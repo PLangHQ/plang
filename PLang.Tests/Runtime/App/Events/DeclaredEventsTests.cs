@@ -7,7 +7,7 @@ namespace PLang.Tests.App.Events;
 // a core item's events are the core's alone.
 public class DeclaredEventsTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this _app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;
@@ -16,15 +16,15 @@ public class DeclaredEventsTests : System.IAsyncDisposable
     {
         var window = new Window();
         global::app.data.@this? heard = null;
-        window.Own().Bind("closed", global::app.@event.When.after,
+        _app.actor.list.User.on.Bind(window, "closed", global::app.@event.When.after,
             (_, data, _) => { heard = data; return System.Threading.Tasks.Task.FromResult(data); },
-            _app.actor.list.User, global::app.@event.binding.Scope.actor);
+            global::app.@event.binding.Scope.actor);
 
-        await window.on["closed"]!.After(window, Ctx.Ok((global::app.type.item.text.@this)"{\"window\":\"closed\",\"id\":3}"), Ctx);
+        await _app.actor.list.User.on[window]["closed"]!.After(window, Ctx.Ok((global::app.type.item.text.@this)"{\"window\":\"closed\",\"id\":3}"), Ctx);
 
         await Assert.That(heard).IsNotNull();
-        await Assert.That(window.on.Names).Contains("closed");
-        await Assert.That(window.on.Names).Contains("create");
+        await Assert.That(_app.actor.list.User.on[window].Names).Contains("closed");
+        await Assert.That(_app.actor.list.User.on[window].Names).Contains("create");
     }
 
     // nothing bound on a window yet: its declared events are still there to raise, shared and closed to bindings

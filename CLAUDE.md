@@ -58,6 +58,11 @@ When reading or writing C#, check the diff against the named smells. A hit means
 - **fork** — two execution paths for one operation: behavioral `if`/`switch`, generic fallback beside per-type handlers, type-switch in a registry (push onto the element as a virtual member), optional-override branch.
 - **verb+noun** — any compound name where one half is a verb (`BuildTypeEntries`, `CoerceToKind`, `GetParameters`); only boolean `IsX`/`HasX` are exempt. Never allowed — always diagnostic of an object doing another object's job or proxying what should own itself.
 
+**Branch rules:**
+- **The boy scout rule.** A file a branch touches is left better: its older smells are fixed in the branch, not deferred as "pre-existing". A reviewer's scope is every file the branch touched, read whole, not only the diff's lines; it marks an older finding with the commit it came from. A fix is scaled to its smell (a rename where a rename does it). Only a file the branch never touches leaves its smells to another branch.
+- **No runtime code for tests.** A production member that only tests call is removed with the tests that exist for it; a test of real behaviour reaches it through the door production uses.
+- **A run never writes an object its app shares.** A sub app's types, actions and goals are layers over what it's made from (`Documentation/v0.2/apps.md`), so a shared entry is every app's: what a run adds goes to its own layer or its own context, never onto the shared object. A binding made while a program runs is held on the context of the actor that made it (`actor.on`); a type takes no history. The only writes onto a shared object are caches that give every app the same answer (a kinded type made once, a kind coined once).
+
 If removing one line of choreography requires editing three files, those three files are one missing type.
 
 Full catalog with worked examples: `Documentation/v0.2/obp-smells.md`. The pattern (3 laws + rules): `Documentation/v0.2/object_pattern_formal.md`. Audit procedure: `Documentation/v0.2/obp-scan.md`.
@@ -144,6 +149,10 @@ Only `plang --test` is exposed to the trap.
 
 Do **not** delete `test/**/.build/` — those are tracked `.pr` files, not
 build artefacts. The "NEVER delete .build folders" rule above applies.
+
+## Speed record
+- `Tools/Bench/run.sh` measures, gated on the machine's load: a sub app's and a root app's birth (time, bytes), a request app (time, bytes) with its held memory after 3,000 requests and a rest, `plang --test`'s time, the C# sweep's time, and the C# build (clean and incremental). Each run appends a row to `Tools/Bench/record.md` (date, branch, commit, load, each number); each number's noise band is at the record's top.
+- Codeanalyzer runs it at every review and compares with the last row recorded on the branch's parent. A number outside its band is a finding: blocking unless the branch's decisions explain it. Held memory that grows with the request count always blocks.
 
 ## Mutation Testing (announce first)
 

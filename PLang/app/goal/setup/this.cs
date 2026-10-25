@@ -38,8 +38,8 @@ public sealed class @this
         var context = app.actor.list.System.Context!;
         var candidates = new global::app.type.item.path.@this[]
         {
-            global::app.goal.@this.Pr(global::app.type.item.path.@this.Resolve("/Setup.goal", context)),
-            global::app.goal.@this.Pr(global::app.type.item.path.@this.Resolve("/Setup/Setup.goal", context)),
+            global::app.type.item.path.file.@this.Resolve("/Setup.goal", context).Pr,
+            global::app.type.item.path.file.@this.Resolve("/Setup/Setup.goal", context).Pr,
         };
 
         foreach (var file in candidates)
@@ -51,14 +51,12 @@ public sealed class @this
             if (!exists.Success) return exists;
             if ((await exists.Value())?.Value != true) continue;
 
-            // The .pr lands as a file reference whose value its format decodes into a goal. A setup file
-            // that doesn't read or parse is the answer — setup doesn't run past it.
-            var read = await file.Read(context);
-            var content = read.Success ? await read.Value() : null;
+            // read as the app's goals read every .pr (through the goal's on.load, stamped, held); a setup file that
+            // doesn't read or parse is the answer — setup doesn't run past it
+            // a candidate is setup's by its path, the convention that names it, so what it holds is setup's: asked
+            // before anything is read
+            var read = await _goals.Read(file, context);
             if (!read.Success) return read;
-            if (content as global::app.goal.@this is not { } goal || !goal.IsSetup) continue;
-
-            _goals.Add(goal);
         }
 
         return context.Ok();

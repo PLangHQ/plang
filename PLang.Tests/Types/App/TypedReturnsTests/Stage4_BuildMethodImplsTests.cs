@@ -15,7 +15,7 @@ public class Stage4_BuildMethodImplsTests
     public void Setup()
     {
         _app = new global::app.@this(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-stage4-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            System.IO.Path.GetTempPath(), "plang-stage4-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
     }
 
     [After(Test)]
@@ -96,7 +96,7 @@ public class Stage4_BuildMethodImplsTests
         await result.IsSuccess();
 
         channel.Stream.Position = 0;
-        var written = await channel.ReadAllTextAsync();
+        var written = await new System.IO.StreamReader(channel.Stream, leaveOpen: true).ReadToEndAsync();
         await Assert.That(written).Contains(missing)
             .Because("Build() must write a missing-file warning whose message names the offending path.");
     }

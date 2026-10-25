@@ -11,7 +11,7 @@ public class DefaultSwitchTests
             "plang-default-switch-" + Guid.NewGuid().ToString("N")[..8])).FullName;
         try
         {
-            await using var app = new global::app.@this(root).Consenting();
+            await using var app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Consenting();
             return await then(app);
         }
         finally { System.IO.Directory.Delete(root, recursive: true); }

@@ -14,7 +14,7 @@ public class TypeKindFaceTests
     [Test]
     public async Task ADecimalKindsDescription_IsNumbers()
     {
-        await using var app = new global::app.@this("/tmp/plang_kindface_" + Guid.NewGuid().ToString("N")[..8]).Testing();
+        await using var app = new global::app.@this("/tmp/plang_kindface_" + Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var number = ctx.App.type.list[new global::app.type.@this("number"), ctx];
         var @decimal = number.kind["decimal"];
@@ -30,7 +30,7 @@ public class TypeKindFaceTests
         var root = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_kindface_" + Guid.NewGuid().ToString("N")[..8])).FullName;
         await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(root, "config.json"), "{\"port\":8080}");
-        await using var app = new global::app.@this(root).Testing();
+        await using var app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var read = await Make.Action(ctx, "file", "read", ("Path", "config.json")).Start(ctx);
         await ctx.Variable.Set(new global::app.data.@this("cfg", read.Peek(), context: ctx));
@@ -48,7 +48,7 @@ public class TypeKindFaceTests
     [Test]
     public async Task APlainTextsTypeKind_IsNull()
     {
-        await using var app = new global::app.@this("/tmp/plang_kindface_" + Guid.NewGuid().ToString("N")[..8]).Testing();
+        await using var app = new global::app.@this("/tmp/plang_kindface_" + Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("s", "hi");
 

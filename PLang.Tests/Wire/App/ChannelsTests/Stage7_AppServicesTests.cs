@@ -10,7 +10,7 @@ public class Stage7_AppServicesTests
     [Test]
     public async Task Services_NewWithParent_CreatesService_AddsToCollection()
     {
-        await using var app = new global::app.@this("/tmp/s7a").Testing();
+        await using var app = new global::app.@this("/tmp/s7a", global::PLang.Tests.Parent.Actor).Testing();
         var s = app.Services.New(parent: app.actor.list.User);
         await Assert.That(s.Parent).IsEqualTo(app.actor.list.User);
         await Assert.That(app.Services.Count).IsEqualTo(1);
@@ -20,24 +20,15 @@ public class Stage7_AppServicesTests
     [Test]
     public async Task Service_Channels_IsEmptyOnConstruction()
     {
-        await using var app = new global::app.@this("/tmp/s7b").Testing();
+        await using var app = new global::app.@this("/tmp/s7b", global::PLang.Tests.Parent.Actor).Testing();
         var s = app.Services.New(parent: app.actor.list.User);
-        await Assert.That(s.Channels.ChannelNames.Any()).IsFalse();
-    }
-
-    [Test]
-    public async Task Service_Identity_NavigatesToAppSystemIdentity()
-    {
-        await using var app = new global::app.@this("/tmp/s7c").Testing();
-        app.actor.list.System.Identity = new global::app.module.identity.Identity(app.type.list[typeof(global::app.module.identity.Identity)]) { Name = "system-id" };
-        var s = app.Services.New(parent: app.actor.list.User);
-        await Assert.That(s.Identity).IsEqualTo(app.actor.list.System.Identity);
+        await Assert.That(s.Channels.list.Any()).IsFalse();
     }
 
     [Test]
     public async Task Service_Parent_IsTheActorPassedAtCreation()
     {
-        await using var app = new global::app.@this("/tmp/s7d").Testing();
+        await using var app = new global::app.@this("/tmp/s7d", global::PLang.Tests.Parent.Actor).Testing();
         var sUser = app.Services.New(parent: app.actor.list.User);
         var sSystem = app.Services.New(parent: app.actor.list.System);
         await Assert.That(sUser.Parent).IsEqualTo(app.actor.list.User);
@@ -47,7 +38,7 @@ public class Stage7_AppServicesTests
     [Test]
     public async Task Service_AwaitUsing_RemovesFromCollection_AndDisposesChannels()
     {
-        await using var app = new global::app.@this("/tmp/s7e").Testing();
+        await using var app = new global::app.@this("/tmp/s7e", global::PLang.Tests.Parent.Actor).Testing();
         AppService captured;
         global::app.channel.@this disposedCh;
         {
@@ -64,7 +55,7 @@ public class Stage7_AppServicesTests
     [Test]
     public async Task TwoParallelServices_DontCollide_OnChannelNames()
     {
-        await using var app = new global::app.@this("/tmp/s7f").Testing();
+        await using var app = new global::app.@this("/tmp/s7f", global::PLang.Tests.Parent.Actor).Testing();
         await using var sA = app.Services.New(parent: app.actor.list.User);
         await using var sB = app.Services.New(parent: app.actor.list.User);
         sA.Channels.Register(StreamChannel.Memory("input"));
@@ -87,7 +78,7 @@ public class Stage7_AppServicesTests
         // Regression for the ConcurrentBag drain-and-rebuild Remove that could lose
         // services racing with concurrent New(). With ConcurrentDictionary<Guid, Service>,
         // Add and Remove are atomic, so every still-live service must remain visible.
-        await using var app = new global::app.@this("/tmp/s7-race").Testing();
+        await using var app = new global::app.@this("/tmp/s7-race", global::PLang.Tests.Parent.Actor).Testing();
         const int n = 200;
         var pool = new AppService[n];
         for (int i = 0; i < n; i++) pool[i] = app.Services.New(parent: app.actor.list.User);

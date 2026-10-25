@@ -58,7 +58,7 @@ public class FluidWriteErrorTests
 
     [Test] public async Task AValueWhoseWriteFails_InAFilter_AnswersItsOwnError()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
 
         var result = await Rendered(app, "{{ x | upcase }}", new Refusing());
 
@@ -68,7 +68,7 @@ public class FluidWriteErrorTests
 
     [Test] public async Task AValueWhoseWriteIsStillPending_InAFilter_AnswersTemplateValueUnread()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var arrives = new System.Threading.Tasks.TaskCompletionSource();
 
         var result = await Rendered(app, "{{ x | upcase }}", new Waiting(arrives.Task));
@@ -80,7 +80,7 @@ public class FluidWriteErrorTests
 
     [Test] public async Task AValueWhoseComparisonFails_AnswersItsOwnError()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
 
         var result = await Rendered(app, "{% if x == \"a\" %}yes{% endif %}", new Incomparable());
 

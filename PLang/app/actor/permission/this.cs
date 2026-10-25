@@ -24,9 +24,8 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     public @this(global::app.actor.@this actor)
     {
         _actor = actor;
-        // Every actor's standing grant on the runtime's shared os folder: it reads and runs what is there (the
-        // builder's goals, /system/error/show). Writing there is the system actor's alone (Stand).
-        Stand(actor.App.filesystem.os, Verb.read, Verb.execute);
+        // what the actor stands on its app's folders, as its role answers
+        actor.Role.Stand(this, actor.App);
     }
 
     /// <summary>
@@ -149,8 +148,8 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     /// </summary>
     public async Task Add(global::app.data.@this grant, bool persist)
     {
-        if (await grant.Value<Grant>() is not { } __rec) return;
-        var key = __rec.Path;
+        if (await grant.Value<Grant>() is not { } value) return;
+        var key = value.Path;
 
         if (persist)
         {
@@ -158,7 +157,7 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
             var grants = new List<Grant>();
             foreach (var row in setting.Grant.Items(_actor.Context))
                 if (await row.Value<Grant>() is { } entry && !string.Equals(entry.Path, key, StringComparison.Ordinal)) grants.Add(entry);
-            grants.Add(__rec);
+            grants.Add(value);
             await Save(setting, grants);
             return;
         }
@@ -167,7 +166,7 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
         {
             // Overwrite same-path entry if any.
             var idx = _inMemory.FindIndex(d =>
-                d.Peek() is Grant __dv && string.Equals(__dv.Path, key, StringComparison.Ordinal));
+                d.Peek() is Grant each && string.Equals(each.Path, key, StringComparison.Ordinal));
             if (idx >= 0) _inMemory[idx] = grant;
             else _inMemory.Add(grant);
         }
@@ -183,9 +182,9 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
         lock (_lock)
         {
             var idx = _inMemory.FindIndex(d =>
-                d.Peek() is Grant __dv2
-                && __dv2.Actor == match.Actor
-                && __dv2.Path == match.Path);
+                d.Peek() is Grant each
+                && each.Actor == match.Actor
+                && each.Path == match.Path);
             if (idx >= 0) { _inMemory.RemoveAt(idx); removed = true; }
         }
 

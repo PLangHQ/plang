@@ -12,7 +12,7 @@ public class PrEmptyListTests
     [Test]
     public async Task AGoalWithNoSubGoals_WritesNoChild()
     {
-        await using var app = new global::app.@this(Root).Testing();
+        await using var app = new global::app.@this(Root, global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         var goal = await Read(app, System.IO.File.ReadAllText(System.IO.Path.Combine(Root, ".build", "setdeciderkey.pr")));
 

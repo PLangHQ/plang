@@ -11,7 +11,7 @@ public class ComputedAndClrStoreNoContextTests
     private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;
 
     [Before(Test)]
-    public void Setup() => _app = new global::app.@this("/tmp/computedclr-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+    public void Setup() => _app = new global::app.@this("/tmp/computedclr-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
 
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();

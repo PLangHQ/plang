@@ -212,34 +212,10 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     }
 
     /// <summary>
-    /// Read counterpart of <see cref="Write(string, object?)"/>: the value
-    /// navigates to its own child by <paramref name="key"/>. <c>dict</c> does
-    /// key-lookup, <c>list</c> index, the foreign-object carrier reflects its
-    /// host — one dispatch, each value owns its body. The default answers
-    /// <c>NotFound</c> (IsInitialized=false), so a value with no key-navigation
-    /// falls through to the binding's remaining resolution (domain items reflect
-    /// themselves via the legacy navigators there; raw stragglers too) until those
-    /// collapse onto this method as well.
-    /// </summary>
-    /// <summary>
-    /// The item navigates itself to a child by key. The default reflects a public CLR
-    /// property off THIS value — a domain item (<c>step.Index</c>, <c>goal.Step</c>) or a
-    /// scalar leaf's backing (<c>now.Ticks</c> → <c>DateTimeOffset.Ticks</c>). Containers
-    /// (<c>dict</c>/<c>list</c>) override with key/index lookup; references
-    /// (<c>file</c>/<c>url</c>/<c>source</c>/<c>variable</c>) override to materialise
-    /// themselves first. Walks the inheritance chain bottom-up (DeclaredOnly) so a
-    /// shadowing property wins without AmbiguousMatch. Returns NotFound when truly absent.
-    /// </summary>
-    /// <summary>
-    /// The item navigates ITSELF to a child by key. The DEFAULT — for a domain item
-    /// (goal/step/action/…) — is to reflect its own members through the <c>clr</c> carrier
-    /// (CLR reflection lives there; an item is not a CLR object). Types that navigate
-    /// differently override: <c>dict</c>/<c>list</c> by key/index (lazy, no sibling
-    /// render); a scalar (datetime/number/…) reflects its CLR backing
-    /// (<c>clr(Clr&lt;object&gt;())</c>) so <c>%now.Ticks%</c> reaches DateTimeOffset;
-    /// a reference/source/computed/variable opens its own door for structure then
-    /// navigates the result; <c>null</c>/<c>text</c> can't be walked by key. No
-    /// <c>IsLeaf</c> branching, no generic <c>.Value()</c> in the base — the TYPE decides.
+    /// The item navigates itself to a child by <paramref name="key"/>: its own members first, then its events
+    /// (<c>on</c>), its settings, then a member a program added to it; <c>NotFound</c> when none answers. Types that
+    /// navigate differently override: <c>dict</c>/<c>list</c> by key or index, a reference opens its own door first
+    /// and navigates what it holds.
     /// </summary>
     public virtual async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key)
@@ -375,7 +351,11 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// its add; <see cref="Is"/> queries it.
     /// </summary>
     private global::app.type.item.history.@this? _history;
-    internal global::app.type.item.history.@this history => _history ??= new();
+    internal global::app.type.item.history.@this history => _history ??= Blank();
+
+    // The history this value starts with, before anything is added: one that takes a prior, unless the value is one
+    // never made from another.
+    private protected virtual global::app.type.item.history.@this Blank() => new();
 
     /// <summary>
     /// This value's OWN type entity — the type that MADE it, handed in at birth (the app's list for an
@@ -480,8 +460,27 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// one level, itself.</summary>
     protected internal virtual @this? Level(int depth, global::app.actor.context.@this context) => depth == 0 ? this : null;
 
-    /// <summary>This value's own events, given to it by its first binding — what a binding is added to.</summary>
-    internal global::app.@event.on.own Own()
+    /// <summary>Whether anything is bound before this item's event <paramref name="event"/>, at this item alone — on its
+    /// own events or in the hold of an actor of the asker's app: a door that would have to make what it hands a binding
+    /// asks first.</summary>
+    internal bool IsBoundBefore(string @event, global::app.actor.context.@this context)
+        => on[@event] is { } named && named.IsBoundBefore(this, context);
+
+    /// <summary>Whether anything is bound after this item's event <paramref name="event"/>, at this item alone.</summary>
+    internal bool IsBoundAfter(string @event, global::app.actor.context.@this context)
+        => on[@event] is { } named && named.IsBoundAfter(this, context);
+
+    /// <summary>What is bound before this item's event <paramref name="event"/>, at this item alone, started on
+    /// <paramref name="about"/> — something other than one of its own values (a load's .pr, before there is a goal);
+    /// null when nothing is bound there.</summary>
+    internal System.Threading.Tasks.ValueTask<global::app.data.@this?> Before(string @event, @this about,
+        global::app.actor.context.@this context, global::app.data.@this result)
+        => on[@event] is { } named ? named.BeforeAt(this, about, context, result) : default;
+
+    /// <summary>This value's own events, given to it by its first binding — what a clause its program's read attaches is
+    /// added to (<c>action.Take</c>). A binding made while a program runs is held by the context that binds it, never
+    /// here: an item can be every app's that shares it.</summary>
+    private protected global::app.@event.on.own Own()
     {
         if (_on is global::app.@event.on.own events) return events;
         var shared = on;

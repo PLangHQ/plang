@@ -112,6 +112,11 @@ public partial class @this
     public async System.Threading.Tasks.ValueTask<@this> Follow(actor.context.@this ctx)
         => IsVariable && await _item.Get(ctx) is { } named ? named : this;
 
+    /// <summary>This Data settled for <paramref name="view"/> — the view decides: plang's own store keeps it as written; a
+    /// view that crosses (Out) or dumps (Debug) uses it, a reference a copy of the Data it names, a name that reads
+    /// nothing the error. What a signature hashes and holds, as one.</summary>
+    public System.Threading.Tasks.ValueTask<@this> Settle(View view) => view.Settle(this);
+
     /// <summary>The Data this is, as it is here and now, read with this Data's own context where it stands —
     /// carrying this Data's own name and its result flags (Returned, ReturnDepth, Handled), never another's.
     /// <list type="bullet">
@@ -128,11 +133,6 @@ public partial class @this
     /// it something the signature doesn't cover.</item>
     /// <item>A failure, and any other Data, answers itself.</item>
     /// </list></summary>
-    /// <summary>This Data settled for <paramref name="view"/> — the view decides: plang's own store keeps it as written; a
-    /// view that crosses (Out) or dumps (Debug) uses it, a reference a copy of the Data it names, a name that reads
-    /// nothing the error. What a signature hashes and holds, as one.</summary>
-    public System.Threading.Tasks.ValueTask<@this> Settle(View view) => view.Settle(this);
-
     public virtual async System.Threading.Tasks.ValueTask<@this> Settle()
     {
         if (!HasVariable || _error != null || Signature != null) return this;
@@ -156,7 +156,7 @@ public partial class @this
         try
         {
             var rendered = await asked.Value();
-            if (asked.Success) return new @this(Name, rendered, context: _context) { Attachment = Attachment.Copy() };
+            if (asked.Success) return new @this(Name, rendered, context: _context) { Attachment = Carried?.Copy() };
             why = asked.Error!;
         }
         // a partial template throws for a name it can't read; here that is this value's answer, on the Data
@@ -222,11 +222,26 @@ public partial class @this
     [Out, Store]
     internal global::app.type.item.kept.list.@this Kept { get => Attachment.Kept; set => Attachment.Kept = value; }
 
+    /// <summary>Whether a program added any member to this value — asked without making the list.</summary>
+    internal bool HasKept => Carried?.HasKept ?? false;
+
+    /// <summary>Whether this value carries any property — asked without making the bag.</summary>
+    internal bool HasProperties => Carried?.HasProperties ?? false;
+
     /// <summary>What this variable's value carries — its properties and its added members, together: a face of this
-    /// variable shares it, a copy takes a copy of it.</summary>
+    /// variable shares it, a copy takes a copy of what it carries (none when it carries none). Made when first asked,
+    /// the first made kept.</summary>
     [JsonIgnore]
     [LlmIgnore]
-    internal virtual attachment Attachment { get; set; } = new();
+    internal virtual attachment Attachment
+    {
+        get => System.Threading.LazyInitializer.EnsureInitialized(ref _attachment, static () => new());
+        [param: System.Diagnostics.CodeAnalysis.AllowNull] set => _attachment = value;
+    }
+    private attachment? _attachment;
+
+    // What this value carries as it stands — none until something asks for it.
+    internal virtual attachment? Carried => _attachment;
 
 
     [JsonConstructor]
@@ -737,7 +752,7 @@ public partial class @this
             Handled = Handled,
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Attachment = Attachment.Copy(),
+            Attachment = Carried?.Copy(),
             Signature = signature ?? Signature,
         };
     }
@@ -754,7 +769,7 @@ public partial class @this
             Handled = Handled,
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Attachment = Attachment.Copy(),
+            Attachment = Carried?.Copy(),
         };
     }
 
@@ -987,8 +1002,10 @@ public class DynamicData : @this
     internal override attachment Attachment
     {
         get => _find(Context)?.Attachment ?? base.Attachment;
-        set => base.Attachment = value;
+        [param: System.Diagnostics.CodeAnalysis.AllowNull] set => base.Attachment = value;
     }
+
+    internal override attachment? Carried => _find(Context)?.Carried ?? base.Carried;
 
     /// <summary>In memory now = the current computation, lifted with this Data's context.</summary>
     public override global::app.type.item.@this Peek() => _cell.Compute(Context);
@@ -1004,7 +1021,7 @@ public class DynamicData : @this
         global::app.type.item.signature.@this? signature = null)
     {
         var ctx = context ?? Context;
-        return new @this(name, _cell.Compute(ctx), context: ctx) { Attachment = Attachment.Copy() };
+        return new @this(name, _cell.Compute(ctx), context: ctx) { Attachment = Carried?.Copy() };
     }
 }
 

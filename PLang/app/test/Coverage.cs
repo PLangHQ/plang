@@ -43,7 +43,7 @@ public sealed class Coverage
     /// own result is truthy), keyed by its position in the step's action chain. Answers the binding; whoever
     /// watches removes it when the watch ends.</summary>
     public global::app.@event.binding.@this Watch(global::app.actor.context.@this context)
-        => context.App.type.list["action"].Own().Bind("start", global::app.@event.When.after,
+        => context.Actor!.on.Bind(context.App.type.list["action"], "start", global::app.@event.When.after,
             async (item, result, ctx) =>
             {
                 if (item is not global::app.goal.step.action.@this action) return ctx.Ok();
@@ -54,16 +54,16 @@ public sealed class Coverage
                 var fired = await result.ToBooleanAsync();
                 var lone = Lone(step);
                 if (!fired && !lone) return ctx.Ok();
-                var site = Site(step.Goal, step.Index.ToString());
+                var site = Site(step.Goal, step);
                 if (fired) RecordBranch(site, step.Code.IndexOf(action));
                 RecordBranchLabel(site, lone ? (fired ? "true" : "false") : action.Name);
                 return ctx.Ok();
             },
-            context.Actor, global::app.@event.binding.Scope.actor);
+            global::app.@event.binding.Scope.actor);
 
-    // A condition step's site — "goal:stepIndex", the goal by its path.
-    private string Site(global::app.goal.@this? goal, string? index)
-        => $"{goal?.Path?.ToString() ?? goal?.Name ?? "?"}:{index ?? "?"}";
+    // A condition step's site — "goal:stepIndex", its goal by its path (a goal with none, by its name).
+    private string Site(global::app.goal.@this goal, global::app.goal.step.@this step)
+        => $"{goal.Path?.ToString() ?? goal.Name}:{step.Index}";
 
     /// <summary>Records that a handler fired. Idempotent — calling twice is a no-op.</summary>
     public void RecordModuleAction(string module, string actionName)
@@ -124,7 +124,7 @@ public sealed class Coverage
         {
             var conditions = step.Code.Items().Where(a => a.IsCondition).ToList();
             if (conditions.Count == 0) continue;
-            RecordBranchChain(Site(goal, step.Index.ToString()), Lone(step)
+            RecordBranchChain(Site(goal, step), Lone(step)
                 ? new[] { "true", "false" }
                 : conditions.Select(c => c.Name).ToArray());
         }

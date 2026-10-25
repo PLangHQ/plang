@@ -12,8 +12,8 @@ public interface ICode
     string Name { get; }
 
     /// <summary>
-    /// True when this implementation was registered by <see cref="@this.RegisterDefaults"/>
-    /// at App boot. Such implementations are reconstructed on App boot — they don't appear
+    /// True when this implementation is one of the app's built-in providers, registered at its code registry's first
+    /// use. Such implementations are reconstructed on App boot — they don't appear
     /// in snapshots because the fresh App will already have them registered. Default false.
     /// </summary>
     bool IsBuiltIn { get; set; }

@@ -9,7 +9,7 @@ namespace PLang.Tests.App.Types;
 public class KindViaCreateTests : System.IAsyncDisposable
 {
     private readonly global::app.@this app = new global::app.@this(
-        System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-kind-via-create-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+        System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-kind-via-create-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private string? KindOf(string typeName, object? raw)

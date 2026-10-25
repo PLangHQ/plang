@@ -43,10 +43,10 @@ public sealed class Default : IIdentity
 
         var (items, err) = await LoadAll(action);
         if (err != null) return action.Context.Error<Identity>(err);
-        var __an = (await action.Name.Value())?.Clr<string>();
-        if (items.Exists(i => string.Equals(i.Name, __an, StringComparison.OrdinalIgnoreCase)))
+        var name = (await action.Name.Value())?.Clr<string>();
+        if (items.Exists(i => string.Equals(i.Name, name, StringComparison.OrdinalIgnoreCase)))
             return action.Context.Error<Identity>(new ActionError($"Identity '{await action.Name.Value()}' already exists", "DuplicateName", 409));
-        if (await Consent(action, $"create the identity '{__an}'", __an!, global::app.type.item.permission.Verb.write) is { } refused)
+        if (await Consent(action, $"create the identity '{name}'", name!, global::app.type.item.permission.Verb.write) is { } refused)
             return data.@this<Identity>.From(refused);
 
         var genResult = await GenerateIdentity(action, (await action.Name.Value())!.Clr<string>()!, (await action.Default.Value())!.Value, (action.Provider == null ? null : (await action.Provider.Value())?.Clr<string>()));
@@ -113,8 +113,8 @@ public sealed class Default : IIdentity
         var (items, err) = await LoadAll(action);
         if (err != null) return action.Context.Error<Identity>(err);
 
-        var __nm = (await action.Name.Value())?.Clr<string>();
-        var target = items.Find(i => string.Equals(i.Name, __nm, StringComparison.OrdinalIgnoreCase));
+        var name = (await action.Name.Value())?.Clr<string>();
+        var target = items.Find(i => string.Equals(i.Name, name, StringComparison.OrdinalIgnoreCase));
         if (target == null)
             return action.Context.Error<Identity>(new ActionError($"Identity '{await action.Name.Value()}' not found", "NotFound", 404));
 
@@ -151,10 +151,10 @@ public sealed class Default : IIdentity
 
         var (items, err) = await LoadAll(action);
         if (err != null) return action.Context.Error<Identity>(err);
-        var __nn = (await action.NewName.Value())?.Clr<string>();
-        if (items.Exists(i => string.Equals(i.Name, __nn, StringComparison.OrdinalIgnoreCase)))
+        var name = (await action.NewName.Value())?.Clr<string>();
+        if (items.Exists(i => string.Equals(i.Name, name, StringComparison.OrdinalIgnoreCase)))
             return action.Context.Error<Identity>(new ActionError($"Identity '{await action.NewName.Value()}' already exists", "DuplicateName", 409));
-        if (await Consent(action, $"rename the identity '{identity.Name}' to '{__nn}'", identity.Name, global::app.type.item.permission.Verb.write) is { } refused)
+        if (await Consent(action, $"rename the identity '{identity.Name}' to '{name}'", identity.Name, global::app.type.item.permission.Verb.write) is { } refused)
             return data.@this<Identity>.From(refused);
 
         // One row holds every identity, so the rename is one write: the old name out, the new one in.
@@ -197,15 +197,23 @@ public sealed class Default : IIdentity
     public async Task<data.@this<Identity>> ExportAsync(Export action)
     {
         var name = action.Name == null ? null : (await action.Name.Value())?.Clr<string>();
-        var identity = await ResolveIdentityAsync(action, name);
-        if (!identity.Success) return identity;
-        var exported = (await identity.Value())!;
+        // an app gives out only an identity it holds itself — the one named, else its default; one its origin answers
+        // (a sub app's, its maker's) is never asked for, and none is made to be given out
+        var (items, err) = await LoadAll(action);
+        if (err != null) return action.Context.Error<Identity>(err);
+        var exported = name != null
+            ? items!.Find(i => string.Equals(i.Name, name, StringComparison.Ordinal))
+            : items!.Find(i => i.IsDefault && !i.IsArchived);
+        if (exported == null)
+            return action.Context.Error<Identity>(name != null
+                ? new ActionError($"Identity '{name}' not found", "NotFound", 404)
+                : new ActionError("this app holds no default identity of its own to give out", "IdentityNotOwn", 404));
         // what a yes means, said plainly: the key leaves as text the step can send anywhere — this once
         if (await Consent(action, $"export the private key of the identity '{exported.Name}' — the step gets the key as text it " +
                 "can send anywhere, for this call only; you are asked every time, and the answer is never kept", exported.Name,
                 global::app.type.item.permission.Verb.read) is { } refused)
             return data.@this<Identity>.From(refused);
-        return identity;
+        return action.Context.Ok<Identity>(exported);
     }
 
     // --- Internal helpers ---
@@ -300,10 +308,10 @@ public sealed class Default : IIdentity
             return action.Context.Ok<Identity>(candidate);
         }
 
-        // None stored yet. One held in memory is the one being stored right now — its own row is signed with
-        // it on the way into the store, and that signing asks for the identity here — so it answers, rather
-        // than making another for every row.
-        if (action.Context.App.actor.list.System.Identity is { IsArchived: false } making)
+        // None stored yet: who the app is, as its origin answers — the code, the one being stored right now (its
+        // own row is signed with it on the way into the store, and that signing asks for the identity here, so it
+        // answers rather than making another for every row); an actor, the actor's.
+        if (action.Context.App.origin.Identity(action.Context.App) is { IsArchived: false } making)
             return action.Context.Ok<Identity>(making);
 
         // No identities at all — auto-create; it is the app's identity from here, before its row is stored

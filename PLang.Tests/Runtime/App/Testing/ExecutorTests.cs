@@ -217,7 +217,7 @@ public class ExecutorTests
         await Assert.That(error).IsNull();
         var goalFile = (string?)await engine!.actor.list.System.Context.Variable.GetValue("goalFile");
         await Assert.That(goalFile).IsEqualTo("/sub/Run.goal");
-        await Assert.That(global::app.goal.@this.Pr(global::app.type.item.path.@this.Resolve(goalFile!, engine.actor.list.System.Context)).ToString())
+        await Assert.That(global::app.type.item.path.file.@this.Resolve(goalFile!, engine.actor.list.System.Context).Pr.ToString())
             .IsEqualTo("/sub/.build/run.pr");
     }
 

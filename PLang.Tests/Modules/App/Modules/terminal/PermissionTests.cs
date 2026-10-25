@@ -19,7 +19,7 @@ public class PermissionTests : IDisposable
         _root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "plang_permission_" + Guid.NewGuid().ToString("N"))).FullName;
         _outside = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "plang_permission_out_" + Guid.NewGuid().ToString("N"))).FullName;
         Directory.CreateDirectory(Path.Combine(_root, "granted"));
-        _app = new global::app.@this(_root).Testing();
+        _app = new global::app.@this(_root, global::PLang.Tests.Parent.Actor).Testing();
     }
 
     public void Dispose()

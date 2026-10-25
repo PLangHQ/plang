@@ -11,7 +11,7 @@ public class FlagsDiffAutoFlipTests
     [Test]
     public async Task Diff_IsOn_InsideADiffScope()
     {
-        var app = new global::app.@this("/test").Testing();
+        var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         await Assert.That((await app.actor.list.User.Context.call.Diff()).Value).IsFalse();
 
         using (app.actor.list.User.Context.call.DiffScope(app.actor.list.User.Context.Variable))
@@ -23,7 +23,7 @@ public class FlagsDiffAutoFlipTests
     [Test]
     public async Task Diff_RestoredToPriorState_WhenTheScopeCloses()
     {
-        var app = new global::app.@this("/test").Testing();
+        var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         // Off baseline.
         await Assert.That((await app.actor.list.User.Context.call.Diff()).Value).IsFalse();
 

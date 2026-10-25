@@ -8,7 +8,7 @@ namespace PLang.Tests.App.Serialization;
 
 public class IWriterFormatTests
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
 
     private global::app.type.item.kind.json.Writer MakeJsonWriter(System.IO.Stream stream)
     {

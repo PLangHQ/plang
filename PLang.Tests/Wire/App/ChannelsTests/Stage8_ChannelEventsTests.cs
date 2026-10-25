@@ -12,7 +12,7 @@ namespace PLang.Tests.App.ChannelsTests;
 public class Stage8_ChannelEventsTests : System.IAsyncDisposable
 {
     private readonly global::app.@this app = new global::app.@this(
-        "/tmp/s8-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+        "/tmp/s8-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
 
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
@@ -25,7 +25,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
 
     private void Bind(global::app.type.item.@this on, string @event, When when,
         System.Func<global::app.type.item.@this, Data, global::app.actor.context.@this, Task<Data>> handler)
-        => on.Own().Bind(@event, when, handler, app.actor.list.User, Scope.actor);
+        => app.actor.list.User.on.Bind(on, @event, when, handler, Scope.actor);
 
     [Test]
     public async Task AChannel_IsAnItem_WithItsOwnEvents()
@@ -230,15 +230,15 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     [Test]
     public async Task TheChannelTypesWrite_FiresForEveryChannel_UserAndServiceAlike()
     {
-        await using var app = new global::app.@this("/tmp/s8-cross").Testing();
+        await using var app = new global::app.@this("/tmp/s8-cross", global::PLang.Tests.Parent.Actor).Testing();
         var userLogger = StreamChannel.Memory("logger");
         var serviceLogger = StreamChannel.Memory("logger");
         app.actor.list.User.Channel.Register(userLogger);
         await using var svc = app.Services.New(parent: app.actor.list.User);
         svc.Channels.Register(serviceLogger);
         var hits = 0;
-        app.type.list["channel"].Own().Bind("write", When.before,
-            (_, _, ctx) => { Interlocked.Increment(ref hits); return Task.FromResult(ctx.Ok()); }, app.actor.list.User, Scope.app);
+        app.actor.list.User.on.Bind(app.type.list["channel"], "write", When.before,
+            (_, _, ctx) => { Interlocked.Increment(ref hits); return Task.FromResult(ctx.Ok()); }, Scope.app);
 
         await userLogger.WriteAsync(app.Ok("a"));
         await serviceLogger.WriteAsync(app.Ok("b"));
@@ -251,7 +251,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     {
         var ch = Registered("c");
         var fired = false;
-        app.goal.type.Own().Bind("start", When.before, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); }, app.actor.list.User, Scope.app);
+        app.actor.list.User.on.Bind(app.goal.type, "start", When.before, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); }, Scope.app);
 
         await ch.WriteAsync(app.Ok("x"));
 

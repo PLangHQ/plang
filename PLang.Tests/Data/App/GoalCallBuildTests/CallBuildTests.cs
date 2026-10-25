@@ -12,7 +12,7 @@ public class CallBuildTests
     [Test]
     public async Task Build_KeepsASelfReferenceArgument()
     {
-        var app = new global::app.@this("/t").Testing();
+        var app = new global::app.@this("/t", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
 
         var args = new global::app.type.item.list.@this(new List<Data>
@@ -44,7 +44,7 @@ public class CallBuildTests
     [Test]
     public async Task ASelfPassedName_WrittenInTheCallee_StaysTheCallees()
     {
-        await using var app = new global::app.@this("/t2").Testing();
+        await using var app = new global::app.@this("/t2", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         app.goal.list.Add(await RealGoalLoad.ViaChannel(app, Make.Goal(ctx, "Rename",
             Make.Step("set %path% = \"inner\"",

@@ -22,7 +22,7 @@ public class FileSystemPermissionFlowTests
         root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-fs-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        var app = new global::app.@this(root);
+        var app = new global::app.@this(root, global::PLang.Tests.Parent.Actor);
         // Permission-FLOW tests exercise the consent gate, not crypto correctness — use the
         // no-crypto signing mock so parallel real-ed25519 keygen/sign doesn't starve/hang.
         (app).TestSigning();

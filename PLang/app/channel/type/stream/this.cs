@@ -30,14 +30,6 @@ public class @this : global::app.channel.type.session.@this
         _ownsStream = ownsStream;
     }
 
-    /// <summary>Read-only stream channel (e.g. stdin).</summary>
-    public static @this Input(string name, global::System.IO.Stream stream, bool ownsStream = false)
-        => new(name, stream, ChannelDirection.Input, ownsStream);
-
-    /// <summary>Write-only stream channel (e.g. stdout, stderr).</summary>
-    public static @this Output(string name, global::System.IO.Stream stream, bool ownsStream = false)
-        => new(name, stream, ChannelDirection.Output, ownsStream);
-
     /// <summary>In-memory bidirectional channel (testing / capture).</summary>
     public static @this Memory(string name, ChannelDirection direction = ChannelDirection.Bidirectional)
         => new(name, new MemoryStream(), direction, ownsStream: true);
@@ -182,8 +174,9 @@ public class @this : global::app.channel.type.session.@this
         return await Read(ResolveEncoding().GetBytes(line), ct);
     }
 
-    // what was read past the last message's end: the start of the next one
-    private byte[] _ahead = new byte[1 << 16];
+    // what was read past the last message's end: the start of the next one — empty until the first read (a channel
+    // that only writes never holds one), then grown as a read needs room
+    private byte[] _ahead = [];
     private int _held;
 
     /// <summary>The next message, without its end; null when the stream ends first (a part read before the end is
@@ -209,7 +202,7 @@ public class @this : global::app.channel.type.session.@this
             }
             // what was searched holds no end (an end may straddle the next read: search again from just before it)
             searched = Math.Max(0, _held - end.Length + 1);
-            if (_held == _ahead.Length) System.Array.Resize(ref _ahead, _ahead.Length * 2);
+            if (_held == _ahead.Length) System.Array.Resize(ref _ahead, Math.Max(1 << 16, _ahead.Length * 2));
             var read = await Stream.ReadAsync(_ahead.AsMemory(_held), ct);
             if (read == 0)
             {
@@ -222,9 +215,8 @@ public class @this : global::app.channel.type.session.@this
         }
     }
 
-    // --- Convenience surface kept for v1 callers ---------------------------------
-
-    public async Task<byte[]> ReadAllBytesAsync(CancellationToken cancellationToken = default)
+    // The stream's whole content, as bytes.
+    private async Task<byte[]> ReadAllBytesAsync(CancellationToken cancellationToken = default)
     {
         if (!CanRead)
             throw new InvalidOperationException($"Channel '{Name}' does not support reading");
@@ -235,12 +227,6 @@ public class @this : global::app.channel.type.session.@this
         using var buffer = new MemoryStream();
         await Stream.CopyToAsync(buffer, cancellationToken);
         return buffer.ToArray();
-    }
-
-    public async Task<string> ReadAllTextAsync(CancellationToken cancellationToken = default)
-    {
-        var bytes = await ReadAllBytesAsync(cancellationToken);
-        return ResolveEncoding().GetString(bytes);
     }
 
     public override void Close()

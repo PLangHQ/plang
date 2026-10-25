@@ -1,23 +1,26 @@
-using app.type.item.variable;
 using app.module.code;
-using app.module.crypto;
-using app.module.crypto.code;
-using EngineProviders = global::app.module.code.@this;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.crypto;
 
+/// The app's code registry, asked for an interface no built-in provider serves: none until one is registered.
 public class ProviderRegistryTests
 {
-    private EngineProviders _providers = null!;
     private PLangEngine _app = null!;
+
+    /// An interface no built-in provider serves.
+    public interface IProbe : ICode;
+
+    private sealed class Probe(string name) : IProbe
+    {
+        public string Name { get; } = name;
+        public bool IsBuiltIn { get; set; }
+        public string? Source { get; set; }
+    }
 
     [Before(Test)]
     public void Setup()
-    {
-        _app = new global::app.@this("/tmp/provreg-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
-        _providers = new EngineProviders(_app.actor.list.User.Context);
-    }
+        => _app = new global::app.@this("/tmp/provreg-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
 
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();
@@ -25,7 +28,7 @@ public class ProviderRegistryTests
     [Test]
     public async Task Get_NoRegistration_ReturnsError()
     {
-        var result = _providers.Get<ICrypto>();
+        var result = _app.Code.Get<IProbe>();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
     }
@@ -33,10 +36,10 @@ public class ProviderRegistryTests
     [Test]
     public async Task Register_Then_Get_ReturnsSameInstance()
     {
-        var provider = new global::app.module.crypto.code.Default();
-        _providers.Register<ICrypto>(provider);
+        var provider = new Probe("default");
+        _app.Code.Register<IProbe>(provider);
 
-        var result = _providers.Get<ICrypto>();
+        var result = _app.Code.Get<IProbe>();
         await Assert.That(result.Error).IsNull();
         await Assert.That(result.Provider).IsSameReferenceAs(provider);
     }
@@ -44,11 +47,9 @@ public class ProviderRegistryTests
     [Test]
     public async Task Register_DuplicateName_ReturnsError()
     {
-        var first = new global::app.module.crypto.code.Default();
-        _providers.Register<ICrypto>(first);
+        _app.Code.Register<IProbe>(new Probe("default"));
 
-        var second = new global::app.module.crypto.code.Default();
-        var result = _providers.Register<ICrypto>(second);
+        var result = _app.Code.Register<IProbe>(new Probe("default"));
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderExists");
     }
@@ -56,33 +57,31 @@ public class ProviderRegistryTests
     [Test]
     public async Task Has_NoRegistration_ReturnsFalse()
     {
-        await Assert.That(_providers.Has<ICrypto>()).IsFalse();
+        await Assert.That(_app.Code.Has<IProbe>()).IsFalse();
     }
 
     [Test]
     public async Task Has_AfterRegistration_ReturnsTrue()
     {
-        _providers.Register<ICrypto>(new global::app.module.crypto.code.Default());
-        await Assert.That(_providers.Has<ICrypto>()).IsTrue();
+        _app.Code.Register<IProbe>(new Probe("default"));
+        await Assert.That(_app.Code.Has<IProbe>()).IsTrue();
     }
 
     [Test]
     public async Task Remove_NonDefault_Succeeds()
     {
-        var first = new global::app.module.crypto.code.Default();
-        _providers.Register<ICrypto>(first);
-        var second = new NamedCryptoProvider("second");
-        _providers.Register<ICrypto>(second);
+        _app.Code.Register<IProbe>(new Probe("default"));
+        _app.Code.Register<IProbe>(new Probe("second"));
 
-        var removed = _providers.Remove<ICrypto>("second");
+        var removed = _app.Code.Remove<IProbe>("second");
         await removed.IsSuccess();
-        await Assert.That(_providers.Get<ICrypto>("second").Error).IsNotNull();
+        await Assert.That(_app.Code.Get<IProbe>("second").Error).IsNotNull();
     }
 
     [Test]
     public async Task Remove_NoRegistration_ReturnsError()
     {
-        var removed = _providers.Remove<ICrypto>("unknown");
+        var removed = _app.Code.Remove<IProbe>("unknown");
         await removed.IsFailure();
         await Assert.That(removed.Error!.Key).IsEqualTo("ProviderNotFound");
     }
@@ -90,31 +89,18 @@ public class ProviderRegistryTests
     [Test]
     public async Task GetOrDefault_NoRegistration_ReturnsDefault()
     {
-        var fallback = new global::app.module.crypto.code.Default();
-        var result = _providers.GetOrDefault<ICrypto>(fallback);
+        var fallback = new Probe("fallback");
+        var result = _app.Code.GetOrDefault<IProbe>(fallback);
         await Assert.That(result).IsSameReferenceAs(fallback);
     }
 
     [Test]
     public async Task GetOrDefault_WithRegistration_ReturnsRegistered()
     {
-        var registered = new global::app.module.crypto.code.Default();
-        var fallback = new NamedCryptoProvider("fallback");
-        _providers.Register<ICrypto>(registered);
+        var registered = new Probe("default");
+        _app.Code.Register<IProbe>(registered);
 
-        var result = _providers.GetOrDefault<ICrypto>(fallback);
+        var result = _app.Code.GetOrDefault<IProbe>(new Probe("fallback"));
         await Assert.That(result).IsSameReferenceAs(registered);
     }
-
-    private class NamedCryptoProvider : ICrypto
-    {
-        public string Name { get; }
-
-        public bool IsBuiltIn { get; set; }
-
-        public string? Source { get; set; }
-
-        public NamedCryptoProvider(string name) { Name = name; }
-
-        public System.Threading.Tasks.Task<global::app.data.@this<global::app.module.crypto.type.hash.@this>> Hash(Hash action) => System.Threading.Tasks.Task.FromResult(action.Context.Ok<global::app.module.crypto.type.hash.@this>(new global::app.module.crypto.type.hash.@this(new byte[32], (global::app.module.crypto.type.hash.kind.keccak256.@this)action.Context.App.type.list[typeof(global::app.module.crypto.type.hash.@this)].kind["keccak256"]!), new global::app.type.@this("hash", "keccak256")));         public System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.@bool.@this>> Verify(Verify action) => System.Threading.Tasks.Task.FromResult(action.Context.Ok<global::app.type.item.@bool.@this>(true));     }
 }

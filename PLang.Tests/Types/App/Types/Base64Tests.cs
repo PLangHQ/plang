@@ -11,7 +11,7 @@ namespace PLang.Tests.App.Types;
 public class Base64Tests : System.IAsyncDisposable
 {
     private readonly global::app.@this app = new global::app.@this(
-        System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-base64-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+        System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-base64-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
     private global::app.type.@this B64 => app.type.list[typeof(base64)];
     private global::app.actor.context.@this Ctx => app.actor.list.User.Context;

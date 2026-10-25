@@ -20,7 +20,7 @@ public class RealPathGateReCheck3ProbeTests : System.IAsyncDisposable
         root = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-rc3-" + System.Guid.NewGuid().ToString("N")[..8])).FullName;
         outside = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-rc3-out-" + System.Guid.NewGuid().ToString("N")[..8])).FullName;
         System.IO.File.WriteAllText(System.IO.Path.Combine(outside, "secret.txt"), "outside");
-        app = new global::app.@this(root).TestSigning();
+        app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).TestSigning();
         user = app.actor.list.User.Context;
         channel = new Asking(user);
         app.actor.list.User.Channel.Register(channel);

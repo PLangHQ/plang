@@ -21,45 +21,51 @@ public sealed partial class @this : ISnapshot
     ///  - non-built-in registrations as (typeName, providerName, source) tuples
     ///  - default-selection overrides where the current default differs from the
     ///    built-in default for that interface type
-    /// Built-in registrations stay out of the snapshot — App boot's RegisterDefaults
-    /// reproduces them on the fresh side.
+    /// Built-in registrations stay out of the snapshot — a fresh App's registry holds
+    /// them on the fresh side.
     /// </summary>
     public void Capture(global::app.snapshot.@this s)
     {
         var registrations = new List<Registration>();
         var overrides = new List<DefaultOverride>();
         var types = s.Context.App.type.list;
+        // what was made so far: a shipped provider nothing asked for is neither registered nor chosen, and a registry
+        // never used holds neither
+        var table = System.Threading.Volatile.Read(ref _table);
 
-        foreach (var (type, dict) in _providers)
+        if (table != null)
         {
-            _defaults.TryGetValue(type, out var currentDefaultName);
-
-            foreach (var (name, provider) in dict)
+            foreach (var (type, dict) in table.Providers)
             {
-                if (!provider.IsBuiltIn)
-                    registrations.Add(new Registration(types[typeof(Registration)])
+                table.Defaults.TryGetValue(type, out var currentDefaultName);
+
+                foreach (var (name, provider) in dict)
+                {
+                    if (!provider.IsBuiltIn)
+                        registrations.Add(new Registration(types[typeof(Registration)])
+                        {
+                            TypeName = type.AssemblyQualifiedName ?? type.FullName!,
+                            ProviderName = name,
+                            Source = provider.Source,
+                        });
+                }
+
+                // Compare current default to the built-in default this type was *born* with
+                // (tracked as the built-ins are registered, so SetDefault can't erase the evidence).
+                // If they differ, the user changed the selection — emit an override so Restore
+                // re-applies it over the built-ins a fresh App's registry holds.
+                // No built-in for the type → emit unconditionally so the chosen default survives.
+                table.BuiltIn.TryGetValue(type, out var bornDefault);
+                if (currentDefaultName != null
+                    && (bornDefault == null
+                        || !string.Equals(currentDefaultName, bornDefault, StringComparison.OrdinalIgnoreCase)))
+                {
+                    overrides.Add(new DefaultOverride(types[typeof(DefaultOverride)])
                     {
                         TypeName = type.AssemblyQualifiedName ?? type.FullName!,
-                        ProviderName = name,
-                        Source = provider.Source,
+                        ProviderName = currentDefaultName,
                     });
-            }
-
-            // Compare current default to the built-in default this type was *born* with
-            // (tracked at RegisterDefaults time so SetDefault can't erase the evidence).
-            // If they differ, the user changed the selection — emit an override so Restore
-            // re-applies it after the fresh App's RegisterDefaults reproduces the built-ins.
-            // No built-in for the type → emit unconditionally so the chosen default survives.
-            _builtInDefaults.TryGetValue(type, out var bornDefault);
-            if (currentDefaultName != null
-                && (bornDefault == null
-                    || !string.Equals(currentDefaultName, bornDefault, StringComparison.OrdinalIgnoreCase)))
-            {
-                overrides.Add(new DefaultOverride(types[typeof(DefaultOverride)])
-                {
-                    TypeName = type.AssemblyQualifiedName ?? type.FullName!,
-                    ProviderName = currentDefaultName,
-                });
+                }
             }
         }
 
@@ -72,14 +78,14 @@ public sealed partial class @this : ISnapshot
     ///   1) Replay non-built-in registrations — load source DLLs (hard error on failure),
     ///      register the provider instances against each ICode-derived interface they implement.
     ///   2) Apply default-selection overrides — hard error if the named provider isn't registered.
-    /// The fresh App boot has already run RegisterDefaults so built-ins are present.
+    /// A fresh App's registry holds the built-ins, so they are present.
     /// </summary>
     public async System.Threading.Tasks.Task Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
     {
         var providers = this;
 
-        var registrations = await Rows<Registration>(s, "registrations");
-        var overrides = await Rows<DefaultOverride>(s, "defaultOverrides");
+        var registrations = await s.Read<Registration>("registrations");
+        var overrides = await s.Read<DefaultOverride>("defaultOverrides");
 
         // Step 1 — registrations
         foreach (var reg in registrations)
@@ -119,23 +125,23 @@ public sealed partial class @this : ISnapshot
                     $"Provider '{reg.ProviderName}' source '{reg.Source}' failed to load: {ex.Message}", ex);
             }
 
-            // Find the implementation type matching ProviderName among types in the DLL
-            // that implement the captured interface. Mirrors provider/load.cs.
-            var implType = assembly.GetExportedTypes()
-                .FirstOrDefault(t => providerType.IsAssignableFrom(t)
-                                     && !t.IsInterface && !t.IsAbstract
-                                     && InstanceName(t) == reg.ProviderName);
+            // The provider among the DLL's classes that implement the captured interface, by the name it answers to:
+            // each made once through its parameterless constructor (the contract provider/load enforces), the one
+            // with the captured name kept. Mirrors provider/load.cs.
+            var instance = assembly.GetExportedTypes()
+                .Where(t => providerType.IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
+                .Select(t => (ICode)Activator.CreateInstance(t)!)
+                .FirstOrDefault(provider => provider.Name == reg.ProviderName);
 
-            if (implType == null)
+            if (instance == null)
                 throw new ProviderRestoreException(
                     $"Provider '{reg.ProviderName}' implementing {providerType.Name} not found in '{reg.Source}'.");
 
-            var instance = (ICode)Activator.CreateInstance(implType)!;
             instance.Source = reg.Source;
 
             // Register against every ICode-derived interface the type implements
             // (matches provider/load.cs behaviour).
-            var interfaces = implType.GetInterfaces()
+            var interfaces = instance.GetType().GetInterfaces()
                 .Where(i => typeof(ICode).IsAssignableFrom(i) && i != typeof(ICode))
                 .ToList();
             foreach (var iface in interfaces)
@@ -157,30 +163,6 @@ public sealed partial class @this : ISnapshot
         }
     }
 
-
-    /// <summary>The captured rows of one entry, each read through its own typed ask — the same door
-    /// every value goes through, so nothing lowers to CLR here. Absent entry → empty, the same
-    /// answer a captured empty list gives.</summary>
-    private static async System.Threading.Tasks.Task<List<T>> Rows<T>(
-        global::app.snapshot.@this s, string key)
-        where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-    {
-        var rows = new List<T>();
-        var entry = s.Entries.Get(key, s.Context);
-        if (entry == null) return rows;
-        foreach (var row in (await entry.Value<global::app.type.item.list.@this>())!.Items(s.Context))
-            if (await row.Value<T>() is { } value) rows.Add(value);
-        return rows;
-    }
-
-    private static string InstanceName(System.Type implType)
-    {
-        // Mirror what provider/load does: instantiate transiently to read the Name.
-        // This is the same parameterless-ctor contract that load already enforces,
-        // so a provider that can't be built fails here too, not under a guessed name.
-        var probe = (ICode)Activator.CreateInstance(implType)!;
-        return probe.Name;
-    }
 }
 
 /// <summary>

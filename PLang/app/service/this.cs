@@ -1,11 +1,8 @@
-using app.module.identity;
-
 namespace app.service;
 
 /// <summary>
 /// Per-outbound-call I/O scope. Not an Actor — Service holds Channels (per-call
-/// channel set), Identity (always System's), and a Parent reference to the Actor
-/// that triggered the call.
+/// channel set) and a Parent reference to the Actor that triggered the call.
 ///
 /// Lifetime is bounded by the call (HTTP request/response) or the connection
 /// (TCP, WebSocket). Spawned via <see cref="@this.New"/> on <see cref="app.service.list.@this"/>;
@@ -23,12 +20,6 @@ public sealed class @this : IAsyncDisposable
 
     /// <summary>This service's per-call channel set.</summary>
     public global::app.channel.list.@this Channels { get; }
-
-    /// <summary>
-    /// Always the System actor's identity. Outbound calls go under the app's
-    /// name regardless of which Actor triggered them.
-    /// </summary>
-    public Identity? Identity => Parent.App.actor.list.System.Identity;
 
     internal @this(app.service.list.@this collection, global::app.actor.@this parent)
     {

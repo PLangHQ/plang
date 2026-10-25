@@ -16,7 +16,7 @@ public class RenderJsonFileIsItemOfKindJsonTests : IDisposable
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_render_itemjson_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir).TestSigning();
+        _app = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).TestSigning();
         _provider = new global::app.module.ui.code.Fluid();
     }
 

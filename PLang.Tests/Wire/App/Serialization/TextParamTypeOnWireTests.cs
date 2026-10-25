@@ -8,7 +8,7 @@ public class TextParamTypeOnWireTests
     [Test] public async Task TextParam_CarriesTypeOnWire()
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-ptype-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            System.IO.Path.GetTempPath(), "plang-ptype-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var plang = app.actor.list.User.Context.Format("application/plang");
 
         // No Context → no signing, so we see the raw {name, type?, value} shape.

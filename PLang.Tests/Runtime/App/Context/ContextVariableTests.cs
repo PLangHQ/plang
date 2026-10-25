@@ -11,7 +11,7 @@ public class ContextVariableTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/test").Testing();
+        _app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
     }
 
     [Test]
@@ -113,8 +113,9 @@ public class ContextVariableTests
         // Regular var is cloned
         await Assert.That((await clone.GetValue("regularVar"))).IsEqualTo("hello");
 
-        // Context vars are NOT cloned (they'd break as plain Data objects)
-        await Assert.That(clone.Contains("!app")).IsFalse();
+        // Context vars are NOT cloned (they'd break as plain Data objects): the clone answers its own, computed
+        await Assert.That(clone.Peek("!app")).IsNotSameReferenceAs(vars.Peek("!app"));
+        await Assert.That(await clone.GetValue("!app")).IsSameReferenceAs(_app);
     }
 
     [Test]

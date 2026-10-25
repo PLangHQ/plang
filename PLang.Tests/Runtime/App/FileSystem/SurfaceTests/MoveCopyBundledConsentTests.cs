@@ -16,7 +16,7 @@ public class MoveCopyBundledConsentTests
         root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-mc-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        return new global::app.@this(root).TestSigning();
+        return new global::app.@this(root, global::PLang.Tests.Parent.Actor).TestSigning();
     }
 
     private sealed class CapturingChannel : global::app.channel.@this

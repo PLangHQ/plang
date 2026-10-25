@@ -89,22 +89,27 @@ public sealed partial class @this
 
     /// <summary>The goal's .goal file — where its .pr is found. A sub-goal is in its parent's file.</summary>
     [Debug, LlmBuilder]
-    public global::app.type.item.path.@this? Path { get => Parent?.Path ?? _path; set => _path = value; }
+    public global::app.type.item.path.@this? Path
+    {
+        get => Parent?.Path ?? _path;
+        set
+        {
+            _path = value;
+            // the .pr it is built to, worked out where its file is given
+            _pr = value is global::app.type.item.path.file.@this { Absolute.Length: > 0 } source ? source.Pr : null;
+        }
+    }
     private global::app.type.item.path.@this? _path;
+    private global::app.type.item.path.@this? _pr;
 
     /// <summary>The folder holding this goal's source .goal file — what a relative path in it resolves against.
     /// Null for a goal with no Path.</summary>
     public global::app.type.item.path.@this? Folder => Path?.Parent;
 
-    /// <summary>The .pr this goal is built to (<see cref="Pr"/>); none without a Path.</summary>
+    /// <summary>The .pr this goal is built to (its file's <c>Pr</c>), worked out where its Path is set; a sub-goal's is its
+    /// parent's; none without a Path.</summary>
     [Debug]
-    public global::app.type.item.path.@this? PrPath => Path is { Absolute.Length: > 0 } source ? Pr(source) : null;
-
-    /// <summary>The .pr a .goal is built to: <c>X.goal</c> → <c>.build/x.pr</c> beside it. A static on the goal type by
-    /// exception — a rule about where a goal's build lands, read before there is a goal: by <see cref="PrPath"/>,
-    /// <see cref="Load"/> and setup's discovery, nothing else.</summary>
-    public static global::app.type.item.path.@this Pr(global::app.type.item.path.@this source)
-        => source.Parent.Combine(".build").Combine(source.Stem.ToString().ToLowerInvariant() + ".pr");
+    public global::app.type.item.path.@this? PrPath => Parent?.PrPath ?? _pr;
 
     [Store, Out, Debug]
     public string? Hash
@@ -120,14 +125,14 @@ public sealed partial class @this
             // parent's line and is not a step of the source
             var sb = new StringBuilder();
             sb.Append(Comment).Append('\n').Append(Name);
-            void Written(global::app.goal.step.@this step)
+            void Append(global::app.goal.step.@this step)
             {
                 sb.Append('\n').Append(step.Comment).Append('\n').Append(step.Text);
                 foreach (var action in step.Code.Items())
                     foreach (var body in action.Child.Items())
-                        if (body.Line.Number != step.Line.Number) Written(body);
+                        if (body.Line.Number != step.Line.Number) Append(body);
             }
-            foreach (var step in Step.Items()) Written(step);
+            foreach (var step in Step.Items()) Append(step);
 
             _hash = Convert.ToHexString(
                 SHA256.HashData(Encoding.UTF8.GetBytes(sb.ToString()))).ToLowerInvariant();
@@ -256,14 +261,14 @@ public sealed partial class @this
         // The prior steps are every step as the .pr holds it, a condition's folded body included (the
         // source lists an indented body as steps of its own, as the hash walks them).
         var prior = new List<global::app.goal.step.@this>();
-        void Held(global::app.goal.step.@this step)
+        void Collect(global::app.goal.step.@this step)
         {
             prior.Add(step);
             foreach (var action in step.Code.Items())
                 foreach (var body in action.Child.Items())
-                    if (body.Line.Number != step.Line.Number) Held(body);
+                    if (body.Line.Number != step.Line.Number) Collect(body);
         }
-        foreach (var step in existing.Step.Items()) Held(step);
+        foreach (var step in existing.Step.Items()) Collect(step);
         if (prior.Count > 0)
         {
             var consumed = new HashSet<int>();
@@ -335,50 +340,45 @@ public sealed partial class @this
 
     /// <summary>
     /// The goal <paramref name="source"/> (a <c>.goal</c>) is built to, loaded as <paramref name="app"/> itself from
-    /// its <see cref="Pr"/>: the one already held from there, else read through its <c>on.load</c> — what is bound
+    /// its .pr (<see cref="PrPath"/>): the one already held from there, else read through its <c>on.load</c> — what is bound
     /// before a goal loads is the goal type's, handed the .pr (there is no goal yet), and a failure or a Handled
     /// answer is the load's answer with nothing read; the path reads itself into a goal, the app's goals hold it,
     /// and what is bound after it runs across the goal's levels, handed the goal. A setup goal is refused — it runs
     /// only through setup.
     /// </summary>
-    public static async Task<data.@this> Load(global::app.type.item.path.@this source, global::app.@this app)
-    {
-        var pr = Pr(source);
-        var context = app.actor.list.System.Context;
-        var loaded = app.goal.list[pr] is { } goal ? context.Ok(goal) : await Read(pr, app);
-        if (loaded.Success && await loaded.Value() is @this { IsSetup: true })
-            return context.Error(new global::app.error.@this($"{pr}: a setup goal runs only through setup.", "SetupGoal", 400));
-        return loaded;
-    }
+    // A goal by its location, as item's ILoad door asks it: the app's goals load it.
+    public static Task<data.@this> Load(global::app.type.item.path.@this source, global::app.@this app) => app.goal.list.Load(source);
 
-    // One .pr read into a goal and held, through the goal's load.
-    private static async Task<data.@this> Read(global::app.type.item.path.@this pr, global::app.@this app)
+    /// <summary>What the goal knows of the .pr it was read from; a goal not read from a file has none.</summary>
+    internal stamp Stamp { get; set; } = new stamp.none();
+
+    /// <summary>A goal's .pr as the goal was read from it — each kind says whether the file is still as it was.</summary>
+    internal abstract record stamp
     {
-        var context = app.actor.list.System.Context;
-        var before = app.goal.type.on.load.before;
-        if (before.Count > 0 && await before.Start(pr, context.Ok(), context) is { } answer
-            && (!answer.Success || answer.Handled))
-            return answer;
-        try
+        internal abstract Task<bool> IsFresh(actor.context.@this context);
+
+        /// <summary>Not read from a file: the goal is as it is.</summary>
+        internal sealed record none : stamp
         {
-            // The .pr lands as a file reference; its value is the content its format decodes — a goal.
-            var read = await pr.Read(context);
-            var content = read.Success ? await read.Value() : null;
-            if (!read.Success || content is null || content.IsNull)
-                return context.Error(read.Error ?? new global::app.error.@this($"Failed to read goal file: {pr}"));
-            if (content is not @this goal)
-                return context.Error(read.Error ?? new global::app.error.@this(
-                    $"Failed to parse goal file: {pr} — read produced {content.GetType().Name}, not a goal"));
-
-            app.goal.list.Add(goal);
-            return await goal.on.load.After(goal, read, context);
+            internal override Task<bool> IsFresh(actor.context.@this context) => Task.FromResult(true);
         }
-        // a refused .pr names itself — its reader was born knowing the file
-        catch (Exception ex)
+
+        /// <summary>Read from a file whose stat failed: what it held is unknown, so it is read again.</summary>
+        internal sealed record unknown : stamp
         {
-            return context.Error(global::app.error.@this.FromException(ex));
+            internal override Task<bool> IsFresh(actor.context.@this context) => Task.FromResult(false);
+        }
+
+        /// <summary>Read from <paramref name="Pr"/> with <paramref name="Stat"/>: still as it was while its stat is the same.</summary>
+        internal sealed record stat(global::app.type.item.path.@this Pr, global::app.type.item.path.@this.StatInfo Stat) : stamp
+        {
+            internal override async Task<bool> IsFresh(actor.context.@this context)
+                => await Pr.Stat(context) is { Success: true } now && await now.Value() is { } info && info.Same(Stat);
         }
     }
+
+    /// <summary>Whether the .pr this goal was read from is as it was then.</summary>
+    internal Task<bool> IsFresh(actor.context.@this context) => Stamp.IsFresh(context);
 
     /// <summary>A goal starts through the goal type's events, then its own.</summary>
     protected internal override global::app.type.item.@this? Level(int depth, actor.context.@this context) => depth switch

@@ -29,9 +29,11 @@ public class ConsentedExportMeansTheStepHoldsTheKeyTests : System.IAsyncDisposab
 
     private async Task<global::app.data.@this> Run(string formal) => await (await User.Action(formal)).Start(User);
 
-    // The actor said yes to the export ask: the step is handed the key, and the ask was raised for it.
+    // The actor said yes to the export ask: the step is handed the key, and the ask was raised for it. The app's
+    // default identity is made first (identity.get asks nothing): an app gives out only an identity it holds.
     private async Task<(string text, Asking asked)> ExportedAsText()
     {
+        await Run("identity.get()");
         var asked = new Asking(User, "y");
         app.actor.list.User.Channel.Register(asked);
         var got = await Run("identity.export()");

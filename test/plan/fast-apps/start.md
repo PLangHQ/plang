@@ -1,0 +1,87 @@
+# fast-apps
+
+## Why
+
+Every `new app.@this(...)` builds the whole world again: it scans every class of the code for the type list (`type/list/Registry.cs:90–99`, `assembly.GetTypes()`) and again for the module catalog (`module/this.cs:112`), makes every part whether it's asked for or not (`app/this.cs:286–364`), and reads every goal's `.pr` again (`goal/list/this.cs:100`, `goal.@this.Load(at, App)`). A test pays this once per test, and a webserver will pay it once per request (item-doors 317a: each request is a new app whose System is the server's actor). On test-speed the tester measured that making an app is about 75 % of a test's CPU (`.bot/test-speed/tester/test-speed.md` §2). With its changes, the C# sweep went from 137–215 s to 29–31 s and `plang --test` from 24–31 s to 5.0–5.4 s (§21).
+
+test-speed was the first attempt, with the locked core open and the code allowed to be bad (item-doors 159). Nothing merges from it. This branch builds what it learned, clean, on runtime2, in the shape the four decisions below give it. The tester's map of it is `.bot/fast-apps/tester/map.md`; §N is test-speed's write-up.
+
+This is the fast-apps half of the snapshot plan ("Frozen parts and children", `test/plan/snapshot/start.md`), done first. One of that plan's decisions changes here: a child doesn't copy a part at its first change (decision 3 below).
+
+## Decisions (Ingi, 2026-10-23/24; the log is `.bot/fast-apps/architect/summary.md`, 3–7)
+
+1. **A new app is made from an origin:** the code (the command line's app) or the actor that calls (a sub app) (36, 39). It takes what's the same for every app made from the same code (the code's facts, the type list and its actions, the loaded goals) and makes the rest itself: its folder, memory, channels, store, the settings' run layer and its bindings. (3)
+2. **Its System is born from the actor that calls.** The door is handed the calling actor, which answers as the app's origin (`actor/this.cs:14`). The System is a new actor: it takes the caller's identity (`:204`) and its cancellation is linked to the caller's token (`:166`), so it stops when the caller stops. Its context, channels, permission and settings are its own (an actor holds its app's context, channels and settings' root, so it can't be another app's System). A sub app is made in its caller's folder or under it, and never in its caller's stores folder (`OutsideItsMaker`, `actor/this.cs:177`, `:181`; 49, 51). (3, 4)
+3. **`app.parent` keeps its word:** the app whose actor made this one. Across processes it is today's link (`parent/this.cs:25`); one parent at most. The in-process parent is not built in this branch (Ingi, 18); it's built with its first user, with PlangOS's end of a call folded in (backlog 9); until then a test's `%!app.parent%` stays false. (4, 18)
+4. **A sub app keeps its parent's lists whole, under a layer of its own** (Ingi, 19, 20; replacing "decided at birth"). Any code or DLL a sub app adds is that app's alone: the parent and its siblings never have it. Its type list and module registry are layers over its origin's (the origin's list is the layer's first row), read through and never copied (so `text` is one object in every app), and what it loads goes into its own rows (36, 40). A kind added to a type the parent holds is refused, naming the type (`TypesShared`), and an action added to a parent's module likewise (`ModuleShared`), until the "sub apps own their code" branch. What a parent loads after making a sub app is the sub app's too: it reads the parent's lists live (38). Never copied at the first change: the tester tried it (§23), and values made before the copy held the parent's types while values made after held the copy's. (5, 19, 20)
+5. **The scope** (6): the six stages below. Left for later: C (the generator writes the facts; cold start only), D (157, approved, a small win after A), §19–§22's trims, and large data (§25–§27).
+6. **The proof measures a request app too, not only the suites** (7): a request app's size at birth, and memory flat over a few thousand requests.
+
+## The shape (the coder owns the code; this is the intent)
+
+- **The door.** `new app.@this(path, actor)` (`app/this.cs:306`): the folder, and the actor that calls, which is the app's origin; nothing else is passed. The command line has no caller in its process: its app is made from the code (`new app.@this(path)`, `app/this.cs:299`, handing `origin/code.cs`).
+- **Where parents come from.** `plang --test`: the runner hands the actor that runs the test (`test/list/this.cs:178`, `context.Actor`). The C# tests: one parent per test process, which every test's app is made from (605 test files make an app today; the change is mechanical). A webserver (later): the server's actor that takes the request.
+- **The code's facts** are read once, by the first app made from the code, and every app made from it takes them through its parent. No static in production. **They are the type list's own, private, with no new name on any surface** (Ingi, 9): a child that shares the list shares them, and a child born with its own list builds it from its parent's list's facts. test-speed's holder (`assembly/this.cs`: each fact read once under one gate, the generator's lists read when present) is the code to learn from; its name and its place on the app don't carry over.
+- **The layer.** Nothing is decided at birth beyond a caller or none: no mark on an action, no test choosing its app (19 dropped them). A run never writes an object its app shares (29): a type's history takes no prior (30), and what the audit found is either the same answer for every app (a cache) or moved off the object.
+- **What still grows on a shared list** is the same answer for every app from the same code: a kind asked for by name is made once on its type (`type/list/this.cs:179`, `kind.Coin`), and the full types are kept as they're made (`:181`). The kind lookup reads without the type's lock (§30), so sharing it adds no lock across apps.
+- **A binding on a shared object is the binding app's own** (the hold, 26). A goal, step, action or type entry that apps share keeps no binding an app makes while it runs: every run-time binding is held on the context of the actor that made it, whatever its scope, an event reads each actor's hold in the asker's app, and it goes with its app (Ingi's idea, §19). What a program's own clauses bind when it's read stays on the item, and only they reach an item's own events.
+- **Goals through the parent.** A goal the parent has read is the child's: the child's list finds it there, and the `.pr`'s modified time and size keep it fresh. A goal changed on disk is read again on its next use.
+- **A birth makes only what's asked for** (B): modules and their actions, the code providers, channel settings, stream buffers, `Data.Properties`, an actor's and a context's parts, the store's file, system variables, the memory's table, the app's id and start. (Dropped: path's schemes as kind classes, root birth only, which a sub app never pays: decision 42.)
+- **The run path** (§18): an in-memory store that nothing has written answers empty without opening SQLite (`store/sqlite/this.cs:59–73`); class facts (choice sets, action properties, setting paths and defaults) are read once per code. (Dropped: a list's positional reads from its snapshot, measured inside the noise: decision 56.)
+- **The step cache** belongs to its app and is disposed with it (`app/this.cs:174` makes a `Memory` holding a `MemoryCache`, `module/cache/Memory.cs:11`; `DisposeAsync`, `app/this.cs:580–594`, never disposes it).
+
+## Stages
+
+0. **Measure** (tester): on fast-apps as cut, an app's birth (time and bytes), the C# sweep, `plang --test`, and a request app born 3,000 times (time, bytes, memory after). The baseline every stage is measured against.
+1. **The step cache is disposed** (coder). Independent of the rest; a leak (§29: 73.5 KB kept per request with `cache for …`, 223 MB after 3k requests).
+2. **The door** (coder): `new app.@this(path, actor)`, internal (Ingi, 17); the System born from the caller; the code's facts read once and taken through the parent; the runner and the C# tests make their apps through it. Each child still makes its own type list, from the parent's facts (A: birth 26–29 ms → ~3.5 ms).
+3. **What's the same is shared** (coder): the type list and the module registry whole under a sub app's own layer; goals through the parent while the sub app holds no code of its own and shares its root; a binding made while a program runs held on its actor's context; a type's history taking no prior; the kind lookup without the type's lock.
+4. **A birth makes only what's asked for** (coder): B, without §10's entries made on first ask (a shared list makes its entries once per code; they aren't needed). Birth ~3.5 ms → ~0.1 ms.
+5. **The run path** (coder): the empty store, class facts once (the list's snapshot reads dropped: decision 56). `plang --test` ~8 → ~5 s.
+6. **The C# build** (coder, Ingi 64): measured first, then the packages the code never names removed (PLang keeps nine), PLang on `Microsoft.NET.Sdk` instead of `Sdk.Web`, the test projects carrying only the build machine's native assets. A no-change build 7.3 → 4.0 s; the clean build is not slower (decisions 85, 90).
+
+Each locked item comes to Ingi with its code before it's built (decision 5). By stage: **2**: none (the door is internal, 17; the in-process parent deferred, 18). **3**: type (the layer and its refusals, 20; a type's history taking no prior, `history.Add` virtual, 30), module registry (the layer, 20), events (the hold, `IClause.Bind` handed the action's own events, `Own()` private to read-time clauses, 26). **4**: call (how the call list is made, 52), data (`Properties` made when asked, 52); `module.Action` as `list<action>` and `Alias`/`Internal` without `init` went to the follow-up with path's scheme kind classes (42). **5**: private, by the surface golden. **6**: project files and build settings only.
+
+## Not carried over from test-speed
+
+- The `assembly` and `shareTypes` constructor parameters: the door takes the calling actor, and the parent decides what's shared (`shareTypes` was a bool that forked the birth).
+- `Loads` (`origin/test-speed test/list/this.cs:167`): a static on the runner, its name a plural verb, a name compare in two nested loops (Ingi: "that is plural and static = obpv").
+- The hidden goal reader app (`goal/program/this.cs`): the parent's goals are the shared goals.
+- The 1-second freshness window (3d90ec3f2): a goal changed within a second read stale; the stat keeps it fresh.
+- §10's entries made on first ask, and the `Fill()` hook on the list base for one subclass.
+- The test `Session` static holding the code's facts: the C# tests hold one parent app per test process instead (a test-code static, the test process's root, as the CLI's root app is Executor's local; architect, 11).
+- `held`'s shape (`origin/test-speed event/held/this.cs`): the idea stays whole, but `IsShared` is a static type switch over goal, step, action and type (a **fork**: each shared item answers for itself), and `On`/`Own` are static helpers with a switch over levels (**stray helper**: they belong to the context's hold).
+- §14's call-list makers (closures standing in for a reference) and §15's explicit "system variables last" in `GetAll`: each gets a second look before it's built.
+- "No stat for a path with one place" (§20): it changes what an `exists` costs; out of scope.
+
+## Stays
+
+- What a child makes itself (decision 1), and today's birth for the command line's one app.
+- `app.parent`'s cross-process link and its `call goal X in %!app.parent%` (`parent/this.cs:48`).
+- Copy on write where the snapshot plan uses it for its other A parts: the settings' run layer and code providers.
+
+## How it's proven
+
+- [start.goal](start.goal) runs the plan's tests; each lives under this folder at the path of what it tests. A C# test is named in it as a comment, with its file.
+- At each stage's end its tests are built and run. A stage is accepted when its tests are green, the checks hold, and the architect's OBP review is clean.
+- **Every test fails without its change.** A guard (sharing must not leak) fails under its mutation: drop the change and the guard goes red.
+- The plang in start.goal says what is wanted; each test is written in real plang that builds, red before its stage, keeping what it proves.
+
+## What tests can't show (the tester measures, against stage 0)
+
+- **Every stage:** an app's birth (time, bytes), the C# sweep, `plang --test`, a request app born 3,000 times (memory flat). Back to back against stage 0, at the same load.
+- **Stage 2:** no class is scanned twice in one process (the second birth reads no `GetTypes`).
+- **Every stage:** the gate by name; PLNG001/002 at 0; the surface golden moved only with its decision.
+
+## OBP validation
+
+| surface | plang path | C# path | file path | checks |
+|---|---|---|---|---|
+| the parent | `%!app.parent%` | `app.parent` | `PLang/app/parent/this.cs` | the app whose actor made this one; across processes the link; one at most; the in-process parent deferred (18) |
+| the child's System | `%!app.actor.list.system%` | `actor.list.System` | `PLang/app/actor/list/this.cs` | born from the calling actor: its identity, its cancellation; its own context, channels, permission, settings |
+| the code's facts | — | private to `type.list` | `PLang/app/type/list/` | read once per code; reached through the parent; no static; no new name on a surface |
+| the type list | `%!app.type.list%` | `type.list` | `PLang/app/type/list/this.cs` | a sub app's is a layer over its parent's, its own rows what it loads; a kind on a parent's type is refused, saying why |
+| the module registry | `%!app.module.list%` | `module` | `PLang/app/module/this.cs` | the same layer; an action into a parent's module refused (`ModuleShared`) |
+| a binding on a shared object | (`on …` steps) | held on the binding actor's context (`actor.context.on`) | `PLang/app/event/on/list/this.cs` | never on the shared object; read through each actor's hold; `Own()` only for read-time clauses |
+| the loaded goals | `%!app.goal.list%` | `goal.list` | `PLang/app/goal/list/this.cs` | the parent's goal, kept fresh by its `.pr`'s stat; no reader app, no time window |
+| the step cache | — | `app.Cache` | `PLang/app/module/cache/Memory.cs` | disposed with its app |

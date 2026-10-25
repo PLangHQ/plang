@@ -9,7 +9,7 @@ namespace PLang.Tests.App.Errors;
 /// </summary>
 public class ErrorShowTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
+    private readonly global::app.@this _app = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os"), global::PLang.Tests.Parent.Actor).Testing();
     private readonly System.IO.MemoryStream _errorOut = new();
 
     public ErrorShowTests()
@@ -35,7 +35,7 @@ public class ErrorShowTests : System.IAsyncDisposable
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "errshow-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        await using var app = new global::app.@this(root).Testing();
+        await using var app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
         var shownOut = new System.IO.MemoryStream();
         app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Error, shownOut, ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });

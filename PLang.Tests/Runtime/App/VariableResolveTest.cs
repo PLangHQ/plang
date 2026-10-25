@@ -4,7 +4,7 @@ namespace PLang.Tests.App;
 
 public class VariableResolveTest : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/tmp/varresolve-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+    private readonly global::app.@this _app = new global::app.@this("/tmp/varresolve-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     private global::app.type.item.variable.@this Resolve(string raw)
@@ -64,7 +64,7 @@ public class VariableResolveTest : System.IAsyncDisposable
 
     [Test] public async Task VariableSet_BangSyntax_WritesProperty()
     {
-        await using var app = new global::app.@this("/tmp/var-set-bang-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        await using var app = new global::app.@this("/tmp/var-set-bang-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
 
         await new global::app.goal.step.action.@this(new global::app.module.variable.Set(app.actor.list.User.Context)
@@ -89,7 +89,7 @@ public class VariableResolveTest : System.IAsyncDisposable
 
     [Test] public async Task VariableSet_BangOnUnsetVariable_IsVariableNotFound()
     {
-        await using var app = new global::app.@this("/tmp/var-set-unset-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        await using var app = new global::app.@this("/tmp/var-set-unset-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
 
         var result = await new global::app.goal.step.action.@this(new global::app.module.variable.Set(app.actor.list.User.Context)

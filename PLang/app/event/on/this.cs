@@ -111,6 +111,10 @@ public class @this : global::app.type.item.@this
     /// <summary>The ask — what runs before and after the item asks.</summary>
     public virtual ask ask => NoAsk;
 
+    /// <summary>The event named <paramref name="name"/> as a binding made it here; null when none did. Events no
+    /// binding gave an item are the shared empty ones, closed to bindings: they hold none.</summary>
+    internal virtual global::app.@event.@this? Bound(string name) => null;
+
     /// <summary>The refusal of <paramref name="name"/>, which is no event: it says the events this item has (the core's
     /// and its type's), and that before or after one is a binding's When — so the name never binds.</summary>
     public global::app.error.@this NoEvent(string name)

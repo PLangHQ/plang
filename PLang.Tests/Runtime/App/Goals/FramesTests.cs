@@ -10,7 +10,7 @@ public class FramesTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::app.@this("/tmp/frames-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+    public void Setup() => _app = new global::app.@this("/tmp/frames-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
 
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();
@@ -45,12 +45,12 @@ public class FramesTests
 
         // what the step type's after-binding sees, per step of the caller
         var seen = new List<(global::app.goal.step.@this ending, global::app.goal.step.@this? inPlay, global::app.goal.@this? goal)>();
-        _app.type.list["step"].Own().Bind("start", global::app.@event.When.after, (item, _, c) =>
+        _app.actor.list.User.on.Bind(_app.type.list["step"], "start", global::app.@event.When.after, (item, _, c) =>
         {
             if (item is global::app.goal.step.@this step && ReferenceEquals(step.Goal, caller))
                 seen.Add((step, c.call.Step, c.call.Goal));
             return Task.FromResult(c.Ok());
-        }, _app.actor.list.User, global::app.@event.binding.Scope.actor);
+        }, global::app.@event.binding.Scope.actor);
 
         var result = await caller.Start(ctx);
 
@@ -73,12 +73,12 @@ public class FramesTests
         var (caller, _) = await CallerAndCallee();
 
         var took = new List<TimeSpan?>();
-        _app.type.list["step"].Own().Bind("start", global::app.@event.When.after, (item, _, c) =>
+        _app.actor.list.User.on.Bind(_app.type.list["step"], "start", global::app.@event.When.after, (item, _, c) =>
         {
             if (item is global::app.goal.step.@this step && ReferenceEquals(step.Goal, caller))
                 took.Add(c.call.Current?.Duration(c)?.Value);
             return Task.FromResult(c.Ok());
-        }, _app.actor.list.User, global::app.@event.binding.Scope.actor);
+        }, global::app.@event.binding.Scope.actor);
 
         await (await caller.Start(_app.actor.list.User.Context)).IsSuccess();
 

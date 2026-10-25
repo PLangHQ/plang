@@ -1,0 +1,13 @@
+=== stage3b  783ad353f  2026-10-24T20:59:19Z  8 cpus  rounds 3
+r1 Debug root birth  load 2.66  median 18.60 ms  min 11.57  p90 24.23  cpu 21.15 ms  alloc 2890 KB (birth + dispose)
+r1 Release root birth  load 2.66  median 19.16 ms  min 10.53  p90 24.18  cpu 21.54 ms  alloc 2882 KB (birth + dispose)
+r1 Debug root request  load 1.59  3000 apps in 60.6 s (20.19 ms each, 50/s)  alloc 4410 KB each  held MB 0.9 → 3.3 → 4.0 → 4.5  failed 0
+r1 Release root request  load 1.44  3000 apps in 53.4 s (17.80 ms each, 56/s)  alloc 4249 KB each  held MB 0.9 → 3.4 → 3.9 → 4.5  failed 0
+r2 Debug root birth  load 1.41  median 19.79 ms  min 11.70  p90 25.56  cpu 22.74 ms  alloc 2908 KB (birth + dispose)
+r2 Release root birth  load 1.46  median 19.21 ms  min 14.32  p90 23.34  cpu 22.13 ms  alloc 2888 KB (birth + dispose)
+r2 Debug root request  load 1.21  3000 apps in 62.0 s (20.68 ms each, 48/s)  alloc 4416 KB each  held MB 0.9 → 3.4 → 4.0 → 4.5  failed 0
+r2 Release root request  load 1.16  3000 apps in 54.1 s (18.03 ms each, 55/s)  alloc 4247 KB each  held MB 1.0 → 3.4 → 3.9 → 4.5  failed 0
+r3 Debug root birth  load 1.16  median 19.77 ms  min 11.99  p90 25.75  cpu 22.42 ms  alloc 2889 KB (birth + dispose)
+r3 Release root birth  load 1.15  median 20.54 ms  min 16.02  p90 24.59  cpu 23.34 ms  alloc 2891 KB (birth + dispose)
+r3 Debug root request  load 1.14  3000 apps in 62.6 s (20.85 ms each, 48/s)  alloc 4414 KB each  held MB 0.9 → 3.4 → 4.0 → 4.5  failed 0
+r3 Release root request  load 1.17  3000 apps in 54.7 s (18.24 ms each, 55/s)  alloc 4246 KB each  held MB 0.9 → 3.4 → 3.9 → 4.5  failed 0

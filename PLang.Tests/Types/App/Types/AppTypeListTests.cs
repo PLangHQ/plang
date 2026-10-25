@@ -17,7 +17,7 @@ public class AppTypeListTests
 
     [Test] public async Task TheTypeList_HoldsTheBuiltInsAndTheConcepts()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         await Assert.That(await Holds(app, "text")).IsTrue();
         await Assert.That(await Holds(app, "goal")).IsTrue();
         await Assert.That(await Holds(app, "no-such-type")).IsFalse();

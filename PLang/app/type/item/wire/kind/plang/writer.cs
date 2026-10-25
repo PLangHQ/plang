@@ -57,7 +57,7 @@ public sealed class Writer : global::app.type.format.IWriter
     {
         // a value kept as written names its variables beside it, as the view keeps them
         await View.Variables(record.Peek(), this);
-        if (record.Properties.Count > 0)
+        if (record.HasProperties)
         {
             _json.Name("properties");
             _json.BeginObject();
@@ -72,7 +72,7 @@ public sealed class Writer : global::app.type.format.IWriter
             _json.EndObject();
         }
         // the members a program added to the value, beside it; nothing kept, nothing said
-        if (record.Kept.Count > 0)
+        if (record.HasKept)
         {
             _json.Name("kept");
             _json.BeginObject();

@@ -32,6 +32,11 @@ public abstract partial class @this
         {
             this.Exists = Exists; this.IsFile = IsFile; this.Size = Size; this.Modified = Modified;
         }
+
+        /// <summary>Whether the file is as it was when <paramref name="then"/> was taken: there still, the same size and
+        /// modified time.</summary>
+        internal bool Same(StatInfo then)
+            => Exists == then.Exists && Modified == then.Modified && Size?.Value == then.Size?.Value;
     }
 
     /// <summary>

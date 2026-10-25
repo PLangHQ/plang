@@ -30,18 +30,130 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         Setup = new setup.@this(this);
     }
 
+    // A replace of the goal held from a .pr is one step: two reads adding the same .pr at once never both stay.
+    private readonly object _gate = new();
+
+    // The .pr reads in flight, by the .pr: the apps loading one goal at once make one read.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<global::app.type.item.path.@this, Task<data.@this>> _reading = new();
+
+    /// <summary>
+    /// The goal <paramref name="source"/> (a <c>.goal</c>) is built to, as this app loads it from its .pr: the one held
+    /// while its .pr is as it was read; else, while its origin's goals are this app's too, the one its origin loads, as
+    /// itself; else this app's own read — one read in flight for each .pr. A setup goal is refused — it runs only
+    /// through setup.
+    /// </summary>
+    internal async Task<data.@this> Load(global::app.type.item.path.@this source)
+    {
+        var context = App.actor.list.System.Context;
+        // a goal is built from a file: its .pr lies beside it
+        if (source is not global::app.type.item.path.file.@this file)
+            return context.Error(new global::app.error.@this($"{source}: a goal is built from a .goal file, which this isn't", "GoalNotAFile", 400));
+        var pr = file.Pr;
+        var loaded = await Fresh(pr, context) is { } held ? context.Ok(held)
+            : await Inherited(source, context) ?? await Unbuilt(pr, source, context) ?? await Read(pr, context);
+        if (loaded.Success && await loaded.Value() is goal.@this { IsSetup: true })
+            return context.Error(new global::app.error.@this($"{pr}: a setup goal runs only through setup.", "SetupGoal", 400));
+        return loaded;
+    }
+
+    // The refusal of a .goal with no .pr; null when it is built.
+    private async Task<data.@this?> Unbuilt(global::app.type.item.path.@this pr, global::app.type.item.path.@this source,
+        actor.context.@this context)
+        => await (await pr.Exists(context)).ToBooleanAsync() ? null
+            : context.Error(new global::app.error.@this($"Goal {source} isn't built; run plang build", "GoalNotBuilt", 404));
+
+    // The goal held from `pr` while its .pr is as it was read; null when none is held, or the file changed since —
+    // then it is read again.
+    private async Task<goal.@this?> Fresh(global::app.type.item.path.@this pr, actor.context.@this context)
+        => this[pr] is { } held && await held.IsFresh(context) ? held : null;
+
+    // The goal at `source` as the app's origin loads it, as itself — held by this app too and loaded here through this
+    // app's own on.load; null when the origin gives none. A goal never goes up from a sub app: the parent reads it, so
+    // nothing of this app is in a goal its sub apps share.
+    private async Task<data.@this?> Inherited(global::app.type.item.path.@this source, actor.context.@this context)
+    {
+        if (await App.origin.Goal(source, App) is not { } loaded) return null;
+        if (!loaded.Success || await loaded.Value() is not goal.@this inherited) return loaded;
+        Add(inherited);
+        return await inherited.on.load.After(inherited, context.Ok(inherited), context);
+    }
+
+    // The read of `pr` — one at a time for each .pr: a load that finds one in flight awaits it. Whoever takes the slot
+    // asks for the held goal again first: a read that ended between that load's ask and its turn has added it.
+    internal async Task<data.@this> Read(global::app.type.item.path.@this pr, actor.context.@this context)
+    {
+        var ours = new TaskCompletionSource<data.@this>(TaskCreationOptions.RunContinuationsAsynchronously);
+        if (_reading.TryAdd(pr, ours.Task) is false && _reading.TryGetValue(pr, out var inFlight)) return await inFlight;
+        try
+        {
+            var answer = await Fresh(pr, context) is { } held ? context.Ok(held) : await Decode(pr, context);
+            ours.SetResult(answer);
+            return answer;
+        }
+        catch (Exception ex)
+        {
+            ours.SetException(ex);
+            throw;
+        }
+        finally { _reading.TryRemove(new KeyValuePair<global::app.type.item.path.@this, Task<data.@this>>(pr, ours.Task)); }
+    }
+
+    // One .pr decoded into a goal and held here, through the goal's load: what is bound before a goal loads is the goal
+    // type's (its own, and each actor's hold), handed the .pr (there is no goal yet), and a failure or a Handled answer
+    // is the load's answer with nothing read; what is bound after it runs across the goal's levels, handed the goal.
+    private async Task<data.@this> Decode(global::app.type.item.path.@this pr, actor.context.@this context)
+    {
+        if (await App.goal.type.Before("load", pr, context, context.Ok()) is { } answer
+            && (!answer.Success || answer.Handled))
+            return answer;
+        try
+        {
+            // the .pr as it is before the read: a change during it is read again on the next use
+            var stat = await pr.Stat(context);
+            // The .pr lands as a file reference; its value is the content its format decodes — a goal.
+            var read = await pr.Read(context);
+            var content = read.Success ? await read.Value() : null;
+            if (!read.Success || content is null || content.IsNull)
+                return context.Error(read.Error ?? new global::app.error.@this($"Failed to read goal file: {pr}"));
+            if (content is not goal.@this goal)
+                return context.Error(read.Error ?? new global::app.error.@this(
+                    $"Failed to parse goal file: {pr} — read produced {content.GetType().Name}, not a goal"));
+
+            // the stamp holds the .pr the goal itself has
+            goal.Stamp = stat.Success && await stat.Value() is { } info && goal.PrPath is { } path
+                ? new goal.@this.stamp.stat(path, info) : new goal.@this.stamp.unknown();
+            Add(goal);
+            return await goal.on.load.After(goal, read, context);
+        }
+        // a refused .pr names itself — its reader was born knowing the file
+        catch (Exception ex)
+        {
+            return context.Error(global::app.error.@this.FromException(ex));
+        }
+    }
 
     /// <summary>
     /// Adds a goal read from its <c>.pr</c>; the goal held from the same <c>.pr</c> gives way.
     /// </summary>
     public void Add(goal.@this goal)
     {
-        if (goal.PrPath == null)
+        if (goal.PrPath is not { } pr)
             throw new ArgumentException($"Goal '{goal.Name}' must have a Path set. PrPath is derived from Path and is required for keying.");
-        for (int i = 0; i < CountRaw; i++)
-            if (Equals(this[i].PrPath, goal.PrPath)) { RemoveAt(i); break; }
-        base.Add((global::app.type.item.@this)goal);
-        _app = _system = null;
+        lock (_gate)
+        {
+            // the goal held from the same .pr, found in one look, gives way — its row, by reference
+            if (this[pr] is { } held)
+            {
+                var at = 0;
+                foreach (var each in Items())
+                {
+                    if (ReferenceEquals(each, held)) { RemoveAt(at); break; }
+                    at++;
+                }
+            }
+            base.Add((global::app.type.item.@this)goal);
+            _app = _system = null;
+        }
     }
 
     /// <summary>
@@ -94,10 +206,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
                 if (await Spelled(at) is not { } file) return data.@this<goal.@this>.From(context.NotFound(name));
                 at = global::app.type.item.path.@this.Resolve(at.Parent.Combine(file).Raw, context);
             }
-            if (!await (await goal.@this.Pr(at).Exists(context)).ToBooleanAsync())
-                return context.Error<goal.@this>(new Error(
-                    $"Goal {at} exists but isn't built; run plang build", "GoalNotBuilt", 404));
-            return data.@this<goal.@this>.From(await goal.@this.Load(at, App));
+            return data.@this<goal.@this>.From(await Load(at));
         }
 
         // The .goal file in `at`'s folder whose goal name is `at`'s, spelled as the file is; null when none answers to
@@ -207,7 +316,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         foreach (var source in wants.Os.Value ? _app.Concat(_system) : _app)
         {
             if (!seen.Add(source.ToString()!) || goals.Any(g => Equals(g.Path, source))) continue;
-            var loaded = await global::app.goal.@this.Load(source, App);
+            var loaded = await Load(source);
             if (!loaded.Success)
             {
                 await (App.Debug?.Write($"goal.list: {source} left out — {loaded.Error?.Message}") ?? Task.CompletedTask);
@@ -231,6 +340,12 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
                 && !plang.Replace('\\', '/').Contains("/.", StringComparison.Ordinal)).ToList();
     }
 
-    /// <summary>The goal read from <paramref name="pr"/>, when it is held; null when it isn't.</summary>
-    public goal.@this? this[global::app.type.item.path.@this pr] => Items().FirstOrDefault(g => Equals(g.PrPath, pr));
+    /// <summary>The goal read from <paramref name="pr"/>, when it is held; null when it isn't. Found in one look: the
+    /// list's index of its rows, which no edit leaves behind.</summary>
+    public goal.@this? this[global::app.type.item.path.@this pr] => Row(pr) as goal.@this;
+
+    // A goal is found by its .pr. It is a fact of the goal by the time the list holds it: its Path is set as it is
+    // made (the reader, a build) and a sub-goal, whose .pr is its parent's, is never a row; nothing changes a held
+    // goal's Path or Parent.
+    private protected override object? Key(object? row) => (row as goal.@this)?.PrPath;
 }

@@ -15,11 +15,11 @@ namespace PLang.Tests.App.LazyDeserialize.ReaderRegistryTests;
 public class TemporalReaderTests
 {
     private static global::app.@this NewApp() => new(System.IO.Path.Combine(
-        System.IO.Path.GetTempPath(), "plang-temporal-" + System.Guid.NewGuid().ToString("N")[..8]));
+        System.IO.Path.GetTempPath(), "plang-temporal-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor);
 
     [Test] public async Task Typed_DateDatetimeTime_AreRegistered()
     {
-        var r = new global::app.type.reader.@this();
+        var r = new global::app.origin.code().type.Reader;
         await Assert.That(r.Typed("date", null)).IsNotNull();
         await Assert.That(r.Typed("datetime", null)).IsNotNull();
         await Assert.That(r.Typed("time", null)).IsNotNull();

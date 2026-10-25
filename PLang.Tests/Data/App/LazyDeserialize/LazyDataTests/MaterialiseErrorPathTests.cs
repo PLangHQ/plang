@@ -13,7 +13,7 @@ public class MaterialiseErrorPathTests
 {
     private static global::app.@this NewApp()
         => new(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-materr-" + System.Guid.NewGuid().ToString("N")[..8]));
+            "plang-materr-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor);
 
     private static data MalformedJson(global::app.actor.context.@this ctx, string name)
         => global::PLang.Tests.Shared.Make.FromRaw("{ this is not valid json", ctx.App.type.list[new type("item", "json"), ctx], ctx, name);

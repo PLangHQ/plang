@@ -32,7 +32,7 @@ public class RequestActionTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_http_req_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir, global::PLang.Tests.Parent.Actor);
 
         _handler = new MockHttpMessageHandler();
         var provider = new Default(_handler) { Name = "test" };
@@ -229,7 +229,7 @@ public class RequestActionTests
     private async Task<string> RemoteAnswers(params Func<global::app.actor.context.@this, global::app.data.@this>[] sent)
     {
         await using var remote = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang_remote_" + Guid.NewGuid().ToString("N")[..8]));
+            "plang_remote_" + Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor);
         var remoteCtx = remote.actor.list.User.Context;
         using var body = new System.IO.MemoryStream();
         foreach (var d in sent)

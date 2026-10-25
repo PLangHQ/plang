@@ -11,7 +11,7 @@ namespace app.type.item.history;
 /// entry's <c>.Type</c> (<c>[{image},{path}]</c>). It does NOT reference the owner (the item asks its
 /// own type directly) — no back-reference, so a clone never cycles into the owner graph.</para>
 /// </summary>
-public sealed class @this
+public class @this
 {
     private readonly System.Collections.Generic.List<global::app.type.item.@this> _list = new();
 
@@ -21,7 +21,7 @@ public sealed class @this
 
     /// <summary>Record that the item evolved FROM <paramref name="prior"/> — the prior's own history
     /// rides along (a source that was a file, then parsed to a dict). Idempotent by reference.</summary>
-    public void Add(global::app.type.item.@this? prior)
+    public virtual void Add(global::app.type.item.@this? prior)
     {
         if (prior != null && !_list.Contains(prior)) _list.Add(prior);
     }

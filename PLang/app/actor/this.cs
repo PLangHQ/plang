@@ -11,7 +11,7 @@ namespace app.actor;
 [global::app.Attributes.PlangType("actor")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IAsyncDisposable,
     global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>, global::app.type.item.ILoad<@this>,
-    global::app.type.item.IList<@this, global::app.actor.list.@this>
+    global::app.type.item.IList<@this, global::app.actor.list.@this>, global::app.origin.@this
 {
     private readonly CancellationTokenSource _cts;
 
@@ -30,10 +30,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static global::app.actor.list.@this List(global::app.@this app) => new(app);
 
     /// <summary>
-    /// Name of the actor ("System", "Service", or "User").
+    /// Name of the actor ("System" or "User") — the name its role goes by.
     /// </summary>
     [global::app.LlmBuilder]
-    public string Name { get; }
+    public string Name => Role.Name;
+
+    /// <summary>What this actor is in its app — the system or a user: its name, and what it stands on the app's
+    /// folders.</summary>
+    internal role.@this Role { get; }
 
     /// <summary>The key this actor's row for the setting at <paramref name="address"/> is kept under in the settings'
     /// store (<c>user!app.test.setting</c>).</summary>
@@ -58,13 +62,22 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     [global::app.LlmBuilder]
     public context.@this Context { get; }
 
+    /// <summary>The bindings this actor made while a program ran, on the items each is on — every run-time binding,
+    /// whatever its scope, whichever of its contexts bound it; an event reads the holds of every actor of the asker's
+    /// app, and the binding decides whether it fires. Let go with the actor.</summary>
+    internal global::app.@event.on.list.@this on { get; }
+
     /// <summary>
     /// Per-actor permission view — signed grants on paths, keyed by verb
     /// + sub-options. <c>Find/Add/Revoke</c>. Routes "y" grants to an
     /// in-memory list (live for the App's lifetime) and "a" grants to the
     /// actor's permission setting, saved in the settings' store.
     /// </summary>
-    public permission.@this Permission { get; private set; } = null!;
+    public permission.@this Permission
+        => _permission ?? System.Threading.LazyInitializer.EnsureInitialized(ref _permission, () => new(this));
+
+    // the permission view, made when first asked; the first made is the one kept (it holds the grants)
+    private permission.@this? _permission;
 
     private readonly global::app.channel.list.@this _channels;
 
@@ -76,11 +89,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     [global::app.LlmBuilder]
     public global::app.channel.list.@this Channel => _channels;
 
-    private readonly global::app.task.list.@this _tasks;
+    // the tasks, made when first asked; the first made is the one kept (it lists what runs)
+    private global::app.task.list.@this? _tasks;
 
     /// <summary>The tasks this actor runs — the goal calls made in parallel on it, each listed while it runs.</summary>
     [global::app.LlmBuilder]
-    public global::app.task.list.@this Task => _tasks;
+    public global::app.task.list.@this Task
+        => _tasks ?? System.Threading.LazyInitializer.EnsureInitialized(ref _tasks, () => new(this));
 
     /// <summary>
     /// Back-reference to the app.
@@ -100,27 +115,31 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// </summary>
     public Identity? Identity { get; set; }
 
-    private readonly @this? _fallback;
+    // the system actor, whose settings answer what this one's don't; none for the system itself
+    private readonly @this? _system;
     private global::app.actor.setting.@this? _setting;
 
     /// <summary>This actor's settings — the root its contexts' layers chain to; the user's falls back
-    /// to the system's (<c>app.actor.list.System.Setting</c>).</summary>
-    public global::app.actor.setting.@this Setting => _setting ??= new(this, _fallback?.Setting);
+    /// to the system's (<c>app.actor.list.System.Setting</c>). Made when first asked; the first made is the one kept
+    /// (it holds the settings' store).</summary>
+    public global::app.actor.setting.@this Setting
+        => _setting ?? System.Threading.LazyInitializer.EnsureInitialized(ref _setting, () => new(this, _system?.Setting));
 
-    /// <param name="fallback">The actor whose settings answer what this one's don't — the system, for the user.</param>
-    public @this(string name, app.@this app, CancellationToken parentToken = default, @this? fallback = null)
+    /// <param name="system">The system actor, whose settings answer what this one's don't — given for the user.</param>
+    /// <param name="role">What the actor is in its app: the system or a user.</param>
+    /// <param name="console">Whether this actor's channels begin as the console's standard ones, wired when first used.</param>
+    internal @this(role.@this role, app.@this app, CancellationToken parentToken = default, @this? system = null, bool console = false)
         : base(app.type.list[typeof(@this)])
     {
-        Name = name;
+        Role = role;
+        on = new(this);
         App = app;
-        _fallback = fallback;
+        _system = system;
         _cts = parentToken == default
             ? new CancellationTokenSource()
             : CancellationTokenSource.CreateLinkedTokenSource(parentToken);
         Context = new context.@this(app, this, parentToken: _cts.Token);
-        Permission = new permission.@this(this);
-        _channels = new global::app.channel.list.@this(app, this);
-        _tasks = new global::app.task.list.@this(this);
+        _channels = new global::app.channel.list.@this(app, this, console);
         // %MyIdentity% and %Identity% are not set here: the memory is born holding them (variable.list), computed from
         // whoever asks, so an actor born at any time has them at once and no set — nor anything bound to one — runs.
     }
@@ -141,6 +160,63 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         }
     }
 
+    // As what a sub app is made from: the actor answers each part from its own app, the sub app's life ends with its
+    // own, and the sub app is who it is.
+
+    System.Threading.CancellationTokenSource global::app.origin.@this.Shutdown()
+        => CancellationTokenSource.CreateLinkedTokenSource(CancellationToken);
+
+    // a sub app is made in its app's folder or under it, never in its app's stores folder or under it: rooted anywhere
+    // else (an ancestor's, a sibling's, the stores'), what its app keeps there (its stores) would be plain in-root for it.
+    // Its app's stores are the only ones to check down a chain of makers: its app was itself made in its own maker's
+    // folder or under it — at that maker's root, its stores folder is the maker's; under it, the maker's stores lie
+    // outside it.
+    global::app.type.item.path.file.filesystem.@this global::app.origin.@this.Filesystem(string absolutePath)
+    {
+        var filesystem = new global::app.type.item.path.file.filesystem.@this(absolutePath);
+        if (!filesystem.root.IsUnder(App.filesystem.root).Value)
+            throw new global::app.error.AppException(new global::app.error.@this(
+                $"a sub app is made in its maker's folder or under it: {filesystem.root.Absolute} is not in {App.filesystem.root.Absolute}",
+                "OutsideItsMaker", 400));
+        if (filesystem.root.IsUnder(App.filesystem.store).Value)
+            throw new global::app.error.AppException(new global::app.error.@this(
+                $"a sub app is never made in its maker's stores folder: {filesystem.root.Absolute} is in {App.filesystem.store.Absolute}",
+                "OutsideItsMaker", 400));
+        return filesystem;
+    }
+
+    // a sub app is never the terminal's owner: its actors write to the console and read an input that is EOF, whatever
+    // its maker wired for itself
+    bool global::app.origin.@this.Console => true;
+
+    bool global::app.origin.@this.Testing => App.Mode.Value == global::app.Mode.Test;
+
+    global::app.type.list.@this global::app.origin.@this.type => App.type.list;
+
+    global::app.module.@this global::app.origin.@this.Module(global::app.@this app) => App.module;
+
+    // its app's goals are the sub app's while the sub app holds no code of its own (a goal is bound to its modules and
+    // types when it is read, so a goal its app reads reaches only its app's) and shares its folder (a .pr is then the same
+    // file in both)
+    async Task<global::app.data.@this?> global::app.origin.@this.Goal(global::app.type.item.path.@this source, global::app.@this app)
+        => app.HasCode || !Equals(app.filesystem.root, App.filesystem.root) ? null : await App.goal.list.Load(source);
+
+    Identity? global::app.origin.@this.Identity(global::app.@this app) => Identity ?? DefaultIdentity;
+
+    // a type of its app is not a sub app's to change, until sub apps own their code
+    global::app.error.@this? global::app.origin.@this.Hold(global::app.type.kind.@this kind)
+        => new($"'{kind.Name}' is a kind of {kind.Owner?.Name}, which this app shares with the app that made it: a sub app "
+            + $"can't add a kind to {kind.Owner?.Name} yet", "TypesShared", 400);
+
+    // a module of its app is not a sub app's to change, until sub apps own their code
+    void global::app.origin.@this.Register(global::app.module.@this module, string action, System.Type type)
+        => throw new global::app.error.AppException(new global::app.error.@this($"the module '{module.Name}' is shared with the "
+            + $"app that made this one: a sub app adds its own modules, not actions to '{module.Name}'", "ModuleShared", 400));
+
+    System.Threading.Tasks.ValueTask<bool> global::app.origin.@this.Remove(global::app.module.@this module, global::app.actor.context.@this context)
+        => throw new global::app.error.AppException(new global::app.error.@this($"the module '{module.Name}' is shared with the "
+            + $"app that made this one: a sub app takes out only its own modules", "ModuleShared", 400));
+
     /// <summary>
     /// Cancels this actor. If System, cascades to User and Service.
     /// </summary>
@@ -150,6 +226,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         _cts.Cancel();
         _cts.Dispose();
+        on.Clear();
         Context.Dispose();
         await _channels.DisposeAsync();
         // the settings' store, when this actor's settings are the chain's root that made it

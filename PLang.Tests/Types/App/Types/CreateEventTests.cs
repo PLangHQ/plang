@@ -6,15 +6,15 @@ namespace PLang.Tests.App.Types;
 public class CreateEventTests : System.IAsyncDisposable
 {
     private readonly global::app.@this app = new global::app.@this(
-        System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-create-event-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+        System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-create-event-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private global::app.actor.context.@this Ctx => app.actor.list.User.Context;
 
     private global::app.@event.binding.@this On(string type, global::app.@event.When when,
         System.Func<global::app.data.@this, global::app.actor.context.@this, global::app.data.@this> handler)
-        => app.type.list[type].Own().Bind("create", when,
-            (_, data, c) => System.Threading.Tasks.Task.FromResult(handler(data, c)), app.actor.list.User, global::app.@event.binding.Scope.actor);
+        => app.actor.list.User.on.Bind(app.type.list[type], "create", when,
+            (_, data, c) => System.Threading.Tasks.Task.FromResult(handler(data, c)), global::app.@event.binding.Scope.actor);
 
     [Test] public async Task ABeforeThatRefuses_IsTheResult_NothingIsMade()
     {

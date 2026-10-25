@@ -31,6 +31,8 @@ test/**/workspace/
 
 # Test runner output
 .test/
+# what a test's answerer goal saves of the question it was asked, rewritten on every run
+test/app/permission/grantastorespersisted/probe-question.txt
 
 # Test snapshots with non-deterministic content (timestamps, generated keys)
 **/junit_sensitive_masked.xml

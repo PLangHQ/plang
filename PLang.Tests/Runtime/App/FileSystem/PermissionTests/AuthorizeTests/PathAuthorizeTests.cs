@@ -15,7 +15,7 @@ public class PathAuthorizeTests
 {
     private static global::app.@this NewApp() =>
         new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-auth-" + System.Guid.NewGuid().ToString("N")[..8])).TestSigning();
+            "plang-auth-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).TestSigning();
 
     /// Stub stateful channel — answers Ask with a pre-set canned line.
     private sealed class CannedAnswerChannel : global::app.channel.@this

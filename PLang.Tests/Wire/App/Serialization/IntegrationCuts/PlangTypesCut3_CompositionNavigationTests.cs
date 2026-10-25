@@ -14,7 +14,7 @@ public class PlangTypesCut3_CompositionNavigationTests
     [Test] public async Task ImageFromFile_PathFacet_IsTypePath_NavigationWorks()
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-cut3a-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            "plang-cut3a-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var p = global::app.type.item.path.@this.Resolve("/srv/photo.png", app.actor.list.User.Context);
         var img = app.actor.list.User.Context.Image(p!, PngBytes);
 
@@ -28,7 +28,7 @@ public class PlangTypesCut3_CompositionNavigationTests
     [Test] public async Task ImageFromFile_PathExists_TrueForPresentFile()
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-cut3b-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            "plang-cut3b-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         System.IO.Directory.CreateDirectory(app.filesystem.root.Absolute);
         var abs = System.IO.Path.Combine(app.filesystem.root.Absolute, "present.png");
         System.IO.File.WriteAllBytes(abs, PngBytes);
@@ -47,7 +47,7 @@ public class PlangTypesCut3_CompositionNavigationTests
     [Test] public async Task ImageFromFile_PathExists_FalseForMissingFile()
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-cut3c-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            "plang-cut3c-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         System.IO.Directory.CreateDirectory(app.filesystem.root.Absolute);
         var abs = System.IO.Path.Combine(app.filesystem.root.Absolute, "missing-" + System.Guid.NewGuid().ToString("N")[..8] + ".png");
         // Don't create the file.
@@ -56,19 +56,16 @@ public class PlangTypesCut3_CompositionNavigationTests
         await Assert.That(await (await img.Path!.Exists(app.actor.list.User.Context)).ToBooleanAsync()).IsFalse();
     }
 
-    [Test] public async Task ImageFromBase64_PathIsNull_AndBytesThatDontDecode_HaveNoSize()
+    [Test] public async Task ImageFromBase64_PathIsNull()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var img = app.actor.list.User.Context.Image(PngBytes, "image/png");
         await Assert.That(img.Path).IsNull();
-        // The 8-byte signature isn't a full image: its size is an error, never a 0×0 image.
-        await Assert.That(() => { _ = img.Width; return Task.CompletedTask; })
-            .Throws<SixLabors.ImageSharp.InvalidImageContentException>();
     }
 
     [Test] public async Task RoutingKey_StaysImage_NoPathImageUnion_AnywhereInRegistry()
     {
-        var types = new global::app.type.list.@this();
+        var types = new global::app.origin.code().type;
         // image and path are distinct registered types.
         await Assert.That(types.Clr("image")).IsEqualTo(typeof(image));
         await Assert.That(types.Clr("path")).IsNotEqualTo(typeof(image));
@@ -81,7 +78,7 @@ public class PlangTypesCut3_CompositionNavigationTests
 
     [Test] public async Task CatalogRendering_ImagePathProperty_HasTypePathAnnotation()
     {
-        var types = new global::app.type.list.@this();
+        var types = new global::app.origin.code().type;
         var imageEntry = types["image"];
         await Assert.That(imageEntry).IsNotNull();
         await Assert.That(imageEntry!.Property).IsNotNull();

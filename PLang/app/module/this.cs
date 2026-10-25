@@ -57,7 +57,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, global::app.goal.step.action.@this> _action
         = new(System.StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>The app's module — empty, holding every module the app loads.</summary>
+    /// <summary>The code's module — the bottom, holding every module the code ships, born with
+    /// <paramref name="app"/>, the app the code is made for, which answers for them.</summary>
     internal @this(global::app.@this app) : base(app.type.list[typeof(@this)])
     {
         Name = "";
@@ -67,14 +68,32 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         Discover(typeof(@this).Assembly);
     }
 
+    /// <summary>An app's module — a layer of its own over the registry <paramref name="under"/>, which it holds whole as
+    /// its list's first row and reads through: a module it reaches is that registry's own object, a module it adds is
+    /// its layer's alone, and what the registry it is over loads later is this one's too.</summary>
+    internal @this(global::app.@this app, @this under) : base(app.type.list[typeof(@this)])
+    {
+        Name = "";
+        _app = app;
+        _modules = new global::app.type.item.list.@this<@this>(app.type.list[typeof(global::app.type.item.list.@this<@this>)]);
+        _modules.Add(under._modules!);
+        _registering = new object();
+    }
+
     internal @this(string name, @this root) : base(root.Type)
     {
         Name = name;
         _root = root;
     }
 
-    // The app's module: this one, or the one holding it.
-    private @this Root => _root ?? this;
+    /// <summary>Whether this registry, a layer, holds modules of its own — a module this layer made.</summary>
+    internal bool HasOwn => System.Threading.Volatile.Read(ref _own) > 0;
+
+    // How many modules this registry made and holds: changed only by its own two doors, Of and Drop.
+    private int _own;
+
+    // The app's module: this one, or the registry holding it.
+    internal @this Root => _root ?? this;
 
     /// <summary>The App this module belongs to — reached through the app's module.</summary>
     internal global::app.@this App => Root._app!;
@@ -101,7 +120,22 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>Registers an action class for per-call instantiation in the module named <paramref name="module"/>
     /// — the module is made the first time an action names it.</summary>
-    public void Register(string module, string actionName, System.Type type) => Of(module).Add(actionName, type);
+    public void Register(string module, string actionName, System.Type type)
+    {
+        var owner = Of(module);
+        // the same action again is the same answer, whichever registry holds its module
+        if (owner[actionName]?.Class == type) return;
+        owner.Root.Register(owner, actionName, type, Root);
+    }
+
+    // An action into one of this registry's modules, asked by `asker`'s registry.
+    private void Register(@this module, string action, System.Type type, @this asker)
+    {
+        // the fact itself, not a flag: a change to the asker's own rows it holds, one to a row below it is its origin's
+        // to answer
+        if (!ReferenceEquals(this, asker)) asker.App.origin.Register(module, action, type);
+        else module.Add(action, type);
+    }
 
     /// <summary>Registers every [Action] class under <paramref name="baseNamespace"/> in an assembly — the module is
     /// the namespace segment after it. The built-ins at birth; an external DLL through <c>module.add</c>.</summary>
@@ -129,15 +163,28 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             if (Named(name) is { } module) return module;
             var born = new @this(name, Root);
             list.Add(born);
+            System.Threading.Interlocked.Increment(ref Root._own);
             return born;
         }
     }
 
     /// <summary>Takes this module out of the app — emptied too, so anyone still holding it finds no actions.</summary>
-    public async System.Threading.Tasks.ValueTask<bool> Remove(actor.context.@this context)
+    public System.Threading.Tasks.ValueTask<bool> Remove(actor.context.@this context)
+        => Root.Remove(this, context.App.module, context);
+
+    // One of this registry's modules taken out, asked by `asker`'s registry.
+    private System.Threading.Tasks.ValueTask<bool> Remove(@this module, @this asker, actor.context.@this context)
+        // the fact itself, not a flag: a change to the asker's own rows it holds, one to a row below it is its origin's
+        // to answer
+        => ReferenceEquals(this, asker) ? Drop(module, context) : asker.App.origin.Remove(module, context);
+
+    /// <summary>Takes <paramref name="module"/>, one this registry holds, out of it, for every app over it too —
+    /// emptied, so anyone still holding it finds no actions.</summary>
+    internal async System.Threading.Tasks.ValueTask<bool> Drop(@this module, actor.context.@this context)
     {
-        if (!await list.Remove(this, context)) return false;
-        Clear();
+        if (!await list.Remove(module, context)) return false;
+        System.Threading.Interlocked.Decrement(ref _own);
+        module.Clear();
         return true;
     }
 

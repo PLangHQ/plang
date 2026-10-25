@@ -22,7 +22,7 @@ public class EntryGateTests : System.IAsyncDisposable
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(key)!);
         System.IO.File.WriteAllText(key, "the identity's private key");
         System.IO.File.WriteAllText(System.IO.Path.Combine(root, "a.txt"), "a");
-        app = new global::app.@this(root).TestSigning();
+        app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).TestSigning();
         user = app.actor.list.User.Context;
         channel = new Asking(user);
         app.actor.list.User.Channel.Register(channel);

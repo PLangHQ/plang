@@ -9,7 +9,7 @@ public class PathAskerContextTests
 {
     private static global::app.@this NewApp() =>
         new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-asker-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            "plang-asker-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
 
     private static async Task<string?> Nav(global::app.data.@this d, string key) =>
         (await (await d.Get(key)).Value())?.ToString();

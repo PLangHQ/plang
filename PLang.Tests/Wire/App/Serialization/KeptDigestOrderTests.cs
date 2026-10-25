@@ -4,7 +4,7 @@ namespace PLang.Tests.App.Serialization;
 // added in either order, digest the same (else a signed Data with kept members fails its verify for nothing).
 public class KeptDigestOrderTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [Test] public async Task TheSameKeptMembers_AddedInOppositeOrder_DigestTheSame()

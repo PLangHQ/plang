@@ -14,7 +14,7 @@ public class PathSerializerMigrationTests
 {
     private static global::app.@this NewApp()
         => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-path-mig-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            "plang-path-mig-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
 
     [Test]
     public async Task PathFile_Wire_RendersAsRelativeString_ViaDefaultSerializer()

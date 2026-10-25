@@ -15,7 +15,7 @@ public class ReportFormatTests
 
     [Test] public async Task SettingAFormatThatWritesNoReport_IsRefused()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
 
         var set = await app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["format"] = "text" }, app.actor.list.System.Context);
 

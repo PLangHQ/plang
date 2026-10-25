@@ -16,7 +16,7 @@ public class JsonFileTruthTests
     {
         var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "jsontruth_" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(dir);
-        await using var app = new global::app.@this(dir).Testing();
+        await using var app = new global::app.@this(dir, global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "in.json"), json);
 
@@ -31,7 +31,7 @@ public class JsonFileTruthTests
     {
         var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "jsontruth_" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(dir);
-        await using var app = new global::app.@this(dir).Testing();
+        await using var app = new global::app.@this(dir, global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "in.json"), "{\"a\":1}");
         var read = await context.File(System.IO.Path.Combine(dir, "in.json")).Read(context);

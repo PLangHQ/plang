@@ -25,7 +25,7 @@ public class NamedProviderRegistryTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_registry_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir, global::PLang.Tests.Parent.Actor);
     }
 
     [After(Test)]
@@ -52,6 +52,29 @@ public class NamedProviderRegistryTests
         await Assert.That(result.Error).IsNull();
         await Assert.That(result.Provider).IsSameReferenceAs(provider);
         await Assert.That(((global::app.module.code.ICode)result.Provider!).Name).IsEqualTo("custom");
+    }
+
+    // What the code ships for an interface is made the first time the interface is asked for: a first ask for one
+    // makes that one, not every provider the code ships.
+    [Test]
+    public async Task AFirstAsk_MakesOnlyTheProviderAskedFor()
+    {
+        var registry = new EngineProviders(_app.actor.list.System.Context);
+
+        var (math, error) = registry.Get<global::app.module.math.code.IMath>();
+
+        await Assert.That(error).IsNull();
+        await Assert.That(registry.All().ToList()).IsEquivalentTo(new global::app.module.code.ICode[] { math! });
+    }
+
+    // Whether an interface has a provider is answered from what the code ships, making nothing.
+    [Test]
+    public async Task AskingWhetherOneIsThere_MakesNone()
+    {
+        var registry = new EngineProviders(_app.actor.list.System.Context);
+
+        await Assert.That(registry.Has<global::app.module.math.code.IMath>()).IsTrue();
+        await Assert.That(registry.All().Any()).IsFalse();
     }
 
     [Test]
@@ -118,9 +141,8 @@ public class NamedProviderRegistryTests
     [Test]
     public async Task Get_NoneRegistered_ReturnsError()
     {
-        // Use a bare registry with no built-in registrations
-        var bare = new EngineProviders(_app.actor.list.User.Context);
-        var result = bare.Get<IKey>();
+        // an interface no built-in provider serves
+        var result = _app.Code.Get<IUnserved>();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
     }
@@ -316,9 +338,8 @@ public class NamedProviderRegistryTests
     [Test]
     public async Task GetOrDefault_WhenNoneRegistered_ReturnsFallback()
     {
-        var bare = new EngineProviders(_app.actor.list.User.Context);
-        var fallback = new MockSigningProvider("fallback");
-        var result = bare.GetOrDefault<ISigning>(fallback);
+        var fallback = new Unserved("fallback");
+        var result = _app.Code.GetOrDefault<IUnserved>(fallback);
         await Assert.That(result).IsSameReferenceAs(fallback);
     }
 
@@ -331,12 +352,21 @@ public class NamedProviderRegistryTests
     [Test]
     public async Task Has_WhenNoneRegistered_ReturnsFalse()
     {
-        var bare = new EngineProviders(_app.actor.list.User.Context);
-        await Assert.That(bare.Has<ISigning>()).IsFalse();
+        await Assert.That(_app.Code.Has<IUnserved>()).IsFalse();
     }
 
     #endregion
 
+
+    // An interface no built-in provider serves.
+    public interface IUnserved : global::app.module.code.ICode;
+
+    private sealed class Unserved(string name) : IUnserved
+    {
+        public string Name { get; } = name;
+        public bool IsBuiltIn { get; set; }
+        public string? Source { get; set; }
+    }
 
     private class MockSigningProvider : ISigning
     {

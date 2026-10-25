@@ -16,7 +16,7 @@ public class ConverterDeletionsTests
 
     private static global::app.@this NewApp()
         => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-conv-del-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            "plang-conv-del-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
 
     public sealed class InnerFixture { public global::app.type.item.path.@this? File { get; set; } }
     public sealed class MidFixture { public InnerFixture? Inner { get; set; } }

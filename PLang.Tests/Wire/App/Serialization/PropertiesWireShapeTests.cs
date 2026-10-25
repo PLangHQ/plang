@@ -10,7 +10,7 @@ namespace PLang.Tests.App.Serialization;
 public class PropertiesWireShapeTests
 {
     private static global::app.@this NewApp() => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-        "plang-prop-" + Guid.NewGuid().ToString("N")[..8])).Testing();
+        "plang-prop-" + Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
 
     private static (global::app.type.kind.@this plang, global::app.data.@this data, Action dispose)
         SeedData(string name = "thing", object? value = null)
@@ -218,7 +218,7 @@ public class PropertiesWireShapeTests
     [Test] public async Task OuterSignature_AfterPropertiesValueTamper_FailsVerify()
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-propwire-" + System.Guid.NewGuid().ToString("N")[..8])).TestIdentity();
+            System.IO.Path.GetTempPath(), "plang-propwire-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).TestIdentity();
         var ctx = app.actor.list.User.Context;
         var plang = ctx.Format("application/plang");
         var d = new global::app.data.@this("thing", "v", context: ctx);

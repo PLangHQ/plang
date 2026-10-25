@@ -1,0 +1,74 @@
+/ fast-apps: a new app is made from the actor that calls, taking what's the same for every app made from the same
+/ code and making the rest itself. This goal is the plan's index and its proof: each stage is a goal, each comment a
+/ behaviour we want, and the step under it runs the test that proves it. Tests live under this plan's folder at the
+/ path of what they test. The plang here is intent: each test is written so it builds and goes red before its stage,
+/ and the coder makes it green. The text is start.md; what tests can't show (the measurements) is there too.
+Start
+- call Stage1
+- call Stage2
+- call Stage3
+- call Stage4
+- call Stage5
+
+Stage1
+/ an app's step cache goes with its app: disposing the app disposes its cache — C# test CacheLifetimeTests
+/ (today app/this.cs:174 makes a Memory cache and DisposeAsync never disposes it)
+/ a request app leaves nothing behind: 3,000 request apps made and disposed, memory after stays flat — C# test
+/ RequestAppsLeaveNothingBehindTests (red today: the step cache's MemoryCache stays)
+
+Stage2
+/ (the in-process parent is deferred to its first user, decision 18: a test's %!app.parent% stays false; its test TestAppHasItsRunnerAsParent went to the backlog with it)
+/ a child's System is born from the actor that calls: it has the caller's identity — C# test ChildSystemTests
+/ (AChildsSystem_HasItsCallersIdentity)
+/ a child stops when the actor that made it stops: cancelling the caller cancels the child — C# test ChildSystemTests
+/ (AChildsSystem_StopsWithItsCaller)
+/ a child's System is its own actor: a variable it sets, a channel it registers and a setting it writes are not the
+/ caller's — C# test ChildSystemTests (AChildsSystem_KeepsItsOwnMemoryChannelsAndSettings)
+/ the code's facts are read once per code: a sub app reads no class at its birth — C# test CodeFactsTests
+/ (AChildsTypeList_HoldsNothingOfItsOwn_AtBirth, AnAppNoActorMade_ReadsItsOwnFacts)
+
+Stage3
+/ a sub app keeps its parent's type list whole under a layer of its own: a type in it is the parent's own object —
+/ C# test SharedTypeListTests (AChildsType_IsItsParentsType)
+/ what a sub app adds is its own alone: neither its parent nor a sibling has it — C# test SharedTypeListTests
+/ (ATypeASubAppAdds_IsOnlyItsOwn)
+/ a kind added to a type its parent holds is refused, naming the type (TypesShared), until sub apps own their code —
+/ C# test SharedTypeListTests (AKindOnAParentsType_IsRefused_NamingIt)
+/ what a parent loads after making a sub app is the sub app's too — C# test SharedTypeListTests
+/ (AParentLoadingAfterMakingASubApp_IsTheSubAppsToo)
+/ the plugin's type joins only the sub app that loaded it, and its sibling never sees it
+- call /plan/fast-apps/app/type/plugin/PluginTypeJoinsOnlyItsApp
+- call /plan/fast-apps/app/type/plugin/SiblingDoesNotSeeThePluginType
+/ the module registry the same way, refused as ModuleShared — C# test SharedModuleTests
+/ a binding made while a program runs is held on the context of the actor that made it: it fires only in its own app
+/ and goes with it — C# tests HoldTests, HeldBindingTests
+- call /plan/fast-apps/app/event/BindingStaysInItsTest
+- call /plan/fast-apps/app/event/SiblingDoesNotSeeTheBinding
+/ a run never writes an object its app shares: a type takes no prior into its history — C# test SharedEntryWritesTests
+/ a sub app finds the goal its parent read: the same goal object, no second .pr read — C# test SharedGoalTests
+/ (AChild_FindsItsParentsGoal); many sub apps loading one goal make one read (ManySubAppsLoadingOneGoal_MakeOneRead)
+/ a goal read after a sub app loads code stays its own, never its parent's — C# test SharedGoalTests
+/ (AGoalReadAfterTheSubAppLoadsCode_StaysItsOwn)
+/ a goal changed on disk is read again on its next use, with no time window — C# test SharedGoalTests
+/ (AGoalChangedOnDisk_IsReadAgain)
+/ the kind lookup takes no lock: two apps sharing a type look up its kinds at once, and a lookup answers while an
+/ addition holds the type's gate — C# test KindLookupTests (ALookup_AnswersWhileTheGateIsHeld)
+/ every app is made from something, its lists a layer over it: an app made from the code holds what it loads in its
+/ own layer and may still change the code under it, which is its own — C# test OriginTests
+
+Stage4
+/ a birth makes only what's asked for: an actor's tasks and permission, a context's system variables are made when
+/ first asked — C# test BirthTests (AnActorsTasksAndPermission_AreMadeWhenFirstAsked,
+/ AContextsSystemVariables_AreMadeWhenFirstAsked)
+/ (dropped: path's schemes as kind classes, PathSchemeTests — stage 4's 14, root birth only, which a sub app never
+/ pays: decision 42)
+/ what's made on first ask is the same as what a birth made before: every module's actions, every setting's default,
+/ the system variables — the existing suites are this stage's guard
+
+Stage5
+/ (dropped: a list's positional read from its snapshot, ListSnapshotReadTests — stage 5's (2), measured inside the
+/ noise: decision 56)
+/ an in-memory store nothing has written answers empty without opening SQLite — C# test InMemoryStoreTests
+/ (ABlankStoresRead_OpensNoDatabase)
+/ class facts are read once per code: choice sets, action properties, setting paths and defaults — C# test
+/ BirthTests (ARequestReadsItsSettingClassesFacts_OncePerCode)

@@ -14,7 +14,7 @@ public class JsonCompareTests
     [Test]
     public async Task TwoEqualJsonObjects_AreEqual()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
 
         var a = await Json(ctx, "{\"a\": 1}");
@@ -28,7 +28,7 @@ public class JsonCompareTests
     [Test]
     public async Task ValuesSetAsJson_AreJsonsOwn_ThroughThePr()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var steps = new List<Make.StepDef>();
         foreach (var line in new[]
@@ -55,7 +55,7 @@ public class JsonCompareTests
     [Test]
     public async Task TwoDifferentJsonObjects_AreNotEqual()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
 
         var a = await Json(ctx, "{\"a\": 1}");
@@ -67,7 +67,7 @@ public class JsonCompareTests
     [Test]
     public async Task JsonAndAnEqualDict_CompareAsTheirContent()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
 
         var json = await Json(ctx, "{\"a\": 1}");

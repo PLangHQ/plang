@@ -23,7 +23,7 @@ public sealed class HttpPathFixture : IPathSchemeFixture, IDisposable
         _server = new HttpTestServer();
         _appRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-chx-" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_appRoot);
-        _app = new global::app.@this(_appRoot).Testing();
+        _app = new global::app.@this(_appRoot, global::PLang.Tests.Parent.Actor).Testing();
         (_app).TestSigning();
     }
 

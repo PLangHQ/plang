@@ -15,8 +15,50 @@ namespace app.channel.list;
 /// </summary>
 public sealed class @this : global::app.type.item.@this, IAsyncDisposable
 {
-    private readonly ConcurrentDictionary<string, channel.@this> _channels = new(StringComparer.OrdinalIgnoreCase);
+    // The channels by name, made on the list's first use — with the console's standard ones when the list was born
+    // with them (an actor that never writes makes none).
+    private ConcurrentDictionary<string, channel.@this>? _rows;
+    private readonly object _gate = new();
+    // whether the list's first rows are the console's standard channels: as the app's origin answers, at its birth
+    private readonly bool _console;
     private readonly app.@this _app;
+
+    // The channels by name, as they are now: made, wired, on the first use — the one door every other reads through.
+    private ConcurrentDictionary<string, channel.@this> Rows
+    {
+        get
+        {
+            if (System.Threading.Volatile.Read(ref _rows) is { } rows) return rows;
+            lock (_gate)
+            {
+                if (_rows is { } made) return made;
+                var channels = new ConcurrentDictionary<string, channel.@this>(StringComparer.OrdinalIgnoreCase);
+                if (_console) Wire(channels, interactiveInput: false);
+                System.Threading.Volatile.Write(ref _rows, channels);
+                return channels;
+            }
+        }
+    }
+
+    /// <summary>Wires the console's standard channels now, under the names not yet registered: output and error to the
+    /// process's streams; input to real stdin when <paramref name="interactiveInput"/> (the one terminal owner, the CLI),
+    /// else an empty stream that reads as EOF, so a prompt nothing answers fails fast instead of blocking.</summary>
+    internal void Wire(bool interactiveInput) => Wire(Rows, interactiveInput);
+
+    // The console's standard channels into <paramref name="channels"/>, under the names not yet there. The console
+    // writes and reads in the channel setting's format (%!app.channel.setting.format%): text for a person at a terminal,
+    // plang's own for a program that runs this plang (--channel.setting.format=plang).
+    private void Wire(ConcurrentDictionary<string, channel.@this> channels, bool interactiveInput)
+    {
+        if (!channels.ContainsKey(Output))
+            channels.TryAdd(Output, Adopt(new type.console.@this(Output, Console.OpenStandardOutput(), ChannelDirection.Output)));
+        if (!channels.ContainsKey(Error))
+            channels.TryAdd(Error, Adopt(new type.console.@this(Error, Console.OpenStandardError(), ChannelDirection.Output)));
+        if (!channels.ContainsKey(Input))
+            channels.TryAdd(Input, Adopt(interactiveInput
+                ? new type.console.@this(Input, Console.OpenStandardInput(), ChannelDirection.Input)
+                : type.stream.@this.Memory(Input, ChannelDirection.Input)));
+    }
 
     /// <summary>
     /// The owning App. Child channels navigate via <c>Channel.Channels.App</c>
@@ -47,10 +89,15 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
     public static readonly string[] Defaults = [Output, Error, Input];
 
     /// <summary>The channels of <paramref name="actor"/> — or of a Service, which is no actor (null).</summary>
-    public @this(app.@this app, global::app.actor.@this? actor) : base(app.type.list[typeof(@this)])
+    public @this(app.@this app, global::app.actor.@this? actor) : this(app, actor, console: false) { }
+
+    /// <summary>The channels of <paramref name="actor"/>, whose first rows, when <paramref name="console"/>, are the
+    /// console's standard channels, wired at the list's first use with an input that reads as EOF (no shared stdin).</summary>
+    internal @this(app.@this app, global::app.actor.@this? actor, bool console) : base(app.type.list[typeof(@this)])
     {
         _app = app;
         Actor = actor;
+        _console = console;
     }
 
     /// <summary>
@@ -64,7 +111,7 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
         var context = Actor?.Context ?? _app.actor.list.System.Context;
         foreach (var name in Defaults)
         {
-            if (!_channels.ContainsKey(name))
+            if (!Rows.ContainsKey(name))
                 return context.Error(new ServiceError(
                     $"Channel '{name}' not registered. Default channels ({string.Join(", ", Defaults)}) must be wired before goals run.",
                     "MissingRequiredChannelAtBoot", 500));
@@ -95,12 +142,12 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
     /// channels stay visible.
     /// </summary>
     public channel.@this? Get(string name)
-        => _channels.TryGetValue(name, out var channel) && channel.Available ? channel : null;
+        => Rows.TryGetValue(name, out var channel) && channel.Available ? channel : null;
 
     public void Register(channel.@this channel)
     {
         Adopt(channel);
-        _channels[channel.Name] = channel;
+        Rows[channel.Name] = channel;
     }
 
     /// <summary>Registers <paramref name="channel"/> in place of the one by its name, which is disposed after — one
@@ -109,15 +156,16 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
     {
         Adopt(channel);
         channel.@this? old = null;
-        _channels.AddOrUpdate(channel.Name, channel, (_, previous) => { old = previous; return channel; });
+        Rows.AddOrUpdate(channel.Name, channel, (_, previous) => { old = previous; return channel; });
         if (old != null && !ReferenceEquals(old, channel)) await old.DisposeAsync();
     }
 
-    // A channel registered here belongs to this list and, unless it names another, to its actor.
-    private void Adopt(channel.@this channel)
+    // A channel registered here belongs to this list and, unless it names another, to its actor. Answers the channel.
+    private channel.@this Adopt(channel.@this channel)
     {
         channel.Channels = this;
         if (channel.Actor == null) channel.Actor = Actor!;
+        return channel;
     }
 
     /// <summary>Removes the channel named <paramref name="name"/>. A default channel can't be — the boot invariant
@@ -128,27 +176,26 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
             return context.Error(new ServiceError(
                 $"Channel '{name}' is a default channel and cannot be removed (use channel.set to replace its backing).",
                 "ChannelInvariantViolation", 400));
-        if (!_channels.TryRemove(name, out var channel))
+        if (!Rows.TryRemove(name, out var channel))
             return context.Error(new ServiceError($"Channel '{name}' not found", "ChannelNotFound", 404));
         await channel.DisposeAsync();
         return context.Ok();
     }
 
-    public bool Contains(string name) => _channels.ContainsKey(name);
+    public bool Contains(string name) => Rows.ContainsKey(name);
 
     /// <summary>Index by name. Throws on miss — index-miss is a hard error.</summary>
     public channel.@this this[string name]
         => Get(name) ?? throw new KeyNotFoundException($"No channel named '{name}'.");
 
     /// <summary>The open channel of the C# class <paramref name="clrType"/>, whatever name it is under;
-    /// null when there is none. What a channel IS, beside where it writes (its name).</summary>
+    /// null when there is none. What a channel IS, beside where it writes (its name). Asked without making the rows:
+    /// a list never used holds no channel registered on it.</summary>
     public channel.@this? this[System.Type clrType]
-        => _channels.Values.FirstOrDefault(c => c.IsOpen && clrType.IsInstanceOfType(c));
+        => System.Threading.Volatile.Read(ref _rows)?.Values.FirstOrDefault(c => c.IsOpen && clrType.IsInstanceOfType(c));
 
     /// <summary>Enumerate registered channels.</summary>
-    public IEnumerable<channel.@this> list => _channels.Values;
-
-    public IEnumerable<string> ChannelNames => _channels.Keys;
+    public IEnumerable<channel.@this> list => Rows.Values;
 
     /// <summary>One step down: the list's own members first, then a channel by name —
     /// <c>%!app.actor["user"].channel.output%</c> is the channel a program binds its events on.</summary>
@@ -161,8 +208,10 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        foreach (var channel in _channels.Values)
+        // a list never used made no channel, so it has none to dispose
+        if (System.Threading.Volatile.Read(ref _rows) is not { } channels) return;
+        foreach (var channel in channels.Values)
             await channel.DisposeAsync();
-        _channels.Clear();
+        channels.Clear();
     }
 }

@@ -1,0 +1,7 @@
+# v1 plan: OBP review of the whole fast-apps production diff (decision 61)
+
+Scope: `git diff 98624ab6a..HEAD -- PLang PLang.Generators` at 4d28eda40 (69 files, +1760/-653; PLang.Generators unchanged). Read each touched method whole and walk callers (obp-scan.md); ObpScan on changed types.
+Checks: every named smell in CLAUDE.md "OBP Shape Smells" (incl. creative name) + obp-smells.md; branch rules: no static in production; no production code only tests call (35); a run never writes an object its app shares (29); every app's lists are layers over its origin, the code the bottom (36, 39); no `caller == null`, no `_parent` null, no flag checked at many doors (33); locked-core additions without a decision.
+Look first: origin/, type list layer and lookups (type/list/*, Code.cs), module registry layer, goal.list (Take, Held, Reading, .pr index), event/this.cs walks and the hold (event/on/list), actor/role/, stage 4 lazy births (channels, actor views, system variables, call list), store/sqlite in-memory naming.
+Known and deferred, not re-raised unless worse: 34's S1, 35's Registry statics and public Assemblies lists, 42's items 12-14, 41's identity provider asking the origin.
+Output: .bot/fast-apps/codeanalyzer/review.md (each finding: smell, file:line, why, fix shape, blocking or not; verdict), v1/verdict.json, summary.md, report.json. Read only; commit only .bot/fast-apps/codeanalyzer and the session log.

@@ -7,8 +7,8 @@ namespace app.actor.setting;
 /// this run's values (<c>set %!x%</c>, the CLI flags) ← the step's own. Each actor has one
 /// (<c>app.actor.list.System.Setting</c>, <c>app.actor.list.User.Setting</c>, the user's falling back to the system's) that holds
 /// the actor's rows; a context's own layer (<c>context.Setting</c>) chains up to its actor's, so a
-/// goal-local value shadows the rest. The rows are read once, when the app starts (<see cref="Load"/>);
-/// after that a setting is built in memory. The rows live in the settings' own store,
+/// goal-local value shadows the rest. Each actor's rows are read once, the first time a row is asked for (the app
+/// asks at its start, <see cref="Load"/>); after that a setting is built in memory. The rows live in the settings' own store,
 /// <c>/.data/setting/data.sqlite</c> — never the app's data — made by the root of the chain.
 /// </summary>
 public sealed class @this : IDisposable
@@ -18,8 +18,7 @@ public sealed class @this : IDisposable
     private readonly actor.context.@this _context;                  // born-with-context (not-found Data, the store's reach)
     private readonly ConcurrentDictionary<string, data.@this> _values = new(StringComparer.OrdinalIgnoreCase);
     private readonly global::app.actor.@this? _actor;               // an actor's own: the actor whose rows it holds
-    private readonly Lazy<Task<ConcurrentDictionary<string, data.@this>>>? _rows;
-    private ConcurrentDictionary<string, data.@this>? _held;        // the rows, once read
+    private readonly Lazy<Task<ConcurrentDictionary<string, data.@this>>>? _rows;   // the actor's saved rows, read once
     private global::app.error.@this? _unread;                       // why the rows could not be read, when they couldn't
     // While the rows are being read, a setting read inside that (the store reading a row back) builds
     // without them — it can't wait on the read it is part of.
@@ -45,7 +44,7 @@ public sealed class @this : IDisposable
     // The settings changed somewhere: every setting built before this is stale.
     private void Move() => System.Threading.Interlocked.Increment(ref Root._version);
 
-    // The settings' own store — /.data/setting/data.sqlite, in memory while testing under this app's id — opened by the
+    // The settings' own store — /.data/setting/data.sqlite, in memory while testing, a database of its own — opened by the
     // default store provider, asked by the root of the chain at its first use; every layer reaches it through its root.
     private global::app.store.@this Store => Root._store.Value;
     private readonly Lazy<global::app.store.@this> _store;
@@ -60,7 +59,7 @@ public sealed class @this : IDisposable
             var (provider, error) = context.App.Code.Get<global::app.store.code.IStore>();
             if (provider == null) throw new global::app.error.AppException(error!);
             return provider.Open(global::app.type.item.path.@this.Resolve("/" + global::app.store.@this.Folder + "/setting/data.sqlite", context),
-                () => context.App.Mode.Value == global::app.Mode.Test ? $"setting-{context.App.Id}" : null,
+                context.App.Mode.Value == global::app.Mode.Test,
                 context);
         });
     }
@@ -85,15 +84,20 @@ public sealed class @this : IDisposable
     public async Task<data.@this> Load()
     {
         for (@this? s = this; s != null; s = s._parent)
-            if (s._rows != null && !s._reading.Value && s._held == null)
-            {
-                s._held = await s._rows.Value;
-                // a setting built before the rows were read was built without them
-                Move();
-            }
-        for (@this? s = this; s != null; s = s._parent)
+        {
+            await s.Rows();
             if (s._unread != null) return _context.Error(s._unread);
+        }
         return _context.Ok();
+    }
+
+    // This actor's saved rows, read once — the one door every reader of them comes through; none for a scope that
+    // holds no actor's, or while they are being read (a setting read inside the read builds without them).
+    private async ValueTask<ConcurrentDictionary<string, data.@this>?> Rows()
+    {
+        if (_rows == null || _reading.Value) return null;
+        var read = _rows.Value;
+        return read.IsCompletedSuccessfully ? read.Result : await read;
     }
 
     /// <summary>
@@ -104,14 +108,13 @@ public sealed class @this : IDisposable
     /// </summary>
     public async ValueTask<data.@this> Get(global::app.goal.step.action.@this action, string option)
     {
-        await Load();
         // read at the action's address, then its module's
         var address = action.Address;
         var module = action.Module.Address;
         var run = Run([$"{address}.{option}", $"{module}.{option}"]);
         if (run.IsInitialized) return run;
-        if (Saved(address) is { } row && Option(row, option) is { } value) return value;
-        if (Saved(module) is { } setting && Option(setting, option) is { } entry) return entry;
+        if (await Saved(address) is { } row && Option(row, option) is { } value) return value;
+        if (await Saved(module) is { } setting && Option(setting, option) is { } entry) return entry;
         return _context.NotFound($"{address}.{option}");
     }
 
@@ -190,7 +193,7 @@ public sealed class @this : IDisposable
         var row = new data.@this(path, value, context: _context);
         var stored = await Store.Set(Table, owner._actor!.Row(path), row);
         if (!stored.Success) return stored;
-        owner._held![path] = row;
+        (await owner.Rows())![path] = row;
         Move();
         return row;
     }
@@ -204,7 +207,7 @@ public sealed class @this : IDisposable
         if (await owner.Load() is { Success: false } unread) return unread;
         var removed = await Store.Remove(Table, owner._actor!.Row(path));
         if (!removed.Success) return removed;
-        owner._held!.TryRemove(path, out _);
+        (await owner.Rows())!.TryRemove(path, out _);
         Move();
         return removed;
     }
@@ -220,13 +223,13 @@ public sealed class @this : IDisposable
         }
     }
 
-    // The saved row for path, the closest actor first (the user's, then the system's); null when none
-    // (or before the rows are read). An actor's own class reads that actor's row alone.
-    private data.@this? Saved(string path)
+    // The saved row for path, the closest actor first (the user's, then the system's), each actor's rows read through
+    // its door; null when none. An actor's own class reads that actor's row alone.
+    private async ValueTask<data.@this?> Saved(string path)
     {
         for (@this? s = this; s != null; s = s._parent)
         {
-            if (s._held != null && s._held.TryGetValue(path, out var row)) return row;
+            if (await s.Rows() is { } rows && rows.TryGetValue(path, out var row)) return row;
             if (s._actor != null && Own(path)) return null;
         }
         return null;
@@ -266,7 +269,7 @@ public sealed class @this : IDisposable
         {
             if (_actor!.Address(row.Name) is not { } address) continue;
             var value = await row.Value();
-            // A row that could NOT be read — an older-shape row 790 drops — is kept WITH its error, never
+            // A row that could NOT be read — an older-shape row no reader takes — is kept WITH its error, never
             // silently skipped: its read named the key and how to fix it (delete it and set it again). It is
             // said on the debug channel now, and held so a read of that setting answers the error (loud), not
             // a silent default. A row that read to nothing (a null value) is simply absent.
@@ -290,6 +293,8 @@ public sealed class @this : IDisposable
                     ? new data.@this(row.Name, value, row.Type, context: _context).Copy(row.Signature!)
                     : new data.@this(row.Name, value, row.Type, context: _context);
         }
+        // a setting built before the rows were read was built without them
+        Move();
         return rows;
     }
 
@@ -332,14 +337,15 @@ public sealed class @this : IDisposable
     // written somewhere (its address is looked up only then).
     private async ValueTask<global::app.type.item.setting.@this> Setting(System.Type @class)
     {
-        await Load();
+        // the rows first: a build is kept at the version after they are read
+        for (@this? s = this; s != null; s = s._parent) await s.Rows();
         var version = System.Threading.Interlocked.Read(ref Root._version);
         if (_built.TryGetValue(@class, out var entry) && entry.Version == version) return entry.Built;
         var address = Address(@class);
-        var setting = Build(address);
+        var setting = await Build(address);
         // an own row signed by a key that is not the app's (a store shipped with a cloned app) is refused, loud — as an
         // unsigned one is
-        if (Own(address) && Saved(address)?.Signature is { } signature && !await setting.IsOwn(signature, _context))
+        if (Own(address) && (await Saved(address))?.Signature is { } signature && !await setting.IsOwn(signature, _context))
             throw new global::app.error.AppException(new global::app.error.@this(
                 $"setting '{address}' is the actor's own and its stored row is signed by a key that is not this app's identity — it was not written by this app, and is not read",
                 "SettingForeign", 403));
@@ -348,14 +354,15 @@ public sealed class @this : IDisposable
     }
 
     // The setting at path as this scope sees it: the class's defaults ← the saved row ← this run's values.
-    private global::app.type.item.setting.@this Build(string path)
+    private async ValueTask<global::app.type.item.setting.@this> Build(string path)
     {
         var instance = Default(path) ?? throw new KeyNotFoundException($"'{path}' names no setting class.");
+        var saved = await Saved(path);
         // a saved row that could NOT be read (an older-shape row) answers its error here — the read of this
         // setting is loud and names the key + how to fix it, never a silent fall-back to the defaults
-        if (Saved(path) is { Success: false, Error: { } unreadable }) throw new global::app.error.AppException(unreadable);
+        if (saved is { Success: false, Error: { } unreadable }) throw new global::app.error.AppException(unreadable);
         // the saved row's options, an owned setting copied — this run's values below never reach the row
-        if (Saved(path)?.Peek() is global::app.type.item.setting.@this setting)
+        if (saved?.Peek() is global::app.type.item.setting.@this setting)
             foreach (var option in setting.Options)
                 option.SetValue(instance, option.GetValue(setting) is global::app.type.item.setting.@this owned ? owned.Copy() : option.GetValue(setting));
         // this run's values for its own options — a longer path under it (llm.query.cache under llm)
@@ -396,11 +403,13 @@ public sealed class @this : IDisposable
     {
         if (_classes != null) return _classes;
         var classes = new System.Collections.Generic.Dictionary<string, System.Type>(System.StringComparer.OrdinalIgnoreCase);
+        // each class of options the types hold, by the path its facts say it is read by (once per code, not an
+        // instance made to ask it)
         foreach (var type in _context.App.type.list.Items())
             if (type.ClrType is { } clr && typeof(global::app.type.item.setting.@this).IsAssignableFrom(clr)
                 && clr != typeof(global::app.type.item.setting.@this) && !clr.IsAbstract
                 && clr.GetConstructor(new[] { typeof(global::app.type.@this) }) != null)
-                classes[((global::app.type.item.setting.@this)System.Activator.CreateInstance(clr, _context.App.type.list[clr])!).Path] = clr;
+                classes[type.Facts(clr).Path] = clr;
         return _classes = classes;
     }
 

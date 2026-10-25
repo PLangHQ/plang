@@ -1,0 +1,5 @@
+/ a plugin's type joins only the app that loaded it: a test beside the one that loads TypeProvider.dll holds no "money".
+Start
+- set %types% = %!app.type.list%
+- any %types% where "name" == "money", write to %joined%
+- assert %joined% is false, "another test's plugin type never reaches this app"

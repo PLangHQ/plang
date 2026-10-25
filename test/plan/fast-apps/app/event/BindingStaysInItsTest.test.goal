@@ -1,0 +1,9 @@
+/ a binding a test makes while it runs is its own: bound app-wide on every step's start, it fires for this test's steps.
+Start
+- set %seen% = 0
+- on %!app.type.step.on.start%, before, call Seen, scope app
+- set %after% = 1
+- assert %seen% is greater than 0, "the binding fired for this test's own steps"
+
+Seen
+- set %seen% = %seen% + 1

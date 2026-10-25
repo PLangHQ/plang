@@ -21,7 +21,7 @@ public class StepWrittenGrantTests : System.IAsyncDisposable
 
     public StepWrittenGrantTests()
     {
-        app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-sec-" + System.Guid.NewGuid().ToString("N")[..8]));
+        app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-sec-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor);
         app.TestIdentity();
         user = app.actor.list.User;
         ctx = user.Context;

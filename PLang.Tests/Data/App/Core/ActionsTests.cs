@@ -6,7 +6,7 @@ namespace PLang.Tests.App.Core;
 
 public class ActionsTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [Test]
@@ -292,7 +292,7 @@ public class ActionsTests : System.IAsyncDisposable
         if (actions == null || actions.Count == 0)
             return (false, new global::app.error.ProgramError("No actions provided", key: "NoActionsProvided"));
 
-        var app = new global::app.@this("/app").Testing();
+        var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
 
         var notFound = new List<string>();
         foreach (var action in actions)
@@ -313,7 +313,7 @@ public class ActionsTests : System.IAsyncDisposable
     /// </summary>
     private StepActions DiscoverActions()
     {
-        var modules = new global::app.@this("/app").Testing().module.list;
+        var modules = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing().module.list;
 
         var actions = new StepActions(app.type.list);
 

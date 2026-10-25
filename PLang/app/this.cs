@@ -50,7 +50,14 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <summary>The one root: a copy of the app is the app.</summary>
     protected internal override global::app.type.item.@this Clone() => this;
 
-    private readonly CancellationTokenSource _shutdownCts = new();
+    // The app's life: bounded by its caller's, when an actor made it.
+    private readonly CancellationTokenSource _shutdownCts;
+
+    /// <summary>What the app is made from — the code or an actor: each of its lists is a layer over what it answers.</summary>
+    internal global::app.origin.@this origin { get; }
+
+    /// <summary>Whether the app holds code of its own: its layers hold types or modules it loaded.</summary>
+    internal bool HasCode => type.list.HasOwn || module.HasOwn;
     private bool _disposed;
 
     private global::app.service.list.@this? _services;
@@ -174,7 +181,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public ICache Cache { get; internal set; } = new global::app.module.cache.Memory();
 
     /// <summary>
-    /// The app's store — <c>.data/data.sqlite</c> (in memory while testing, under this app's id). One per
+    /// The app's store — <c>.data/data.sqlite</c> (in memory while testing, a database of its own). One per
     /// app — actors share it; its owners keep their tables (<c>settings</c>, setup's steps, the LLM cache, …).
     /// Opened by the default store provider at its first use, so an app that never touches it pays for no file, and a
     /// provider loaded before then is the one it keeps.
@@ -227,11 +234,11 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public global::app.module.build.@this? Build { get; set; }
 
     /// <summary>What this App is doing — derived from what it holds: building when it has a Build,
-    /// testing while its test session is open, otherwise running. Not a stored field, so there is no
+    /// testing while its test session is open or while the app that made it is testing, otherwise running. Not a stored field, so there is no
     /// second truth; the App branches on this, never on the presence itself.</summary>
     public global::app.type.item.choice.@this<global::app.Mode> Mode
         => Build != null ? global::app.Mode.Build
-         : test.list.Session != null ? global::app.Mode.Test
+         : test.list.Session != null || origin.Testing ? global::app.Mode.Test
          : global::app.Mode.Run;
 
     /// <summary>
@@ -283,18 +290,35 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// </summary>
     public keepalive.@this KeepAlive { get; } = new();
 
+    /// <summary>An app made from the code: a new code of its own, under its layers.</summary>
+    /// <param name="autoWireConsoleChannels">Whether its System and User are born with the console's standard channels,
+    /// wired when each first uses its channels. Their input is a non-blocking EOF sink: a prompt fails fast with
+    /// ChannelEof instead of reading the shared process stdin (which deadlocks under parallel tests); a caller that wants
+    /// to answer registers its own input/ask channel. The one interactive owner, the CLI (Executor), is made without
+    /// them and calls WireDefaultConsoleChannels to bind real stdin.</param>
     public @this(string absolutePath,
         string? environment = null,
         bool autoWireConsoleChannels = true)
+        : this(absolutePath, new global::app.origin.code(autoWireConsoleChannels), environment) { }
+
+    /// <summary>An app made by <paramref name="actor"/>, the actor that calls: its folder is its own, and its lists are
+    /// layers over the caller's app's. Its life ends with its caller's; it is who its caller is.</summary>
+    internal @this(string absolutePath, global::app.actor.@this actor) : this(absolutePath, actor, null) { }
+
+    private @this(string absolutePath, global::app.origin.@this origin, string? environment)
     {
+        this.origin = origin;
+        // the app's disk, holding the app's folder as what / is — first, as its origin answers it: a folder a sub app
+        // may not be made in is refused before anything of the app is made
+        filesystem = origin.Filesystem(absolutePath);
+        _shutdownCts = origin.Shutdown();
         Id = Guid.NewGuid().ToString("N")[..12];
         var trimmed = absolutePath.TrimEnd('/', '\\');
         var lastSep = trimmed.LastIndexOfAny(['/', '\\']);
         _folder = lastSep >= 0 ? trimmed[(lastSep + 1)..] : trimmed;
-        // the app's disk, holding the app's folder as what / is
-        filesystem = new(absolutePath);
 
-        // The types come first: every value is born holding its type from this list, the actors' contexts too.
+        // The types come first: every value is born holding its type from this list, the actors' contexts too — a
+        // layer over the types the origin answers.
         type = new(this);
         parent = new(type.list[typeof(global::app.parent.@this)]);
 
@@ -308,8 +332,10 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
 
         // Debug/Build are born on their flag (--debug/--build), not at
         // startup — null = off. Presence is the enable signal (no IsEnabled).
+        // the code providers, the built-ins registered at the registry's first use
         Code = new AppCode(actor.list.System.Context);
-        module = new(this);
+        // the actions, a layer of its own over the ones the origin answers
+        module = new(this, origin.Module(this));
         goal = new(this);
         test = new(this);
         error = new(this);
@@ -319,16 +345,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         action = type.list["action"];
         channel = type.list["channel"];
 
-        Code.RegisterDefaults();
-        // path's schemes, each a kind of path that builds its own path subclass. (The types' own
-        // scan finds the kind classes and choice's closed sets.)
-        var path = type.list[typeof(global::app.type.item.path.@this)];
-        type.list.Add(new global::app.type.item.path.scheme.@this("file", path, (raw, context) => global::app.type.item.path.file.@this.Resolve(raw, context)));
-        type.list.Add(new global::app.type.item.path.scheme.@this("http", path, (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
-        type.list.Add(new global::app.type.item.path.scheme.@this("https", path, (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
-        // The store: where it lives is decided when it opens — in memory while testing, scoped by this app's id
-        // (per-test apps never share a database: SQLite's shared cache merges in-memory databases of one name),
-        // else its file.
+        // The store: where it lives is decided when it opens — in memory while testing, a database the store names
+        // itself (no two apps share one, whatever id they load), else its file.
         // an environment given at construction is this run's value of the app's setting
         if (environment != null)
         {
@@ -342,34 +360,12 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
             var (provider, error) = Code.Get<global::app.store.code.IStore>();
             if (provider == null) throw new global::app.error.AppException(error!);
             return provider.Open(global::app.type.item.path.@this.Resolve("/" + global::app.store.@this.Folder + "/data.sqlite", actor.list.System.Context),
-                () => Mode.Value == global::app.Mode.Test ? $"system-{Id}" : null,
+                Mode.Value == global::app.Mode.Test,
                 actor.list.System.Context);
         });
 
-        // Auto-wire console channels for ad-hoc App constructions (sub-process
-        // test fixtures, embedded scenarios, C# tests, the `plang --test` child
-        // app). These are NOT the interactive terminal owner, so their input is
-        // a non-blocking EOF sink — a prompt fails fast with ChannelEof instead
-        // of reading the shared process stdin (which deadlocks under parallel
-        // tests). Ask I/O goes through channels: a caller that wants to answer
-        // registers its own input/ask channel (e.g. tests' CannedAnswerChannel).
-        // The one interactive owner — the CLI (Executor) — constructs with
-        // autoWireConsoleChannels:false and calls WireDefaultConsoleChannels
-        // itself to bind real stdin.
-        if (autoWireConsoleChannels)
-        {
-            WireConsoleChannels(actor.list.System, interactiveInput: false);
-            WireConsoleChannels(actor.list.User, interactiveInput: false);
-        }
     }
 
-    /// <summary>
-    /// Verifies the all-three-roles invariant on every I/O actor (System, User).
-    /// Returns Data.Error on first missing channel; Ok otherwise. PlangConsole
-    /// (or any entry point) must register Output/Error/Input on each before
-    /// goal execution. <see cref="Start"/> calls this and surfaces failure as
-    /// MissingRequiredChannelAtBoot before any user code runs.
-    /// </summary>
     /// <summary>
     /// Wires the console standard streams onto the given actor's Channels under
     /// the well-known names ("output", "error", "input"), with real interactive
@@ -389,27 +385,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// fast with ChannelEof rather than blocking on the shared process stdin.
     /// </summary>
     public static void WireConsoleChannels(global::app.actor.@this actor, bool interactiveInput)
-    {
-        // The console writes and reads in the channel setting's format (%!app.channel.setting.format%): text for a
-        // person at a terminal, plang's own for a program that runs this plang (--channel.setting.format=plang).
-        if (!actor.Channel.Contains(global::app.channel.list.@this.Output))
-            actor.Channel.Register(new global::app.channel.type.console.@this(
-                global::app.channel.list.@this.Output, Console.OpenStandardOutput(), global::app.channel.ChannelDirection.Output));
-        if (!actor.Channel.Contains(global::app.channel.list.@this.Error))
-            actor.Channel.Register(new global::app.channel.type.console.@this(
-                global::app.channel.list.@this.Error, Console.OpenStandardError(), global::app.channel.ChannelDirection.Output));
-        if (!actor.Channel.Contains(global::app.channel.list.@this.Input))
-            actor.Channel.Register(interactiveInput
-                // The one terminal owner (CLI) reads real stdin.
-                ? new global::app.channel.type.console.@this(
-                    global::app.channel.list.@this.Input, Console.OpenStandardInput(), global::app.channel.ChannelDirection.Input)
-                // Non-interactive: an empty in-memory stream — reads as instant
-                // EOF (ChannelEof), so a prompt with no registered answerer fails
-                // fast instead of blocking on the shared process stdin.
-                : global::app.channel.type.stream.@this.Memory(
-                    global::app.channel.list.@this.Input,
-                    global::app.channel.ChannelDirection.Input));
-    }
+        => actor.Channel.Wire(interactiveInput);
 
     /// <summary>
     /// Loads app identity from .build/app.pr. Called at startup.
@@ -594,5 +570,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         await KeepAlive.DisposeAsync();
         // The store lets its database go; one never asked for holds nothing.
         if (_store.IsValueCreated) _store.Value.Dispose();
+        // The step cache lets its entries and their expiry timers go.
+        Cache.Dispose();
     }
 }

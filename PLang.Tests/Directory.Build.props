@@ -12,6 +12,11 @@
     <!-- Emit source-generator output to disk so structural Generator tests can read it. -->
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <CompilerGeneratedFilesOutputPath>obj/Debug/net10.0/generated</CompilerGeneratedFilesOutputPath>
+    <!-- A test runs on the machine that builds it: its native assets (sqlite, libsodium) are that machine's alone,
+         not every runtime's (~72 MB a bin). The output stays at bin/<config>/net10.0, where dev.sh runs it. -->
+    <RuntimeIdentifier>$([System.Runtime.InteropServices.RuntimeInformation]::RuntimeIdentifier)</RuntimeIdentifier>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <SelfContained>false</SelfContained>
   </PropertyGroup>
 
   <!-- Disable EventSource/EventPipe to dodge a .NET 10 runtime teardown bug: an

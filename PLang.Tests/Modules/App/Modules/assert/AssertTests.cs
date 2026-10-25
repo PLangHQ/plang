@@ -18,7 +18,7 @@ public class AssertTests
 {
     private (global::app.actor.context.@this context, Variables memory) CreateContext()
     {
-        var app = new global::app.@this("/app").Testing();
+        var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         return (app.actor.list.User.Context, app.actor.list.User.Context.Variable);
     }
 
@@ -251,7 +251,7 @@ public class AssertTests
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-assertpath-" + tag + "-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
-        return (new global::app.@this(root).Testing(), root);
+        return (new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing(), root);
     }
 
     [Test]

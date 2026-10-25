@@ -6,7 +6,7 @@ namespace PLang.Tests.App.Types;
 /// </summary>
 public class KindsTests
 {
-    private readonly global::app.@this _app = new global::app.@this("/test").Testing();
+    private readonly global::app.@this _app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
 
     [After(Test)]
     public async Task Dispose() => await _app.DisposeAsync();

@@ -19,7 +19,7 @@ public class SignatureExpiryTests
     [Test] public async Task LiveRead_ExpiresTheSettingsWindowAfterCreated()
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-sigexp-" + Guid.NewGuid().ToString("N")[..8])).Testing();
+            "plang-sigexp-" + Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
 
         var layer = await ReadBack(app, "first");

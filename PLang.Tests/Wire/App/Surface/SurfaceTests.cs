@@ -37,7 +37,7 @@ public class SurfaceTests
 
         lines.Add("");
         lines.Add("# What a plang program sees");
-        await using var os = new global::app.@this(System.IO.Path.Combine(Fixture.Root(), "os")).Testing();
+        await using var os = new global::app.@this(System.IO.Path.Combine(Fixture.Root(), "os"), global::PLang.Tests.Parent.Actor).Testing();
         foreach (var type in os.type.list.Items().OrderBy(t => t.Name, System.StringComparer.Ordinal))
         {
             lines.Add("");
@@ -132,10 +132,45 @@ public class SurfaceTests
     {
         var ours = (await Surface()).Split('\n');
         var pinned = System.IO.File.ReadAllText(System.IO.Path.Combine(Fixture.Root(), Pinned)).Split('\n');
-        var added = ours.Except(pinned).Take(20).ToList();
-        var removed = pinned.Except(ours).Take(20).ToList();
-        await Assert.That(string.Join("\n", added.Select(l => "+ " + l).Concat(removed.Select(l => "- " + l))))
+        await Assert.That(Diff(ours, pinned))
             .IsEqualTo("").Because("the core's surface changed: an addition needs Ingi's yes, then AcceptTheSurface re-pins it and the commit names the decision");
+    }
+
+    // What differs between two surfaces: each line under the class (or type, or action) it belongs to, counted, so a
+    // member added, dropped or changed in one class shows whatever other classes hold — "+ " ours, "- " pinned.
+    private static string Diff(string[] ours, string[] pinned)
+    {
+        var have = Counted(ours);
+        var had = Counted(pinned);
+        var added = have.SelectMany(each => Enumerable.Repeat(each.Key, each.Value - had.GetValueOrDefault(each.Key))).Take(20);
+        var removed = had.SelectMany(each => Enumerable.Repeat(each.Key, each.Value - have.GetValueOrDefault(each.Key))).Take(20);
+        return string.Join("\n", added.Select(l => "+ " + l).Concat(removed.Select(l => "- " + l)));
+    }
+
+    // Each line of a surface under its section — the unindented line above it — with how many times it is there.
+    private static Dictionary<string, int> Counted(string[] lines)
+    {
+        var counted = new Dictionary<string, int>(System.StringComparer.Ordinal);
+        var section = "";
+        foreach (var line in lines)
+        {
+            if (line.Length > 0 && line[0] != ' ') section = line;
+            var key = line.Length > 0 && line[0] == ' ' ? $"{section}  ⟶ {line.TrimStart()}" : line;
+            counted[key] = counted.GetValueOrDefault(key) + 1;
+        }
+        return counted;
+    }
+
+    [Test]
+    public async Task AMemberDroppedFromAClass_Shows_ThoughAnotherClassHasTheSameLine()
+    {
+        var pinned = System.IO.File.ReadAllText(System.IO.Path.Combine(Fixture.Root(), Pinned)).Split('\n');
+        // one class's parameterless constructor, a line many classes have
+        var at = System.Array.IndexOf(pinned, "  ctor()");
+        var dropped = pinned.Where((_, i) => i != at).ToArray();
+
+        await Assert.That(pinned.Count(l => l == "  ctor()")).IsGreaterThan(1).Because("the line is one several classes have");
+        await Assert.That(Diff(dropped, pinned)).IsNotEqualTo("").Because("a class lost a constructor");
     }
 
     // Re-pins surface_golden.txt from C#: run by hand, once the change is decided.

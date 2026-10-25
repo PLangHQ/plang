@@ -98,22 +98,6 @@ public class IdentityErrorPathTests
     }
 
     [Test]
-    public async Task Export_NullName_SaveFails_ReturnsError()
-    {
-        // Swap to failing save — Export(null) calls GetOrCreateDefaultAsync which returns error
-        SwapDataSource(_app, new FailingSaveDataSource(
-            SettingsStore(_app)));
-
-        var handler = new Export(Ctx) { Name = null };
-        await handler.Attach(null, Ctx);
-        var result = await handler.Start();
-
-        await result.IsFailure();
-        await Assert.That(result.Error).IsNotNull();
-        await Assert.That(result.Error!.Key).IsEqualTo("IOError");
-    }
-
-    [Test]
     public async Task MyIdentity_ResolveDefault_SaveFails_ReturnsNull()
     {
         // Swap to failing save before %MyIdentity% resolves

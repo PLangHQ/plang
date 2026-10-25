@@ -1,0 +1,296 @@
+{
+  "branch": "fast-apps",
+  "sessions": [
+    {
+      "id": "be96ae57-56bf-4ad9-bc51-b0afd019bb50",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T01:32:13Z",
+      "intent": "OBP review of the whole fast-apps production diff (decision 61)",
+      "before": {
+        "assumptions": "98624ab6a..4d28eda40, 69 files; deferred items not re-raised unless worse",
+        "risk": "layered lists and lazy births hide shared-state writes"
+      },
+      "plan": ".bot/fast-apps/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/fast-apps/codeanalyzer/review.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "OBP review of 98624ab6a..4d28eda40 by three region readers plus spot checks; 3 blocking, 15 non-blocking. Read only."
+        }
+      ],
+      "timestamp_end": "2026-10-25T01:38:36Z",
+      "after": {
+        "status": "review written: .bot/fast-apps/codeanalyzer/review.md",
+        "health": "fail: 3 blocking (test-only code, flag at four doors, own-ness by ReferenceEquals)",
+        "notes": "no build/tests/ObpScan; findings 3 and 5-16 mostly the readers' with spot checks"
+      }
+    },
+    {
+      "id": "86efbd48-a13f-4e4c-9318-785180e1acf2",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T02:55:11Z",
+      "intent": "Re-review fast-apps fixes (63/65/66/74) and every touched file whole, older smells included",
+      "before": {
+        "assumptions": "tip 5d942c7af; 79 touched files; ruled items checked as ruled",
+        "risk": "renames across files can hide a fix that moved a smell; older smells in touched files now in scope"
+      },
+      "plan": ".bot/fast-apps/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/fast-apps/codeanalyzer/review2.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Re-review of fixes + 79 touched files read whole by three readers; blocking: Registry.Under null, rule-35 members; many older smells marked. Read only."
+        }
+      ],
+      "timestamp_end": "2026-10-25T03:03:35Z",
+      "after": {
+        "status": "review2 written: .bot/fast-apps/codeanalyzer/review2.md",
+        "health": "fail: 2 blocking groups; 15 of 18 v1 findings fixed at the root",
+        "notes": "no build/tests/ObpScan/bench; allocation findings from reading"
+      }
+    },
+    {
+      "id": "e1c24462-7920-40c9-941c-692097a1e878",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T04:28:37Z",
+      "intent": "Third fast-apps review: review2's findings against the coder's fixes (75-78), touched files whole",
+      "before": {
+        "assumptions": "tip f4f754455; 84 touched files, 48 changed since review2; ruled items checked as ruled",
+        "risk": "fixes to fixes can reintroduce nulls/sentinels; bench row pending stage 6"
+      },
+      "plan": ".bot/fast-apps/codeanalyzer/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/fast-apps/codeanalyzer/review3.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Third review at f4f754455: review2's findings checked against fixes 75-78; 84 touched files read by three readers; blocking: reader Shipped null, overflow check after frame built. Read only."
+        }
+      ],
+      "timestamp_end": "2026-10-25T04:33:27Z",
+      "after": {
+        "status": "review3 written: .bot/fast-apps/codeanalyzer/review3.md",
+        "health": "fail: 2 small blocking; review2's blocking all fixed",
+        "notes": "bench row pending stage 6; no build/tests/ObpScan"
+      }
+    },
+    {
+      "id": "0a9a5da5-8b5b-46d6-b826-4fa09d4cbe7e",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T05:43:50Z",
+      "intent": "Fourth fast-apps review (81-85) and the bench row",
+      "before": {
+        "assumptions": "tip 02aff152e; 24 production files changed since review3; stage 6 is project files",
+        "risk": "fixes to fixes; clean-build number taken under a shared machine"
+      },
+      "plan": ".bot/fast-apps/codeanalyzer/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/fast-apps/codeanalyzer/review4.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Fourth review at 02aff152e: review3 findings against fixes 81-84, 23 changed files read whole, stage 6 namespace check; no new blocking. Read only."
+        },
+        {
+          "paths": [
+            "Tools/Bench/record.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Two bench rows appended (full run at load 16.25; build-only rerun at load 13.66). Held memory flat; root birth +110 KB; clean build not settled under load."
+        }
+      ],
+      "timestamp_end": "2026-10-25T06:06:35Z",
+      "after": {
+        "status": "review4 written: .bot/fast-apps/codeanalyzer/review4.md",
+        "health": "fail, small: Add(kind) hold-then-guard cost; setup behaviour change; QRCoder-ImageSharp",
+        "notes": "bench loads 13-16; clean build needs a quiet run"
+      }
+    },
+    {
+      "id": "d1d73e1d-8177-43c3-91d7-49eb9cdbdb50",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T06:38:05Z",
+      "intent": "Fifth fast-apps review: review4's fixes (decision 86) and the verdict for the branch",
+      "before": {
+        "assumptions": "tip d050b9f50; nine production files changed since review4",
+        "risk": "fixes to fixes; bench under load"
+      },
+      "plan": ".bot/fast-apps/codeanalyzer/v5/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/fast-apps/codeanalyzer/review5.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "All review4 findings fixed at the root; root birth back in band (2,360 KB); one small blocking: public Registry.Add(kind) test-only again (rule 35)."
+        },
+        {
+          "paths": [
+            "Tools/Bench/record.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Birth and build row appended at load 12.7; bytes in band, times load-inflated, clean build unsettled."
+        }
+      ],
+      "timestamp_end": "2026-10-25T06:38:05Z",
+      "after": {
+        "status": "review5 written: .bot/fast-apps/codeanalyzer/review5.md",
+        "health": "fail, one small blocking (rule 35: Add(kind))",
+        "notes": "clean-build row still needs a quiet machine; ImageSharp 2.0.0 advisory check not done"
+      }
+    },
+    {
+      "id": "73a2c6dc-3f04-42d8-87d8-642863a9cb73",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T07:21:30Z",
+      "intent": "Sixth fast-apps review: review5's fixes (decisions 88-89) and the verdict",
+      "before": {
+        "assumptions": "tip 6420e4894; six production files changed since review5",
+        "risk": "package advisories claimed fixed"
+      },
+      "plan": ".bot/fast-apps/codeanalyzer/v6/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/fast-apps/codeanalyzer/review6.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "All review5 findings fixed at the root; PASS for the OBP review; dotnet list package --vulnerable still shows 3 High + 2 Moderate on ImageSharp 2.1.13."
+        }
+      ],
+      "timestamp_end": "2026-10-25T07:21:30Z",
+      "after": {
+        "status": "review6 written: .bot/fast-apps/codeanalyzer/review6.md",
+        "health": "pass (OBP); ImageSharp advisories open",
+        "notes": "no build/tests/ObpScan"
+      }
+    },
+    {
+      "id": "d0c5-fast-apps-docs-v1",
+      "bot": "docs",
+      "timestamp_start": "2026-10-25T11:00:00Z",
+      "timestamp_end": "2026-10-25T12:00:00Z",
+      "intent": "Docs pass before the fast-apps merge: origin/layers, hold, shared-write rule, bench; CLAUDE.md proposals.",
+      "before": {
+        "assumptions": "The log is claims; the code at the tip is truth.",
+        "risk": "A rule written from the log that the code no longer holds."
+      },
+      "plan": ".bot/fast-apps/docs/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "Documentation/v0.2/apps.md",
+            "Documentation/v0.2/good_to_know.md",
+            "Documentation/v0.2/architecture.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Each rule checked against the tip with file:line."
+        },
+        {
+          "paths": [
+            "CLAUDE.md",
+            "test/plan/fast-apps/start.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Three proposals applied; plan corrected."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "docs only",
+        "notes": "Satisfied."
+      }
+    },
+    {
+      "id": "ba5a534c-6f07-4a09-a916-a4ab495a2f2b",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T08:32:43Z",
+      "intent": "Read identity Default.cs and image/this.cs whole (N12) and record the full bench row at the tip (N15)",
+      "before": {
+        "assumptions": "tip 2401279ed; 23 lines changed in the two files since review6",
+        "risk": "stale restore voided the first row"
+      },
+      "plan": ".bot/fast-apps/codeanalyzer/v7/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/fast-apps/codeanalyzer/review7.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Both files pass with notes; no blocking."
+        },
+        {
+          "paths": [
+            "Tools/Bench/record.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Two rows appended (full; build/ptest/sweep after restore); first row annotated void for its test/sweep/build columns. Held memory flat; clean build 75.7 s not settled."
+        }
+      ],
+      "timestamp_end": "2026-10-25T08:32:43Z",
+      "after": {
+        "status": "review7 written: .bot/fast-apps/codeanalyzer/review7.md",
+        "health": "pass with notes",
+        "notes": "dev.sh does not restore dependents when a referenced project's packages change; one more quiet clean-build row needed"
+      }
+    },
+    {
+      "id": "0aee99ec-7d7b-4649-9708-88615eab7915",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T09:00:49Z",
+      "intent": "Eighth fast-apps review: the last read before the merge (decision 103)",
+      "before": {
+        "assumptions": "tip 5665127ef; commits since review7 plus 49aaf8199",
+        "risk": "dev.sh change could leave a stale restore"
+      },
+      "plan": ".bot/fast-apps/codeanalyzer/v8/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/fast-apps/codeanalyzer/review8.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "PASS: ChannelNames gone, export reads once, image size gate and probes gone, dev.sh restore stamp verified by a build; nothing blocks."
+        }
+      ],
+      "timestamp_end": "2026-10-25T09:00:49Z",
+      "after": {
+        "status": "review8 written: .bot/fast-apps/codeanalyzer/review8.md",
+        "health": "pass",
+        "notes": "dev.sh link-flag unset not yet on the tip"
+      }
+    }
+  ]
+}

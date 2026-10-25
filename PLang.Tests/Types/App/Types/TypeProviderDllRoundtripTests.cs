@@ -8,7 +8,7 @@ namespace PLang.Tests.App.Types;
 
 public class TypeProviderDllRoundtripTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private static readonly string FixtureDll = System.IO.Path.GetFullPath(
@@ -20,7 +20,7 @@ public class TypeProviderDllRoundtripTests : System.IAsyncDisposable
     [Test] public async Task LoadDll_Money_RegistersType_WritesExpectedWireString()
     {
         var asm = LoadFixture();
-        var types = new global::app.type.list.@this();
+        var types = new global::app.origin.code().type;
         var result = types.Add(asm, app.actor.list.User.Context);
 
         await Assert.That(result.Success).IsTrue();

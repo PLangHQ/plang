@@ -4,6 +4,4 @@ namespace app.@event.on;
 public sealed class remove : global::app.@event.@this
 {
     internal remove(binding.list.before before, binding.list.after after) : base("remove", before, after) { }
-
-    protected override global::app.@event.@this Of(global::app.@event.on.@this on) => on.remove;
 }

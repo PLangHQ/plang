@@ -33,8 +33,8 @@ public class AppRootTests
         System.IO.File.WriteAllText(System.IO.Path.Combine(outside, "out.txt"), "out");
         try
         {
-            await using var runner = new global::app.@this(root).Testing();
-            await using var app = new global::app.@this(runner.filesystem.root.Absolute).Testing();
+            await using var runner = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
+            await using var app = new global::app.@this(runner.filesystem.root.Absolute, global::PLang.Tests.Parent.Actor).Testing();
             var ch = new AskCountingChannel(app.actor.list.User.Context);
             app.actor.list.User.Channel.Register(ch);
 
@@ -52,7 +52,7 @@ public class AppRootTests
 
     [Test] public async Task TheAppsParent_IsTheLink()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
 
         var parent = await new global::app.type.item.variable.@this("!app.parent", ctx.App.type.list).Start(ctx);
@@ -70,7 +70,7 @@ public class AppRootTests
     // naming both, under any spelling
     [Test] public async Task WritingAMemberTwoMembersMatch_IsTheErrorNamingBoth()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var item = new CasedItem();
 
@@ -94,7 +94,7 @@ public class AppRootTests
     // the error naming both, under any spelling
     [Test] public async Task TwoMarkedMembersDifferingOnlyByCase_AreTheErrorNamingBoth()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var held = new global::app.data.@this("rows", new CasedList(app.type.list["list"]), context: ctx);
 
@@ -115,7 +115,7 @@ public class AppRootTests
 
     [Test] public async Task TwoMembersDifferingOnlyByCase_AreTheErrorNamingBoth()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var held = new global::app.data.@this("cased", new global::app.type.clr.@this(new Cased(), ctx), context: ctx);
 

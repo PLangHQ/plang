@@ -50,7 +50,7 @@ public class LlmTypeTests
     [Test]
     public async Task AText_DeclaredMessages_IsTheUsersMessage()
     {
-        await using var app = new global::app.@this("/tmp/llmmsg-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        await using var app = new global::app.@this("/tmp/llmmsg-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var messages = new global::app.data.@this("Message", "say hi in one word", new global::app.type.@this("list", "message"), context: ctx)
             .As<global::app.type.item.list.@this<LlmMessage>>();
@@ -68,7 +68,7 @@ public class LlmTypeTests
     [Test]
     public async Task AListOfMessageDicts_ReadsAsTheMessages()
     {
-        await using var app = new global::app.@this("/tmp/llmmsg-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        await using var app = new global::app.@this("/tmp/llmmsg-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var list = new List<object?>
         {
@@ -105,7 +105,7 @@ public class LlmTypeTests
     [Test]
     public async Task Call_Parallel_DefaultsFalse()
     {
-        await using var app = new global::app.@this("/test").TestSigning();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).TestSigning();
         var (handler, _) = await Make.Tool(app.actor.list.User.Context, "Any").Bind(app.actor.list.User.Context);
         var call = (global::app.module.goal.Call)handler!;
         await Assert.That(await call.Parallel.ToBooleanAsync()).IsFalse();

@@ -17,10 +17,12 @@ namespace app.type.reader;
 /// The file name maps to the kind token (<c>Default.cs</c> → wildcard
 /// <c>"*"</c>); the parent folder name maps to the PLang type name.</para>
 ///
-/// <para><see cref="Register"/> is the runtime seam for DLLs loaded via
-/// <c>code.load</c> — runtime registrations shadow generator-discovered entries.</para>
+/// <para>Two kinds: the code's readers (<see cref="code"/>), the ones its facts ship, and a layer's
+/// (<see cref="layer"/>), only what its app registers, over the readers under it. <see cref="Register"/> is the
+/// runtime seam for DLLs loaded via <c>code.load</c> — runtime registrations shadow generator-discovered
+/// entries.</para>
 /// </summary>
-public sealed class @this
+public abstract class @this
 {
     /// <summary>Wildcard kind token — covers any kind the type reads uniformly.</summary>
     public const string AnyKind = "*";
@@ -31,7 +33,6 @@ public sealed class @this
     /// </summary>
     public delegate object? Read(object raw, string? kind, ReadContext ctx);
 
-    private readonly ConcurrentDictionary<(string Type, string Kind), Read> _generated = new();
     private readonly ConcurrentDictionary<(string Type, string Kind), Read> _runtime = new();
 
     // The typed (ITypeReader) registry — the two read modes live side by side, and
@@ -43,17 +44,35 @@ public sealed class @this
     //     (CSV parse, base64, JSON-of-a-string). A token reader buys nothing here.
     // A type may answer both — its wire value streams via Typed, its content form
     // (a file's bytes materialising through source.Value) decodes via Of.
-    private readonly ConcurrentDictionary<(string Type, string Kind), ITypeReader> _generatedTyped = new();
     private readonly ConcurrentDictionary<(string Type, string Kind), ITypeReader> _runtimeTyped = new();
 
-    private readonly object _initLock = new();
-    private bool _initialized;
+    // The readers an assembly ships under its serializer folders, from the code's facts: each token reader the code
+    // made (the token-stream table), each whole-payload decode as it is. Readers that ship none hold an empty one.
+    private protected sealed class shipped
+    {
+        internal readonly Dictionary<(string Type, string Kind), Read> Payloads = new();
+        internal readonly Dictionary<(string Type, string Kind), ITypeReader> Tokens = new();
 
-    /// <summary>
-    /// Assemblies to scan for <c>serializer/&lt;kind&gt;.cs</c> classes.
-    /// Defaults to the App assembly; consumers can extend (test fixtures).
-    /// </summary>
-    public List<Assembly> Assemblies { get; } = new() { typeof(@this).Assembly };
+        internal shipped() { }
+
+        internal shipped(global::app.type.list.@this.Code code, IEnumerable<Assembly> assemblies)
+        {
+            foreach (var assembly in assemblies)
+            {
+                var library = code[assembly];
+                foreach (var (type, reader) in library.Tokens)
+                    Tokens[(type, reader.Kind)] = reader;
+                foreach (var (type, kind, read) in library.Payloads)
+                    Payloads[(type, kind)] = read;
+            }
+        }
+    }
+
+    // The readers these ship, each kind its own: the code's, made from its facts; a layer's, none.
+    private protected abstract shipped Shipped { get; }
+
+    // Readers are the code's or a layer's, made by the type list alone.
+    private protected @this() { }
 
     /// <summary>
     /// Returns the <see cref="Read"/> delegate registered for
@@ -61,18 +80,9 @@ public sealed class @this
     /// the wildcard <c>"*"</c> entry, or null when neither is present. Runtime
     /// registrations win over generated entries; an exact (type, kind) match
     /// wins over the wildcard at the same level. Precedence: runtime-exact → generated-exact →
-    /// runtime-"*" → generated-"*".
+    /// runtime-"*" → generated-"*", then the readers under a layer.
     /// </summary>
-    public Read? Of(string typeName, string? kind)
-    {
-        EnsureInitialized();
-        var k = string.IsNullOrEmpty(kind) ? AnyKind : kind!;
-        if (_runtime.TryGetValue((typeName, k), out var rt)) return rt;
-        if (_generated.TryGetValue((typeName, k), out var gen)) return gen;
-        if (_runtime.TryGetValue((typeName, AnyKind), out var rtAny)) return rtAny;
-        if (_generated.TryGetValue((typeName, AnyKind), out var genAny)) return genAny;
-        return null;
-    }
+    public Read? Of(string typeName, string? kind) => Payload(typeName, kind);
 
     /// <summary>
     /// Returns the <see cref="ITypeReader"/> registered for
@@ -81,15 +91,22 @@ public sealed class @this
     /// generated-exact → runtime-"*" → generated-"*". Null when the type has not
     /// been converted to a typed reader yet (the caller falls back to <see cref="Of"/>).
     /// </summary>
-    public ITypeReader? Typed(string typeName, string? kind)
+    public ITypeReader? Typed(string typeName, string? kind) => Token(typeName, kind);
+
+    // The whole-payload decode these readers hold for the type and kind, in the precedence Of names.
+    private protected virtual Read? Payload(string typeName, string? kind) => Find(_runtime, Shipped.Payloads, typeName, kind);
+
+    // The token reader these readers hold for the type and kind, in the precedence Typed names.
+    private protected virtual ITypeReader? Token(string typeName, string? kind) => Find(_runtimeTyped, Shipped.Tokens, typeName, kind);
+
+    // The entry for the type and kind, in the one precedence both tables are read by: runtime-exact → shipped-exact →
+    // runtime-"*" → shipped-"*".
+    private T? Find<T>(ConcurrentDictionary<(string Type, string Kind), T> runtime, Dictionary<(string Type, string Kind), T> shipped,
+        string typeName, string? kind) where T : class
     {
-        EnsureInitialized();
         var k = string.IsNullOrEmpty(kind) ? AnyKind : kind!;
-        if (_runtimeTyped.TryGetValue((typeName, k), out var rt)) return rt;
-        if (_generatedTyped.TryGetValue((typeName, k), out var gen)) return gen;
-        if (_runtimeTyped.TryGetValue((typeName, AnyKind), out var rtAny)) return rtAny;
-        if (_generatedTyped.TryGetValue((typeName, AnyKind), out var genAny)) return genAny;
-        return null;
+        return runtime.GetValueOrDefault((typeName, k)) ?? shipped.GetValueOrDefault((typeName, k))
+            ?? runtime.GetValueOrDefault((typeName, AnyKind)) ?? shipped.GetValueOrDefault((typeName, AnyKind));
     }
 
     /// <summary>
@@ -127,13 +144,14 @@ public sealed class @this
     /// and never answer here. Null when no kind-specific reader exists (the
     /// caller falls back to the format family). Runtime registrations win.
     /// </summary>
-    public string? TypeOf(string? kind)
+    public string? TypeOf(string? kind) => string.IsNullOrEmpty(kind) ? null : Owner(kind!);
+
+    // The type these readers read under a kind-specific reader of <paramref name="kind"/>.
+    private protected virtual string? Owner(string kind)
     {
-        if (string.IsNullOrEmpty(kind)) return null;
-        EnsureInitialized();
         foreach (var key in _runtime.Keys)
             if (string.Equals(key.Kind, kind, System.StringComparison.OrdinalIgnoreCase)) return key.Type;
-        foreach (var key in _generated.Keys)
+        foreach (var key in Shipped.Payloads.Keys)
             if (string.Equals(key.Kind, kind, System.StringComparison.OrdinalIgnoreCase)) return key.Type;
         return null;
     }
@@ -158,92 +176,5 @@ public sealed class @this
         _runtimeTyped[(typeName, kind)] = reader;
     }
 
-    // The word of the one item type the namespace declares by its word ([PlangType]); null when it declares none, or more.
-    private static string? Declared(Assembly assembly, string @namespace)
-    {
-        var words = assembly.GetTypes()
-            .Where(t => t.Namespace == @namespace && typeof(global::app.type.item.@this).IsAssignableFrom(t))
-            .Select(t => t.GetCustomAttribute<global::app.Attributes.PlangTypeAttribute>(inherit: false)?.Name)
-            .Where(w => !string.IsNullOrEmpty(w))
-            .Distinct()
-            .ToList();
-        return words.Count == 1 ? words[0] : null;
-    }
-
-    private void EnsureInitialized()
-    {
-        if (_initialized) return;
-        lock (_initLock)
-        {
-            if (_initialized) return;
-            foreach (var asm in Assemblies)
-                IndexAssembly(asm);
-            _initialized = true;
-        }
-    }
-
-    private void IndexAssembly(Assembly assembly)
-    {
-        foreach (var type in assembly.GetTypes())
-        {
-            if (!type.IsClass) continue;
-            if (string.IsNullOrEmpty(type.Namespace)) continue;
-            if (!type.Namespace!.EndsWith(".serializer", System.StringComparison.Ordinal)) continue;
-
-            // namespace shape: <the type's namespace>.serializer — the reader is its type's, registered under
-            // the name that type goes by (its word, else its namespace). A module's serializer folder reads the one
-            // type the module declares by its word ([PlangType("ask")] in app.module.output); a folder with no such
-            // type registers under its last segment.
-            var ns = type.Namespace;
-            var pivot = ns.LastIndexOf(".serializer", System.StringComparison.Ordinal);
-            var head = ns[..pivot];
-            var lastDot = head.LastIndexOf('.');
-            if (lastDot < 0) continue;
-            var typeName = global::app.type.item.@this.NameOf(assembly, head) ?? Declared(assembly, head) ?? head[(lastDot + 1)..].TrimStart('@');
-
-            // The typed (ITypeReader) pull reader — an instance class whose own Kind
-            // names the (type, kind) variant. Registered into the token-stream table;
-            // the static Default.Read branch below registers the whole-payload decode.
-            // A type may ship both (its wire read and its content decode).
-            if (!type.IsAbstract && !type.IsGenericTypeDefinition
-                && typeof(ITypeReader).IsAssignableFrom(type)
-                && type.GetConstructor(System.Type.EmptyTypes) is { } ctor)
-            {
-                var instance = (ITypeReader)ctor.Invoke(null);
-                _generatedTyped[(typeName, instance.Kind)] = instance;
-                continue;
-            }
-
-            if (!type.IsAbstract || !type.IsSealed) continue; // static class
-
-            // file/class name maps to kind/format token; "Default" → wildcard.
-            var kind = type.Name.Equals("Default", System.StringComparison.Ordinal)
-                ? AnyKind
-                : type.Name.ToLowerInvariant();
-
-            // READ — static Read(object raw, string? kind, ReadContext).
-            var method = type.GetMethod("Read",
-                BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
-            if (method is not null
-                && method.GetParameters() is { Length: 3 } parameters
-                && parameters[2].ParameterType == typeof(ReadContext))
-            {
-                // Reflection wraps a thrown exception in TargetInvocationException;
-                // unwrap so callers (source.Value's parse-failure catch) see the real
-                // JsonException/FormatException and author their own error, rather than
-                // a reflection wrapper leaking to the courier.
-                Read del = (raw, k, ctx) =>
-                {
-                    try { return method.Invoke(null, new object?[] { raw, k, ctx }); }
-                    catch (System.Reflection.TargetInvocationException tie) when (tie.InnerException != null)
-                    {
-                        System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(tie.InnerException).Throw();
-                        throw; // unreachable — Throw() always rethrows
-                    }
-                };
-                _generated[(typeName, kind)] = del;
-            }
-        }
-    }
 
 }

@@ -71,11 +71,6 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
     /// <summary>The App this run belongs to — reporters read its version for drift.</summary>
     internal global::app.@this App => _app;
 
-    /// <summary>Fires once per test's App after it is made and configured (its session
-    /// open), before the test's goal runs — a probe snapshots the test's App here. Parallel tests fire it
-    /// concurrently.</summary>
-    internal event System.Action<global::app.@this>? Made;
-
     /// <summary>
     /// Runs the tests <paramref name="given"/> holds, as many at once as test's setting says (≤ 0: one per
     /// processor), each running itself in an App of its own — the file is the App boundary. A test that isn't
@@ -92,10 +87,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         var executed = new global::app.type.item.list.@this<global::app.test.@this>(tests, given.Type);
         if (tests.Count == 0) return executed;
 
-        var parallel = (await context.Setting.Get<global::app.test.setting.@this>()).Parallel.ToInt32();
-        if (parallel < 1) parallel = System.Environment.ProcessorCount;
-
-        using var semaphore = new SemaphoreSlim(parallel);
+        using var semaphore = new SemaphoreSlim((await context.Setting.Get<global::app.test.setting.@this>()).Width);
         await Task.WhenAll(tests.Select(async test =>
         {
             await semaphore.WaitAsync(context.CancellationToken);
@@ -120,14 +112,23 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         {
             var listed = await root.List(match.ToString(), under.Value == global::app.type.item.path.subfolder.include, context);
             if (!listed.Success) return listed;
-            var tests = new List<data.@this>();
-            if (await listed.Value() is global::app.type.item.list.@this files)
-                foreach (var row in files.Items(context))
+            var files = new List<global::app.type.item.path.file.@this>();
+            if (await listed.Value() is global::app.type.item.list.@this list)
+                foreach (var row in list.Items(context))
                     // .test.goal files resolve only under the file scheme; another scheme is skipped
                     if (await row.Value<global::app.type.item.path.@this>() is global::app.type.item.path.file.@this file)
-                        tests.Add(new data.@this("", await Of(file, context), context: context));
+                        files.Add(file);
+            // each file made its test as many at once as a run runs tests (each writes nothing shared), the tests
+            // kept in the listing's order
+            using var gate = new SemaphoreSlim((await context.Setting.Get<global::app.test.setting.@this>()).Width);
+            var tests = await Task.WhenAll(files.Select(async file =>
+            {
+                await gate.WaitAsync(context.CancellationToken);
+                try { return new data.@this("", await Of(file, context), context: context); }
+                finally { gate.Release(); }
+            }));
             return (data.@this)context.Ok<global::app.type.item.list.@this<global::app.test.@this>>(
-                new global::app.type.item.list.@this<global::app.test.@this>(tests,
+                new global::app.type.item.list.@this<global::app.test.@this>(tests.ToList(),
                     context.App.type.list[typeof(global::app.type.item.list.@this<global::app.test.@this>)]));
         }));
 
@@ -167,17 +168,16 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
             => new(context.App.type.list) { Goal = goal, Status = Status.Stale, StatusReason = reason };    }
 
     // One test: this run's coverage takes in the goals it reaches (a site that never runs still shows); a test
-    // that isn't Ready is recorded, not run; a Ready one runs itself in an App of its own, rooted at this one's folder
-    // (the .pr files' root-relative paths resolve as they were built), testing it (its session open) — the App lives
-    // exactly as long as the run.
+    // that isn't Ready is recorded, not run; a Ready one runs itself in an App of its own, made by the asker's actor
+    // and rooted at this one's folder (the .pr files' root-relative paths resolve as they were built), testing it (its
+    // session open) — the App lives exactly as long as the run, and no longer than its caller.
     private async Task Run(global::app.test.@this test, actor.context.@this context)
     {
         foreach (var goal in test.Reach) Report.Coverage.Add(goal);
         if (test.Status == Status.Ready)
         {
-            await using var app = new global::app.@this(_app.filesystem.root.Absolute);
+            await using var app = new global::app.@this(_app.filesystem.root.Absolute, context.Actor!);
             await app.test.list.Open(test);
-            Made?.Invoke(app);
             await test.Start(app, context);
             Report.Coverage.Merge(app.test.list.Report.Coverage);
         }

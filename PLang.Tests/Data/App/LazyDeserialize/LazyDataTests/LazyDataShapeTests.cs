@@ -12,7 +12,7 @@ namespace PLang.Tests.App.LazyDeserialize.LazyDataTests;
 public class LazyDataShapeTests : System.IAsyncDisposable
 {
     private readonly global::app.@this _app = new global::app.@this(
-        "/tmp/LazyDataShapeTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+        "/tmp/LazyDataShapeTests-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     // Independent #4 companion — a serialized Data has no `raw` key; the wire

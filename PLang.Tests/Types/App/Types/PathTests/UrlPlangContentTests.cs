@@ -11,7 +11,7 @@ public class UrlPlangContentTests
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-urlplang-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
         // real signing — the no-crypto test signer verifies anything, and verifying is what's under test
-        var app = new global::app.@this(root);
+        var app = new global::app.@this(root, global::PLang.Tests.Parent.Actor);
         (app).TestIdentity();
         return (app, root);
     }

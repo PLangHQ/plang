@@ -8,7 +8,7 @@ namespace PLang.Tests.App.Modules.llm;
 public class ComposedActionsAreObservableTests
 {
     private static void Watch(global::app.@this app, string module, string action, List<string> seen)
-        => app.type.list["action"].Own().Bind("start", global::app.@event.When.before, (item, _, ctx) =>
+        => app.actor.list.System.on.Bind(app.type.list["action"], "start", global::app.@event.When.before, (item, _, ctx) =>
         {
             if (item is global::app.goal.step.action.@this started && started.Module.Name == module && started.Name == action)
             {
@@ -16,12 +16,12 @@ public class ComposedActionsAreObservableTests
                 return Task.FromResult(ctx.Error(new global::app.error.@this("stopped by the watcher", "Watched", 400)));
             }
             return Task.FromResult(ctx.Ok());
-        }, app.actor.list.System, global::app.@event.binding.Scope.app);
+        }, global::app.@event.binding.Scope.app);
 
     // llm's call to the model goes through http.request as an action: a before-binding there sees it.
     [Test] public async Task LlmsHttpCall_IsSeenByABindingOnHttpRequest()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "composed-" + Guid.NewGuid().ToString("N")[..8])).Testing();
+        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "composed-" + Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         LlmTestHelper.SetupMockHttp(app);
         var ctx = app.actor.list.System.Context;
         var seen = new List<string>();
@@ -40,7 +40,7 @@ public class ComposedActionsAreObservableTests
     // a binding on output.ask (which could answer in the actor's place) never sees it.
     [Test] public async Task TheConsentDoorsAsk_GoesToTheActorsInput_NotThroughOutputAsk()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var seen = new List<string>();
         Watch(app, "output", "ask", seen);

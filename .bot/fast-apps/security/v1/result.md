@@ -1,0 +1,9 @@
+# security v1 — fast-apps c1837a736 (System's standing grants made at its permission view's first ask, decision 47)
+
+Verdict: PASS for c1837a736. One carry (S-A, not caused by the commit). Probes `RoleStandingProbeTests` (18; 17 green, 1 red by design) pushed as ea42551e2; StandingTests 2/2, BirthTests 9/9 green.
+
+Checked clean: grants unchanged (System exactly os exact+glob r/w/d/x and stores exact+glob r/w/d; User exactly os r/x; nothing else for either; user has no stores grant on the folder or a file); never asked before stood — the view stands in its ctor and is published by CompareExchange (`actor/this.cs:72`), 64-thread first ask yields one instance with all grants and no refusal/ask; the loser view of a race is discarded and its Stand has no side effect outside itself; no re-entrancy (bare actor + Permission, whole-app birth); a sub app's System stands only its own os and own `.data`, neither sub actor answers the maker's `.data`, the maker's grants are unchanged; names/role per view.
+
+Not probed: the CopyTo/MoveTo ask path and Saved() as first touch; the pre-commit grant set was compared by count/paths, the old commit was not run; decision 4 (a sub app's System signing with its caller's key) is outside this commit.
+
+S-A (Low today, latent; carry): `PLang/app/actor/role/system.cs` stands the stores grant for the sub app's own `app.filesystem.store`, and IsStore is relative to that — so a sub app rooted at an ANCESTOR of its maker sees the maker's `<makerRoot>/.data` as plain in-root and authorizes reads/writes of it with no ask (red: `RoleStandingProbeTests.P4_ASubAppRootedAtAnAncestor_DoesNotReachTheMakersStores_ThroughItsViews`). Reached only if a sub app's path can be chosen: the sole production caller (`app/test/list/this.cs:178`) passes the maker's own root. Fix: a sub app's root must be a descendant of (or equal to) its maker's, or an ancestor app's stores folder is refused in the sub (IsStore across the chain of makers).

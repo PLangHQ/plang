@@ -113,16 +113,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     [global::app.LlmBuilder, global::app.Out, global::app.Store]
     public global::app.type.item.path.@this? Path { get; init; }
 
-    private int? _width;
-    private int? _height;
-
-    /// <summary>Lazy width — read on first access via SixLabors.ImageSharp.
-    /// Valid once bytes are in memory (bytes-backed, or after <see cref="BytesAsync"/>).</summary>
-    public int Width => _width ??= ProbeDimensions().w;
-
-    /// <summary>Lazy height — read on first access via SixLabors.ImageSharp.</summary>
-    public int Height => _height ??= ProbeDimensions().h;
-
     /// <summary>THE PURE CORE — an <c>image</c> passes through; a <c>byte[]</c> declared <c>as image</c> becomes the
     /// image its magic bytes name (the declaration is the ask), born holding the app's type of that kind, asked of
     /// <paramref name="context"/>'s types. A string source needs the scheme registry and lives in the courier below;
@@ -303,13 +293,5 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         {
             return (false, null);
         }
-    }
-
-    // An image's size, read from its header. Bytes that can't be identified are an error, never a 0×0 image.
-    private (int w, int h) ProbeDimensions()
-    {
-        if (Bytes.Length == 0) return (0, 0);
-        var info = SixLabors.ImageSharp.Image.Identify(Bytes);
-        return (info.Width, info.Height);
     }
 }

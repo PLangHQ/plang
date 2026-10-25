@@ -45,7 +45,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
     [Test] public async Task SameImage_TextWriter_GivesItsSize()
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-cut2t-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            "plang-cut2t-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var p = global::app.type.item.path.@this.Resolve("/srv/photo.png", app.actor.list.User.Context);
         var img = app.actor.list.User.Context.Image(p!, PngBytes);
 
@@ -58,7 +58,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
     [Test] public async Task SameImage_JsonWriter_GivesBase64String()
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-cut2j-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            "plang-cut2j-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var img = app.actor.list.User.Context.Image(PngBytes, "image/png");
 
         using var ms = new System.IO.MemoryStream();
@@ -74,7 +74,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
     [Test] public async Task SameInstance_TwoWriters_NeverReMaterializesValue()
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-cut2s-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            "plang-cut2s-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var p = global::app.type.item.path.@this.Resolve("/srv/x.png", app.actor.list.User.Context);
         var img = app.actor.list.User.Context.Image(p!, PngBytes);
         var beforeBytes = img.Bytes;
@@ -91,7 +91,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
     [Test] public async Task ImageInstance_DataTypeStaysImage_AcrossBothChannels()
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-cut2i-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            "plang-cut2i-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var img = app.actor.list.User.Context.Image(PngBytes, "image/png");
         var data = new global::app.data.@this("photo", img,
             new global::app.type.@this("image"), context: app.actor.list.User.Context);

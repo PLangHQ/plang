@@ -8,7 +8,7 @@ namespace PLang.Tests.App.actions.variable;
 public class BornTypedDeclineTests
 {
     private global::app.@this _app = null!;
-    [Before(Test)] public void Setup() => _app = new global::app.@this("/app").Testing();
+    [Before(Test)] public void Setup() => _app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
 
     // Direct unit test on the decline seam (Variable.Create, app/type/item/variable/this.cs).
     [Test]

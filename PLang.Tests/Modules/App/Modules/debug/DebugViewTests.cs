@@ -4,7 +4,7 @@ namespace PLang.Tests.App.Modules.debug;
 // a module doesn't carry every module — so a goal writes, however large the app.
 public class DebugViewTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/tmp/debugview-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+    private readonly global::app.@this _app = new global::app.@this("/tmp/debugview-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;
@@ -96,8 +96,8 @@ public class DebugViewTests : System.IAsyncDisposable
     [Test]
     public async Task ABindingDump_IsItsName()
     {
-        var binding = _app.type.list["action"].Own().Bind("start", global::app.@event.When.before,
-            (_, _, c) => System.Threading.Tasks.Task.FromResult(c.Ok()), _app.actor.list.User, global::app.@event.binding.Scope.actor);
+        var binding = _app.actor.list.User.on.Bind(_app.type.list["action"], "start", global::app.@event.When.before,
+            (_, _, c) => System.Threading.Tasks.Task.FromResult(c.Ok()), global::app.@event.binding.Scope.actor);
 
         var written = await binding.Debug(Ctx);
 

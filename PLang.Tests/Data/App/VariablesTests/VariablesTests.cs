@@ -8,7 +8,7 @@ public class VariablesTests : System.IAsyncDisposable
     // Born-with-context: a Variables under test is born from this app's user context
     // (bare `new Variables(_app.actor.list.User.Context)` would birth context-less values that throw on Set).
     private readonly global::app.@this _app = new global::app.@this(
-        "/tmp/vars-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+        "/tmp/vars-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     [Test]
@@ -138,7 +138,7 @@ public class VariablesTests : System.IAsyncDisposable
     [Test]
     public async Task Set_DotPath_SetsPropertyOnObject()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var stack = app.actor.list.User.Context.Variable;
 
         var person = stack.Context.Dict();
@@ -426,7 +426,7 @@ public class VariablesTests : System.IAsyncDisposable
     {
         // A variable index in a READ resolves in the walk via the value's context
         // (Segment.Index.ResolveKey) — so the store needs a context.
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var stack = app.actor.list.User.Context.Variable;
         var items = new List<object> { "zero", "one", "two" };
         stack.Set("items", items);
@@ -750,7 +750,7 @@ public class VariablesTests : System.IAsyncDisposable
     [Test]
     public async Task PLangContext_StampsContextOnVariablesData()
     {
-        await using var engine = new global::app.@this("/test").Testing();
+        await using var engine = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         // Variables set through global::app.actor.context.@this's Variables get context stamped
@@ -762,7 +762,7 @@ public class VariablesTests : System.IAsyncDisposable
     [Test]
     public async Task PLangContext_Put_KeepsTheDatasBirthContext()
     {
-        await using var engine = new global::app.@this("/test").Testing();
+        await using var engine = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         var data = new Data("test", "hello", context: engine.actor.list.User.Context);
@@ -775,7 +775,7 @@ public class VariablesTests : System.IAsyncDisposable
     [Test]
     public async Task Clone_PreservesDataContext()
     {
-        await using var engine = new global::app.@this("/test").Testing();
+        await using var engine = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         context.Variable.Set("name", "John");
@@ -789,11 +789,11 @@ public class VariablesTests : System.IAsyncDisposable
     [Test]
     public async Task ChildContext_ClonedData_KeepsItsBirthContext()
     {
-        await using var engine = new global::app.@this("/test").Testing();
+        await using var engine = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var parentContext = new global::app.actor.context.@this(engine, engine.actor.list.User);
         parentContext.Variable.Set("name", "John");
 
-        var childContext = parentContext.CreateChild();
+        var childContext = new global::app.actor.context.@this(engine, engine.actor.list.User, parentContext.Variable.Clone(), parentContext);
 
         // The child sees the variable; the Data keeps the context it was born with — never re-pointed.
         var seen = (await childContext.Variable.Get("name"))!;
@@ -805,13 +805,13 @@ public class VariablesTests : System.IAsyncDisposable
 public class VariablesAccessorTests : System.IAsyncDisposable
 {
     private readonly global::app.@this _app = new global::app.@this(
-        "/tmp/varsacc-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+        "/tmp/varsacc-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     [Test]
     public async Task Clone_PreservesContext()
     {
-        var engine = new global::app.@this("/app").Testing();
+        var engine = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User, new Variables(_app.actor.list.User.Context));
         context.Variable.Set("x", 1);
 

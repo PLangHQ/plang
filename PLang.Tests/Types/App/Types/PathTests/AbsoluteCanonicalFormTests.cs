@@ -18,7 +18,7 @@ public class AbsoluteCanonicalFormTests
     {
         var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-abs-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(dir);
-        var app = new global::app.@this(dir).Testing();
+        var app = new global::app.@this(dir, global::PLang.Tests.Parent.Actor).Testing();
         return (app, app.actor.list.User.Context);
     }
 

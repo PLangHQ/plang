@@ -10,7 +10,7 @@ namespace PLang.Tests.App.VariablesTests;
 public class AtomicStepTests : System.IAsyncDisposable
 {
     private readonly global::app.@this _app = new global::app.@this(
-        "/tmp/atomic-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+        "/tmp/atomic-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     [Test]
@@ -35,9 +35,9 @@ public class AtomicStepTests : System.IAsyncDisposable
         var store = _app.actor.list.User.Context.Variable;
         await store.Set("l", new List(_app.type.list["list"]));
         var held = await store.Get("l");
-        _app.variable.type.Own().Bind("set", global::app.@event.When.before,
+        _app.actor.list.User.on.Bind(_app.variable.type, "set", global::app.@event.When.before,
             (_, _, c) => System.Threading.Tasks.Task.FromResult(c.Error(new global::app.error.@this("not today", "Refused", 403))),
-            _app.actor.list.User, global::app.@event.binding.Scope.actor);
+            global::app.@event.binding.Scope.actor);
 
         var answer = await store.Replace("l", held, new List(_app.type.list["list"]));
 

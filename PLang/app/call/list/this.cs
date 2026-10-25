@@ -48,31 +48,29 @@ public sealed partial class @this : global::app.type.item.@this
     private readonly Func<global::app.actor.setting.@this> _settings;
 
     // The app's types, handed to each frame at its push: the frame's own (a call, a binding, an isolated call), its
-    // start and end (datetime), and its tags (dict).
-    private readonly global::app.type.@this _call;
-    private readonly global::app.type.@this _binding;
-    private readonly global::app.type.@this _isolated;
-    private readonly global::app.type.@this _datetime;
-    private readonly global::app.type.@this _dict;
+    // start and end (datetime), and its tags (dict) — each found at the first push that needs it (a context that calls
+    // nothing finds none).
+    private readonly global::app.type.list.@this _types;
+    private global::app.type.@this? _callType, _bindingType, _isolatedType, _datetimeType, _dictType, _errorsType;
+    private global::app.type.@this Call => _callType ??= _types[typeof(call.@this)];
+    private global::app.type.@this Binding => _bindingType ??= _types[typeof(call.binding.@this)];
+    private global::app.type.@this Isolated => _isolatedType ??= _types[typeof(call.isolated.@this)];
 
     /// <summary>The app's datetime type — a frame's start and end are of it.</summary>
-    internal global::app.type.@this Datetime => _datetime;
+    internal global::app.type.@this Datetime => _datetimeType ??= _types[typeof(global::app.type.item.datetime.@this)];
 
     /// <summary>The app's dict type — a frame's tags are of it.</summary>
-    internal global::app.type.@this Dict => _dict;
+    internal global::app.type.@this Dict => _dictType ??= _types[typeof(global::app.type.item.dict.@this)];
+
+    /// <summary>The app's error list type — a frame's errors and the audit are of it.</summary>
+    internal global::app.type.@this Errors => _errorsType ??= _types[typeof(global::app.error.list.@this)];
 
     /// <summary>A context's calls, of the app's <paramref name="types"/>, reading what they capture through its
-    /// <paramref name="settings"/>; <paramref name="audit"/> is where every error they observe is kept.</summary>
-    public @this(global::app.type.list.@this types,
-        Func<global::app.actor.setting.@this> settings, global::app.error.list.@this audit) : base(types[typeof(@this)])
+    /// <paramref name="settings"/>.</summary>
+    public @this(global::app.type.list.@this types, Func<global::app.actor.setting.@this> settings) : base(types[typeof(@this)])
     {
-        _call = types[typeof(call.@this)];
-        _binding = types[typeof(call.binding.@this)];
-        _isolated = types[typeof(call.isolated.@this)];
-        _datetime = types[typeof(global::app.type.item.datetime.@this)];
-        _dict = types[typeof(global::app.type.item.dict.@this)];
+        _types = types;
         _settings = settings;
-        Audit = audit;
     }
 
     /// <summary>What this stack captures (<c>%!app.call.setting%</c>), as its settings have it now — kept by them until a
@@ -94,11 +92,14 @@ public sealed partial class @this : global::app.type.item.@this
     public async System.Threading.Tasks.ValueTask<@bool> History() => (await Setting()).History;
 
     /// <summary>
-    /// Every error observed this run at every frame (handled or unhandled). Survives Pop.
+    /// Every error observed this run at every frame (handled or unhandled). Survives Pop. Made when first asked — at
+    /// the first observed error — the first made kept.
     /// See <see cref="global::app.error.list.@this"/> for thread-safety + lifecycle.
     /// </summary>
     [global::app.LlmBuilder]
-    public global::app.error.list.@this Audit { get; }
+    public global::app.error.list.@this Audit
+        => _audit ?? LazyInitializer.EnsureInitialized(ref _audit, () => new(Errors));
+    private global::app.error.list.@this? _audit;
 
     /// <summary>
     /// Optional Variables source for diff capture — the store a Call captures when pushed with none of its own
@@ -180,36 +181,35 @@ public sealed partial class @this : global::app.type.item.@this
     /// <param name="setting">What the stack captures, as its async caller read it (<see cref="Setting"/>).</param>
     /// <param name="names">The variables its frame is born with — a goal call's parameters.</param>
     public call.@this Push(global::app.goal.@this goal, setting.@this setting, IEnumerable<global::app.data.@this>? names = null)
-        => Enter(new call.@this(_call, this, goal, setting, names));
+        => Push((goal, setting, names), static (stack, s) => new call.@this(stack.Call, stack, s.goal, s.setting, s.names));
 
     /// <summary>Pushes a frame that only binds <paramref name="names"/> (a loop's item, a handler's error) — for
     /// <paramref name="held"/> when its runner supplies them to that one call (a tool call's state).</summary>
     public call.@this Push(IEnumerable<global::app.data.@this>? names, setting.@this setting, global::app.goal.step.action.@this? held = null)
-        => Enter(new call.binding.@this(_binding, _current.Value, this, names, held, setting));
+        => Enter(new call.binding.@this(Binding, _current.Value, this, names, held, setting));
 
     /// <summary>Pushes a frame with memory of its own, born with <paramref name="names"/>: every write under it stays
     /// in it (a tool's goal, a shortcut's). A task's run starts its chain with one whose <paramref name="caller"/> is
     /// the frame its caller was in — reads fall through to the caller's frames and memory.</summary>
     public call.@this Isolate(IEnumerable<global::app.data.@this>? names, setting.@this setting,
         global::app.goal.step.action.@this? held = null, call.@this? caller = null)
-        => Enter(new call.isolated.@this(_isolated, caller ?? _current.Value, this, names, held, setting));
+        => Enter(new call.isolated.@this(Isolated, caller ?? _current.Value, this, names, held, setting));
 
     /// <summary>Pushes the frame of a step starting: its goal and itself.</summary>
     public call.@this Push(global::app.goal.step.@this step, setting.@this setting)
-        => Enter(new call.@this(_call, this, step, setting));
+        => Push((step, setting), static (stack, s) => new call.@this(stack.Call, stack, s.step, s.setting));
 
     /// <summary>Pushes the frame of an action starting: its step's goal, its step and itself — an action composed
     /// in C# holds no step. <paramref name="variables"/> is the store for diff capture (when Diff is on).</summary>
     public call.@this Push(global::app.goal.step.action.@this action, setting.@this setting, Variables? variables = null)
-        => Enter(new call.@this(_call, this, action, setting, variables));
+        => Push((action, setting, variables), static (stack, s) => new call.@this(stack.Call, stack, s.action, s.setting, s.variables));
 
-    // The frame a frame pushed now is called from — the current one; past MaxDepth (the caller's own depth) the
-    // overflow.
-    internal call.@this? Caller()
+    // A call frame (a goal's, a step's, an action's) pushed: past MaxDepth (its caller's depth) it is the overflow,
+    // refused before anything of it is made. Its state rides in, so the making captures nothing.
+    private call.@this Push<TState>(TState state, Func<@this, TState, call.@this> make)
     {
-        var caller = _current.Value;
-        if (caller != null && caller.Depth >= MaxDepth) throw new CallStackOverflowException(MaxDepth);
-        return caller;
+        if (_current.Value is { } caller && caller.Depth >= MaxDepth) throw new CallStackOverflowException(MaxDepth);
+        return Enter(make(this, state));
     }
 
     // The frame becomes current: it joins its caller's children (Children owns its own lock + FIFO eviction), and a

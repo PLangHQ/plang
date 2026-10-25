@@ -1,0 +1,31 @@
+=== stage2  d2efd3d96  2026-10-24T17:53:25Z  8 cpus  rounds 3
+r1 Debug root birth  load 2.78  median 26.43 ms  min 22.07  p90 31.02  cpu 31.08 ms  alloc 6066 KB (birth + dispose)
+r1 Release root birth  load 2.72  median 29.32 ms  min 23.00  p90 33.82  cpu 33.85 ms  alloc 6032 KB (birth + dispose)
+r1 Debug root request  load 1.63  3000 apps in 72.5 s (24.16 ms each, 41/s)  alloc 7372 KB each  held MB 0.9 → 3.4 → 4.0 → 4.6  failed 0
+r1 Release root request  load 10.98  3000 apps in 119.6 s (39.87 ms each, 25/s)  alloc 7159 KB each  held MB 1.0 → 3.3 → 3.9 → 4.5  failed 0
+r1 Debug child birth  load 2.74  median 13.02 ms  min 9.30  p90 18.34  cpu 15.24 ms  alloc 4483 KB (birth + dispose)
+r1 Release child birth  load 2.74  median 16.69 ms  min 10.36  p90 21.95  cpu 19.26 ms  alloc 4478 KB (birth + dispose)
+r1 Debug child request  load 2.62  3000 apps in 47.7 s (15.91 ms each, 63/s)  alloc 6156 KB each  held MB 2.5 → 4.0 → 4.6 → 5.2  failed 0
+r1 Release child request  load 17.04  3000 apps in 83.2 s (27.72 ms each, 36/s)  alloc 5873 KB each  held MB 2.5 → 4.7 → 4.5 → 5.8  failed 0
+r1 sweep  load 2.69  wall 105.8 s  Modules green (total: 1335) [1m 23s 389ms vs ~43s];Types FAILED: 2 (total: 957) [31s 696ms vs ~8s];Wire FAILED: 6 (total: 596) [48s 846ms vs ~25s];Data FAILED: 2 (total: 869) [38s 896ms vs ~28s];Generator green (total: 191) [8s 720ms vs ~4s];Runtime green (total: 1242) [41s 535ms vs ~24s];
+r1 ptest  load 2.65  wall 17.4 s   2 [Fail]  298 [Pass]  1 [Skipped]  3 [Stale]   fail: /app/type/item/BareLiteralJudgedByForm.test.goal /plan/fast-apps/app/parent/TestAppHasItsRunnerAsParent.test.goal 
+r2 Debug root birth  load 2.67  median 27.96 ms  min 20.56  p90 39.09  cpu 33.62 ms  alloc 6057 KB (birth + dispose)
+r2 Release root birth  load 2.54  median 28.55 ms  min 23.92  p90 31.49  cpu 32.87 ms  alloc 6042 KB (birth + dispose)
+r2 Debug root request  load 1.68  3000 apps in 70.2 s (23.39 ms each, 43/s)  alloc 7383 KB each  held MB 0.9 → 3.4 → 4.0 → 4.6  failed 0
+r2 Release root request  load 1.32  3000 apps in 64.7 s (21.58 ms each, 46/s)  alloc 7014 KB each  held MB 1.0 → 3.4 → 3.9 → 4.5  failed 0
+r2 Debug child birth  load 1.29  median 14.56 ms  min 10.17  p90 21.12  cpu 17.34 ms  alloc 4475 KB (birth + dispose)
+r2 Release child birth  load 1.29  median 16.67 ms  min 11.18  p90 22.11  cpu 20.39 ms  alloc 4462 KB (birth + dispose)
+r2 Debug child request  load 1.12  3000 apps in 51.9 s (17.32 ms each, 58/s)  alloc 6159 KB each  held MB 2.5 → 4.0 → 4.6 → 5.2  failed 0
+r2 Release child request  load 1.29  3000 apps in 40.4 s (13.45 ms each, 74/s)  alloc 5882 KB each  held MB 2.5 → 4.0 → 4.6 → 5.1  failed 0
+r2 sweep  load 1.19  wall 105.7 s  Modules green (total: 1335) [1m 25s 278ms vs ~43s];Types FAILED: 2 (total: 957) [27s 479ms vs ~8s];Wire FAILED: 6 (total: 596) [46s 232ms vs ~25s];Data FAILED: 2 (total: 869) [38s 873ms vs ~28s];Generator green (total: 191) [8s 687ms vs ~4s];Runtime green (total: 1242) [45s 010ms vs ~24s];
+r2 ptest  load 2.84  wall 16.9 s   2 [Fail]  298 [Pass]  1 [Skipped]  3 [Stale]   fail: /app/type/item/BareLiteralJudgedByForm.test.goal /plan/fast-apps/app/parent/TestAppHasItsRunnerAsParent.test.goal 
+r3 Debug root birth  load 2.79  median 25.73 ms  min 21.55  p90 29.19  cpu 29.57 ms  alloc 6056 KB (birth + dispose)
+r3 Release root birth  load 2.73  median 31.92 ms  min 22.69  p90 41.30  cpu 41.50 ms  alloc 6057 KB (birth + dispose)
+r3 Debug root request  load 1.66  3000 apps in 69.4 s (23.14 ms each, 43/s)  alloc 7372 KB each  held MB 0.9 → 3.4 → 4.0 → 4.6  failed 0
+r3 Release root request  load 1.32  3000 apps in 62.6 s (20.86 ms each, 48/s)  alloc 7173 KB each  held MB 0.9 → 3.4 → 3.9 → 4.5  failed 0
+r3 Debug child birth  load 1.32  median 14.25 ms  min 9.71  p90 18.60  cpu 16.19 ms  alloc 4484 KB (birth + dispose)
+r3 Release child birth  load 1.53  median 15.88 ms  min 10.89  p90 20.78  cpu 18.05 ms  alloc 4471 KB (birth + dispose)
+r3 Debug child request  load 1.37  3000 apps in 44.5 s (14.82 ms each, 67/s)  alloc 6158 KB each  held MB 2.5 → 4.0 → 4.6 → 5.2  failed 0
+r3 Release child request  load 1.19  3000 apps in 39.0 s (12.99 ms each, 77/s)  alloc 5889 KB each  held MB 2.5 → 4.0 → 4.6 → 5.1  failed 0
+r3 sweep  load 1.19  wall 103.9 s  Modules green (total: 1335) [1m 24s 250ms vs ~43s];Types FAILED: 2 (total: 957) [31s 504ms vs ~8s];Wire FAILED: 6 (total: 596) [45s 037ms vs ~25s];Data FAILED: 2 (total: 869) [39s 821ms vs ~28s];Generator green (total: 191) [8s 393ms vs ~4s];Runtime green (total: 1242) [44s 716ms vs ~24s];
+r3 ptest  load 2.47  wall 18.5 s   2 [Fail]  298 [Pass]  1 [Skipped]  3 [Stale]   fail: /app/type/item/BareLiteralJudgedByForm.test.goal /plan/fast-apps/app/parent/TestAppHasItsRunnerAsParent.test.goal 

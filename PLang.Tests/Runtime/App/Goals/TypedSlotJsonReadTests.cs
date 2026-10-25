@@ -10,7 +10,7 @@ public class TypedSlotJsonReadTests
     [Test]
     public async Task ATypedDictSlot_FirstReadOfTheDict_GoesThroughJsonAndAnswers()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var unread = ctx.App.type.list[new global::app.type.@this("item", "json"), ctx].Make("{\"a\":1}", ctx);
         await ctx.Variable.Set("j", new global::app.data.@this("j", unread, context: ctx));

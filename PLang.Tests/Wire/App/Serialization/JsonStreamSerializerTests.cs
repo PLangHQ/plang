@@ -7,7 +7,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
 {
     // Born-with-context: the test's Data is born from this app's user context.
     private readonly global::app.@this app = new global::app.@this(
-        "/tmp/jss-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+        "/tmp/jss-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private global::app.actor.context.@this Ctx => app.actor.list.User.Context;

@@ -11,7 +11,7 @@ public class StoreFromCodeTests
         public string? Source { get; set; }
         public List<string> Files { get; } = new();
 
-        public global::app.store.@this Open(global::app.type.item.path.@this file, System.Func<string?> memory, global::app.actor.context.@this context)
+        public global::app.store.@this Open(global::app.type.item.path.@this file, bool memory, global::app.actor.context.@this context)
         {
             Files.Add(file.ToString());
             return new global::app.store.sqlite.@this(file, memory, context);
@@ -21,7 +21,7 @@ public class StoreFromCodeTests
     [Test]
     public async Task TheStores_AreTheDefaultProvidersOpening()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var probe = new Probe();
         app.Code.Register<global::app.store.code.IStore>(probe);
         await app.Code.SetDefault<global::app.store.code.IStore>("probe").IsSuccess();

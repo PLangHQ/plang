@@ -1,0 +1,8 @@
+/ a program that loads code is an app of its own: the plugin's type joins its app's list, reached like a built-in.
+/ TypeProvider.dll declares "money" (TestFixtures/TypeProvider/Money.cs), copied next to this test.
+Start
+- code.load Path=TypeProvider.dll
+- set %types% = %!app.type.list%
+- any %types% where "name" == "money", write to %joined%
+- assert %joined% is true, "the plugin's type joined this app's list"
+- assert %!app.type.money.name% equals "money", "and is reached like a built-in"

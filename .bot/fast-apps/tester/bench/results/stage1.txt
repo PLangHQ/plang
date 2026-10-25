@@ -1,0 +1,19 @@
+=== stage1  9c0a7d129  2026-10-24T12:45:18Z  8 cpus  rounds 3
+r1 Debug birth  load 2.80  median 26.36 ms  min 20.33  p90 29.90  cpu 29.57 ms  alloc 5224 KB (birth + dispose)
+r1 Release birth  load 2.65  median 27.26 ms  min 19.57  p90 30.94  cpu 30.56 ms  alloc 5305 KB (birth + dispose)
+r1 Debug request  load 1.63  3000 apps in 72.2 s (24.06 ms each, 42/s)  alloc 6947 KB each  held MB 1.0 → 3.3 → 3.8 → 4.4  failed 0
+r1 Release request  load 1.36  3000 apps in 66.1 s (22.02 ms each, 45/s)  alloc 6644 KB each  held MB 0.9 → 3.2 → 3.8 → 4.4  failed 0
+r1 sweep  load 1.36  wall 99.5 s  Modules green (total: 1334) [1m 10s 049ms vs ~43s];Types green (total: 951) [29s 571ms vs ~8s];Wire FAILED: 6 (total: 596) [44s 610ms vs ~25s];Data green (total: 864) [36s 547ms vs ~28s];Generator green (total: 191) [9s 704ms vs ~4s];Runtime green (total: 1242) [38s 959ms vs ~24s];
+r1 ptest  load 2.40  wall 17.1 s   1 [Fail]  294 [Pass]  1 [Skipped]  3 [Stale]   fail: /app/type/item/BareLiteralJudgedByForm.test.goal 
+r2 Debug birth  load 1.99  median 27.22 ms  min 20.88  p90 30.48  cpu 30.29 ms  alloc 5228 KB (birth + dispose)
+r2 Release birth  load 1.91  median 26.54 ms  min 22.43  p90 29.69  cpu 29.88 ms  alloc 5305 KB (birth + dispose)
+r2 Debug request  load 1.48  3000 apps in 74.1 s (24.70 ms each, 40/s)  alloc 6939 KB each  held MB 0.9 → 3.3 → 3.8 → 4.4  failed 0
+r2 Release request  load 1.31  3000 apps in 65.3 s (21.75 ms each, 46/s)  alloc 6816 KB each  held MB 0.9 → 3.2 → 3.8 → 4.4  failed 0
+r2 sweep  load 1.31  wall 97.7 s  Modules green (total: 1334) [1m 08s 293ms vs ~43s];Types green (total: 951) [27s 881ms vs ~8s];Wire FAILED: 6 (total: 596) [45s 619ms vs ~25s];Data green (total: 864) [35s 682ms vs ~28s];Generator green (total: 191) [10s 256ms vs ~4s];Runtime green (total: 1242) [35s 280ms vs ~24s];
+r2 ptest  load 2.95  wall 17.0 s   1 [Fail]  294 [Pass]  1 [Skipped]  3 [Stale]   fail: /app/type/item/BareLiteralJudgedByForm.test.goal 
+r3 Debug birth  load 2.68  median 25.68 ms  min 19.22  p90 30.24  cpu 29.65 ms  alloc 5243 KB (birth + dispose)
+r3 Release birth  load 2.54  median 26.70 ms  min 22.01  p90 29.91  cpu 31.03 ms  alloc 5298 KB (birth + dispose)
+r3 Debug request  load 1.64  3000 apps in 72.6 s (24.21 ms each, 41/s)  alloc 6951 KB each  held MB 1.0 → 3.3 → 3.9 → 4.4  failed 0
+r3 Release request  load 1.34  3000 apps in 64.9 s (21.63 ms each, 46/s)  alloc 6636 KB each  held MB 1.0 → 3.2 → 3.8 → 4.4  failed 0
+r3 sweep  load 1.34  wall 102.7 s  Modules FAILED: 1 (total: 1334) [1m 20s 079ms vs ~43s];Types green (total: 951) [31s 891ms vs ~8s];Wire FAILED: 6 (total: 596) [42s 855ms vs ~25s];Data green (total: 864) [35s 659ms vs ~28s];Generator green (total: 191) [8s 686ms vs ~4s];Runtime green (total: 1242) [45s 113ms vs ~24s];
+r3 ptest  load 2.88  wall 16.6 s   1 [Fail]  294 [Pass]  1 [Skipped]  3 [Stale]   fail: /app/type/item/BareLiteralJudgedByForm.test.goal 

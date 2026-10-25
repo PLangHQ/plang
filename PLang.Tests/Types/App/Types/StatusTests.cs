@@ -30,7 +30,7 @@ public class StatusTests
 
     [Test] public async Task ComparesWithANumber_ByItsCode()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var serverError = new global::app.data.@this("s", (status)503, context: ctx);
         await Assert.That(await serverError.Compare(ctx.Ok(500))).IsEqualTo(global::app.data.Comparison.Greater);
@@ -40,7 +40,7 @@ public class StatusTests
 
     [Test] public async Task WritesAsItsCode_UnlessItsTextIsItsOwn()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         await Assert.That(await Json(app, (status)404)).IsEqualTo("404");
         await Assert.That(await Json(app, new status(200, "All good"))).IsEqualTo("{\"code\":200,\"text\":\"All good\"}");
     }

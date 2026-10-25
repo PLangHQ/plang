@@ -6,9 +6,9 @@ namespace app.store.sqlite;
 /// <summary>
 /// A store in SQLite, on disk or in memory.
 /// Two-column schema per table: key TEXT PRIMARY KEY, data TEXT (a whole Data in plang's own format).
-/// WAL mode for concurrent reads. Tables auto-created on first write.
+/// WAL mode for concurrent reads. Each table made by its first statement.
 /// Connection per operation (SQLite pools internally via connection string).
-/// Born ready: where the database lives is decided, and the database opened, at the first verb.
+/// Born knowing where its database lives, for its life; the database opened at the first verb.
 /// </summary>
 public sealed class @this : global::app.store.@this
 {
@@ -17,41 +17,64 @@ public sealed class @this : global::app.store.@this
 
     protected override string Kind => "sqlite";
 
-    // Where the database lives: in memory under the name this answers at the first verb, else in this file.
+    // Where the database lives: in memory, else in this file.
     private readonly global::app.type.item.path.@this? _file;
-    private readonly System.Func<string?> _memory;
+    private readonly bool _memory;
+    // The in-memory database's name: the store's own, made with it, so no other store reaches it.
+    private readonly string _name = "store-" + System.Guid.NewGuid().ToString("N");
     // The store's own context — system-owned. Its result Data is born from it, and its rows are written
     // and read (verified) with it.
     private readonly actor.context.@this Context;
 
-    // The one open, begun by the first verb: the connection string, or the reason it couldn't open.
+    // The one open, begun by the first verb that reaches the database: the connection string, or the reason it
+    // couldn't open.
     private readonly object _gate = new();
     private Task<string>? _opened;
     // An in-memory database lives as long as a connection to it: this one, held for the store's life.
     private SqliteConnection? _sentinel;
+
+    // The database as each verb finds it: blank (in memory, never opened, so nothing written to it) or connected — the
+    // connected one made at the first verb that reaches the database.
+    private readonly database _blank;
+    private database? _connected;
+    private database Connected => _connected ?? System.Threading.LazyInitializer.EnsureInitialized(ref _connected, () => new connected(this));
 
     // A row is a whole Data in plang's own format (application/plang).
     private global::app.type.kind.@this Format => Context.App.type.list["wire"].kind["plang"]!;
     private bool _disposed;
 
     /// <summary>
-    /// A store in <paramref name="file"/>, or in memory under the name <paramref name="memory"/> answers when
-    /// the store opens (null: the file). Nothing is opened here — the first verb opens it.
+    /// A store in <paramref name="file"/>, or in memory, a database of its own, when <paramref name="memory"/>.
+    /// Nothing is opened here — the first verb opens it.
     /// </summary>
-    public @this(global::app.type.item.path.@this? file, System.Func<string?> memory, actor.context.@this context)
+    public @this(global::app.type.item.path.@this? file, bool memory, actor.context.@this context)
         : base(context.App.type.list[new global::app.type.@this("store", "sqlite"), context])
     {
         _file = file;
         _memory = memory;
         Context = context;
+        _blank = new blank(this);
     }
 
-    /// <summary>
-    /// An in-memory store. The database lives as long as this instance.
-    /// Different names produce isolated databases.
-    /// </summary>
-    public static @this InMemory(string name, actor.context.@this context)
-        => new @this(null, () => name, context);
+    public override Task<data.@this<T>> Get<T>(string table, string key) => Database.Get<T>(table, key);
+
+    public override Task<data.@this<global::app.type.item.list.@this>> GetAll<T>(string table) => Database.GetAll<T>(table);
+
+    public override Task<data.@this> Set(string table, string key, data.@this data) => Database.Set(table, key, data);
+
+    public override Task<data.@this> Remove(string table, string key) => Database.Remove(table, key);
+
+    public override Task<data.@this<global::app.type.item.@bool.@this>> Exists(string table, string key) => Database.Exists(table, key);
+
+    public override Task<data.@this<global::app.type.item.list.@this>> Tables() => Database.Tables();
+
+    // What the database is now: an in-memory one nothing has opened holds nothing, so it answers empty; once opened,
+    // or on disk, the connection.
+    private database Database
+        => _memory && System.Threading.Volatile.Read(ref _opened) == null ? _blank : Connected;
+
+    // A list of rows, none in it.
+    private global::app.type.item.list.@this Empty => new(Context.App.type.list[typeof(global::app.type.item.list.@this)]);
 
     // The database, opened once — every verb awaits the same open.
     private Task<string> Opened()
@@ -61,11 +84,11 @@ public sealed class @this : global::app.store.@this
 
     private async Task<string> Open()
     {
-        if (_memory() is { } name)
+        if (_memory)
         {
             var memory = new SqliteConnectionStringBuilder
             {
-                DataSource = name,
+                DataSource = _name,
                 Mode = SqliteOpenMode.Memory,
                 Cache = SqliteCacheMode.Shared
             }.ToString();
@@ -113,185 +136,193 @@ public sealed class @this : global::app.store.@this
         return read.Success ? read.As<T>() : global::app.data.@this<T>.From(read);
     }
 
-    public override async Task<data.@this<T>> Get<T>(string table, string key)
+    // The database as a verb finds it: each kind answers every verb its own way.
+    private abstract class database(@this store)
     {
-        try
-        {
-            var connectionString = await Opened();
-            EnsureTable(connectionString, table);
-            using var connection = new SqliteConnection(connectionString);
-            connection.Open();
-            using var cmd = connection.CreateCommand();
-            cmd.CommandText = $"SELECT data FROM [{SanitizeTableName(table)}] WHERE key = @key;";
-            cmd.Parameters.AddWithValue("@key", key);
+        private protected @this Store { get; } = store;
 
-            var result = cmd.ExecuteScalar();
-            if (result == null || result == DBNull.Value)
-                return Context.Ok<T>(default!);
-            return await Hydrate<T>(result.ToString()!);
-        }
-        catch (global::app.error.AppException ex) { return Context.Error<T>(ex.Error); }
-        catch (Exception ex)
-        {
-            return Context.Error<T>(SettingsError.FromException(ex, table, key));
-        }
+        internal abstract Task<data.@this<T>> Get<T>(string table, string key) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>;
+        internal abstract Task<data.@this<global::app.type.item.list.@this>> GetAll<T>(string table) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>;
+        internal abstract Task<data.@this> Set(string table, string key, data.@this data);
+        internal abstract Task<data.@this> Remove(string table, string key);
+        internal abstract Task<data.@this<global::app.type.item.@bool.@this>> Exists(string table, string key);
+        internal abstract Task<data.@this<global::app.type.item.list.@this>> Tables();
     }
 
-    public override async Task<data.@this<global::app.type.item.list.@this>> GetAll<T>(string table)
+    // An in-memory database nothing has opened: nothing was written to it, so a read finds nothing and a remove has
+    // nothing to take out; a write opens it.
+    private sealed class blank(@this store) : database(store)
     {
-        try
-        {
-            var connectionString = await Opened();
-            EnsureTable(connectionString, table);
-            using var connection = new SqliteConnection(connectionString);
-            connection.Open();
-            using var cmd = connection.CreateCommand();
-            cmd.CommandText = $"SELECT key, data FROM [{SanitizeTableName(table)}];";
+        internal override Task<data.@this<T>> Get<T>(string table, string key) => Task.FromResult(Store.Context.Ok<T>(default!));
 
-            // Read all rows first (the reader is sync), then deserialize each — keeps the
-            // connection lifetime tight and the await off the open reader.
-            var raws = new List<(string Key, string Data)>();
-            using (var reader = cmd.ExecuteReader())
-                while (reader.Read())
-                    if (!reader.IsDBNull(1)) raws.Add((reader.GetString(0), reader.GetString(1)));
-            // each row answered under its key — the key it was set under, whatever the Data's own name
-            var list = new global::app.type.item.list.@this(Context.App.type.list["list"]);
-            foreach (var (key, raw) in raws)
+        internal override Task<data.@this<global::app.type.item.list.@this>> GetAll<T>(string table)
+            => Task.FromResult(Store.Context.Ok<global::app.type.item.list.@this>(Store.Empty));
+
+        internal override Task<data.@this> Set(string table, string key, data.@this data) => Store.Connected.Set(table, key, data);
+
+        internal override Task<data.@this> Remove(string table, string key) => Task.FromResult(Store.Context.Ok());
+
+        internal override Task<data.@this<global::app.type.item.@bool.@this>> Exists(string table, string key)
+            => Task.FromResult(Store.Context.Ok<global::app.type.item.@bool.@this>(false));
+
+        internal override Task<data.@this<global::app.type.item.list.@this>> Tables()
+            => Task.FromResult(Store.Context.Ok<global::app.type.item.list.@this>(Store.Empty));
+    }
+
+    // The database the store opened (or opens, at this verb): its tables, each a statement's place.
+    private sealed class connected(@this store) : database(store)
+    {
+        // The database's tables by the name a verb gives, each made by its first statement.
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<string, table> _tables = new(StringComparer.OrdinalIgnoreCase);
+
+        private table this[string name] => _tables.GetOrAdd(name, each => new table(Store, each));
+
+        internal override Task<data.@this<T>> Get<T>(string table, string key) => this[table].Get<T>(key);
+
+        internal override Task<data.@this<global::app.type.item.list.@this>> GetAll<T>(string table) => this[table].GetAll<T>();
+
+        internal override Task<data.@this> Set(string table, string key, data.@this data) => this[table].Set(key, data);
+
+        internal override Task<data.@this> Remove(string table, string key) => this[table].Remove(key);
+
+        internal override Task<data.@this<global::app.type.item.@bool.@this>> Exists(string table, string key) => this[table].Exists(key);
+
+        internal override async Task<data.@this<global::app.type.item.list.@this>> Tables()
+        {
+            try
             {
-                var loaded = await Hydrate<T>(raw);
-                if (loaded.Success && !loaded.Peek().IsNull) list.Add(loaded.Copy(key));
+                var connectionString = await Store.Opened();
+                using var connection = new SqliteConnection(connectionString);
+                connection.Open();
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;";
+
+                var tables = Store.Empty;
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                    tables.Add(new data.@this("", reader.GetString(0), context: Store.Context));
+
+                return Store.Context.Ok<global::app.type.item.list.@this>(tables);
             }
-            return Context.Ok<global::app.type.item.list.@this>(list);
-        }
-        catch (global::app.error.AppException ex) { return Context.Error<global::app.type.item.list.@this>(ex.Error); }
-        catch (Exception ex)
-        {
-            return Context.Error<global::app.type.item.list.@this>(
-                SettingsError.FromException(ex, table));
+            catch (global::app.error.AppException ex) { return Store.Context.Error<global::app.type.item.list.@this>(ex.Error); }
+            catch (Exception ex)
+            {
+                return Store.Context.Error<global::app.type.item.list.@this>(
+                    SettingsError.FromException(ex));
+            }
         }
     }
 
-    public override async Task<data.@this> Set(string table, string key, data.@this data)
+    // One table of the database: its name as SQLite takes it (letters, digits and underscores, lower case; none left:
+    // default_table), and its statements. Its first statement makes it; every statement awaits that one making.
+    private sealed class table
     {
-        try
+        private readonly @this _store;
+        // the name the verb gave, for its errors
+        private readonly string _given;
+        private readonly Lazy<Task<string>> _made;
+
+        internal table(@this store, string name)
         {
-            var connectionString = await Opened();
-            EnsureTable(connectionString, table);
+            _store = store;
+            _given = name;
+            var sanitized = new string(name.Where(c => char.IsLetterOrDigit(c) || c == '_').ToArray());
+            Name = string.IsNullOrEmpty(sanitized) ? "default_table" : sanitized.ToLowerInvariant();
+            _made = new(Make);
+        }
+
+        /// <summary>The table's name as SQLite takes it.</summary>
+        internal string Name { get; }
+
+        // The table made in the opened database — the connection string its statements open, once it exists.
+        private async Task<string> Make()
+        {
+            var connectionString = await _store.Opened();
             using var connection = new SqliteConnection(connectionString);
             connection.Open();
             using var cmd = connection.CreateCommand();
-            var sanitized = SanitizeTableName(table);
-            cmd.CommandText = $@"INSERT INTO [{sanitized}] (key, data) VALUES (@key, @data)
-                                 ON CONFLICT(key) DO UPDATE SET data = @data;";
-            cmd.Parameters.AddWithValue("@key", key);
-            // Store view ships every [Store]-tagged property (incl. [Sensitive] like
-            // Identity.PrivateKey). The store owns its TEXT↔stream bridge: serialize to a
-            // buffer, bind the TEXT param (this is where the string lives — the column's choice).
-            using var ms = new MemoryStream();
-            var serialized = await Format.Encode(ms, data, Context, global::app.View.Store);
-            if (!serialized.Success) return Context.Error(serialized.Error!);
-            cmd.Parameters.AddWithValue("@data", System.Text.Encoding.UTF8.GetString(ms.ToArray()));
+            cmd.CommandText = $"CREATE TABLE IF NOT EXISTS [{Name}] (key TEXT PRIMARY KEY, data TEXT);";
             cmd.ExecuteNonQuery();
-
-            return Context.Ok();
+            return connectionString;
         }
-        catch (global::app.error.AppException ex) { return Context.Error(ex.Error); }
-        catch (Exception ex)
+
+        internal Task<data.@this<T>> Get<T>(string key) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+            => Run(key, $"SELECT data FROM [{Name}] WHERE key = @key;", error => _store.Context.Error<T>(error), async cmd =>
+            {
+                cmd.Parameters.AddWithValue("@key", key);
+                var result = cmd.ExecuteScalar();
+                if (result == null || result == DBNull.Value)
+                    return _store.Context.Ok<T>(default!);
+                return await _store.Hydrate<T>(result.ToString()!);
+            });
+
+        internal Task<data.@this<global::app.type.item.list.@this>> GetAll<T>() where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+            => Run(null, $"SELECT key, data FROM [{Name}];", error => _store.Context.Error<global::app.type.item.list.@this>(error), async cmd =>
+            {
+                // Read all rows first (the reader is sync), then deserialize each — keeps the
+                // connection lifetime tight and the await off the open reader.
+                var raws = new List<(string Key, string Data)>();
+                using (var reader = cmd.ExecuteReader())
+                    while (reader.Read())
+                        if (!reader.IsDBNull(1)) raws.Add((reader.GetString(0), reader.GetString(1)));
+                // each row answered under its key — the key it was set under, whatever the Data's own name
+                var list = _store.Empty;
+                foreach (var (key, raw) in raws)
+                {
+                    var loaded = await _store.Hydrate<T>(raw);
+                    if (loaded.Success && !loaded.Peek().IsNull) list.Add(loaded.Copy(key));
+                }
+                return _store.Context.Ok<global::app.type.item.list.@this>(list);
+            });
+
+        internal Task<data.@this> Set(string key, data.@this data)
+            => Run(key, $@"INSERT INTO [{Name}] (key, data) VALUES (@key, @data)
+                           ON CONFLICT(key) DO UPDATE SET data = @data;", error => _store.Context.Error(error), async cmd =>
+            {
+                cmd.Parameters.AddWithValue("@key", key);
+                // Store view ships every [Store]-tagged property (incl. [Sensitive] like
+                // Identity.PrivateKey). The store owns its TEXT↔stream bridge: serialize to a
+                // buffer, bind the TEXT param (this is where the string lives — the column's choice).
+                using var ms = new MemoryStream();
+                var serialized = await _store.Format.Encode(ms, data, _store.Context, global::app.View.Store);
+                if (!serialized.Success) return _store.Context.Error(serialized.Error!);
+                cmd.Parameters.AddWithValue("@data", System.Text.Encoding.UTF8.GetString(ms.ToArray()));
+                cmd.ExecuteNonQuery();
+                return _store.Context.Ok();
+            });
+
+        internal Task<data.@this> Remove(string key)
+            => Run(key, $"DELETE FROM [{Name}] WHERE key = @key;", error => _store.Context.Error(error), cmd =>
+            {
+                cmd.Parameters.AddWithValue("@key", key);
+                cmd.ExecuteNonQuery();
+                return Task.FromResult(_store.Context.Ok());
+            });
+
+        internal Task<data.@this<global::app.type.item.@bool.@this>> Exists(string key)
+            => Run(key, $"SELECT COUNT(*) FROM [{Name}] WHERE key = @key;", error => _store.Context.Error<global::app.type.item.@bool.@this>(error), cmd =>
+            {
+                cmd.Parameters.AddWithValue("@key", key);
+                var count = Convert.ToInt64(cmd.ExecuteScalar());
+                return Task.FromResult(_store.Context.Ok<global::app.type.item.@bool.@this>(count > 0));
+            });
+
+        // One statement on this table, once it exists: its connection opened and its command made, the statement's
+        // answer, or — when anything fails — the failure in the verb's own shape, naming the table and the key.
+        private async Task<TData> Run<TData>(string? key, string text, Func<global::app.error.@this, TData> failed,
+            Func<SqliteCommand, Task<TData>> statement)
         {
-            return Context.Error(
-                SettingsError.FromException(ex, table, key));
+            try
+            {
+                using var connection = new SqliteConnection(await _made.Value);
+                connection.Open();
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = text;
+                return await statement(cmd);
+            }
+            catch (global::app.error.AppException ex) { return failed(ex.Error); }
+            catch (Exception ex) { return failed(SettingsError.FromException(ex, _given, key)); }
         }
-    }
-
-    public override async Task<data.@this> Remove(string table, string key)
-    {
-        try
-        {
-            var connectionString = await Opened();
-            EnsureTable(connectionString, table);
-            using var connection = new SqliteConnection(connectionString);
-            connection.Open();
-            using var cmd = connection.CreateCommand();
-            cmd.CommandText = $"DELETE FROM [{SanitizeTableName(table)}] WHERE key = @key;";
-            cmd.Parameters.AddWithValue("@key", key);
-            cmd.ExecuteNonQuery();
-
-            return Context.Ok();
-        }
-        catch (global::app.error.AppException ex) { return Context.Error(ex.Error); }
-        catch (Exception ex)
-        {
-            return Context.Error(
-                SettingsError.FromException(ex, table, key));
-        }
-    }
-
-    public override async Task<data.@this<global::app.type.item.@bool.@this>> Exists(string table, string key)
-    {
-        try
-        {
-            var connectionString = await Opened();
-            EnsureTable(connectionString, table);
-            using var connection = new SqliteConnection(connectionString);
-            connection.Open();
-            using var cmd = connection.CreateCommand();
-            cmd.CommandText = $"SELECT COUNT(*) FROM [{SanitizeTableName(table)}] WHERE key = @key;";
-            cmd.Parameters.AddWithValue("@key", key);
-
-            var count = Convert.ToInt64(cmd.ExecuteScalar());
-            return Context.Ok<global::app.type.item.@bool.@this>(count > 0);
-        }
-        catch (global::app.error.AppException ex) { return Context.Error<global::app.type.item.@bool.@this>(ex.Error); }
-        catch (Exception ex)
-        {
-            return Context.Error<global::app.type.item.@bool.@this>(
-                SettingsError.FromException(ex, table, key));
-        }
-    }
-
-    public override async Task<data.@this<global::app.type.item.list.@this>> Tables()
-    {
-        try
-        {
-            var connectionString = await Opened();
-            using var connection = new SqliteConnection(connectionString);
-            connection.Open();
-            using var cmd = connection.CreateCommand();
-            cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;";
-
-            var tables = new global::app.type.item.list.@this(Context.App.type.list["list"]);
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
-                tables.Add(new data.@this("", reader.GetString(0), context: Context));
-
-            return Context.Ok<global::app.type.item.list.@this>(tables);
-        }
-        catch (global::app.error.AppException ex) { return Context.Error<global::app.type.item.list.@this>(ex.Error); }
-        catch (Exception ex)
-        {
-            return Context.Error<global::app.type.item.list.@this>(
-                SettingsError.FromException(ex));
-        }
-    }
-
-    private void EnsureTable(string connectionString, string table)
-    {
-        var sanitized = SanitizeTableName(table);
-        using var connection = new SqliteConnection(connectionString);
-        connection.Open();
-        using var cmd = connection.CreateCommand();
-        cmd.CommandText = $"CREATE TABLE IF NOT EXISTS [{sanitized}] (key TEXT PRIMARY KEY, data TEXT);";
-        cmd.ExecuteNonQuery();
-    }
-
-    /// <summary>
-    /// Sanitizes a table name for SQLite.
-    /// Allows only alphanumeric and underscores — prevents SQL injection in table names.
-    /// </summary>
-    private static string SanitizeTableName(string table)
-    {
-        var sanitized = new string(table.Where(c => char.IsLetterOrDigit(c) || c == '_').ToArray());
-        return string.IsNullOrEmpty(sanitized) ? "default_table" : sanitized.ToLowerInvariant();
     }
 
     public override void Dispose()

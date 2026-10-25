@@ -18,7 +18,7 @@ public class StoresFolderProbeTests : System.IAsyncDisposable
         key = System.IO.Path.Combine(root, ".data", "setting", "data.sqlite");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(key)!);
         System.IO.File.WriteAllText(key, "SECRET-KEY");
-        app = new global::app.@this(root).TestSigning();
+        app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).TestSigning();
         app.actor.list.User.Channel.Register(new Asking(app.actor.list.User.Context, () => asked++));
     }
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();

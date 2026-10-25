@@ -4,7 +4,7 @@ namespace PLang.Tests.App.Errors;
 // the key the exception carries, never a generic one of its own.
 public class KeepsItsKeyTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private global::app.actor.context.@this Ctx => app.actor.list.User.Context;
@@ -13,9 +13,9 @@ public class KeepsItsKeyTests : System.IAsyncDisposable
     [Test] public async Task AStepsKeyedFailure_IsItsResultsKey()
     {
         var goal = Make.Goal(Ctx, "Start", "/Start.goal", Make.Step("write out hi", Make.Action(Ctx, "output", "write", ("Data", "hi"))));
-        app.type.list["action"].Own().Bind("start", global::app.@event.When.before,
+        app.actor.list.User.on.Bind(app.type.list["action"], "start", global::app.@event.When.before,
             (item, result, c) => Task.FromException<global::app.data.@this>(new global::app.error.AppException("refused", "MyRefusal", 418)),
-            app.actor.list.User, global::app.@event.binding.Scope.actor);
+            global::app.@event.binding.Scope.actor);
 
         var result = await goal.Step.Items().First().Start(Ctx);
 

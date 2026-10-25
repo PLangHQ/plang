@@ -7,7 +7,7 @@ namespace PLang.Tests.App.Serialization.IntegrationCuts;
 public class Cut4_PropertiesWireTests
 {
     private static global::app.@this NewApp() => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-        "plang-cut4-" + Guid.NewGuid().ToString("N")[..8])).Testing();
+        "plang-cut4-" + Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
 
     private static async Task<(string wire, global::app.data.@this back, global::app.@this app)> WriteAndRead()
     {
@@ -83,7 +83,7 @@ public class Cut4_PropertiesWireTests
     [Test] public async Task Cut4_TamperingPropertyValue_FailsOuterSignatureVerify()
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-cut4-" + System.Guid.NewGuid().ToString("N")[..8])).TestIdentity();
+            System.IO.Path.GetTempPath(), "plang-cut4-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).TestIdentity();
         var ctx = app.actor.list.User.Context;
         var plang = ctx.Format("application/plang");
         var d = new global::app.data.@this("response", "Hello!", context: ctx);
@@ -103,7 +103,7 @@ public class Cut4_PropertiesWireTests
     [Test] public async Task TamperedCopyReadFirst_GenuineWireStillVerifies()
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-cut4-" + System.Guid.NewGuid().ToString("N")[..8])).TestIdentity();
+            System.IO.Path.GetTempPath(), "plang-cut4-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).TestIdentity();
         var ctx = app.actor.list.User.Context;
         var plang = ctx.Format("application/plang");
         var d = new global::app.data.@this("response", "Hello!", context: ctx);

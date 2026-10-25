@@ -21,7 +21,7 @@ public class IdentityKeyProviderTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_keyprovider_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir).Consenting();
+        _app = new PLangEngine(_tempDir, global::PLang.Tests.Parent.Actor).Consenting();
     }
 
     // The private key the identity's owner holds — its row in the system's identity setting (a step holds none).

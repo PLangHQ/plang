@@ -17,7 +17,7 @@ public class AppStartTests
     {
         _root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-appstart-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(System.IO.Path.Combine(_root, ".build"));
-        await using var writer = new global::app.@this(_root).Testing();
+        await using var writer = new global::app.@this(_root, global::PLang.Tests.Parent.Actor).Testing();
         var goal = Make.Goal(writer.actor.list.User.Context, "Entry",
             Make.Step("set x", Make.Action(writer.actor.list.User.Context, "variable", "set", Make.Param(writer.actor.list.User.Context, "Name", "x", "variable"), ("Value", 1))));
         await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(_root, ".build", "entry.pr"), await writer.actor.list.User.Context.Pr(goal));
@@ -28,7 +28,7 @@ public class AppStartTests
 
     private async Task<global::app.@this> App()
     {
-        var app = new global::app.@this(_root).Testing();
+        var app = new global::app.@this(_root, global::PLang.Tests.Parent.Actor).Testing();
         await app.actor.list.System.Context.Variable.Set("goalFile", "/entry.goal");
         return app;
     }
@@ -38,7 +38,7 @@ public class AppStartTests
 
     [Test] public async Task TheApp_IsAnItem_AndNavigatesAsItDid()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
 
         await Assert.That(ReferenceEquals((await Read("%!app%", context)).Peek(), app)).IsTrue();
@@ -49,7 +49,7 @@ public class AppStartTests
 
     [Test] public async Task ACopyOfTheApp_IsTheApp()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         await Assert.That(ReferenceEquals(app.Clone(), app)).IsTrue();
     }
 
@@ -57,16 +57,15 @@ public class AppStartTests
     {
         await using var app = await App();
         var ran = new List<string>();
-        var own = app.Own();
         // bound by the System actor, for the app: it fires though the goal runs as the User
-        own.Bind("start", When.before, (item, _, ctx) => { lock (ran) ran.Add($"before {(item as global::app.@this)?.Name(ctx)}"); return Task.FromResult(ctx.Ok()); },
-            app.actor.list.System, Scope.app);
-        own.Bind("start", When.after, async (_, result, ctx) =>
+        app.actor.list.System.on.Bind(app, "start", When.before, (item, _, ctx) => { lock (ran) ran.Add($"before {(item as global::app.@this)?.Name(ctx)}"); return Task.FromResult(ctx.Ok()); },
+            Scope.app);
+        app.actor.list.System.on.Bind(app, "start", When.after, async (_, result, ctx) =>
         {
             var x = (await ctx.Variable.Get("x")).IsInitialized;
             lock (ran) ran.Add($"after x={x}");
             return ctx.Ok();
-        }, app.actor.list.System, Scope.app);
+        }, Scope.app);
 
         var result = await app.Start();
 
@@ -78,8 +77,8 @@ public class AppStartTests
     [Test] public async Task ARefusingBefore_IsTheAnswer_AndTheGoalDoesntRun()
     {
         await using var app = await App();
-        app.Own().Bind("start", When.before,
-            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Refused", 400))), app.actor.list.User, Scope.app);
+        app.actor.list.User.on.Bind(app, "start", When.before,
+            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Refused", 400))), Scope.app);
 
         var result = await app.Start();
 
@@ -91,12 +90,12 @@ public class AppStartTests
     [Test] public async Task ACancellingBefore_IsTheAnswer_AndTheGoalDoesntRun()
     {
         await using var app = await App();
-        app.Own().Bind("start", When.before, (_, _, ctx) =>
+        app.actor.list.User.on.Bind(app, "start", When.before, (_, _, ctx) =>
         {
             var instead = ctx.Ok("instead");
             instead.Handled = true;
             return Task.FromResult(instead);
-        }, app.actor.list.User, Scope.app);
+        }, Scope.app);
 
         var result = await app.Start();
 

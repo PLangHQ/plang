@@ -7,7 +7,7 @@ namespace PLang.Tests.App.DataTests;
 
 public class DataTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/tmp/DataTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+    private readonly global::app.@this _app = new global::app.@this("/tmp/DataTests-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     [Test]
@@ -466,7 +466,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Context_WhenSet_PropagesToType()
     {
-        await using var engine = new global::app.@this("/test").Testing();
+        await using var engine = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         // Context propagation: setting Data.Context stamps the embedded Type
@@ -481,7 +481,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Type_LazyDerivation_WithContext()
     {
-        await using var engine = new global::app.@this("/test").Testing();
+        await using var engine = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         var ov = new Data("test", "hello", context: context);
@@ -520,7 +520,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Type_ExplicitType_NotOverridden()
     {
-        await using var engine = new global::app.@this("/test").Testing();
+        await using var engine = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         // A declared {image, jpg} (bytes off I/O, unread) survives the ctor — the value isn't
@@ -535,7 +535,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Type_Setter_StampsContext()
     {
-        await using var engine = new global::app.@this("/test").Testing();
+        await using var engine = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         var newType = new Type("text", "plain");
@@ -548,7 +548,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Type_Kind_WithContext()
     {
-        await using var engine = new global::app.@this("/test").Testing();
+        await using var engine = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         var data = new Data("img", new byte[] { 1, 2 }, engine.type.list.Stamp("image/jpeg", context), context: context);
@@ -573,7 +573,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Type_Compressible_TextKind()
     {
-        await using var engine = new global::app.@this("/test").Testing();
+        await using var engine = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         var data = new Data("txt", "hello", engine.type.list.Stamp("text/plain", context), context: context);
@@ -585,7 +585,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task GetChild_InheritsContext()
     {
-        await using var engine = new global::app.@this("/test").Testing();
+        await using var engine = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         var data = new Dictionary<string, object?> { { "name", "test" } };
@@ -714,7 +714,7 @@ public class DataTests : System.IAsyncDisposable
 
 public class DynamicDataTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/tmp/DynamicDataTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+    private readonly global::app.@this _app = new global::app.@this("/tmp/DynamicDataTests-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     [Test]

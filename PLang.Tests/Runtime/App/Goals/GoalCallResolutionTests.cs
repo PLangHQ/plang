@@ -25,7 +25,7 @@ public class GoalCallResolutionTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_goalcall_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir).Testing();
+        _app = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).Testing();
     }
 
     [After(Test)]
@@ -69,9 +69,9 @@ public class GoalCallResolutionTests
         await WritePr(".build/target.pr", "Target");
         var ctx = _app.actor.list.User.Context;
         var births = new List<string>();
-        _app.type.list["goal"].Own().Bind("create", global::app.@event.When.after,
+        _app.actor.list.User.on.Bind(_app.type.list["goal"], "create", global::app.@event.When.after,
             (_, data, c) => { births.Add(data.Type.Name); return Task.FromResult(data); },
-            _app.actor.list.User, global::app.@event.binding.Scope.actor);
+            global::app.@event.binding.Scope.actor);
 
         var slot = new global::app.data.@this("", ctx.Text("Target"), context: ctx).As<PLangGoal>();
         var selected = await slot.Value();
@@ -179,7 +179,7 @@ public class GoalCallResolutionTests
 
         await loaded.IsSuccess();
         await Assert.That((await loaded.Value() as PLangGoal)?.Name).IsEqualTo("Inner");
-        await Assert.That(PLangGoal.Pr(global::app.type.item.path.@this.Resolve("/sub/Inner.goal", _app.actor.list.User.Context)).ToString())
+        await Assert.That(global::app.type.item.path.file.@this.Resolve("/sub/Inner.goal", _app.actor.list.User.Context).Pr.ToString())
             .IsEqualTo("/sub/.build/inner.pr");
     }
 

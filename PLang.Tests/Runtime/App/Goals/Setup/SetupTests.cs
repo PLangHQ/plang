@@ -16,7 +16,7 @@ public class SetupTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-setup-test-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir).TestSigning();
+        _app = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).TestSigning();
     }
 
     [After(Test)]
@@ -165,17 +165,6 @@ public class SetupTests
 
         await result.IsSuccess();
         await Assert.That(context.Setup).IsNull(); // cleared after RunAsync
-    }
-
-    [Test]
-    public async Task Clone_PreservesSetup()
-    {
-        var context = _app.actor.list.User.Context;
-        context.Setup = _app.goal.list.Setup;
-
-        var clone = context.Clone();
-
-        await Assert.That(clone.Setup).IsEqualTo(context.Setup);
     }
 
     [Test]

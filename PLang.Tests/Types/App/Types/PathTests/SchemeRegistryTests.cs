@@ -25,7 +25,7 @@ public class SchemeRegistryTests
     [Test] public async Task Register_ThenFrom_ReturnsRegisteredSubclass()
     {
         var (app, context) = MakeApp();
-        app.type.list.Add(new SchemeKind("test", app.type.list[typeof(PLangPath)], (raw, c) => new FilePath(raw, c.App.type.list[new global::app.type.@this("path", "file"), c]) { Raw = raw }));
+        app.type.list.Add([new SchemeKind("test", app.type.list[typeof(PLangPath)], (raw, c) => new FilePath(raw, c.App.type.list[new global::app.type.@this("path", "file"), c]) { Raw = raw })]);
         var p = PLangPath.Resolve("test://hello", context);
         await Assert.That(p).IsNotNull();
         await Assert.That(p is FilePath).IsTrue();
@@ -36,8 +36,8 @@ public class SchemeRegistryTests
         var (app, context) = MakeApp();
         var first = context.File("/first");
         var second = context.File("/second");
-        app.type.list.Add(new SchemeKind("dup", app.type.list[typeof(PLangPath)], (raw, c) => first));
-        app.type.list.Add(new SchemeKind("dup", app.type.list[typeof(PLangPath)], (raw, c) => second));
+        app.type.list.Add([new SchemeKind("dup", app.type.list[typeof(PLangPath)], (raw, c) => first)]);
+        app.type.list.Add([new SchemeKind("dup", app.type.list[typeof(PLangPath)], (raw, c) => second)]);
         var p = PLangPath.Resolve("dup://x", context);
         await Assert.That(object.ReferenceEquals(p, second)).IsTrue();
     }
@@ -92,7 +92,7 @@ public class SchemeRegistryTests
     {
         var (a, _) = MakeApp();
         var (b, ctxB) = MakeApp();
-        a.type.list.Add(new SchemeKind("zzz", a.type.list[typeof(PLangPath)], (raw, c) => c.File(raw)));
+        a.type.list.Add([new SchemeKind("zzz", a.type.list[typeof(PLangPath)], (raw, c) => c.File(raw))]);
         await Assert.That(a.type.list["path"].kind["zzz"] is SchemeKind).IsTrue();
         await Assert.That(b.type.list["path"].kind["zzz"] is SchemeKind).IsFalse();
         await Assert.That(() => PLangPath.Resolve("zzz://x", ctxB)).Throws<SchemeNotRegistered>();

@@ -14,7 +14,7 @@ public class ReaderRegistryShapeTests
     private global::app.type.reader.@this _r = null!;
 
     [Before(Test)]
-    public void Setup() => _r = new global::app.type.reader.@this();
+    public void Setup() => _r = new global::app.origin.code().type.Reader;
 
     [Test] public async Task Reader_TypeExists_AtAppTypeReaderNamespace()
     {

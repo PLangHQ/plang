@@ -1,0 +1,26 @@
+{
+  "reviewer": "docs",
+  "branch": "fast-apps",
+  "timestamp": "2026-10-25T12:00:00Z",
+  "reviewed_version": "v1",
+  "summary": "The docs pass before the fast-apps merge. The rules a next coder needs (origin and layers, the sub app folder and testing rules, the hold, a run never writes a shared object, a birth that makes what's asked, Tools/Bench, the packages and SDK, the rebase trap) are in a new apps.md with file:line checked at the tip. The three CLAUDE.md proposals are applied. CLAUDE.md names none of the removed members; architecture.md named two (fixed); the plan's start.md contradicted the code in five places (fixed, stage 6 added). Documentation, CLAUDE.md and the plan only: no production code, no .pr, no teaching markdown.",
+  "stats": { "gaps_found": 6, "gaps_filled": 6, "docs_updated": 5, "docs_created": 1 },
+  "changes": [
+    { "id": 1, "type": "architecture-doc", "action": "created", "file": "Documentation/v0.2/apps.md", "description": "Origin and layers, sub app folder and testing rules, the hold, shared writes, a birth that makes what's asked, Tools/Bench, packages/SDK, the rebase trap; each with file:line." },
+    { "id": 2, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/good_to_know.md", "description": "Topic doc and six section lines." },
+    { "id": 3, "type": "consistency", "action": "updated", "file": "Documentation/v0.2/architecture.md", "description": "CreateChild()/Clone() no longer exist; replaced by context.Child(runner, token)." },
+    { "id": 4, "type": "consistency", "action": "updated", "file": "CLAUDE.md", "description": "Branch rules (3 bullets) and a Speed record section." },
+    { "id": 5, "type": "consistency", "action": "updated", "file": "test/plan/fast-apps/start.md", "description": "Origin instead of parent, the folder rule, layers, stage 6, deferred stage-4 items (auditor N14)." },
+    { "id": 6, "type": "changelog", "action": "created", "file": ".bot/fast-apps/docs/v1/result.md", "description": "Changelog and file table." }
+  ],
+  "findings": [
+    { "id": 1, "severity": "minor", "category": "stale-doc", "file": "test/plan/fast-apps/start.goal", "issue": "start.goal stops at stage 5 and is the test-designer's file; stage 6 has no test (a build change).", "resolution": "flagged-for-coder", "detail": "Noted in start.md; no behaviour to bind." },
+    { "id": 2, "severity": "minor", "category": "stale-doc", "file": "Documentation/v0.2/architecture.md", "issue": "The rest of the overview predates the lowercase members, the layers and the origin.", "resolution": "flagged-for-coder", "detail": "Only the CreateChild/Clone lines were wrong about removed members; a full refresh is its own pass." }
+  ],
+  "claude_md_proposals": [
+    { "from_bot": "architect", "target": "CLAUDE.md (boy scout, no runtime code for tests)", "decision": "applied", "reason": "Standing rules that apply to every branch and bot; attribution trimmed." },
+    { "from_bot": "architect", "target": "CLAUDE.md (speed record)", "decision": "applied", "reason": "Tools/Bench/run.sh and record.md exist; the rule says who runs it and what blocks." },
+    { "from_bot": "architect", "target": "CLAUDE.md (a run never writes a shared object)", "decision": "applied", "reason": "Checked in code: actor.on, history.closed, the three caches." }
+  ],
+  "character_proposals": []
+}

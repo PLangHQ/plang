@@ -24,7 +24,7 @@ public class VerifyActionTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_verify_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir, global::PLang.Tests.Parent.Actor);
         (_app).TestIdentity();
     }
 
@@ -155,7 +155,7 @@ public class VerifyActionTests
     [Test]
     public async Task TheTestSigner_ReadsItsData()
     {
-        await using var app = new global::app.@this(_tempDir).Testing();
+        await using var app = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.System.Context;
         await ctx.Variable.Set("plain", "hello");
         var refused = await global::PLang.Tests.Shared.Make.Action(ctx, "signing", "verify", ("Data", "%plain%")).Start(ctx);

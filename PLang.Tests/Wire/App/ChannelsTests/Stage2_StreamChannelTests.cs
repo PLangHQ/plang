@@ -54,7 +54,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     [Test]
     public async Task StreamChannel_OutputFactory_CreatesWriteOnlyChannel()
     {
-        var ch = StreamChannel.Output("o", new MemoryStream());
+        var ch = new StreamChannel("o", new MemoryStream(), global::app.channel.ChannelDirection.Output, ownsStream: false);
         app.actor.list.User.Channel.Register(ch);
         await Assert.That(ch.Direction).IsEqualTo(ChannelDirection.Output);
         await Assert.That(ch.CanWrite).IsTrue();
@@ -67,7 +67,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     [Test]
     public async Task StreamChannel_InputFactory_CreatesReadOnlyChannel()
     {
-        var ch = StreamChannel.Input("i", new MemoryStream());
+        var ch = new StreamChannel("i", new MemoryStream(), global::app.channel.ChannelDirection.Input, ownsStream: false);
         await Assert.That(ch.Direction).IsEqualTo(ChannelDirection.Input);
         await Assert.That(ch.CanRead).IsTrue();
         await Assert.That(ch.CanWrite).IsFalse();
@@ -341,11 +341,11 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
         var ch = StreamChannel.Memory("output");
         app.actor.list.User.Channel.Register(ch);
         string? seen = null;
-        ch.Own().Bind("write", global::app.@event.When.before, async (_, data, ctx) =>
+        app.actor.list.User.on.Bind(ch, "write", global::app.@event.When.before, async (_, data, ctx) =>
         {
             seen = (await data.Value())?.ToString();
             return ctx.Ok();
-        }, app.actor.list.User, global::app.@event.binding.Scope.actor);
+        }, global::app.@event.binding.Scope.actor);
 
         await ch.WriteText("  Saved Start");
 
@@ -353,14 +353,16 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task StreamChannel_ReadAllTextAsync_HonorsLatin1Encoding()
+    public async Task StreamChannel_Read_HonorsLatin1Encoding()
     {
         var ms = new MemoryStream(new byte[] { 0xE9 });
         var ch = new StreamChannel("c", ms, ChannelDirection.Input, ownsStream: false)
         { Mime = "text/plain", Encoding = "iso-8859-1" };
+        app.actor.list.User.Channel.Register(ch);
 
-        var text = await ch.ReadAllTextAsync();
-        await Assert.That(text).IsEqualTo("é");
+        var read = await ch.Read();
+        await read.IsSuccess();
+        await Assert.That((await read.Value())?.ToString()).IsEqualTo("é");
     }
 
     [Test]

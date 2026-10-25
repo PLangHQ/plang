@@ -33,7 +33,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     item.IList<@this, list.@this>
 {
     /// <summary>The types' list — the app's types, with the lookups by other keys.</summary>
-    public static list.@this List(global::app.@this app) => new();
+    public static list.@this List(global::app.@this app) => new(app.origin);
 
     /// <summary>Writes the type's identity — <c>{name, kind?, strict?, template?}</c>: what a type is written as in json
     /// and plang (a Data's and a property row's type slot, a type held as a value). A nested kind is written as its own
@@ -697,6 +697,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     /// <summary>Scalar wire shape (the underlying primitive form, e.g. "string" for path).</summary>
     public string? Shape { get => Family._shape ??= Family.Form; init => _shape = value; }
+
+    /// <summary>A type is never made from a value: what reads a name to it finds it, so its history takes no prior —
+    /// one entry is every app's made from the same code, and no read in any of them is written onto it.</summary>
+    private protected override item.history.@this Blank() => new item.history.closed();
     private string? _shape;
 
     /// <summary>A value of this type is written as an object: a record (its builder properties, no shape of its own),
@@ -819,27 +823,22 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// </summary>
     internal @this(string name, System.Type clr, list.@this? types) : this(name, clr, null, false, null, known: true)
     {
-        Alias = Declared<IReadOnlyList<string>>("Alias") ?? [];
-        Owned = Declared<IReadOnlyList<global::app.type.convert.OwnedClr>>("OwnedClrTypes") ?? [];
-        // declared by the class itself: a base that is internal (reference) leaves its subclasses (file, url) named
-        Internal = clr.GetProperty("Internal", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
-                                               | System.Reflection.BindingFlags.DeclaredOnly)?.GetValue(null) is true;
         // The type entity's own wire shape and kinds are taught by the prompt's type reference, not as facts.
-        if (types == null || clr == typeof(@this)) return;
-        _offer = Declared<IReadOnlyList<item.@this>>("Offer");
-        _list = types;
-
-        T? Declared<T>(string member) where T : class
-        {
-            var p = clr.GetProperty(member, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
-                                            | System.Reflection.BindingFlags.FlattenHierarchy);
-            return p?.GetValue(null) as T;
-        }
+        _list = clr == typeof(@this) ? null : types;
+        var declared = Facts(clr);
+        Alias = declared.Alias;
+        Owned = declared.Owned;
+        Internal = declared.Internal;
+        if (_list != null) _offer = declared.Offer;
     }
 
     // The list this type is in — its facts name their property types through it; null for a type that is its
     // identity alone.
     private readonly list.@this? _list;
+
+    /// <summary>What <paramref name="clr"/> declares of itself, as the code that made this type's entry read it — once
+    /// per code; for a type that is its identity alone (no list made it), the class's own, read now.</summary>
+    internal list.@this.Class Facts(System.Type clr) => Family._list?.code[clr] ?? new list.@this.Class(clr);
 
     /// <summary>The app's type list this type is in — what a value holding it asks the app's other types of (a text
     /// reading the variables it holds); null for a type that is its identity alone.</summary>

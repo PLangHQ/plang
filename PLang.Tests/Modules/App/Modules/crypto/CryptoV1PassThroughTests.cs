@@ -6,7 +6,7 @@ public class CryptoV1PassThroughTests
 {
     private static global::app.@this NewApp() =>
         new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-crypto-" + System.Guid.NewGuid().ToString("N")[..8]));
+            "plang-crypto-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor);
 
     [Test]
     public async Task CryptoEncrypt_V1_ReturnsInputUnchanged()

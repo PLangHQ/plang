@@ -735,17 +735,16 @@ public class IdentityHandlerTests
         await Assert.That(identity.IsDefault).IsTrue();
     }
 
-    // --- export null name uses same resolution as get ---
+    // --- export gives out only an identity the app holds: none is made to be given out ---
 
     [Test]
-    public async Task Export_NullName_AutoCreatesLikeGet()
+    public async Task Export_NullName_OnAnAppHoldingNone_IsRefused_AndMakesNone()
     {
-        // Export(null) should use GetOrCreateDefaultAsync, same as Get(null)
         var handler = new Export(Ctx) { Name = null };
         await handler.Attach(null, Ctx);
         var result = await handler.Start();
-        await result.IsSuccess();
-        var identity = (await result.Value()) as Identity;
-        await Assert.That(identity!.PrivateKey).IsNotNull();
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("IdentityNotOwn");
+        await Assert.That(await StoredKey("default")).IsEqualTo("");
     }
 }

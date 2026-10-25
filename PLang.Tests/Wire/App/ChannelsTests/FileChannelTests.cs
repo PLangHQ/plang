@@ -10,7 +10,7 @@ public class FileChannelTests
     {
         var dir = Path.Combine(Path.GetTempPath(), "plang_filech_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
-        var app = new global::app.@this(dir).Testing();
+        var app = new global::app.@this(dir, global::PLang.Tests.Parent.Actor).Testing();
         return (app, app.actor.list.User.Context, dir);
     }
 
@@ -97,12 +97,12 @@ public class FileChannelTests
     {
         var (app, context, dir) = MakeApp();
         await using var _ = app;
-        app.type.list["image"].Own().Bind("create", global::app.@event.When.before, (_, _, ctx) =>
+        app.actor.list.User.on.Bind(app.type.list["image"], "create", global::app.@event.When.before, (_, _, ctx) =>
         {
             global::app.data.@this made = ctx.Ok(context.Image(Png1x1, "image/png"));
             made.Handled = true;
             return Task.FromResult(made);
-        }, app.actor.list.User, global::app.@event.binding.Scope.actor);
+        }, global::app.@event.binding.Scope.actor);
 
         var saved = await context.File(Path.Combine(dir, "x.png")).Save(ADict(context), context);
 

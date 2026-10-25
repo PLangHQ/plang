@@ -17,7 +17,7 @@ public class JsonSourceContextTests : System.IAsyncDisposable
     {
         root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-sec-g-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        app = new global::app.@this(root).TestSigning();
+        app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).TestSigning();
     }
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 

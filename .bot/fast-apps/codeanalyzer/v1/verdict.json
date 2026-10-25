@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "Architecture holds; three blocking: production code only tests call (sqlite InMemory), IsBlank flag checked at four sqlite doors, own-ness asked by ReferenceEquals at the module registry/type list (two owners for HasCode); fifteen non-blocking (dead event.Of(on), static goal.Load, hold route by hand, publish idiom x11, names)." }

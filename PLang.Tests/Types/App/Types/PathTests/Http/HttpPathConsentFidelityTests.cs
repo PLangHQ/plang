@@ -44,7 +44,7 @@ public class HttpPathConsentFidelityTests
         var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-http-consent-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(dir);
-        var app = new AppEngine(dir);
+        var app = new AppEngine(dir, global::PLang.Tests.Parent.Actor);
         var ch = new CapturingChannel(app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
         return (app, app.actor.list.User.Context, ch);

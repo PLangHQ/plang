@@ -16,7 +16,7 @@ public class TakesTests : System.IAsyncDisposable
     public TakesTests()
     {
         System.IO.Directory.CreateDirectory(root);
-        app = new global::app.@this(root).Testing();
+        app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
     }
 
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();

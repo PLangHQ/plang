@@ -16,7 +16,7 @@ public class TableTypeTests
 {
     private static global::app.@this NewApp()
         => new(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-table-" + System.Guid.NewGuid().ToString("N")[..8]));
+            "plang-table-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor);
 
     private const string Csv = "name,age\nAda,36\nGrace,40\n";
 
@@ -30,7 +30,7 @@ public class TableTypeTests
     // to raw-bytes passthrough, not a wildcard parse that would fail.
     [Test] public async Task TableReader_Discovered_ForCsvKind()
     {
-        var r = new global::app.type.reader.@this();
+        var r = new global::app.origin.code().type.Reader;
         await Assert.That(r.Of("table", "csv")).IsNotNull();
     }
 

@@ -18,7 +18,7 @@ public class DeleteMoveWindowTests : System.IAsyncDisposable
     {
         root = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-window-" + System.Guid.NewGuid().ToString("N")[..8])).FullName;
         outside = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-window-out-" + System.Guid.NewGuid().ToString("N")[..8]);
-        app = new global::app.@this(root).TestSigning();
+        app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).TestSigning();
         user = app.actor.list.User.Context;
         app.actor.list.User.Channel.Register(new Granting(user));
     }

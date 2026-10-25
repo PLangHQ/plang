@@ -11,7 +11,7 @@ namespace PLang.Tests.App.Modules.browser;
 /// </summary>
 public class HeadlessInputTests : IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this _app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async ValueTask DisposeAsync() => await _app.DisposeAsync();
     private global::app.type.list.@this Types => _app.type.list;
 

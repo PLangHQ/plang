@@ -1,0 +1,25 @@
+=== layer  b7c59ecb8  2026-10-24T18:41:07Z  8 cpus  rounds 3
+r1 Debug root birth  load 2.68  median 26.03 ms  min 20.97  p90 29.92  cpu 29.94 ms  alloc 6055 KB (birth + dispose)
+r1 Release root birth  load 2.62  median 27.70 ms  min 23.44  p90 30.95  cpu 31.77 ms  alloc 6042 KB (birth + dispose)
+r1 Debug root request  load 1.52  3000 apps in 70.0 s (23.35 ms each, 43/s)  alloc 7381 KB each  held MB 0.9 → 3.4 → 4.0 → 4.6  failed 0
+r1 Release root request  load 1.26  3000 apps in 62.7 s (20.91 ms each, 48/s)  alloc 7170 KB each  held MB 0.9 → 3.3 → 3.9 → 4.5  failed 0
+r1 Debug child birth  load 1.24  median 3.31 ms  min 2.28  p90 5.08  cpu 3.79 ms  alloc 1168 KB (birth + dispose)
+r1 Release child birth  load 1.24  median 3.46 ms  min 2.65  p90 5.34  cpu 4.06 ms  alloc 1161 KB (birth + dispose)
+r1 Debug child request  load 1.23  3000 apps in 25.2 s (8.41 ms each, 119/s)  alloc 2759 KB each  held MB 2.5 → 3.9 → 4.7 → 5.5  failed 0
+r1 Release child request  load 1.15  3000 apps in 21.2 s (7.06 ms each, 142/s)  alloc 2515 KB each  held MB 2.4 → 3.7 → 4.6 → 5.4  failed 0
+r2 Debug root birth  load 1.14  median 27.49 ms  min 21.93  p90 31.05  cpu 31.89 ms  alloc 6055 KB (birth + dispose)
+r2 Release root birth  load 1.13  median 30.49 ms  min 25.26  p90 34.50  cpu 34.98 ms  alloc 6028 KB (birth + dispose)
+r2 Debug root request  load 1.20  3000 apps in 71.8 s (23.93 ms each, 42/s)  alloc 7377 KB each  held MB 0.9 → 3.3 → 4.0 → 4.6  failed 0
+r2 Release root request  load 1.18  3000 apps in 64.3 s (21.45 ms each, 47/s)  alloc 7183 KB each  held MB 0.9 → 3.4 → 4.0 → 4.5  failed 0
+r2 Debug child birth  load 1.24  median 3.57 ms  min 2.29  p90 5.20  cpu 4.01 ms  alloc 1174 KB (birth + dispose)
+r2 Release child birth  load 1.24  median 3.46 ms  min 2.59  p90 5.03  cpu 4.01 ms  alloc 1166 KB (birth + dispose)
+r2 Debug child request  load 1.15  3000 apps in 26.5 s (8.82 ms each, 113/s)  alloc 2763 KB each  held MB 2.5 → 3.9 → 4.7 → 5.5  failed 0
+r2 Release child request  load 1.23  3000 apps in 21.7 s (7.23 ms each, 138/s)  alloc 2658 KB each  held MB 2.5 → 3.8 → 4.7 → 5.5  failed 0
+r3 Debug root birth  load 1.22  median 27.09 ms  min 22.88  p90 30.46  cpu 31.06 ms  alloc 6057 KB (birth + dispose)
+r3 Release root birth  load 1.20  median 28.40 ms  min 23.12  p90 32.46  cpu 32.64 ms  alloc 6042 KB (birth + dispose)
+r3 Debug root request  load 1.11  3000 apps in 71.9 s (23.96 ms each, 42/s)  alloc 7380 KB each  held MB 0.9 → 3.3 → 4.0 → 4.6  failed 0
+r3 Release root request  load 1.37  3000 apps in 65.3 s (21.78 ms each, 46/s)  alloc 7185 KB each  held MB 0.9 → 3.4 → 3.9 → 4.5  failed 0
+r3 Debug child birth  load 1.37  median 3.37 ms  min 2.42  p90 5.07  cpu 3.75 ms  alloc 1174 KB (birth + dispose)
+r3 Release child birth  load 1.34  median 3.35 ms  min 2.67  p90 4.99  cpu 3.85 ms  alloc 1161 KB (birth + dispose)
+r3 Debug child request  load 1.31  3000 apps in 26.5 s (8.84 ms each, 113/s)  alloc 2765 KB each  held MB 2.5 → 3.9 → 4.7 → 5.6  failed 0
+r3 Release child request  load 1.35  3000 apps in 23.7 s (7.92 ms each, 126/s)  alloc 2515 KB each  held MB 2.5 → 3.8 → 4.7 → 5.5  failed 0

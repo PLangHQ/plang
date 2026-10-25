@@ -9,7 +9,7 @@ public class GivenSlotTests
 {
     private static async Task<string?> Split(string step)
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         var result = await (await context.Action(step)).Start(context);
         await result.IsSuccess();

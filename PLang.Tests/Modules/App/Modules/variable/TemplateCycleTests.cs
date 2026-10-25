@@ -9,7 +9,7 @@ public class TemplateCycleTests
     public async Task ATemplateNamingItsOwnUnsetVariable_FailsTheSet()
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-cycle-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            "plang-cycle-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         // the value `set %label% = '%label%-and-done'` holds, born as the build births it
         var born = global::PLang.Tests.Shared.Make.Built(ctx, "label", "%label%-and-done");
@@ -40,7 +40,7 @@ public class TemplateCycleTests
     public async Task AParameterNamingItsOwnName_RendersWithTheCallersVariable()
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-cycle-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            "plang-cycle-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("label", "milk");
 
@@ -53,7 +53,7 @@ public class TemplateCycleTests
     public async Task AParameterNamingItsOwnUnsetName_FailsTheCallInTheCaller()
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-cycle-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            "plang-cycle-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
 
         var result = await CallWithASelfNamingParameter(app);
 

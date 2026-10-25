@@ -3,7 +3,7 @@ namespace PLang.Tests.App.Types;
 // In text a type is the word it goes by with its kind (list<path>); a kind is a type too, and its word is its name.
 public class TypeTextLookTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private global::app.actor.context.@this Ctx => app.actor.list.User.Context;

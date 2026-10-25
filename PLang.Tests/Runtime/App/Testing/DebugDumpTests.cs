@@ -7,7 +7,7 @@ public class DebugDumpTests
     [Test]
     public async Task AValueResolvingToTheStructureItIsIn_IsNamed_NotWalkedForever()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var goal = await RealGoalLoad.ViaChannel(app, Make.Goal(ctx, "Start",
             Make.Step("set %x% = %!data%", Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "%x%", "variable"), ("Value", "%!data%")))));

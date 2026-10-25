@@ -8,10 +8,8 @@ namespace PLang.Tests.App.VariablesTests;
 // the stored value. A name's first set is a set; the same Data set again changes nothing and fires nothing.
 public class CollectionEventsTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/tmp/CollectionEventsTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+    private readonly global::app.@this app = new global::app.@this("/tmp/CollectionEventsTests-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
-
-    private global::app.@event.on.own On => app.variable.type.Own();
 
     [Test]
     public async Task AfterSet_IsHandedTheVariable_AndTheStoredValue()
@@ -20,12 +18,12 @@ public class CollectionEventsTests : System.IAsyncDisposable
         await vars.Set("name", "old");
         string? name = null;
         string? stored = null;
-        On.Bind("set", When.after, async (item, result, ctx) =>
+        app.actor.list.User.on.Bind(app.variable.type, "set", When.after, async (item, result, ctx) =>
         {
             name = ((global::app.type.item.variable.@this)item).Name;
             stored = (await result.Value())?.ToString();
             return ctx.Ok();
-        }, app.actor.list.User, Scope.app);
+        }, Scope.app);
 
         await vars.Set("name", "new");
 
@@ -38,7 +36,7 @@ public class CollectionEventsTests : System.IAsyncDisposable
     {
         var vars = new Variables(app.actor.list.User.Context);
         var sets = 0;
-        On.Bind("set", When.after, (_, _, ctx) => { sets++; return Task.FromResult(ctx.Ok()); }, app.actor.list.User, Scope.app);
+        app.actor.list.User.on.Bind(app.variable.type, "set", When.after, (_, _, ctx) => { sets++; return Task.FromResult(ctx.Ok()); }, Scope.app);
 
         await vars.Set("name", "first");
 
@@ -51,7 +49,7 @@ public class CollectionEventsTests : System.IAsyncDisposable
         var vars = new Variables(app.actor.list.User.Context);
         var held = await vars.Set("name", "first");
         var sets = 0;
-        On.Bind("set", When.after, (_, _, ctx) => { sets++; return Task.FromResult(ctx.Ok()); }, app.actor.list.User, Scope.app);
+        app.actor.list.User.on.Bind(app.variable.type, "set", When.after, (_, _, ctx) => { sets++; return Task.FromResult(ctx.Ok()); }, Scope.app);
 
         await vars.Set("name", held);
 
@@ -64,11 +62,11 @@ public class CollectionEventsTests : System.IAsyncDisposable
         var vars = new Variables(app.actor.list.User.Context);
         await vars.Set("name", "old");
         string? about = null;
-        On.Bind("set", When.before, async (_, result, ctx) =>
+        app.actor.list.User.on.Bind(app.variable.type, "set", When.before, async (_, result, ctx) =>
         {
             about = (await result.Value())?.ToString();
             return ctx.Error(new global::app.error.@this("no", "Refused", 400));
-        }, app.actor.list.User, Scope.app);
+        }, Scope.app);
 
         var answer = await vars.Set("name", "new");
 
@@ -83,12 +81,12 @@ public class CollectionEventsTests : System.IAsyncDisposable
     [Test]
     public async Task Restore_DoesNotAnswerUntilItsSetsHaveFinished()
     {
-        await using var source = new global::app.@this("/tmp/CollectionEventsTests-src-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+        await using var source = new global::app.@this("/tmp/CollectionEventsTests-src-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
         await source.actor.list.User.Context.Variable.Set("x", 1L);
         var snap = source.Snapshot(source.actor.list.User.Context);
 
         var gate = new TaskCompletionSource();
-        On.Bind("set", When.before, async (_, _, ctx) => { await gate.Task; return ctx.Ok(); }, app.actor.list.User, Scope.app);
+        app.actor.list.User.on.Bind(app.variable.type, "set", When.before, async (_, _, ctx) => { await gate.Task; return ctx.Ok(); }, Scope.app);
         var vars = new Variables(app.actor.list.User.Context);
 
         // the app hands each owner its own section of the snapshot (app/this.Snapshot.cs), as the test does
@@ -104,12 +102,12 @@ public class CollectionEventsTests : System.IAsyncDisposable
     public async Task ACancellingBeforeSet_IsTheAnswer_AndNothingIsWritten()
     {
         var vars = new Variables(app.actor.list.User.Context);
-        On.Bind("set", When.before, (_, _, ctx) =>
+        app.actor.list.User.on.Bind(app.variable.type, "set", When.before, (_, _, ctx) =>
         {
             var instead = ctx.Ok("instead");
             instead.Handled = true;
             return Task.FromResult(instead);
-        }, app.actor.list.User, Scope.app);
+        }, Scope.app);
 
         var answer = await vars.Set("name", "new");
 
@@ -123,11 +121,11 @@ public class CollectionEventsTests : System.IAsyncDisposable
         var vars = new Variables(app.actor.list.User.Context);
         await vars.Set("name", "ingi");
         string? removed = null;
-        On.Bind("remove", When.after, async (_, result, ctx) =>
+        app.actor.list.User.on.Bind(app.variable.type, "remove", When.after, async (_, result, ctx) =>
         {
             removed = (await result.Value())?.ToString();
             return ctx.Ok();
-        }, app.actor.list.User, Scope.app);
+        }, Scope.app);
 
         var answer = await vars.Remove("name");
 
@@ -141,8 +139,8 @@ public class CollectionEventsTests : System.IAsyncDisposable
     {
         var vars = new Variables(app.actor.list.User.Context);
         await vars.Set("name", "ingi");
-        On.Bind("remove", When.before,
-            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Refused", 400))), app.actor.list.User, Scope.app);
+        app.actor.list.User.on.Bind(app.variable.type, "remove", When.before,
+            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Refused", 400))), Scope.app);
 
         var answer = await vars.Remove("name");
 
@@ -155,7 +153,7 @@ public class CollectionEventsTests : System.IAsyncDisposable
     {
         var vars = new Variables(app.actor.list.User.Context);
         var sets = 0;
-        On.Bind("set", When.after, (_, _, ctx) => { sets++; return Task.FromResult(ctx.Ok()); }, app.actor.list.System, Scope.actor);
+        app.actor.list.System.on.Bind(app.variable.type, "set", When.after, (_, _, ctx) => { sets++; return Task.FromResult(ctx.Ok()); }, Scope.actor);
 
         await vars.Set("name", "first");
 

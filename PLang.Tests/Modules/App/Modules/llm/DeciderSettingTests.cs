@@ -12,7 +12,7 @@ public class DeciderSettingTests : System.IAsyncDisposable
 
     public DeciderSettingTests()
     {
-        _app = new global::app.@this("/tmp/decider-setting-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        _app = new global::app.@this("/tmp/decider-setting-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         _handler = LlmTestHelper.SetupMockHttp(_app);
     }
 

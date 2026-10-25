@@ -12,7 +12,7 @@ namespace PLang.Tests.App.DataTests.Navigators;
 // it could only fire on a raw JsonObject, which SetValue prevents).
 public class JsonObjectNavigationTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/tmp/JsonObjectNavigationTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+    private readonly global::app.@this _app = new global::app.@this("/tmp/JsonObjectNavigationTests-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     private Data MakeData(JsonObject value)

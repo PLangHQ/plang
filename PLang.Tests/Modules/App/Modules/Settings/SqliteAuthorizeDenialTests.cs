@@ -31,7 +31,7 @@ public class SqliteAuthorizeDenialTests
         root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-sqlite-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        return new global::app.@this(root).Testing();
+        return new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
     }
 
     [Test] public async Task SqliteOpen_DataSourceOutsideRoot_DeniedAnswer_DoesNotOpenDb()
@@ -41,7 +41,7 @@ public class SqliteAuthorizeDenialTests
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "external.sqlite");
         var dbPath = app.actor.list.User.Context.File(outOfRoot);
-        using var store = new global::app.store.sqlite.@this(dbPath, () => null, app.actor.list.User.Context);
+        using var store = new global::app.store.sqlite.@this(dbPath, false, app.actor.list.User.Context);
         // the first verb opens the store: an out-of-root path the actor denies fails it, and sqlite never sees it
         var read = await store.Get<global::app.type.item.@this>("t", "k");
         await Assert.That(read.Success).IsFalse();
@@ -59,7 +59,7 @@ public class SqliteAuthorizeDenialTests
         var outOfRoot = System.IO.Path.Combine(folder, "external.sqlite");
         var grant = global::app.type.item.permission.@this.Request(user, outOfRoot, global::app.type.item.permission.Verb.write);
         await user.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", grant, context: user.Context), persist: false);
-        using var store = new global::app.store.sqlite.@this(user.Context.File(outOfRoot), () => null, user.Context);
+        using var store = new global::app.store.sqlite.@this(user.Context.File(outOfRoot), false, user.Context);
 
         var read = await store.Get<global::app.type.item.@this>("t", "k");
         await Assert.That(read.Success).IsFalse();
@@ -73,7 +73,7 @@ public class SqliteAuthorizeDenialTests
         var ch = new CannedChannel("UNEXPECTED", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
         var dbPath = app.actor.list.User.Context.File(System.IO.Path.Combine(root, "data.sqlite"));
-        using var store = new global::app.store.sqlite.@this(dbPath, () => null, app.actor.list.User.Context);
+        using var store = new global::app.store.sqlite.@this(dbPath, false, app.actor.list.User.Context);
         await (await store.Get<global::app.type.item.@this>("t", "k")).IsSuccess();
         await Assert.That(ch.AskCount).IsEqualTo(0);
     }

@@ -6,8 +6,6 @@ public sealed class error : global::app.@event.@this
 {
     internal error(binding.list.before before, binding.list.after after) : base("error", before, after) { }
 
-    protected override global::app.@event.@this Of(global::app.@event.on.@this on) => on.error;
-
     /// <summary>
     /// The failure <paramref name="failed"/> handed to what is bound on <paramref name="item"/>'s error, level by
     /// level, in the order added: the first binding that takes it answers — anything but the failure handed back
@@ -19,12 +17,14 @@ public sealed class error : global::app.@event.@this
     {
         if (!IsBound(item, context)) return failed;
         for (var depth = 0; item.Level(depth, context) is { } level; depth++)
-            foreach (var binding in Of(level.on).before)
-            {
-                if (!binding.For(item, context)) continue;
-                var answer = await binding.Start(item, failed, context);
-                if (!ReferenceEquals(answer, failed)) return answer;
-            }
+            // the level's own clauses, then what each actor of the asker's app holds for it
+            foreach (var @event in Outward(level, context))
+                foreach (var binding in @event.before)
+                {
+                    if (!binding.For(item, context)) continue;
+                    var answer = await binding.Start(item, failed, context);
+                    if (!ReferenceEquals(answer, failed)) return answer;
+                }
         return failed;
     }
 }

@@ -7,7 +7,7 @@ public class EngineTypesTests
     [Before(Test)]
     public void Setup()
     {
-        _types = new global::app.type.list.@this();
+        _types = new global::app.origin.code().type;
     }
 
     // --- Clr: PLang name → CLR type ---
@@ -137,7 +137,7 @@ public class EngineTypesTests
     [Test]
     public async Task Engine_HasTypesProperty()
     {
-        await using var engine = new global::app.@this("/test").Testing();
+        await using var engine = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
 
         await Assert.That(engine.type.list).IsNotNull();
         await Assert.That(engine.type.list.Clr("string")).IsEqualTo(typeof(global::app.type.item.text.@this));

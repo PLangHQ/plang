@@ -18,7 +18,7 @@ public class UnpackTests : IDisposable
     {
         _root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "plang_unpack_" + Guid.NewGuid().ToString("N"))).FullName;
         _outside = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "plang_unpack_out_" + Guid.NewGuid().ToString("N"))).FullName;
-        _app = new global::app.@this(_root).Testing();
+        _app = new global::app.@this(_root, global::PLang.Tests.Parent.Actor).Testing();
     }
 
     public void Dispose()

@@ -17,7 +17,7 @@ public class ReadFailureTests
     // a typed Data error, not an uncaught exception.
     private static global::app.@this NewApp()
         => new(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-readfail-" + System.Guid.NewGuid().ToString("N")[..8]));
+            "plang-readfail-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor);
 
     [Test] public async Task Read_OfMalformedJson_ProducesError_NotThrow()
     {
@@ -39,7 +39,7 @@ public class ReadFailureTests
     {
         // Registry-level "no entry" path: Of(...) returns null; the dispatch
         // itself does not throw. The caller turns null into a typed error.
-        var r = new global::app.type.reader.@this();
+        var r = new global::app.origin.code().type.Reader;
         await Assert.That(r.Of("no-such-type", "json")).IsNull();
     }
 

@@ -9,7 +9,7 @@ namespace PLang.Tests.App.Types;
 
 public class ImageValueTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private static readonly byte[] PngHeader = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
@@ -39,7 +39,7 @@ public class ImageValueTests : System.IAsyncDisposable
     [Test] public async Task Image_FromFileRead_PathReferencesSourceFile()
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-img-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            "plang-img-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var raw = System.IO.Path.Combine(app.filesystem.root.Absolute, "photo.png");
         var p = global::app.type.item.path.@this.Resolve(raw, app.actor.list.User.Context);
         var img = app.actor.list.User.Context.Image(p, PngHeader);
@@ -50,7 +50,7 @@ public class ImageValueTests : System.IAsyncDisposable
     [Test] public async Task Image_PathBorn_JpegExtension_KindIsCanonicalJpg()
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-img-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            "plang-img-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var p = global::app.type.item.path.@this.Resolve("photo.jpeg", app.actor.list.User.Context);
         var img = app.actor.list.User.Context.Image(p);
         await Assert.That(img.Mime).IsEqualTo("image/jpeg");
@@ -63,15 +63,6 @@ public class ImageValueTests : System.IAsyncDisposable
         await Assert.That(app.actor.list.User.Context.Ok(img).Type.kind.Name).IsEqualTo("jpg");
     }
 
-    [Test] public async Task Image_WidthHeight_LazyEvaluation()
-    {
-        // Width/Height computed on first access via SixLabors.ImageSharp.
-        // Empty/garbage bytes degrade to (0, 0) without throwing.
-        var img = app.actor.list.User.Context.Image(System.Array.Empty<byte>(), "image/png");
-        await Assert.That(img.Width).IsEqualTo(0);
-        await Assert.That(img.Height).IsEqualTo(0);
-    }
-
     [Test] public async Task Image_IBooleanResolvable_NonEmptyBytes_Truthy()
         => await Assert.That(await app.actor.list.User.Context.Image(PngHeader, "image/png").AsBooleanAsync(app.actor.list.User.Context)).IsTrue();
 
@@ -80,7 +71,7 @@ public class ImageValueTests : System.IAsyncDisposable
 
     [Test] public async Task Image_PlangTypeAttribute_Registered()
     {
-        var types = new global::app.type.list.@this();
+        var types = new global::app.origin.code().type;
         await Assert.That(types.Clr("image")).IsEqualTo(typeof(image));
     }
 

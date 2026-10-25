@@ -6,7 +6,7 @@ namespace PLang.Tests.App.Types;
 // one field carrying full identity, no flat sibling `kind` key.
 public class KindFieldTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/tmp/kindfield-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+    private readonly global::app.@this _app = new global::app.@this("/tmp/kindfield-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     // A Data writes itself via Data.Output through the serializer's async path (the Out view),

@@ -17,7 +17,7 @@ public class MemberNoteTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_member_note_" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(System.IO.Path.Combine(_tempDir, "system", "type", "text"));
-        _app = new global::app.@this(_tempDir).Testing();
+        _app = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).Testing();
     }
 
     [After(Test)]

@@ -114,7 +114,8 @@ public sealed class @this : IDisposable
     private global::app.actor.setting.@this? _setting;
     // Scoped door: chains to the parent context's door, or (at a root context) to its actor's — so an
     // in-memory read walks this → parents → the actor's → the system's → [Default].
-    public global::app.actor.setting.@this Setting => _setting ??= new(this, Parent?.Setting ?? Actor.Setting);
+    public global::app.actor.setting.@this Setting
+        => _setting ?? System.Threading.LazyInitializer.EnsureInitialized(ref _setting, () => new(this, Parent?.Setting ?? Actor.Setting));
 
     /// <summary>
     /// What this context's file paths read and write once their gate has passed: the one it was born with,
@@ -139,25 +140,11 @@ public sealed class @this : IDisposable
         // Stamp context on Variables (propagates to all existing Data)
         Variable.Context = this;
         // a frame's values are the app's types
-        call = new(app.type.list,
-            () => Setting, new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)]));
+        call = new(app.type.list, () => Setting);
 
-        // Register context variables on the Variables
-        RegisterContextVariables();
-    }
-
-    /// <summary>
-    /// Registers context variables (prefixed with !) on the Variables.
-    /// </summary>
-    private void RegisterContextVariables()
-    {
-        var vars = Variable;
-
-        // All context variables are lazy — context has app, fetch at request time. The goal, step, error, test and
-        // channels in play are the app's shortcuts (/system/shortcut/: %!goal%, %!step%, %!error%, %!test%,
-        // %!channel%), each reading its asker's place through the app.
-        vars.Set(new data.DynamicData("!app", asker => asker.Ok(App), this));
-        vars.Set(new data.DynamicData("!context", asker => asker.Ok(this), this));
+        // %!app% and %!context% are the memory's system variables, under it: the goal, step, error, test and channels in
+        // play are the app's shortcuts (/system/shortcut/: %!goal%, %!step%, %!error%, %!test%, %!channel%), each
+        // reading its asker's place through the app.
     }
 
     // --- Value births ---
@@ -265,41 +252,6 @@ public sealed class @this : IDisposable
         var key = $"__static_{moduleNamespace}__";
         return (ConcurrentDictionary<string, object?>)_data.GetOrAdd(key,
             _ => new ConcurrentDictionary<string, object?>(StringComparer.OrdinalIgnoreCase));
-    }
-
-    /// <summary>
-    /// Creates a child context for nested execution.
-    /// Test fixture — production creates contexts only via the ctor in Actor.this.cs.
-    /// One Context propagates through the entire goal-call tree of an Actor; child
-    /// contexts are unit-test scaffolding for inheritance scenarios (Setting,
-    /// Variables, Parent linkage).
-    /// </summary>
-    public @this CreateChild(Variables? variables = null)
-    {
-        return new @this(App, Actor, variables ?? Variable.Clone(), this);
-    }
-
-    /// <summary>
-    /// Clones this context with a new Variables.
-    /// Test fixture — see CreateChild. Not used by production code; the property
-    /// propagation here (IsAsync, Setup, Setting, _data) reflects what existing
-    /// tests need, not a Clone/Copy contract for the runtime.
-    /// </summary>
-    public @this Clone(Variables? variables = null)
-    {
-        var clone = new @this(App, Actor, variables ?? Variable.Clone(), Parent, filesystem: Filesystem)
-        {
-            IsAsync = IsAsync,
-            Setup = Setup,
-        };
-        clone._setting = _setting?.Clone();
-
-        foreach (var kvp in _data)
-        {
-            clone._data[kvp.Key] = kvp.Value;
-        }
-
-        return clone;
     }
 
     // --- Data wrapper cache for structural types (Goal, Step, Action) ---

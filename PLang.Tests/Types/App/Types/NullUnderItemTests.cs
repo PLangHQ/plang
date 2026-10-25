@@ -7,7 +7,7 @@ public class NullUnderItemTests
     [Test]
     public async Task ANullUnderItem_IsTheNullType()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
 
         await Assert.That(app.type.list["item"].Make(null, ctx).Type.Name).IsEqualTo("null");
@@ -16,7 +16,7 @@ public class NullUnderItemTests
     [Test]
     public async Task ANullUnderADeclaration_KeepsIt()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
 
         var held = app.type.list["path"].Make(null, ctx);
@@ -29,7 +29,7 @@ public class NullUnderItemTests
     [Test]
     public async Task SetToNull_ThroughThePr_ItsTypeIsNull()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         const string line = "variable.set(Name=%x%, Value=null)";
         var step = new global::app.goal.step.@this(app.type.list) { Text = line };
@@ -47,7 +47,7 @@ public class NullUnderItemTests
     [Test]
     public async Task SetToNull_ItsTypeIsNull()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
 
         await (await Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "%x%", "variable"), ("Value", null)).Start(ctx)).IsSuccess();

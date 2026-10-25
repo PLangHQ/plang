@@ -9,7 +9,7 @@ public class IntegrationCutsTests
     [Test]
     public async Task Cut1_ConsoleBoot_ThroughWriteOut_ReachesStdout()
     {
-        await using var app = new global::app.@this("/tmp/cut1").Testing();
+        await using var app = new global::app.@this("/tmp/cut1", global::PLang.Tests.Parent.Actor).Testing();
         var userOutput = new MemoryStream();
         var userError = new MemoryStream();
         var userInput = new MemoryStream();
@@ -41,7 +41,7 @@ public class IntegrationCutsTests
     [Test]
     public async Task Cut3_ChannelEvents_AbortPlusAuditMetric_AcrossTwoWrites()
     {
-        await using var app = new global::app.@this("/tmp/cut3").Testing();
+        await using var app = new global::app.@this("/tmp/cut3", global::PLang.Tests.Parent.Actor).Testing();
         var auditCapture = new MemoryStream();
         var metricsCapture = new MemoryStream();
         var audit = new StreamChannel("audit.external", auditCapture, ChannelDirection.Output, ownsStream: false)
@@ -52,18 +52,18 @@ public class IntegrationCutsTests
         app.actor.list.User.Channel.Register(metrics);
 
         // Before a write to audit: refuse a value containing "REJECT" — the refusal is the write's answer.
-        audit.Own().Bind("write", global::app.@event.When.before, (_, payload, ctx) =>
+        app.actor.list.User.on.Bind(audit, "write", global::app.@event.When.before, (_, payload, ctx) =>
             Task.FromResult(payload.Peek()?.ToString() is { } s && s.Contains("REJECT")
                 ? ctx.Error(new global::app.error.@this("rejected by approval", "Rejected", 400))
                 : ctx.Ok()),
-            app.actor.list.User, global::app.@event.binding.Scope.actor);
+            global::app.@event.binding.Scope.actor);
 
         // After a write to audit (it runs on every result): count the writes that went through.
-        audit.Own().Bind("write", global::app.@event.When.after, async (_, result, ctx) =>
+        app.actor.list.User.on.Bind(audit, "write", global::app.@event.When.after, async (_, result, ctx) =>
         {
             if (result.Success) await metrics.WriteAsync(app.Ok("+1"));
             return ctx.Ok();
-        }, app.actor.list.User, global::app.@event.binding.Scope.actor);
+        }, global::app.@event.binding.Scope.actor);
 
         var ok = await audit.WriteAsync(app.Ok("ok-payload"));
         var bad = await audit.WriteAsync(app.Ok("REJECT-this"));

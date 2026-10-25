@@ -18,7 +18,7 @@ public class AskAnswerTests : System.IAsyncDisposable
     {
         outside = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-askanswer-" + System.Guid.NewGuid().ToString("N")[..8])).FullName;
         System.IO.File.WriteAllText(System.IO.Path.Combine(outside, "secret.txt"), "outside");
-        app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-askanswer-root-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+        app =new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-askanswer-root-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         user = app.actor.list.User.Context;
         channel = new Counting(user);
         app.actor.list.User.Channel.Register(channel);
@@ -41,6 +41,14 @@ public class AskAnswerTests : System.IAsyncDisposable
         }
     }
 
+    // identity.export on the app's own default identity, made first (identity.get asks nothing): an app gives out only
+    // an identity it holds
+    private async Task<global::app.data.@this> Export()
+    {
+        await (await user.Action("identity.get()")).Start(user);
+        return await (await user.Action("identity.export()")).Start(user);
+    }
+
     private async Task Answering() => await (await (await user.Action("variable.set(Name=\"!ask.answer\", Value=\"a\")")).Start(user)).IsSuccess();
 
     private async Task Refused(global::app.data.@this answer)
@@ -53,12 +61,12 @@ public class AskAnswerTests : System.IAsyncDisposable
     // a binding before the input's ask that answers "a" in the channel's place — what a step's `on ask on "input"`
     // binding does — never answers a consent: it may watch it, never answer it
     private void Binding()
-        => channel.Own().ask.before.Add((item, data, ctx) =>
+        => app.actor.list.User.on.Bind(channel, "ask", global::app.@event.When.before, (item, data, ctx) =>
         {
             var answer = ctx.Ok("a");
             answer.Handled = true;
             return Task.FromResult(answer);
-        }, app.actor.list.User, global::app.@event.binding.Scope.actor, (item, ctx) => true);
+        }, global::app.@event.binding.Scope.actor);
 
     [Test] public async Task ABindingOnTheInputsAsk_DoesNotAnswerARead()
     {
@@ -69,7 +77,7 @@ public class AskAnswerTests : System.IAsyncDisposable
     [Test] public async Task ABindingOnTheInputsAsk_DoesNotAnswerAnExport()
     {
         Binding();
-        await Refused(await (await user.Action("identity.export()")).Start(user));
+        await Refused(await Export());
     }
 
     [Test] public async Task AStepSettingTheAskAnswer_IsStillAskedForARead()
@@ -81,7 +89,7 @@ public class AskAnswerTests : System.IAsyncDisposable
     [Test] public async Task AStepSettingTheAskAnswer_IsStillAskedForAnExport()
     {
         await Answering();
-        await Refused(await (await user.Action("identity.export()")).Start(user));
+        await Refused(await Export());
     }
 
     [Test] public async Task AStepSettingTheAskAnswer_IsStillAskedForACopy()

@@ -7,11 +7,11 @@ namespace PLang.Tests.App.CompareRedesign;
 // `error`, `success`) is protected — a type may not shadow it.
 public class Stage2_PlaneResolverTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private global::app.@this NewApp() => new(System.IO.Path.Combine(
-        System.IO.Path.GetTempPath(), "plang-stage2pl-" + System.Guid.NewGuid().ToString("N")[..8]));
+        System.IO.Path.GetTempPath(), "plang-stage2pl-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor);
 
     [Test]
     public async Task DotPlane_ResolvesDataContent_TypeAnswers()

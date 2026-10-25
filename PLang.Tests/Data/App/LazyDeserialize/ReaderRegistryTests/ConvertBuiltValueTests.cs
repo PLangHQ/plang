@@ -18,7 +18,7 @@ namespace PLang.Tests.App.LazyDeserialize.ReaderRegistryTests;
 public class ConvertBuiltValueTests
 {
     private static global::app.@this NewApp() => new(System.IO.Path.Combine(
-        System.IO.Path.GetTempPath(), "plang-convert2b-" + System.Guid.NewGuid().ToString("N")[..8]));
+        System.IO.Path.GetTempPath(), "plang-convert2b-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor);
 
     [Test] public async Task ConvertBuiltText_ToNumber_Succeeds()
     {

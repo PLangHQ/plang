@@ -8,7 +8,7 @@ public class ReadBuildWarningTests
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "readwarn-" + System.Guid.NewGuid().ToString("N")[..6]);
         System.IO.Directory.CreateDirectory(root);
-        var app = new global::app.@this(root).Testing();
+        var app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
         var warnings = new System.IO.MemoryStream();
         app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(
             "builder", warnings, global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });

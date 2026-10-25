@@ -4,7 +4,7 @@ namespace app.module.cache;
 /// Pluggable cache interface for step result caching.
 /// Default: global::app.module.cache.Memory. Swap via: - use 'redis.dll' for caching
 /// </summary>
-public interface ICache
+public interface ICache : System.IDisposable
 {
     Task<data.@this?> GetAsync(string key, CancellationToken ct = default);
     Task SetAsync(string key, data.@this value, CacheSettings settings, CancellationToken ct = default);

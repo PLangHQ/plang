@@ -101,7 +101,7 @@ class app.call.list.this : app.type.item.this, app.snapshot.ISnapshot
   Tags() : System.Threading.Tasks.ValueTask<app.type.item.bool.this>
   Timing() : System.Threading.Tasks.ValueTask<app.type.item.bool.this>
   Variables : app.type.item.variable.list.this { get; }
-  ctor(app.type.list.this types, System.Func<app.actor.setting.this> settings, app.error.list.this audit)
+  ctor(app.type.list.this types, System.Func<app.actor.setting.this> settings)
   override IsLeaf : System.Boolean { get; }
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
 
@@ -175,7 +175,6 @@ class app.channel.format.this : app.type.item.this, app.type.item.ICreate<app.ch
 
 class app.channel.list.this : app.type.item.this, System.IAsyncDisposable
   App : app.this { get; }
-  ChannelNames : System.Collections.Generic.IEnumerable<System.String> { get; }
   Contains(System.String name) : System.Boolean
   DisposeAsync() : System.Threading.Tasks.ValueTask
   Get(System.String name) : app.channel.this
@@ -275,8 +274,6 @@ class app.channel.type.stream.this : app.channel.type.session.this
   End : System.String { get; set; } [Debug]
   Framed : System.Boolean { get; init; } [Debug]
   KeepsLast : System.Boolean { get; init; } [Debug]
-  ReadAllBytesAsync(System.Threading.CancellationToken cancellationToken = …) : System.Threading.Tasks.Task<System.Byte[]>
-  ReadAllTextAsync(System.Threading.CancellationToken cancellationToken = …) : System.Threading.Tasks.Task<System.String>
   Stream : System.IO.Stream { get; }
   ctor(System.String name, System.IO.Stream stream, app.channel.ChannelDirection direction = …, System.Boolean ownsStream = …)
   override Ask(app.module.output.ask action, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
@@ -286,9 +283,7 @@ class app.channel.type.stream.this : app.channel.type.session.this
   override DisposeAsync() : System.Threading.Tasks.ValueTask
   override Read(System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   override Write(app.data.this data, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
-  static Input(System.String name, System.IO.Stream stream, System.Boolean ownsStream = …) : app.channel.type.stream.this
   static Memory(System.String name, app.channel.ChannelDirection direction = …) : app.channel.type.stream.this
-  static Output(System.String name, System.IO.Stream stream, System.Boolean ownsStream = …) : app.channel.type.stream.this
 
 class app.channel.type.test.this : app.channel.type.session.this
   Test : app.test.this { get; }
@@ -512,27 +507,21 @@ class app.event.binding.this : app.type.item.this, app.type.item.ICreate<app.eve
   Scope : app.event.binding.Scope { get; }
 
 class app.event.on.ask : app.event.this
-  protected override Of(app.event.on.this on) : app.event.this
 
 class app.event.on.create : app.event.this
-  protected override Of(app.event.on.this on) : app.event.this
 
 class app.event.on.declared : app.event.this
 
 class app.event.on.error : app.event.this
   Catch(app.type.item.this item, app.data.this failed, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
-  protected override Of(app.event.on.this on) : app.event.this
 
 class app.event.on.hit : app.event.this
 
 class app.event.on.load : app.event.this
-  protected override Of(app.event.on.this on) : app.event.this
 
 class app.event.on.miss : app.event.this
 
 class app.event.on.own : app.event.on.this
-  Bind(System.String event, app.event.When when, System.Func<app.type.item.this, app.data.this, app.actor.context.this, System.Threading.Tasks.Task<app.data.this>> handler, app.actor.this actor, app.event.binding.Scope scope) : app.event.binding.this
-  Bind(System.String event, app.event.When when, System.Func<app.type.item.this, app.data.this, app.actor.context.this, System.Threading.Tasks.Task<app.data.this>> handler, app.actor.this actor, app.event.binding.Scope scope, System.Func<app.type.item.this, app.actor.context.this, System.Boolean> filter) : app.event.binding.this
   Bind<T>(System.String event, app.event.When when, System.Func<app.event.binding.list.this, T> make) : T
   override Item[System.String] : app.event.this { get; }
   override ask : app.event.on.ask { get; }
@@ -546,16 +535,12 @@ class app.event.on.own : app.event.on.this
   override write : app.event.on.write { get; }
 
 class app.event.on.read : app.event.this
-  protected override Of(app.event.on.this on) : app.event.this
 
 class app.event.on.remove : app.event.this
-  protected override Of(app.event.on.this on) : app.event.this
 
 class app.event.on.set : app.event.this
-  protected override Of(app.event.on.this on) : app.event.this
 
 class app.event.on.start : app.event.this
-  protected override Of(app.event.on.this on) : app.event.this
 
 class app.event.on.this : app.type.item.this
   Names : System.Collections.Generic.IEnumerable<System.String> { get; }
@@ -574,7 +559,6 @@ class app.event.on.this : app.type.item.this
   virtual write : app.event.on.write { get; }
 
 class app.event.on.write : app.event.this
-  protected override Of(app.event.on.this on) : app.event.this
 
 class app.event.serializer.Reader : app.type.reader.ITypeReader
   Kind : System.String { get; }
@@ -590,7 +574,6 @@ abstract class app.event.this : app.type.item.this, app.type.item.ICreate<app.ev
   before : app.event.binding.list.before { get; }
   override ToString() : System.String
   protected override Type : app.type.this { get; }
-  protected virtual Of(app.event.on.this on) : app.event.this
 
 class app.module.ActionAttribute : System.Attribute
   Cacheable : System.Boolean { get; set; }
@@ -622,7 +605,7 @@ interface app.module.IClass
   virtual Validate() : System.Threading.Tasks.Task<app.error.this>
 
 interface app.module.IClause
-  abstract Bind(app.goal.step.action.this clause, app.goal.step.action.this action) : System.Void
+  abstract Bind(app.goal.step.action.this clause, app.goal.step.action.this action, app.event.on.own on) : System.Void
 
 interface app.module.ICodeGenerated
   abstract Start() : System.Threading.Tasks.Task<app.data.this>
@@ -1629,11 +1612,11 @@ class app.type.item.guid.this : app.type.item.this, System.IEquatable<app.type.i
   static Shape : System.String { get; }
 
 class app.type.item.history.this
-  Add(app.type.item.this prior) : System.Void
   Has(app.type.this other) : System.Boolean
   HasKind(System.String name) : System.Boolean
   ctor()
   list : System.Collections.Generic.IReadOnlyList<app.type.item.this> { get; }
+  virtual Add(app.type.item.this prior) : System.Void
 
 static class app.type.item.image.serializer.Default
   static Read(System.Object raw, System.String kind, app.type.reader.ReadContext ctx) : System.Object
@@ -1646,12 +1629,10 @@ class app.type.item.image.serializer.Reader : app.type.reader.ITypeReader
 class app.type.item.image.this : app.type.item.this, app.data.IKindValidatable, app.data.IStrictKindEnforcer, app.type.item.ICreate<app.type.item.image.this>, app.type.item.IEncode<app.type.item.image.this> [Format, Format, Format, Format, Format, Format, Format, Format, PlangType]
   Bytes : System.Byte[] { get; } [Out, Store]
   CheckStrictKind() : System.Nullable<System.ValueTuple<System.Boolean, System.String>>
-  Height : System.Int32 { get; }
   Mime : System.String { get; } [LlmBuilder, Out, Store]
   Path : app.type.item.path.this { get; init; } [LlmBuilder, Out, Store]
   RequireStrictKind(System.String kind) : System.Void
   ValidateKind(System.Object value, System.String requiredKind) : System.ValueTuple<System.Boolean, System.String>
-  Width : System.Int32 { get; }
   ctor(System.Byte[] bytes, app.type.item.path.this path, app.type.this type)
   ctor(System.Byte[] bytes, app.type.this type)
   ctor(app.type.item.path.this path, app.type.this type)
@@ -3147,8 +3128,6 @@ abstract class app.type.kind.this<T> : app.type.kind.this
 class app.type.list.this : app.type.item.list.this<app.type.this>
   Add(System.Reflection.Assembly assembly, app.actor.context.this context) : app.data.this
   Add(System.Type clr, app.actor.context.this context, System.String name = …) : app.data.this
-  Add(app.type.kind.this kind) : System.Void
-  Assemblies : System.Collections.Generic.List<System.Reflection.Assembly> { get; }
   Contains(System.String name) : System.Boolean
   Extension(System.String extension, app.actor.context.this context) : app.type.this
   Format(System.String named) : app.type.kind.this
@@ -3163,7 +3142,6 @@ class app.type.list.this : app.type.item.list.this<app.type.this>
   Reader : app.type.reader.this { get; }
   Reserved : System.Collections.Generic.IReadOnlySet<System.String> { get; }
   Sealed : System.Collections.Generic.IReadOnlySet<System.String> { get; }
-  ctor()
   protected override Admit(System.Object slot) : System.Void
   protected override Admit(app.type.item.list.this other) : System.Void
   protected override Type : app.type.this { get; }
@@ -3245,15 +3223,13 @@ class app.type.reader.ReadContext : System.IEquatable<app.type.reader.ReadContex
   Window : app.type.item.duration.this { get; init; }
   ctor(app.actor.context.this Context, app.type.item.template.kind.this Template = …, System.Boolean Verify = …, System.Boolean DeferVerify = …, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> Variable = …, app.type.item.path.this Origin = …, System.Boolean IsBuilt = …)
 
-class app.type.reader.this
-  Assemblies : System.Collections.Generic.List<System.Reflection.Assembly> { get; }
+abstract class app.type.reader.this
   Of(System.String typeName, System.String kind) : app.type.reader.this+Read
   Reader(System.String typeName, System.String kind, app.actor.context.this context) : app.type.reader.ITypeReader
   Register(System.String typeName, System.String kind, app.type.reader.ITypeReader reader) : System.Void
   Register(System.String typeName, System.String kind, app.type.reader.this+Read read) : System.Void
   TypeOf(System.String kind) : System.String
   Typed(System.String typeName, System.String kind) : app.type.reader.ITypeReader
-  ctor()
   static const AnyKind : System.String
 
 class app.type.reader.this+Read : System.MulticastDelegate

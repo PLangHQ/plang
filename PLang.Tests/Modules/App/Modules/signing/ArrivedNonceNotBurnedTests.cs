@@ -17,7 +17,7 @@ public class ArrivedNonceNotBurnedTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_burn_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir, global::PLang.Tests.Parent.Actor);
         _app.TestIdentity();
         await Ctx.Variable.Set("NowUtc", new global::app.type.item.datetime.@this(Now, _app.type.list[typeof(global::app.type.item.datetime.@this)]));
     }

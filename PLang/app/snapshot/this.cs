@@ -70,6 +70,18 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         => Entries.Set(new global::app.data.@this(
             key, global::app.type.item.@this.Create(value, Context), context: Context));
 
+    /// <summary>The rows a list entry holds, each read through its own typed ask — the same door every value goes
+    /// through, so nothing lowers to CLR. An absent entry is empty, the same answer a written empty list gives.</summary>
+    internal async System.Threading.Tasks.Task<List<T>> Read<T>(string key)
+        where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+    {
+        var rows = new List<T>();
+        if (Entries.Get(key, Context) is not { } entry) return rows;
+        foreach (var row in (await entry.Value<global::app.type.item.list.@this>())!.Items(Context))
+            if (await row.Value<T>() is { } value) rows.Add(value);
+        return rows;
+    }
+
     /// <summary>The snapshot writes ITSELF: an object of its entries. One loop, because there is
     /// one kind of member — a subtree is an entry whose value is a snapshot, so it writes itself
     /// like every other value. This node shape is the only structural thing the snapshot owns;

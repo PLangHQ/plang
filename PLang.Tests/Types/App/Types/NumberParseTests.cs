@@ -40,7 +40,7 @@ public class NumberParseTests
     // a literal past long, as a .pr holds it (a bare json number), reads back exact
     [Test] public async Task APrLiteral_PastLong_ReadsBackExact()
     {
-        await using var app = new global::app.@this("/tmp/numparse-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        await using var app = new global::app.@this("/tmp/numparse-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var big = System.Numerics.BigInteger.Parse("12345678901234567890123");
         var goal = await global::PLang.Tests.Shared.RealGoalLoad.ViaChannel(app, global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal",
@@ -56,7 +56,7 @@ public class NumberParseTests
     // a json document's integer reads as an integer — past long exact, a small one still a whole number
     [Test] public async Task AJsonInteger_PastLong_ReadsExact()
     {
-        await using var app = new global::app.@this("/tmp/numparse-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        await using var app = new global::app.@this("/tmp/numparse-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var decoded = await app.type.list.Mime("application/json")
             .Decode(System.Text.Encoding.UTF8.GetBytes("{\"n\": 12345678901234567890123, \"small\": 5}"), ctx, "doc");
@@ -122,7 +122,7 @@ public class NumberParseTests
         // We verify by reflection that the instance has no Context-related fields
         // populated after a Resolve.
         await using var app = new global::app.@this(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-num-resolve-" + System.Guid.NewGuid().ToString("N")[..8]));
+            System.IO.Path.GetTempPath(), "plang-num-resolve-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor);
         var n = number.Resolve("3.14", app.actor.list.User.Context);
         var fields = typeof(number).GetFields(System.Reflection.BindingFlags.Instance
                                           | System.Reflection.BindingFlags.NonPublic);

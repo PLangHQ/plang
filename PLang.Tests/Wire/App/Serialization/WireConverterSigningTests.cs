@@ -10,7 +10,7 @@ public class WireConverterSigningTests
 {
     private static global::app.@this NewSignedApp()
         => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-wire-sig-" + Guid.NewGuid().ToString("N")[..8]));
+            "plang-wire-sig-" + Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor);
 
     private static global::app.type.kind.@this Plang(global::app.@this app)
         => app.actor.list.User.Context.Format("application/plang");

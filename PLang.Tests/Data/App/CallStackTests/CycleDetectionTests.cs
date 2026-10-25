@@ -5,7 +5,7 @@ namespace PLang.Tests.App.CallStackTests;
 
 public class CycleDetectionTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [Test]
@@ -21,6 +21,25 @@ public class CycleDetectionTests : System.IAsyncDisposable
         {
             await Task.Run(() => stack.Push(MakeAction(app.actor.list.User.Context, "D"), setting));
         });
+    }
+
+    // A frame past the depth is refused before anything of it is made: while diffing, nothing of it is left open
+    // to be fed every change after (the stack's open frames are read where they are kept).
+    [Test]
+    public async Task AnOverflowWhileDiffing_LeavesNoFrameOpen()
+    {
+        var context = app.actor.list.User.Context;
+        var stack = TestCalls.Stack(app, TestCalls.Settings(), maxDepth: 1);
+        using var scope = stack.DiffScope(context.Variable);
+        await using var a = stack.Push(MakeAction(context, "A"), await stack.Setting(), context.Variable);
+
+        var setting = await stack.Setting();
+        await Assert.ThrowsAsync<CallStackOverflowException>(async () =>
+            await Task.Run(() => stack.Push(MakeAction(context, "B"), setting, context.Variable)));
+
+        var open = (System.Array)typeof(global::app.call.list.@this)
+            .GetField("_diffing", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(stack)!;
+        await Assert.That(open.Length).IsEqualTo(1);
     }
 
     [Test]
@@ -65,7 +84,7 @@ public class CycleDetectionTests : System.IAsyncDisposable
     [Test]
     public async Task EnteringAGoalAlreadyOnTheChain_Runs_RecursionIsAllowed()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         // A → B → A: a goal may call itself through others; only the depth limit stops it
         await using var a = context.call.Push(MakeAction(context, "A"), await context.call.Setting());
@@ -80,7 +99,7 @@ public class CycleDetectionTests : System.IAsyncDisposable
     [Test]
     public async Task EnteringASubGoalOfTheSameFile_IsNoCycle()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         // Start calls Compile: the file's sub-goals share its .pr — a goal is its .pr and its name
         await using var start = context.call.Push(MakeAction(context, "Start"), await context.call.Setting());

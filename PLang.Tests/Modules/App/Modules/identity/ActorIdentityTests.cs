@@ -14,7 +14,7 @@ public class ActorIdentityTests : System.IAsyncDisposable
     public ActorIdentityTests()
     {
         System.IO.Directory.CreateDirectory(_root);
-        _app = new global::app.@this(_root).TestSigning();
+        _app = new global::app.@this(_root, global::PLang.Tests.Parent.Actor).TestSigning();
     }
 
     public async System.Threading.Tasks.ValueTask DisposeAsync()
@@ -52,10 +52,10 @@ public class ActorIdentityTests : System.IAsyncDisposable
     public async Task ALaterBornActor_HasItsIdentityVariablesAtOnce_WhateverIsBoundToSet()
     {
         var gate = new TaskCompletionSource();
-        _app.variable.type.Own().Bind("set", global::app.@event.When.before, async (_, _, ctx) => { await gate.Task; return ctx.Ok(); },
-            _app.actor.list.User, global::app.@event.binding.Scope.app);
+        _app.actor.list.User.on.Bind(_app.variable.type, "set", global::app.@event.When.before, async (_, _, ctx) => { await gate.Task; return ctx.Ok(); },
+            global::app.@event.binding.Scope.app);
 
-        await using var born = new global::app.actor.@this("Service", _app, fallback: _app.actor.list.System);
+        await using var born = new global::app.actor.@this(new global::app.actor.role.user(), _app, system: _app.actor.list.System);
 
         await Assert.That(born.Context.Variable.Contains("Identity")).IsTrue();
         await Assert.That(born.Context.Variable.Contains("MyIdentity")).IsTrue();
@@ -68,11 +68,11 @@ public class ActorIdentityTests : System.IAsyncDisposable
     {
         var fired = new List<string>();
         foreach (var when in new[] { global::app.@event.When.before, global::app.@event.When.after })
-            _app.variable.type.Own().Bind("set", when,
+            _app.actor.list.User.on.Bind(_app.variable.type, "set", when,
                 (item, _, ctx) => { fired.Add(((global::app.type.item.variable.@this)item).Name); return Task.FromResult(ctx.Ok()); },
-                _app.actor.list.User, global::app.@event.binding.Scope.app);
+                global::app.@event.binding.Scope.app);
 
-        await using var born = new global::app.actor.@this("Service", _app, fallback: _app.actor.list.System);
+        await using var born = new global::app.actor.@this(new global::app.actor.role.user(), _app, system: _app.actor.list.System);
 
         await Assert.That(fired).DoesNotContain("Identity");
         await Assert.That(fired).DoesNotContain("MyIdentity");
@@ -82,7 +82,7 @@ public class ActorIdentityTests : System.IAsyncDisposable
     [Test]
     public async Task ALaterBornActor_ActsForItsIdentity_AndMyIdentityIsTheApps()
     {
-        await using var born = new global::app.actor.@this("Service", _app, fallback: _app.actor.list.System);
+        await using var born = new global::app.actor.@this(new global::app.actor.role.user(), _app, system: _app.actor.list.System);
         born.Identity = new Identity("caller", _app.type.list[typeof(global::app.module.identity.Identity)]) { PublicKey = "ab+c/d==" };
         var mine = (await (await _app.actor.list.System.Context.Variable.Get("MyIdentity")).Value()) as Identity;
 

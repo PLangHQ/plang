@@ -17,7 +17,21 @@ public partial class @this
     /// <c>%greeting%</c>).</summary>
     internal static readonly StringComparer Comparer = StringComparer.OrdinalIgnoreCase;
 
-    private readonly ConcurrentDictionary<string, data.@this> _variables = new(Comparer);
+    // A name the system keeps (`!data`, `!event`, `!app`): never a program's variable, so a listing, a clear, a
+    // clone or a snapshot of the program's leaves it out.
+    private bool IsSystem(string name) => name.StartsWith('!');
+
+    // What this memory holds by name, made at its first write: a memory nothing is set in holds none.
+    private ConcurrentDictionary<string, data.@this>? _rows;
+
+    // The rows a write lands in — made, the first made kept, on the first.
+    private ConcurrentDictionary<string, data.@this> Rows
+        => System.Threading.LazyInitializer.EnsureInitialized(ref _rows, static () => new(Comparer));
+
+    // What this memory holds by name as it stands, for a read: nothing until the first write.
+    private IReadOnlyDictionary<string, data.@this> _variables
+        => (IReadOnlyDictionary<string, data.@this>?)System.Threading.Volatile.Read(ref _rows)
+           ?? System.Collections.Immutable.ImmutableDictionary<string, data.@this>.Empty;
     private actor.context.@this _context;
 
     /// <summary>How deep a chain of references this flow is resolving (a variable holding a variable…) —
@@ -56,23 +70,11 @@ public partial class @this
     public @this(actor.context.@this context)
     {
         Context = context;
-        // System variables are born WITH context — a computed lifts its factory result
-        // through the registry, so it must hold a context at birth (not stamped after) — each
-        // holding the app's type for what it is (the app's types exist before its actors).
-        var datetime = context.App.type.list[typeof(app.type.item.datetime.@this)];
-        _variables["Now"] = new data.DynamicData("Now", asker => asker.Ok(DateTimeOffset.Now), context, datetime);
-        _variables["NowUtc"] = new data.DynamicData("NowUtc", asker => asker.Ok(DateTimeOffset.UtcNow), context, datetime);
-        _variables["GUID"] = new data.DynamicData("GUID", asker => asker.Ok(Guid.NewGuid()), context,
-            context.App.type.list[typeof(app.type.item.guid.@this)]);
-        // %MyIdentity% — the app's own identity; %Identity% — who the asking actor acts for: its identity's public key
-        // (a caller's, in a service), else, in a local run, the app's own. Both computed on each read from the asker's
-        // actor, so a setDefault or rename is reflected, and born with the memory — not set — so an actor born at any
-        // time has them at once and nothing bound to a variable's set runs for them.
-        // a step holds an identity without its private key
-        _variables["MyIdentity"] = new data.DynamicData("MyIdentity", asker => asker.Ok(asker.Actor.DefaultIdentity?.Public()), context);
-        _variables["Identity"] = new data.DynamicData("Identity",
-            asker => asker.Ok((asker.Actor.Identity ?? asker.Actor.DefaultIdentity)?.PublicKey), context);
+        _system = new system(this);
     }
+
+    // The system's variables, under this memory's own: what a name nothing else holds reads last.
+    private readonly system _system;
 
     /// <summary>
     /// Stores a Data under its own Data.Name.
@@ -114,7 +116,7 @@ public partial class @this
         // The name is a variable's root; a write deeper in is the variable's own (variable.Set).
 
         // What is bound before the set answers first: a refusal or a cancel is the answer, nothing written.
-        if (await Before(Events?.set, name, value) is { } refused) return refused;
+        if (await Before("set", name, value) is { } refused) return refused;
 
         var (stored, changed, before) = Bind(name, value);
         return changed ? await After(name, before, stored) : stored;
@@ -147,7 +149,7 @@ public partial class @this
 
             var had = _variables.TryGetValue(name, out var prev);
             var before = had ? prev!.Peek() : null;
-            _variables[name] = dv;
+            Rows[name] = dv;
             return had && ReferenceEquals(prev, dv) ? (dv, false, null) : (dv, true, before);
         }
 
@@ -181,22 +183,24 @@ public partial class @this
             // into a value already captured elsewhere.
             var rebound = new data.@this(name, value, context: _context);
             var prevValue = existing.Peek();
-            _variables[name] = rebound;
+            Rows[name] = rebound;
             return (rebound, true, prevValue);
         }
 
         var binding = new data.@this(name, value, context: _context);
-        _variables[name] = binding;
+        Rows[name] = binding;
         return (binding, true, null);
     }
 
-    // The variable type's events — once the app has it: the actors' stores are born before the app's types.
-    private global::app.@event.on.@this? Events => _context.App.variable?.type.on;
+    // The variable type — once the app has it: the actors' stores are born before the app's types.
+    private global::app.type.@this? type => _context.App.variable?.type;
 
-    // What is bound before `name` changes to `value`: null to go on — nothing bound, or nothing refused — else a
-    // failure or a Handled answer, which is the write's answer. The variable is made only when something is bound.
-    private System.Threading.Tasks.ValueTask<data.@this?> Before(global::app.@event.@this? @event, string name, object? value)
-        => @event is { before.Count: > 0 } ? Before(@event, name, value as data.@this ?? new data.@this(name, value, context: _context)) : default;
+    // What is bound before `name` changes to `value` (the variable type's event `event`): null to go on — nothing bound,
+    // or nothing refused — else a failure or a Handled answer, which is the write's answer. The variable is made only
+    // when something is bound on the variable type, its own or in an actor's hold.
+    private System.Threading.Tasks.ValueTask<data.@this?> Before(string @event, string name, object? value)
+        => type is { } variable && variable.IsBoundBefore(@event, _context)
+            ? Before(variable.on[@event]!, name, value as data.@this ?? new data.@this(name, value, context: _context)) : default;
 
     private async System.Threading.Tasks.ValueTask<data.@this?> Before(global::app.@event.@this @event, string name, data.@this about)
     {
@@ -209,7 +213,7 @@ public partial class @this
     private System.Threading.Tasks.ValueTask<data.@this> After(string name, object? before, data.@this stored)
     {
         _context.call.Record(this, name, before);
-        return Events?.set is { after.Count: > 0 } set ? set.After(Named(name), stored, _context) : new(stored);
+        return type is { } variable && variable.IsBoundAfter("set", _context) ? variable.on.set.After(Named(name), stored, _context) : new(stored);
     }
 
     // The variable named `name`, as its events are handed it.
@@ -230,9 +234,9 @@ public partial class @this
         if (_context.call.Current?.Keeper(name) != null)
             return await Set(name, item);
 
-        if (await Before(Events?.set, name, item) is { } refused) return refused;
+        if (await Before("set", name, item) is { } refused) return refused;
         data.@this? stored = null;
-        var binding = _variables.GetOrAdd(name, _ => stored = new data.@this(name, item, context: _context));
+        var binding = Rows.GetOrAdd(name, _ => stored = new data.@this(name, item, context: _context));
         return ReferenceEquals(binding, stored) ? await After(name, null, binding) : binding;
     }
 
@@ -251,7 +255,7 @@ public partial class @this
         var copy = value.Copy();
         if (ReferenceEquals(copy, value)) return read;
         var binding = new data.@this(name, copy, context: _context);
-        if (keeper == null) return _variables.GetOrAdd(name, binding);
+        if (keeper == null) return Rows.GetOrAdd(name, binding);
         keeper.Set(name, binding);
         return binding;
     }
@@ -264,7 +268,7 @@ public partial class @this
     public async System.Threading.Tasks.ValueTask<data.@this> Replace(string name, data.@this expected, global::app.type.item.@this value)
     {
         if (ReferenceEquals(expected.Peek(), value)) return expected;
-        if (await Before(Events?.set, name, value) is { } refused) return refused;
+        if (await Before("set", name, value) is { } refused) return refused;
 
         // the frame a write lands in reads what it holds outward — a frame with memory of its own (a task's run) reading
         // its caller's — and the write lands in it: the caller's stays as it was
@@ -276,7 +280,7 @@ public partial class @this
         // Rebind — the same rebind Set does.
         var rebound = new data.@this(name, value, context: _context);
         if (frame != null) frame.Set(name, rebound);
-        else if (!_variables.TryUpdate(name, rebound, expected)) return await Get(name);
+        else if (!Rows.TryUpdate(name, rebound, expected)) return await Get(name);
         return await After(name, expected.Peek(), rebound);
     }
 
@@ -287,11 +291,14 @@ public partial class @this
     /// null when absent. Content reads still go through the async <see cref="Get"/> door; this is
     /// the in-memory rung only.
     /// </summary>
-    public data.@this? Peek(string name)
+    public data.@this? Peek(string name) => string.IsNullOrEmpty(name) ? null : Find(name);
+
+    // What a name holds: the frames of this context's calls first, inner first; then this memory's own, then the
+    // system's under it (a task's %!context% is its own), then its outer memory's (a task's caller's); null when none.
+    private data.@this? Find(string name)
     {
-        if (string.IsNullOrEmpty(name)) return null;
         if (_context.call.Current is { } frame && frame.TryGet(name, out var framed)) return framed;
-        return _variables.TryGetValue(name, out var v) ? v : Outer?.Peek(name);
+        return _variables.TryGetValue(name, out var row) ? row : _system[name] ?? Outer?.Find(name);
     }
 
     /// <summary>The value-counterpart to <see cref="Get"/>: hand back the VALUE a
@@ -304,14 +311,8 @@ public partial class @this
     /// through its own code. The frames of this context's calls win, inner first, over its memory; a task's reads
     /// fall through to its caller's. NotFound when nothing is bound.</summary>
     public System.Threading.Tasks.ValueTask<data.@this> Get(string name)
-    {
-        if (string.IsNullOrEmpty(name))
-            return System.Threading.Tasks.ValueTask.FromResult(_context.NotFound(name ?? ""));
-        if (_context.call.Current is { } frame && frame.TryGet(name, out var framed))
-            return System.Threading.Tasks.ValueTask.FromResult(framed);
-        if (_variables.TryGetValue(name, out var root)) return System.Threading.Tasks.ValueTask.FromResult(root);
-        return Outer?.Get(name) ?? System.Threading.Tasks.ValueTask.FromResult(_context.NotFound(name));
-    }
+        => System.Threading.Tasks.ValueTask.FromResult(
+            (string.IsNullOrEmpty(name) ? null : Find(name)) ?? _context.NotFound(name ?? ""));
 
     /// <summary>
     /// Typed ask on the variable store — returns <c>Data&lt;T&gt;</c>. Identity hop:
@@ -337,13 +338,13 @@ public partial class @this
     }
 
     /// <summary>
-    /// Checks if a variable exists.
+    /// Checks if a variable exists — the chain <see cref="Peek"/> reads, asked without making a system variable.
     /// </summary>
     public bool Contains(string name)
     {
         if (_context.call.Current is { } frame && frame.TryGet(name, out _))
             return true;
-        return _variables.ContainsKey(name) || (Outer?.Contains(name) ?? false);
+        return _variables.ContainsKey(name) || _system.Contains(name) || (Outer?.Contains(name) ?? false);
     }
 
     /// <summary>
@@ -354,9 +355,9 @@ public partial class @this
     public async System.Threading.Tasks.ValueTask<data.@this> Remove(string name)
     {
         if (!_variables.TryGetValue(name, out var binding)) return _context.NotFound(name);
-        if (await Before(Events?.remove, name, binding) is { } refused) return refused;
-        if (!_variables.TryRemove(name, out var removed)) return _context.NotFound(name);
-        return Events?.remove is { after.Count: > 0 } remove ? await remove.After(Named(name), removed, _context) : removed;
+        if (await Before("remove", name, binding) is { } refused) return refused;
+        if (!Rows.TryRemove(name, out var removed)) return _context.NotFound(name);
+        return type is { } variable && variable.IsBoundAfter("remove", _context) ? await variable.on.remove.After(Named(name), removed, _context) : removed;
     }
 
     /// <summary>
@@ -367,7 +368,7 @@ public partial class @this
         var result = new Dictionary<string, string>();
         foreach (var (name, data) in _variables)
         {
-            if (name.StartsWith("!")) continue; // skip system variables
+            if (IsSystem(name)) continue; // skip system variables
             if (data.Updated > since)
                 result[name] = data.Peek()?.ToString() ?? "(null)";
         }
@@ -381,8 +382,9 @@ public partial class @this
     {
         get
         {
-            var names = (_context.call.Current?.Names ?? []).Concat(_variables.Keys)
-                .Where(n => !n.StartsWith('!'))
+            // the current call's, then this memory's own, then the system's under it
+            var names = (_context.call.Current?.Names ?? []).Concat(_variables.Keys).Concat(_system.Names)
+                .Where(n => !IsSystem(n))
                 .Distinct(StringComparer.OrdinalIgnoreCase);
             var variables = new global::app.type.item.list.@this<global::app.type.item.variable.@this>(
                 _context.App.type.list[typeof(global::app.type.item.list.@this<global::app.type.item.variable.@this>)]);
@@ -399,23 +401,26 @@ public partial class @this
     /// Gets all variable names.
     /// </summary>
     public IEnumerable<string> GetNames()
-    {
-        return _variables.Keys.Where(k => !k.StartsWith("!"));
-    }
+        // this memory's own, then the system's under it that no own name shadows
+        => _variables.Keys.Where(k => !IsSystem(k))
+            .Concat(_system.Names.Where(name => !IsSystem(name) && !_variables.ContainsKey(name)));
 
     /// <summary>
     /// Gets all variables ordered by last update.
     /// </summary>
     public IEnumerable<KeyValuePair<string, data.@this>> GetAll()
     {
-        // what a read sees: the current call's names first (they shadow the actor's), then the memory
+        // what a read sees: the current call's names first (they shadow the actor's), then the memory, then the system's
+        // variables under it
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         if (_context.call.Current is { } frame)
             foreach (var name in frame.Names)
-                if (!name.StartsWith('!') && seen.Add(name) && frame.TryGet(name, out var framed))
+                if (!IsSystem(name) && seen.Add(name) && frame.TryGet(name, out var framed))
                     yield return new(name, framed);
-        foreach (var kvp in _variables.Where(kvp => !kvp.Key.StartsWith("!")).OrderByDescending(kvp => kvp.Value.Updated))
+        foreach (var kvp in _variables.Where(kvp => !IsSystem(kvp.Key)).OrderByDescending(kvp => kvp.Value.Updated))
             if (seen.Add(kvp.Key)) yield return kvp;
+        foreach (var kvp in _system.All)
+            if (!IsSystem(kvp.Key) && seen.Add(kvp.Key)) yield return kvp;
     }
 
     /// <summary>
@@ -424,13 +429,13 @@ public partial class @this
     public void Clear()
     {
         var toRemove = _variables
-            .Where(kvp => !kvp.Key.StartsWith("!") && kvp.Value is not data.DynamicData)
+            .Where(kvp => !IsSystem(kvp.Key))
             .Select(kvp => kvp.Key)
             .ToList();
 
         foreach (var key in toRemove)
         {
-            _variables.TryRemove(key, out _);
+            Rows.TryRemove(key, out _);
         }
     }
 
@@ -443,13 +448,10 @@ public partial class @this
         var clone = new @this(_context);
         foreach (var kvp in _variables)
         {
-            // Data.DynamicData (Now, GUID, etc.) — already in clone from constructor
-            if (kvp.Value is data.DynamicData) continue;
-
             // System context vars (! prefix) — skip, they're per-execution
-            if (kvp.Key.StartsWith("!")) continue;
+            if (IsSystem(kvp.Key)) continue;
 
-            clone._variables[kvp.Key] = kvp.Value.Clone();
+            clone.Rows[kvp.Key] = kvp.Value.Clone();
         }
         clone.Context = Context;
         return clone;
@@ -468,7 +470,7 @@ public partial class @this
         foreach (var key in _variables.Keys)
         {
             if (!snapshot.Contains(key))
-                _variables.TryRemove(key, out _);
+                Rows.TryRemove(key, out _);
         }
     }
 
@@ -480,19 +482,19 @@ public partial class @this
         var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         foreach (var kvp in _variables)
         {
-            if (!includeSystem && kvp.Key.StartsWith("!"))
+            if (!includeSystem && IsSystem(kvp.Key))
                 continue;
             dict[kvp.Key] = kvp.Value.Peek();
         }
+        foreach (var (name, system) in _system.All)
+            if (includeSystem || !IsSystem(name)) dict.TryAdd(name, system.Peek());
         return dict;
     }
 
     /// <summary>
     /// Captures user-visible variables for failure diagnostics (e.g. assertion errors).
-    /// Excludes:
-    ///  - infrastructure vars (!-prefixed, e.g. !app, !filesystem)
-    ///  - dynamic system vars (Now, NowUtc, GUID) — always-fresh, no diagnostic value
-    /// Each variable rides whole — its Data (name, type, value), held by reference — keyed by its
+    /// Excludes the infrastructure rows (!-prefixed, e.g. !data, !event); the system variables (Now, GUID, !app) live
+    /// apart from the rows, so they are never among them. Each variable rides whole — its Data (name, type, value), held by reference — keyed by its
     /// name, so <c>%!error.Variables.foo%</c> navigates to it. Called when an error happens (assert,
     /// and every recorded error under --debug). ConcurrentDictionary enumeration is snapshot-style
     /// and safe during concurrent writes.
@@ -502,8 +504,7 @@ public partial class @this
         var vars = new global::app.type.item.dict.@this(_context.App.type.list[typeof(global::app.type.item.dict.@this)]);
         foreach (var kvp in _variables)
         {
-            if (kvp.Key.StartsWith("!")) continue;
-            if (kvp.Value is data.DynamicData) continue;
+            if (IsSystem(kvp.Key)) continue;
             vars.Set(kvp.Key, kvp.Value);
         }
         return vars;

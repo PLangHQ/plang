@@ -22,7 +22,7 @@ public partial class @this : ISnapshot
         // dict of Data — so %snap.variables.x% navigates straight to it.
         foreach (var kvp in _variables)
         {
-            if (kvp.Key.StartsWith("!")) continue;
+            if (IsSystem(kvp.Key)) continue;
             // Always-fresh cells (Now, NowUtc, GUID, MyIdentity) — the lazy
             // lives on the computed instance now, so check the instance, not
             // the Data subtype (a store re-wrap loses the subtype).

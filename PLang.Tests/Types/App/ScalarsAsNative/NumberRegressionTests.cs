@@ -21,7 +21,7 @@ public class NumberRegressionTests
     [Test]
     public async Task Number_Compare_UnchangedUnderItemInheritance()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         // Order(1, 2) < 0, AreEqual(5, 5) true — IOrderableValue/IEquatableValue
         // dispatch still routes; `item` adds nothing to ordering.
         await Assert.That(((Number)(1)).CompareTo(((Number)(2)))).IsLessThan(0);

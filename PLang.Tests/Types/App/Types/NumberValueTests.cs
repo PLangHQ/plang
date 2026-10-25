@@ -11,7 +11,7 @@ namespace PLang.Tests.App.Types;
 
 public class NumberValueTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [Test] public async Task From_Int_StoresKindInt()
@@ -121,7 +121,7 @@ public class NumberValueTests : System.IAsyncDisposable
     [Test]
     public async Task PlangTypeAttribute_Number_IsRegistered()
     {
-        var types = new global::app.type.list.@this();
+        var types = new global::app.origin.code().type;
         await Assert.That(types.Clr("number")).IsEqualTo(typeof(number));
         await Assert.That(types[typeof(number)]?.Name).IsEqualTo("number");
     }

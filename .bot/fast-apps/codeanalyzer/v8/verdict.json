@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "Nothing blocks the merge: ChannelNames gone, export reads once and gives out only an identity it holds, the image's size gate and probes gone with their tests, dev.sh restores on a stamp (verified: restored once, built the tip, skipped on the next run), the grant test's probe untracked. Not yet on the tip: the dev.sh unset of the two link flags." }

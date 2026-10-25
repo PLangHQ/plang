@@ -331,7 +331,7 @@ public partial class Set : IContext, IScope, IKeep
     private static void CopyProperties(data.@this source, data.@this target)
     {
         if (ReferenceEquals(source, target)) return;
-        if (source.Properties.Count == 0) return;
+        if (!source.HasProperties) return;
         foreach (var p in source.Properties)
             target.Properties[p.Key] = p.Value;
     }

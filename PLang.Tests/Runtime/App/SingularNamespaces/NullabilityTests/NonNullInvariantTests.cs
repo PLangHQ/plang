@@ -28,7 +28,7 @@ public class NonNullInvariantTests
     {
         // `path` lives only in the per-App catalog, so resolving its ClrType proves the
         // read went through Context.App.type.list.Clr.
-        await using var app = new PLangEngine("/test");
+        await using var app = new PLangEngine("/test", global::PLang.Tests.Parent.Actor);
 
         // A declared type that doesn't know its class is born through the types by the Data,
         // which holds the context.

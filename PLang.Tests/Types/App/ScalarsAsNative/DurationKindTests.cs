@@ -7,7 +7,7 @@ namespace PLang.Tests.App.ScalarsAsNative;
 // short; a kind asked for converts it.
 public class DurationKindTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private global::app.actor.context.@this Ctx => app.actor.list.User.Context;
@@ -83,7 +83,7 @@ public class DurationKindTests : System.IAsyncDisposable
     [Test]
     public async Task TheSetting_NamesTheStandardOfASpanWithNoForm()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         var set = await new global::app.type.item.variable.parser.@this("%!app.type.duration.setting.standard%", context.App.type.list).Variable.Single()
             .Set(context.Ok(context.Text("iso")), context);

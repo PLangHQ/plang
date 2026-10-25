@@ -13,7 +13,7 @@ public class AfterActionPayloadTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/test").Testing();
+        _app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
     }
 
     [After(Test)]
@@ -22,7 +22,7 @@ public class AfterActionPayloadTests
     // Binds handler on the action type's start, before or after, for the User actor.
     private void Bind(global::app.@event.When when,
         Func<global::app.type.item.@this, Data, global::app.actor.context.@this, Task<Data>> handler)
-        => _app.type.list["action"].Own().Bind("start", when, handler, _app.actor.list.User, global::app.@event.binding.Scope.actor);
+        => _app.actor.list.User.on.Bind(_app.type.list["action"], "start", when, handler, global::app.@event.binding.Scope.actor);
 
     // Runs a simple goal with one action (variable.set) so a single action start fires.
     private async Task RunSimpleGoal(string varName = "x", int value = 42)

@@ -23,7 +23,7 @@ public class QueryCacheTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_llm_cache_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir).Testing();
+        _app = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).Testing();
         _handler = LlmTestHelper.SetupMockHttp(_app);
     }
 
@@ -94,8 +94,8 @@ public class QueryCacheTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("born")));
         var births = 0;
-        _app.type.list["text"].Own().Bind("create", global::app.@event.When.after,
-            (_, data, _) => { births++; return Task.FromResult(data); }, Ctx.Actor, global::app.@event.binding.Scope.actor);
+        Ctx.Actor!.on.Bind(_app.type.list["text"], "create", global::app.@event.When.after,
+            (_, data, _) => { births++; return Task.FromResult(data); }, global::app.@event.binding.Scope.actor);
 
         var query = LlmTestHelper.MakeQuery(Ctx, userText: "a birth");
         await query.Attach(null, Ctx);

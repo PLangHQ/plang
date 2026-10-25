@@ -37,8 +37,8 @@ public class KindCanonicalisationTests
     {
         // A format added at runtime is found by the same walk — nothing hand-written beside it.
         await using var app = new global::app.@this("/test").Testing();
-        app.type.list.Add(new global::app.type.kind.@this(
-            new global::app.Attributes.FormatAttribute("frobx", "application/x-frobnicate", ".frobx", ".frob"), app.type.list["binary"]));
+        app.type.list.Add([new global::app.type.kind.@this(
+            new global::app.Attributes.FormatAttribute("frobx", "application/x-frobnicate", ".frobx", ".frob"), app.type.list["binary"])]);
         await Assert.That(app.type.list.Mime("application/x-frobnicate").Name).IsEqualTo("frobx");
         await Assert.That(app.type.list.Extension(".frob", app.actor.list.User.Context).kind.Name).IsEqualTo("frobx");
     }

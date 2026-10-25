@@ -18,7 +18,7 @@ public class PlangRuntimeTests : IDisposable
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_runtime_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir).Testing();
+        _app = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).Testing();
     }
 
     public void Dispose()
@@ -85,8 +85,10 @@ public class PlangRuntimeTests : IDisposable
         await (await Make.Action(context, "on", "event", ("Event", "%!app.type.step.on.start%"), ("When", "before"),
             ("Action", Make.Call(context, "LogBefore"))).Start(context)).IsSuccess();
 
-        var before = _app.type.list["step"].on["start"]!.before;
+        // held on the binding actor's context, never on the shared step type
+        var before = _app.actor.list.User.on[_app.type.list["step"]]["start"]!.before;
         await Assert.That(before.Count).IsEqualTo(1);
+        await Assert.That(_app.type.list["step"].on["start"]!.before.Count).IsEqualTo(0);
         await Assert.That(ReferenceEquals(before[0].Actor, _app.actor.list.User)).IsTrue();
     }
 
