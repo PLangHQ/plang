@@ -321,6 +321,33 @@ run; the tests already loaded most of those goals into their own apps), `Add`'s 
 a whole with the first), discovery's serial 1.65 s (a `Task.WhenAll` over the files would be ~0.3 s at 8-wide), the
 0.5 s start. After those, the loop's 3.7× inflation is the remainder.
 
+## Stage 5 — the build closed (tip `cc78ec913`, decision 61), against stage 0
+
+Three rounds, root and child, each measurement gated on load under 3 (the load is written beside every row in
+`bench/results/stage5.txt`; `stage5rest.txt` is the REST=300 run). 8 cpus.
+
+| Measurement | Stage 0 | Stage 5 | Change from stage 0 |
+|---|---|---|---|
+| Root birth (time, bytes) | 28 ms, 5.2 MB | 18.4–20.2 ms, 2.36–2.40 MB (Debug 18.4–19.8, Release 18.4–20.2) | −30 % time, −54 % bytes |
+| Child birth (through the door) | — (no door) | **0.14–0.16 ms**, 128 KB | 28 ms → 0.15 ms: ~190× faster, 5.2 MB → 128 KB: 41× less |
+| Root request app × 3,000 (Release) | 22 ms, 6.7 MB | 17.2–18.3 ms, 3.6–3.9 MB (Debug 20.6–21.3 ms, 4.0 MB) | −20 % time, −42 % bytes |
+| Child request app × 3,000 (Release) | — | **2.0–2.3 ms**, 0.60–0.61 MB (Debug 2.27–2.30 ms, 0.68 MB) | 22 ms → 2.1 ms: ~10× faster, 6.7 → 0.6 MB: 11× less |
+| Held memory, root, at 0 / 1k / 2k / 3k | 0.9 → 45 → 87 → 130 MB | 0.9 → 2.8 → 2.7 → 2.7 MB | grows 43 MB per 1,000 → flat |
+| Held memory, child | — | 2.4 → 3.0 → 3.0 → 3.0 MB | flat |
+| After a 300 s rest | not measured | root 1.7–1.8 MB, child 2.6 MB (0.9 and 2.4–2.5 at the start) | the sqlite bookkeeping is let go; +0.8 MB root is the one-time `_identities` cache (see above), +0.1–0.2 MB child; nothing grows with the count |
+| C# sweep (`./dev.sh test --force`) | 103–136 s | **40.6, 54.7, 41.6 s** | 2.5–3× faster; the same 6 Wire reds as stage 0 (names unchanged), every other suite green |
+| `plang --test` | 17–27 s | **4.7, 5.0, 5.6 s** | 3.6–5× faster; 298 pass, 1 fail (`/app/type/item/BareLiteralJudgedByForm.test.goal`), 3 stale, 1 skipped, every round |
+
+Noise in this run, so a reader doesn't over-read a row:
+
+- Round 2's sweep (54.7 s) came at the same reported load as round 1 (40.6 s) and round 3 (41.6 s): ±14 s on the sweep
+  at one load. The suites that moved are Modules and Runtime.
+- **One row is not a clean number: root request, Debug, round 3** ran at load 13.65 (another session started a
+  build mid-run): 121 s, 40 ms each. The REST run's Debug root request also started at load 3.9 and took 39 ms. Neither
+  is in the range above (20.6–21.3 ms is rounds 1 and 2); the Release rows beside them were 17–18 ms.
+- Root birth and request: round-to-round spread 1–2 ms at load 1–3.
+- The test sweep's per-suite expected times (`vs ~43s`) are the suite's own baseline, not stage 0.
+
 ## Not measured here
 
 - A class scanned twice in one process (stage 2's check): it needs a count of `GetTypes` calls, which comes with
