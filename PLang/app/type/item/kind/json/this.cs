@@ -8,7 +8,8 @@ namespace app.type.item.kind.json;
 /// once into a plang value through <see cref="Parse"/> (an object into a dict, an array into a list, a scalar
 /// into its native) — no <c>JsonElement</c> carrier, no navigator.
 /// </summary>
-public sealed class @this : global::app.type.kind.@this<global::app.type.item.@this>
+public sealed class @this : global::app.type.kind.@this<global::app.type.item.@this>,
+    global::app.type.item.setting.ISetting<setting.@this>
 {
     public @this(global::app.type.@this owner) : base("json", owner) { }
 

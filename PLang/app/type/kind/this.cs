@@ -56,12 +56,21 @@ public class @this : global::app.type.@this
     /// format's MIMEs), its parent's the fallback. It navigates its OWN members directly, never
     /// re-resolved through the registry the way a bare <c>{name}</c> identity is (a kind is no top-level
     /// type, so that would mint a bare type by the kind's name and lose its facts). A key the kind has
-    /// no member for falls to the type's own navigation.</summary>
+    /// no member for is one of its type's kinds by that name (<c>%!app.type.kind.json%</c>) — never its settings, which
+    /// are its own — else the type's own navigation.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
     {
         var member = await new global::app.type.clr.@this(this, parent.Context).Get(parent, key);
-        return member.IsInitialized ? member : await base.Get(parent, key);
+        if (member.IsInitialized) return member;
+        if (!string.Equals(key, "setting", System.StringComparison.OrdinalIgnoreCase) && this[key] is { } kind)
+            return new global::app.data.@this(key, kind, parent: parent);
+        return await base.Get(parent, key);
     }
+
+    /// <summary>A kind's settings are the ones its own class names (<c>json : ISetting&lt;json.setting&gt;</c>,
+    /// <c>%!app.type.kind.json.setting%</c>), never its type's.</summary>
+    protected override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent)
+        => await parent.Context.Setting.Get(GetType());
 
     /// <summary>A format of <paramref name="owner"/> — a kind its class declares with <c>[Format]</c>: the
     /// MIMEs and extensions it answers to, whether its content compresses, and how its type writes and reads it.</summary>

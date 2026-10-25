@@ -1835,7 +1835,7 @@ class app.type.item.kind.json.source : app.type.item.source
   protected override Write(app.type.item.kind.json.Writer writer) : System.Threading.Tasks.ValueTask
   protected override Write(app.type.item.wire.kind.plang.Writer writer) : System.Threading.Tasks.ValueTask
 
-class app.type.item.kind.json.this : app.type.kind.this<app.type.item.this>
+class app.type.item.kind.json.this : app.type.kind.this<app.type.item.this>, app.type.item.setting.ISetting<app.type.item.kind.json.setting.this>
   ctor(app.type.this owner)
   override Compressible : System.Boolean { get; }
   override Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View view, System.Text.Encoding encoding = …, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
@@ -3130,6 +3130,7 @@ class app.type.kind.this : app.type.this
   override IsClosed : System.Boolean { get; }
   override Offers(app.goal.step.this step) : System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<app.type.item.this>>
   override ToString() : System.String
+  protected override Setting(app.data.this parent) : System.Threading.Tasks.ValueTask<app.data.this>
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   protected virtual Owner : app.type.this { get; }
   type(app.actor.context.this context) : app.type.this
@@ -3206,6 +3207,7 @@ class app.type.node.current.this<T, L> : app.type.node.this<T, L>
 
 class app.type.node.root.this : app.type.node.this<app.type.this, app.type.list.this>
   ctor(app.this app)
+  override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
 
 abstract class app.type.node.this : app.type.item.this [PlangType]

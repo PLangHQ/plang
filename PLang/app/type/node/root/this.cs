@@ -12,6 +12,14 @@ public sealed class @this : global::app.type.node.@this<global::app.type.@this, 
     // The app's types, over the list it is born with: they are its own types too.
     private @this(global::app.@this app, global::app.type.list.@this types) : base(app, types[typeof(global::app.type.node.@this)], types) { }
 
+    /// <summary>One step by dot: <c>kind</c> is item's kinds (<c>%!app.type.kind.json%</c>, as <c>type/item/kind/json</c>
+    /// reads, a kind's settings there: <c>%!app.type.kind.json.setting%</c>); any other key is the node's own members,
+    /// then one type by name.</summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
+        => string.Equals(key, "kind", System.StringComparison.OrdinalIgnoreCase)
+            ? new global::app.data.@this(key, list["item"].kind, parent: parent)
+            : await base.Get(parent, key);
+
     /// <summary>Written alone, the type system: every type plang doesn't keep for itself, each with its facts — its
     /// name (the namespace), the word it goes by when it declares one, its description, example and aliases, and its
     /// kinds' names.</summary>

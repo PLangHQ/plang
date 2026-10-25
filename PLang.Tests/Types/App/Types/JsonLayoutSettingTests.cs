@@ -43,6 +43,45 @@ public class JsonLayoutSettingTests
         await Assert.That(await Written(app, "application/json", Dict(app))).IsEqualTo("{\"name\":\"þú <b> & '—'\",\"n\":1}");
     }
 
+    private static global::app.type.item.variable.@this Path(global::app.@this app, string path)
+        => new global::app.type.item.variable.parser.@this(path, app.type.list).Variable.Single();
+
+    // the walk follows the address: app.type.kind is item's kinds, json one of them, its settings its own class's
+    [Test]
+    public async Task TheLayout_IsReadAlongItsPath()
+    {
+        await using var app = App();
+        var context = app.actor.list.User.Context;
+
+        var json = await Path(app, "%!app.type.kind.json%").Start(context);
+        await Assert.That(await json.Value()).IsTypeOf<global::app.type.item.kind.json.@this>();
+        var layout = await Path(app, "%!app.type.kind.json.setting.layout%").Start(context);
+        await layout.IsSuccess();
+        await Assert.That((await layout.Value())!.ToString()).IsEqualTo("formatted");
+    }
+
+    [Test]
+    public async Task TheLayout_IsSetAlongItsPath()
+    {
+        await using var app = App();
+        var context = app.actor.list.User.Context;
+
+        await (await Path(app, "%!app.type.kind.json.setting.layout%").Set(context.Ok(context.Text("compact")), context)).IsSuccess();
+
+        await Assert.That(await Written(app, "application/json", Dict(app))).IsEqualTo("{\"name\":\"þú <b> & '—'\",\"n\":1}");
+    }
+
+    // a type's own settings still answer by its type, and a kind answering its kinds never takes `setting`
+    [Test]
+    public async Task ATypesSetting_IsItsOwn()
+    {
+        await using var app = App();
+        var context = app.actor.list.User.Context;
+
+        await Assert.That((await (await Path(app, "%!app.type.size.setting.standard%").Start(context)).Value())!.ToString()).IsEqualTo("iec");
+        await Assert.That(await (await Path(app, "%!app.type.kind.setting%").Start(context)).Value()).IsNotTypeOf<global::app.type.kind.@this>();
+    }
+
     [Test]
     public async Task TheWire_IsUntouched()
     {
