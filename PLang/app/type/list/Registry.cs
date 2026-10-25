@@ -222,11 +222,45 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
 
     /// <summary>Adds a kind to the type it is a kind of — a closed set to choice, a scheme to path.
     /// A kind of the same name on that type is replaced.</summary>
-    public void Add(global::app.type.kind.@this kind)
+    public void Add(global::app.type.kind.@this kind) => Add([kind]);
+
+    // Kinds added as one: each guarded against the formats held, and against the others, before any is held — a
+    // refused one leaves nothing held. No result to answer, so the refusal travels whole.
+    internal void Add(IReadOnlyList<global::app.type.kind.@this> kinds)
     {
-        // held, then the guard every format passes, as a loaded assembly's kinds are; no result to answer, so the
-        // refusal travels whole
-        if ((Hold(kind) ?? Guard()) is { } refused) throw new global::app.error.AppException(refused);
+        if (Guard(kinds) is { } refused) throw new global::app.error.AppException(refused);
+        foreach (var kind in kinds)
+            if (Hold(kind) is { } unheld) throw new global::app.error.AppException(unheld);
+    }
+
+    // The first of `kinds` answering to a MIME or an extension a held format (or one before it in `kinds`) already
+    // answers to; a kind of the same name on the same type replaces that one. The held formats are read only when one
+    // of `kinds` answers to any key.
+    private error.@this? Guard(IReadOnlyList<global::app.type.kind.@this> kinds)
+    {
+        Dictionary<string, global::app.type.kind.@this>? seen = null;
+        foreach (var kind in kinds)
+            foreach (var key in kind.Mime.Concat(kind.Extension))
+            {
+                seen ??= Formats();
+                if (seen.TryGetValue(key, out var taken)
+                    && !(ReferenceEquals(taken.Owner, kind.Owner) && string.Equals(taken.Name, kind.Name, StringComparison.OrdinalIgnoreCase)))
+                    return Collision(key, taken, kind);
+                seen[key] = kind;
+            }
+        return null;
+    }
+
+    // Every held format by each key it answers to, the first that answers.
+    private Dictionary<string, global::app.type.kind.@this> Formats()
+    {
+        var formats = new Dictionary<string, global::app.type.kind.@this>(StringComparer.OrdinalIgnoreCase);
+        foreach (var type in Items())
+            if (type.kind is global::app.type.kind.empty.@this root)
+                foreach (var kind in root.Kinds)
+                    foreach (var key in kind.Mime.Concat(kind.Extension))
+                        formats.TryAdd(key, kind);
+        return formats;
     }
 
     // Holds a kind (the startup scan calls it while loading), asked of the list that holds its type. Answers the

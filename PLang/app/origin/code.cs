@@ -13,11 +13,13 @@ internal sealed class code : @this
     {
         Console = console;
         type = new global::app.type.list.@this(this);
-        // path's schemes, each a kind of path that builds its own path subclass
+        // path's schemes, each a kind of path that builds its own path subclass — added as one
         var path = type[typeof(global::app.type.item.path.@this)];
-        type.Add(new global::app.type.item.path.scheme.@this("file", path, (raw, context) => global::app.type.item.path.file.@this.Resolve(raw, context)));
-        type.Add(new global::app.type.item.path.scheme.@this("http", path, (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
-        type.Add(new global::app.type.item.path.scheme.@this("https", path, (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
+        type.Add([
+            new global::app.type.item.path.scheme.@this("file", path, (raw, context) => global::app.type.item.path.file.@this.Resolve(raw, context)),
+            new global::app.type.item.path.scheme.@this("http", path, (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)),
+            new global::app.type.item.path.scheme.@this("https", path, (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)),
+        ]);
     }
 
     public System.Threading.CancellationTokenSource Shutdown() => new();
