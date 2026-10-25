@@ -30,14 +30,6 @@ public class @this : global::app.channel.type.session.@this
         _ownsStream = ownsStream;
     }
 
-    /// <summary>Read-only stream channel (e.g. stdin).</summary>
-    public static @this Input(string name, global::System.IO.Stream stream, bool ownsStream = false)
-        => new(name, stream, ChannelDirection.Input, ownsStream);
-
-    /// <summary>Write-only stream channel (e.g. stdout, stderr).</summary>
-    public static @this Output(string name, global::System.IO.Stream stream, bool ownsStream = false)
-        => new(name, stream, ChannelDirection.Output, ownsStream);
-
     /// <summary>In-memory bidirectional channel (testing / capture).</summary>
     public static @this Memory(string name, ChannelDirection direction = ChannelDirection.Bidirectional)
         => new(name, new MemoryStream(), direction, ownsStream: true);
@@ -223,9 +215,8 @@ public class @this : global::app.channel.type.session.@this
         }
     }
 
-    // --- Convenience surface kept for v1 callers ---------------------------------
-
-    public async Task<byte[]> ReadAllBytesAsync(CancellationToken cancellationToken = default)
+    // The stream's whole content, as bytes.
+    private async Task<byte[]> ReadAllBytesAsync(CancellationToken cancellationToken = default)
     {
         if (!CanRead)
             throw new InvalidOperationException($"Channel '{Name}' does not support reading");
@@ -236,12 +227,6 @@ public class @this : global::app.channel.type.session.@this
         using var buffer = new MemoryStream();
         await Stream.CopyToAsync(buffer, cancellationToken);
         return buffer.ToArray();
-    }
-
-    public async Task<string> ReadAllTextAsync(CancellationToken cancellationToken = default)
-    {
-        var bytes = await ReadAllBytesAsync(cancellationToken);
-        return ResolveEncoding().GetString(bytes);
     }
 
     public override void Close()

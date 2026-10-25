@@ -70,7 +70,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
 
     [Test] public async Task ChannelWrite_OnInputOnlyChannel_ReturnsServiceErrorChannelReadOnly()
     {
-        var ch = global::app.channel.type.stream.@this.Input("stdin", new MemoryStream());
+        var ch = new global::app.channel.type.stream.@this("stdin", new MemoryStream(), global::app.channel.ChannelDirection.Input, ownsStream: false);
         var result = await ch.Write(app.Ok("x"));
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ChannelReadOnly");
@@ -78,7 +78,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
 
     [Test] public async Task ChannelRead_OnOutputOnlyChannel_ReturnsServiceErrorChannelWriteOnly()
     {
-        var ch = global::app.channel.type.stream.@this.Output("stdout", new MemoryStream());
+        var ch = new global::app.channel.type.stream.@this("stdout", new MemoryStream(), global::app.channel.ChannelDirection.Output, ownsStream: false);
         app.actor.list.User.Channel.Register(ch);
         var result = await ch.Read();
         await result.IsFailure();

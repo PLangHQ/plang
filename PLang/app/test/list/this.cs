@@ -71,11 +71,6 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
     /// <summary>The App this run belongs to — reporters read its version for drift.</summary>
     internal global::app.@this App => _app;
 
-    /// <summary>Fires once per test's App after it is made and configured (its session
-    /// open), before the test's goal runs — a probe snapshots the test's App here. Parallel tests fire it
-    /// concurrently.</summary>
-    internal event System.Action<global::app.@this>? Made;
-
     /// <summary>
     /// Runs the tests <paramref name="given"/> holds, as many at once as test's setting says (≤ 0: one per
     /// processor), each running itself in an App of its own — the file is the App boundary. A test that isn't
@@ -183,7 +178,6 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         {
             await using var app = new global::app.@this(_app.filesystem.root.Absolute, context.Actor!);
             await app.test.list.Open(test);
-            Made?.Invoke(app);
             await test.Start(app, context);
             Report.Coverage.Merge(app.test.list.Report.Coverage);
         }

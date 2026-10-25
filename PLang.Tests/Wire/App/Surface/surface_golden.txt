@@ -275,8 +275,6 @@ class app.channel.type.stream.this : app.channel.type.session.this
   End : System.String { get; set; } [Debug]
   Framed : System.Boolean { get; init; } [Debug]
   KeepsLast : System.Boolean { get; init; } [Debug]
-  ReadAllBytesAsync(System.Threading.CancellationToken cancellationToken = …) : System.Threading.Tasks.Task<System.Byte[]>
-  ReadAllTextAsync(System.Threading.CancellationToken cancellationToken = …) : System.Threading.Tasks.Task<System.String>
   Stream : System.IO.Stream { get; }
   ctor(System.String name, System.IO.Stream stream, app.channel.ChannelDirection direction = …, System.Boolean ownsStream = …)
   override Ask(app.module.output.ask action, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
@@ -286,9 +284,7 @@ class app.channel.type.stream.this : app.channel.type.session.this
   override DisposeAsync() : System.Threading.Tasks.ValueTask
   override Read(System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   override Write(app.data.this data, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
-  static Input(System.String name, System.IO.Stream stream, System.Boolean ownsStream = …) : app.channel.type.stream.this
   static Memory(System.String name, app.channel.ChannelDirection direction = …) : app.channel.type.stream.this
-  static Output(System.String name, System.IO.Stream stream, System.Boolean ownsStream = …) : app.channel.type.stream.this
 
 class app.channel.type.test.this : app.channel.type.session.this
   Test : app.test.this { get; }
@@ -3136,7 +3132,6 @@ class app.type.list.this : app.type.item.list.this<app.type.this>
   Add(System.Reflection.Assembly assembly, app.actor.context.this context) : app.data.this
   Add(System.Type clr, app.actor.context.this context, System.String name = …) : app.data.this
   Add(app.type.kind.this kind) : System.Void
-  Assemblies : System.Collections.Generic.List<System.Reflection.Assembly> { get; }
   Contains(System.String name) : System.Boolean
   Extension(System.String extension, app.actor.context.this context) : app.type.this
   Format(System.String named) : app.type.kind.this
@@ -3233,7 +3228,6 @@ class app.type.reader.ReadContext : System.IEquatable<app.type.reader.ReadContex
   ctor(app.actor.context.this Context, app.type.item.template.kind.this Template = …, System.Boolean Verify = …, System.Boolean DeferVerify = …, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> Variable = …, app.type.item.path.this Origin = …, System.Boolean IsBuilt = …)
 
 abstract class app.type.reader.this
-  Assemblies : System.Collections.Generic.List<System.Reflection.Assembly> { get; }
   Of(System.String typeName, System.String kind) : app.type.reader.this+Read
   Reader(System.String typeName, System.String kind, app.actor.context.this context) : app.type.reader.ITypeReader
   Register(System.String typeName, System.String kind, app.type.reader.ITypeReader reader) : System.Void

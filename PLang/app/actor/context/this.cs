@@ -254,41 +254,6 @@ public sealed class @this : IDisposable
             _ => new ConcurrentDictionary<string, object?>(StringComparer.OrdinalIgnoreCase));
     }
 
-    /// <summary>
-    /// Creates a child context for nested execution.
-    /// Test fixture — production creates contexts only via the ctor in Actor.this.cs.
-    /// One Context propagates through the entire goal-call tree of an Actor; child
-    /// contexts are unit-test scaffolding for inheritance scenarios (Setting,
-    /// Variables, Parent linkage).
-    /// </summary>
-    public @this CreateChild(Variables? variables = null)
-    {
-        return new @this(App, Actor, variables ?? Variable.Clone(), this);
-    }
-
-    /// <summary>
-    /// Clones this context with a new Variables.
-    /// Test fixture — see CreateChild. Not used by production code; the property
-    /// propagation here (IsAsync, Setup, Setting, _data) reflects what existing
-    /// tests need, not a Clone/Copy contract for the runtime.
-    /// </summary>
-    public @this Clone(Variables? variables = null)
-    {
-        var clone = new @this(App, Actor, variables ?? Variable.Clone(), Parent, filesystem: Filesystem)
-        {
-            IsAsync = IsAsync,
-            Setup = Setup,
-        };
-        clone._setting = _setting?.Clone();
-
-        foreach (var kvp in _data)
-        {
-            clone._data[kvp.Key] = kvp.Value;
-        }
-
-        return clone;
-    }
-
     // --- Data wrapper cache for structural types (Goal, Step, Action) ---
     // Per-execution: same domain object → same Data wrapper within this context.
     private readonly ConcurrentDictionary<object, data.@this> _wrapperCache = new();

@@ -69,16 +69,10 @@ public abstract class @this
         }
     }
 
-    /// <summary>
-    /// Assemblies to scan for <c>serializer/&lt;kind&gt;.cs</c> classes: the code's, its own; a layer's, none.
-    /// </summary>
-    public List<Assembly> Assemblies { get; }
-
+    /// <param name="assemblies">The assemblies scanned for <c>serializer/&lt;kind&gt;.cs</c> classes: the code's, its
+    /// own; a layer's, none.</param>
     private protected @this(global::app.type.list.@this.Code code, List<Assembly> assemblies)
-    {
-        Assemblies = assemblies;
-        _shipped = new(() => new shipped(code, Assemblies), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);
-    }
+        => _shipped = new(() => new shipped(code, assemblies), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);
 
     // The shipped readers, through the one door that makes them.
     private shipped Shipped => _shipped.Value;

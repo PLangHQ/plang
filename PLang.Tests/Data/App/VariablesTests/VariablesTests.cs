@@ -793,7 +793,7 @@ public class VariablesTests : System.IAsyncDisposable
         var parentContext = new global::app.actor.context.@this(engine, engine.actor.list.User);
         parentContext.Variable.Set("name", "John");
 
-        var childContext = parentContext.CreateChild();
+        var childContext = new global::app.actor.context.@this(engine, engine.actor.list.User, parentContext.Variable.Clone(), parentContext);
 
         // The child sees the variable; the Data keeps the context it was born with — never re-pointed.
         var seen = (await childContext.Variable.Get("name"))!;

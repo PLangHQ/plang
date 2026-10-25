@@ -108,7 +108,7 @@ public class SettingsTests : System.IAsyncDisposable
         var parent = Ctx();
         parent.Setting.Set("http.request.setting.timeout", parent.Ok(50L));
 
-        var child = parent.CreateChild();
+        var child = new global::app.actor.context.@this(parent.App, parent.Actor, parent.Variable.Clone(), parent);
         var d = await child.Setting.Get(Request(child.Setting), "timeout");
         await Assert.That((await d.Value())?.ToString()).IsEqualTo("50");
     }
@@ -119,7 +119,7 @@ public class SettingsTests : System.IAsyncDisposable
         var parent = Ctx();
         parent.Setting.Set("http.request.setting.timeout", parent.Ok(50L));
 
-        var child = parent.CreateChild();
+        var child = new global::app.actor.context.@this(parent.App, parent.Actor, parent.Variable.Clone(), parent);
         child.Setting.Set("http.request.setting.timeout", child.Ok(10L));
 
         await Assert.That((await (await child.Setting.Get(Request(child.Setting), "timeout")).Value())?.ToString()).IsEqualTo("10");

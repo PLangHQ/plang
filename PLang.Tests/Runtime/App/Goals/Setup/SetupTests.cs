@@ -168,17 +168,6 @@ public class SetupTests
     }
 
     [Test]
-    public async Task Clone_PreservesSetup()
-    {
-        var context = _app.actor.list.User.Context;
-        context.Setup = _app.goal.list.Setup;
-
-        var clone = context.Clone();
-
-        await Assert.That(clone.Setup).IsEqualTo(context.Setup);
-    }
-
-    [Test]
     public async Task RunAsync_FailedStepNotRecorded()
     {
         // A step that fails (unknown module) and does NOT have on.error ignore

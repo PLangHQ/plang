@@ -130,63 +130,37 @@ public class RunActionTests
         await runs.AssertAllPass();
     }
 
-    // With test's setting parallel = 2 and 4 tests, at most 2 tests run concurrently.
-    // Each fixture's BeforeAction delays asynchronously for long enough that another
-    // fixture can enter the same window. The observed max concurrent depth equals the
-    // semaphore size — parallel=2 → max 2; parallel=1 would observe max 1.
+    // With test's setting parallel = 2 and 4 tests, at most 2 tests run concurrently. Each test writes the moment it
+    // starts and the moment it ends around a sleep long enough for another to start inside it; the most intervals
+    // that overlap is the run's width — parallel=2 → 2; parallel=1 would give 1.
     [Test]
     public async Task Run_ParallelExecution_RespectsSemaphoreLimit()
     {
-        int currentDepth = 0;
-        int maxDepth = 0;
-        var depthLock = new object();
-        // Each test's action waits at a gate that opens once two are inside at the same time — so the run
-        // is proven to hold two at once without a clock. A serial run never opens it (the wait times out).
-        var twoInside = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var context = _app.actor.list.User.Context;
+        var tests = new List<global::app.test.@this>();
+        for (int i = 0; i < 4; i++)
+            tests.Add(await BuildFixture($"T{i}.test.goal", $"T{i}", new (string, string, List<Data>)[]
+            {
+                // each moment held as it is set, then written
+                ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("start", _app.type.list), context: context), new("Value", "%NowUtc%", new global::app.type.@this("variable"), context: context) }),
+                ("timer", "sleep", new List<Data> { new("Duration", "1s", context: context) }),
+                ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("end", _app.type.list), context: context), new("Value", "%NowUtc%", new global::app.type.@this("variable"), context: context) }),
+                ("output", "write", new List<Data> { new("Data", "%start%", new global::app.type.@this("variable"), context: context) }),
+                ("output", "write", new List<Data> { new("Data", "%end%", new global::app.type.@this("variable"), context: context) })
+            }));
 
-        void Probe(global::app.@this childApp)
-        {
-            if (!childApp.filesystem.root.Absolute.StartsWith(_tempDir)) return;
-            childApp.actor.list.User.on.Bind(childApp.type.list["action"], "start", global::app.@event.When.before,
-                async (_, _, context) =>
-                {
-                    lock (depthLock)
-                    {
-                        currentDepth++;
-                        if (currentDepth > maxDepth) maxDepth = currentDepth;
-                        if (currentDepth == 2) twoInside.TrySetResult();
-                    }
-                    await twoInside.Task.WaitAsync(System.TimeSpan.FromSeconds(30));
-                    lock (depthLock) currentDepth--;
-                    return context.Ok();
-                },
-                global::app.@event.binding.Scope.actor);
-        }
+        var runs = (await RunTests(tests, parallel: 2)).ToList();
 
-        _app.test.list.Made += Probe;
-        try
-        {
-            var tests = new List<global::app.test.@this>();
-            for (int i = 0; i < 4; i++)
-                tests.Add(await BuildFixture($"T{i}.test.goal", $"T{i}", new (string, string, List<Data>)[]
-                {
-                    ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("x", _app.type.list), context: _app.actor.list.User.Context), new("Value", i, context: _app.actor.list.User.Context) })
-                }));
-
-            var results = await RunTests(tests, parallel: 2);
-            var runs = results.ToList();
-
-            await Assert.That(runs.Count).IsEqualTo(4);
-            await Assert.That(runs.All(r => r.Status == global::app.test.Status.Pass)).IsTrue();
-            // The semaphore caps concurrency at 2: the gate opened with two inside, and no third was ever
-            // inside with them. A serial run would never open the gate.
-            await Assert.That(twoInside.Task.IsCompletedSuccessfully).IsTrue();
-            await Assert.That(maxDepth).IsEqualTo(2);
-        }
-        finally
-        {
-            _app.test.list.Made -= Probe;
-        }
+        await Assert.That(runs.Count).IsEqualTo(4);
+        await Assert.That(runs.All(r => r.Status == global::app.test.Status.Pass)).IsTrue();
+        // each test's interval, from what it wrote
+        var intervals = runs.Select(run => run.Stdout!.Clr<string>()!
+                .Split('\n', System.StringSplitOptions.RemoveEmptyEntries | System.StringSplitOptions.TrimEntries)
+                .Select(System.DateTimeOffset.Parse).ToList())
+            .Select(moments => (Start: moments[0], End: moments[^1])).ToList();
+        // the most running at one moment: at each test's start, the tests started and not yet ended
+        var width = intervals.Max(one => intervals.Count(other => other.Start <= one.Start && one.Start < other.End));
+        await Assert.That(width).IsEqualTo(2).Because(string.Join("; ", intervals.Select(i => $"{i.Start:HH:mm:ss.fff}–{i.End:HH:mm:ss.fff}")));
     }
 
     // A test that sleeps past the configured timeout → global::app.test.Status.Timeout.
@@ -252,113 +226,70 @@ public class RunActionTests
 
     // The os root is the executable's: every app — a test's own app too — resolves shared os/ goals
     // (e.g. setup helpers) from the same folder, derived, never set or copied.
-    // Uses the test list's Made hook to snapshot the child's os root.
+    // The test's own goal writes its app's os folder; the run's output carries it.
     [Test]
     public async Task Run_TheOsRoot_IsTheExecutables()
     {
-        string? observedChildOsDir = null;
-        void Probe(global::app.@this childApp)
+        var test = await BuildFixture("OsDir.test.goal", "S", new (string, string, List<Data>)[]
         {
-            if (childApp.filesystem.root.Absolute.StartsWith(_tempDir))
-                observedChildOsDir = childApp.filesystem.os.Absolute;
-        }
-        _app.test.list.Made += Probe;
-        try
-        {
-            var test = await BuildFixture("OsDir.test.goal", "S", new (string, string, List<Data>)[]
-            {
-                ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("x", _app.type.list), context: _app.actor.list.User.Context), new("Value", 1, context: _app.actor.list.User.Context) })
-            });
+            ("output", "write", new List<Data> { new("Data", "%!app.filesystem.os%", new global::app.type.@this("variable"), context: _app.actor.list.User.Context) })
+        });
 
-            await RunTests(new List<global::app.test.@this> { test });
+        var run = (await RunTests(new List<global::app.test.@this> { test })).Single();
 
-            // the executable's os folder, where the OS lands for it (a test bin's os is a link to the repo's)
-            var folder = System.IO.Path.GetFullPath(System.IO.Path.Combine(System.AppContext.BaseDirectory, "os"));
-            var executables = System.IO.Directory.ResolveLinkTarget(folder, returnFinalTarget: true)?.FullName ?? folder;
-            await Assert.That(observedChildOsDir).IsEqualTo(executables);
-            await Assert.That(_app.filesystem.os.Absolute).IsEqualTo(executables);
-        }
-        finally
-        {
-            _app.test.list.Made -= Probe;
-        }
+        // the executable's os folder, where the OS lands for it (a test bin's os is a link to the repo's)
+        var folder = System.IO.Path.GetFullPath(System.IO.Path.Combine(System.AppContext.BaseDirectory, "os"));
+        var executables = System.IO.Directory.ResolveLinkTarget(folder, returnFinalTarget: true)?.FullName ?? folder;
+        await Assert.That(run.Status).IsEqualTo(global::app.test.Status.Pass).Because(run.Error?.Message ?? "");
+        await Assert.That(run.Stdout!.Clr<string>()!.Trim()).IsEqualTo(executables);
+        await Assert.That(_app.filesystem.os.Absolute).IsEqualTo(executables);
     }
 
-    // testApp.Test = new global::app.test.list.@this(testApp.actor.list.System.Context) before the test starts. Subsystems that branch
-    // on test mode (in-memory DBs, stubbed identity, etc.) observe the flag.
-    // Uses the test list's Made hook to snapshot IsEnabled directly on the child App.
+    // A test's app runs in test mode: its session is open before its goal runs, so what branches on the mode (in-memory
+    // stores, stubbed identity) sees it. The test's own goal writes its app's mode; the run's output carries it.
     [Test]
     public async Task Run_TestingIsEnabled_SetToTrueInChildApp()
     {
-        bool? observed = null;
-        void Probe(global::app.@this childApp)
+        var test = await BuildFixture("IsEn.test.goal", "E", new (string, string, List<Data>)[]
         {
-            if (childApp.filesystem.root.Absolute.StartsWith(_tempDir))
-                observed = childApp.test.list.Session != null;
-        }
-        _app.test.list.Made += Probe;
-        try
-        {
-            var test = await BuildFixture("IsEn.test.goal", "E", new (string, string, List<Data>)[]
-            {
-                ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("x", _app.type.list), context: _app.actor.list.User.Context), new("Value", 1, context: _app.actor.list.User.Context) })
-            });
+            ("output", "write", new List<Data> { new("Data", "%!app.test.current%", new global::app.type.@this("variable"), context: _app.actor.list.User.Context) })
+        });
 
-            var results = await RunTests(new List<global::app.test.@this> { test });
-            var run = results.Single();
+        var run = (await RunTests(new List<global::app.test.@this> { test })).Single();
 
-            await Assert.That(run.Status).IsEqualTo(global::app.test.Status.Pass);
-            await Assert.That(observed).IsEqualTo(true);
-        }
-        finally
-        {
-            _app.test.list.Made -= Probe;
-        }
+        await Assert.That(run.Status).IsEqualTo(global::app.test.Status.Pass).Because(run.Error?.Message ?? "");
+        // the test running is its app's current one — only a session holds one
+        await Assert.That(run.Stdout!.Clr<string>()!.Trim()).IsNotEmpty();
     }
 
     // Tests with global::app.test.Status.Stale or Skipped are NOT executed but are included in
     // the returned global::app.test.Run[] results with their original status. Reporter shows the
     // full surface — hiding filtered tests would hurt CI visibility.
-    // Side-effect probe: count Made invocations — only the Ready test
-    // should trigger a child App. Stale/Skipped take the early-return path.
+    // A test that runs leaves its output; a Stale or Skipped one never ran, so it has none.
     [Test]
     public async Task Run_OnlyReadyTests_Executed_StaleAndSkippedPreserved()
     {
-        int childAppsCreated = 0;
-        void Probe(global::app.@this childApp)
+        var ready = await BuildFixture("Ready.test.goal", "R", new (string, string, List<Data>)[]
         {
-            if (childApp.filesystem.root.Absolute.StartsWith(_tempDir))
-                Interlocked.Increment(ref childAppsCreated);
-        }
-        _app.test.list.Made += Probe;
-        try
-        {
-            var ready = await BuildFixture("Ready.test.goal", "R", new (string, string, List<Data>)[]
-            {
-                ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("x", _app.type.list), context: _app.actor.list.User.Context), new("Value", 1, context: _app.actor.list.User.Context) })
-            });
-            var stale = new global::app.test.@this(_app.type.list) {
-                Goal = new Goal(_app.type.list) { Name = "Stale", Path = global::app.type.item.path.@this.Resolve("/Stale.test.goal", _app.actor.list.User.Context) },
-                Status = global::app.test.Status.Stale, StatusReason = "no .pr" };
-            var skipped = new global::app.test.@this(_app.type.list) {
-                Goal = new Goal(_app.type.list) { Name = "Skip", Path = global::app.type.item.path.@this.Resolve("/Skip.test.goal", _app.actor.list.User.Context) },
-                Status = global::app.test.Status.Skipped, StatusReason = "excluded by tag" };
+            ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("x", _app.type.list), context: _app.actor.list.User.Context), new("Value", 1, context: _app.actor.list.User.Context) })
+        });
+        var stale = new global::app.test.@this(_app.type.list) {
+            Goal = new Goal(_app.type.list) { Name = "Stale", Path = global::app.type.item.path.@this.Resolve("/Stale.test.goal", _app.actor.list.User.Context) },
+            Status = global::app.test.Status.Stale, StatusReason = "no .pr" };
+        var skipped = new global::app.test.@this(_app.type.list) {
+            Goal = new Goal(_app.type.list) { Name = "Skip", Path = global::app.type.item.path.@this.Resolve("/Skip.test.goal", _app.actor.list.User.Context) },
+            Status = global::app.test.Status.Skipped, StatusReason = "excluded by tag" };
 
-            var results = await RunTests(new List<global::app.test.@this> { ready, stale, skipped });
-            var runs = results.ToList();
+        var runs = (await RunTests(new List<global::app.test.@this> { ready, stale, skipped })).ToList();
 
-            await Assert.That(runs.Count).IsEqualTo(3);
-            await Assert.That(runs.Count(r => r.Status == global::app.test.Status.Pass)).IsEqualTo(1);
-            await Assert.That(runs.Count(r => r.Status == global::app.test.Status.Stale)).IsEqualTo(1);
-            await Assert.That(runs.Count(r => r.Status == global::app.test.Status.Skipped)).IsEqualTo(1);
+        await Assert.That(runs.Count).IsEqualTo(3);
+        await Assert.That(runs.Count(r => r.Status == global::app.test.Status.Pass)).IsEqualTo(1);
+        await Assert.That(runs.Count(r => r.Status == global::app.test.Status.Stale)).IsEqualTo(1);
+        await Assert.That(runs.Count(r => r.Status == global::app.test.Status.Skipped)).IsEqualTo(1);
 
-            // Only the one Ready test spun up a child App.
-            await Assert.That(childAppsCreated).IsEqualTo(1);
-        }
-        finally
-        {
-            _app.test.list.Made -= Probe;
-        }
+        // only the Ready test ran: the others carry their status and reason, never a run's output
+        await Assert.That(runs.Single(r => r.Status == global::app.test.Status.Pass).Stdout).IsNotNull();
+        await Assert.That(runs.Where(r => r.Status != global::app.test.Status.Pass).All(r => r.Stdout == null)).IsTrue();
     }
 
     // A test that fails an assertion: global::app.test.Run.Status == Fail, error on the global::app.test.Run,
@@ -460,45 +391,27 @@ public class RunActionTests
     [Test]
     public async Task Run_OutputCapture_OutputChannelOnly_ErrorChannelExcluded()
     {
-        // The child App's output is the test's session (test.start opens it); the error channel
-        // is a MemoryStream we don't read — we only assert through the test's Stdout, which is the
-        // session's text.
-        var errStream = new System.IO.MemoryStream();
-        void Probe(global::app.@this childApp)
+        // The child App's output is the test's session (test.start opens it); we assert through the test's
+        // Stdout, which is the session's text.
+        var test = await BuildFixture("OutCap.test.goal", "OutCap", new (string, string, List<Data>)[]
         {
-            if (!childApp.filesystem.root.Absolute.StartsWith(_tempDir)) return;
-            childApp.actor.list.User.Channel.Register(new StreamChannel(
-                global::app.channel.list.@this.Error, errStream,
-                ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
-        }
-        _app.test.list.Made += Probe;
-        try
-        {
-            var test = await BuildFixture("OutCap.test.goal", "OutCap", new (string, string, List<Data>)[]
+            // No `channel` param → defaults to "output".
+            ("output", "write", new List<Data> { new("Data", "hello-output", context: _app.actor.list.User.Context) }),
+            // Explicit channel routing to "error".
+            ("output", "write", new List<Data>
             {
-                // No `channel` param → defaults to "output".
-                ("output", "write", new List<Data> { new("Data", "hello-output", context: _app.actor.list.User.Context) }),
-                // Explicit channel routing to "error".
-                ("output", "write", new List<Data>
-                {
-                    new("Data", "hello-error", context: _app.actor.list.User.Context),
-                    new("channel", "error", context: _app.actor.list.User.Context)
-                })
-            });
+                new("Data", "hello-error", context: _app.actor.list.User.Context),
+                new("channel", "error", context: _app.actor.list.User.Context)
+            })
+        });
 
-            var results = await RunTests(new List<global::app.test.@this> { test });
-            var run = results.Single();
+        var run = (await RunTests(new List<global::app.test.@this> { test })).Single();
 
-            await Assert.That(run.Status).IsEqualTo(global::app.test.Status.Pass);
-            await Assert.That(run.Stdout).IsNotNull();
-            await Assert.That(run.Stdout!.Clr<string>()!).Contains("hello-output");
-            // The error-channel write must NOT leak into Run.Output.
-            await Assert.That(run.Stdout!.Clr<string>()!).DoesNotContain("hello-error");
-        }
-        finally
-        {
-            _app.test.list.Made -= Probe;
-        }
+        await Assert.That(run.Status).IsEqualTo(global::app.test.Status.Pass);
+        await Assert.That(run.Stdout).IsNotNull();
+        await Assert.That(run.Stdout!.Clr<string>()!).Contains("hello-output");
+        // The error-channel write must NOT leak into Run.Output.
+        await Assert.That(run.Stdout!.Clr<string>()!).DoesNotContain("hello-error");
     }
 
     // Per-step Timings: only the entry goal's top-level steps. Nested sub-goal

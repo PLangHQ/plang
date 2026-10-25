@@ -22,8 +22,8 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
 {
     private readonly object _lock = new();
 
-    /// <summary>Assemblies the startup scan reads. Defaults to the App assembly; callers can extend.</summary>
-    public List<Assembly> Assemblies { get; } = new() { typeof(@this).Assembly };
+    // The assemblies the startup scan reads: the App's.
+    private List<Assembly> Assemblies { get; } = new() { typeof(@this).Assembly };
 
     /// <summary>
     /// Built-in type names a runtime-loaded assembly may not claim. Their bodies are signing- or
