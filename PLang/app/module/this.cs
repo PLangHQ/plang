@@ -87,10 +87,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     }
 
     /// <summary>Whether this registry, a layer, holds modules of its own — a module this layer made.</summary>
-    internal bool HasOwn => list.Items().Any(module => ReferenceEquals(module.Root, this));
+    internal bool HasOwn => System.Threading.Volatile.Read(ref _own) > 0;
 
-    // The app's module: this one, or the one holding it.
-    private @this Root => _root ?? this;
+    // How many modules this registry made and holds: changed only by its own two doors, Of and Drop.
+    private int _own;
+
+    // The app's module: this one, or the registry holding it.
+    internal @this Root => _root ?? this;
 
     /// <summary>The App this module belongs to — reached through the app's module.</summary>
     internal global::app.@this App => Root._app!;
@@ -122,9 +125,16 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         var owner = Of(module);
         // the same action again is the same answer, whichever registry holds its module
         if (owner[actionName]?.Class == type) return;
-        // a module below this layer takes the action as the app's origin answers it
-        if (!ReferenceEquals(owner.Root, Root)) App.origin.Register(owner, actionName, type);
-        else owner.Add(actionName, type);
+        owner.Root.Register(owner, actionName, type, Root);
+    }
+
+    // An action into one of this registry's modules, asked by `asker`'s registry.
+    private void Register(@this module, string action, System.Type type, @this asker)
+    {
+        // the fact itself, not a flag: a change to the asker's own rows it holds, one to a row below it is its origin's
+        // to answer (decision 40)
+        if (!ReferenceEquals(this, asker)) asker.App.origin.Register(module, action, type);
+        else module.Add(action, type);
     }
 
     /// <summary>Registers every [Action] class under <paramref name="baseNamespace"/> in an assembly — the module is
@@ -153,21 +163,28 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             if (Named(name) is { } module) return module;
             var born = new @this(name, Root);
             list.Add(born);
+            System.Threading.Interlocked.Increment(ref Root._own);
             return born;
         }
     }
 
     /// <summary>Takes this module out of the app — emptied too, so anyone still holding it finds no actions.</summary>
     public System.Threading.Tasks.ValueTask<bool> Remove(actor.context.@this context)
-        // a module below the asker's app's layer is taken out as its origin answers it
-        => ReferenceEquals(context.App.module, Root) ? Drop(context) : context.App.origin.Remove(this, context);
+        => Root.Remove(this, context.App.module, context);
 
-    /// <summary>Takes this module out of the registry that holds it, for every app over that registry too — emptied,
-    /// so anyone still holding it finds no actions.</summary>
-    internal async System.Threading.Tasks.ValueTask<bool> Drop(actor.context.@this context)
+    // One of this registry's modules taken out, asked by `asker`'s registry.
+    private System.Threading.Tasks.ValueTask<bool> Remove(@this module, @this asker, actor.context.@this context)
+        // the fact itself, not a flag: a change to the asker's own rows it holds, one to a row below it is its origin's
+        // to answer (decision 40)
+        => ReferenceEquals(this, asker) ? Drop(module, context) : asker.App.origin.Remove(module, context);
+
+    /// <summary>Takes <paramref name="module"/>, one this registry holds, out of it, for every app over it too —
+    /// emptied, so anyone still holding it finds no actions.</summary>
+    internal async System.Threading.Tasks.ValueTask<bool> Drop(@this module, actor.context.@this context)
     {
-        if (!await list.Remove(this, context)) return false;
-        Clear();
+        if (!await list.Remove(module, context)) return false;
+        System.Threading.Interlocked.Decrement(ref _own);
+        module.Clear();
         return true;
     }
 

@@ -42,5 +42,5 @@ internal sealed class code : @this
     public void Register(global::app.module.@this module, string action, System.Type type) => module.Add(action, type);
 
     public System.Threading.Tasks.ValueTask<bool> Remove(global::app.module.@this module, global::app.actor.context.@this context)
-        => module.Drop(context);
+        => module.Root.Drop(module, context);
 }

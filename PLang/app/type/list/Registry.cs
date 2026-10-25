@@ -93,8 +93,6 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     /// <summary>Whether this list, a layer, holds types of its own — what its app loaded over the list under it.</summary>
     internal bool HasOwn => !_named.IsEmpty;
 
-    // The entry is one this list holds itself, not one of the list it is a layer over.
-    private bool Holds(global::app.type.@this entry) => ReferenceEquals(_named.GetValueOrDefault(entry.Name), entry);
 
     // The code's scan, as the code's list is made: every item class in Assemblies comes in under its name, then each
     // type takes its kinds; a type's facts are read when first asked, once every name is known (a fact names its
@@ -234,11 +232,17 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         if (Hold(kind) is { } refused) throw new global::app.error.AppException(refused);
     }
 
-    // Holds a kind (the startup scan calls it while loading): on a type this list holds itself, here; on a type below
-    // this layer, as the app's origin answers it. Answers the refusal; null when the kind is held.
+    // Holds a kind (the startup scan calls it while loading), asked of the list that holds its type. Answers the
+    // refusal; null when the kind is held.
     private error.@this? Hold(global::app.type.kind.@this kind)
+        => (kind.Owner?.Types ?? this).Take(kind, this);
+
+    // A kind asked of this list, the one holding its type, by `asker`.
+    private error.@this? Take(global::app.type.kind.@this kind, @this asker)
     {
-        if (kind.Owner is { } owner && !Holds(owner)) return _origin.Hold(kind);
+        // the fact itself, not a flag: a change to the asker's own rows it holds, one to a row below it is its origin's
+        // to answer (decision 40)
+        if (!ReferenceEquals(this, asker)) return asker._origin.Hold(kind);
         Put(kind);
         return null;
     }

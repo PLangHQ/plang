@@ -195,11 +195,15 @@ public sealed partial class @this
     // answering to the name (`{text, txt}`) is the type itself, no kind.
     private app.type.@this Full(app.type.@this type, string? name)
     {
+        // a full type is made by the list that made its entry (one object in every app over that list); a name no type
+        // answers to, by this one
         var entry = Named(type.Name);
-        // a full type is the list's that made its entry — the list under's for a type it holds (one object in every app
-        // over that list), the code's for a name no type answers to
-        if (entry == null || !Holds(entry))
-            foreach (var under in Under) return under.Full(type, name);
+        return (entry?.Types ?? this).Made(entry, type, name);
+    }
+
+    // The full type this list makes for its own entry (or for no entry), kept: a kinded type is one object here.
+    private app.type.@this Made(app.type.@this? entry, app.type.@this type, string? name)
+    {
         var kind = name == null ? null
             : entry?.kind[name] is { } match ? (match.IsEmpty ? null : match)
             : entry?.kind.Coin(name) ?? new global::app.type.kind.@this(name);
@@ -315,10 +319,13 @@ public sealed partial class @this
     /// only for its asker's context is read as a property (<c>%p.relative%</c>); any other is called with its arguments
     /// (<c>%x.replace("a", "b")%</c>).</summary>
     internal property.list.@this Member(System.Type clr)
+        // listed by the list that made the class's type (one list per class in every app over it); a class no type is,
+        // by this one
+        => (Classed(clr)?.Types ?? this).Members(clr);
+
+    // The members this list lists for a class, kept.
+    private property.list.@this Members(System.Type clr)
     {
-        // a class this list holds no type for is the list under's to list: one list per class in every app over it
-        if (!_classed.ContainsKey(clr))
-            foreach (var under in Under) return under.Member(clr);
         return _member.GetOrAdd(clr, @class =>
     {
         var owner = Classed(@class)?.Name ?? app.type.item.@this.NameOf(@class);
