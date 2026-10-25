@@ -7,7 +7,7 @@
       "set %!app.test.setting.parallel% = 1",
       "set %!build.setting.files% = [\"a.goal\"]"
     ],
-    "block": "\n\nSettings\n- %!build.setting%(cache: choice<cache> = use, files: list = [])\n- %!llm.setting%(cache: choice<cache> = use, key: text, endpoint: text = https://api.openai.com/v1/chat/completions, model: text = gpt-5.4-nano)\n- %!app.test.setting%(actor: choice<actor> = user, timeout: duration = 30s, parallel: number = 0, format: choice<format> = json, include: list<text> = [], exclude: list<text> = [])"
+    "block": "\n\nSettings\n- %!build.setting%(cache: choice<cache> = use, files: list = [])\n- %!llm.setting%(cache: choice<cache> = use, key: text, endpoint: text = https://api.openai.com/v1/chat/completions, model: text = gpt-5.4-nano)\n- %!app.test.setting%(actor: choice<actor> = user, timeout: duration = 30s, llm: choice<llm> = saved, parallel: number = 0, format: choice<format> = json, include: list<text> = [], exclude: list<text> = [])"
   },
   {
     "goal": "NoneNamed",

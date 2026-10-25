@@ -280,6 +280,7 @@ public sealed partial class @this : IAsyncDisposable
         Ship<global::app.module.assert.code.IAssert>(table, new(() => new global::app.module.assert.code.Default()));
         Ship<ITemplate>(table, new(() => new global::app.module.ui.code.Fluid()));
         Ship<global::app.module.llm.code.ILlm>(table, new(() => new global::app.module.llm.code.OpenAi()));
+        Ship<global::app.module.llm.code.IAnswer>(table, new(() => new global::app.module.llm.code.Live()));
         Ship<global::app.module.llm.code.IDecider>(table, new(() => new global::app.module.llm.code.TypeSafe()));
         Ship<global::app.module.build.code.IBuilder>(table, new(() => new global::app.module.build.code.Default()));
         Ship<global::app.data.code.IGrep>(table, new(() => new global::app.data.code.Default()));

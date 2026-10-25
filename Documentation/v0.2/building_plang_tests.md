@@ -220,6 +220,25 @@ DELETE FROM LlmCache;
 ```
 Don't delete the whole `data.sqlite` — it contains other data.
 
+## A Test's LLM Answers
+
+`plang --test` keeps each test's LLM answers in a file beside it, for every plang app's tests: `Ask.test.goal` →
+`Ask.test.llm.json`, committed with the test. It stands where the LLM stands, not where the cache stands: the
+`LlmCache` table is still the one cache, in the test's own in-memory store, so a test of the cache still sees a
+miss and then a hit.
+
+- A request in the file is answered from it; nothing is sent, and no key is needed.
+- A request not in it is asked of the LLM once and added. The request is the body as the API takes it, compared
+  whole, so a changed prompt is a new question and its old answer is never served. No header is kept, so the key
+  never lands in the file.
+- A test that passes leaves the file holding the answers it asked, in the order first asked; one it no longer asks
+  is dropped. A failing test leaves the file as it was.
+- A streamed ask always goes to the LLM, and isn't kept.
+- `--test.setting.llm=live` asks the LLM every time, the file neither read nor written: the check that the LLM still
+  takes the requests. The default is `saved`.
+
+The file is plain json, indented, one `{request, response}` per question: review it in the diff like the test.
+
 ## v2 .pr File Format
 
 Single file per goal, array of goal objects:

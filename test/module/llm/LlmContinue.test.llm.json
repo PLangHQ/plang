@@ -1,0 +1,114 @@
+[
+  {
+    "request": {
+      "model": "gpt-5.4-nano",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a helpful assistant"
+        },
+        {
+          "role": "user",
+          "content": "My favorite color is blue. Remember that."
+        }
+      ],
+      "temperature": 0,
+      "max_completion_tokens": 16000
+    },
+    "response": {
+      "id": "chatcmpl-Ecv6OnnN0OHu0QkhXiJT2cIMh8sRS",
+      "object": "chat.completion",
+      "created": 1792944672,
+      "model": "gpt-5.4-nano-2026-03-17",
+      "choices": [
+        {
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": "Got it — I’ll remember that your favorite color is **blue**.",
+            "refusal": null,
+            "annotations": []
+          },
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 24,
+        "completion_tokens": 18,
+        "total_tokens": 42,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "service_tier": "default",
+      "system_fingerprint": null
+    }
+  },
+  {
+    "request": {
+      "model": "gpt-5.4-nano",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a helpful assistant"
+        },
+        {
+          "role": "user",
+          "content": "My favorite color is blue. Remember that."
+        },
+        {
+          "role": "assistant",
+          "content": "Got it — I’ll remember that your favorite color is **blue**."
+        },
+        {
+          "role": "user",
+          "content": "What is my favorite color?"
+        }
+      ],
+      "temperature": 0,
+      "max_completion_tokens": 16000
+    },
+    "response": {
+      "id": "chatcmpl-Ecv6POEFX4NMfp9aahhbeyGVQzUV9",
+      "object": "chat.completion",
+      "created": 1792944673,
+      "model": "gpt-5.4-nano-2026-03-17",
+      "choices": [
+        {
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": "Your favorite color is **blue**.",
+            "refusal": null,
+            "annotations": []
+          },
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 55,
+        "completion_tokens": 11,
+        "total_tokens": 66,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "service_tier": "default",
+      "system_fingerprint": null
+    }
+  }
+]

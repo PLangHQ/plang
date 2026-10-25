@@ -7,8 +7,6 @@ using app.error;
 using app.goal;
 using app.module.setting;
 using app.type.item.path;
-using app.module.http;
-using PlangHttpMethod = app.module.http.HttpMethod;
 using number = global::app.type.item.number.@this;
 using text = global::app.type.item.text.@this;
 using item = global::app.type.item.@this;
@@ -61,12 +59,10 @@ public sealed class OpenAi : ILlm
         var app = action.Context.App;
         var context = action.Context;
 
-        // --- Config: the llm module's settings — a saved key wins, else its environment's ---
+        // --- Config: the llm module's settings; the endpoint and key are the answer's (Live asks the key when it sends) ---
         var llm = await context.Setting.Get<global::app.module.llm.setting.@this>();
-        var endpoint = llm.Endpoint.ToString();
-        var secret = await llm.Asked(context);
-        if (!secret.Success) return secret;
-        var apiKey = (await secret.Value())!.ToString();
+        var (answer, unanswered) = app.Code.Get<IAnswer>();
+        if (answer == null) return context.Error(unanswered!);
         var model = ((action.Model == null ? null : await action.Model.Value())?.ToString()) is { Length: >0 } __m ? __m : llm.Model.ToString();
 
         // --- Validate ---
@@ -208,24 +204,8 @@ public sealed class OpenAi : ILlm
             // Remove null entries
             body = body.Where(kv => kv.Value != null).ToDictionary(kv => kv.Key, kv => kv.Value);
 
-            // --- HTTP request via http module ---
-            var headers = new Dictionary<string, object>();
-            if (!string.IsNullOrEmpty(apiKey))
-                headers["Authorization"] = $"Bearer {apiKey}";
-
-            var httpAction = new request(context)
-            {
-                Url = new data.@this<global::app.type.item.text.@this>("", endpoint, context: context),
-                Method = new data.@this<global::app.type.item.choice.@this<PlangHttpMethod>>("", PlangHttpMethod.POST, context: context),
-                Body = new data.@this("", body, context: context),
-                Header = new data.@this<global::app.type.item.dict.@this>("", (global::app.type.item.dict.@this)global::app.type.item.@this.Create(headers, context), context: context),
-                Unsigned = new data.@this<global::app.type.item.@bool.@this>("", true, context: context),
-                Timeout = new data.@this<global::app.type.item.duration.@this>("", global::app.type.item.duration.@this.Create(System.TimeSpan.FromMinutes(2), context), context: context),
-                OnStream = action.OnStream,
-                StreamAs = (action.OnStream == null ? null : await action.OnStream.Value()) != null ? new data.@this<global::app.type.item.choice.@this<StreamFormat>>("", StreamFormat.SSE, context: context) : default
-            };
-
-            data.@this httpResult = await new global::app.goal.step.action.@this(httpAction, context).Start(context);
+            // --- The request answered: by OpenAI, or a test's saved answers ---
+            data.@this httpResult = await answer.Ask(new data.@this("", body, context: context), action);
             if ((action.OnStream == null ? null : await action.OnStream.Value()) != null)
             {
                 // TODO: streaming tool call accumulation needs work

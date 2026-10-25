@@ -1,0 +1,54 @@
+[
+  {
+    "request": {
+      "model": "gpt-5.4-nano",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You analyze sentiment. Respond in JSON only.\nYou MUST respond in JSON, schema: {\"sentiment\":\"string\",\"score\":\"number\"}"
+        },
+        {
+          "role": "user",
+          "content": "Analyze: I love sunny days"
+        }
+      ],
+      "temperature": 0,
+      "max_completion_tokens": 16000
+    },
+    "response": {
+      "id": "chatcmpl-Ecv6O1hMZCERH9le3yl1S3bTjpHXT",
+      "object": "chat.completion",
+      "created": 1792944672,
+      "model": "gpt-5.4-nano-2026-03-17",
+      "choices": [
+        {
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": "{\"sentiment\":\"positive\",\"score\":0.9}",
+            "refusal": null,
+            "annotations": []
+          },
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 43,
+        "completion_tokens": 15,
+        "total_tokens": 58,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "service_tier": "default",
+      "system_fingerprint": null
+    }
+  }
+]

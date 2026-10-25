@@ -135,7 +135,19 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         Begin();
         global::app.@event.binding.@this[] watching = [app.test.list.Report.Coverage.Watch(user), .. await Time(user)];
 
-        System.TimeSpan timeout = (await context.Setting.Get<global::app.test.setting.@this>()).Timeout;
+        var setting = await context.Setting.Get<global::app.test.setting.@this>();
+        // its llm questions answered from the file beside it, unless the run asks live: registered on its own app, whose
+        // code registry is its alone
+        var saved = setting.Llm.Value == global::app.test.llm.saved
+            && app.Code.Get<global::app.module.llm.code.IAnswer>() is { Provider: { } live }
+            ? new global::app.module.llm.code.Saved(Goal.Path!, live, user) : null;
+        if (saved != null)
+        {
+            app.Code.Register<global::app.module.llm.code.IAnswer>(saved);
+            app.Code.SetDefault<global::app.module.llm.code.IAnswer>(saved.Name);
+        }
+
+        System.TimeSpan timeout = setting.Timeout;
         using var cts = System.Threading.CancellationTokenSource.CreateLinkedTokenSource(context.CancellationToken);
         cts.CancelAfter(timeout <= System.TimeSpan.Zero ? System.Threading.Timeout.InfiniteTimeSpan : timeout);
         user.PushCancellation(cts);
@@ -148,6 +160,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                 : loaded;
             if (timedOut()) Complete(Status.Timeout);
             else Complete(result);
+            // a passing run's answers kept: the file holds what it asked, no more
+            if (saved != null && Status == Status.Pass && await saved.Keep(user) is { Success: false } unkept)
+                Complete(Status.Fail, unkept.Error);
         }
         catch (System.OperationCanceledException) when (timedOut())
         {
