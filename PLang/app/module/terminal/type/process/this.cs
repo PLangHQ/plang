@@ -218,7 +218,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                     Remote.Answered(reply);
                     continue;
                 }
-                screen?.Show(message);
+                if (screen != null) screen.Show(message, (await context.Setting.Get<global::app.module.screen.setting.@this>()).Max);
                 if (onOutput != null)
                     await global::app.module.on.code.Gate.Call(onOutput,
                         new Data("!data", new global::app.type.item.binary.@this(message, context.App.type.list["binary"]), context.App.type.list["binary"], context: context), context);

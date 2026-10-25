@@ -15,8 +15,6 @@ namespace app.module.screen.type.screen.window;
 public sealed class @this : screen.@this
 {
     private readonly Native _window;
-    // screen.setting.max as the last draw read it: a frame's pixels at most this
-    private volatile global::app.type.item.size.@this _max = null!;
 
     private @this(string title, int width, int height, Native window) : base(title, width, height) => _window = window;
 
@@ -33,6 +31,8 @@ public sealed class @this : screen.@this
         var window = new Native(title, width, height, context.App.type.list,
             onEvent: e => events.Writer.TryWrite(e),
             onClosed: () => { events.Writer.TryWrite(closedLine); errors.Writer.TryComplete(); },
+            // a frame it refused, on its own threads: reported where the app's errors go (no step waits for it)
+            report: error => _ = context.Actor.Channel.Report(context.Error(error)),
             onError: json => errors.Writer.TryWrite(json));
         var failed = window.Show();
         if (failed != null)
@@ -107,34 +107,33 @@ public sealed class @this : screen.@this
 
     private protected override int Drawn => _window.Frames;
 
-    internal override bool Show(byte[] message) => !_window.Closed && _window.Take(message);
+    internal override bool Show(byte[] message, global::app.type.item.size.@this max) => !_window.Closed && _window.Take(message, max);
 
     internal override async Task<global::app.data.@this> Draw(global::app.data.@this frame, global::app.actor.context.@this context)
     {
         if (_window.Closed) return context.Ok();   // closed: nothing to draw on
 
         var value = await frame.Value();
-        // the most a frame's pixels take, as the setting says now; the decode thread reads the newest
-        _max = (await context.Setting.Get<global::app.module.screen.setting.@this>()).Max;
         if (value is Text t)
         {
             // A line from a browser: a frame (decoded by the window's own thread, newest only — this
             // step returns at once, so input behind it never waits) or the pointer the page wants.
             var line = t.Clr<string>() ?? "";
-            if (line.StartsWith("{\"rect", StringComparison.Ordinal)) _window.Patch(line);   // {"rects":…} or {"rect":…}
-            else if (line.Contains("\"frame\":\"", StringComparison.Ordinal)) _window.Offer(line, offered => Present(offered, context));
-            else if (Field(line, "cursor") is { } css) _window.Cursor(css);
+            if (line.StartsWith("{\"rect", StringComparison.Ordinal)) _window.Patch(line, await Max(context));   // {"rects":…} or {"rect":…}
+            else if (line.Contains("\"frame\":\"", StringComparison.Ordinal)) _window.Offer(line, await Max(context));
+            else if (Native.Field(line, "cursor") is { } css) _window.Cursor(css);
             return context.Ok();
         }
 
         if (value?.RawBytes is not { } encoded) return context.Ok();   // not a frame: ignored
 
-        // a message from PlangOS's screen: the window knows what it means
-        if (_window.Take(encoded)) return context.Ok();
+        // a message from PlangOS's screen: the window knows what it means; else a picture, whole
+        var max = await Max(context);
+        if (_window.Take(encoded, max)) return context.Ok();
 
         try
         {
-            _window.Present(new Bitmap(encoded, _max));
+            _window.Present(new Bitmap(encoded, max));
         }
         catch (AppException ex)
         {
@@ -143,47 +142,14 @@ public sealed class @this : screen.@this
         return context.Ok();
     }
 
+    // the most a frame's pixels take, as the setting says for this draw
+    private static async Task<global::app.type.item.size.@this> Max(global::app.actor.context.@this context)
+        => (await context.Setting.Get<global::app.module.screen.setting.@this>()).Max;
+
     /// <summary>A window that shows frames takes no input lines: its input comes out of it (OnInput).</summary>
     internal override Task<global::app.data.@this> Send(global::app.data.@this line, global::app.actor.context.@this context)
         => Task.FromResult(context.Error(new ActionError("This screen shows frames; it takes no input. screen.send is PlangOS's display (Linux).", "NotSupported", 400)));
 
     internal override void Close() => _window.Close();
 
-    // a browser's frame line, on the window's decode thread: its picture shown, or, when it is none, the error
-    // reported (no step waits for it to answer)
-    private void Present(string line, global::app.actor.context.@this context)
-    {
-        try
-        {
-            _window.Present(new Bitmap(Frame(line), _max));
-        }
-        catch (AppException ex)
-        {
-            _ = context.Actor.Channel.Report(context.Error(ex.Error));
-        }
-    }
-
-    // "key":"value" from a one-line JSON message, without parsing a 200 KB frame line
-    private static string? Field(string line, string key)
-    {
-        var marker = "\"" + key + "\":\"";
-        var start = line.IndexOf(marker, StringComparison.Ordinal);
-        if (start < 0) return null;
-        start += marker.Length;
-        var end = line.IndexOf('"', start);
-        return end < 0 ? null : line[start..end];
-    }
-
-    // {"frame":"<base64>",...} → the image bytes; a line without them is an AppException carrying BadFrame
-    private static byte[] Frame(string line)
-    {
-        if (Field(line, "frame") is not { } base64) throw new AppException(new Error("Not an image: the line holds no frame", "BadFrame", 400));
-        try { return Convert.FromBase64String(base64); }
-        catch (FormatException ex)
-        {
-            var error = new Error("Not an image: the frame isn't base64", "BadFrame", 400);
-            error.list.Add(Error.FromException(ex));
-            throw new AppException(error, ex);
-        }
-    }
 }

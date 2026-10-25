@@ -69,8 +69,9 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
         => Task.FromResult(context.Error(new ActionError("This screen takes no input (it isn't PlangOS's display).", "NotSupported", 400)));
 
     /// <summary>A message from PlangOS's screen, straight to it (no goal per frame): what
-    /// <c>terminal.open … binary output to %screen%</c> does with each one. False when it takes none.</summary>
-    internal virtual bool Show(byte[] message) => false;
+    /// <c>terminal.open … binary output to %screen%</c> does with each one, a frame's rectangles each at most
+    /// <paramref name="max"/> (<c>screen.setting.max</c>, as the sender read it). False when it takes none.</summary>
+    internal virtual bool Show(byte[] message, global::app.type.item.size.@this max) => false;
 
     /// <summary>An element's events were reached: its clicks are its own from now on.</summary>
     internal virtual void Bind(string selector) { }
