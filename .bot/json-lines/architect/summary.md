@@ -1,0 +1,7 @@
+# json-lines — architect's log
+
+JSON Lines, so plang's json can be written formatted by default (Ingi, bugs 23 and 45). Cut from runtime2 0a178687b (bugs' merge). The plan's draft is `plan/start.md` + `plan/start.goal`; the coder places it at `test/plan/json-lines/`. Newest first; numbered from 1.
+
+| # | what | rule | detail | who | waits on |
+|---|---|---|---|---|---|
+| 1 | **The plan, three stages** (`plan/start.md`, `plan/start.goal`) | Ingi: "yes", "sounds like a small branch (that is good)" | 1 the jsonl kind (a kind of item beside json: `application/jsonl`, `application/x-ndjson`, `.jsonl`, `.ndjson`; reads each line as a json value into a list; writes each record compact on its own line ending with LF, every character as itself). 2 the line writers write it (errors.jsonl, the headless cursor line; the errorlog channel stays json because it's framed by Flush and decoded whole; the coder surveys every other json Encode). 3 the json setting `%!app.type.json.setting.format%` (`formatted \| compact`, default formatted, read once at Encode's start; HTML escaping leaves the kind for the `\| json` filter; not the wire, a digest or a .pr), then the six `.llm.json` read and saved once. **To Ingi:** a list written as jsonl writes its elements as lines, through `item.Write(jsonl.Writer)` and list's override, the established per-writer pattern but a locked addition. | coder; Ingi | the list question |
