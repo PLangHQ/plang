@@ -16,11 +16,12 @@ public class Fluid : ITemplate
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
-    // how a template writes its values, by its format's mime: a page escapes them for html; a template of any other
-    // format, or an inline one, writes them as they are
+    // how a template writes its values, by its format's mime: a page (html, or an svg, where a browser runs script too)
+    // escapes them; a template of any other format, or an inline one, writes them as they are
     private readonly Dictionary<string, System.Text.Encodings.Web.TextEncoder> _encoder = new(StringComparer.OrdinalIgnoreCase)
     {
         ["text/html"] = System.Text.Encodings.Web.HtmlEncoder.Default,
+        ["image/svg+xml"] = System.Text.Encodings.Web.HtmlEncoder.Default,
     };
 
     // The parser with plang's tags and operators.

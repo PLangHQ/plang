@@ -75,11 +75,12 @@ public class FluidHtmlEscapeProbeTests
         await Assert.That(o).Contains("\"\"x onmouseover=alert(1) \"\"");
     }
 
-    // an svg page is html-capable and is written as it is (its mime is not text/html)
+    // an svg is a page: a browser runs script in it, so it escapes as html does
     [Test]
-    public async Task AnSvgTemplate_WritesAsItIs_PinnedForTheAuthor()
+    public async Task AnSvgTemplate_EscapesAValue()
     {
         var o = await Page("p.svg", "{{ x }}");
-        await Assert.That(o).Contains("<img src=x");
+        await Assert.That(o).DoesNotContain("<img src=x");
+        await Assert.That(o).Contains("&lt;img");
     }
 }
