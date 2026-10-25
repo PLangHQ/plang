@@ -8,7 +8,9 @@ PLang's NuGet packages brought up to date: one package per commit, each followed
 ## What was done
 | package | from → to | commit | code it forced |
 |---|---|---|---|
-| SixLabors.ImageSharp | 2.1.13 → 4.1.3 | ab9459746 | none in Debug; **blocks every non-Debug build without a licence key** (see Blocker) |
+| SixLabors.ImageSharp | 2.1.13 → 4.1.3 | ab9459746 | built in Debug only: its licence check fails every other configuration without a key, so it was replaced (next row) |
+| ImageSharp → SkiaSharp 4.153.1 + NativeAssets.Linux.NoDependencies | — | 2d37ae5a2 | Ingi's choice (packages 7). The image type uses no image library at all: `ValidateKind` asks its own magic-byte `Sniff`, which now names TIFF too. The view encodes its pixels to PNG and the window decodes PNG frames, both as straight BGRA. `PngTests` round-trips them. |
+| (native trims) | — | f75df0c1b | `native.targets`: no package's native `.pdb` in any output. PlangConsole's dev build takes the machine's runtime only, and its path is unchanged. `<RuntimeIdentifiers>` keeps the machine's assets after a publish for another runtime. PlangConsole's Debug bin goes 67 → 28 MB. |
 | Microsoft.Data.Sqlite, Microsoft.AspNetCore.WebUtilities, System.Runtime.Caching | 9.0.x → 10.0.13 | a14891bdf | none |
 | Fluid.Core | 2.31.0 → 2.40.0 | 248f5cb8f, then 57255ca9e | Fluid 2.40 asks the file provider for an include's name as written first, then with `.liquid`. The provider (`PLang/app/module/ui/code/Fluid.cs`) now keys each include by one rule (`Key(name)`: the name with `.liquid` added when it has none), so either ask finds the one row. 57255ca9e also left the file better (boy scout rule, packages 3): errors answered whole, a typed catch, the goal's answer written through the template's value writer, files read through `path.Bytes`, verb+noun and creative names gone. |
 | NSec.Cryptography | 24.4.0 → 26.4.0 | 1422e4b43 | none; the real Ed25519 classes are green |
@@ -24,12 +26,14 @@ Vulnerable list (`dotnet list package --vulnerable --include-transitive`, per pr
 
 Tests after each commit: the sweep's reds are runtime2's (Wire's six snapshot tests), and `plang --test` is 298/303 (BareLiteralJudgedByForm fails, 3 stale, 1 skipped).
 
-## Blocker
-ImageSharp 4.x's `build/SixLabors.ImageSharp.targets` runs a licence check before compiling. With `ContinueOnError` only for `Debug*` configurations, the gate's own configuration (`./dev.sh full`), a Release build and a published plang all fail with "No Six Labors license found". With ImageSharp held at 2.1.13 (working tree only), the gate passes with analyzers on, so this is the only blocker. Ingi decides: get a licence key and set `SixLaborsLicenseKey` outside the repo, go back to 2.1.13 (no key check, its advisories stay), or replace ImageSharp in the screen module.
+## ImageSharp's licence check, resolved
+ImageSharp 4.x (and 3.2.0, which backports it) runs a licence check in `build/SixLabors.ImageSharp.targets`, with `ContinueOnError` only for `Debug*`. Every other configuration failed without a key: the gate, Release, a publish. Ingi chose SkiaSharp. Magick.NET was measured partway and dropped. The gate (`./dev.sh full`) is green at f75df0c1b.
+
+Sizes (MB), PlangConsole: Debug bin 67 → 28; publish linux-x64 17 → 27, win-x64 18 → 29, osx-arm64 32.
 
 ## Next
-- Ingi's ImageSharp decision, through the architect.
-- `Tools/Bench/run.sh` at the final tip, then codeanalyzer.
+- `Tools/Bench/run.sh` row at the tip, then codeanalyzer.
+- `scratch/skiasharp` (pushed) holds the measurement commits; delete it once packages merges.
 
 ## Code example
 ```csharp
