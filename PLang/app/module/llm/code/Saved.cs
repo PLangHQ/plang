@@ -35,7 +35,7 @@ public sealed class Saved : IAnswer
     public async Task<data.@this> Ask(data.@this body, query action)
     {
         var context = action.Context;
-        if ((action.OnStream == null ? null : await action.OnStream.Value()) != null) return await _live.Ask(body, action);
+        if (await action.IsStreamed()) return await _live.Ask(body, action);
 
         await _gate.WaitAsync(context.CancellationToken);
         try
