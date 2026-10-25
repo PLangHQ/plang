@@ -147,7 +147,8 @@ public sealed class @this : screen.@this
     private static (byte[] bgra, int w, int h)? Decode(string line)
         => Frame(line) is { } encoded ? Pixels(encoded) : null;
 
-    private static (byte[] bgra, int w, int h)? Pixels(byte[] encoded)
+    // the frame's encoded picture (PNG, JPEG) as straight BGRA; bytes no image format reads are a FormatException
+    internal static (byte[] bgra, int w, int h)? Pixels(byte[] encoded)
     {
         // straight (unpremultiplied) BGRA, as the window shows it
         var info = SkiaSharp.SKBitmap.DecodeBounds(encoded);
