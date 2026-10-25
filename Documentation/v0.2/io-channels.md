@@ -240,6 +240,10 @@ Two actions in the `channel` module:
 
 **`channel.set`** registers (or replaces — always upserts) a goal-backed channel on the current actor or an explicitly-named one. Direction precedence: an explicit `direction:` parameter wins; otherwise the channel name `"input"` / `"output"` decides; otherwise `Bidirectional`. Optional config: `buffer`, `timeout` (ISO 8601 like `PT30S`), `mime`, `encoding`, `encryption`, `signing`.
 
+A write to a goal-backed channel runs its goal the way `goal.call` runs one, in the writer's flow: the context the written value carries (`data.Context`), so a parallel iteration's write is its own and a variable never crosses flows. The goal gets the written value as `%message%`. The channel's actor runs it through `context.Run(actor, then)` (`actor/context/this.cs:77`, the one door): right there when the writer is the channel's own actor, else in a child context with a fresh memory, ended with the run, so no actor reads another's variables. A failure of the goal is the write's answer, whole (an `AppException` keeps its Error; anything else is a `GoalChannelError` holding `Error.FromException`).
+
+A channel is born of its actor's channels: every channel type's constructor takes its list, and its actor is the list's (`channel/this.cs`). There is no channel without a list, and nothing stamps an actor on it later.
+
 The referenced goal must be **public** — a top-level goal in its own `.goal` file under the app's goal directory. `channel.set` resolves the name via `GetGoalAsync` which walks `App.Goals`; private sub-goals nested under another goal (defined below a `Start` in the same file) aren't discoverable by name. Put the answerer in its own file: `MyAnswerer.goal` next to `Start.goal`, with `MyAnswerer` as the first non-comment line.
 
 **`channel.remove`** unregisters. Refused for `output`/`error`/`input` (the boot invariant); use `channel.set` to replace their backing instead.

@@ -107,7 +107,7 @@ Notes are split across the topic docs below. Each section title maps to its doc 
 - Where a verb is judged — an open at `Location` (links followed), a delete and a move's two ends at `Spot` (the entry itself); a move's source asked read and delete; a grant is on the place asked; ask once, check all, then do → `filesystem-permission.md`
 - The stores' folder (`.data/`) — the system's alone; an app folder that arrives with one is used as it is → `filesystem-permission.md`
 - A signed value that arrives — the nonce is presented once per arrival, the value verifies and names its signer any number of times, the same bytes again answer `NonceReplay` → `callbacks.md`
-- `[Own]` settings and identity keys — no run value, an unsigned row is refused, the private key leaves only through `export`, which asks every time → `bans.md`
+- `[Own]` settings and identity keys — no run value, an unsigned row is refused, the private key leaves only through `export`, which refuses until critical actions → `bans.md`
 - The console's format — `%!app.channel.setting.format%` (`txt` / `plang` / `json` / `bin`) → `io-channels.md`
 - Command-line flags are setting paths — `--<path>=<value>`, `app.` optional; `--debug={…}` and `--callstack={…}` are refused → `cli-changes.md`
 - The app's anchors are paths — `app.filesystem.root` / `app.filesystem.os` (`%!app.filesystem.root%`) → `bans.md`, `filesystem-permission.md`
@@ -117,4 +117,9 @@ Notes are split across the topic docs below. Each section title maps to its doc 
 - A run never writes an object its app shares; a type takes no history → `apps.md`
 - A birth makes only what's asked; each part at its first use, pinned by a bytes test → `apps.md`
 - `Tools/Bench` and its speed record; the packages and the SDK; the rebase trap → `apps.md`
+- An app is made with a `Wiring` (`console` or `none`); the CLI is made `none` and binds real stdin → `apps.md`
+- A write to a goal-backed channel runs its goal like a call, in the writer's flow (`context.Run`); a channel is born of its actor's channels → `io-channels.md`
+- A grant has three homes (standing, once, persisted); a failed "always" save is not a yes; only "nobody could answer" is a no → `filesystem-permission.md`
+- The command line refuses what it can't read (a value given to a mode word, a second goal, one name twice in different case) → `cli-changes.md`
+- A test's LLM answers live in a file beside it (`X.test.llm.json`); `--test.setting.llm=live` at the gate → `building_plang_tests.md`
 - `date` / `datetime` / `time` ship an `ITypeReader` (`serializer/Reader.cs`) so `as date`/`as datetime`/`as time` literals materialize through `source` + the reader, not an eager `Convert` hook. → `type-system.md`

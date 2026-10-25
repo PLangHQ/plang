@@ -150,6 +150,13 @@ Only `plang --test` is exposed to the trap.
 Do **not** delete `test/**/.build/` — those are tracked `.pr` files, not
 build artefacts. The "NEVER delete .build folders" rule above applies.
 
+### A test's LLM answers
+
+- A test that asks the llm reads its answers from a file beside it (`X.test.goal` → `X.test.llm.json`), committed with the test. A question not in it is asked live once and added; a passing run keeps the file to what it asked. So `plang --test` runs the llm tests with no key and no network, on every commit.
+- A changed prompt is a new question: run the test once with a key to record it, and commit the file with the change.
+- The gate runs them once live, `--test.setting.llm=live`, which asks OpenAI and writes nothing: it checks OpenAI still takes the requests.
+- The file keeps the request body and the response, never a header (so never a key). It is written by the run, not by hand. Full rule: `Documentation/v0.2/building_plang_tests.md` "A Test's LLM Answers".
+
 ## Speed record
 - `Tools/Bench/run.sh` measures, gated on the machine's load: a sub app's and a root app's birth (time, bytes), a request app (time, bytes) with its held memory after 3,000 requests, `plang --test`'s time, the C# sweep's time, and the C# build (clean and incremental). Each run appends a row to `Tools/Bench/record.md` (date, branch, commit, load, each number); each number's noise band is at the record's top. A whole run is about 5 minutes and calls no OpenAI (no key, the llm tag left out).
 - Codeanalyzer runs it at every review, **the parts the diff touches** (run.sh's header says which: a package-only diff skips birth and request), and compares with the last row recorded on the branch's parent. The two 300 s rests (`BENCH_REST=300`) only for a diff that touches the store, its pool, or what a request app holds. A number outside its band is a finding: blocking unless the branch's decisions explain it. Held memory that grows with the request count always blocks.
@@ -174,7 +181,7 @@ source edit to a security-relevant file is intentional. Rules:
 - `plang --debug` — debug all steps
 - `plang --debug.setting.goal=Start` — debug specific goal (a debug setting alone switches debug on)
 - `plang '--debug.setting={"goal":"Start","step":3}'` — debug specific step (several options at once: a dict at the setting's path)
-- Any setting from the command line: `--<path>=<value>`, `app.` optional — `--channel.setting.format=plang`, `--build.setting.cache=skip`, `--test.setting.parallel=1`. A path no setting takes is refused.
+- Any setting from the command line: `--<path>=<value>`, `app.` optional — `--channel.setting.format=plang`, `--build.setting.cache=skip`, `--test.setting.parallel=1`. A path no setting takes is refused, and so is a value given to a mode word (`--debug=Start`: write `--debug.setting.goal=Start`).
 - See `cli_reference.md` (auto-loaded into memory) for the full property bag.
 
 ## Learning

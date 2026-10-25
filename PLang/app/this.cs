@@ -372,7 +372,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// stdin as the input source. The interactive CLI (Executor) calls this for
     /// System and User after constructing the App with Wiring.none.
     /// Non-interactive constructions (tests, embedded, the test runner's child
-    /// app) get the EOF-sink input via the ctor's auto-wire instead.
+    /// app) are made with Wiring.console, whose input is an EOF sink.
     /// </summary>
     public static void WireDefaultConsoleChannels(global::app.actor.@this actor)
         => WireConsoleChannels(actor, interactiveInput: true);

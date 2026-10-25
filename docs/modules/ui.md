@@ -115,6 +115,8 @@ Output is HTML-encoded by default for XSS prevention. `{{ name }}` where name is
 
 Use the Liquid `raw` filter if you need unescaped HTML from a trusted source.
 
+`{{ x | json }}` writes the value as json, the way plang's json format shows it, for a page that embeds data (`<script>const data = {{ x | json }};</script>`). `<`, `>` and `&` come out as `<`, `>` and `&`, which json reads back as the same characters, so a value holding `</script>` can't close the page's script.
+
 ## Security
 
 **Never pass untrusted user input as the Template parameter.** Because templates can execute goals via `{% callGoal %}`, passing user-controlled content as the template string is a server-side template injection (SSTI) vulnerability.

@@ -1,0 +1,11 @@
+# docs v1 — bugs: changes
+- identity.export refuses (ExportWaitsForCriticalActions, 403): bans.md, good_to_know.md, docs/modules/identity.md.
+- Permission homes (standing, once, persisted), failed "always" save is not a yes, only "nobody could answer" is a no: filesystem-permission.md (replaces `_inMemory`).
+- `Holds`: filesystem-permission.md.
+- `app.Wiring` replaces autoWireConsoleChannels: apps.md; XML comments in Executor.cs and app/this.cs no longer say "auto-wire".
+- Goal channel runs like a call (context.Run), channel born of its list: io-channels.md.
+- Command-line refusals: cli-changes.md, CLAUDE.md Debugging.
+- Test LLM answers: CLAUDE.md "A test's LLM answers" (proposal bugs 39 applied).
+- `| json` escapes < > &: docs/modules/ui.md.
+- module.Remove answers data<bool>, ModuleShared as an answer: apps.md.
+- good_to_know.md: five index lines.

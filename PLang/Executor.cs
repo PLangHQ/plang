@@ -35,10 +35,10 @@ namespace PLang
 			if (args.Length > 0 && args[0].Equals("build", StringComparison.OrdinalIgnoreCase))
 				args = ["--build", .. args[1..]];
 
-			// The CLI is the one interactive terminal owner: opt out of the
-			// ctor's non-interactive auto-wire and bind real stdin explicitly so
-			// `output.ask` prompts read the user's keystrokes. Ad-hoc/test apps
-			// keep the EOF-sink input from auto-wire.
+			// The CLI is the one interactive terminal owner: it is made with Wiring.none
+			// and binds real stdin explicitly so `output.ask` prompts read the user's
+			// keystrokes. Ad-hoc/test apps are made with Wiring.console, whose input is
+			// an EOF sink.
 			var app = new global::app.@this(startupDirectory, wiring: global::app.Wiring.none);
 			global::app.@this.WireDefaultConsoleChannels(app.actor.list.System);
 			global::app.@this.WireDefaultConsoleChannels(app.actor.list.User);
