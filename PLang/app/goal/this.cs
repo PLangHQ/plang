@@ -106,7 +106,7 @@ public sealed partial class @this
     /// Null for a goal with no Path.</summary>
     public global::app.type.item.path.@this? Folder => Path?.Parent;
 
-    /// <summary>The .pr this goal is built to (<see cref="Pr"/>), worked out where its Path is set; a sub-goal's is its
+    /// <summary>The .pr this goal is built to (its file's <c>Pr</c>), worked out where its Path is set; a sub-goal's is its
     /// parent's; none without a Path.</summary>
     [Debug]
     public global::app.type.item.path.@this? PrPath => Parent?.PrPath ?? _pr;
@@ -340,7 +340,7 @@ public sealed partial class @this
 
     /// <summary>
     /// The goal <paramref name="source"/> (a <c>.goal</c>) is built to, loaded as <paramref name="app"/> itself from
-    /// its <see cref="Pr"/>: the one already held from there, else read through its <c>on.load</c> — what is bound
+    /// its .pr (<see cref="PrPath"/>): the one already held from there, else read through its <c>on.load</c> — what is bound
     /// before a goal loads is the goal type's, handed the .pr (there is no goal yet), and a failure or a Handled
     /// answer is the load's answer with nothing read; the path reads itself into a goal, the app's goals hold it,
     /// and what is bound after it runs across the goal's levels, handed the goal. A setup goal is refused — it runs
