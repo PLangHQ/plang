@@ -630,9 +630,11 @@ public class RenderTests : IDisposable
 
         var result = await _provider.Render(action);
 
-        // Fluid throws FileNotFoundException for missing includes — caught as RenderError
+        // Fluid throws FileNotFoundException for missing includes — the render's error, the fault its cause whole
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("RenderError");
+        await Assert.That(result.Error.list).Count().IsEqualTo(1);
+        await Assert.That(result.Error.list[0].Message).Contains("FileNotFoundException");
     }
 
     [Test]
