@@ -54,7 +54,7 @@ public class CycleDetectionTests : System.IAsyncDisposable
         catch (CallStackOverflowException ex) { caught = ex; }
 
         await Assert.That(caught).IsNotNull();
-        await Assert.That(caught!.MaxDepth).IsEqualTo(2);
+        await Assert.That(caught!.Depth).IsEqualTo(2);
     }
 
     [Test]
@@ -78,7 +78,7 @@ public class CycleDetectionTests : System.IAsyncDisposable
         }
 
         await Assert.That(caught).IsNotNull();
-        await Assert.That(caught!.MaxDepth).IsEqualTo(5);
+        await Assert.That(caught!.Depth).IsEqualTo(5);
     }
 
     [Test]

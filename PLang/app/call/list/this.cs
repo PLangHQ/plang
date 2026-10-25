@@ -166,7 +166,8 @@ public sealed partial class @this : global::app.type.item.@this
     /// <summary>
     /// Maximum depth of the synchronous Caller chain before a runaway is treated as a cycle.
     /// Default 1500 — a goal level is three frames (goal, step, action), so a program recurses about 500
-    /// levels: headroom for legitimate recursion, low enough that real infinite loops don't blow the stack.
+    /// levels. A count can't know the thread's stack (Linux's main thread has 8 MB, Windows' 1 MB), so a frame is
+    /// also refused when the stack runs short (<see cref="Push{TState}"/>).
     /// </summary>
     public int MaxDepth { get; init; } = 1500;
 
@@ -204,11 +205,18 @@ public sealed partial class @this : global::app.type.item.@this
     public call.@this Push(global::app.goal.step.action.@this action, setting.@this setting, Variables? variables = null)
         => Push((action, setting, variables), static (stack, s) => new call.@this(stack.Call, stack, s.action, s.setting, s.variables));
 
-    // A call frame (a goal's, a step's, an action's) pushed: past MaxDepth (its caller's depth) it is the overflow,
-    // refused before anything of it is made. Its state rides in, so the making captures nothing.
+    // A call frame (a goal's, a step's, an action's) pushed: past MaxDepth (its caller's depth), or with the thread's
+    // stack run short, it is the overflow, refused before anything of it is made — a stack that overflows can't be
+    // caught and ends the process. Its state rides in, so the making captures nothing.
     private call.@this Push<TState>(TState state, Func<@this, TState, call.@this> make)
     {
-        if (_current.Value is { } caller && caller.Depth >= MaxDepth) throw new CallStackOverflowException(MaxDepth);
+        if (_current.Value is { } caller)
+        {
+            if (caller.Depth >= MaxDepth) throw new CallStackOverflowException(MaxDepth);
+            if (!System.Runtime.CompilerServices.RuntimeHelpers.TryEnsureSufficientExecutionStack())
+                throw new CallStackOverflowException((int)caller.Depth,
+                    $"Call stack overflow: the thread's stack ran short at {caller.Depth} frames");
+        }
         return Enter(make(this, state));
     }
 

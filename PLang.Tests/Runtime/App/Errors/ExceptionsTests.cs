@@ -143,7 +143,7 @@ public class ExceptionsTests
     {
         var ex = new CallStackOverflowException(1000);
 
-        await Assert.That(ex.MaxDepth).IsEqualTo(1000);
+        await Assert.That(ex.Depth).IsEqualTo(1000);
         await Assert.That(ex.Message).IsEqualTo("Call stack overflow: exceeded 1000 frames");
         await Assert.That(ex.Error.Key).IsEqualTo("CallStackOverflow");
         await Assert.That(ex.Error.Status.Code.ToInt32()).IsEqualTo(500);
