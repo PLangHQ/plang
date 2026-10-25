@@ -19,9 +19,8 @@ internal sealed class Bitmap
     internal Bitmap(byte[] encoded, global::app.type.item.size.@this max)
     {
         var info = SkiaSharp.SKBitmap.DecodeBounds(encoded);
-        // width × height fits a long for any two ints; × 4 is taken off the max instead, so nothing overflows
         var why = info.Width <= 0 || info.Height <= 0 ? "no image format reads the frame"
-            : (long)info.Width * info.Height > max.Value / 4
+            : !Fits(info.Width, info.Height, max)
                 ? $"the frame claims {info.Width}×{info.Height}, more pixels than screen.setting.max ({max}) holds; raise it with --screen.setting.max=1GiB"
             : null;
         Exception? cause = null;
@@ -47,6 +46,12 @@ internal sealed class Bitmap
         if (cause != null) error.list.Add(global::app.error.@this.FromException(cause));
         throw new global::app.error.AppException(error, cause);
     }
+
+    /// <summary>Whether a picture <paramref name="width"/>×<paramref name="height"/> has pixels <paramref name="max"/>
+    /// holds: the one rule for a picture and for each rectangle of a frame. Width × height fits a long for any two ints;
+    /// × 4 is taken off the max instead, so nothing overflows.</summary>
+    internal static bool Fits(int width, int height, global::app.type.item.size.@this max)
+        => width >= 0 && height >= 0 && (long)width * height <= max.Value / 4;
 
     /// <summary>A copy of <paramref name="bitmap"/>, its pixels its own.</summary>
     internal Bitmap(Bitmap bitmap) : this(bitmap.Width, bitmap.Height, (byte[])bitmap.Pixels.Clone()) { }

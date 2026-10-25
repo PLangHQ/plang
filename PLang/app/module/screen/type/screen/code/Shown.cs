@@ -99,11 +99,10 @@ internal sealed class Shown
         lock (Lock) picture.Pixels.AsSpan(0, Math.Min(picture.Pixels.Length, Bitmap.Pixels.Length)).CopyTo(Bitmap.Pixels);
     }
 
-    // a rectangle's pixels may take at most the max: width × height fits a long for any two ints, and × 4 is taken off
-    // the max instead, so nothing overflows
+    // a rectangle's pixels may take at most the max, by the picture's own rule
     private static void Bound(int w, int h, global::app.type.item.size.@this max)
     {
-        if (w < 0 || h < 0 || (long)w * h > max.Value / 4)
+        if (!Bitmap.Fits(w, h, max))
             throw new global::app.error.AppException(new global::app.error.@this(
                 $"Not an image: a rectangle claims {w}×{h}, more pixels than screen.setting.max ({max}) holds; raise it with --screen.setting.max=1GiB",
                 "BadFrame", 400));
