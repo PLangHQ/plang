@@ -18,9 +18,10 @@ namespace app.actor.permission;
 public sealed class @this : global::app.type.item.setting.ISetting<setting.@this>
 {
     private readonly global::app.actor.@this _actor;
-    // what the actor's role stands on the app's folders (Stand), and what it said "y" to (Add): kept apart, so a one-time
-    // yes never replaces a standing grant on the same place, and a revoke never reaches one
-    private readonly List<global::app.data.@this> _standing = new();
+    // what the actor's role stands on the app's folders (Stand), each with the folder it was stood on, and what it said
+    // "y" to (Add): kept apart, so a one-time yes never replaces a standing grant on the same place, and a revoke never
+    // reaches one
+    private readonly List<(path Place, global::app.data.@this Grant)> _standing = new();
     private readonly List<global::app.data.@this> _once = new();
     private readonly object _lock = new();
 
@@ -49,8 +50,8 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
         lock (_lock)
             foreach (var grant in grants)
             {
-                _standing.RemoveAll(d => d.Peek() is Grant g && string.Equals(g.Path, grant.Path, StringComparison.Ordinal));
-                _standing.Add(new global::app.data.@this<Grant>("", grant, context: _actor.Context));
+                _standing.RemoveAll(s => s.Grant.Peek() is Grant g && string.Equals(g.Path, grant.Path, StringComparison.Ordinal));
+                _standing.Add((place, new global::app.data.@this<Grant>("", grant, context: _actor.Context)));
             }
     }
 
@@ -82,10 +83,17 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
                     Question = new global::app.data.@this<global::app.type.item.text.@this>("", prefix + question, context: context),
                 }, context.CancellationToken);
             }
-            // an input that couldn't answer (cancelled, its transport broken): nobody answered, so no
-            catch (System.Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+            // an input that couldn't answer (cancelled, its stream closed or its transport broken, or one that says so):
+            // nobody answered, so no
+            catch (System.Exception ex) when (ex is OperationCanceledException or IOException or ObjectDisposedException
+                                              || ex is global::app.error.AppException { Error.Unanswered: true })
             {
                 return context.Error(new global::app.error.PermissionDenied(request) { list = [global::app.error.@this.FromException(ex)] });
+            }
+            // anything else is a bug inside the ask, never a "no": it answers as itself
+            catch (System.Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+            {
+                return context.Error(global::app.error.@this.FromException(ex));
             }
             // decided before the exit check, which would otherwise hand the failed ask back as itself
             if (!asked.Success && asked.Error!.Unanswered)
@@ -132,7 +140,7 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
 
         // 1) In-memory grants, standing then once. Snapshot under the lock; read outside it so
         //    the async read doesn't hold the lock.
-        if (await Allowing(Snapshot(_standing), request) is { } standing) return standing;
+        if (await Allowing(Snapshot(_standing).Select(s => s.Grant).ToList(), request) is { } standing) return standing;
         if (await Allowing(Snapshot(_once), request) is { } once) return once;
 
         // 2) Persisted grants — the actor's own saved ones. A store that can't open (an unwritable root)
@@ -143,13 +151,16 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
         return null;
     }
 
-    /// <summary>The grant this actor's role stands on that allows <paramref name="verb"/> at <paramref name="place"/>,
-    /// whatever it said yes to; null when its role stands on none there. The stores' folder opens only to this.</summary>
-    internal Task<global::app.data.@this?> Stands(string place, Verb verb)
-        => Allowing(Snapshot(_standing), Grant.Request(_actor, place, verb, MatchMode.exact));
+    /// <summary>The grant this actor's role stood on <paramref name="folder"/> itself that allows <paramref name="verb"/>
+    /// at <paramref name="place"/>, whatever it said yes to; null when its role stands on none there. A grant stood on
+    /// a wider folder (the os folder, should the folder lie under it) never answers for it. The stores' folder opens only
+    /// to this.</summary>
+    internal Task<global::app.data.@this?> Stands(path folder, string place, Verb verb)
+        => Allowing(Snapshot(_standing).Where(s => s.Place.Equals(folder)).Select(s => s.Grant).ToList(),
+            Grant.Request(_actor, place, verb, MatchMode.exact));
 
     // the grants as they are now, taken under the lock and read outside it
-    private List<global::app.data.@this> Snapshot(List<global::app.data.@this> grants)
+    private List<T> Snapshot<T>(List<T> grants)
     {
         lock (_lock) return [.. grants];
     }
@@ -169,7 +180,10 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     /// </summary>
     public async Task<global::app.data.@this> Add(global::app.data.@this grant, bool persist)
     {
-        if (await grant.Value<Grant>() is not { } value) return grant.Success ? _actor.Context.Ok() : grant;
+        if (await grant.Value<Grant>() is not { } value)
+            return grant.Success
+                ? _actor.Context.Error(new global::app.error.ServiceError("Permission.Add was handed no grant to keep", "NoGrant", 500))
+                : grant;
         var key = value.Path;
 
         if (persist)

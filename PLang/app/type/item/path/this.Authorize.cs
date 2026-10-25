@@ -61,15 +61,15 @@ public partial class @this
     }
 
     /// <summary>What the gate answers the actor about this place without asking: yes in its root or by a grant it holds;
-    /// in the stores' folder, whose keys nobody is asked for, yes only by what its role stands on (the system's) — a
-    /// grant it said yes to, even one saved, never opens it; null when the actor is to be asked. Asked of a place — a
+    /// in the stores' folder, whose keys nobody is asked for, yes only by what its role stands on the stores' folder
+    /// itself (the system's) — a grant it said yes to, even one saved, or one stood on a wider folder, never opens it; null when the actor is to be asked. Asked of a place — a
     /// path's <see cref="Location"/>. Every door that asks takes this answer first.</summary>
     internal async Task<data.@this?> Standing(Verb verb, actor.context.@this context)
     {
         var filesystem = context.Filesystem;
         if (IsInRoot(filesystem)) return context.Ok();
         if (IsStore(filesystem))
-            return await context.Actor.Permission.Stands(Absolute, verb) != null
+            return await context.Actor.Permission.Stands(filesystem.store, Absolute, verb) != null
                 ? context.Ok() : context.Error(new global::app.error.PermissionDenied(Request(context.Actor, verb)));
         if (await context.Actor.Permission.Find(Absolute, verb) != null) return context.Ok();
         return null;

@@ -18,8 +18,8 @@ public class RoleStandingProbeTests
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
         var list = (System.Collections.IEnumerable)field.GetValue(actor.Permission)!;
         var held = new List<(string, string, string)>();
-        foreach (var d in list)
-            if (((global::app.data.@this)d).Peek() is Grant g)
+        foreach (var (_, d) in list.Cast<(global::app.type.item.path.@this Place, global::app.data.@this Grant)>())
+            if (d.Peek() is Grant g)
                 held.Add((g.Path, g.Match.ToString(), string.Join("+", g.Verbs.Select(v => v.ToString()).OrderBy(v => v))));
         return held.OrderBy(h => h.Item1).ThenBy(h => h.Item2).ToList();
     }
@@ -156,7 +156,7 @@ public class RoleStandingProbeTests
             await Assert.That(view).IsNotNull();
             var field = typeof(global::app.actor.permission.@this).GetField("_standing",
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
-            var contexts = ((System.Collections.IEnumerable)field.GetValue(view)!).Cast<global::app.data.@this>()
+            var contexts = ((System.Collections.IEnumerable)field.GetValue(view)!).Cast<(global::app.type.item.path.@this Place, global::app.data.@this Grant)>().Select(s => s.Grant)
                 .Select(d => d.Context).ToList();
             await Assert.That(contexts.Count).IsGreaterThan(0);
             await Assert.That(contexts.All(c => ReferenceEquals(c, actor.Context))).IsTrue();
@@ -252,7 +252,7 @@ public class RoleStandingProbeTests
         await Assert.That(await system.Find(osFile, Verb.write)).IsNotNull();
         var field = typeof(global::app.actor.permission.@this).GetField("_standing",
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
-        var names = ((System.Collections.IEnumerable)field.GetValue(system)!).Cast<global::app.data.@this>()
+        var names = ((System.Collections.IEnumerable)field.GetValue(system)!).Cast<(global::app.type.item.path.@this Place, global::app.data.@this Grant)>().Select(s => s.Grant)
             .Select(d => ((Grant)d.Peek()!).Actor).Distinct().ToList();
         await Assert.That(names.Count).IsEqualTo(1);
         await Assert.That(names[0]).IsEqualTo("System");

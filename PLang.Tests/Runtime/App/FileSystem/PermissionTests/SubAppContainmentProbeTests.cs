@@ -271,7 +271,7 @@ public class SubAppContainmentProbeTests : System.IAsyncDisposable
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
         foreach (var actor in new[] { app.actor.list.System, app.actor.list.User })
         {
-            var paths = ((System.Collections.IEnumerable)field.GetValue(actor.Permission)!).Cast<global::app.data.@this>()
+            var paths = ((System.Collections.IEnumerable)field.GetValue(actor.Permission)!).Cast<(global::app.type.item.path.@this Place, global::app.data.@this Grant)>().Select(s => s.Grant)
                 .Select(d => ((Grant)d.Peek()!).Path).ToList();
             foreach (var path in paths)
                 await Assert.That(path.StartsWith(app.filesystem.os.Absolute, System.StringComparison.Ordinal)

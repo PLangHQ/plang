@@ -50,6 +50,14 @@ public class GrantKeepTests : System.IAsyncDisposable
         await Assert.That(await User.Permission.Find(app.filesystem.os, Verb.read)).IsNotNull().Because("the role's grant is no revoke's");
     }
 
+    // a data that holds no grant is the caller's bug: adding nothing is no yes
+    [Test]
+    public async Task AddingNoGrant_IsAnError()
+    {
+        var kept = await User.Permission.Add(new global::app.data.@this("", (object?)null, context: User.Context), persist: false);
+        await kept.IsFailure();
+    }
+
     // the settings' database can't be written (it is no database): an "always" answers that, never Ok
     [Test]
     public async Task AFailedAlwaysSave_AnswersItsError()
