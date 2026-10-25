@@ -67,22 +67,25 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     private protected virtual object? Key(object? row) => null;
 
     /// <summary>The row <paramref name="key"/> names, found in one look; null when no row has it.</summary>
-    private protected object? Row(object key)
+    private protected object? Row(object key) => Keyed.GetValueOrDefault(key);
+
+    // The rows by their keys, made at the first look after an edit.
+    private System.Collections.Concurrent.ConcurrentDictionary<object, object?> Keyed
     {
-        var index = System.Threading.Volatile.Read(ref _index);
-        if (index == null)
+        get
+        {
+            var index = System.Threading.Volatile.Read(ref _index);
+            if (index != null) return index;
             lock (_gate)
             {
-                index = _index;
-                if (index == null)
-                {
-                    index = new();
-                    foreach (var row in Now)
-                        if (Key(row) is { } each) index[each] = row;
-                    System.Threading.Volatile.Write(ref _index, index);
-                }
+                if (_index != null) return _index;
+                index = new();
+                foreach (var row in Now)
+                    if (Key(row) is { } key) index[key] = row;
+                System.Threading.Volatile.Write(ref _index, index);
+                return index;
             }
-        return index.GetValueOrDefault(key);
+        }
     }
 
     /// <summary>The lists this one's chunk rows read through, in row order, as the <typeparamref name="TList"/> its
@@ -93,9 +96,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         if (System.Threading.Volatile.Read(ref _chunks) is TList[] chunks) return chunks;
         lock (_gate)
         {
-            if (_chunks is TList[] made) return made;
-            var lists = System.Array.ConvertAll(System.Array.FindAll(Now, row => row is Chunk), row => (TList)((Chunk)row!).List);
-            _chunks = lists;
+            if (_chunks is not TList[] lists)
+                _chunks = lists = System.Array.ConvertAll(System.Array.FindAll(Now, row => row is Chunk), row => (TList)((Chunk)row!).List);
             return lists;
         }
     }
@@ -124,7 +126,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         if (value is not null and not global::app.type.item.@this)
         {
             value = global::app.type.item.@this.Create(value, data.Context);
-            if (value is @this born) return born;
+            if (value is @this list) return list;
         }
         // the list the slot declares is the app's list type (the type that made this ask); else the app's — asked only
         // when a list is made
@@ -648,7 +650,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         {
             if (!list.Locate(s.index, out int row, out int offset, out @this? inner)) return null;
             if (inner != null) return inner.Row(offset, s.context);
-            if (list._items[row] is Data stored) return stored;
+            if (list._items[row] is Data data) return data;
             var element = list.Element(list._items[row], s.context);
             list.Admit(element);
             list._items[row] = element;
@@ -678,28 +680,28 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         // the target's shape. A mutable list/array/IList fills directly; a read-only domain
         // collection (IReadOnlyList<T>: action.list, step.list — no Add) takes
         // the built sequence through its ctor.
-        var elem = target.IsArray ? target.GetElementType()
+        var element = target.IsArray ? target.GetElementType()
                  : target.IsGenericType && typeof(System.Collections.IEnumerable).IsAssignableFrom(target)
                      ? target.GetGenericArguments()[0]
                  : typeof(System.Collections.IList).IsAssignableFrom(target) ? typeof(object)
                  : ReadOnlyElement(target);
-        if (elem != null)
+        if (element != null)
         {
-            var listType = typeof(List<>).MakeGenericType(elem);
+            var type = typeof(List<>).MakeGenericType(element);
             var list = (System.Collections.IList)System.Activator.CreateInstance(
                 target.IsArray || target.IsInterface || !typeof(System.Collections.IList).IsAssignableFrom(target)
-                    ? listType : target)!;
-            foreach (var slot in Slots()) list.Add(Lower(slot, elem));
+                    ? type : target)!;
+            foreach (var slot in Slots()) list.Add(Lower(slot, element));
             if (target.IsArray)
             {
-                var arr = System.Array.CreateInstance(elem, list.Count); list.CopyTo(arr, 0); return arr;
+                var array = System.Array.CreateInstance(element, list.Count); list.CopyTo(array, 0); return array;
             }
             if (target.IsInstanceOfType(list)) return list;   // List<T>/IList<T>/IReadOnlyList<T> target — the list IS it
             // read-only domain wrapper — hand the sequence to its ctor
-            var seqCtor = target.GetConstructor(new[] { typeof(IReadOnlyList<>).MakeGenericType(elem) })
-                       ?? target.GetConstructor(new[] { typeof(IEnumerable<>).MakeGenericType(elem) })
-                       ?? target.GetConstructor(new[] { listType });
-            if (seqCtor != null) return seqCtor.Invoke(new object[] { list });
+            var constructor = target.GetConstructor(new[] { typeof(IReadOnlyList<>).MakeGenericType(element) })
+                       ?? target.GetConstructor(new[] { typeof(IEnumerable<>).MakeGenericType(element) })
+                       ?? target.GetConstructor(new[] { type });
+            if (constructor != null) return constructor.Invoke(new object[] { list });
             return list;
         }
 
@@ -707,17 +709,17 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         // the shared converter over the raw form.
         var raw = new List<object?>(CountRaw);
         foreach (var slot in Slots())
-            raw.Add(slot is Data { Name.Length: > 0 } named ? named : Unwrap(slot is Data d ? d.Peek() : slot));
+            raw.Add(slot is Data { Name.Length: > 0 } named ? named : Unwrap(slot is Data data ? data.Peek() : slot));
         return ClrConvert(raw, target);
     }
 
     // A slot lowered to the CLR element type at the exit door. A raw CLR slot is already the
     // CLR form, so it converts without a context; a stored Data or an item lowers itself.
-    private protected virtual object? Lower(object? slot, System.Type elem) => slot switch
+    private protected virtual object? Lower(object? slot, System.Type type) => slot switch
     {
-        Data d => d.Clr(elem),
-        global::app.type.item.@this item => item.Clr(elem),
-        _ => ClrConvert(slot, elem),
+        Data data => data.Clr(type),
+        global::app.type.item.@this item => item.Clr(type),
+        _ => ClrConvert(slot, type),
     };
 
     // Element type of a read-only domain collection (IReadOnlyList<T>/ICollection<T> — action.list,
@@ -727,12 +729,12 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     {
         if (typeof(global::app.type.item.@this).IsAssignableFrom(target)) return null;
         System.Type? readOnly = null, collection = null;
-        foreach (var i in target.GetInterfaces())
+        foreach (var @interface in target.GetInterfaces())
         {
-            if (!i.IsGenericType) continue;
-            var g = i.GetGenericTypeDefinition();
-            if (g == typeof(IReadOnlyList<>)) readOnly = i.GetGenericArguments()[0];
-            else if (g == typeof(System.Collections.Generic.ICollection<>)) collection = i.GetGenericArguments()[0];
+            if (!@interface.IsGenericType) continue;
+            var definition = @interface.GetGenericTypeDefinition();
+            if (definition == typeof(IReadOnlyList<>)) readOnly = @interface.GetGenericArguments()[0];
+            else if (definition == typeof(System.Collections.Generic.ICollection<>)) collection = @interface.GetGenericArguments()[0];
         }
         return readOnly ?? collection;
     }
@@ -1041,21 +1043,21 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// boundary). A non-list other side → <c>Incomparable</c>.</summary>
     protected override async System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other, global::app.actor.context.@this context)
     {
-        if (other is not @this lb) return global::app.data.Comparison.Incomparable;
+        if (other is not @this list) return global::app.data.Comparison.Incomparable;
         // Walk both lists in step, one pass each — items handed out with the asker's context.
-        using var mine = Items(context).GetEnumerator();
-        using var theirs = lb.Items(context).GetEnumerator();
+        using var left = Items(context).GetEnumerator();
+        using var right = list.Items(context).GetEnumerator();
         while (true)
         {
-            bool hasMine = mine.MoveNext(), hasTheirs = theirs.MoveNext();
+            bool hasLeft = left.MoveNext(), hasRight = right.MoveNext();
             // A prefix sorts first ([1,2] < [1,2,3]).
-            if (!hasMine || !hasTheirs)
-                return hasMine ? global::app.data.Comparison.Greater
-                     : hasTheirs ? global::app.data.Comparison.Less
+            if (!hasLeft || !hasRight)
+                return hasLeft ? global::app.data.Comparison.Greater
+                     : hasRight ? global::app.data.Comparison.Less
                      : global::app.data.Comparison.Equal;
-            var c = await mine.Current.Compare(theirs.Current);   // item Data compare — lazy, first mismatch exits
-            if (c is global::app.data.Comparison.Less or global::app.data.Comparison.Greater) return c;
-            if (c is global::app.data.Comparison.NotEqual or global::app.data.Comparison.Incomparable)
+            var comparison = await left.Current.Compare(right.Current);   // item Data compare — lazy, first mismatch exits
+            if (comparison is global::app.data.Comparison.Less or global::app.data.Comparison.Greater) return comparison;
+            if (comparison is global::app.data.Comparison.NotEqual or global::app.data.Comparison.Incomparable)
                 return global::app.data.Comparison.NotEqual;
         }
     }

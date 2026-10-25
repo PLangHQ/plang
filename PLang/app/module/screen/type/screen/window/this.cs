@@ -61,10 +61,17 @@ public sealed class @this : screen.@this
                 .Set("where", where.Success ? await where.Value() : null)
                 .Set("error", error.Success && await error.Value() is { IsNull: false } what ? what : (Text)System.Text.Encoding.UTF8.GetString(sent));
             var value = new global::app.data.@this("error", record, context: context);
+            // a background loop: nobody to answer, so a record that isn't kept leaves a sign on the debug channel
             using var stream = new MemoryStream();
-            if (!(await kind.Encode(stream, value, context)).Success) continue;
-            var line = System.Text.Encoding.UTF8.GetString(stream.ToArray());
-            await file.Append(line, context);
+            var encoded = await kind.Encode(stream, value, context);
+            if (!encoded.Success)
+            {
+                await (context.App.Debug?.Write($"errors.jsonl: an error record wasn't written ({record}): {encoded.Error?.Message}") ?? Task.CompletedTask);
+                continue;
+            }
+            var appended = await file.Append(System.Text.Encoding.UTF8.GetString(stream.ToArray()), context);
+            if (!appended.Success)
+                await (context.App.Debug?.Write($"errors.jsonl: an error record wasn't kept ({record}): {appended.Error?.Message}") ?? Task.CompletedTask);
         }
     }
 
