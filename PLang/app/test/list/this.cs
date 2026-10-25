@@ -92,10 +92,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         var executed = new global::app.type.item.list.@this<global::app.test.@this>(tests, given.Type);
         if (tests.Count == 0) return executed;
 
-        var parallel = (await context.Setting.Get<global::app.test.setting.@this>()).Parallel.ToInt32();
-        if (parallel < 1) parallel = System.Environment.ProcessorCount;
-
-        using var semaphore = new SemaphoreSlim(parallel);
+        using var semaphore = new SemaphoreSlim((await context.Setting.Get<global::app.test.setting.@this>()).Width);
         await Task.WhenAll(tests.Select(async test =>
         {
             await semaphore.WaitAsync(context.CancellationToken);
@@ -120,17 +117,16 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         {
             var listed = await root.List(match.ToString(), under.Value == global::app.type.item.path.subfolder.include, context);
             if (!listed.Success) return listed;
-            var found = new List<global::app.type.item.path.file.@this>();
-            if (await listed.Value() is global::app.type.item.list.@this files)
-                foreach (var row in files.Items(context))
+            var files = new List<global::app.type.item.path.file.@this>();
+            if (await listed.Value() is global::app.type.item.list.@this list)
+                foreach (var row in list.Items(context))
                     // .test.goal files resolve only under the file scheme; another scheme is skipped
                     if (await row.Value<global::app.type.item.path.@this>() is global::app.type.item.path.file.@this file)
-                        found.Add(file);
+                        files.Add(file);
             // each file made its test as many at once as a run runs tests (each writes nothing shared), the tests
             // kept in the listing's order
-            var parallel = (await context.Setting.Get<global::app.test.setting.@this>()).Parallel.ToInt32();
-            using var gate = new SemaphoreSlim(parallel < 1 ? System.Environment.ProcessorCount : parallel);
-            var tests = await Task.WhenAll(found.Select(async file =>
+            using var gate = new SemaphoreSlim((await context.Setting.Get<global::app.test.setting.@this>()).Width);
+            var tests = await Task.WhenAll(files.Select(async file =>
             {
                 await gate.WaitAsync(context.CancellationToken);
                 try { return new data.@this("", await Of(file, context), context: context); }

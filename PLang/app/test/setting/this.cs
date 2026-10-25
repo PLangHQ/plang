@@ -23,6 +23,9 @@ public sealed class @this : global::app.type.item.setting.@this
     /// machine, so it reads (and is taught) the same everywhere.</summary>
     [Out, Store] public global::app.type.item.number.@this Parallel { get; set; } = 0;
 
+    /// <summary>How many tests run at once on this machine: <see cref="Parallel"/>, or one per processor for 0.</summary>
+    internal int Width => Parallel.ToInt32() is var parallel and > 0 ? parallel : System.Environment.ProcessorCount;
+
     /// <summary>The report's format — a format kind that writes one (json, junit). The console is always written.</summary>
     [Out, Store] public global::app.type.item.choice.@this<global::app.test.format.@this> Format { get; set; } = new global::app.test.format.@this("json");
 
