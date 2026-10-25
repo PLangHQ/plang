@@ -19,7 +19,8 @@ public class PersistedGrantCannotOverrideStoresTests : System.IAsyncDisposable
     public PersistedGrantCannotOverrideStoresTests()
     {
         root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-sec-l2-" + System.Guid.NewGuid().ToString("N")[..8]);
-        file = System.IO.Path.Combine(root, ".data", "setting", "data.sqlite");
+        // a key the stores' folder holds — beside the settings' database, which the persist really saves into
+        file = System.IO.Path.Combine(root, ".data", "secret.key");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(file)!);
         System.IO.File.WriteAllText(file, "SECRET-KEY");
         app = new global::app.@this(root).TestSigning();
@@ -42,7 +43,9 @@ public class PersistedGrantCannotOverrideStoresTests : System.IAsyncDisposable
     {
         var user = app.actor.list.User;
         var grant = new Grant(user.Name, path, Grant.AllVerbs, match, app.type.list[typeof(Grant)]);
-        await user.Permission.Add(new global::app.data.@this<Grant>("", grant, context: user.Context), persist: true);
+        await (await user.Permission.Add(new global::app.data.@this<Grant>("", grant, context: user.Context), persist: true)).IsSuccess();
+        // the grant is really held, so the refusal is the stores' folder's and not a missing grant's
+        await Assert.That(await user.Permission.Find(match == MatchMode.glob ? file : path, global::app.type.item.permission.Verb.read)).IsNotNull();
     }
 
     [Test]

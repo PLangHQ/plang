@@ -52,23 +52,26 @@ public partial class @this
 
     /// <summary>The actor's answer kept as one grant on this place, for each verb it was asked here: in memory for the
     /// run, or persisted (<paramref name="persist"/>, the answer "always"), signed as it crosses into the settings'
-    /// store. One grant per place: a place's grant replaces the one before on it.</summary>
-    internal async Task<data.@this> Keep(actor.@this actor, IEnumerable<Verb> verbs, bool persist, actor.context.@this context)
+    /// store. One grant per place: a place's grant replaces the one before on it. Answers the keeping's answer: a save
+    /// that failed is its error, never a yes.</summary>
+    internal Task<data.@this> Keep(actor.@this actor, IEnumerable<Verb> verbs, bool persist, actor.context.@this context)
     {
         var grant = new permission.@this(actor.Name, Absolute, new HashSet<Verb>(verbs), MatchMode.exact, actor.App.type.list[typeof(permission.@this)]);
-        await actor.Permission.Add(new data.@this<permission.@this>("", grant, context: context), persist);
-        return context.Ok();
+        return actor.Permission.Add(new data.@this<permission.@this>("", grant, context: context), persist);
     }
 
     /// <summary>What the gate answers the actor about this place without asking: yes in its root or by a grant it holds;
-    /// no in the stores' folder, whose keys nobody is asked for; null when the actor is to be asked. Asked of a place — a
+    /// in the stores' folder, whose keys nobody is asked for, yes only by what its role stands on (the system's) — a
+    /// grant it said yes to, even one saved, never opens it; null when the actor is to be asked. Asked of a place — a
     /// path's <see cref="Location"/>. Every door that asks takes this answer first.</summary>
     internal async Task<data.@this?> Standing(Verb verb, actor.context.@this context)
     {
         var filesystem = context.Filesystem;
         if (IsInRoot(filesystem)) return context.Ok();
+        if (IsStore(filesystem))
+            return await context.Actor.Permission.Stands(Absolute, verb) != null
+                ? context.Ok() : context.Error(new global::app.error.PermissionDenied(Request(context.Actor, verb)));
         if (await context.Actor.Permission.Find(Absolute, verb) != null) return context.Ok();
-        if (IsStore(filesystem)) return context.Error(new global::app.error.PermissionDenied(Request(context.Actor, verb)));
         return null;
     }
 

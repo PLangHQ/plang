@@ -14,7 +14,7 @@ public class RoleStandingProbeTests
     // the view's standing in-memory grants, as (path, match, verbs) — the private list a view keeps them in
     private static List<(string Path, string Match, string Verbs)> Held(global::app.actor.@this actor)
     {
-        var field = typeof(global::app.actor.permission.@this).GetField("_inMemory",
+        var field = typeof(global::app.actor.permission.@this).GetField("_standing",
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
         var list = (System.Collections.IEnumerable)field.GetValue(actor.Permission)!;
         var held = new List<(string, string, string)>();
@@ -154,7 +154,7 @@ public class RoleStandingProbeTests
             // the first thing asked of a bare actor is its permission view: must not throw nor recurse
             var view = actor.Permission;
             await Assert.That(view).IsNotNull();
-            var field = typeof(global::app.actor.permission.@this).GetField("_inMemory",
+            var field = typeof(global::app.actor.permission.@this).GetField("_standing",
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
             var contexts = ((System.Collections.IEnumerable)field.GetValue(view)!).Cast<global::app.data.@this>()
                 .Select(d => d.Context).ToList();
@@ -250,7 +250,7 @@ public class RoleStandingProbeTests
         var system = app.actor.list.System.Permission;
         var osFile = app.filesystem.os.Combine("x").Absolute;
         await Assert.That(await system.Find(osFile, Verb.write)).IsNotNull();
-        var field = typeof(global::app.actor.permission.@this).GetField("_inMemory",
+        var field = typeof(global::app.actor.permission.@this).GetField("_standing",
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
         var names = ((System.Collections.IEnumerable)field.GetValue(system)!).Cast<global::app.data.@this>()
             .Select(d => ((Grant)d.Peek()!).Actor).Distinct().ToList();

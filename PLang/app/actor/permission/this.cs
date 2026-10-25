@@ -18,7 +18,10 @@ namespace app.actor.permission;
 public sealed class @this : global::app.type.item.setting.ISetting<setting.@this>
 {
     private readonly global::app.actor.@this _actor;
-    private readonly List<global::app.data.@this> _inMemory = new();
+    // what the actor's role stands on the app's folders (Stand), and what it said "y" to (Add): kept apart, so a one-time
+    // yes never replaces a standing grant on the same place, and a revoke never reaches one
+    private readonly List<global::app.data.@this> _standing = new();
+    private readonly List<global::app.data.@this> _once = new();
     private readonly object _lock = new();
 
     public @this(global::app.actor.@this actor)
@@ -46,8 +49,8 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
         lock (_lock)
             foreach (var grant in grants)
             {
-                _inMemory.RemoveAll(d => d.Peek() is Grant g && string.Equals(g.Path, grant.Path, StringComparison.Ordinal));
-                _inMemory.Add(new global::app.data.@this<Grant>("", grant, context: _actor.Context));
+                _standing.RemoveAll(d => d.Peek() is Grant g && string.Equals(g.Path, grant.Path, StringComparison.Ordinal));
+                _standing.Add(new global::app.data.@this<Grant>("", grant, context: _actor.Context));
             }
     }
 
@@ -127,12 +130,10 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
         // SECURITY REVIEW (signature-as-layer): this relies on store reads
         // of signed grants going through application/plang auto-verify-on-read.
 
-        // 1) In-memory grants. Snapshot under the lock; read outside it so
+        // 1) In-memory grants, standing then once. Snapshot under the lock; read outside it so
         //    the async read doesn't hold the lock.
-        List<global::app.data.@this> snapshot;
-        lock (_lock) snapshot = new(_inMemory);
-        foreach (var grantData in snapshot)
-            if (await grantData.Value<Grant>() is { } grant && grant.Allows(request)) return grantData;
+        if (await Allowing(Snapshot(_standing), request) is { } standing) return standing;
+        if (await Allowing(Snapshot(_once), request) is { } once) return once;
 
         // 2) Persisted grants — the actor's own saved ones. A store that can't open (an unwritable root)
         // holds no rows, so only the in-memory grants are searched and the caller falls through to the prompt.
@@ -142,13 +143,33 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
         return null;
     }
 
-    /// <summary>
-    /// Records a grant: persisted into the actor's own permission setting (signed with its row when it is
-    /// saved), or in memory for this run. Same path twice overwrites (in either home).
-    /// </summary>
-    public async Task Add(global::app.data.@this grant, bool persist)
+    /// <summary>The grant this actor's role stands on that allows <paramref name="verb"/> at <paramref name="place"/>,
+    /// whatever it said yes to; null when its role stands on none there. The stores' folder opens only to this.</summary>
+    internal Task<global::app.data.@this?> Stands(string place, Verb verb)
+        => Allowing(Snapshot(_standing), Grant.Request(_actor, place, verb, MatchMode.exact));
+
+    // the grants as they are now, taken under the lock and read outside it
+    private List<global::app.data.@this> Snapshot(List<global::app.data.@this> grants)
     {
-        if (await grant.Value<Grant>() is not { } value) return;
+        lock (_lock) return [.. grants];
+    }
+
+    // the first of the grants that allows the request
+    private async Task<global::app.data.@this?> Allowing(List<global::app.data.@this> grants, Grant request)
+    {
+        foreach (var grantData in grants)
+            if (await grantData.Value<Grant>() is { } grant && grant.Allows(request)) return grantData;
+        return null;
+    }
+
+    /// <summary>
+    /// Records what the actor said yes to: persisted into its own permission setting (signed with its row when it is
+    /// saved), or in memory for this run, beside what its role stands on (never replacing it). Same path twice
+    /// overwrites in its home. Answers the save's answer, or Ok.
+    /// </summary>
+    public async Task<global::app.data.@this> Add(global::app.data.@this grant, bool persist)
+    {
+        if (await grant.Value<Grant>() is not { } value) return grant.Success ? _actor.Context.Ok() : grant;
         var key = value.Path;
 
         if (persist)
@@ -158,34 +179,34 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
             foreach (var row in setting.Grant.Items(_actor.Context))
                 if (await row.Value<Grant>() is { } entry && !string.Equals(entry.Path, key, StringComparison.Ordinal)) grants.Add(entry);
             grants.Add(value);
-            await Save(setting, grants);
-            return;
+            return await Save(setting, grants);
         }
 
         lock (_lock)
         {
             // Overwrite same-path entry if any.
-            var idx = _inMemory.FindIndex(d =>
+            var idx = _once.FindIndex(d =>
                 d.Peek() is Grant each && string.Equals(each.Path, key, StringComparison.Ordinal));
-            if (idx >= 0) _inMemory[idx] = grant;
-            else _inMemory.Add(grant);
+            if (idx >= 0) _once[idx] = grant;
+            else _once.Add(grant);
         }
+        return _actor.Context.Ok();
     }
 
     /// <summary>
-    /// Drops a grant. Removes from in-memory if present; also removes from
-    /// the persisted table by path key.
+    /// Drops a grant the actor said yes to: from this run's if present, and from the persisted ones by path. What its
+    /// role stands on is the role's, never revoked.
     /// </summary>
     public async Task<bool> Revoke(Grant match)
     {
         bool removed = false;
         lock (_lock)
         {
-            var idx = _inMemory.FindIndex(d =>
+            var idx = _once.FindIndex(d =>
                 d.Peek() is Grant each
                 && each.Actor == match.Actor
                 && each.Path == match.Path);
-            if (idx >= 0) { _inMemory.RemoveAt(idx); removed = true; }
+            if (idx >= 0) { _once.RemoveAt(idx); removed = true; }
         }
 
         var setting = await Saved();

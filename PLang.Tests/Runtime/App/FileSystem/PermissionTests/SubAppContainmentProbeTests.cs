@@ -267,7 +267,7 @@ public class SubAppContainmentProbeTests : System.IAsyncDisposable
 
         // its stores folder is its own; its standing grants are the role's, on the os and on its own stores only
         await Assert.That(app.filesystem.store.Absolute).IsEqualTo(System.IO.Path.Combine(app.filesystem.root.Absolute, ".data"));
-        var field = typeof(global::app.actor.permission.@this).GetField("_inMemory",
+        var field = typeof(global::app.actor.permission.@this).GetField("_standing",
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
         foreach (var actor in new[] { app.actor.list.System, app.actor.list.User })
         {
