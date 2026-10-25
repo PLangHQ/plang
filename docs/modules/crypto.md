@@ -53,7 +53,7 @@ Verify data against a known hash.
 
 | Algorithm | Implementation |
 |-----------|---------------|
-| `keccak256` | Nethereum Sha3Keccack (default) |
+| `keccak256` | BouncyCastle `KeccakDigest(256)` (default). The original Keccak padding, not FIPS SHA-3, so it matches Ethereum's `keccak256`, not `SHA3-256`. |
 | `sha256` | System.Security.Cryptography |
 
 Custom algorithms can be added by loading a code DLL that implements `ICrypto` (see [code.load](code.md#load)).

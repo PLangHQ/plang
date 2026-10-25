@@ -458,6 +458,4 @@ Values passed to Data are automatically unwrapped from `JsonElement`:
 
 **Important:** JSON integers become `long`, not `int`. JSON decimals become `decimal`. This matters for generic casts — `(int)(object)longValue` will throw.
 
-Newtonsoft `JToken` values are also unwrapped (v1 compatibility shim) — detected by namespace, no Newtonsoft import required.
-
 Nesting depth limit: 128 levels. Exceeding throws `InvalidOperationException`.

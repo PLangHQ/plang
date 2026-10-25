@@ -151,8 +151,8 @@ Do **not** delete `test/**/.build/` — those are tracked `.pr` files, not
 build artefacts. The "NEVER delete .build folders" rule above applies.
 
 ## Speed record
-- `Tools/Bench/run.sh` measures, gated on the machine's load: a sub app's and a root app's birth (time, bytes), a request app (time, bytes) with its held memory after 3,000 requests and a rest, `plang --test`'s time, the C# sweep's time, and the C# build (clean and incremental). Each run appends a row to `Tools/Bench/record.md` (date, branch, commit, load, each number); each number's noise band is at the record's top.
-- Codeanalyzer runs it at every review and compares with the last row recorded on the branch's parent. A number outside its band is a finding: blocking unless the branch's decisions explain it. Held memory that grows with the request count always blocks.
+- `Tools/Bench/run.sh` measures, gated on the machine's load: a sub app's and a root app's birth (time, bytes), a request app (time, bytes) with its held memory after 3,000 requests, `plang --test`'s time, the C# sweep's time, and the C# build (clean and incremental). Each run appends a row to `Tools/Bench/record.md` (date, branch, commit, load, each number); each number's noise band is at the record's top. A whole run is about 5 minutes and calls no OpenAI (no key, the llm tag left out).
+- Codeanalyzer runs it at every review, **the parts the diff touches** (run.sh's header says which: a package-only diff skips birth and request), and compares with the last row recorded on the branch's parent. The two 300 s rests (`BENCH_REST=300`) only for a diff that touches the store, its pool, or what a request app holds. A number outside its band is a finding: blocking unless the branch's decisions explain it. Held memory that grows with the request count always blocks.
 
 ## Mutation Testing (announce first)
 
