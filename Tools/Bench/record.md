@@ -50,6 +50,7 @@ per birth + dispose; a request app is born, a goal loaded and run, disposed, × 
 | Date | Branch | Commit | Load | Sub birth | Root birth | Sub request | Root request | Held, sub (MB) | Held, root (MB) | `plang --test` | C# sweep | Build, clean | Build, incr. |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 <!-- rows -->
+| 2026-10-25 | fast-apps | d050b9f50 (review5-d050b9f50) | 12.71 | 0.27 ms, 110 KB | 29.83 ms, 2360 KB | - | - | - | - | - | - | 98.3 s | 15.6 s |
 | 2026-10-25 | fast-apps | dec53e6c4 (review4 N1) | 2.59 | 0.15 ms, 110 KB | 18.62 ms, 2359 KB | - | - | - | - | - | - | - | - |
 | 2026-10-25 | fast-apps | d1fb4dd29 (review4-build-rerun) | 13.66 | - | - | - | - | - | - | - | - | 74.9 s | 9.1 s |
 | 2026-10-25 | fast-apps | d1fb4dd29 (review4-02aff152e) | 16.25 | 0.14 ms, 110 KB | 18.48 ms, 2488 KB | 1.85 ms, 541 KB | 16.56 ms, 3720 KB | 1.6 → 2.1 → 2.1 → 2.1 → 1.9 | 0.1 → 2.0 → 1.9 → 1.9 → 1.1 | 5.6 s (298 pass, 1 fail) | 37.3 s (red: Wire) | 90.5 s | 79.4 s |

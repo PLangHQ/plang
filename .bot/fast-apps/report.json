@@ -121,6 +121,43 @@
         "health": "fail, small: Add(kind) hold-then-guard cost; setup behaviour change; QRCoder-ImageSharp",
         "notes": "bench loads 13-16; clean build needs a quiet run"
       }
+    },
+    {
+      "id": "d1d73e1d-8177-43c3-91d7-49eb9cdbdb50",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T06:38:05Z",
+      "intent": "Fifth fast-apps review: review4's fixes (decision 86) and the verdict for the branch",
+      "before": {
+        "assumptions": "tip d050b9f50; nine production files changed since review4",
+        "risk": "fixes to fixes; bench under load"
+      },
+      "plan": ".bot/fast-apps/codeanalyzer/v5/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/fast-apps/codeanalyzer/review5.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "All review4 findings fixed at the root; root birth back in band (2,360 KB); one small blocking: public Registry.Add(kind) test-only again (rule 35)."
+        },
+        {
+          "paths": [
+            "Tools/Bench/record.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Birth and build row appended at load 12.7; bytes in band, times load-inflated, clean build unsettled."
+        }
+      ],
+      "timestamp_end": "2026-10-25T06:38:05Z",
+      "after": {
+        "status": "review5 written: .bot/fast-apps/codeanalyzer/review5.md",
+        "health": "fail, one small blocking (rule 35: Add(kind))",
+        "notes": "clean-build row still needs a quiet machine; ImageSharp 2.0.0 advisory check not done"
+      }
     }
   ]
 }

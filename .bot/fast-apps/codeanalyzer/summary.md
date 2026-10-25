@@ -1,16 +1,17 @@
 # codeanalyzer summary (fast-apps)
 
-**Version:** v4
+**Version:** v5
 
-**What this is:** The fourth fast-apps review (decisions 81–85, stage 6, tip 02aff152e) and the first bench row I recorded. The 23 production files changed since review3 were read whole against review3's findings; stage 6 (56 packages out of `PLang.csproj`, `Sdk.Web` → `Sdk`, the test projects' runtime identifier) was checked for removed namespaces still named in source. Read only. Report: `.bot/fast-apps/codeanalyzer/review4.md`.
+**What this is:** The fifth fast-apps review: review4's fixes (decision 86, tip d050b9f50) and the verdict for the branch. Nine production files changed since review4. Read only; not run. Report: `.bot/fast-apps/codeanalyzer/review5.md`.
 
-**What was done:** Both blocking findings of review3 are fixed at the root (the reader's `Shipped` is non-null in both kinds; the call frame past the depth is refused before it is made). No new blocking by the branch's rules. Open: `Registry.Add(kind)` holds, then runs a full `Guard()`, three times per root birth (the likely cause of the root birth's +110 KB, outside its band); setup now adds every `.pr` it reads; `QRCoder-ImageSharp` is a hidden dependency; small names. No removed package's namespace is named in source (`WebUtilities` and `Nethereum.Util` stay). Bench (`Tools/Bench/run.sh`, load 16): held memory flat, sub birth −12 KB, request apps lower, `plang --test` 5.6 s with the same counts, sweep 37.3 s, incremental build 9.1 s on the rerun; the clean build (90.5 s, rerun 74.9 s at load 13.7) is not settled and needs a quiet-machine run.
+**What was done:** Every review4 finding is fixed at the root: `Registry` guards a batch of kinds before any is held and reads the held formats only when a kind answers to a key (root birth back to 2,360 KB, inside its band), setup keeps only setup goals, `SixLabors.ImageSharp` is referenced directly, the names are done, the snapshot writes its lists once, the stamp holds the goal's own `PrPath`. One small blocking finding remains, and it is rule 35 coming back: the origin now uses the internal batch `Add`, so the public single-kind `Add(kind)` is called by tests alone. Not blocking: the collision rule is written three times, a refused later kind leaves earlier ones held, setup adds then removes, the overflow throw repeats in three `Push` overloads, the `ImageSharp` 2.0.0 version needs an advisory check. The clean-build row is still unsettled (load 12.7); it needs a quiet machine.
 
-**Next:** the coder fixes `Add(kind)`'s order and re-measures the root birth; someone runs the build row at load under 3.
+**Next:** the coder makes `Add(kind)` internal (a surface narrowing the architect takes to Ingi) or gives it a production caller on purpose; then the tester's pass and security.
 
 **Code example:**
 ```csharp
-// holds first, then guards: a refused kind stays held, and the origin's three schemes pay three full scans   type/list/Registry.cs:229
-if ((Hold(kind) ?? Guard()) is { } refused) throw new AppException(refused);
-// root: Guard checks the incoming kind before it is held (or Add undoes the hold), and the schemes go in as one batch
+// production adds kinds as one list; the single-kind door is left for tests alone     type/list/Registry.cs
+public void Add(global::app.type.kind.@this kind) => Add([kind]);
+internal void Add(IReadOnlyList<global::app.type.kind.@this> kinds) { … }     // origin/code.cs:18 is its only production caller
+// root: Add(kind) internal (the tests see internals), re-pinned with the decision
 ```
