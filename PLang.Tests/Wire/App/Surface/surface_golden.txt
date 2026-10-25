@@ -175,7 +175,6 @@ class app.channel.format.this : app.type.item.this, app.type.item.ICreate<app.ch
 
 class app.channel.list.this : app.type.item.this, System.IAsyncDisposable
   App : app.this { get; }
-  ChannelNames : System.Collections.Generic.IEnumerable<System.String> { get; }
   Contains(System.String name) : System.Boolean
   DisposeAsync() : System.Threading.Tasks.ValueTask
   Get(System.String name) : app.channel.this

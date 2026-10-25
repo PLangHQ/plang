@@ -20,8 +20,8 @@ public class Stage6_EntryPointWiringTests
         // With autoWireConsoleChannels:false, the per-actor Channels are empty.
         // A plain App — Testing() opens a test session, which is a channel.
         await using var app = new global::app.@this("/tmp/s6a", autoWireConsoleChannels: false);
-        await Assert.That(app.actor.list.User.Channel.ChannelNames.Any()).IsFalse();
-        await Assert.That(app.actor.list.System.Channel.ChannelNames.Any()).IsFalse();
+        await Assert.That(app.actor.list.User.Channel.list.Any()).IsFalse();
+        await Assert.That(app.actor.list.System.Channel.list.Any()).IsFalse();
     }
 
     [Test]

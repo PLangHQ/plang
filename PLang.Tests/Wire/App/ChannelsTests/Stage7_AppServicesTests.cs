@@ -22,7 +22,7 @@ public class Stage7_AppServicesTests
     {
         await using var app = new global::app.@this("/tmp/s7b", global::PLang.Tests.Parent.Actor).Testing();
         var s = app.Services.New(parent: app.actor.list.User);
-        await Assert.That(s.Channels.ChannelNames.Any()).IsFalse();
+        await Assert.That(s.Channels.list.Any()).IsFalse();
     }
 
     [Test]
