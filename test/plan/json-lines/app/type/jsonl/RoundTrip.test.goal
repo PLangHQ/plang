@@ -1,0 +1,8 @@
+/ A list saved to .jsonl and read back is the same list, one element per line.
+Start
+- set %rows% = [{"a": 1}, {"a": 2}, "three"]
+- save %rows% to 'roundtrip.jsonl'
+- read file 'roundtrip.jsonl', write to %back%
+- delete file 'roundtrip.jsonl'
+- assert %back.count% equals 3
+- assert %back% equals %rows%

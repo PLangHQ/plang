@@ -1,0 +1,6 @@
+/ A .jsonl file reads as the list of its lines, each a json value.
+Start
+- read file 'lines.jsonl', write to %lines%
+- assert %lines.count% equals 3
+- assert %lines[0].name% equals "Ingi"
+- assert %lines[2]% equals "þrír"

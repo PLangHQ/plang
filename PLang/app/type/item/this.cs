@@ -913,6 +913,11 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     protected internal virtual System.Threading.Tasks.ValueTask Write(global::app.type.item.kind.json.Writer writer)
         => Write((global::app.type.format.IWriter)writer);
 
+    /// <summary>How this value looks in JSON Lines: its records — by default itself, one record (a dict is one line,
+    /// never its entries).</summary>
+    protected internal virtual System.Threading.Tasks.ValueTask Write(global::app.type.item.kind.jsonl.Writer writer)
+        => writer.Record(this);
+
     /// <summary>How this value looks in plang's own format, where it looks different there (characters that already
     /// are json are pasted); by default its own write.</summary>
     protected internal virtual System.Threading.Tasks.ValueTask Write(global::app.type.item.wire.kind.plang.Writer writer)

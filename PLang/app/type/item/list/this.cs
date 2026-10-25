@@ -316,6 +316,13 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         writer.EndArray();
     }
 
+    /// <summary>In JSON Lines a list is its elements, a record each.</summary>
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.item.kind.jsonl.Writer writer)
+    {
+        foreach (var element in Items(writer.Context))
+            await writer.Record(element);
+    }
+
     /// <summary>Iterates as (index, element) pairs — the list owns how it iterates.</summary>
     public override System.Collections.Generic.IEnumerable<(Data key, Data value)>
         EnumerateItems(global::app.actor.context.@this? context)
