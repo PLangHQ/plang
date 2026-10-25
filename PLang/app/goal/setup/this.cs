@@ -51,14 +51,10 @@ public sealed class @this
             if (!exists.Success) return exists;
             if ((await exists.Value())?.Value != true) continue;
 
-            // The .pr lands as a file reference whose value its format decodes into a goal. A setup file
-            // that doesn't read or parse is the answer — setup doesn't run past it.
-            var read = await file.Read(context);
-            var content = read.Success ? await read.Value() : null;
+            // read as the app's goals read every .pr (through the goal's on.load, stamped, held); a setup file that
+            // doesn't read or parse is the answer — setup doesn't run past it
+            var read = await _goals.Read(file, context);
             if (!read.Success) return read;
-            if (content as global::app.goal.@this is not { } goal || !goal.IsSetup) continue;
-
-            _goals.Add(goal);
         }
 
         return context.Ok();

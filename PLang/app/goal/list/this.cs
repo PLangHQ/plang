@@ -80,7 +80,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
 
     // The read of `pr` — one at a time for each .pr: a load that finds one in flight awaits it. Whoever takes the slot
     // asks for the held goal again first: a read that ended between that load's ask and its turn has added it.
-    private async Task<data.@this> Read(global::app.type.item.path.@this pr, actor.context.@this context)
+    internal async Task<data.@this> Read(global::app.type.item.path.@this pr, actor.context.@this context)
     {
         var ours = new TaskCompletionSource<data.@this>(TaskCreationOptions.RunContinuationsAsynchronously);
         if (_reading.TryAdd(pr, ours.Task) is false && _reading.TryGetValue(pr, out var inFlight)) return await inFlight;
