@@ -7,7 +7,16 @@ namespace app.data;
 /// </summary>
 internal sealed class attachment
 {
-    public Properties Properties { get; set; } = new();
+    /// <summary>The value's properties — made the first time they are asked for; the first made is the one kept.</summary>
+    public Properties Properties
+    {
+        get => _properties ?? System.Threading.Interlocked.CompareExchange(ref _properties, new(), null) ?? _properties;
+        set => _properties = value;
+    }
+    private Properties? _properties;
+
+    /// <summary>Whether the value carries any property — asked without making the bag.</summary>
+    public bool HasProperties => _properties is { Count: > 0 };
 
     /// <summary>The members a program added — made the first time one is asked for; the first made is the one kept.</summary>
     public global::app.type.item.kept.list.@this Kept
@@ -21,5 +30,5 @@ internal sealed class attachment
     public bool HasKept => _kept is { Count: > 0 };
 
     /// <summary>A copy for a new variable over the same value.</summary>
-    public attachment Copy() => new() { Properties = Properties.Clone(), _kept = _kept?.Copy() };
+    public attachment Copy() => new() { _properties = _properties?.Clone(), _kept = _kept?.Copy() };
 }

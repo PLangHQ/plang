@@ -223,13 +223,24 @@ public partial class @this
     internal global::app.type.item.kept.list.@this Kept { get => Attachment.Kept; set => Attachment.Kept = value; }
 
     /// <summary>Whether a program added any member to this value — asked without making the list.</summary>
-    internal bool HasKept => Attachment.HasKept;
+    internal bool HasKept => Carried?.HasKept ?? false;
+
+    /// <summary>Whether this value carries any property — asked without making the bag.</summary>
+    internal bool HasProperties => Carried?.HasProperties ?? false;
 
     /// <summary>What this variable's value carries — its properties and its added members, together: a face of this
-    /// variable shares it, a copy takes a copy of it.</summary>
+    /// variable shares it, a copy takes a copy of it. Made when first asked, the first made kept.</summary>
     [JsonIgnore]
     [LlmIgnore]
-    internal virtual attachment Attachment { get; set; } = new();
+    internal virtual attachment Attachment
+    {
+        get => _attachment ?? System.Threading.Interlocked.CompareExchange(ref _attachment, new attachment(), null) ?? _attachment;
+        set => _attachment = value;
+    }
+    private attachment? _attachment;
+
+    // What this value carries as it stands — none until something asks for it.
+    internal virtual attachment? Carried => _attachment;
 
 
     [JsonConstructor]
@@ -992,6 +1003,8 @@ public class DynamicData : @this
         get => _find(Context)?.Attachment ?? base.Attachment;
         set => base.Attachment = value;
     }
+
+    internal override attachment? Carried => _find(Context)?.Carried ?? base.Carried;
 
     /// <summary>In memory now = the current computation, lifted with this Data's context.</summary>
     public override global::app.type.item.@this Peek() => _cell.Compute(Context);

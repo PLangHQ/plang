@@ -57,7 +57,7 @@ public sealed class Writer : global::app.type.format.IWriter
     {
         // a value kept as written names its variables beside it, as the view keeps them
         await View.Variables(record.Peek(), this);
-        if (record.Properties.Count > 0)
+        if (record.HasProperties)
         {
             _json.Name("properties");
             _json.BeginObject();

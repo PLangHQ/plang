@@ -379,7 +379,7 @@ public sealed class @this
 
             sb.AppendLine($"    %{variable.Name}% = {await Text(data.Peek(), context)} ({data.Type.Name})");
 
-            if (data.Properties.Count > 0)
+            if (data.HasProperties)
             {
                 sb.AppendLine($"      Properties ({data.Properties.Count}):");
                 foreach (var prop in data.Properties)
