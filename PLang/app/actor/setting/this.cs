@@ -396,11 +396,14 @@ public sealed class @this : IDisposable
     {
         if (_classes != null) return _classes;
         var classes = new System.Collections.Generic.Dictionary<string, System.Type>(System.StringComparer.OrdinalIgnoreCase);
+        // each class of options the types hold, by the path its facts say it is read by (once per code, not an
+        // instance made to ask it)
         foreach (var type in _context.App.type.list.Items())
             if (type.ClrType is { } clr && typeof(global::app.type.item.setting.@this).IsAssignableFrom(clr)
                 && clr != typeof(global::app.type.item.setting.@this) && !clr.IsAbstract
-                && clr.GetConstructor(new[] { typeof(global::app.type.@this) }) != null)
-                classes[((global::app.type.item.setting.@this)System.Activator.CreateInstance(clr, _context.App.type.list[clr])!).Path] = clr;
+                && clr.GetConstructor(new[] { typeof(global::app.type.@this) }) != null
+                && type.Declared is { } declared)
+                classes[declared.Path] = clr;
         return _classes = classes;
     }
 

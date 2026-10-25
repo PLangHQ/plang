@@ -24,15 +24,8 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <c>app.module.llm.decider.setting</c>, the action being a class) is read the same way, through its owner:
     /// <c>llm.decider.setting</c>.</summary>
     protected @this(global::app.type.@this type) : base(type)
-    {
-        var path = GetType() is { DeclaringType: { } owner } @class
-            ? $"{@class.Namespace}.{owner.Name}.{@class.Name}"
-            : GetType().Namespace!;
-        const string module = "app.module.", at = "app.type.item.";
-        Path = path.StartsWith(module) ? path[module.Length..]
-            : path.StartsWith(at) ? "app.type." + path[at.Length..]
-            : path;
-    }
+        // as the code's facts say it, once per code; a type that is its identity alone reads the class's own
+        => Path = (type.Facts?[GetType()] ?? new global::app.type.list.@this.Class(GetType())).Path;
 
     /// <summary>The path this setting is read by — <c>%!app.goal.list.setting%</c> is <c>app.goal.list.setting</c>,
     /// <c>%!llm.setting%</c> is <c>llm.setting</c>. Its identity, not one of its options: it is not written with them.</summary>
@@ -252,14 +245,12 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         // a member the values leave out holds its declared default, made by its type from the app ([Default("iec")] is
         // the app's iec); one that can't be null and declares none holds the empty value its own class is born as,
         // holding the app's type for it: an empty list or dict, a nested setting at its defaults, the machine's culture
-        const System.Reflection.BindingFlags any = System.Reflection.BindingFlags.Instance
-            | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
-        var nullability = new System.Reflection.NullabilityInfoContext();
-        foreach (var member in node.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+        // — which members those are, their defaults and their empty constructors, is the class's, read once per code
+        var declared = Type.Facts?[node.GetType()] ?? new global::app.type.list.@this.Class(node.GetType());
+        foreach (var (member, defaulted, empty) in declared.Defaults)
         {
-            if (member.SetMethod?.IsPublic != true || !typeof(global::app.type.item.@this).IsAssignableFrom(member.PropertyType)
-                || member.GetValue(node) != null) continue;
-            if (System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.module.DefaultAttribute>(member) is { } @default)
+            if (member.GetValue(node) != null) continue;
+            if (defaulted is { } @default)
             {
                 var asked = new global::app.data.@this(member.Name, context: context);
                 if (context.App.type.list[member.PropertyType].Make(@default.Value, asked) is { } value
@@ -270,8 +261,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
                         $"setting '{member.Name}' declares a default its {member.PropertyType.Name} cannot be made from: {@default.Value}",
                         "TypeConversionFailed", 400));
             }
-            else if (nullability.Create(member).WriteState != System.Reflection.NullabilityState.Nullable
-                && member.PropertyType.GetConstructor(any, [typeof(global::app.type.@this)]) is { } empty)
+            else if (empty != null)
                 member.SetValue(node, empty.Invoke([context.App.type.list[member.PropertyType]]));
         }
         return context.Ok();

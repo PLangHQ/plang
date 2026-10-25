@@ -69,6 +69,46 @@ public sealed partial class @this
                 return _setting;
             }
         }
+
+        private string? _path;
+
+        /// <summary>For a class of options, the path it is read by: its namespace — a module's read from the module
+        /// (<c>app.module.llm.setting</c> is <c>llm.setting</c>), a type's where types are (<c>app.type.item.size.setting</c>
+        /// is <c>app.type.size.setting</c>), a class declared inside what it configures through its owner
+        /// (<c>app.module.llm.decider.setting</c> is <c>llm.decider.setting</c>). Worked out once per code.</summary>
+        internal string Path => _path ??= Where();
+
+        // The path a class of options is read by, from where the class is declared.
+        private string Where()
+        {
+            var path = _clr is { DeclaringType: { } owner } ? $"{_clr.Namespace}.{owner.Name}.{_clr.Name}" : _clr.Namespace!;
+            const string module = "app.module.", at = "app.type.item.";
+            return path.StartsWith(module) ? path[module.Length..]
+                : path.StartsWith(at) ? "app.type." + path[at.Length..]
+                : path;
+        }
+
+        private (PropertyInfo Member, global::app.module.DefaultAttribute? Declared, ConstructorInfo? Empty)[]? _defaults;
+
+        /// <summary>For a class of options, each public settable plang-valued member with its declared default, and —
+        /// when it declares none and can't be null — the constructor its empty value is born by: what a value left out
+        /// is given. Read once per code.</summary>
+        internal IReadOnlyList<(PropertyInfo Member, global::app.module.DefaultAttribute? Declared, ConstructorInfo? Empty)> Defaults
+            => _defaults ??= Members();
+
+        // The members a value of this class left out may be given, as the class declares them.
+        private (PropertyInfo, global::app.module.DefaultAttribute?, ConstructorInfo?)[] Members()
+        {
+            const BindingFlags any = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+            var nullability = new NullabilityInfoContext();
+            return _clr.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(member => member.SetMethod?.IsPublic == true && typeof(global::app.type.item.@this).IsAssignableFrom(member.PropertyType))
+                .Select(member => (member, member.GetCustomAttribute<global::app.module.DefaultAttribute>(),
+                    member.GetCustomAttribute<global::app.module.DefaultAttribute>() == null
+                    && nullability.Create(member).WriteState != NullabilityState.Nullable
+                        ? member.PropertyType.GetConstructor(any, [typeof(global::app.type.@this)]) : null))
+                .ToArray();
+        }
     }
 
     /// <summary>The facts an assembly's classes give: each read once from its classes, in the order they come.</summary>

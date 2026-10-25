@@ -141,7 +141,8 @@ public class BirthTests
         await Assert.That(await copy.Properties.Value("tag")).IsEqualTo("two");
     }
 
-    [Test]
+    // alone: the bytes are the process's, and a test beside it would add its own
+    [Test, NotInParallel]
     public async Task ARequestReadsItsSettingClassesFacts_OncePerCode()
     {
         var root = System.IO.Path.Combine(Fixture.Root(), "test");
