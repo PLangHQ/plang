@@ -215,7 +215,8 @@ public class @this : global::app.type.@this
     /// positional vs named differently. The list kind indexes, the dict kind keys, the <c>*</c>
     /// kind reflects a property — each owns its own descend.</summary>
     public virtual (bool found, object? node) Descend(object obj, string key, bool isIndex, global::app.actor.context.@this ctx)
-        => throw new System.NotSupportedException($"kind '{Name}' is not navigable");
+        => throw new global::app.error.AppException(new global::app.error.@this(
+            $"kind '{Name}' is not navigable: it holds no '{key}'", "NotNavigable", 400));
 
     /// <summary>Build the child <c>Data</c> for a landed node. Default: a node that already IS
     /// a Data rides through as itself; otherwise the raw node becomes a child Data (the ctor
@@ -228,7 +229,8 @@ public class @this : global::app.type.@this
     /// <summary>Each child of a container, for <c>foreach</c> — array elements or object members.</summary>
     public virtual System.Collections.Generic.IEnumerable<global::app.data.@this> Enumerate(
         object obj, global::app.actor.context.@this ctx)
-        => throw new System.NotSupportedException($"kind '{Name}' is not enumerable");
+        => throw new global::app.error.AppException(new global::app.error.@this(
+            $"kind '{Name}' is not enumerable", "NotEnumerable", 400));
 
     /// <summary>Whether a host of this kind holds its children by position (an array) rather than by name (an
     /// object's members).</summary>
@@ -316,8 +318,8 @@ public class @this : global::app.type.@this
     /// from json, audio from text). An error <c>Data</c> when the source can't become this kind.</summary>
     public virtual global::System.Threading.Tasks.ValueTask<global::app.data.@this> Convert(
         global::app.data.@this source, global::app.actor.context.@this ctx)
-        => throw new System.NotSupportedException(
-            $"cannot convert {source.Type?.Name} into kind '{Name}'");
+        => new(ctx.Error(new global::app.error.@this(
+            $"cannot convert {source.Type?.Name} into kind '{Name}'", "NotConvertible", 400)));
 
     /// <summary>A kind held AS A VALUE writes its own name — <c>%x!type.kind%</c> is "json", "decimal" — in every
     /// format. The kind is a type, but its face is the subtype word, never a type's identity or word; navigation reaches

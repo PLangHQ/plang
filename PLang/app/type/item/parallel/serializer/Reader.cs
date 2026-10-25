@@ -22,7 +22,8 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         while (reader.NextName(out var name))
         {
             if (string.Equals(name, "cpu", System.StringComparison.OrdinalIgnoreCase)) cpu = reader.Long();
-            else throw new System.FormatException($"parallel's one member is cpu (how many at once) — not {name}");
+            else throw new global::app.error.DeclinedException(new global::app.error.@this(
+                $"parallel's one member is cpu (how many at once) — not {name}", "ParallelInvalid", 400));
         }
         reader.EndObject();
         return new global::app.type.item.parallel.@this(type, cpu);
