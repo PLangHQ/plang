@@ -823,15 +823,13 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// </summary>
     internal @this(string name, System.Type clr, list.@this? types) : this(name, clr, null, false, null, known: true)
     {
-        // what the class declares of itself, read once per code: the list's facts, or the class's own without a list
-        var declared = types?.code[clr] ?? new list.@this.Class(clr);
+        // The type entity's own wire shape and kinds are taught by the prompt's type reference, not as facts.
+        _list = clr == typeof(@this) ? null : types;
+        var declared = Facts(clr);
         Alias = declared.Alias;
         Owned = declared.Owned;
         Internal = declared.Internal;
-        // The type entity's own wire shape and kinds are taught by the prompt's type reference, not as facts.
-        if (types == null || clr == typeof(@this)) return;
-        _offer = declared.Offer;
-        _list = types;
+        if (_list != null) _offer = declared.Offer;
     }
 
     // The list this type is in — its facts name their property types through it; null for a type that is its
