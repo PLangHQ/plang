@@ -51,6 +51,7 @@ per birth + dispose; a request app is born, a goal loaded and run, disposed, × 
 | Date | Branch | Commit | Load | Sub birth | Root birth | Sub request | Root request | Held, sub (MB) | Held, root (MB) | `plang --test` | C# sweep | Build, clean | Build, incr. |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 <!-- rows -->
+| 2026-10-25 | bugs | ad0caedd7 (bugs-tip) | 2.88 | 0.14 ms, 109 KB | 18.45 ms, 2406 KB | 1.85 ms, 543 KB | 17.61 ms, 3857 KB | 1.6 → 2.1 → 2.1 → 2.1 | 0.1 → 2.0 → 1.9 → 1.9 | 4.5 s (294 pass, 1 fail) | 45.2 s (red: Wire) | - | - |
 | 2026-10-25 | packages | 1510726b5 (packages-13) | 2.25 | - | - | - | - | - | - | 4.4 s (292 pass, 1 fail) | 84.7 s (red: Wire) | - | - |
 | 2026-10-25 | packages | 1435afbf8 (packages-tip) | 2.73 | 0.14 ms, 109 KB | 17.07 ms, 2358 KB | 1.85 ms, 539 KB | 17.02 ms, 3821 KB | 1.6 → 2.1 → 2.1 → 2.1 → 1.9 | 0.1 → 1.9 → 1.9 → 1.9 → 1.1 | 5.4 s (298 pass, 1 fail; run by hand after the bench, the one run with the OpenAI key) | 39.7 s (red: Wire; the bench's own sweep ran with no key, so Modules' 80 mocked-LLM tests were red with MissingLlmKey: rerun with a dummy key, Wire's six only) | 30.9 s | 8.3 s |
 | 2026-10-25 | fast-apps | 2401279ed (review7-after-restore) | 2.81 | - | - | - | - | - | - | 5.3 s (298 pass, 1 fail) | 40.5 s (red: Wire) | 75.7 s | 8.6 s |

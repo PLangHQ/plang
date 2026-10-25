@@ -51,6 +51,55 @@
       },
       "plan": ".bot/bugs/coder/v1/plan.md",
       "actions": []
+    },
+    {
+      "id": "90512fc9-bcf5-4db6-a566-a5cc7150fcde",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T18:10:21Z",
+      "timestamp_end": "2026-10-25T18:10:21Z",
+      "intent": "Review branch bugs (3a29633f8 to ad0caedd7) and run the bench",
+      "before": {
+        "assumptions": "55 commits, 56 production files; OpenAi.cs older smells excepted (bugs 23)",
+        "risk": "the window's decode thread after the bare catch went; consent and containment rules"
+      },
+      "plan": ".bot/bugs/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/module/screen/type/screen/window/code/Window.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1: Parallel.For wraps Shown.Put's BadFrame in AggregateException (probed); Decode does not catch it, host ends."
+        },
+        {
+          "paths": [
+            "PLang/app/module/screen/type/screen/view/this.cs",
+            "PLang/app/module/llm/code/Saved.cs",
+            "PLang/app/Executor.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "F2 swallowed BadFrame; F3-F8 smell findings."
+        },
+        {
+          "paths": [
+            "Tools/Bench/Program.cs",
+            "Tools/Bench/record.md"
+          ],
+          "type": "modify",
+          "category": "config",
+          "confidence": "high",
+          "context": "Bench program moved to app.Wiring; row bugs-tip added."
+        }
+      ],
+      "after": {
+        "status": "review.md written",
+        "health": "fail",
+        "notes": "coder next for F1/F2"
+      }
     }
   ]
 }
