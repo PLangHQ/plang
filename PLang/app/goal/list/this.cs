@@ -119,8 +119,9 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
                 return context.Error(read.Error ?? new global::app.error.@this(
                     $"Failed to parse goal file: {pr} — read produced {content.GetType().Name}, not a goal"));
 
-            goal.Stamp = stat.Success && await stat.Value() is { } info
-                ? new goal.@this.stamp.stat(pr, info) : new goal.@this.stamp.unknown();
+            // the stamp holds the .pr the goal itself has
+            goal.Stamp = stat.Success && await stat.Value() is { } info && goal.PrPath is { } held
+                ? new goal.@this.stamp.stat(held, info) : new goal.@this.stamp.unknown();
             Add(goal);
             return await goal.on.load.After(goal, read, context);
         }
