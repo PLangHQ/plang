@@ -22,6 +22,8 @@ public sealed class Saved : IAnswer
     private readonly SemaphoreSlim _gate = new(1, 1);
     private List<Exchange>? _exchanges;
     private readonly HashSet<Exchange> _asked = new(ReferenceEqualityComparer.Instance);
+    // each exchange's request as the json writer writes it, written once: a request is compared by it, exactly
+    private readonly Dictionary<Exchange, string> _written = new(ReferenceEqualityComparer.Instance);
     private bool _added;
 
     /// <summary>The answers of the test whose goal is at <paramref name="goal"/>; a question not in them goes to
@@ -42,12 +44,25 @@ public sealed class Saved : IAnswer
         {
             var read = await Read(context);
             if (!read.Success) return read;
+            // the request matched exactly — its json as written, ordinal: a changed character (its case, a space) is a
+            // new question, never another's answer
+            var asking = await Written(body, context);
+            if (!asking.Success) return asking;
+            var question = (await asking.Value())!.ToString();
             foreach (var exchange in _exchanges!)
-                if (await new data.@this("request", exchange.Request, context: context).Compare(body) == global::app.data.Comparison.Equal)
+            {
+                if (!_written.TryGetValue(exchange, out var request))
+                {
+                    var written = await Written(new data.@this("request", exchange.Request, context: context), context);
+                    if (!written.Success) return written;
+                    _written[exchange] = request = (await written.Value())!.ToString();
+                }
+                if (string.Equals(request, question, StringComparison.Ordinal))
                 {
                     _asked.Add(exchange);
                     return context.Ok(exchange.Response);
                 }
+            }
 
             var answer = await _live.Ask(body, action);
             if (!answer.Success) return answer;
@@ -94,5 +109,15 @@ public sealed class Saved : IAnswer
         }
         _exchanges = exchanges;
         return context.Ok();
+    }
+
+    // a request as the json writer writes it — the text two requests are the same question by, character for character
+    private async Task<data.@this> Written(data.@this request, global::app.actor.context.@this context)
+    {
+        using var stream = new MemoryStream();
+        var encoded = await context.App.type.list.Mime("application/json").Encode(stream, request, context);
+        return encoded.Success
+            ? context.Ok((global::app.type.item.text.@this)System.Text.Encoding.UTF8.GetString(stream.ToArray()))
+            : encoded;
     }
 }
