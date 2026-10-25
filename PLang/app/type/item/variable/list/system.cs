@@ -70,5 +70,10 @@ internal sealed class system
     private global::app.type.@this Datetime => _context.App.type.list[typeof(global::app.type.item.datetime.@this)];
 
     // the table's row for a name, whatever its case, as every variable's name is; -1 for none
-    private static int Row(string name) => System.Array.FindIndex(Table, each => @this.Comparer.Equals(each.Name, name));
+    private static int Row(string name)
+    {
+        for (var row = 0; row < Table.Length; row++)
+            if (@this.Comparer.Equals(Table[row].Name, name)) return row;
+        return -1;
+    }
 }
