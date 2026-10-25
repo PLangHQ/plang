@@ -50,7 +50,7 @@ public class DataSourceTests
     private System.Threading.Tasks.Task<global::app.store.sqlite.@this> CreateDataSource()
     {
         var dbPath = global::app.type.item.path.@this.Resolve("/.db/test.sqlite", _app.actor.list.System.Context!);
-        return System.Threading.Tasks.Task.FromResult(new global::app.store.sqlite.@this(dbPath, () => null, _app.actor.list.System.Context!));
+        return System.Threading.Tasks.Task.FromResult(new global::app.store.sqlite.@this(dbPath, () => false, _app.actor.list.System.Context!));
     }
 
     [Test]
@@ -285,7 +285,7 @@ public class DataSourceTests
     [Test]
     public async Task InMemory_CrudOperations()
     {
-        using var ds = global::app.store.sqlite.@this.InMemory("test_crud", _app.actor.list.User.Context);
+        using var ds = global::app.store.sqlite.@this.InMemory(_app.actor.list.User.Context);
 
         // Set
         var setResult = await ds.Set("items", "key1", new Data("key1", "value1", context: _app.actor.list.System.Context!));
@@ -316,7 +316,7 @@ public class DataSourceTests
     [Test]
     public async Task InMemory_SchemaPersistsAcrossOperations()
     {
-        using var ds = global::app.store.sqlite.@this.InMemory("test_schema", _app.actor.list.User.Context);
+        using var ds = global::app.store.sqlite.@this.InMemory(_app.actor.list.User.Context);
 
         // First operation creates the table
         await ds.Set("persistent", "key1", new Data("key1", "value1", context: _app.actor.list.System.Context!));
@@ -336,8 +336,8 @@ public class DataSourceTests
     [Test]
     public async Task InMemory_TwoNamesAreIsolated()
     {
-        using var ds1 = global::app.store.sqlite.@this.InMemory("db_alpha", _app.actor.list.User.Context);
-        using var ds2 = global::app.store.sqlite.@this.InMemory("db_beta", _app.actor.list.User.Context);
+        using var ds1 = global::app.store.sqlite.@this.InMemory(_app.actor.list.User.Context);
+        using var ds2 = global::app.store.sqlite.@this.InMemory(_app.actor.list.User.Context);
 
         await ds1.Set("shared", "key", new Data("key", "alpha_value", context: _app.actor.list.System.Context!));
         await ds2.Set("shared", "key", new Data("key", "beta_value", context: _app.actor.list.System.Context!));
@@ -353,12 +353,12 @@ public class DataSourceTests
     public async Task InMemory_DisposeClosesDb()
     {
         // Create, populate, dispose
-        var ds1 = global::app.store.sqlite.@this.InMemory("disposable_db", _app.actor.list.User.Context);
+        var ds1 = global::app.store.sqlite.@this.InMemory(_app.actor.list.User.Context);
         await ds1.Set("data", "key", new Data("key", "value", context: _app.actor.list.System.Context!));
         ds1.Dispose();
 
         // New datasource with same name should start empty (sentinel closed → DB vanished)
-        using var ds2 = global::app.store.sqlite.@this.InMemory("disposable_db", _app.actor.list.User.Context);
+        using var ds2 = global::app.store.sqlite.@this.InMemory(_app.actor.list.User.Context);
         var result = await ds2.Get<global::app.type.item.@this>("data", "key");
         await result.IsSuccess();
         await Assert.That((await result.Value())!.IsTruthy()).IsFalse();

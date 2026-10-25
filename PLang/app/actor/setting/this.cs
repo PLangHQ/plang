@@ -45,7 +45,7 @@ public sealed class @this : IDisposable
     // The settings changed somewhere: every setting built before this is stale.
     private void Move() => System.Threading.Interlocked.Increment(ref Root._version);
 
-    // The settings' own store — /.data/setting/data.sqlite, in memory while testing under this app's id — opened by the
+    // The settings' own store — /.data/setting/data.sqlite, in memory while testing, a database of its own — opened by the
     // default store provider, asked by the root of the chain at its first use; every layer reaches it through its root.
     private global::app.store.@this Store => Root._store.Value;
     private readonly Lazy<global::app.store.@this> _store;
@@ -60,7 +60,7 @@ public sealed class @this : IDisposable
             var (provider, error) = context.App.Code.Get<global::app.store.code.IStore>();
             if (provider == null) throw new global::app.error.AppException(error!);
             return provider.Open(global::app.type.item.path.@this.Resolve("/" + global::app.store.@this.Folder + "/setting/data.sqlite", context),
-                () => context.App.Mode.Value == global::app.Mode.Test ? $"setting-{context.App.Id}" : null,
+                () => context.App.Mode.Value == global::app.Mode.Test,
                 context);
         });
     }

@@ -17,9 +17,11 @@ public sealed class @this : global::app.store.@this
 
     protected override string Kind => "sqlite";
 
-    // Where the database lives: in memory under the name this answers at the first verb, else in this file.
+    // Where the database lives: in memory when this answers yes at the first verb, else in this file.
     private readonly global::app.type.item.path.@this? _file;
-    private readonly System.Func<string?> _memory;
+    private readonly System.Func<bool> _memory;
+    // The in-memory database's name: the store's own, made with it, so no other store reaches it.
+    private readonly string _name = "store-" + System.Guid.NewGuid().ToString("N");
     // The store's own context — system-owned. Its result Data is born from it, and its rows are written
     // and read (verified) with it.
     private readonly actor.context.@this Context;
@@ -35,10 +37,10 @@ public sealed class @this : global::app.store.@this
     private bool _disposed;
 
     /// <summary>
-    /// A store in <paramref name="file"/>, or in memory under the name <paramref name="memory"/> answers when
-    /// the store opens (null: the file). Nothing is opened here — the first verb opens it.
+    /// A store in <paramref name="file"/>, or in memory, a database of its own, when <paramref name="memory"/> answers
+    /// yes as the store opens. Nothing is opened here — the first verb opens it.
     /// </summary>
-    public @this(global::app.type.item.path.@this? file, System.Func<string?> memory, actor.context.@this context)
+    public @this(global::app.type.item.path.@this? file, System.Func<bool> memory, actor.context.@this context)
         : base(context.App.type.list[new global::app.type.@this("store", "sqlite"), context])
     {
         _file = file;
@@ -47,11 +49,10 @@ public sealed class @this : global::app.store.@this
     }
 
     /// <summary>
-    /// An in-memory store. The database lives as long as this instance.
-    /// Different names produce isolated databases.
+    /// An in-memory store, a database of its own. The database lives as long as this instance.
     /// </summary>
-    public static @this InMemory(string name, actor.context.@this context)
-        => new @this(null, () => name, context);
+    public static @this InMemory(actor.context.@this context)
+        => new @this(null, () => true, context);
 
     // The database, opened once — every verb awaits the same open.
     private Task<string> Opened()
@@ -59,13 +60,17 @@ public sealed class @this : global::app.store.@this
         lock (_gate) return _opened ??= Open();
     }
 
+    // Whether a read here can only find nothing: an in-memory database of the store's own that nothing has opened, so
+    // nothing has written to it — a read answers empty without opening it.
+    private bool IsBlank => System.Threading.Volatile.Read(ref _opened) == null && _memory();
+
     private async Task<string> Open()
     {
-        if (_memory() is { } name)
+        if (_memory())
         {
             var memory = new SqliteConnectionStringBuilder
             {
-                DataSource = name,
+                DataSource = _name,
                 Mode = SqliteOpenMode.Memory,
                 Cache = SqliteCacheMode.Shared
             }.ToString();
@@ -115,6 +120,7 @@ public sealed class @this : global::app.store.@this
 
     public override async Task<data.@this<T>> Get<T>(string table, string key)
     {
+        if (IsBlank) return Context.Ok<T>(default!);
         try
         {
             var connectionString = await Opened();
@@ -139,6 +145,7 @@ public sealed class @this : global::app.store.@this
 
     public override async Task<data.@this<global::app.type.item.list.@this>> GetAll<T>(string table)
     {
+        if (IsBlank) return Context.Ok<global::app.type.item.list.@this>(new global::app.type.item.list.@this(Context.App.type.list["list"]));
         try
         {
             var connectionString = await Opened();
@@ -228,6 +235,7 @@ public sealed class @this : global::app.store.@this
 
     public override async Task<data.@this<global::app.type.item.@bool.@this>> Exists(string table, string key)
     {
+        if (IsBlank) return Context.Ok<global::app.type.item.@bool.@this>(false);
         try
         {
             var connectionString = await Opened();
@@ -251,6 +259,7 @@ public sealed class @this : global::app.store.@this
 
     public override async Task<data.@this<global::app.type.item.list.@this>> Tables()
     {
+        if (IsBlank) return Context.Ok<global::app.type.item.list.@this>(new global::app.type.item.list.@this(Context.App.type.list["list"]));
         try
         {
             var connectionString = await Opened();

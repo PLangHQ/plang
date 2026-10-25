@@ -181,7 +181,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public ICache Cache { get; internal set; } = new global::app.module.cache.Memory();
 
     /// <summary>
-    /// The app's store — <c>.data/data.sqlite</c> (in memory while testing, under this app's id). One per
+    /// The app's store — <c>.data/data.sqlite</c> (in memory while testing, a database of its own). One per
     /// app — actors share it; its owners keep their tables (<c>settings</c>, setup's steps, the LLM cache, …).
     /// Opened by the default store provider at its first use, so an app that never touches it pays for no file, and a
     /// provider loaded before then is the one it keeps.
@@ -341,9 +341,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         action = type.list["action"];
         channel = type.list["channel"];
 
-        // The store: where it lives is decided when it opens — in memory while testing, scoped by this app's id
-        // (per-test apps never share a database: SQLite's shared cache merges in-memory databases of one name),
-        // else its file.
+        // The store: where it lives is decided when it opens — in memory while testing, a database the store names
+        // itself (no two apps share one, whatever id they load), else its file.
         // an environment given at construction is this run's value of the app's setting
         if (environment != null)
         {
@@ -357,7 +356,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
             var (provider, error) = Code.Get<global::app.store.code.IStore>();
             if (provider == null) throw new global::app.error.AppException(error!);
             return provider.Open(global::app.type.item.path.@this.Resolve("/" + global::app.store.@this.Folder + "/data.sqlite", actor.list.System.Context),
-                () => Mode.Value == global::app.Mode.Test ? $"system-{Id}" : null,
+                () => Mode.Value == global::app.Mode.Test,
                 actor.list.System.Context);
         });
 
