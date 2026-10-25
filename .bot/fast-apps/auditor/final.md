@@ -177,3 +177,9 @@ Beyond B1 there is no new red name.
 - CLI path unchanged in shape: `Executor.cs:44` → `new origin.code(false)`, `Load()` reads `.build/app.pr`.
 - No removed package's namespace remains in source; `Microsoft.Data.Sqlite` 9.0.21 and `Newtonsoft.Json` 13.0.4 list no advisory.
 - The tree is clean after the sweep, `plang --test` and the bench (I removed what the bench wrote; `record.md` restored).
+
+## Update — B1 closed (0b770e18d, 2b685ce17)
+
+The coder skipped the two T1 probes with backlog 10's reason (`SubAppFullPassProbeTests.cs`) and added a comment at `image/this.cs` `Sized`
+(the ICC note, decision 96a); no behaviour changed. I re-ran `SubAppFullPassProbeTests`: 20 total, 0 failed. **Verdict now: PASS**, next: docs.
+B2 stays as the docs pass's first item (backlog.md section and the N19/N20 docs); it blocks no code.
