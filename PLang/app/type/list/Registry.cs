@@ -224,12 +224,9 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     /// A kind of the same name on that type is replaced.</summary>
     public void Add(global::app.type.kind.@this kind)
     {
-        foreach (var key in kind.Mime.Concat(kind.Extension))
-            foreach (var type in Items())
-                if (type.kind[key] is { } taken
-                    && !(ReferenceEquals(taken.Owner, kind.Owner) && string.Equals(taken.Name, kind.Name, StringComparison.OrdinalIgnoreCase)))
-                    throw new InvalidOperationException(Collision(key, taken, kind).Message);
-        if (Hold(kind) is { } refused) throw new global::app.error.AppException(refused);
+        // held, then the guard every format passes, as a loaded assembly's kinds are; no result to answer, so the
+        // refusal travels whole
+        if ((Hold(kind) ?? Guard()) is { } refused) throw new global::app.error.AppException(refused);
     }
 
     // Holds a kind (the startup scan calls it while loading), asked of the list that holds its type. Answers the
