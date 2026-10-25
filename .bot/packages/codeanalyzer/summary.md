@@ -1,15 +1,14 @@
 # codeanalyzer summary (packages)
 
-**Version:** v2
+**Version:** v3
 
-**What this is:** The packages branch (NuGet bumps, ImageSharp replaced by SkiaSharp, Nethereum and Newtonsoft replaced by BouncyCastle, Fluid.cs reshaped, native trims, ObpScan). v1 (review.md) failed on three small findings; v2 (review2.md) re-reads the coder's fixes at tip 1510726b5.
+**What this is:** The packages branch (NuGet bumps, SkiaSharp for ImageSharp, BouncyCastle for Nethereum/Newtonsoft, Fluid.cs reshaped, native trims, ObpScan). v1 FAIL (F1–F3), v2 FAIL (F4), v3 PASS.
 
-**What was done:** v1: every touched file read whole, 15 commits run (identical), llm goals once, tests red under mutation, bench in band. v2: F1 (a `code/Bitmap.cs` owns the screen's pixels), F2 (TIFF tests) and F3 (usings) are fixed. New finding F4: the window's decode thread now catches only `FormatException`, and Skia throws `System.Exception` on a PNG with a valid header and junk data (probed), which would end the host; wrap Skia's failure as `FormatException` in `Bitmap`'s reader and pin it in `PngTests`. Also: `Tools/Bench/run.sh` now rests 0 s by default, spends nothing on OpenAI, and says which parts to run for which diff (about 5 minutes whole).
+**What was done:** v1 read every touched file whole, ran the 15 commits (identical), the llm goals once, tests red under mutation, bench in band. v2 found F4 (Skia throws a plain Exception on a junk-data PNG; the decode thread then ends the host). v3: `Bitmap` answers every failed read as an AppException carrying BadFrame with the decoder's exception as its cause; Draw and the decode thread answer `ex.Error` whole; PngTests 3/3 with the probe PNG; `plang --test` 292 pass, 1 fail (the parent's). `Tools/Bench/run.sh` now rests 0 s, spends nothing on OpenAI, and runs the diff's parts (about 5 min).
 
-**Next:** the coder fixes F4; a short re-read of `Bitmap.cs` and `PngTests`, then the tester and security. Window.cs's `Move`/`Copy` are stored twice beside `Shown` (older, Windows-only): the architect rules fold or defer.
+**Next:** the tester and security. Window.cs's duplicate delta logic and QOI decoder are with Ingi (follow-up).
 
 **Code example:**
 ```csharp
-// the producer says what its failure is, once; both callers keep catch (FormatException)   screen/code/Bitmap.cs
-internal Bitmap(byte[] encoded)
+throw new global::app.error.AppException(error, cause);   // screen/code/Bitmap.cs: the producer says what its failure is, once
 ```

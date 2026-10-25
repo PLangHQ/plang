@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "F4 fixed at the producer: Bitmap answers every failed read as an AppException carrying BadFrame with the decoder exception as its cause; Draw and the decode thread answer ex.Error whole; PngTests 3/3 incl. the probe PNG; plang --test 292 pass, 1 fail (the parent's)." }

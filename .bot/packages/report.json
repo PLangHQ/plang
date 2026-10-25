@@ -145,6 +145,34 @@
         "health": "fail",
         "notes": "coder next for F4"
       }
+    },
+    {
+      "id": "d855ca24-3255-40b1-9fe1-0b469bf22271",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T12:51:40Z",
+      "timestamp_end": "2026-10-25T12:51:40Z",
+      "intent": "Re-read packages F4 fix (Bitmap throws AppException BadFrame)",
+      "before": {
+        "assumptions": "tip 1de0b78fa",
+        "risk": "a bad frame ending the decode thread"
+      },
+      "plan": ".bot/packages/codeanalyzer/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/packages/codeanalyzer/review3.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "PASS: producer answers every failed read as AppException BadFrame with the cause; consumers answer ex.Error whole; PngTests 3/3."
+        }
+      ],
+      "after": {
+        "status": "review3 written",
+        "health": "pass",
+        "notes": "tester and security next"
+      }
     }
   ]
 }
