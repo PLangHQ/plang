@@ -51,7 +51,7 @@ public class OsTrustTests : IDisposable
     {
         var goal = await Goal(Os(name), steps);
         goal.Path = global::app.type.item.path.file.@this.Resolve(Os(name), Context);
-        await Assert.That(goal.Folder!.Absolute.StartsWith(_app.filesystem.os.Absolute.TrimEnd('/') + "/", StringComparison.Ordinal))
+        await Assert.That(goal.Folder!.IsUnder(_app.filesystem.os).Value)
             .IsTrue().Because("the goal is one of plang's own, under the os folder");
         return goal;
     }
