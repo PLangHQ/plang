@@ -18,7 +18,7 @@ public sealed class @this : browser.@this
     private readonly cdp.session.@this _page;
     private readonly string _format;
     // sends a line up beside the frames (the pointer the page wants)
-    private Func<string, Task>? _emit;
+    private Func<global::app.type.item.text.@this, Task>? _emit;
     private string _lastCursor = "default";
     private long _lastCursorAsk;
     private int _cursorBusy;
@@ -60,13 +60,13 @@ public sealed class @this : browser.@this
             });
             if (onFrame != null)
             {
-                Task Deliver(string line) => global::app.module.on.code.Gate.Call(onFrame,
-                    new global::app.data.@this("!data", new global::app.type.item.text.@this(line,
-                        context.App.type.list[typeof(global::app.type.item.text.@this)]), context: context), context);
+                Task Deliver(global::app.type.item.text.@this line) => global::app.module.on.code.Gate.Call(onFrame,
+                    new global::app.data.@this("!data", line, context: context), context);
                 browser._emit = Deliver;
                 _ = Task.Run(async () =>
                 {
-                    await foreach (var line in frames.Reader.ReadAllAsync()) await Deliver(line);
+                    await foreach (var line in frames.Reader.ReadAllAsync())
+                        await Deliver(new global::app.type.item.text.@this(line, context.App.type.list[typeof(global::app.type.item.text.@this)]));
                 });
             }
             browser.Watched();
@@ -199,8 +199,10 @@ public sealed class @this : browser.@this
                 var css = value.GetString()!;
                 if (css == _lastCursor) return;
                 _lastCursor = css;
-                // the cursor goes up as its line, beside the frames
-                if (await new cursor.@this(css).Line(context) is { } line) await _emit!(line);
+                // the cursor goes up as its line, beside the frames; a line that couldn't be written leaves the pointer
+                // as it was
+                var line = await new cursor.@this(css).Line(context);
+                if (line.Success) await _emit!((await line.Value())!);
             }
             catch (Exception ex) when (ex is TimeoutException or JsonException or IOException or InvalidOperationException)
             {
