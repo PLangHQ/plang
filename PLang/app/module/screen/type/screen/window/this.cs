@@ -1,14 +1,12 @@
 using app.error;
 using app.Utils;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using Native = global::app.module.screen.type.screen.window.code.Window;
 using Text = global::app.type.item.text.@this;
 
 namespace app.module.screen.type.screen.window;
 
 /// <summary>
-/// A screen that is a window on the host (Windows): frames drawn into it are decoded (JPEG/PNG, ImageSharp) off the
+/// A screen that is a window on the host (Windows): frames drawn into it are decoded (JPEG/PNG, SkiaSharp) off the
 /// window's thread and shown as BGRA pixels; a message from PlangOS's screen goes to it whole. What the person does in
 /// it reaches OnInput one at a time per app (on.code.Gate), newest last — input and the clipboard as values, the rest
 /// as text; moves are thinned in the window. Closing it calls OnClose.
@@ -133,7 +131,7 @@ public sealed class @this : screen.@this
         {
             if (Pixels(encoded) is { } px) _window.Present(px.bgra, px.w, px.h);
         }
-        catch (Exception ex) when (ex is UnknownImageFormatException or InvalidImageContentException)
+        catch (FormatException ex)
         {
             return context.Error(new ActionError("Not an image: " + ex.Message, "BadFrame", 400));
         }
@@ -149,12 +147,18 @@ public sealed class @this : screen.@this
     private static (byte[] bgra, int w, int h)? Decode(string line)
         => Frame(line) is { } encoded ? Pixels(encoded) : null;
 
-    private static (byte[] bgra, int w, int h)? Pixels(byte[] encoded)
+    // the frame's encoded picture (PNG, JPEG) as straight BGRA; bytes no image format reads are a FormatException.
+    // Internal: a window is made only over a native Win32 window (Start), so a test reaches the decode here, not
+    // through Draw.
+    internal static (byte[] bgra, int w, int h)? Pixels(byte[] encoded)
     {
-        using var image = Image.Load<Bgra32>(encoded);
-        var bgra = new byte[image.Width * image.Height * 4];
-        image.CopyPixelDataTo(bgra);
-        return (bgra, image.Width, image.Height);
+        // straight (unpremultiplied) BGRA, as the window shows it
+        var info = SkiaSharp.SKBitmap.DecodeBounds(encoded);
+        if (info.Width <= 0 || info.Height <= 0) throw new FormatException("the frame is no image format");
+        using var decoded = SkiaSharp.SKBitmap.Decode(encoded,
+            new SkiaSharp.SKImageInfo(info.Width, info.Height, SkiaSharp.SKColorType.Bgra8888, SkiaSharp.SKAlphaType.Unpremul))
+            ?? throw new FormatException("the frame's pixels can't be read");
+        return (decoded.Bytes, decoded.Width, decoded.Height);
     }
 
     // "key":"value" from a one-line JSON message, without parsing a 200 KB frame line
