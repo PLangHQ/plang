@@ -43,11 +43,12 @@ public sealed class @this : screen.@this
 
     // PlangOS's errors (what its desktop lists, sent up through the shell's errorlog channel), kept in errors.jsonl in
     // the app's folder — read on the host, no copying from the screen. Each a record: when, where, the error itself,
-    // written by the json writer, one per line; kept across starts.
+    // written in the file's own format (JSON Lines, a record a line); kept across starts.
     internal static async Task Kept(System.Threading.Channels.ChannelReader<byte[]> errors, global::app.actor.context.@this context)
     {
         var file = global::app.type.item.path.file.@this.Resolve("/errors.jsonl", context);
         var json = context.App.type.list.Mime("application/json");
+        var kind = file.Kind(context).kind;
         await foreach (var sent in errors.ReadAllAsync())
         {
             // what came up is what the shell wrote through its json channel: read back through the json kind; what
@@ -60,10 +61,17 @@ public sealed class @this : screen.@this
                 .Set("where", where.Success ? await where.Value() : null)
                 .Set("error", error.Success && await error.Value() is { IsNull: false } what ? what : (Text)System.Text.Encoding.UTF8.GetString(sent));
             var value = new global::app.data.@this("error", record, context: context);
+            // a background loop: nobody to answer, so a record that isn't kept leaves a sign on the debug channel
             using var stream = new MemoryStream();
-            if (!(await json.Encode(stream, value, context)).Success) continue;
-            var line = System.Text.Encoding.UTF8.GetString(stream.ToArray()) + "\n";
-            await (await (await file.Exists(context)).ToBooleanAsync() ? file.Append(line, context) : file.WriteText(line, context));
+            var encoded = await kind.Encode(stream, value, context);
+            if (!encoded.Success)
+            {
+                await (context.App.Debug?.Write($"errors.jsonl: an error record wasn't written ({record}): {encoded.Error?.Message}") ?? Task.CompletedTask);
+                continue;
+            }
+            var appended = await file.Append(System.Text.Encoding.UTF8.GetString(stream.ToArray()), context);
+            if (!appended.Success)
+                await (context.App.Debug?.Write($"errors.jsonl: an error record wasn't kept ({record}): {appended.Error?.Message}") ?? Task.CompletedTask);
         }
     }
 

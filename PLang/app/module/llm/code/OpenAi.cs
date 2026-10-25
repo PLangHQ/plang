@@ -528,9 +528,10 @@ public sealed class OpenAi : ILlm
             result = "";
         else
         {
-            // The tool result writes ITSELF as json — never STJ on the item (property bag).
+            // The tool result writes ITSELF as text — a message's content: a leaf bare, a structure as compact json
+            // (tokens cost) — never STJ on the item (property bag).
             using var ms = new System.IO.MemoryStream();
-            await context.App.type.list["item"].kind["json"]!.Encode(ms, ended, context);
+            await context.App.type.list["text"].kind.Encode(ms, ended, context);
             result = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         }
 

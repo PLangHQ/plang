@@ -24,7 +24,7 @@ public class QueryToolTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_llm_tools_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).Testing();
+        _app = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).Testing().Compact();
         _handler = LlmTestHelper.SetupMockHttp(_app);
     }
 
@@ -114,6 +114,31 @@ public class QueryToolTests
 
         await result.IsSuccess();
         await Assert.That(_handler.CallCount).IsEqualTo(2);
+    }
+
+    // A tool's result is a message's text: a leaf bare, a structure as compact json — whatever json's own layout.
+    [Test]
+    public async Task Query_ToolResult_IsText_ALeafBare_AStructureCompact()
+    {
+        Ctx.Setting.Set("app.type.kind.json.setting.layout", "formatted");
+        _app.goal.list.Add(Make.Goal(Ctx, "Leaf", Make.Step("return", Make.Action(Ctx, "goal", "return", ("Data", "sunny")))));
+        _app.goal.list.Add(Make.Goal(Ctx, "Structure", Make.Step("return", Make.Action(Ctx, "goal", "return",
+            ("Data", new Dictionary<string, object?> { ["a"] = 1L, ["b"] = new List<object?> { 1L, 2L } })))));
+        int callIndex = 0;
+        _handler.Handler = _ => Task.FromResult(LlmTestHelper.JsonResponse(++callIndex == 1
+            ? LlmTestHelper.MakeToolCallResponse(("call_1", "Leaf", "{}"), ("call_2", "Structure", "{}"))
+            : LlmTestHelper.MakeCompletionResponse("done")));
+
+        var action = new query(Ctx) { Message = new List<LlmMessage> { new LlmMessage { Role = "user", Content = "both" } }.ToListData<LlmMessage>(Ctx),
+            Tool = new List<global::app.goal.step.action.@this> { Make.Tool(Ctx, "Leaf"), Make.Tool(Ctx, "Structure") }.ToListData(Ctx) };
+        await action.Attach(null, Ctx);
+        await (await action.Start()).IsSuccess();
+
+        var second = System.Text.Json.Nodes.JsonNode.Parse(await _handler.AllRequests[1].Content!.ReadAsStringAsync())!;
+        var results = second["messages"]!.AsArray().Where(m => m!["role"]!.GetValue<string>() == "tool")
+            .ToDictionary(m => m!["tool_call_id"]!.GetValue<string>(), m => m!["content"]!.GetValue<string>());
+        await Assert.That(results["call_1"]).IsEqualTo("sunny");
+        await Assert.That(results["call_2"]).IsEqualTo("{\"a\":1,\"b\":[1,2]}");
     }
 
     [Test]
@@ -666,7 +691,7 @@ public class QueryToolTests
 
         await result.IsSuccess();
         var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
-        await Assert.That(secondReq).Contains("userId\\u0027 is not an argument of GetWeather");
+        await Assert.That(secondReq).Contains("userId' is not an argument of GetWeather");
     }
 
     #endregion

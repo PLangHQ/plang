@@ -70,7 +70,7 @@ public class TableTypeTests
     // as json. (It was refused: NoWireContract.) Untouched, the read is still its raw text and relays that.
     [Test] public async Task TableCsv_WrittenThroughJsonWriter_IsTheRows()
     {
-        await using var app = NewApp();
+        await using var app = NewApp().Compact();
         var ctx = app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.FromRaw(Csv, ctx.App.type.list[new type("table", "csv"), ctx], ctx, "t");
         await Assert.That(await d.Value()).IsTypeOf<table>();

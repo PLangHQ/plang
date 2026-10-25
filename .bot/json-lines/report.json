@@ -1,0 +1,108 @@
+{
+  "branch": "json-lines",
+  "sessions": [
+    {
+      "id": "6d1f7a52-3c84-4e0b-9a17-2f5e8c41b903",
+      "bot": "architect",
+      "timestamp_start": "2026-10-25T21:30:00Z",
+      "timestamp_end": "2026-10-25T21:55:00Z",
+      "intent": "Cut json-lines from runtime2 and write its plan: a jsonl kind, the line writers on it, then the json format setting.",
+      "before": {
+        "assumptions": "The json kind writes compact today; errors.jsonl, the headless cursor line and a framed json channel write one record per line; size and duration show how a type holds a setting.",
+        "risk": "A formatted default breaks every reader that splits json by lines; a list written as jsonl needs a locked addition to round-trip."
+      },
+      "plan": ".bot/json-lines/architect/plan/start.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/type/item/kind/json/this.cs",
+            "PLang/app/module/screen/type/screen/window/this.cs",
+            "PLang/app/module/browser/type/browser/headless/this.cs",
+            "PLang/app/module/screen/type/screen/display/this.cs",
+            "PLang/app/module/screen/type/screen/display/code/Errorlog.cs",
+            "PLang/app/channel/type/stream/this.cs",
+            "PLang/app/type/item/this.cs",
+            "PLang/app/goal/this.Item.cs",
+            "PLang/app/module/llm/code/Saved.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read json's Encode and Parse, each json line writer, the framed channel's end, item's per-writer virtuals and the .pr writer's options."
+        },
+        {
+          "paths": [
+            ".bot/json-lines/architect/plan/start.md",
+            ".bot/json-lines/architect/plan/start.goal",
+            ".bot/json-lines/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "medium",
+          "context": "Three stages. The errorlog channel stays json (framed by Flush). The list-as-lines write is a locked addition, asked of Ingi; without it a list round-trips as one array line."
+        }
+      ],
+      "after": {
+        "status": "plan drafted; waiting on Ingi's answer on the list write, then the coder's read of the plan",
+        "health": "runtime2 at 0a178687b; json-lines cut from it",
+        "notes": "The six .llm.json files are already indented (recorded before Saved moved to path.Save); stage 3 rewrites them through plang's writer."
+      }
+    },
+    {
+      "id": "5c1c3348-85b0-45be-b3a6-87bfe233677a",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T22:59:52Z",
+      "timestamp_end": "2026-10-25T22:59:52Z",
+      "intent": "Review json-lines (0a178687b..9ed572965) and bench the touched parts",
+      "before": {
+        "assumptions": "coder tip 9ed572965",
+        "risk": "json Encode on every write; headless cursor shape change"
+      },
+      "plan": ".bot/json-lines/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/json-lines/codeanalyzer/review.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "FAIL: window Draw no longer sees the cursor item (traced, Windows not run); bench in band; mutations red."
+        }
+      ],
+      "after": {
+        "status": "review written",
+        "health": "fail",
+        "notes": "coder next (F1, F2)"
+      }
+    },
+    {
+      "id": "7b3ac734-11c3-4046-ae85-824b18d22c2b",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T23:05:38Z",
+      "timestamp_end": "2026-10-25T23:05:38Z",
+      "intent": "Re-review json-lines review 1 fixes",
+      "before": {
+        "assumptions": "coder tip db75159fd",
+        "risk": "cursor line shape; writer disposal"
+      },
+      "plan": ".bot/json-lines/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/json-lines/codeanalyzer/review2.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "PASS"
+        }
+      ],
+      "after": {
+        "status": "review2 written",
+        "health": "pass",
+        "notes": "tester next"
+      }
+    }
+  ]
+}

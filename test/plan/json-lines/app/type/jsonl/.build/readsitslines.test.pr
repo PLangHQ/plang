@@ -1,0 +1,231 @@
+{
+  "name": "Start",
+  "comment": "A .jsonl file reads as the list of its lines, each a json value.",
+  "step": [
+    {
+      "index": 0,
+      "text": "read file 'lines.jsonl', write to %lines%",
+      "line": {
+        "number": 3,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "lines.jsonl"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%lines%",
+              "variable": [
+                {
+                  "text": "%lines%",
+                  "code": [
+                    {
+                      "variable": "lines"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "file",
+                "kind": "jsonl"
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %lines.count% equals 3",
+      "line": {
+        "number": 4,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 3
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%lines.count%",
+              "variable": [
+                {
+                  "text": "%lines.count%",
+                  "code": [
+                    {
+                      "variable": "lines"
+                    },
+                    {
+                      "property": "count"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %lines[0].name% equals \"Ingi\"",
+      "line": {
+        "number": 5,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "Ingi"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%lines[0].name%",
+              "variable": [
+                {
+                  "text": "%lines[0].name%",
+                  "code": [
+                    {
+                      "variable": "lines"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %lines[2]% equals \"þrír\"",
+      "line": {
+        "number": 6,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "þrír"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%lines[2]%",
+              "variable": [
+                {
+                  "text": "%lines[2]%",
+                  "code": [
+                    {
+                      "variable": "lines"
+                    },
+                    {
+                      "index": {
+                        "number": 2
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "visibility": "Public",
+  "file": "ReadsItsLines.test.goal",
+  "hash": "fe441f8d39afee6c5159083168a640be39ff68d73d743c81c9f8389fdf5759c8"
+}

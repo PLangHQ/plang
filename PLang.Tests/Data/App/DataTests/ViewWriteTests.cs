@@ -6,7 +6,7 @@ namespace PLang.Tests.App.DataTests;
 /// </summary>
 public class ViewWriteTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/tmp/view-write-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
+    private readonly global::app.@this _app = new global::app.@this("/tmp/view-write-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing().Compact();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;

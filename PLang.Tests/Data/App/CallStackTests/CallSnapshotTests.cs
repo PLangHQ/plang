@@ -45,6 +45,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
     public async Task Call_Capture_WritesItsExactShape()
     {
         var (app, action) = BuildLiveAction("G", "a step");
+        app.Compact();
         var user = app.actor.list.User.Context;
         await using var call = app.actor.list.User.Context.call.Push(action, await app.actor.list.User.Context.call.Setting());
         var snap = new Snapshot(user);

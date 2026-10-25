@@ -31,9 +31,11 @@ public class LlmAnswersFileTests
 
     // one run: an app of its own, the test's answers in front of a mock OpenAI that answers `answer`; what the query
     // got, how many requests reached OpenAI, and what was sent
-    private async Task<(string? Answer, MockHttpMessageHandler OpenAi)> Run(string question, string answer, string? key = null)
+    private async Task<(string? Answer, MockHttpMessageHandler OpenAi)> Run(string question, string answer, string? key = null,
+        bool compact = false)
     {
         await using var app = new global::app.@this(_root, global::PLang.Tests.Parent.Actor).Testing();
+        if (compact) app.Compact();
         var openAi = LlmTestHelper.SetupMockHttp(app);
         openAi.Handler = _ => Task.FromResult(LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse(answer)));
         var context = app.actor.list.User.Context;
@@ -68,6 +70,33 @@ public class LlmAnswersFileTests
         var second = await Run("What is 2+2?", "not asked");
         await Assert.That(second.OpenAi.CallCount).IsEqualTo(0).Because("the file holds the question");
         await Assert.That(second.Answer).IsEqualTo("four");
+    }
+
+    // the file written in one json layout and read with the other: a request matches by what it is, never by its layout
+    private async Task Relaid(bool indented)
+        => await System.IO.File.WriteAllTextAsync(File, System.Text.Json.Nodes.JsonNode.Parse(await System.IO.File.ReadAllTextAsync(File))!
+            .ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = indented }));
+
+    [Test]
+    public async Task ACompactFile_IsServed_WhenFormatted()
+    {
+        await Run("What is 2+2?", "four");
+        await Relaid(indented: false);
+
+        var formatted = await Run("What is 2+2?", "not asked");
+        await Assert.That(formatted.OpenAi.CallCount).IsEqualTo(0).Because("a compact file holds the question");
+        await Assert.That(formatted.Answer).IsEqualTo("four");
+    }
+
+    [Test]
+    public async Task AFormattedFile_IsServed_WhenCompact()
+    {
+        await Run("What is 2+2?", "four");
+        await Relaid(indented: true);
+
+        var compact = await Run("What is 2+2?", "not asked", compact: true);
+        await Assert.That(compact.OpenAi.CallCount).IsEqualTo(0).Because("a formatted file holds the question");
+        await Assert.That(compact.Answer).IsEqualTo("four");
     }
 
     [Test]

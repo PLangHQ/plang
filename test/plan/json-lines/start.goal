@@ -1,0 +1,34 @@
+/ json-lines: plang's json is written formatted by default, so what writes one record per line writes JSON Lines.
+/ This goal is the plan's index and its proof: each stage is a goal, each comment a behaviour we want, and the step
+/ under it runs the test that proves it. Each test goes red before its stage. The text is start.md.
+Start
+- call Stage1
+- call Stage2
+- call Stage3
+
+Stage1
+/ a .jsonl file reads as the list of its lines, each a json value — plang test /plan/json-lines/app/type/jsonl/ReadsItsLines
+- call /plan/json-lines/app/type/jsonl/ReadsItsLines
+/ a list saved to .jsonl and read back is the same list, one element per line — plang test RoundTrip
+- call /plan/json-lines/app/type/jsonl/RoundTrip
+/ a dict is one record, never its entries; a text holding a newline stays one line — C# test JsonlKindTests
+/ (ADict_IsOneRecord, ANewlineInAValue_StaysOneLine)
+/ CR LF lines read, a blank line is skipped, a line that is no json is refused naming its number — C# test
+/ JsonlKindTests (CrLfLines_Read, ABlankLine_IsSkipped, ABadLine_IsRefused_NamingItsNumber)
+
+Stage2
+/ errors.jsonl keeps one record per line with json formatted — C# test ErrorsKeptTests
+/ (AnErrorThatCameUp_IsKept_AsARecordPerLine)
+/ the cursor line is one compact text line beside the frames, found by the window — C# test HeadlessCursorTests
+/ (TheCursor_IsOneCompactLine_WithJsonFormatted, TheWindow_FindsTheCursorInTheLine)
+
+Stage3
+/ json is written formatted by default, compact when the setting says — plang test
+/ /plan/json-lines/app/type/json/LayoutSetting
+- call /plan/json-lines/app/type/json/LayoutSetting
+/ the setting never reaches plang's wire, a digest or a .pr — C# test JsonLayoutSettingTests
+/ (TheWire_IsUntouched, ADigest_IsUntouched, APr_IsUntouched)
+/ an llm tool result is a message's text: a leaf bare, a structure compact whatever json's layout — C# test
+/ QueryToolTests (Query_ToolResult_IsText_ALeafBare_AStructureCompact)
+/ a saved llm answer is served whichever way its file was written — C# test LlmAnswersFileTests
+/ (ACompactFile_IsServed_WhenFormatted, AFormattedFile_IsServed_WhenCompact)

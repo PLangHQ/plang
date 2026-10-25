@@ -7,7 +7,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
 {
     // Born-with-context: the test's Data is born from this app's user context.
     private readonly global::app.@this app = new global::app.@this(
-        "/tmp/jss-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
+        "/tmp/jss-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing().Compact();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private global::app.actor.context.@this Ctx => app.actor.list.User.Context;
@@ -33,13 +33,14 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
         await Assert.That(json).IsEqualTo("\"hello\"");
     }
 
-    // Every character as itself — an Icelandic name is not \u-escaped; what a page reads as markup still is.
+    // Every character as itself — an Icelandic name, and what a page reads as markup too: json is no page (the
+    // `| json` filter makes it safe for one).
     [Test]
-    public async Task Serialize_NonAscii_IsWrittenAsItself_MarkupStillEscaped()
+    public async Task Serialize_EveryCharacter_IsWrittenAsItself()
     {
         var json = (await Json.Serialize(app.Ok("Þórður — <b>&'+"), Ctx).Value())!.Clr<string>()!;
 
-        await Assert.That(json).IsEqualTo("\"Þórður — \\u003Cb\\u003E\\u0026\\u0027\\u002B\"");
+        await Assert.That(json).IsEqualTo("\"Þórður — <b>&'+\"");
     }
 
     [Test]

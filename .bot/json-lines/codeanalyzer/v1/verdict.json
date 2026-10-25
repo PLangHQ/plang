@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "F1: the headless cursor is now a cursor item, but the Windows window's Draw only reads the cursor from a Text line, so the pointer is silently ignored; F2 a creative name. Rest clean, bench in band." }

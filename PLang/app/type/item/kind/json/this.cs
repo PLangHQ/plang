@@ -8,7 +8,8 @@ namespace app.type.item.kind.json;
 /// once into a plang value through <see cref="Parse"/> (an object into a dict, an array into a list, a scalar
 /// into its native) — no <c>JsonElement</c> carrier, no navigator.
 /// </summary>
-public sealed class @this : global::app.type.kind.@this<global::app.type.item.@this>
+public sealed class @this : global::app.type.kind.@this<global::app.type.item.@this>,
+    global::app.type.item.setting.ISetting<setting.@this>
 {
     public @this(global::app.type.@this owner) : base("json", owner) { }
 
@@ -38,20 +39,23 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
         global::app.type.kind.@this? format = null)
         => new source(raw, type, this, origin, variable, built);
 
-    // Every character written as itself (Icelandic letters, "—"); the ones a page reads as markup (< > & ' +)
-    // still escaped, as json in an HTML page needs.
-    private readonly System.Text.Encodings.Web.JavaScriptEncoder _encoder
-        = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All);
-
     /// <summary>json content written: the value alone, as json — no Data around it (the type is inferred on
-    /// read). The value writes itself through the json writer.</summary>
+    /// read), laid out as <c>%!app.type.kind.json.setting.layout%</c> says, every character as itself (json is no
+    /// page: the <c>| json</c> filter makes it safe for one). The value writes itself through the json writer.</summary>
     public override async System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
         global::app.data.@this data, global::app.actor.context.@this context, global::app.View view,
         System.Text.Encoding? encoding = null, System.Threading.CancellationToken ct = default)
     {
         try
         {
-            await using var utf8 = new Utf8JsonWriter(stream, new JsonWriterOptions { Encoder = _encoder });
+            var setting = await context.Setting.Get<setting.@this>();
+            await using var utf8 = new Utf8JsonWriter(stream, new JsonWriterOptions
+            {
+                Indented = setting.Layout.Value == layout.formatted,
+                // a line ends at LF on every OS, as a stream channel's does
+                NewLine = "\n",
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            });
             await data.Output(new global::app.type.item.kind.json.Writer(utf8, view, context));
             await utf8.FlushAsync(ct);
             return context.Ok();

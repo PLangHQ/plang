@@ -94,6 +94,7 @@ public class RenderTests : IDisposable
     [Test]
     public async Task Render_JsonFilter_WritesTheValueAsJson()
     {
+        _app.Compact();
         var context = _app.actor.list.User.Context;
         await context.Variable.Set("d", new Dictionary<string, object?> { ["a"] = 1, ["b"] = "Þór" });
         await context.Variable.Set("s", context.Text("50% of %x%"));

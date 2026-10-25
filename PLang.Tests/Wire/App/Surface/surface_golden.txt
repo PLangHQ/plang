@@ -1818,6 +1818,15 @@ class app.type.item.kind.json.Writer : app.type.format.IWriter
   Write(app.type.item.this value) : System.Threading.Tasks.ValueTask
   ctor(System.Text.Json.Utf8JsonWriter writer, app.View view, app.actor.context.this context)
 
+enum app.type.item.kind.json.layout [Choice, PlangType]
+  static const compact : app.type.item.kind.json.layout
+  static const formatted : app.type.item.kind.json.layout
+
+class app.type.item.kind.json.setting.this : app.type.item.setting.this
+  Layout : app.type.item.choice.this<app.type.item.kind.json.layout> { get; set; } [Default, Out, Store]
+  ctor(app.type.this type)
+  static Internal : System.Boolean { get; }
+
 class app.type.item.kind.json.source : app.type.item.source
   ctor(System.Object raw, app.type.this type, app.type.item.kind.json.this json, app.type.item.path.this origin = …, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable = …, System.Boolean built = …)
   override AsBooleanAsync(app.actor.context.this context) : System.Threading.Tasks.Task<System.Boolean>
@@ -1826,7 +1835,7 @@ class app.type.item.kind.json.source : app.type.item.source
   protected override Write(app.type.item.kind.json.Writer writer) : System.Threading.Tasks.ValueTask
   protected override Write(app.type.item.wire.kind.plang.Writer writer) : System.Threading.Tasks.ValueTask
 
-class app.type.item.kind.json.this : app.type.kind.this<app.type.item.this>
+class app.type.item.kind.json.this : app.type.kind.this<app.type.item.this>, app.type.item.setting.ISetting<app.type.item.kind.json.setting.this>
   ctor(app.type.this owner)
   override Compressible : System.Boolean { get; }
   override Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View view, System.Text.Encoding encoding = …, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
@@ -1839,6 +1848,44 @@ class app.type.item.kind.json.this : app.type.kind.this<app.type.item.this>
   override Parse(System.Object raw, app.actor.context.this ctx) : app.type.item.this
   override Read(System.Object obj, app.type.reader.ITypeReader reader, System.String kind, app.actor.context.this context) : System.Object
   override Report : System.String { get; }
+
+class app.type.item.kind.jsonl.Writer : System.IAsyncDisposable, app.type.format.IWriter
+  BeginArray(System.Int32 count) : System.Void
+  BeginObject() : System.Void
+  Bool(System.Boolean value) : System.Void
+  Bytes(System.Byte[] value, app.type.kind.this kind) : System.Void
+  Context : app.actor.context.this { get; }
+  DateTime(System.DateTime value) : System.Void
+  DateTimeOffset(System.DateTimeOffset value) : System.Void
+  Decimal(System.Decimal value) : System.Void
+  DisposeAsync() : System.Threading.Tasks.ValueTask
+  Double(System.Double value) : System.Void
+  EndArray() : System.Void
+  EndObject() : System.Void
+  Enum(System.Enum value) : System.Void
+  Float(System.Single value) : System.Void
+  Guid(System.Guid value) : System.Void
+  Int(System.Int32 value) : System.Void
+  Kind : app.type.kind.this { get; }
+  Long(System.Int64 value) : System.Void
+  Name(System.String name) : System.Void
+  Null() : System.Void
+  String(System.String value) : System.Void
+  TimeSpan(System.TimeSpan value) : System.Void
+  Value(System.Object normalized) : System.Void
+  View : app.View { get; }
+  Write(app.type.item.this value) : System.Threading.Tasks.ValueTask
+  ctor(System.IO.Stream stream, app.View view, app.actor.context.this context)
+
+class app.type.item.kind.jsonl.this : app.type.kind.this<app.type.item.this>
+  ctor(app.type.this owner)
+  override Compressible : System.Boolean { get; }
+  override Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View view, System.Text.Encoding encoding = …, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
+  override Extension : System.Collections.Generic.IReadOnlyList<System.String> { get; }
+  override IsText : System.Boolean { get; }
+  override Mime : System.Collections.Generic.IReadOnlyList<System.String> { get; }
+  override Open(System.String characters, app.actor.context.this context) : app.data.this
+  override Parse(System.Object raw, app.actor.context.this ctx) : app.type.item.this
 
 class app.type.item.kind.list.this : app.type.kind.this<app.type.item.this>
   ctor(app.type.this owner)
@@ -1941,6 +1988,7 @@ class app.type.item.list.this : app.type.item.this, app.type.item.ICreate<app.ty
   protected Slots() : System.Collections.Generic.IEnumerable<System.Object>
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
+  protected override Write(app.type.item.kind.jsonl.Writer writer) : System.Threading.Tasks.ValueTask
   protected virtual Admit(System.Object slot) : System.Void
   protected virtual Admit(app.type.item.list.this other) : System.Void
   static Alias : System.Collections.Generic.IReadOnlyList<System.String> { get; }
@@ -2749,6 +2797,7 @@ abstract class app.type.item.this : app.data.IBooleanResolvable, app.type.item.I
   protected virtual Write(app.goal.step.action.formal.Writer writer) : System.Threading.Tasks.ValueTask
   protected virtual Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   protected virtual Write(app.type.item.kind.json.Writer writer) : System.Threading.Tasks.ValueTask
+  protected virtual Write(app.type.item.kind.jsonl.Writer writer) : System.Threading.Tasks.ValueTask
   protected virtual Write(app.type.item.text.Writer writer) : System.Threading.Tasks.ValueTask
   protected virtual Write(app.type.item.wire.kind.plang.Writer writer) : System.Threading.Tasks.ValueTask
   static Create(System.Object raw, app.actor.context.this context) : app.type.item.this
@@ -3082,6 +3131,7 @@ class app.type.kind.this : app.type.this
   override IsClosed : System.Boolean { get; }
   override Offers(app.goal.step.this step) : System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<app.type.item.this>>
   override ToString() : System.String
+  protected override Setting(app.data.this parent) : System.Threading.Tasks.ValueTask<app.data.this>
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   protected virtual Owner : app.type.this { get; }
   type(app.actor.context.this context) : app.type.this
@@ -3158,6 +3208,7 @@ class app.type.node.current.this<T, L> : app.type.node.this<T, L>
 
 class app.type.node.root.this : app.type.node.this<app.type.this, app.type.list.this>
   ctor(app.this app)
+  override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
 
 abstract class app.type.node.this : app.type.item.this [PlangType]
@@ -3502,6 +3553,8 @@ type app.type.item.duration.setting
 
 type app.type.item.input.modifier.list
   .list : list<modifier>
+
+type app.type.item.kind.json.setting
 
 type app.type.item.note
   .line : list<app.type.item.note.line>

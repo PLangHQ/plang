@@ -61,11 +61,11 @@ public class KindListTests : System.IAsyncDisposable
         await Assert.That(internalByKind["json"]).IsFalse();
     }
 
-    [Test] public async Task ItemKinds_AreJsonListDictAndReflection()
+    [Test] public async Task ItemKinds_AreJsonJsonlListDictAndReflection()
     {
         var ctx = app.actor.list.User.Context;
         var kinds = ctx.App.type.list["item"].kind["json"]!.list(ctx).Items().Select(t => t.kind.Name).ToList();
-        await Assert.That(kinds).IsEquivalentTo(new[] { "json", "list", "dict", "*" });
+        await Assert.That(kinds).IsEquivalentTo(new[] { "json", "jsonl", "list", "dict", "*" });
     }
 
     [Test] public async Task AFormatKind_IsAKindOfTheTypeThatReadsIt()

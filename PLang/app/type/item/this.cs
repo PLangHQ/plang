@@ -41,40 +41,40 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public static @this Create(object? raw, global::app.actor.context.@this context)
     {
         if (raw is null) return context.App.type.list["null"].Empty(context);
-        if (raw is @this already) return already;
+        if (raw is @this item) return item;
         if (raw is global::app.data.@this)
             throw new System.InvalidOperationException(
                 "A bare Data may not be stored as a value — return the inner value via its own factory, "
                 + "never the Data wrapper.\n" + System.Environment.StackTrace);
 
         // A sequence of Data / native items narrows to a native list, preserving the instances.
-        if (raw is System.Collections.Generic.IEnumerable<global::app.data.@this> dataSeq)
-            return new global::app.type.item.list.@this(dataSeq, context.App.type.list["list"]);
-        if (raw is System.Collections.Generic.IEnumerable<@this> itemSeq)
-            return new global::app.type.item.list.@this(itemSeq, context.App.type.list["list"]);
-        if (raw is System.Collections.Generic.List<object?> objList)
-            return new global::app.type.item.list.@this(objList, context.App.type.list["list"]);
-        if (raw is System.Collections.Generic.Dictionary<string, object?> objDict)
-            return new global::app.type.item.dict.@this(objDict, context.App.type.list["dict"]);
+        if (raw is System.Collections.Generic.IEnumerable<global::app.data.@this> data)
+            return new global::app.type.item.list.@this(data, context.App.type.list["list"]);
+        if (raw is System.Collections.Generic.IEnumerable<@this> items)
+            return new global::app.type.item.list.@this(items, context.App.type.list["list"]);
+        if (raw is System.Collections.Generic.List<object?> list)
+            return new global::app.type.item.list.@this(list, context.App.type.list["list"]);
+        if (raw is System.Collections.Generic.Dictionary<string, object?> dictionary)
+            return new global::app.type.item.dict.@this(dictionary, context.App.type.list["dict"]);
         // A non-generic container narrows the same way its generic sibling above does — build the
         // native dict/list DIRECTLY from its entries (store raw, type on read), no STJ round-trip.
-        if (raw is System.Collections.IDictionary idict)
+        if (raw is System.Collections.IDictionary entries)
         {
-            var d = new System.Collections.Generic.Dictionary<string, object?>();
-            foreach (System.Collections.DictionaryEntry e in idict)
-                d[e.Key?.ToString() ?? ""] = e.Value;
-            return new global::app.type.item.dict.@this(d, context.App.type.list["dict"]);
+            var dict = new System.Collections.Generic.Dictionary<string, object?>();
+            foreach (System.Collections.DictionaryEntry entry in entries)
+                dict[entry.Key?.ToString() ?? ""] = entry.Value;
+            return new global::app.type.item.dict.@this(dict, context.App.type.list["dict"]);
         }
         // Any remaining enumerable — an IList, an IReadOnlyList<T> (a domain X.list like warning.list),
         // an array, a HashSet<T> — narrows to a native plang list (store raw, type on read). string is
         // IEnumerable<char> but a scalar; byte[] is bytes; a dict / Data-or-item sequence was handled
         // above. Without this a read-only domain collection would slip past narrowing to the entity
         // dispatch below, whose identity door answers "list" but can't build it — an infinite rebuild.
-        if (raw is System.Collections.IEnumerable seq && raw is not string && raw is not byte[])
+        if (raw is System.Collections.IEnumerable sequence && raw is not string && raw is not byte[])
         {
-            var l = new System.Collections.Generic.List<object?>();
-            foreach (var e in seq) l.Add(e);
-            return new global::app.type.item.list.@this(l, context.App.type.list["list"]);
+            var elements = new System.Collections.Generic.List<object?>();
+            foreach (var element in sequence) elements.Add(element);
+            return new global::app.type.item.list.@this(elements, context.App.type.list["list"]);
         }
 
         // A CLR enum IS plang's choice (a closed named set) — build choice<T> for the enum. BEFORE
@@ -111,11 +111,11 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         }
         // The lazy-kind rebirth is for item's own kinds ({item, kind: json}): its characters ride to a fresh
         // source read through the kind.
-        if (type is { } d && !d.kind.IsEmpty && raw is @this leaf && leaf.RawText is { } chars)
-            return d.Make(chars, data.Context);
+        if (type is { kind.IsEmpty: false } && raw is @this leaf && leaf.RawText is { } characters)
+            return type.Make(characters, data.Context);
         if (raw is @this self) return self;
         if (raw is global::app.type.item.dict.@this or global::app.type.item.list.@this
-            && ((@this)raw).Clr(typeof(@this)) is @this rec) return rec;
+            && ((@this)raw).Clr(typeof(@this)) is @this item) return item;
         data.Fail(new global::app.error.@this(
             $"%{data.Name}% holds a {(raw as @this)?.Type.Name ?? raw?.GetType().Name} — 'item' cannot be created from it.",
             "CreateItemDeclined", 400));
@@ -912,6 +912,11 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// pasted); by default its own write.</summary>
     protected internal virtual System.Threading.Tasks.ValueTask Write(global::app.type.item.kind.json.Writer writer)
         => Write((global::app.type.format.IWriter)writer);
+
+    /// <summary>How this value looks in JSON Lines: its records — by default itself, one record (a dict is one line,
+    /// never its entries).</summary>
+    protected internal virtual System.Threading.Tasks.ValueTask Write(global::app.type.item.kind.jsonl.Writer writer)
+        => writer.Record(this);
 
     /// <summary>How this value looks in plang's own format, where it looks different there (characters that already
     /// are json are pasted); by default its own write.</summary>

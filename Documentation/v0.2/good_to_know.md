@@ -122,4 +122,5 @@ Notes are split across the topic docs below. Each section title maps to its doc 
 - A grant has three homes (standing, once, persisted); a failed "always" save is not a yes; only "nobody could answer" is a no → `filesystem-permission.md`
 - The command line refuses what it can't read (a value given to a mode word, a second goal, one name twice in different case) → `cli-changes.md`
 - A test's LLM answers live in a file beside it (`X.test.llm.json`); `--test.setting.llm=live` at the gate → `building_plang_tests.md`
+- json is written `formatted` or `compact` (`%!app.type.kind.json.setting.layout%`), every character as itself; `.jsonl` / `.ndjson` is one json value per line, a list a line per element; a kind is walkable at `%!app.type.kind.json%` → `type-system.md`
 - `date` / `datetime` / `time` ship an `ITypeReader` (`serializer/Reader.cs`) so `as date`/`as datetime`/`as time` literals materialize through `source` + the reader, not an eager `Convert` hook. → `type-system.md`
