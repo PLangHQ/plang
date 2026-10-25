@@ -341,8 +341,10 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
 
     /// <summary>The goal read from <paramref name="pr"/>, when it is held; null when it isn't. Found in one look: the
     /// list's index of its rows, which no edit leaves behind.</summary>
-    public goal.@this? this[global::app.type.item.path.@this pr] => Indexed(pr) as goal.@this;
+    public goal.@this? this[global::app.type.item.path.@this pr] => Row(pr) as goal.@this;
 
-    // A goal is found by the .pr it was read from.
+    // A goal is found by its .pr. It is a fact of the goal by the time the list holds it: its Path is set as it is
+    // made (the reader, a build) and a sub-goal, whose .pr is its parent's, is never a row; nothing changes a held
+    // goal's Path or Parent.
     private protected override object? Key(object? row) => (row as goal.@this)?.PrPath;
 }

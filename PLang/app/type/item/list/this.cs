@@ -62,12 +62,12 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // A list that names no key keeps none.
     private System.Collections.Concurrent.ConcurrentDictionary<object, object?>? _index;
 
-    /// <summary>The key a row is found by in <see cref="Indexed"/>; none (null) for a list that keeps no index, the last
-    /// row with a key answering for it.</summary>
+    /// <summary>The key a row is found by in <see cref="Row"/>; none (null) for a list that keeps no index, the last
+    /// row with a key answering for it. A key is a fact of its row while the list holds it.</summary>
     private protected virtual object? Key(object? row) => null;
 
     /// <summary>The row <paramref name="key"/> names, found in one look; null when no row has it.</summary>
-    private protected object? Indexed(object key)
+    private protected object? Row(object key)
     {
         var index = System.Threading.Volatile.Read(ref _index);
         if (index == null)
@@ -209,8 +209,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         lock (_gate)
         {
             var answer = edit(this, state);
-            _rows = null;
-            _chunks = null;
+            Drop();
             _index = null;
             return answer;
         }
@@ -223,10 +222,17 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         lock (_gate)
         {
             _items.Add(row);
-            _rows = null;
-            _chunks = null;
+            Drop();
             if (_index != null && Key(row) is { } key) _index[key] = row;
         }
+    }
+
+    // What is made from the rows as they were — their snapshot and the chunk lists — given up at an edit, under the
+    // gate; the index each door keeps or drops itself.
+    private void Drop()
+    {
+        _rows = null;
+        _chunks = null;
     }
 
     // The raw slots in element order — a chunk contributes its list's slots. No Data is made: the
