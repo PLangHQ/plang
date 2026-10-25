@@ -25,6 +25,8 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 export DOTNET_CLI_USE_MSBUILD_SERVER=1
+# copies stay files: a DLL linked into a test bin resolves outside its app's root, and the gate refuses it
+unset CreateSymbolicLinksForCopyLocalIfPossible CreateHardLinksForAdditionalFilesIfPossible
 
 DEVFLAGS=(-p:Configuration=Debug -p:RunAnalyzers=false -v:q -nologo)
 PROJECTS=(Modules Types Wire Data Generator Runtime)
