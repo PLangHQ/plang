@@ -401,9 +401,8 @@ public sealed class @this : IDisposable
         foreach (var type in _context.App.type.list.Items())
             if (type.ClrType is { } clr && typeof(global::app.type.item.setting.@this).IsAssignableFrom(clr)
                 && clr != typeof(global::app.type.item.setting.@this) && !clr.IsAbstract
-                && clr.GetConstructor(new[] { typeof(global::app.type.@this) }) != null
-                && type.Declared is { } declared)
-                classes[declared.Path] = clr;
+                && clr.GetConstructor(new[] { typeof(global::app.type.@this) }) != null)
+                classes[type.Facts(clr).Path] = clr;
         return _classes = classes;
     }
 

@@ -53,7 +53,7 @@ public class @this<T, L> : @this
 
     // The class of the concept's own settings, when its element names one (test: IConcept<test.setting>): a fact of the
     // class, as the code that made the concept's type read it.
-    private System.Type? _setting => type.Declared?.Setting;
+    private System.Type? _setting => type.Facts(typeof(T)).Setting;
 
     // The list the asker sees — its own for a concept whose list belongs to the asker, else the app's.
     // Navigation always asks through here: one path for every concept.

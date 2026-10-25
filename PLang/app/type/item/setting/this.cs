@@ -25,7 +25,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <c>llm.decider.setting</c>.</summary>
     protected @this(global::app.type.@this type) : base(type)
         // as the code's facts say it, once per code; a type that is its identity alone reads the class's own
-        => Path = (type.Facts?[GetType()] ?? new global::app.type.list.@this.Class(GetType())).Path;
+        => Path = type.Facts(GetType()).Path;
 
     /// <summary>The path this setting is read by — <c>%!app.goal.list.setting%</c> is <c>app.goal.list.setting</c>,
     /// <c>%!llm.setting%</c> is <c>llm.setting</c>. Its identity, not one of its options: it is not written with them.</summary>
@@ -246,8 +246,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         // the app's iec); one that can't be null and declares none holds the empty value its own class is born as,
         // holding the app's type for it: an empty list or dict, a nested setting at its defaults, the machine's culture
         // — which members those are, their defaults and their empty constructors, is the class's, read once per code
-        var declared = Type.Facts?[node.GetType()] ?? new global::app.type.list.@this.Class(node.GetType());
-        foreach (var (member, defaulted, empty) in declared.Defaults)
+        foreach (var (member, defaulted, empty) in Type.Facts(node.GetType()).Defaults)
         {
             if (member.GetValue(node) != null) continue;
             if (defaulted is { } @default)
