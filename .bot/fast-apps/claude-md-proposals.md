@@ -10,6 +10,14 @@
 - **No runtime code for tests.** A production member that only tests call is removed with the tests that exist for it; a test of real behaviour reaches it through the door production uses. (Ingi, fast-apps 35.)
 ```
 
+## architect — v1 — 2026-10-25 (3)
+**Target:** /CLAUDE.md
+**Why:** fast-apps made apps share their maker's types, actions and goals (decisions 36–41). Two leaks followed from one cause: a binding left on a shared entry fired in every app (26), and a read wrote its source into a shared type's history, growing it forever (29). The rule that prevents both, "a run never writes an object its app shares", is written only in the plan and the log (auditor N19).
+**Proposed change:** add under "OBP Shape Smells", in the branch rules:
+```markdown
+- **A run never writes an object its app shares.** A sub app's types, actions and goals are layers over what it's made from, so a shared entry is every app's: what a run adds goes to its own layer or its own context, never onto the shared object. A binding made while a program runs is held on the context of the actor that made it (`actor.on`); a type takes no history. The only writes onto a shared object are caches that give every app the same answer (a kinded type made once, a kind coined once). (fast-apps 26, 29.)
+```
+
 ## architect — v1 — 2026-10-25 (2)
 **Target:** /CLAUDE.md
 **Why:** Ingi (fast-apps 67): "the code analyzer should also record the speed of running plang apps, memory not growing, and time running tests, compile c#, keeps within what we are doing so we can quickly catch if it suddenly changes". fast-apps built the speed (a sub app born in 0.5 ms, `plang --test` ~5 s, memory flat), and nothing yet keeps a later branch from losing it unseen.
