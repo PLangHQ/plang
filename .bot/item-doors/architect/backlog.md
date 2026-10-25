@@ -24,6 +24,11 @@ Checks to make before the release, not branches:
 
 - **The auditor's next-branch list** (json-lines 21): `.bot/json-lines/auditor/final.md`, the older smells in `type/item/list/this.cs` and `type/item/this.cs` (X1, X2), and window's `Said` (C3).
 
+- **doc2's slice 2 findings** (c3b3a30ef, `doc/`):
+  - A: `call Early done=true, write to %got%` once built with Name="Early done=true", and the run ended GoalNotFound. The repo's own test of the same words builds right. Seen once. The builder bot's.
+  - B: two on-error clauses on one line (`call Flaky, on error retry 2 times, on error ignore`) fail StepsBroken ("writes Order, which the step doesn't give"); one clause per indented line works. The builder bot's (teaching or the writer).
+  - C: `before each goal call X` fired 3 times before the first user goal printed, so a user's binding fires for plang's own goals too. A design question: should a user's event see the runtime's own goals? Mine to bring to Ingi with the events area.
+  - D: counts with `after each goal` plus `before action output.write` didn't match what doc2 expected. Not traced.
 - **The build's per-step lines never print** (doc2, 69f6b6be4): the build output template defines `[✓]`/`[≡]` lines per step (`os/system/builder/templates/output/build-output.template`, rendered by `EmitBuildEvent.goal`), but four real builds printed only "Building path", "Found N goals" and "Saved Start (3.4s)". The builder bot's.
 - **StepsBroken names a variable its step doesn't mention** (doc2): a vague step ("make the data feel nicer") ends in StepsBroken whose message names `%person%`, which the step never says, which confuses a reader. The builder bot's.
 - **A missing decider key is an opaque 403** (doc2, 2026-10-25): a first build with no TypeSafe key ends in HttpError 403 with a trace from api.typesafe.ai. It should be what the OpenAI key does (`llm.setting.Asked`, `MissingLlmKey`): ask, or name both ways to give it (`llm.decider.setting.key`, `TYPESAFE_API_KEY`; `module/llm/decider.setting.cs:20–29`, `code/TypeSafe.cs:28–41`). It's a stranger's first contact, so it belongs on the 2.0b checklist.
