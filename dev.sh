@@ -198,8 +198,10 @@ NICE=(nice -n 10)
 restore() {
   local f
   for f in PLang.Tests/*/PLang.Tests.*.csproj PlangConsole/PLangConsole.csproj PLang/*.csproj PLang.Generators/*.csproj; do
-    # -nt is also true when the assets file doesn't exist
-    if [ "$f" -nt "$(dirname "$f")/obj/project.assets.json" ]; then
+    # -nt is also true when the assets file doesn't exist; the test projects' shared props (their runtime, their
+    # packages) restore them too
+    if [ "$f" -nt "$(dirname "$f")/obj/project.assets.json" ] \
+       || [ PLang.Tests/Directory.Build.props -nt "$(dirname "$f")/obj/project.assets.json" ]; then
       local started=$SECONDS
       scream_build "restore (NuGet) of the test projects + PlangConsole" /tmp/devsh_restore.log \
         "${NICE[@]}" dotnet msbuild PLang.Tests/All.proj -t:Restore -m:1 -v:q -nologo
