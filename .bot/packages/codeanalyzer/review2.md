@@ -1,0 +1,23 @@
+# packages: second review (tip 1510726b5; fixes 5a404e2d7 F1, 5436f525d F2, d997911d4 F3, 4cbfb9d3f)
+
+Scope: the five commits, their files read whole (`code/Bitmap.cs`, `code/Shown.cs`, `view/this.cs`, `window/this.cs`, `window/code/Window.cs` around every `bitmap` use, the four test files). Per the cheaper rule agreed with Ingi: no per-commit runs, no parent build; the bench parts chosen from the diff (tests and screen code: `sweep` and `ptest`, no `birth`/`request`/`build`). Production source edited once, a throwaway probe test, deleted (`git status` clean).
+
+**Verdict: FAIL, one new finding (F4), small.** F1, F2 and F3 are fixed.
+
+## F4. A frame the decoder fails on with a plain `Exception` now ends the host (`window/this.cs` `Present(string, context)`; `code/Window.cs` `Decode`, the `decode!(frame)` call)
+The old `try { … } catch { }` around the frame decode (`Window.cs:149-150`, the bare catch I called older) was the thing that kept any bad frame from killing the decode thread. The fix removed it, correctly as a smell, and replaced it with `catch (FormatException)` in `Present`. Skia does not only throw `FormatException`: a probe on this machine (a PNG with a valid header and CRC, 50,000 × 50,000 declared, junk IDAT) makes `new Bitmap(bytes)` throw **`System.Exception`**; the other four hostile inputs I tried (huge dims with no data, zero dims, a JPEG magic alone, a small junk IDAT) were `FormatException` or decoded. The decode runs on `new Thread(Decode)` (`Window.cs:115`), so an exception that is not caught there is an unhandled exception on a background thread, which ends the process. A frame comes from PlangOS's screen over a browser; one bad frame closing plang is a worse answer than the skipped frame it was before.
+- **Root, not the catch:** `Bitmap`'s reader is the producer of the failure shape, and it says in its own comment that bytes no image format reads are a `FormatException`. It should be true for what Skia throws too: wrap the decode in `Bitmap(byte[])` so a Skia failure (any `Exception` but `OutOfMemoryException`) becomes `new FormatException(message, ex)`. Then both callers (`Draw`'s `catch (FormatException)` and `Present`'s) stay as they are, and no catch is widened at the consumers.
+- **Test at the producer:** in `PngTests`, the probe's bytes (IHDR 50000 × 50000 8-bit RGBA, junk IDAT of five bytes, valid CRCs, IEND) must throw `FormatException` from `new Bitmap(...)`; red now (it throws `Exception`).
+
+## The three fixes
+- **F1 (`Bitmap`)**: pass. `code/Bitmap.cs` owns the BGRA pixels, width and height; `Bitmap(byte[])` reads PNG/JPEG, `Png` writes; `Shown` holds one, the window holds one (`bitmap`), the view's `Picture` copies one and asks it for the PNG. The tuple, `Pixels`, the never-null `(…)?` and the test-only `internal` are gone; `PngTests` enters through `new Bitmap`, the door both production sites use. The new torn-read story holds: `Present` writes `this.bitmap` under `gate`, `Move`/`Copy` run under `gate`, and the paint reads it under `lock (gate)` (`Window.cs:698`); `Shows` reads it once into a local (:67). So the length guards could go. One note: `Shown` still has no gate-protected swap, the view's `Picture` copies `_shown.Bitmap` under `_shown.Lock`, as before.
+- **F2 (TIFF)**: pass. `ImageParseTests.FromBytes_TiffMagicBytes_PicksImageTiff` and `ImageValidateKindTests.ValidateKind_TiffBytesMatchingTif_OkTrue` take both byte orders; the coder's mutation (lines 42-44 out) was red in each class.
+- **F3 and the docstring**: pass (`crypto/code/Default.cs` has no `using`s left that it does not use; `Tools/obp-longmethods.py:12` names `Tools/ObpScan`).
+
+## Open, ruled to the architect
+The coder's OPEN is right: `window/code/Window.cs` `Move` (:327-347) and `Copy` (:361-371) are the same delta logic as `Shown.Move`/`Shown.Copy` (stored twice), and the window's `ApplyBinary` beside `Shown.Apply`. Older, in a touched file (boy scout), Windows-only so the coder cannot run it. Fold (the window holds a `Shown`; its media and gate are the differences) or defer to the follow-up with that reason; it does not block this verdict.
+
+## Bench (parts chosen from the diff)
+Row `1510726b5 (packages-13)`: `plang --test` (llm excluded, no key) 4.4 s, 292 pass, 1 fail (the parent's), the other columns not measured because the diff does not touch the runtime path or a build file. C# sweep 84.7 s, red `Wire` only (six): that number includes the build of the five commits' changes (the first sweep after a pull), so it is not the quiet-sweep figure (39.7 s at the last tip). The estimate in `run.sh`'s header is corrected to what the run takes (about 5 minutes whole, not 15).
+
+CHECK: FAIL (F4); the coder is next. Everything else in the five commits is clean.

@@ -1,15 +1,15 @@
 # codeanalyzer summary (packages)
 
-**Version:** v1
+**Version:** v2
 
-**What this is:** The review of the packages branch (NuGet bumps, ImageSharp replaced by SkiaSharp, Nethereum and Newtonsoft replaced by BouncyCastle, Fluid.cs reshaped, action.Return's race fixed, native trims, NSubstitute and two old projects out, and the three ObpScan commits). Tip 63a299efb, parent 55302f8a5. Report: `.bot/packages/codeanalyzer/review.md`.
+**What this is:** The packages branch (NuGet bumps, ImageSharp replaced by SkiaSharp, Nethereum and Newtonsoft replaced by BouncyCastle, Fluid.cs reshaped, native trims, ObpScan). v1 (review.md) failed on three small findings; v2 (review2.md) re-reads the coder's fixes at tip 1510726b5.
 
-**What was done:** Read whole every touched production file; ran the 15 commits one by one (build, `plang --test` with the llm tag excluded and no OpenAI key: identical on every commit); ran the llm goals once at the tip (6 pass); mutated Fluid.cs, keccak and `Pixels` to show the three new tests are red; ran the bench at the tip (in band; clean build 30.9 s; bins 50 → 29 MB; publish 27/29 MB). Verdict FAIL on three small findings: F1 the window's `Pixels` is a stray helper over a raw `(bgra, w, h)` tuple that needs a picture type in the screen module (and was made `internal` for a test); F2 the TIFF sniff changes `FromBytes` with no test; F3 three unused usings in `crypto/code/Default.cs`.
+**What was done:** v1: every touched file read whole, 15 commits run (identical), llm goals once, tests red under mutation, bench in band. v2: F1 (a `code/Bitmap.cs` owns the screen's pixels), F2 (TIFF tests) and F3 (usings) are fixed. New finding F4: the window's decode thread now catches only `FormatException`, and Skia throws `System.Exception` on a PNG with a valid header and junk data (probed), which would end the host; wrap Skia's failure as `FormatException` in `Bitmap`'s reader and pin it in `PngTests`. Also: `Tools/Bench/run.sh` now rests 0 s by default, spends nothing on OpenAI, and says which parts to run for which diff (about 5 minutes whole).
 
-**Next:** the coder fixes F1–F3; then a short re-read, then the tester and security.
+**Next:** the coder fixes F4; a short re-read of `Bitmap.cs` and `PngTests`, then the tester and security. Window.cs's `Move`/`Copy` are stored twice beside `Shown` (older, Windows-only): the architect rules fold or defer.
 
 **Code example:**
 ```csharp
-// the triple handed by hand through five signatures (F1)         window/this.cs:153, code/Window.cs:94,105,110
-internal static (byte[] bgra, int w, int h)? Pixels(byte[] encoded)
+// the producer says what its failure is, once; both callers keep catch (FormatException)   screen/code/Bitmap.cs
+internal Bitmap(byte[] encoded)
 ```

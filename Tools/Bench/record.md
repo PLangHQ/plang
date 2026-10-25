@@ -4,7 +4,7 @@ What the runtime costs, one row per run of `Tools/Bench/run.sh`, newest first. R
 a number outside its band below is a change, not noise.
 
 ```
-Tools/Bench/run.sh                    # everything; ~15 min. Choose the parts from the diff (see run.sh's header); a package-only diff is BENCH_SKIP="birth request"
+Tools/Bench/run.sh                    # everything; ~5 min. Choose the parts from the diff (see run.sh's header); a package-only diff is BENCH_SKIP="birth request"
 BENCH_REST=300 Tools/Bench/run.sh     # + the two 300 s rests: only when the diff touches the store, its pool, or what a request app holds (the "after the rest" held MB is 0 → the last reading otherwise)
 BENCH_SKIP="build sweep" Tools/Bench/run.sh        # leave parts out: build sweep ptest birth request
 BENCH_LABEL=my-branch-tip Tools/Bench/run.sh
@@ -51,6 +51,7 @@ per birth + dispose; a request app is born, a goal loaded and run, disposed, × 
 | Date | Branch | Commit | Load | Sub birth | Root birth | Sub request | Root request | Held, sub (MB) | Held, root (MB) | `plang --test` | C# sweep | Build, clean | Build, incr. |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 <!-- rows -->
+| 2026-10-25 | packages | 1510726b5 (packages-13) | 2.25 | - | - | - | - | - | - | 4.4 s (292 pass, 1 fail) | 84.7 s (red: Wire) | - | - |
 | 2026-10-25 | packages | 1435afbf8 (packages-tip) | 2.73 | 0.14 ms, 109 KB | 17.07 ms, 2358 KB | 1.85 ms, 539 KB | 17.02 ms, 3821 KB | 1.6 → 2.1 → 2.1 → 2.1 → 1.9 | 0.1 → 1.9 → 1.9 → 1.9 → 1.1 | 5.4 s (298 pass, 1 fail; run by hand after the bench, the one run with the OpenAI key) | 39.7 s (red: Wire; the bench's own sweep ran with no key, so Modules' 80 mocked-LLM tests were red with MissingLlmKey: rerun with a dummy key, Wire's six only) | 30.9 s | 8.3 s |
 | 2026-10-25 | fast-apps | 2401279ed (review7-after-restore) | 2.81 | - | - | - | - | - | - | 5.3 s (298 pass, 1 fail) | 40.5 s (red: Wire) | 75.7 s | 8.6 s |
 | 2026-10-25 | fast-apps | 2401279ed (review7-tip: birth, request and held are valid; `plang --test`, sweep and build ran on a stale restore, 9.0.2 in the test projects' assets, and are void: see the next row) | 2.49 | 0.14 ms, 110 KB | 17.90 ms, 2358 KB | 1.82 ms, 540 KB | 16.68 ms, 3821 KB | 1.6 → 2.1 → 2.1 → 2.1 → 1.9 | 0.1 → 1.9 → 1.9 → 1.9 → 1.1 | 5.2 s (0 pass, 0 fail) | 34.9 s (red: Modules,Types,Wire,Data,Generator,Runtime) | 162.5 s | 9.2 s |

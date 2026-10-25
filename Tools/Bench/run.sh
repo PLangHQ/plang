@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # What the runtime costs, in one run — and one row in Tools/Bench/record.md. Run it at every review: a sudden change shows.
 #
-#   Tools/Bench/run.sh                     everything below (~15 min; ~25 with BENCH_REST=300)
+#   Tools/Bench/run.sh                     everything below (~5 min; ~15 with BENCH_REST=300)
 #   BENCH_SKIP="build sweep" Tools/Bench/run.sh      leave parts out: build sweep ptest birth request
 #   Choose the parts from the diff: PLang/app code on the birth or request path -> birth request; a csproj, props, targets
-#   or dev.sh -> build; tests -> sweep ptest. A package-only diff is `BENCH_SKIP="birth request"` (~4 min).
+#   or dev.sh -> build; tests -> sweep ptest. A package-only diff is `BENCH_SKIP="birth request"` (~4 min), a runtime-path one `BENCH_SKIP="build"` (~3 min).
 #   BENCH_REST=300                         rest 300 s before the last heap count (default 0). Needed only when the diff
 #                                          touches the store, its pool, or what a request app holds: the sqlite pool lets go on a timer
 #   OpenAI: the script unsets OPENAI_API_KEY, `plang --test` leaves the llm tag out, the sweep gets a dummy key

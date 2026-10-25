@@ -107,6 +107,44 @@
         "health": "fail",
         "notes": "coder next for F1-F3"
       }
+    },
+    {
+      "id": "06987899-bc36-4713-a94d-f8be896dcd98",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T12:47:07Z",
+      "timestamp_end": "2026-10-25T12:47:07Z",
+      "intent": "Re-review packages 13 (F1-F3 fixes) and cut the bench's waiting",
+      "before": {
+        "assumptions": "tip 1510726b5; fixes for F1-F3",
+        "risk": "the removed bare catch on the window's decode thread"
+      },
+      "plan": ".bot/packages/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/packages/codeanalyzer/review2.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1-F3 fixed; F4 new: Skia throws System.Exception (probed) where only FormatException is caught on the decode thread."
+        },
+        {
+          "paths": [
+            "Tools/Bench/run.sh",
+            "Tools/Bench/record.md"
+          ],
+          "type": "modify",
+          "category": "config",
+          "confidence": "high",
+          "context": "Ingi: rest off by default, no OpenAI spend, parts chosen from the diff, real estimate (~5 min)."
+        }
+      ],
+      "after": {
+        "status": "review2 written",
+        "health": "fail",
+        "notes": "coder next for F4"
+      }
     }
   ]
 }
