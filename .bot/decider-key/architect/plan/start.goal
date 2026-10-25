@@ -1,0 +1,12 @@
+/ decider-key: a missing TypeSafe key asks once, or names both ways to give one, instead of ending in a 403.
+/ This goal is the plan's index and its proof: each comment a behaviour we want, the C# test under it proves it. The
+/ text is start.md.
+Start
+- call Stage1
+
+Stage1
+/ a missing decider key is asked once, saved, never shown; the next build asks nothing — C# test MissingDeciderKeyTests
+/ (AMissingKey_IsAskedOnce_Saved_AndNeverShown)
+/ with no one to ask, the build fails naming %!llm.decider.setting.key% and TYPESAFE_API_KEY, and no request reaches
+/ the service — C# test MissingDeciderKeyTests (NoOneToAsk_FailsNamingBothWays_AndSendsNothing)
+/ a saved key, or the environment's, is used without asking — C# test MissingDeciderKeyTests (AHeldKey_IsNotAsked)

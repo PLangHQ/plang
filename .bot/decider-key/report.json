@@ -1,0 +1,19 @@
+{
+  "branch": "decider-key",
+  "sessions": [
+    {
+      "id": "a3f1c2d4-8e5b-4f6a-9c7d-1b2e3f4a5d6c",
+      "bot": "architect",
+      "timestamp_start": "2026-10-25T23:50:00Z",
+      "timestamp_end": "2026-10-25T23:58:00Z",
+      "intent": "Cut decider-key from runtime2 and plan the missing TypeSafe key's ask, as the OpenAI key's.",
+      "before": {"assumptions": "llm.setting.Asked asks once and saves; the decider's setting has a Key but no ask; TypeSafe sends without one and the service answers 403.", "risk": "The asking copied into a second setting (stored twice)."},
+      "plan": ".bot/decider-key/architect/plan/start.md",
+      "actions": [
+        {"paths": ["PLang/app/module/llm/setting/this.cs", "PLang/app/module/llm/decider.setting.cs", "PLang/app/module/llm/code/TypeSafe.cs", "PLang/app/module/llm/code/Live.cs"], "type": "review", "category": "code", "confidence": "high", "context": "Read the OpenAI key's ask, the decider's setting and TypeSafe's request."},
+        {"paths": [".bot/decider-key/architect/plan/start.md", ".bot/decider-key/architect/plan/start.goal", ".bot/decider-key/architect/summary.md"], "type": "create", "category": "doc", "confidence": "high", "context": "One stage; the asking written once for both keys; a wrong key out of scope."}
+      ],
+      "after": {"status": "plan drafted; sent to the coder", "health": "runtime2 at 493b157df", "notes": "doc2 found the 403 while verifying doc/."}
+    }
+  ]
+}

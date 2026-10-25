@@ -1,0 +1,7 @@
+# decider-key — architect's log
+
+A missing TypeSafe key asks once, or names both ways to give one, instead of ending in an unreadable 403 (doc2's find; Ingi, 2026-10-25: "yes", a tiny branch before `windows`). Cut from runtime2 493b157df. The plan's draft is `plan/start.md` + `plan/start.goal`; the coder places it at `test/plan/decider-key/`. Newest first; numbered from 1.
+
+| # | what | rule | detail | who | waits on |
+|---|---|---|---|---|---|
+| 1 | **The plan, one stage** (`plan/start.md`, `plan/start.goal`) | Ingi: "yes" | The decider's setting answers its key as asked, as llm's does (`module/llm/setting/this.cs` `Asked`, `code/Live.cs:20–22`): held → at once; none → asked once secretly and saved on the actor's row; no one to ask → `MissingDeciderKey` naming `%!llm.decider.setting.key%` and `TYPESAFE_API_KEY`. TypeSafe (`code/TypeSafe.cs:28–41`) takes its key from it before any request goes out. One door: the asking is written once for both keys, and the coder brings where it lives. Out: a wrong key (the service's own error). No locked surface. | coder | its read and shape |
