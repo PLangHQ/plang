@@ -13,15 +13,31 @@ internal sealed class Bitmap
     /// <summary>A blank one, its pixels pinned: a canvas that lives as long as its screen.</summary>
     internal Bitmap(int width, int height) : this(width, height, GC.AllocateArray<byte>(width * height * 4, pinned: true)) { }
 
-    /// <summary>An encoded picture (PNG, JPEG) read; bytes no image format reads are a FormatException.</summary>
+    /// <summary>An encoded picture (PNG, JPEG) read; bytes that read as no picture are an AppException carrying
+    /// BadFrame (the decoder's own exception its cause, when it threw one).</summary>
     internal Bitmap(byte[] encoded)
     {
         var info = SkiaSharp.SKBitmap.DecodeBounds(encoded);
-        if (info.Width <= 0 || info.Height <= 0) throw new FormatException("the frame is no image format");
-        using var decoded = SkiaSharp.SKBitmap.Decode(encoded,
-            new SkiaSharp.SKImageInfo(info.Width, info.Height, SkiaSharp.SKColorType.Bgra8888, SkiaSharp.SKAlphaType.Unpremul))
-            ?? throw new FormatException("the frame's pixels can't be read");
-        (Width, Height, Pixels) = (decoded.Width, decoded.Height, decoded.Bytes);
+        SkiaSharp.SKBitmap? decoded = null;
+        Exception? cause = null;
+        if (info.Width > 0 && info.Height > 0)
+            try
+            {
+                decoded = SkiaSharp.SKBitmap.Decode(encoded,
+                    new SkiaSharp.SKImageInfo(info.Width, info.Height, SkiaSharp.SKColorType.Bgra8888, SkiaSharp.SKAlphaType.Unpremul));
+            }
+            catch (Exception ex)
+            {
+                // the decoder throws a plain Exception on a picture it can't make (a header past what its data holds)
+                cause = ex;
+            }
+        if (decoded == null)
+        {
+            var error = new global::app.error.@this("Not an image: " + (cause?.Message ?? "no image format reads the frame"), "BadFrame", 400);
+            if (cause != null) error.list.Add(global::app.error.@this.FromException(cause));
+            throw new global::app.error.AppException(error, cause);
+        }
+        using (decoded) (Width, Height, Pixels) = (decoded.Width, decoded.Height, decoded.Bytes);
     }
 
     /// <summary>A copy of <paramref name="bitmap"/>, its pixels its own.</summary>

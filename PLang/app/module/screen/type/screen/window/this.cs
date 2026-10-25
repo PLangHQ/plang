@@ -132,9 +132,9 @@ public sealed class @this : screen.@this
         {
             _window.Present(new Bitmap(encoded));
         }
-        catch (FormatException ex)
+        catch (AppException ex)
         {
-            return context.Error(new ActionError("Not an image: " + ex.Message, "BadFrame", 400));
+            return context.Error(ex.Error);
         }
         return context.Ok();
     }
@@ -153,9 +153,9 @@ public sealed class @this : screen.@this
         {
             _window.Present(new Bitmap(Frame(line)));
         }
-        catch (FormatException ex)
+        catch (AppException ex)
         {
-            _ = context.Actor.Channel.Report(context.Error(new ActionError("Not an image: " + ex.Message, "BadFrame", 400)));
+            _ = context.Actor.Channel.Report(context.Error(ex.Error));
         }
     }
 
@@ -170,7 +170,16 @@ public sealed class @this : screen.@this
         return end < 0 ? null : line[start..end];
     }
 
-    // {"frame":"<base64>",...} → the image bytes; a line without them is a FormatException
+    // {"frame":"<base64>",...} → the image bytes; a line without them is an AppException carrying BadFrame
     private static byte[] Frame(string line)
-        => Field(line, "frame") is { } base64 ? Convert.FromBase64String(base64) : throw new FormatException("the line holds no frame");
+    {
+        if (Field(line, "frame") is not { } base64) throw new AppException(new Error("Not an image: the line holds no frame", "BadFrame", 400));
+        try { return Convert.FromBase64String(base64); }
+        catch (FormatException ex)
+        {
+            var error = new Error("Not an image: the frame isn't base64", "BadFrame", 400);
+            error.list.Add(Error.FromException(ex));
+            throw new AppException(error, ex);
+        }
+    }
 }

@@ -54,5 +54,49 @@ public class PngTests
 
     [Test]
     public async Task BytesThatAreNoImage_AreRefusedAsAFrame()
-        => await Assert.That(() => new Bitmap([1, 2, 3, 4, 5, 6, 7, 8])).Throws<FormatException>();
+        => await RefusedAsBadFrame([1, 2, 3, 4, 5, 6, 7, 8]);
+
+    private static async Task RefusedAsBadFrame(byte[] bytes)
+    {
+        var refused = await Assert.That(() => new Bitmap(bytes)).Throws<global::app.error.AppException>();
+        await Assert.That(refused!.Error.Key).IsEqualTo("BadFrame");
+    }
+
+    // a PNG whose header and CRCs are right, 50000×50000 declared, its data five junk bytes: the decoder fails inside
+    [Test]
+    public async Task APngWhosePixelsAreJunk_IsRefusedAsAFrame()
+    {
+        using var png = new MemoryStream();
+        png.Write([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+        var header = new byte[13];
+        BinaryPrimitives.WriteUInt32BigEndian(header, 50000);
+        BinaryPrimitives.WriteUInt32BigEndian(header.AsSpan(4), 50000);
+        header[8] = 8; header[9] = 6;   // 8-bit RGBA
+        Chunk(png, "IHDR", header);
+        Chunk(png, "IDAT", [1, 2, 3, 4, 5]);
+        Chunk(png, "IEND", []);
+        await RefusedAsBadFrame(png.ToArray());
+    }
+
+    private static void Chunk(MemoryStream png, string kind, byte[] data)
+    {
+        var four = new byte[4];
+        BinaryPrimitives.WriteUInt32BigEndian(four, (uint)data.Length);
+        png.Write(four);
+        var body = System.Text.Encoding.ASCII.GetBytes(kind).Concat(data).ToArray();
+        png.Write(body);
+        BinaryPrimitives.WriteUInt32BigEndian(four, Crc(body));
+        png.Write(four);
+    }
+
+    private static uint Crc(byte[] bytes)
+    {
+        var crc = 0xFFFFFFFFu;
+        foreach (var b in bytes)
+        {
+            crc ^= b;
+            for (var k = 0; k < 8; k++) crc = (crc & 1) != 0 ? 0xEDB88320u ^ (crc >> 1) : crc >> 1;
+        }
+        return ~crc;
+    }
 }
