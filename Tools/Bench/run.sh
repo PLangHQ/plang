@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
 # What the runtime costs, in one run — and one row in Tools/Bench/record.md. Run it at every review: a sudden change shows.
 #
-#   Tools/Bench/run.sh                     everything below (~25 min: the rests alone are 10)
+#   Tools/Bench/run.sh                     everything below (~15 min; ~25 with BENCH_REST=300)
 #   BENCH_SKIP="build sweep" Tools/Bench/run.sh      leave parts out: build sweep ptest birth request
-#   BENCH_REST=0                           no rest before the last heap count (default 300 s; the sqlite pool lets go on a timer)
+#   Choose the parts from the diff: PLang/app code on the birth or request path -> birth request; a csproj, props, targets
+#   or dev.sh -> build; tests -> sweep ptest. A package-only diff is `BENCH_SKIP="birth request"` (~4 min).
+#   BENCH_REST=300                         rest 300 s before the last heap count (default 0). Needed only when the diff
+#                                          touches the store, its pool, or what a request app holds: the sqlite pool lets go on a timer
+#   OpenAI: the script unsets OPENAI_API_KEY, `plang --test` leaves the llm tag out, the sweep gets a dummy key
+#           (its LLM tests use a counting handler and need only a key string): a run costs nothing.
 #   BENCH_LABEL=stage5                     a name beside the commit in the row
 #   LOAD_MAX=3                             each measurement waits (≤ 20 min) for the 1-minute load to fall under this
 #
@@ -19,12 +24,12 @@
 # The row's numbers are read against the noise bands at the top of record.md. The tree is left as found: the
 # incremental build touches a file's time, not its text.
 set -uo pipefail
-unset CreateSymbolicLinksForCopyLocalIfPossible CreateHardLinksForAdditionalFilesIfPossible
+unset CreateSymbolicLinksForCopyLocalIfPossible CreateHardLinksForAdditionalFilesIfPossible OPENAI_API_KEY
 here="$(cd "$(dirname "$0")" && pwd)"
 repo="$(cd "$here/../.." && pwd)"
 cd "$repo"
 skip=" ${BENCH_SKIP:-} "
-rest="${BENCH_REST:-300}"
+rest="${BENCH_REST:-0}"
 work="$here/results"; mkdir -p "$work"
 want() { [[ "$skip" != *" $1 "* ]]; }
 
@@ -94,7 +99,7 @@ fi
 p_test="-"
 if want ptest; then
   calm; t=$(now)
-  (cd test && ../PlangConsole/bin/Debug/net10.0/plang --test < /dev/null > "$work/last-ptest.log" 2>&1)
+  (cd test && ../PlangConsole/bin/Debug/net10.0/plang --test '--test.setting.exclude=["llm"]' < /dev/null > "$work/last-ptest.log" 2>&1)
   w=$(since "$t")
   c() { grep -aEc "^  \[$1\]" "$work/last-ptest.log"; }
   p_test="$w s ($(c Pass) pass, $(c Fail) fail)"
@@ -103,7 +108,7 @@ fi
 s_sweep="-"
 if want sweep; then
   calm; t=$(now)
-  ./dev.sh test --force > "$work/last-sweep.log" 2>&1
+  OPENAI_API_KEY=sk-bench-no-spend ./dev.sh test --force > "$work/last-sweep.log" 2>&1
   red=$(grep -aE '^=== .* FAILED' "$work/last-sweep.log" | grep -aoE '^=== [A-Za-z]+' | cut -c5- | tr '\n' ',' )
   red="${red%,}"
   s_sweep="$(since "$t") s (red: ${red:-none})"

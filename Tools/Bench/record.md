@@ -4,7 +4,8 @@ What the runtime costs, one row per run of `Tools/Bench/run.sh`, newest first. R
 a number outside its band below is a change, not noise.
 
 ```
-Tools/Bench/run.sh                    # everything; ~25 min (the two 300 s rests are 10 of them)
+Tools/Bench/run.sh                    # everything; ~15 min. Choose the parts from the diff (see run.sh's header); a package-only diff is BENCH_SKIP="birth request"
+BENCH_REST=300 Tools/Bench/run.sh     # + the two 300 s rests: only when the diff touches the store, its pool, or what a request app holds (the "after the rest" held MB is 0 → the last reading otherwise)
 BENCH_SKIP="build sweep" Tools/Bench/run.sh        # leave parts out: build sweep ptest birth request
 BENCH_LABEL=my-branch-tip Tools/Bench/run.sh
 ```
