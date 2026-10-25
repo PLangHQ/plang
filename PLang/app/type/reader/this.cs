@@ -33,7 +33,6 @@ public abstract class @this
     /// </summary>
     public delegate object? Read(object raw, string? kind, ReadContext ctx);
 
-    private readonly ConcurrentDictionary<(string Type, string Kind), Read> _generated = new();
     private readonly ConcurrentDictionary<(string Type, string Kind), Read> _runtime = new();
 
     // The typed (ITypeReader) registry — the two read modes live side by side, and
@@ -45,25 +44,44 @@ public abstract class @this
     //     (CSV parse, base64, JSON-of-a-string). A token reader buys nothing here.
     // A type may answer both — its wire value streams via Typed, its content form
     // (a file's bytes materialising through source.Value) decodes via Of.
-    private readonly ConcurrentDictionary<(string Type, string Kind), ITypeReader> _generatedTyped = new();
     private readonly ConcurrentDictionary<(string Type, string Kind), ITypeReader> _runtimeTyped = new();
 
-    private readonly object _initLock = new();
-    private bool _initialized;
+    // The readers the assemblies ship, made once, the first time any is asked for.
+    private readonly Lazy<shipped> _shipped;
+
+    // The readers an assembly ships under its serializer folders, from the code's facts: each token reader made for
+    // these readers (the token-stream table), each whole-payload decode as it is.
+    private sealed class shipped
+    {
+        internal readonly Dictionary<(string Type, string Kind), Read> Payloads = new();
+        internal readonly Dictionary<(string Type, string Kind), ITypeReader> Tokens = new();
+
+        internal shipped(global::app.type.list.@this.Code code, IEnumerable<Assembly> assemblies)
+        {
+            foreach (var assembly in assemblies)
+            {
+                var library = code[assembly];
+                foreach (var (type, kind, made) in library.Typed)
+                    Tokens[(type, kind)] = (ITypeReader)made.Invoke(null);
+                foreach (var (type, kind, read) in library.Read)
+                    Payloads[(type, kind)] = read;
+            }
+        }
+    }
 
     /// <summary>
     /// Assemblies to scan for <c>serializer/&lt;kind&gt;.cs</c> classes: the code's, its own; a layer's, none.
     /// </summary>
     public List<Assembly> Assemblies { get; }
 
-    // The facts of the code the readers are found in, read once per code.
-    private readonly global::app.type.list.@this.Code _code;
-
     private protected @this(global::app.type.list.@this.Code code, List<Assembly> assemblies)
     {
-        _code = code;
         Assemblies = assemblies;
+        _shipped = new(() => new shipped(code, Assemblies), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);
     }
+
+    // The shipped readers, through the one door that makes them.
+    private shipped Shipped => _shipped.Value;
 
     /// <summary>
     /// Returns the <see cref="Read"/> delegate registered for
@@ -87,23 +105,21 @@ public abstract class @this
     // The whole-payload decode these readers hold for the type and kind, in the precedence Of names.
     private protected virtual Read? Payload(string typeName, string? kind)
     {
-        EnsureInitialized();
         var k = string.IsNullOrEmpty(kind) ? AnyKind : kind!;
         if (_runtime.TryGetValue((typeName, k), out var rt)) return rt;
-        if (_generated.TryGetValue((typeName, k), out var gen)) return gen;
+        if (Shipped.Payloads.TryGetValue((typeName, k), out var gen)) return gen;
         if (_runtime.TryGetValue((typeName, AnyKind), out var rtAny)) return rtAny;
-        return _generated.TryGetValue((typeName, AnyKind), out var genAny) ? genAny : null;
+        return Shipped.Payloads.TryGetValue((typeName, AnyKind), out var genAny) ? genAny : null;
     }
 
     // The token reader these readers hold for the type and kind, in the precedence Typed names.
     private protected virtual ITypeReader? Token(string typeName, string? kind)
     {
-        EnsureInitialized();
         var k = string.IsNullOrEmpty(kind) ? AnyKind : kind!;
         if (_runtimeTyped.TryGetValue((typeName, k), out var rt)) return rt;
-        if (_generatedTyped.TryGetValue((typeName, k), out var gen)) return gen;
+        if (Shipped.Tokens.TryGetValue((typeName, k), out var gen)) return gen;
         if (_runtimeTyped.TryGetValue((typeName, AnyKind), out var rtAny)) return rtAny;
-        return _generatedTyped.TryGetValue((typeName, AnyKind), out var genAny) ? genAny : null;
+        return Shipped.Tokens.TryGetValue((typeName, AnyKind), out var genAny) ? genAny : null;
     }
 
     /// <summary>
@@ -146,10 +162,9 @@ public abstract class @this
     // The type these readers read under a kind-specific reader of <paramref name="kind"/>.
     private protected virtual string? Owner(string kind)
     {
-        EnsureInitialized();
         foreach (var key in _runtime.Keys)
             if (string.Equals(key.Kind, kind, System.StringComparison.OrdinalIgnoreCase)) return key.Type;
-        foreach (var key in _generated.Keys)
+        foreach (var key in Shipped.Payloads.Keys)
             if (string.Equals(key.Kind, kind, System.StringComparison.OrdinalIgnoreCase)) return key.Type;
         return null;
     }
@@ -174,27 +189,5 @@ public abstract class @this
         _runtimeTyped[(typeName, kind)] = reader;
     }
 
-    private void EnsureInitialized()
-    {
-        if (_initialized) return;
-        lock (_initLock)
-        {
-            if (_initialized) return;
-            foreach (var asm in Assemblies)
-                IndexAssembly(asm);
-            _initialized = true;
-        }
-    }
-
-    // The readers an assembly ships under its serializer folders, from its facts: each token reader made for this
-    // reader (the token-stream table), each whole-payload decode as it is.
-    private void IndexAssembly(Assembly assembly)
-    {
-        var library = _code[assembly];
-        foreach (var (type, kind, made) in library.Typed)
-            _generatedTyped[(type, kind)] = (ITypeReader)made.Invoke(null);
-        foreach (var (type, kind, read) in library.Read)
-            _generated[(type, kind)] = read;
-    }
 
 }
