@@ -27,7 +27,7 @@ After: a test's requests to OpenAI and their answers are kept in a file beside t
 
 This is a feature of `plang --test` for every plang app's tests, not just ours.
 
-- One sender for the request, chosen once for the app: live, or the test's saved answers. There's no `if testing` where the request is sent.
+- One sender for the request, chosen once for the app (decision 5): `module/llm/code/IAnswer`. Its shipped default is `Live` (OpenAI's endpoint and key; when llm-provider lands, each provider owns its own send). The other is `Saved`, one test's file. The test registers `Saved` on its own app when `test.setting.llm` is `saved`, as it already opens its own store in memory, and each app has its own code registry (`app/this.cs:336`). There's no `if testing` where the request is sent (`OpenAi.cs:228`). Two llm tests run in parallel are each answered from their own file only.
 - The file is text a reviewer reads in a diff: one list of {request, response}, in first-asked order. It holds the request body and the endpoint path, never a header, so the key never lands in it.
 - A changed prompt is a different body, so it's a new entry; its old answer is never served for it.
 - The key is asked only when a request goes out live.
@@ -41,7 +41,7 @@ All in `actor/permission/this.cs`, `type/item/path/this.Authorize.cs` and `modul
 
 - **N1.** `identity.export` refuses with a typed error: exporting a private key waits for critical actions (item-doors 307). Its teaching (`os/system/modules/identity/export.*.md`) says so. The D4-1 guard stays. `IdentityPrivateKeyLeakTests` stays the pin. `Export_WithTheActorsYes_HandsTheKey` and `TheExportQuestion_…` assert the refusal. (The architect's security call with plang-security, 2026-10-25.)
 - **N3.** A failed "always" save answers its error. Today `Add` returns `Task` and drops `Save`'s answer (`:161`), and `Keep` answers Ok regardless (`this.Authorize.cs:59–60`).
-- **N4.** A one-time "y" never replaces a standing grant. Today `Add` overwrites the same-path entry in memory (`:165–171`), including the exact grant `Stand` gives the os folder (`:37`), so {read, execute} becomes {write}.
+- **N4.** A one-time "y" never replaces a standing grant, and a standing grant never replaces a one-time one. Both are kept. Today `Add` overwrites the same-path entry in memory (`:165–171`), including the exact grant `Stand` gives the os folder (`:37`), so {read, execute} becomes {write}; `Stand` replaces by path too (`:49`). The shape goes to the architect before it's coded.
 - **N5.** `PersistedGrantCannotOverrideStoresTests` pins what its comment says. Its fixture overwrites the store with text, so the persist never saves and all 7 cases pass in any order. Make the persist really save, and assert `Find` is non-null after it.
 - **N8.** A bug inside an ask is not a "no". Today the catch turns any exception into PermissionDenied (`:83`). Only "nobody could answer" (a cancelled or broken input) is a denial; anything else surfaces as itself.
 
@@ -50,7 +50,7 @@ Known older smells here: the identity slot in `identity/code/Default.cs` (fast-a
 ### 3. Readers answer their errors
 
 - **N10.** The json reader's `Number()` checks its token (`type/item/kind/json/reader.cs:59`), as `Float()`, `Double()` and `Decimal()` below it do. Today `"value": true` from a peer becomes a typed null number with no error.
-- **N11.** Type readers throw an `AppException` carrying their Error, never a raw `FormatException` or `NotSupportedException`: size (`size/serializer/Reader.cs:24,27`), parallel (`parallel/serializer/Reader.cs:25`), choice (`choice/this.cs:89`), kind (`type/kind/this.cs:218,231,319`). Then a bad value from a peer lands as its own error, not as a generic 500.
+- **N11.** Type readers throw an `AppException` carrying their Error, never a raw `FormatException` or `NotSupportedException`: size (`size/serializer/Reader.cs:24,27`), parallel (`parallel/serializer/Reader.cs:25`), choice (`choice/this.cs:89`), kind (`type/kind/this.cs:218,231,319`). Then a bad value from a peer lands as its own error, not as a generic 500. `choice/this.cs:85` and `kind/this.cs:345` stay plain: they guard against a C# caller's mistake, never a peer's value (decision 5).
 
 ### 4. A goal channel runs its goal like a call
 
@@ -72,7 +72,7 @@ Known older smell: the general catch at `:151` builds a `ServiceError` from `ex.
 
 ### 6. Paths and the Windows window
 
-- **N15.** `path/file/this.Validate.cs:46` uses `StartsWith`, which is culture-sensitive and has no separator boundary (`/root2` starts with `/root`). This is wrong on every OS. Use `IsUnder`.
+- **N15.** `path/file/this.Validate.cs` compares a path with the root by `StartsWith`, with no separator boundary (`/root2` starts with `/root`): at `:46` (culture-sensitive too) and `:55`. At `:81` and `:83` it compares case-blind on every OS. This is wrong on every OS. The whole file takes one boundary-aware compare with `RootComparison`. It's the same rule as path's `IsUnder` (`path/this.cs:173–181`), shared as one string-level check, never a second copy (`:243`: they must not drift apart).
 - **N17.** `OsTrustTests.cs:54` compares with a `/` separator, so it can only pass on Linux.
 - **The Windows window** (`module/screen/type/screen/window/code/Window.cs`, Windows only; Ingi's yes, 2026-10-25):
   - It repeats `Shown`'s delta logic (`ApplyBinary`, `Apply`, `Move`/`Copy`) and keeps its own QOI decoder beside `code/Qoi.cs` (stored twice). It uses the shared ones, so they're tested on Linux.
