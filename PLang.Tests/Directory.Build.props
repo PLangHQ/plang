@@ -37,7 +37,7 @@
        entry point, which a class library must not have; Shared gets
        TUnit.Assertions/Core in its own csproj). -->
   <ItemGroup Condition="'$(MSBuildProjectName)' != 'PLang.Tests.Shared'">
-    <PackageReference Include="TUnit" Version="1.13.11" />
+    <PackageReference Include="TUnit" Version="1.76.0" />
     <PackageReference Include="NSubstitute" Version="5.3.0" />
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)Shared\PLang.Tests.Shared.csproj" />
