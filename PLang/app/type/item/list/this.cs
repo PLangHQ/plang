@@ -57,6 +57,34 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // one list type its subclass admits as a chunk (a TList[]).
     private System.Array? _chunks;
 
+    // The rows by the key a subclass names for a row (goal.list: a goal by its .pr): made at the first look after an edit,
+    // kept by an append, dropped by any other edit — so no edit, whichever door it came in by, leaves it behind the rows.
+    // A list that names no key keeps none.
+    private System.Collections.Concurrent.ConcurrentDictionary<object, object?>? _index;
+
+    /// <summary>The key a row is found by in <see cref="Indexed"/>; none (null) for a list that keeps no index, the last
+    /// row with a key answering for it.</summary>
+    private protected virtual object? Key(object? row) => null;
+
+    /// <summary>The row <paramref name="key"/> names, found in one look; null when no row has it.</summary>
+    private protected object? Indexed(object key)
+    {
+        var index = System.Threading.Volatile.Read(ref _index);
+        if (index == null)
+            lock (_gate)
+            {
+                index = _index;
+                if (index == null)
+                {
+                    index = new();
+                    foreach (var row in Now)
+                        if (Key(row) is { } each) index[each] = row;
+                    System.Threading.Volatile.Write(ref _index, index);
+                }
+            }
+        return index.GetValueOrDefault(key);
+    }
+
     /// <summary>The lists this one's chunk rows read through, in row order, as the <typeparamref name="TList"/> its
     /// subclass admits as a chunk — what a list that is a layer over another reads its misses from. None for a list no
     /// other list was appended to.</summary>
@@ -166,7 +194,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     internal @this AddRaw(object? raw)
     {
         Admit(raw);
-        Change(raw, static (list, r) => list._items.Add(r));
+        Append(raw);
         return this;
     }
 
@@ -183,7 +211,21 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             var answer = edit(this, state);
             _rows = null;
             _chunks = null;
+            _index = null;
             return answer;
+        }
+    }
+
+    // The door for a row added at the end: as Change, but the index kept over the rows takes the row instead of being
+    // dropped, so an add costs the same however many rows the list holds.
+    private void Append(object? row)
+    {
+        lock (_gate)
+        {
+            _items.Add(row);
+            _rows = null;
+            _chunks = null;
+            if (_index != null && Key(row) is { } key) _index[key] = row;
         }
     }
 
@@ -334,7 +376,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public @this Add(global::app.type.item.@this value)
     {
         Admit(value);
-        Change(value, static (list, v) => list._items.Add(v));
+        Append(value);
         return this;
     }
 
@@ -379,7 +421,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public @this Add(Data item)
     {
         Admit(item);
-        Change(item, static (list, i) => list._items.Add(i));
+        Append(item);
         return this;
     }
 

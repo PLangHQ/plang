@@ -134,7 +134,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         lock (_gate)
         {
             // the goal held from the same .pr, found in one look, gives way — its row, by reference
-            if (_held.TryGetValue(pr, out var held))
+            if (this[pr] is { } held)
             {
                 var at = 0;
                 foreach (var each in Items())
@@ -144,22 +144,8 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
                 }
             }
             base.Add((global::app.type.item.@this)goal);
-            _held[pr] = goal;
             _app = _system = null;
         }
-    }
-
-    // The goal held for each .pr, beside the rows: changed only by Add and Remove, under the gate; read without it.
-    private readonly System.Collections.Concurrent.ConcurrentDictionary<global::app.type.item.path.@this, goal.@this> _held = new();
-
-    /// <summary>Takes a goal out of the list, and out of the goals held by their .pr with it.</summary>
-    public override async System.Threading.Tasks.ValueTask<bool> Remove(object? value, actor.context.@this context)
-    {
-        if (!await base.Remove(value, context)) return false;
-        lock (_gate)
-            foreach (var (pr, held) in _held)
-                if (!Items().Any(each => ReferenceEquals(each, held))) _held.TryRemove(pr, out _);
-        return true;
     }
 
     /// <summary>
@@ -349,6 +335,10 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
                 && !plang.Replace('\\', '/').Contains("/.", StringComparison.Ordinal)).ToList();
     }
 
-    /// <summary>The goal read from <paramref name="pr"/>, when it is held; null when it isn't.</summary>
-    public goal.@this? this[global::app.type.item.path.@this pr] => _held.GetValueOrDefault(pr);
+    /// <summary>The goal read from <paramref name="pr"/>, when it is held; null when it isn't. Found in one look: the
+    /// list's index of its rows, which no edit leaves behind.</summary>
+    public goal.@this? this[global::app.type.item.path.@this pr] => Indexed(pr) as goal.@this;
+
+    // A goal is found by the .pr it was read from.
+    private protected override object? Key(object? row) => (row as goal.@this)?.PrPath;
 }

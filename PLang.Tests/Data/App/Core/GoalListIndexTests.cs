@@ -40,4 +40,20 @@ public class GoalListIndexTests
         await Assert.That(app.goal.list.CountRaw).IsEqualTo(1);
         await Assert.That(app.goal.list[again.PrPath!]).IsSameReferenceAs(again);
     }
+
+    // The index is the list's own, made from its rows: a row taken out through a door the goal list doesn't write
+    // (the base list's own) is gone from the index too.
+    [Test]
+    public async Task AGoalTakenOutByAnyDoor_IsNoLongerHeldForItsPr()
+    {
+        await using var app = new global::app.@this("/goal-index", global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.System.Context;
+        var goal = Make.Goal(context, "Start", "/g/Start.goal");
+        app.goal.list.Add(goal);
+        await Assert.That(app.goal.list[goal.PrPath!]).IsSameReferenceAs(goal);
+
+        app.goal.list.RemoveAt(0);
+
+        await Assert.That(app.goal.list[goal.PrPath!]).IsNull();
+    }
 }
