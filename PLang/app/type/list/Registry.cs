@@ -21,7 +21,6 @@ namespace app.type.list;
 public sealed partial class @this : global::app.type.item.list.@this<global::app.type.@this>
 {
     private readonly object _lock = new();
-    private volatile bool _loaded;
 
     /// <summary>Assemblies the startup scan reads. Defaults to the App assembly; callers can extend.</summary>
     public List<Assembly> Assemblies { get; } = new() { typeof(@this).Assembly };
@@ -47,15 +46,8 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         "type", "error", "success", "@schema",
     };
 
-    // Every type, loaded on first ask.
-    private IEnumerable<global::app.type.@this> Types
-    {
-        get
-        {
-            Load();
-            return Items();
-        }
-    }
+    // Every type: the code's, scanned as its list was made, and what this list's app loaded.
+    private IEnumerable<global::app.type.@this> Types => Items();
 
     /// <summary>The types a step can name: every plang type by its name (a type is the word that names it), never one
     /// plang keeps for itself.</summary>
@@ -70,20 +62,13 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     private volatile System.Collections.Immutable.ImmutableDictionary<string, global::app.type.@this> _named
         = System.Collections.Immutable.ImmutableDictionary.Create<string, global::app.type.@this>(StringComparer.OrdinalIgnoreCase);
 
-    // The type a name names, the startup scan done first: this list's own, else the list it is a layer over.
+    // The type a name names as the guard has recorded it so far — this list's own, else the list under's (the scan
+    // reads it as it fills the set).
     private global::app.type.@this? Named(string name)
-    {
-        Load();
-        return Recorded(name);
-    }
-
-    // The type a name names as the guard has recorded it so far — this list's own, else the list under's — with no
-    // scan: what the scan itself reads while it fills the set.
-    private global::app.type.@this? Recorded(string name)
     {
         if (_named.GetValueOrDefault(name) is { } type) return type;
         foreach (var under in Under)
-            if (under.Recorded(name) is { } recorded) return recorded;
+            if (under.Named(name) is { } named) return named;
         return null;
     }
 
@@ -111,28 +96,22 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     // The entry is one this list holds itself, not one of the list it is a layer over.
     private bool Holds(global::app.type.@this entry) => ReferenceEquals(_named.GetValueOrDefault(entry.Name), entry);
 
-    // The startup scan: every item class in Assemblies comes in under its name, then each type takes its kinds; a
-    // type's facts are read when first asked, once every name is known (a fact names its property types). A clash
-    // here is plang's own.
-    private void Load()
+    // The code's scan, as the code's list is made: every item class in Assemblies comes in under its name, then each
+    // type takes its kinds; a type's facts are read when first asked, once every name is known (a fact names its
+    // property types). A clash here is plang's own.
+    private void Scan()
     {
-        if (_loaded) return;
-        lock (_lock)
-        {
-            if (_loaded) return;
-            // each type is made holding this list, its facts read when asked; the type `type` is made holding this
-            // list as its values
-            foreach (var assembly in Assemblies)
-                foreach (var (name, clr) in code[assembly].Item)
-                    base.Add(clr == typeof(global::app.type.@this)
-                        ? new global::app.type.@this(this)
-                        : new global::app.type.@this(name, clr, this));
-            // plang's own assemblies: a refusal here is plang broken
-            foreach (var assembly in Assemblies)
-                if (Enlist(assembly) is { } refused) throw new InvalidOperationException(refused.Message);
-            if (Guard() is { } clash) throw new InvalidOperationException(clash.Message);
-            _loaded = true;
-        }
+        // each type is made holding this list, its facts read when asked; the type `type` is made holding this
+        // list as its values
+        foreach (var assembly in Assemblies)
+            foreach (var (name, clr) in code[assembly].Item)
+                base.Add(clr == typeof(global::app.type.@this)
+                    ? new global::app.type.@this(this)
+                    : new global::app.type.@this(name, clr, this));
+        // plang's own assemblies: a refusal here is plang broken
+        foreach (var assembly in Assemblies)
+            if (Enlist(assembly) is { } refused) throw new InvalidOperationException(refused.Message);
+        if (Guard() is { } clash) throw new InvalidOperationException(clash.Message);
     }
 
     /// <summary>The guard every slot passes: the types hold types, and every name a type answers to — its
@@ -156,7 +135,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     private error.@this? Clash(global::app.type.@this type)
     {
         foreach (var claim in type.Claims)
-            if (Recorded(claim) is { } owner && owner.ClrType != type.ClrType)
+            if (Named(claim) is { } owner && owner.ClrType != type.ClrType)
                 return new error.@this(
                     $"type name '{claim}' is claimed by both {owner.ClrType?.FullName} and {type.ClrType?.FullName} — one name, one class.",
                     "TypeLoadCollision", 400);
@@ -193,7 +172,6 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                 "TypeLoadReservedShadow", 400));
         lock (_lock)
         {
-            Load();
             if (Items().FirstOrDefault(t => t.Names(claimed)) is { } owner && owner.ClrType == clr)
                 return context.Ok(owner);
             var added = new global::app.type.@this(claimed, clr, this);
@@ -248,7 +226,6 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     /// A kind of the same name on that type is replaced.</summary>
     public void Add(global::app.type.kind.@this kind)
     {
-        Load();
         foreach (var key in kind.Mime.Concat(kind.Extension))
             foreach (var type in Items())
                 if (type.kind[key] is { } taken
@@ -304,7 +281,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         // each kind class, born holding the entry of the type it is a kind of (the T of its kind<T>), when this list
         // holds that type
         foreach (var (clr, type) in library.Kind)
-            if (Recorded(type) is { } owner
+            if (Named(type) is { } owner
                 && Hold((global::app.type.kind.@this)System.Activator.CreateInstance(clr, owner)!) is { } refused)
                 return refused;
         foreach (var mark in library.Marked)
@@ -315,7 +292,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             // the list names the class (a list of actions is a list); a declared format no type reads is plang broken
             if (mark.Codec is { } format)
             {
-                if ((Recorded(global::app.type.item.@this.NameOf(t)!) ?? Recorded(PlangName(t).Name))
+                if ((Named(global::app.type.item.@this.NameOf(t)!) ?? Named(PlangName(t).Name))
                     is not { } declaring)
                     return new error.@this($"{t.FullName} declares a format, but no type reads it — it is no type of its own "
                         + "and the list names none for it.", "TypeLoadFormat", 400);
@@ -325,7 +302,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                         return refused;
             }
             // a list's element kinds, made as a list names its element (list<path>)
-            if (mark.List && Recorded(global::app.type.item.@this.NameOf(t)!) is { } list
+            if (mark.List && Named(global::app.type.item.@this.NameOf(t)!) is { } list
                 && Hold(new global::app.type.item.list.kind.@this(list, this)) is { } unheld)
                 return unheld;
             // each class marked a choice ([Choice]) is the closed set a choice<T> draws on, a kind of choice, with its reader
@@ -350,7 +327,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         // each class under a family that has kinds ([Kinds]) is one of its kinds, by its own name — but a kind the
         // family already holds (path's schemes, file and http)
         foreach (var subclass in library.Subclasses)
-            if (Recorded(subclass.Family) is { } owner && owner.kind[subclass.Kind] == null)
+            if (Named(subclass.Family) is { } owner && owner.kind[subclass.Kind] == null)
             {
                 if (Hold((global::app.type.kind.@this)System.Activator.CreateInstance(subclass.Made, subclass.Kind, subclass.Clr, owner)!) is { } refused)
                     return refused;

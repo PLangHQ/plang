@@ -15,13 +15,14 @@ namespace app.type.list;
 /// </summary>
 public sealed partial class @this
 {
-    /// <summary>The code's types — the bottom, with nothing under it: every type its facts hold, scanned on first ask.
-    /// The types hold no context and no app: a lookup that needs the app's formats takes the caller's context.</summary>
+    /// <summary>The code's types — the bottom, with nothing under it: every type its facts hold, scanned as the list is
+    /// made. The types hold no context and no app: a lookup that needs the app's formats takes the caller's context.</summary>
     internal @this(global::app.origin.code origin) : base(new List<object?>())
     {
         code = new Code();
         _origin = origin;
         Reader = new reader.code(code);
+        Scan();
     }
 
     /// <summary>An app's types: a layer of its own over the list its <paramref name="origin"/> answers, which it holds
@@ -33,11 +34,9 @@ public sealed partial class @this
         code = new Code();
         _origin = origin;
         var under = origin.type;
-        under.Load();
         Reader = new reader.layer(code, under.Reader);
-        base.Add(under);
         // the scan is the list under's: this list reads no class of its own until it loads one
-        _loaded = true;
+        base.Add(under);
     }
 
     // What the app is made from — asked for a kind on a type below this layer.
@@ -183,7 +182,6 @@ public sealed partial class @this
     {
         get
         {
-            Load();
             // The name comes from PlangName — the same step the facts name through, so the
             // entity's face and the facts can never disagree. A kinded family is born here with
             // its kind (already the canonical name); every other name is the named entity.
