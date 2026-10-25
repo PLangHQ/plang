@@ -86,6 +86,10 @@ public sealed partial class @this : global::app.type.item.path.@this
         return context.Ok((await stat.Value())?.Size ?? global::app.type.item.size.@this.Create(0, context));
     }
 
+    /// <summary>The .pr this file, a <c>.goal</c>, is built to: <c>X.goal</c> → <c>.build/x.pr</c> beside it.</summary>
+    internal global::app.type.item.path.@this Pr
+        => Parent.Combine(".build").Combine(Stem.ToString().ToLowerInvariant() + ".pr");
+
     /// <summary>
     /// FilePath-specific resolve: applies relative-path-to-goal-folder
     /// resolution and ValidatePath normalization. Called by the scheme

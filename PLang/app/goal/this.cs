@@ -96,7 +96,7 @@ public sealed partial class @this
         {
             _path = value;
             // the .pr it is built to, worked out where its file is given
-            _pr = value is { Absolute.Length: > 0 } source ? Pr(source) : null;
+            _pr = value is global::app.type.item.path.file.@this { Absolute.Length: > 0 } source ? source.Pr : null;
         }
     }
     private global::app.type.item.path.@this? _path;
@@ -110,12 +110,6 @@ public sealed partial class @this
     /// parent's; none without a Path.</summary>
     [Debug]
     public global::app.type.item.path.@this? PrPath => Parent?.PrPath ?? _pr;
-
-    /// <summary>The .pr a .goal is built to: <c>X.goal</c> → <c>.build/x.pr</c> beside it. A static on the goal type by
-    /// exception — a rule about where a goal's build lands, read before there is a goal: by <see cref="PrPath"/>,
-    /// <see cref="Load"/> and setup's discovery, nothing else.</summary>
-    public static global::app.type.item.path.@this Pr(global::app.type.item.path.@this source)
-        => source.Parent.Combine(".build").Combine(source.Stem.ToString().ToLowerInvariant() + ".pr");
 
     [Store, Out, Debug]
     public string? Hash

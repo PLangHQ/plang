@@ -179,7 +179,7 @@ public class GoalCallResolutionTests
 
         await loaded.IsSuccess();
         await Assert.That((await loaded.Value() as PLangGoal)?.Name).IsEqualTo("Inner");
-        await Assert.That(PLangGoal.Pr(global::app.type.item.path.@this.Resolve("/sub/Inner.goal", _app.actor.list.User.Context)).ToString())
+        await Assert.That(global::app.type.item.path.file.@this.Resolve("/sub/Inner.goal", _app.actor.list.User.Context).Pr.ToString())
             .IsEqualTo("/sub/.build/inner.pr");
     }
 

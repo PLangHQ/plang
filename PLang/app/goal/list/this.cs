@@ -44,8 +44,11 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     /// </summary>
     internal async Task<data.@this> Load(global::app.type.item.path.@this source)
     {
-        var pr = goal.@this.Pr(source);
         var context = App.actor.list.System.Context;
+        // a goal is built from a file: its .pr lies beside it
+        if (source is not global::app.type.item.path.file.@this file)
+            return context.Error(new global::app.error.@this($"{source}: a goal is built from a .goal file, which this isn't", "GoalNotAFile", 400));
+        var pr = file.Pr;
         var loaded = await Current(pr, context) is { } held ? context.Ok(held)
             : await Inherited(source, context) ?? await Read(pr, context);
         if (loaded.Success && await loaded.Value() is goal.@this { IsSetup: true })
@@ -209,7 +212,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
                 if (await Spelled(at) is not { } file) return data.@this<goal.@this>.From(context.NotFound(name));
                 at = global::app.type.item.path.@this.Resolve(at.Parent.Combine(file).Raw, context);
             }
-            if (!await (await goal.@this.Pr(at).Exists(context)).ToBooleanAsync())
+            if (at is global::app.type.item.path.file.@this source && !await (await source.Pr.Exists(context)).ToBooleanAsync())
                 return context.Error<goal.@this>(new Error(
                     $"Goal {at} exists but isn't built; run plang build", "GoalNotBuilt", 404));
             return data.@this<goal.@this>.From(await Load(at));

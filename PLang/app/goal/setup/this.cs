@@ -38,8 +38,8 @@ public sealed class @this
         var context = app.actor.list.System.Context!;
         var candidates = new global::app.type.item.path.@this[]
         {
-            global::app.goal.@this.Pr(global::app.type.item.path.@this.Resolve("/Setup.goal", context)),
-            global::app.goal.@this.Pr(global::app.type.item.path.@this.Resolve("/Setup/Setup.goal", context)),
+            global::app.type.item.path.file.@this.Resolve("/Setup.goal", context).Pr,
+            global::app.type.item.path.file.@this.Resolve("/Setup/Setup.goal", context).Pr,
         };
 
         foreach (var file in candidates)
