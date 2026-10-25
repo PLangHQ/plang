@@ -1,0 +1,310 @@
+{
+  "name": "Start",
+  "comment": "A list saved to .jsonl and read back is the same list, one element per line.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %rows% = [{\"a\": 1}, {\"a\": 2}, \"three\"]",
+      "line": {
+        "number": 3,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%rows%",
+              "variable": [
+                {
+                  "text": "%rows%",
+                  "code": [
+                    {
+                      "variable": "rows"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"a":1},{"a":2},"three"]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "save %rows% to 'roundtrip.jsonl'",
+      "line": {
+        "number": 4,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "save",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "roundtrip.jsonl"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%rows%",
+              "variable": [
+                {
+                  "text": "%rows%",
+                  "code": [
+                    {
+                      "variable": "rows"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "read file 'roundtrip.jsonl', write to %back%",
+      "line": {
+        "number": 5,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "roundtrip.jsonl"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%back%",
+              "variable": [
+                {
+                  "text": "%back%",
+                  "code": [
+                    {
+                      "variable": "back"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "file",
+                "kind": "jsonl"
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "delete file 'roundtrip.jsonl'",
+      "line": {
+        "number": 6,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "delete",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "roundtrip.jsonl"
+            }
+          ],
+          "default": [
+            {
+              "name": "recursive",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %back.count% equals 3",
+      "line": {
+        "number": 7,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 3
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%back.count%",
+              "variable": [
+                {
+                  "text": "%back.count%",
+                  "code": [
+                    {
+                      "variable": "back"
+                    },
+                    {
+                      "property": "count"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "assert %back% equals %rows%",
+      "line": {
+        "number": 8,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%rows%",
+              "variable": [
+                {
+                  "text": "%rows%",
+                  "code": [
+                    {
+                      "variable": "rows"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%back%",
+              "variable": [
+                {
+                  "text": "%back%",
+                  "code": [
+                    {
+                      "variable": "back"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "visibility": "Public",
+  "file": "RoundTrip.test.goal",
+  "hash": "a9047c1387b771cdd2ec0c32203f5b6cc5f89df46929d29ff132eb3db155c715"
+}
