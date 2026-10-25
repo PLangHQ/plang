@@ -1823,7 +1823,7 @@ enum app.type.item.kind.json.layout [Choice, PlangType]
   static const formatted : app.type.item.kind.json.layout
 
 class app.type.item.kind.json.setting.this : app.type.item.setting.this
-  Format : app.type.item.choice.this<app.type.item.kind.json.layout> { get; set; } [Default, Out, Store]
+  Layout : app.type.item.choice.this<app.type.item.kind.json.layout> { get; set; } [Default, Out, Store]
   ctor(app.type.this type)
   static Internal : System.Boolean { get; }
 

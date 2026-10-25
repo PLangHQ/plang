@@ -1,11 +1,11 @@
-/ json is written formatted by default, compact when %!app.type.kind.json.setting.format% says; every character as itself.
+/ json is written formatted by default, compact when %!app.type.kind.json.setting.layout% says; every character as itself.
 Start
 - set %d% = {"a": 1, "name": "þú <b>"}
 - save %d% to 'formatted.json'
 - read 'formatted.json' as text, write to %formatted%
 - read 'expected.formatted.json' as text, write to %expectedFormatted%
 - assert %formatted% equals %expectedFormatted%
-- set %!app.type.kind.json.setting.format% = "compact"
+- set %!app.type.kind.json.setting.layout% = "compact"
 - save %d% to 'compact.json'
 - read 'compact.json' as text, write to %compact%
 - read 'expected.compact.json' as text, write to %expectedCompact%

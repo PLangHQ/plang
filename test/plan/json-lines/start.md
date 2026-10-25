@@ -33,7 +33,7 @@ A kind of item beside json: `type/item/kind/jsonl/this.cs`.
 
 ## Stage 3: the json setting
 
-`%!app.type.json.setting.format%`: `formatted | compact`, default `formatted`. Read once at the start of json's Encode.
+`%!app.type.kind.json.setting.layout%` (`--type.kind.json.setting.layout=compact`): `formatted | compact`, default `formatted`. Read once at the start of json's Encode.
 - `formatted`: indented, every character as itself, the `.pr` writer's look (`goal/this.Item.cs:21–34`).
 - `compact`: one line, every character as itself.
 - HTML escaping leaves the json kind. The `| json` filter escapes `<`, `>` and `&` itself (bugs 24, 44), and json is no page.

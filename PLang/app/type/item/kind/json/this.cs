@@ -39,7 +39,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
         => new source(raw, type, this, origin, variable, built);
 
     /// <summary>json content written: the value alone, as json — no Data around it (the type is inferred on
-    /// read), laid out as <c>%!app.type.kind.json.setting.format%</c> says, every character as itself (json is no
+    /// read), laid out as <c>%!app.type.kind.json.setting.layout%</c> says, every character as itself (json is no
     /// page: the <c>| json</c> filter makes it safe for one). The value writes itself through the json writer.</summary>
     public override async System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
         global::app.data.@this data, global::app.actor.context.@this context, global::app.View view,
@@ -50,7 +50,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
             var setting = await context.Setting.Get<setting.@this>();
             await using var utf8 = new Utf8JsonWriter(stream, new JsonWriterOptions
             {
-                Indented = setting.Format.Value == layout.formatted,
+                Indented = setting.Layout.Value == layout.formatted,
                 // a line ends at LF on every OS, as a stream channel's does
                 NewLine = "\n",
                 Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,

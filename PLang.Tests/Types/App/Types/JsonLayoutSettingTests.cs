@@ -1,10 +1,10 @@
 namespace PLang.Tests.App.Types;
 
-// json's layout is the program's say: %!app.type.kind.json.setting.format% — formatted (the default) or compact. Only
+// json's layout is the program's say: %!app.type.kind.json.setting.layout% — formatted (the default) or compact. Only
 // json's own encode reads it: plang's wire, a digest and a .pr have writers of their own.
-public class JsonFormatSettingTests
+public class JsonLayoutSettingTests
 {
-    private const string Address = "app.type.kind.json.setting.format";
+    private const string Address = "app.type.kind.json.setting.layout";
 
     private static global::app.@this App() =>
         new global::app.@this("/tmp/jsonfmt-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();

@@ -12,5 +12,5 @@ public sealed class @this : global::app.type.item.setting.@this
 
     /// <summary>The layout json is written in — <c>formatted</c> (indented) or <c>compact</c> (one line).</summary>
     [Out, Store, global::app.module.Default("formatted")]
-    public global::app.type.item.choice.@this<layout> Format { get; set; } = null!;
+    public global::app.type.item.choice.@this<layout> Layout { get; set; } = null!;
 }

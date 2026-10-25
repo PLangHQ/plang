@@ -22,9 +22,9 @@ Stage2
 
 Stage3
 / json is written formatted by default, compact when the setting says — plang test
-/ /plan/json-lines/app/type/json/FormatSetting
-- call /plan/json-lines/app/type/json/FormatSetting
-/ the setting never reaches plang's wire, a digest or a .pr — C# test JsonFormatSettingTests
+/ /plan/json-lines/app/type/json/LayoutSetting
+- call /plan/json-lines/app/type/json/LayoutSetting
+/ the setting never reaches plang's wire, a digest or a .pr — C# test JsonLayoutSettingTests
 / (TheWire_IsUntouched, ADigest_IsUntouched, APr_IsUntouched)
 / a saved llm answer is served whichever way its file was written — C# test LlmAnswersFileTests
 / (ACompactFile_IsServed_WhenFormatted, AFormattedFile_IsServed_WhenCompact)
