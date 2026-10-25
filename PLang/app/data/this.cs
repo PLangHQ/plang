@@ -234,7 +234,7 @@ public partial class @this
     [LlmIgnore]
     internal virtual attachment Attachment
     {
-        get => _attachment ?? System.Threading.Interlocked.CompareExchange(ref _attachment, new attachment(), null) ?? _attachment;
+        get => System.Threading.LazyInitializer.EnsureInitialized(ref _attachment, static () => new());
         set => _attachment = value;
     }
     private attachment? _attachment;

@@ -74,7 +74,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// actor's permission setting, saved in the settings' store.
     /// </summary>
     public permission.@this Permission
-        => _permission ?? System.Threading.Interlocked.CompareExchange(ref _permission, new permission.@this(this), null) ?? _permission;
+        => System.Threading.LazyInitializer.EnsureInitialized(ref _permission, () => new(this));
 
     // the permission view, made when first asked; the first made is the one kept (it holds the grants)
     private permission.@this? _permission;
@@ -95,7 +95,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>The tasks this actor runs — the goal calls made in parallel on it, each listed while it runs.</summary>
     [global::app.LlmBuilder]
     public global::app.task.list.@this Task
-        => _tasks ?? System.Threading.Interlocked.CompareExchange(ref _tasks, new global::app.task.list.@this(this), null) ?? _tasks;
+        => System.Threading.LazyInitializer.EnsureInitialized(ref _tasks, () => new(this));
 
     /// <summary>
     /// Back-reference to the app.
@@ -119,8 +119,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private global::app.actor.setting.@this? _setting;
 
     /// <summary>This actor's settings — the root its contexts' layers chain to; the user's falls back
-    /// to the system's (<c>app.actor.list.System.Setting</c>).</summary>
-    public global::app.actor.setting.@this Setting => _setting ??= new(this, _fallback?.Setting);
+    /// to the system's (<c>app.actor.list.System.Setting</c>). Made when first asked; the first made is the one kept
+    /// (it holds the settings' store).</summary>
+    public global::app.actor.setting.@this Setting
+        => System.Threading.LazyInitializer.EnsureInitialized(ref _setting, () => new(this, _fallback?.Setting));
 
     /// <param name="fallback">The actor whose settings answer what this one's don't — the system, for the user.</param>
     /// <param name="role">What the actor is in its app: the system or a user.</param>

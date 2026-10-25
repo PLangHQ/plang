@@ -238,7 +238,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
         _for = callee;
         _datetime = stack.Datetime;
         Tags = new global::app.type.item.dict.@this(stack.Dict);
-        Errors =new global::app.error.list.@this(stack.Audit.Type);
+        Errors = new global::app.error.list.@this(stack.Errors);
         Children = new child.list.@this(stack);
         foreach (var name in names ?? [])
         {

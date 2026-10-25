@@ -22,7 +22,7 @@ public partial class @this
 
     // The table a write lands in — made, the first made kept, on the first.
     private ConcurrentDictionary<string, data.@this> Table
-        => _table ?? System.Threading.Interlocked.CompareExchange(ref _table, new(Comparer), null) ?? _table;
+        => System.Threading.LazyInitializer.EnsureInitialized(ref _table, static () => new(Comparer));
 
     // What this memory holds by name as it stands, for a read: nothing until the first write.
     private IReadOnlyDictionary<string, data.@this> _variables

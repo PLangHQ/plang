@@ -11,27 +11,19 @@ internal sealed class @this
     // The actor whose bindings these are: every binding held here is that actor's.
     private readonly global::app.actor.@this _actor;
 
-    // Each item's held events, made on the first bind on any item: a context that binds nothing holds no table.
-    private System.Collections.Concurrent.ConcurrentDictionary<global::app.type.item.@this, own>? _held;
+    // Each item's held events, keyed by the item itself.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<global::app.type.item.@this, own> _held =
+        new(System.Collections.Generic.ReferenceEqualityComparer.Instance);
 
-    /// <summary>The bindings <paramref name="actor"/>'s context holds.</summary>
+    /// <summary>The bindings <paramref name="actor"/> holds.</summary>
     internal @this(global::app.actor.@this actor) => _actor = actor;
 
     /// <summary>The events <paramref name="item"/> has held here — made on the first bind on it, with the events its
     /// type declares.</summary>
-    internal own this[global::app.type.item.@this item]
-    {
-        get
-        {
-            var held = _held ?? System.Threading.Interlocked.CompareExchange(ref _held,
-                new(System.Collections.Generic.ReferenceEqualityComparer.Instance), null) ?? _held!;
-            return held.GetOrAdd(item, static each => new own(each.on.Declared));
-        }
-    }
+    internal own this[global::app.type.item.@this item] => _held.GetOrAdd(item, static each => new own(each.on.Declared));
 
     /// <summary>The events <paramref name="item"/> has held here; null when nothing was bound on it here.</summary>
-    internal own? Of(global::app.type.item.@this item)
-        => _held is { } held && held.TryGetValue(item, out var events) ? events : null;
+    internal own? Of(global::app.type.item.@this item) => _held.TryGetValue(item, out var events) ? events : null;
 
     /// <summary>Binds <paramref name="handler"/> on <paramref name="item"/>'s event named <paramref name="event"/>,
     /// <paramref name="when"/> it runs — this actor's binding, in <paramref name="scope"/>, for the items
@@ -48,5 +40,5 @@ internal sealed class @this
         => this[item].Bind(@event, when, side => make(side, _actor));
 
     /// <summary>Lets go of every binding held here — the context's end.</summary>
-    internal void Clear() => _held?.Clear();
+    internal void Clear() => _held.Clear();
 }

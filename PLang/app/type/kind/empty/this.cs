@@ -56,7 +56,7 @@ public sealed class @this : global::app.type.kind.@this
     // Taken by an addition and by the making of the tables: one at a time.
     private readonly object _gate = new();
     // The type's own format — its class's [Format("", …)]: plain text is {text}, opaque bytes {binary}.
-    private global::app.type.kind.@this? _format;
+    private volatile global::app.type.kind.@this? _format;
 
     /// <summary>The empty kind of <paramref name="owner"/>, the type it is born by.</summary>
     public @this(global::app.type.@this owner, global::app.type.kind.@this? format = null) : base("")

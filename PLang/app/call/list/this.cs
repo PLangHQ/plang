@@ -51,7 +51,7 @@ public sealed partial class @this : global::app.type.item.@this
     // start and end (datetime), and its tags (dict) — each found at the first push that needs it (a context that calls
     // nothing finds none).
     private readonly global::app.type.list.@this _types;
-    private global::app.type.@this? _callType, _bindingType, _isolatedType, _datetimeType, _dictType;
+    private global::app.type.@this? _callType, _bindingType, _isolatedType, _datetimeType, _dictType, _errorsType;
     private global::app.type.@this _call => _callType ??= _types[typeof(call.@this)];
     private global::app.type.@this _binding => _bindingType ??= _types[typeof(call.binding.@this)];
     private global::app.type.@this _isolated => _isolatedType ??= _types[typeof(call.isolated.@this)];
@@ -61,6 +61,9 @@ public sealed partial class @this : global::app.type.item.@this
 
     /// <summary>The app's dict type — a frame's tags are of it.</summary>
     internal global::app.type.@this Dict => _dictType ??= _types[typeof(global::app.type.item.dict.@this)];
+
+    /// <summary>The app's error list type — a frame's errors and the audit are of it.</summary>
+    internal global::app.type.@this Errors => _errorsType ??= _types[typeof(global::app.error.list.@this)];
 
     /// <summary>A context's calls, of the app's <paramref name="types"/>, reading what they capture through its
     /// <paramref name="settings"/>.</summary>
@@ -95,7 +98,7 @@ public sealed partial class @this : global::app.type.item.@this
     /// </summary>
     [global::app.LlmBuilder]
     public global::app.error.list.@this Audit
-        => _audit ?? Interlocked.CompareExchange(ref _audit, new global::app.error.list.@this(_types[typeof(global::app.error.list.@this)]), null) ?? _audit;
+        => LazyInitializer.EnsureInitialized(ref _audit, () => new(Errors));
     private global::app.error.list.@this? _audit;
 
     /// <summary>

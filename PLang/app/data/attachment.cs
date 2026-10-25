@@ -10,7 +10,7 @@ internal sealed class attachment
     /// <summary>The value's properties — made the first time they are asked for; the first made is the one kept.</summary>
     public Properties Properties
     {
-        get => _properties ?? System.Threading.Interlocked.CompareExchange(ref _properties, new(), null) ?? _properties;
+        get => System.Threading.LazyInitializer.EnsureInitialized(ref _properties, static () => new());
         set => _properties = value;
     }
     private Properties? _properties;
@@ -21,7 +21,7 @@ internal sealed class attachment
     /// <summary>The members a program added — made the first time one is asked for; the first made is the one kept.</summary>
     public global::app.type.item.kept.list.@this Kept
     {
-        get => _kept ?? System.Threading.Interlocked.CompareExchange(ref _kept, new(), null) ?? _kept;
+        get => System.Threading.LazyInitializer.EnsureInitialized(ref _kept, static () => new());
         set => _kept = value;
     }
     private global::app.type.item.kept.list.@this? _kept;
