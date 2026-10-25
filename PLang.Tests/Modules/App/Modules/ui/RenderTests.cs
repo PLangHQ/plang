@@ -346,7 +346,7 @@ public class RenderTests : IDisposable
         await Assert.That(output).Contains("I am a partial");
     }
 
-    // one include named both ways in one template — with its .liquid and without — is the one include, read once
+    // one include named both ways in one template, with its .liquid and without: both render
     [Test]
     public async Task Render_Include_NamedWithAndWithoutItsExtension_RendersBoth()
     {
