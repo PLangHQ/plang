@@ -181,7 +181,10 @@ public sealed partial class @this : global::app.type.item.@this
     /// <param name="setting">What the stack captures, as its async caller read it (<see cref="Setting"/>).</param>
     /// <param name="names">The variables its frame is born with — a goal call's parameters.</param>
     public call.@this Push(global::app.goal.@this goal, setting.@this setting, IEnumerable<global::app.data.@this>? names = null)
-        => Enter(new call.@this(Call, this, goal, setting, names));
+    {
+        Deepen();
+        return Enter(new call.@this(Call, this, goal, setting, names));
+    }
 
     /// <summary>Pushes a frame that only binds <paramref name="names"/> (a loop's item, a handler's error) — for
     /// <paramref name="held"/> when its runner supplies them to that one call (a tool call's state).</summary>
@@ -197,19 +200,31 @@ public sealed partial class @this : global::app.type.item.@this
 
     /// <summary>Pushes the frame of a step starting: its goal and itself.</summary>
     public call.@this Push(global::app.goal.step.@this step, setting.@this setting)
-        => Enter(new call.@this(Call, this, step, setting));
+    {
+        Deepen();
+        return Enter(new call.@this(Call, this, step, setting));
+    }
 
     /// <summary>Pushes the frame of an action starting: its step's goal, its step and itself — an action composed
     /// in C# holds no step. <paramref name="variables"/> is the store for diff capture (when Diff is on).</summary>
     public call.@this Push(global::app.goal.step.action.@this action, setting.@this setting, Variables? variables = null)
-        => Enter(new call.@this(Call, this, action, setting, variables));
+    {
+        Deepen();
+        return Enter(new call.@this(Call, this, action, setting, variables));
+    }
+
+    // A call frame (a goal's, a step's, an action's) deepens the stack: past MaxDepth (its caller's depth) it is the
+    // overflow, before anything of the frame is made.
+    private void Deepen()
+    {
+        if (_current.Value is { } caller && caller.Depth >= MaxDepth) throw new CallStackOverflowException(MaxDepth);
+    }
 
     // The frame becomes current: it joins its caller's children (Children owns its own lock + FIFO eviction), and a
     // frame that starts an empty chain is the run's root — reassigned each time, so %!call.Root% is the live run's,
-    // never a stale one already popped. A frame past MaxDepth (its caller's depth) is the overflow, and joins nothing.
+    // never a stale one already popped.
     private call.@this Enter(call.@this frame)
     {
-        if (frame.Caller is { } caller && caller.Depth >= MaxDepth) throw new CallStackOverflowException(MaxDepth);
         frame.Caller?.Children.Add(frame);
         if (_current.Value == null) _root = frame;
         _current.Value = frame;

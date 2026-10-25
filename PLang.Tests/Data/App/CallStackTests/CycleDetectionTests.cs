@@ -23,6 +23,25 @@ public class CycleDetectionTests : System.IAsyncDisposable
         });
     }
 
+    // A frame past the depth is refused before anything of it is made: while diffing, nothing of it is left open
+    // to be fed every change after (the stack's open frames are read where they are kept).
+    [Test]
+    public async Task AnOverflowWhileDiffing_LeavesNoFrameOpen()
+    {
+        var context = app.actor.list.User.Context;
+        var stack = TestCalls.Stack(app, TestCalls.Settings(), maxDepth: 1);
+        using var scope = stack.DiffScope(context.Variable);
+        await using var a = stack.Push(MakeAction(context, "A"), await stack.Setting(), context.Variable);
+
+        var setting = await stack.Setting();
+        await Assert.ThrowsAsync<CallStackOverflowException>(async () =>
+            await Task.Run(() => stack.Push(MakeAction(context, "B"), setting, context.Variable)));
+
+        var open = (System.Array)typeof(global::app.call.list.@this)
+            .GetField("_diffing", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(stack)!;
+        await Assert.That(open.Length).IsEqualTo(1);
+    }
+
     [Test]
     public async Task CallStackOverflowException_IncludesMaxDepth()
     {
