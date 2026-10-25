@@ -29,10 +29,12 @@ public sealed partial class @this : ISnapshot
         var registrations = new List<Registration>();
         var overrides = new List<DefaultOverride>();
         var types = s.Context.App.type.list;
+        // what was made so far: a shipped provider nothing asked for is neither registered nor chosen
+        var rows = System.Threading.Volatile.Read(ref _rows);
 
-        foreach (var (type, dict) in _providers)
+        foreach (var (type, dict) in rows?.Providers ?? [])
         {
-            _defaults.TryGetValue(type, out var currentDefaultName);
+            rows!.Defaults.TryGetValue(type, out var currentDefaultName);
 
             foreach (var (name, provider) in dict)
             {
@@ -50,7 +52,7 @@ public sealed partial class @this : ISnapshot
             // If they differ, the user changed the selection — emit an override so Restore
             // re-applies it over the built-ins a fresh App's registry holds.
             // No built-in for the type → emit unconditionally so the chosen default survives.
-            _builtInDefaults.TryGetValue(type, out var bornDefault);
+            rows.BuiltIn.TryGetValue(type, out var bornDefault);
             if (currentDefaultName != null
                 && (bornDefault == null
                     || !string.Equals(currentDefaultName, bornDefault, StringComparison.OrdinalIgnoreCase)))

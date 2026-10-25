@@ -26,7 +26,7 @@ public sealed partial class @this : IAsyncDisposable
     /// first use, so an app that asks for none makes none.</summary>
     public @this(actor.context.@this context) => Context = context;
 
-    // The registry's rows, made at its first use, with the providers the code ships.
+    // The registry's rows, made at its first use, knowing what the code ships for each interface.
     private sealed class rows
     {
         internal readonly ConcurrentDictionary<System.Type, ConcurrentDictionary<string, ICode>> Providers = new();
@@ -36,13 +36,34 @@ public sealed partial class @this : IAsyncDisposable
         // The default each interface was born with. Snapshot capture compares the current default against it to
         // tell a user's selection from what a fresh App sets itself.
         internal readonly ConcurrentDictionary<System.Type, string> BuiltIn = new();
+        // What the code ships for each interface, made when the interface is first asked for; one provider can be
+        // shipped for several (Ed25519), made once.
+        internal readonly Dictionary<System.Type, Lazy<ICode>> Shipped = new();
+
+        // The providers of `type`, the one the code ships for it in first: made the first time anything asks for the
+        // interface, so it is the first there, the default, whatever is registered after. Null for an interface
+        // nothing ships and nothing registered.
+        internal ConcurrentDictionary<string, ICode>? Of(System.Type type)
+        {
+            if (Providers.TryGetValue(type, out var made)) return made;
+            if (!Shipped.TryGetValue(type, out var shipped)) return null;
+            return Providers.GetOrAdd(type, _ =>
+            {
+                var provider = shipped.Value;
+                provider.IsBuiltIn = true;
+                Defaults.TryAdd(type, provider.Name);
+                // the type's "natural" default name, once — the shipped provider is its default by being first
+                BuiltIn.TryAdd(type, provider.Name);
+                return new ConcurrentDictionary<string, ICode>(StringComparer.OrdinalIgnoreCase) { [provider.Name] = provider };
+            });
+        }
     }
 
     private rows? _rows;
     private readonly object _gate = new();
 
-    // The rows as they are now: made, with the shipped providers registered, on the first use — the one door every
-    // other reads through.
+    // The rows as they are now: made, knowing what the code ships, on the first use — the one door every other reads
+    // through.
     private rows Rows
     {
         get
@@ -58,10 +79,6 @@ public sealed partial class @this : IAsyncDisposable
             }
         }
     }
-
-    private ConcurrentDictionary<System.Type, ConcurrentDictionary<string, ICode>> _providers => Rows.Providers;
-    private ConcurrentDictionary<System.Type, string> _defaults => Rows.Defaults;
-    private ConcurrentDictionary<System.Type, string> _builtInDefaults => Rows.BuiltIn;
 
     /// <summary>
     /// Disposes every registered provider instance (IAsyncDisposable preferred,
@@ -102,7 +119,7 @@ public sealed partial class @this : IAsyncDisposable
     // provider comes back directly beside a typed error.
     public (T? Provider, global::app.error.@this? Error) Get<T>(string? name = null) where T : class, ICode
     {
-        if (!_providers.TryGetValue(typeof(T), out var typeDict))
+        if (Rows.Of(typeof(T)) is not { } typeDict)
             return (null, new ActionError($"No {typeof(T).Name} provider registered", "ProviderNotFound", 404));
 
         if (!string.IsNullOrEmpty(name))
@@ -112,7 +129,7 @@ public sealed partial class @this : IAsyncDisposable
             return ((T)provider, null);
         }
 
-        if (_defaults.TryGetValue(typeof(T), out var defaultName) && typeDict.TryGetValue(defaultName, out var chosen))
+        if (Rows.Defaults.TryGetValue(typeof(T), out var defaultName) && typeDict.TryGetValue(defaultName, out var chosen))
             return ((T)chosen, null);
 
         return (null, new ActionError($"No default {typeof(T).Name} provider registered", "ProviderNotFound", 404));
@@ -140,38 +157,32 @@ public sealed partial class @this : IAsyncDisposable
     /// Lists all providers for a specific type.
     /// </summary>
     public IReadOnlyList<T> List<T>() where T : class, ICode
-    {
-        if (!_providers.TryGetValue(typeof(T), out var typeDict))
-            return Array.Empty<T>();
-
-        return typeDict.Values.Cast<T>().ToList();
-    }
+        => Rows.Of(typeof(T)) is { } typeDict ? typeDict.Values.Cast<T>().ToList() : Array.Empty<T>();
 
     /// <summary>
-    /// Lists all providers across all types.
+    /// Lists all providers across all types — every one the code ships among them, so each is made.
     /// </summary>
     public IReadOnlyList<ICode> List()
     {
+        var rows = Rows;
+        foreach (var type in rows.Shipped.Keys) rows.Of(type);
         var result = new List<ICode>();
-        foreach (var typeDict in _providers.Values)
+        foreach (var typeDict in rows.Providers.Values)
             result.AddRange(typeDict.Values);
         return result;
     }
 
     /// <summary>
-    /// Iterates all provider instances across all types.
-    /// Used for disposal and inspection.
+    /// Iterates the provider instances made so far, across all types: one the code ships and nothing asked for is
+    /// none of them. Used for disposal and inspection.
     /// </summary>
-    public IEnumerable<ICode> All() => _providers.Values
+    public IEnumerable<ICode> All() => (System.Threading.Volatile.Read(ref _rows)?.Providers.Values ?? [])
         .SelectMany(dict => dict.Values);
 
     /// <summary>
     /// Checks if any provider is registered for the given type.
     /// </summary>
-    public bool Has<T>() where T : class, ICode
-    {
-        return _providers.TryGetValue(typeof(T), out var typeDict) && !typeDict.IsEmpty;
-    }
+    public bool Has<T>() where T : class, ICode => Rows.Of(typeof(T)) is { IsEmpty: false };
 
     // --- Non-generic methods (single source of truth) ---
 
@@ -189,7 +200,8 @@ public sealed partial class @this : IAsyncDisposable
     // of its name is already there.
     private bool Put(rows rows, System.Type providerType, ICode provider)
     {
-        var typeDict = rows.Providers.GetOrAdd(providerType, _ => new ConcurrentDictionary<string, ICode>(StringComparer.OrdinalIgnoreCase));
+        var typeDict = rows.Of(providerType)
+            ?? rows.Providers.GetOrAdd(providerType, _ => new ConcurrentDictionary<string, ICode>(StringComparer.OrdinalIgnoreCase));
         if (!typeDict.TryAdd(provider.Name, provider)) return false;
         rows.Defaults.TryAdd(providerType, provider.Name);
         return true;
@@ -199,9 +211,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Lists all providers registered for a runtime-resolved type (typed C# access).
     /// </summary>
     public IReadOnlyList<ICode> List(System.Type providerType)
-        => _providers.TryGetValue(providerType, out var typeDict)
-            ? typeDict.Values.ToList()
-            : Array.Empty<ICode>();
+        => Rows.Of(providerType) is { } typeDict ? typeDict.Values.ToList() : Array.Empty<ICode>();
 
     /// <summary>
     /// Removes a named provider by runtime-resolved type. Cannot remove the default.
@@ -211,13 +221,13 @@ public sealed partial class @this : IAsyncDisposable
         if (string.IsNullOrEmpty(name))
             return Context.Error(new ActionError("Provider name is required", "ValidationError", 400));
 
-        if (!_providers.TryGetValue(providerType, out var typeDict))
+        if (Rows.Of(providerType) is not { } typeDict)
             return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
         if (!typeDict.TryGetValue(name, out var provider))
             return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
-        if (_defaults.TryGetValue(providerType, out var defaultName)
+        if (Rows.Defaults.TryGetValue(providerType, out var defaultName)
             && string.Equals(defaultName, provider.Name, StringComparison.OrdinalIgnoreCase))
             return Context.Error(new ActionError($"Cannot remove default provider '{name}'. Set another as default first.", "CannotRemoveDefault", 400));
 
@@ -233,51 +243,46 @@ public sealed partial class @this : IAsyncDisposable
         if (string.IsNullOrEmpty(name))
             return Context.Error(new ActionError("Provider name is required", "ValidationError", 400));
 
-        if (!_providers.TryGetValue(providerType, out var typeDict))
+        if (Rows.Of(providerType) is not { } typeDict)
             return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
         if (!typeDict.TryGetValue(name, out var newDefault))
             return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
         // One slot per interface — the provider's other interfaces keep their own default.
-        _defaults[providerType] = newDefault.Name;
+        Rows.Defaults[providerType] = newDefault.Name;
         return Context.Ok();
     }
 
-    // The providers the code ships, into the rows as they are made. Each module owns its default provider — this is the
-    // single registration point. Every built-in is stamped so the snapshot capture skips them: a fresh App's registry
-    // holds the same set, so they don't ride along in the payload.
+    // What the code ships for each interface, into the rows as they are made — each provider made the first time its
+    // interface is asked for. Each module owns its default provider — this is the single registration point. Every
+    // built-in is stamped so the snapshot capture skips them: a fresh App's registry holds the same set, so they don't
+    // ride along in the payload.
     private void Ship(rows rows)
     {
-        var ed25519 = new Ed25519();
-        Ship<ISigning>(rows,ed25519);
-        Ship<IKey>(rows,ed25519);
-        Ship<IIdentity>(rows,new global::app.module.identity.code.Default());
-        Ship<ICrypto>(rows,new global::app.module.crypto.code.Default());
-        Ship<global::app.module.math.code.IMath>(rows,new global::app.module.math.code.Default());
-        Ship<global::app.module.http.code.IHttp>(rows,new global::app.module.http.code.Default());
-        Ship<global::app.module.archive.code.IArchive>(rows,new global::app.module.archive.code.Default());
-        Ship<global::app.module.terminal.code.ITerminal>(rows,new global::app.module.terminal.code.Default());
-        Ship<global::app.module.browser.code.IBrowser>(rows,new global::app.module.browser.code.Chromium());
+        var ed25519 = new Lazy<ICode>(() => new Ed25519());
+        Ship<ISigning>(rows, ed25519);
+        Ship<IKey>(rows, ed25519);
+        Ship<IIdentity>(rows, new(() => new global::app.module.identity.code.Default()));
+        Ship<ICrypto>(rows, new(() => new global::app.module.crypto.code.Default()));
+        Ship<global::app.module.math.code.IMath>(rows, new(() => new global::app.module.math.code.Default()));
+        Ship<global::app.module.http.code.IHttp>(rows, new(() => new global::app.module.http.code.Default()));
+        Ship<global::app.module.archive.code.IArchive>(rows, new(() => new global::app.module.archive.code.Default()));
+        Ship<global::app.module.terminal.code.ITerminal>(rows, new(() => new global::app.module.terminal.code.Default()));
+        Ship<global::app.module.browser.code.IBrowser>(rows, new(() => new global::app.module.browser.code.Chromium()));
         // the screen: on Windows a window that shows frames; on Linux (PlangOS) the display that makes them
-        Ship<global::app.module.screen.code.IScreen>(rows,OperatingSystem.IsWindows()
+        Ship<global::app.module.screen.code.IScreen>(rows, new(() => OperatingSystem.IsWindows()
             ? new global::app.module.screen.code.Default()
-            : new global::app.module.screen.code.Wayland());
-        Ship<global::app.module.condition.code.IEvaluator>(rows,new global::app.module.condition.code.Default());
-        Ship<global::app.module.assert.code.IAssert>(rows,new global::app.module.assert.code.Default());
-        Ship<ITemplate>(rows,new global::app.module.ui.code.Fluid());
-        Ship<global::app.module.llm.code.ILlm>(rows,new global::app.module.llm.code.OpenAi());
-        Ship<global::app.module.llm.code.IDecider>(rows,new global::app.module.llm.code.TypeSafe());
-        Ship<global::app.module.build.code.IBuilder>(rows,new global::app.module.build.code.Default());
-        Ship<global::app.data.code.IGrep>(rows,new global::app.data.code.Default());
-        Ship<global::app.store.code.IStore>(rows,new global::app.store.code.Sqlite());
+            : new global::app.module.screen.code.Wayland()));
+        Ship<global::app.module.condition.code.IEvaluator>(rows, new(() => new global::app.module.condition.code.Default()));
+        Ship<global::app.module.assert.code.IAssert>(rows, new(() => new global::app.module.assert.code.Default()));
+        Ship<ITemplate>(rows, new(() => new global::app.module.ui.code.Fluid()));
+        Ship<global::app.module.llm.code.ILlm>(rows, new(() => new global::app.module.llm.code.OpenAi()));
+        Ship<global::app.module.llm.code.IDecider>(rows, new(() => new global::app.module.llm.code.TypeSafe()));
+        Ship<global::app.module.build.code.IBuilder>(rows, new(() => new global::app.module.build.code.Default()));
+        Ship<global::app.data.code.IGrep>(rows, new(() => new global::app.data.code.Default()));
+        Ship<global::app.store.code.IStore>(rows, new(() => new global::app.store.code.Sqlite()));
     }
 
-    private void Ship<T>(rows rows, T provider) where T : class, ICode
-    {
-        provider.IsBuiltIn = true;
-        Put(rows, typeof(T), provider);
-        // the type's "natural" default name, once — the first built-in for a type becomes its default by being first
-        rows.BuiltIn.TryAdd(typeof(T), provider.Name);
-    }
+    private void Ship<T>(rows rows, Lazy<ICode> provider) where T : class, ICode => rows.Shipped[typeof(T)] = provider;
 }

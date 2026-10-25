@@ -54,6 +54,19 @@ public class NamedProviderRegistryTests
         await Assert.That(((global::app.module.code.ICode)result.Provider!).Name).IsEqualTo("custom");
     }
 
+    // What the code ships for an interface is made the first time the interface is asked for: a first ask for one
+    // makes that one, not every provider the code ships.
+    [Test]
+    public async Task AFirstAsk_MakesOnlyTheProviderAskedFor()
+    {
+        var registry = new EngineProviders(_app.actor.list.System.Context);
+
+        var (math, error) = registry.Get<global::app.module.math.code.IMath>();
+
+        await Assert.That(error).IsNull();
+        await Assert.That(registry.All().ToList()).IsEquivalentTo(new global::app.module.code.ICode[] { math! });
+    }
+
     [Test]
     public async Task Register_FirstProvider_BecomesDefault()
     {
