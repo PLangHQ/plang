@@ -275,6 +275,52 @@ Root only (`BENCH_ONLY=1 BENCH_MODES=root`), 3 rounds, load 1.1–2.7. The two f
   `module/terminal/type/process/this.cs:206` (a process this app started). So it is not truthy with nothing linking it:
   no bug.
 
+## Where `plang --test`'s 15 s goes (tip `54c2af241`, decision 56)
+
+Debug build, run from `test/`, load gated below 3, 8 processors. 303 tests found: 298 pass, 1 fail (known), 3 stale,
+1 skipped. Parallel is the test setting's default, 0 = one per processor = 8. Wall time per part came from
+temporary stderr stamps (reverted; nothing committed).
+
+| Part | Wall | Notes |
+|---|---|---|
+| Process start → `test.discover` begins | 0.50 s | runtime, the app, the `Test` goal |
+| `test.discover` | 1.65 s (serial) | 303 files, ~5.4 ms each: `.pr` read 0.7 s total (2.3 ms each), `Invalid` 0.9 s (3 ms), `test.From` 1.0 s (3.3 ms), goal read 0.3 s |
+| `test.start` (the 8-wide loop) | 9.6–9.8 s | the tests; see below |
+| `test.report` | 3.1–3.4 s | **3.3 s of it is one walk** (below); the encode is 74 ms, the file write 1 ms |
+| Exit | 0.06 s | |
+| Total | 14.3–15.7 s | five runs 14.3, 14.5, 14.7, 14.8, 15.0 (instrumented: ±0.3 s of the plain 14.8–15.7) |
+
+**The report's 3.3 s is `Report.Write` walking every goal of the app for coverage** (`test/report/this.cs:70`,
+`goal.list.Walk`). It loads the 181 non-test goals under `test/` one by one, serially, ~18 ms each, and it runs
+after all the tests are done, with 7 of the 8 cores idle. `Coverage.Text` itself is 10 ms.
+
+**Inside the walk, and in the parallel loop, the top item is `goal.list.Add`** (`goal/list/this.cs:77`): CPU sampling
+(`dotnet-trace`, 212 k samples) puts 16.9 % of all samples under it, and 14.2 % under `Monitor.Enter_Slowpath`.
+It takes the list's lock, then for each held goal recomputes `this[i].PrPath`, which builds path pieces and a
+`text` (and through it a type, `type..ctor` → `KindOfClass`, 7.5 %) every time. So each add is O(goals held) with
+the allocation inside the lock, and the goal list is shared by the 8 test apps. Mutation test (one line: compare
+`Path` instead of `PrPath`, reverted): `plang --test` 14.9, 14.8, 15.7 s → **12.1, 12.0, 12.1 s**, three rounds,
+load < 3. That is 3 s from one line, without touching the lock.
+
+**The loop (9.7 s):**
+
+- Serial (`--test.setting.parallel=1`): the tests sum to 18.0 s (avg 59 ms), total 25.0 s, CPU 18 s. So the tests are
+  CPU, and 8-wide should be ~2.3 s.
+- 8-wide: the tests sum to 66 s (avg 218 ms: 3.7× each), CPU 27–30 s. The same work costs 10 s more CPU when run
+  8-wide, and wall is 4× the ideal. 16-wide is worse (23 s, CPU 39 s), so it is contention, not waiting for I/O.
+  The lock above is the biggest named piece; the idle 51 % of samples in `LowLevelLifoSemaphore.WaitForSignal` is
+  the pool's threads waiting.
+- A test's own cost: birth 0.6 ms (`run.birth`, 183 ms over 303), `Open` ~3 ms, the rest is the goal's run. The
+  child-app birth is no longer the cost; the stage 3 number held in the loop.
+- No test dominates: the longest serial tests are 1.0–1.2 s (`LlmContinue`, `TestRunEnforcesTimeout`,
+  `ParallelAnswersATask`, `TaskListedWhileRunning`, which sleep on purpose), 10 tests over 0.5 s. The wall isn't
+  held by a tail; the median test is ~35 ms.
+
+**Where ~5 s would come from** (named, none tried beyond the one line): the coverage walk (3.3 s, serial after the
+run; the tests already loaded most of those goals into their own apps), `Add`'s lock and recompute (3 s measured as
+a whole with the first), discovery's serial 1.65 s (a `Task.WhenAll` over the files would be ~0.3 s at 8-wide), the
+0.5 s start. After those, the loop's 3.7× inflation is the remainder.
+
 ## Not measured here
 
 - A class scanned twice in one process (stage 2's check): it needs a count of `GetTypes` calls, which comes with
