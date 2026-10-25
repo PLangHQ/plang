@@ -36,7 +36,15 @@ Found 1 goals
 Building goal: Start
 ```
 
-Unverified: the lines that follow for a build that succeeds. The source prints `[✓] <step>` for a step built now and `[≡] <step>` for a step kept from an earlier build. A build needs a key (see [install](install.md#the-key-a-build-needs)) and none was available.
+A build that works ends with one line per goal:
+
+```
+  Saved Start (3.4s)
+```
+
+The builder's output template also defines `[✓] <step>` and `[≡] <step>` lines. They did not appear in any build run for these pages.
+
+Build again without changing anything and nothing is built, so nothing is asked of the model and nothing is charged. The build prints only `Building path:` and `Found N goals`.
 
 A build writes `.build/start.pr` beside `Start.goal`, and a trace under `.build/traces/`. Never edit a `.pr` file. It is what the builder wrote.
 
@@ -46,21 +54,16 @@ A build writes `.build/start.pr` beside `Start.goal`, and a trace under `.build/
 plang
 ```
 
-Expected output, unverified for this exact goal:
-
 ```
 Ada
 ```
 
-What was checked is the run half, on goals that were already built. A built goal runs with no key and prints its `write out` lines:
+A built goal runs with no key. Add a third step, `- write out %person.age%`, build again and run, and the output is:
 
 ```
-found
-2
-3
+Ada
+36
 ```
-
-And a built goal reading `config.json` into `%cfg%` then reads `%cfg.alpha%` as the field `alpha`.
 
 ## If it does not print
 

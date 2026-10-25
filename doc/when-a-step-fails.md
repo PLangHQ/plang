@@ -1,6 +1,6 @@
 # When a step fails
 
-This page says how a build tells you something is wrong, and what to change. Only the first three failures below were seen running. The step-level lines come from the builder's output template and are unverified.
+This page says how a build tells you something is wrong, and what to change. Every output below was copied from a run, some trimmed.
 
 ## The build did not start
 
@@ -26,10 +26,36 @@ Every build writes a trace to `.build/traces/<id>/<Goal>.json`. For a failed goa
 
 ## A step could not be built
 
-Unverified, from the output template. These lines need a live build:
+Add a vague third step to the goal in [your first goal](first-goal.md), `- make the data feel nicer`, and build (output trimmed):
 
-- `Step <n> build error: <message>` means the builder could not turn that step into an action.
-- `Planner validation failed: … — retrying...` and `Properties rejected — retrying: …` are retries, not failures yet.
-- `Fix: <text>` after a `Build error` is a suggested change.
+```
+Building goal: Start
+  Properties rejected — retrying: step 2 ("make the data feel nicer") — step 2: %person% isn't in the step — use only the step's variables
+  Saved Start (12.1s)
+StepsBroken (400): the build left goals with steps it could not fix
+  - step 2 ("make the data feel nicer") — step 2: %person% isn't in the step — use only the step's variables (in /Start.goal)
+  at /system/builder/Build.goal:22
+    - error.throw(Message="the build left goals with steps it could not fix", Key="StepsBroken", Status=400, Cause=%brokenGoals%, FixSuggestion="fix the words and build again")
+  Fix: fix the words and build again
+```
 
-What to change is the step's sentence. Say which action and which values you mean, then run `plang build` again. Unverified: that this fixes a given step, and that steps you did not change are kept (`[≡]`) so only the changed one is sent to the model.
+The build exits 1. Read it in three parts:
+
+- `Properties rejected — retrying:` is a retry. The builder tries again before it gives up.
+- `StepsBroken (400)` lists each step it could not fix, by its number (counted from 0) and its text. The `at` line names the builder's own step, not yours.
+- `Fix: fix the words and build again` is the whole instruction.
+
+The step count starts at 0, so `step 2` is the third step. The message gives the reason in the builder's terms. Here it is that the model used variables the sentence does not mention.
+
+Running the goal after that build does not run a half-built program. It answers `GoalBroken (400)` and names the step:
+
+```
+GoalBroken (400): goal '/Start.goal' has 1 broken step(s): 2
+  - step 2 ("make the data feel nicer") is broken
+  in /Start.goal
+  Fix: fix the words and build again
+```
+
+What to change is the step's sentence. Name the action and the values, and use the variables you mean. Replace the step with `- write out %person.age%`, build, and it builds and runs (`Ada`, then `36`).
+
+Not seen: which earlier steps a rebuild keeps. The builder defines `[≡]` lines for them, but none was printed.

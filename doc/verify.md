@@ -22,9 +22,12 @@ Each claim in `doc/`, how it was checked, and the result. `plang` is `PlangConso
 | 15 | first-goal | with input redirected it stops `NoAppFound (400)` | ran `plang build` with no flag from a non-tty shell | pass |
 | 16 | first-goal | `--app.setting.create=true` skips the question | ran `plang build --app.setting.create=true`, it went on to build | pass |
 | 17 | first-goal | build prints `Building path:`, `Found N goals`, `Building goal:` | ran it | pass |
-| 18 | first-goal | success lines `[✓]` and `[≡]` | `os/system/builder/templates/output/build-output.template` | pass (source); not seen in a run |
+| 18 | first-goal | a good build ends `  Saved Start (3.4s)` | ran `plang build` with the decider key saved in the app's settings | pass |
+| 18b | first-goal | `[✓]` / `[≡]` step lines | defined in `os/system/builder/templates/output/build-output.template`; not printed in any of 4 builds | unverified (page says they did not appear) |
+| 18c | first-goal | rebuilding unchanged prints only `Building path:` and `Found N goals`, builds nothing | ran it | pass; "nothing charged" is inferred from no model call being made, not measured |
 | 19 | first-goal | a build writes `.build/<goal>.pr` (lowercase) and `.build/traces/` | listed `.build` after builds: `.build/start.pr`, `.build/traces/<id>/Start.json` | pass (the trace from a failed build; `.pr` from the repo's built goals) |
-| 20 | first-goal | the `Start.goal` here builds to an action that prints `Ada` | needs a decider key | unverified |
+| 20 | first-goal | the `Start.goal` here builds and `plang` prints `Ada` | built and ran in a scratch folder; `.build/start.pr` has `file.read` then `variable.set` for step 0; output `Ada`, exit 0 | pass |
+| 20b | first-goal | a third step `write out %person.age%` prints `36` after `Ada` | rebuilt, ran: `Ada`, `36` | pass |
 | 21 | first-goal | a built goal runs with no key, prints each `write out` line | copied `test/app/deepnavigation` (built) to scratch, ran `plang`: `found`, `2`, `3`, exit 0, `TYPESAFE_API_KEY` unset | pass |
 | 22 | first-goal | a built `read config.json, write to %cfg%` then `%cfg.alpha%` reads the field | copied `test/plan/kind-is-type/app/type/json` to scratch; `plang ReadIntoIsADict.test.goal` exit 0 (its assert on `%cfg.alpha%` passed) | pass |
 | 23 | first-goal | a JSON file reads into a dict | the test's `is dict` check ran with exit 0 | pass |
@@ -33,7 +36,11 @@ Each claim in `doc/`, how it was checked, and the result. `plang` is `PlangConso
 | 26 | when-a-step-fails | `Build error in <goal>:` then the `HttpError` and the `at` line | output copied from the run in 10 | pass |
 | 27 | when-a-step-fails | the `at` line names the builder's own step | `/system/builder/BuildGoal/Decide.goal:22` is in `os/`, not the user's folder | pass |
 | 28 | when-a-step-fails | the trace holds `buildError` with `key`, `message`, `goal` | read `.build/traces/*/Start.json` after run 10 | pass |
-| 29 | when-a-step-fails | `Step n build error`, `Planner validation failed`, `Properties rejected`, `Fix:` | template only | unverified (not seen in a run) |
-| 30 | when-a-step-fails | rewording the step and rebuilding fixes a step error; unchanged steps are kept | `os/system/builder/builder.code.md` caching section, not read at a line; no live build | unverified |
+| 29 | when-a-step-fails | a vague step gives `Properties rejected — retrying`, `StepsBroken (400)`, `Fix: fix the words and build again`, exit 1 | ran with `- make the data feel nicer`; output as quoted (trimmed) | pass |
+| 29b | when-a-step-fails | running after that build gives `GoalBroken (400)` naming the step | ran `plang`, exit 1 | pass |
+| 29c | when-a-step-fails | steps count from 0 (`step 2` is the third) | same run | pass |
+| 30 | when-a-step-fails | replacing the step with `write out %person.age%` and rebuilding builds and runs | ran: `Ada`, `36` | pass |
+| 30b | when-a-step-fails | which unchanged steps a rebuild keeps | no `[≡]` line printed | unverified |
+| 30c | when-a-step-fails | `Step n build error`, `Planner validation failed` lines | template only; never printed | unverified |
 | 31 | start | a run never builds; an unbuilt goal answers `GoalNotBuilt` | `PLang/app/goal/list/this.cs:60-63`; claim 5 | pass |
 | 32 | start | the build output is `.pr` files in `.build/` | claim 19 | pass |

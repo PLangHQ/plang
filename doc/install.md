@@ -55,7 +55,9 @@ HttpError (403): 403 Forbidden: {"detail":{"error_type":"authentication_error","
 
 An `OPENAI_API_KEY` is a different key. It is read by steps that ask a model at run time. It does not unlock the build.
 
-Unverified: how to get a `TYPESAFE_API_KEY`, what a build costs, and what a first build asks about payment. They need a live key and could not be run.
+With the key saved, the build in [your first goal](first-goal.md) works.
+
+Unverified: how to get a `TYPESAFE_API_KEY`, what a build costs, and what a first build asks about payment. A key was supplied to the run, so none of these was seen.
 
 ## Next
 
