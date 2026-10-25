@@ -195,20 +195,29 @@ NICE=(nice -n 10)
 # never restored (a fresh checkout) or whose project file changed since its last restore is restored
 # here first, serially (-m:1): parallel restores race on the assets file of a project they share
 # (Shared, PLang). Restore walks each project's references, so the library and generators come along.
+# What decides a project's packages is its own file AND the files of the projects it references: every test project
+# and the console read PLang's packages through their reference to it, and the test projects their shared props. So
+# any of those files changed since the last restore restores them all (every project here references PLang or is
+# referenced by it). "Since the last restore" is dev.sh's own stamp, written after one: a restore that changes nothing
+# leaves the assets files as they were, so they can't say it ran. The stamp decides restoring only, never building.
+RESTORED=PLang.Tests/obj/devsh.restored
 restore() {
   local f
-  for f in PLang.Tests/*/PLang.Tests.*.csproj PlangConsole/PLangConsole.csproj PLang/*.csproj PLang.Generators/*.csproj; do
-    # -nt is also true when the assets file doesn't exist; the test projects' shared props (their runtime, their
-    # packages) restore them too
-    if [ "$f" -nt "$(dirname "$f")/obj/project.assets.json" ] \
-       || [ PLang.Tests/Directory.Build.props -nt "$(dirname "$f")/obj/project.assets.json" ]; then
-      local started=$SECONDS
-      scream_build "restore (NuGet) of the test projects + PlangConsole" /tmp/devsh_restore.log \
-        "${NICE[@]}" dotnet msbuild PLang.Tests/All.proj -t:Restore -m:1 -v:q -nologo
-      echo "→ restore: $((SECONDS - started))s"
-      return 0
-    fi
+  local projects=(PLang.Tests/*/PLang.Tests.*.csproj PlangConsole/PLangConsole.csproj PLang/*.csproj PLang.Generators/*.csproj)
+  local due=""
+  for f in "${projects[@]}"; do
+    [ -f "$(dirname "$f")/obj/project.assets.json" ] || due=1
   done
+  for f in "${projects[@]}" PLang.Tests/Directory.Build.props; do
+    # -nt is also true when the stamp doesn't exist
+    [ "$f" -nt "$RESTORED" ] && due=1
+  done
+  [ -n "$due" ] || return 0
+  local started=$SECONDS
+  scream_build "restore (NuGet) of the test projects + PlangConsole" /tmp/devsh_restore.log \
+    "${NICE[@]}" dotnet msbuild PLang.Tests/All.proj -t:Restore -m:1 -v:q -nologo
+  mkdir -p "$(dirname "$RESTORED")" && touch "$RESTORED"
+  echo "→ restore: $((SECONDS - started))s"
 }
 # Test projects AND the console in one MSBuild evaluation (PLang.Tests/All.proj holds both) — the
 # console is a dependency of every plang test; a stale plang.exe lies just like a stale dll.
