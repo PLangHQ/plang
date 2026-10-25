@@ -20,6 +20,8 @@ internal sealed class code : @this
 
     public System.Threading.CancellationTokenSource Shutdown() => new();
 
+    public global::app.type.item.path.file.filesystem.@this Filesystem(string absolutePath) => new(absolutePath);
+
     public global::app.type.list.@this type { get; }
 
     // the actions, born with the app the code is made for: that app answers for them

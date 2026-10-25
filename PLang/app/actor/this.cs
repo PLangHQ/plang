@@ -157,6 +157,17 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     System.Threading.CancellationTokenSource global::app.origin.@this.Shutdown()
         => CancellationTokenSource.CreateLinkedTokenSource(CancellationToken);
 
+    // a sub app is made in its app's folder or under it: rooted anywhere else (an ancestor's, a sibling's), what its app
+    // keeps there (its stores) would be plain in-root for it
+    global::app.type.item.path.file.filesystem.@this global::app.origin.@this.Filesystem(string absolutePath)
+    {
+        var filesystem = new global::app.type.item.path.file.filesystem.@this(absolutePath);
+        if (filesystem.root.IsUnder(App.filesystem.root).Value) return filesystem;
+        throw new global::app.error.AppException(new global::app.error.@this(
+            $"a sub app is made in its maker's folder or under it: {filesystem.root.Absolute} is not in {App.filesystem.root.Absolute}",
+            "OutsideItsMaker", 400));
+    }
+
     global::app.type.list.@this global::app.origin.@this.type => App.type.list;
 
     global::app.module.@this global::app.origin.@this.Module(global::app.@this app) => App.module;

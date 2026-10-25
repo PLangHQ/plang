@@ -13,7 +13,7 @@ public class ChildSystemTests
     public void Setup()
     {
         _parent = new global::app.@this("/parent", global::PLang.Tests.Parent.Actor).Testing().TestIdentity();
-        _child = new global::app.@this("/child", Caller).Testing();
+        _child = new global::app.@this("/parent/child", Caller).Testing();
     }
 
     [After(Test)]

@@ -14,7 +14,7 @@ public class SharedEntryWritesTests
 
         for (var i = 0; i < 5; i++)
         {
-            await using var request = new global::app.@this("/request", parent.actor.list.User).Testing();
+            await using var request = new global::app.@this("/parent/request", parent.actor.list.User).Testing();
             var ctx = request.actor.list.User.Context;
             // a value written as a type's name, read as a .pr slice is: a source the type's reader opens
             var slice = Make.FromRaw("bool", request.type.list["type"], ctx);

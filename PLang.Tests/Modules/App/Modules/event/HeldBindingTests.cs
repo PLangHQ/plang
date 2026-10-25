@@ -9,8 +9,8 @@ public class HeldBindingTests
     {
         await using var parent = new global::app.@this("/parent", global::PLang.Tests.Parent.Actor).Testing();
         var caller = parent.actor.list.User;
-        var sibling = new global::app.@this("/sibling", caller).Testing();
-        var binding = new global::app.@this("/binding", caller).Testing();
+        var sibling = new global::app.@this("/parent/sibling", caller).Testing();
+        var binding = new global::app.@this("/parent/binding", caller).Testing();
         var ctx = binding.actor.list.User.Context;
 
         var bound = await Make.Action(ctx, "on", "event", ("Event", "%!app.type.step.on.start%"), ("When", "before"),

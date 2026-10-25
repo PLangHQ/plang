@@ -30,7 +30,7 @@ public class HoldTests
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     private static async Task<System.WeakReference> Bound(global::app.@this parent)
     {
-        var child = Child(parent, "/bound");
+        var child = Child(parent, "/parent/bound");
         var ctx = child.actor.list.User.Context;
         await Bind(ctx, "%!app.type.step.on.start%", Make.Call(ctx, "Log"), "app");
         await child.DisposeAsync();
@@ -58,8 +58,8 @@ public class HoldTests
     public async Task AnAppWideBinding_NeverFiresInASibling()
     {
         await using var parent = new global::app.@this("/parent").Testing();
-        await using var binding = Child(parent, "/binding");
-        await using var sibling = Child(parent, "/sibling");
+        await using var binding = Child(parent, "/parent/binding");
+        await using var sibling = Child(parent, "/parent/sibling");
         var ctx = binding.actor.list.User.Context;
         // a call to a goal the sibling doesn't have: fired there, its step would fail
         await Bind(ctx, "%!app.type.step.on.start%", Make.Call(ctx, "OnlyInTheBindingApp"), "app");
@@ -71,7 +71,7 @@ public class HoldTests
     public async Task AnUnboundBinding_LeavesNothingInTheHold()
     {
         await using var parent = new global::app.@this("/parent").Testing();
-        await using var app = Child(parent, "/app");
+        await using var app = Child(parent, "/parent/app");
         var ctx = app.actor.list.User.Context;
         var binding = await Bind(ctx, "%!app.type.step.on.start%", Make.Call(ctx, "Log"), "app");
         var held = app.actor.list.User.Context.on[app.type.list["step"]];
@@ -91,7 +91,7 @@ public class HoldTests
     public async Task AnActorScopedBinding_FiresOnlyForItsActor()
     {
         await using var parent = new global::app.@this("/parent").Testing();
-        await using var app = Child(parent, "/app");
+        await using var app = Child(parent, "/parent/app");
         var user = app.actor.list.User.Context;
         var watch = Make.Goal(user, "Watch", Make.Step("set %seen% = true",
             Make.Action(user, "variable", "set", Make.Param(user, "Name", "seen", "variable"), ("Value", true))));

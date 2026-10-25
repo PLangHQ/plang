@@ -11,6 +11,10 @@ internal interface @this
     /// <summary>The app's life: the code's own; an actor's, ending with the actor's.</summary>
     System.Threading.CancellationTokenSource Shutdown();
 
+    /// <summary>The app's disk, holding the folder at <paramref name="absolutePath"/> as what <c>/</c> is: the code's
+    /// app may be anywhere; a sub app is made in its maker's folder or under it, and anywhere else is refused.</summary>
+    global::app.type.item.path.file.filesystem.@this Filesystem(string absolutePath);
+
     /// <summary>The types the app's type list is a layer over: the code's own; an actor's app's.</summary>
     global::app.type.list.@this type { get; }
 

@@ -303,14 +303,15 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     private @this(string absolutePath, global::app.origin.@this origin, string? environment, bool autoWireConsoleChannels)
     {
         this.origin = origin;
+        // the app's disk, holding the app's folder as what / is — first, as its origin answers it: a folder a sub app
+        // may not be made in is refused before anything of the app is made
+        filesystem = origin.Filesystem(absolutePath);
         _shutdownCts = origin.Shutdown();
         Console = autoWireConsoleChannels;
         Id = Guid.NewGuid().ToString("N")[..12];
         var trimmed = absolutePath.TrimEnd('/', '\\');
         var lastSep = trimmed.LastIndexOfAny(['/', '\\']);
         _folder = lastSep >= 0 ? trimmed[(lastSep + 1)..] : trimmed;
-        // the app's disk, holding the app's folder as what / is
-        filesystem = new(absolutePath);
 
         // The types come first: every value is born holding its type from this list, the actors' contexts too — a
         // layer over the types the origin answers.

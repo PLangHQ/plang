@@ -19,7 +19,7 @@ public class SharedTypeListTests
     public async Task AChildsType_IsItsParentsType()
     {
         await using var parent = new global::app.@this("/parent").Testing();
-        await using var child = new global::app.@this("/child", parent.actor.list.User).Testing();
+        await using var child = new global::app.@this("/parent/child", parent.actor.list.User).Testing();
 
         await Assert.That(child.type.list).IsNotSameReferenceAs(parent.type.list).Because("a sub app's list is a layer of its own");
         await Assert.That(child.type.list["text"]).IsSameReferenceAs(parent.type.list["text"]);
@@ -30,8 +30,8 @@ public class SharedTypeListTests
     public async Task ATypeASubAppAdds_IsOnlyItsOwn()
     {
         await using var parent = new global::app.@this("/parent").Testing();
-        await using var sibling = new global::app.@this("/sibling", parent.actor.list.User).Testing();
-        var child = new global::app.@this("/child", parent.actor.list.User).Testing();
+        await using var sibling = new global::app.@this("/parent/sibling", parent.actor.list.User).Testing();
+        var child = new global::app.@this("/parent/child", parent.actor.list.User).Testing();
 
         var added = child.type.list.Add(typeof(SharedProbe), child.actor.list.System.Context);
 
@@ -47,7 +47,7 @@ public class SharedTypeListTests
     public async Task AKindOnAParentsType_IsRefused_NamingIt()
     {
         await using var parent = new global::app.@this("/parent").Testing();
-        await using var child = new global::app.@this("/child", parent.actor.list.User).Testing();
+        await using var child = new global::app.@this("/parent/child", parent.actor.list.User).Testing();
         var image = child.type.list["image"];
 
         var refused = await Assert.ThrowsAsync<global::app.error.AppException>(() =>
@@ -64,7 +64,7 @@ public class SharedTypeListTests
     public async Task AParentLoadingAfterMakingASubApp_IsTheSubAppsToo()
     {
         await using var parent = new global::app.@this("/parent").Testing();
-        await using var child = new global::app.@this("/child", parent.actor.list.User).Testing();
+        await using var child = new global::app.@this("/parent/child", parent.actor.list.User).Testing();
 
         var added = parent.type.list.Add(typeof(SharedProbe), parent.actor.list.System.Context);
 

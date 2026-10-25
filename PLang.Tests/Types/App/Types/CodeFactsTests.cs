@@ -8,7 +8,7 @@ public class CodeFactsTests
     public async Task AChildsTypeList_HoldsNothingOfItsOwn_AtBirth()
     {
         await using var parent = new global::app.@this("/parent").Testing();
-        await using var child = new global::app.@this("/child", parent.actor.list.User).Testing();
+        await using var child = new global::app.@this("/parent/child", parent.actor.list.User).Testing();
 
         await Assert.That(child.type.list.HasOwn).IsFalse().Because("a sub app scans no class: its types are its parent's");
         await Assert.That(child.type.list["text"]).IsSameReferenceAs(parent.type.list["text"]);

@@ -217,18 +217,23 @@ public class RoleStandingProbeTests
     [Test]
     public async Task P4_ASubAppRootedAtAnAncestor_DoesNotReachTheMakersStores_ThroughItsViews()
     {
-        // observation: the maker lives at /p4anc/maker; a sub app rooted at its ANCESTOR /p4anc has the maker's folder in ITS
-        // root, so the maker's stores are just in-root for it (its own stores are /p4anc/.data). The safe behaviour is that the
-        // maker's .data still be refused to the sub app's actors.
+        // observation: the maker lives at /p4anc/maker; a sub app rooted at its ANCESTOR /p4anc would have the maker's folder
+        // in ITS root, so the maker's stores would be just in-root for it. The safe behaviour: the maker's .data is never
+        // reachable by the sub app's actors — a sub app is made in its maker's folder or under it, so this one is refused
+        // at its birth and has no actors at all.
         await using var outer = new global::app.@this("/p4anc/maker", global::PLang.Tests.Parent.Actor).Testing();
-        await using var sub = new global::app.@this("/p4anc", outer.actor.list.User);
 
-        var makerStores = outer.filesystem.store.Combine("setting/data.sqlite");
-        foreach (var actor in new[] { sub.actor.list.System, sub.actor.list.User })
+        var refused = await Assert.ThrowsAsync<global::app.error.AppException>(() =>
         {
-            var read = await makerStores.Authorize(Verb.read, actor.Context);
-            await Assert.That(read.Success).IsFalse();
-        }
+            _ = new global::app.@this("/p4anc", outer.actor.list.User);
+            return Task.CompletedTask;
+        });
+
+        await Assert.That(refused!.Error.Key).IsEqualTo("OutsideItsMaker");
+        // a sibling of the maker's folder is outside it too; its own folder and one under it are in
+        await Assert.That(() => new global::app.@this("/p4anc/other", outer.actor.list.User)).Throws<global::app.error.AppException>();
+        await using var same = new global::app.@this("/p4anc/maker", outer.actor.list.User);
+        await using var under = new global::app.@this("/p4anc/maker/sub", outer.actor.list.User);
     }
 
     // ── P5 name / role ─────────────────────────────────────────────────────────
