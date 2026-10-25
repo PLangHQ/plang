@@ -327,31 +327,12 @@ internal sealed class Window
         }
     }
 
-    // {"rects":[[x,y,w,h,"<qoi>"],…]} (one frame, a big change in bands, put in on all cores) or
-    // {"rect":[x,y,w,h],"qoi":"…"} (one rectangle): each handed to the screen as it arrives, which bounds, decodes and
-    // cuts it
+    // {"rects":[[x,y,w,h,"<qoi>"],…]} (one frame, a big change in bands) or {"rect":[x,y,w,h],"qoi":"…"} (one
+    // rectangle): the screen reads, bounds, decodes and cuts it, as it does a binary frame
     private bool Apply(string line, global::app.type.item.size.@this max)
     {
-        using var doc = JsonDocument.Parse(line);
-        var root = doc.RootElement;
-        var screen = Screen();
-        if (root.TryGetProperty("rects", out var list))
-        {
-            var parts = list.EnumerateArray()
-                .Select(e => (x: e[0].GetInt32(), y: e[1].GetInt32(), w: e[2].GetInt32(), h: e[3].GetInt32(), qoi: e[4].GetString()!))
-                .ToArray();
-            var changed = new Rect?[parts.Length];
-            Parallel.For(0, parts.Length, i => changed[i] = screen.Put(parts[i].x, parts[i].y, parts[i].w, parts[i].h, Convert.FromBase64String(parts[i].qoi), max));
-            Interlocked.Add(ref statBytes, parts.Sum(part => (long)part.qoi.Length));
-            return changed.Aggregate(false, (any, area) => Painted(area) | any);
-        }
-        if (root.TryGetProperty("rect", out var r) && root.TryGetProperty("qoi", out var q))
-        {
-            var qoi = q.GetString()!;
-            Interlocked.Add(ref statBytes, qoi.Length);
-            return Painted(screen.Put(r[0].GetInt32(), r[1].GetInt32(), r[2].GetInt32(), r[3].GetInt32(), Convert.FromBase64String(qoi), max));
-        }
-        return false;
+        Interlocked.Add(ref statBytes, line.Length);
+        return Painted(Screen().Apply(line, max));
     }
 
     // ---- live numbers in the title: updates/s, MB/s, time to apply ------------------------------

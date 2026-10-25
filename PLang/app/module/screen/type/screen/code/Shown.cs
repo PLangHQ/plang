@@ -33,6 +33,12 @@ internal sealed class Shown
 
     internal Lock Lock { get; } = new();
 
+    // one rectangle of a frame as it arrived: its place and its bytes (QOI, or "h264" [u32 stream] and a video's picture)
+    private readonly record struct Part(int X, int Y, int W, int H, ReadOnlyMemory<byte> Bytes)
+    {
+        internal bool IsVideo => Bytes.Length > 8 && Bytes.Span[..4].SequenceEqual("h264"u8);
+    }
+
     /// <summary>A frame message (1 or 7) applied, each rectangle at most <paramref name="max"/>; the area it changed,
     /// or none (not a frame, or nothing in it). A rectangle past the max is an AppException carrying BadFrame.</summary>
     internal Rect? Apply(byte[] m, global::app.type.item.size.@this max)
@@ -41,7 +47,7 @@ internal sealed class Shown
         var at = m[0] == 7 ? 25 : 1;
         if (m.Length < at + 2) return null;
         var count = BinaryPrimitives.ReadUInt16LittleEndian(m.AsSpan(at));
-        var parts = new (int x, int y, int w, int h, int at, int n)[count];
+        var parts = new Part[count];
         at += 2;
         for (var i = 0; i < count; i++)
         {
@@ -50,47 +56,68 @@ internal sealed class Shown
             int w = (int)BinaryPrimitives.ReadUInt32LittleEndian(m.AsSpan(at + 8)), h = (int)BinaryPrimitives.ReadUInt32LittleEndian(m.AsSpan(at + 12));
             var n = (int)BinaryPrimitives.ReadUInt32LittleEndian(m.AsSpan(at + 16));
             if (at + 20 + n > m.Length) return null;
-            Bound(w, h, max);
-            parts[i] = (x, y, w, h, at + 20, n);
+            parts[i] = new Part(x, y, w, h, m.AsMemory(at + 20, n));
             at += 20 + n;
         }
-        // each rectangle decoded off the lock: a video's picture in order, the lossless ones on all cores
-        var decoded = new byte[]?[count];
-        var rented = new bool[count];
-        for (var i = 0; i < count; i++)
-            if (IsVideo(m, parts[i].at, parts[i].n))
-                decoded[i] = _video?.Invoke(BinaryPrimitives.ReadUInt32LittleEndian(m.AsSpan(parts[i].at + 4)),
-                    m.AsMemory(parts[i].at + 8, parts[i].n - 8), parts[i].w, parts[i].h);
-        Parallel.For(0, count, i =>
+        return Put(parts, max, m[0] == 7 ? m : null);
+    }
+
+    /// <summary>A text frame applied — <c>{"rects":[[x,y,w,h,"&lt;qoi base64&gt;"],…]}</c> (one frame, a big change in
+    /// bands) or <c>{"rect":[x,y,w,h],"qoi":"…"}</c> (one rectangle) — each rectangle at most <paramref name="max"/>; the
+    /// area it changed, or none. A frame that can't be read (a rectangle past the max, one whose QOI isn't base64, a
+    /// line that isn't such a frame) is an AppException carrying BadFrame, the frame refused whole.</summary>
+    internal Rect? Apply(string line, global::app.type.item.size.@this max)
+    {
+        Part[] parts;
+        try
         {
-            if (IsVideo(m, parts[i].at, parts[i].n)) return;
-            if (Decoded(m.AsSpan(parts[i].at, parts[i].n), parts[i].w, parts[i].h) is { } pixels) { decoded[i] = pixels; rented[i] = true; }
+            using var doc = System.Text.Json.JsonDocument.Parse(line);
+            var root = doc.RootElement;
+            parts = root.TryGetProperty("rects", out var list)
+                ? list.EnumerateArray().Select(e => new Part(e[0].GetInt32(), e[1].GetInt32(), e[2].GetInt32(), e[3].GetInt32(),
+                    Convert.FromBase64String(e[4].GetString()!))).ToArray()
+                : root.TryGetProperty("rect", out var r) && root.TryGetProperty("qoi", out var q)
+                    ? [new Part(r[0].GetInt32(), r[1].GetInt32(), r[2].GetInt32(), r[3].GetInt32(), Convert.FromBase64String(q.GetString()!))]
+                    : [];
+        }
+        catch (Exception ex) when (ex is System.Text.Json.JsonException or FormatException or InvalidOperationException
+                                       or IndexOutOfRangeException or KeyNotFoundException)
+        {
+            var error = new global::app.error.@this($"Not an image: the frame line can't be read: {ex.Message}", "BadFrame", 400);
+            error.list.Add(global::app.error.@this.FromException(ex));
+            throw new global::app.error.AppException(error, ex);
+        }
+        return Put(parts, max);
+    }
+
+    // The one door for a frame's rectangles, whichever form they came in: every one bounded by the max first (refused
+    // before anything is decoded), then decoded off the lock — a video's picture in order, the lossless ones on all
+    // cores — then the move (a kind-7 frame's) and the rectangles cut to the screen under the lock, so no one reading
+    // the pixels sees half of it.
+    private Rect? Put(Part[] parts, global::app.type.item.size.@this max, byte[]? move = null)
+    {
+        foreach (var part in parts) Bound(part.W, part.H, max);
+        var decoded = new byte[]?[parts.Length];
+        var rented = new bool[parts.Length];
+        for (var i = 0; i < parts.Length; i++)
+            if (parts[i].IsVideo)
+                decoded[i] = _video?.Invoke(BinaryPrimitives.ReadUInt32LittleEndian(parts[i].Bytes.Span[4..]), parts[i].Bytes[8..], parts[i].W, parts[i].H);
+        Parallel.For(0, parts.Length, i =>
+        {
+            if (parts[i].IsVideo) return;
+            if (Decoded(parts[i].Bytes.Span, parts[i].W, parts[i].H) is { } pixels) { decoded[i] = pixels; rented[i] = true; }
         });
         var changed = default(Rect);
         lock (Lock)
         {
-            if (m[0] == 7 && Move(m) is { } moved) changed = changed.Merge(moved);
-            for (var i = 0; i < count; i++)
-                if (decoded[i] is { } px && Copy(parts[i].x, parts[i].y, parts[i].w, parts[i].h, px) is { } area)
+            if (move != null && Move(move) is { } moved) changed = changed.Merge(moved);
+            for (var i = 0; i < parts.Length; i++)
+                if (decoded[i] is { } px && Copy(parts[i].X, parts[i].Y, parts[i].W, parts[i].H, px) is { } area)
                     changed = changed.Merge(area);
         }
-        for (var i = 0; i < count; i++)
+        for (var i = 0; i < parts.Length; i++)
             if (rented[i]) ArrayPool<byte>.Shared.Return(decoded[i]!);
         return changed.Empty ? null : changed;
-    }
-
-    /// <summary>One rectangle as it arrives — its place and its QOI — put in: refused past <paramref name="max"/>
-    /// (an AppException carrying BadFrame) before it is decoded, then decoded off the lock and cut to the screen under
-    /// it. The area it changed, or none.</summary>
-    internal Rect? Put(int x, int y, int w, int h, ReadOnlySpan<byte> qoi, global::app.type.item.size.@this max)
-    {
-        Bound(w, h, max);
-        if (Decoded(qoi, w, h) is not { } pixels) return null;
-        try
-        {
-            lock (Lock) return Copy(x, y, w, h, pixels);
-        }
-        finally { ArrayPool<byte>.Shared.Return(pixels); }
     }
 
     /// <summary>A picture the screen's size put in whole, at 0,0.</summary>
@@ -117,8 +144,6 @@ internal sealed class Shown
         ArrayPool<byte>.Shared.Return(pixels);
         return null;
     }
-
-    private static bool IsVideo(byte[] m, int at, int n) => n > 8 && m.AsSpan(at, 4).SequenceEqual("h264"u8);
 
     // the move: what is on the screen both where it is and where it lands, row by row in the order that doesn't
     // overwrite what is still to be moved (within a row the copy is overlap-safe)

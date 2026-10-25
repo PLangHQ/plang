@@ -56,7 +56,7 @@ public class WindowFrameTests : System.IAsyncDisposable
     public async Task ATextFramesRectangleClaimingMoreThanTheMax_IsBadFrame_BeforeAnyDecode()
     {
         var max = await Max();
-        var refused = await Assert.That(() => new Shown(W, H).Put(0, 0, 50000, 50000, [1, 2, 3, 4, 5], max))
+        var refused = await Assert.That(() => new Shown(W, H).Apply("{\"rect\":[0,0,50000,50000],\"qoi\":\"AAAA\"}", max))
             .Throws<global::app.error.AppException>();
         await Assert.That(refused!.Error.Key).IsEqualTo("BadFrame");
     }
@@ -66,15 +66,55 @@ public class WindowFrameTests : System.IAsyncDisposable
     {
         var shown = new Shown(W, H);
         var max = await Max();
-        var put = shown.Put(2, 3, 8, 4, Qoied(8, 4, 7), max);
+        var put = shown.Apply("{\"rect\":[2,3,8,4],\"qoi\":\"" + Convert.ToBase64String(Qoied(8, 4, 7)) + "\"}", max);
         await Assert.That(put).IsEqualTo(new Rect(2, 3, 8, 4));
         await Assert.That(shown.Apply(Frame(4, 4, Qoied(4, 4, 3)), max)).IsEqualTo(new Rect(0, 0, 4, 4));
     }
 
-    // the Linux view's own path: a frame past the max is refused on its thread and changes nothing; one within it shows
+    // a max past what an array holds (16 GiB) still bounds a rectangle by what its pixels can be held in: 30000×30000
+    // is 3.6 GB of pixels, more than one array takes — BadFrame, never an overflow
     [Test]
-    public async Task TheView_SkipsAFramePastTheMax_AndShowsTheNext()
+    public async Task ARectanglePastWhatAnArrayHolds_IsBadFrame_UnderAHugeMax()
     {
+        await (await new global::app.type.item.variable.parser.@this("%!screen.setting.max%", Context.App.type.list).Variable.Single()
+            .Set(Context.Ok(Context.Text("16 GiB")), Context)).IsSuccess();
+        var max = await Max();
+        var refused = await Assert.That(() => new Shown(W, H).Apply(Frame(30000, 30000, [1, 2, 3, 4, 5]), max))
+            .Throws<global::app.error.AppException>();
+        await Assert.That(refused!.Error.Key).IsEqualTo("BadFrame");
+    }
+
+    // a text frame's rectangles — {"rects":[[x,y,w,h,"<qoi base64>"],…]} — through the same door: one past the max, or
+    // one whose QOI isn't base64, is the frame's BadFrame, answered whole (never a throw out of a parallel decode)
+    [Test]
+    [Arguments("{\"rects\":[[0,0,4,4,\"cW9pZg==\"],[0,0,50000,50000,\"AAAA\"]]}")]
+    [Arguments("{\"rects\":[[0,0,4,4,\"not base64!\"]]}")]
+    [Arguments("{\"rect\":[0,0,4,4],\"qoi\":\"not base64!\"}")]
+    [Arguments("{\"rects\":[[0,0]]}")]
+    public async Task ATextFrameWithABadRectangle_IsBadFrame(string line)
+    {
+        var max = await Max();
+        var refused = await Assert.That(() => new Shown(W, H).Apply(line, max)).Throws<global::app.error.AppException>();
+        await Assert.That(refused!.Error.Key).IsEqualTo("BadFrame");
+    }
+
+    [Test]
+    public async Task ATextFrame_GoesIn()
+    {
+        var max = await Max();
+        var qoi = Convert.ToBase64String(Qoied(4, 4, 3));
+        var shown = new Shown(W, H);
+        var changed = shown.Apply("{\"rects\":[[0,0,4,4,\"" + qoi + "\"],[8,8,4,4,\"" + qoi + "\"]]}", max);
+        await Assert.That(changed).IsEqualTo(new Rect(0, 0, 12, 12));
+        await Assert.That(shown.Apply("{\"rect\":[20,10,4,4],\"qoi\":\"" + qoi + "\"}", max)).IsEqualTo(new Rect(20, 10, 4, 4));
+    }
+
+    // the Linux view's own path: a frame past the max is refused on its thread, told on the actor's error channel, and
+    // changes nothing; one within it shows
+    [Test]
+    public async Task TheView_ReportsAFramePastTheMax_AndShowsTheNext()
+    {
+        var errors = (global::app.channel.type.stream.@this)Context.Actor.Channel.CreateMemoryChannel(global::app.channel.list.@this.Error);
         var view = (View)(await View.Start("frames", W, H, null, null, Context).Value())!;
         var max = await Max();
         await Assert.That(view.Show(Frame(50000, 50000, [1, 2, 3, 4, 5]), max)).IsTrue();
@@ -86,6 +126,13 @@ public class WindowFrameTests : System.IAsyncDisposable
             read = new global::app.module.screen.type.screen.code.Bitmap(view.Picture.Bytes, max);
         }
         await Assert.That(read!.Pixels.Take(4 * 4).Any(b => b != 0)).IsTrue().Because("the frame after the refused one shows");
+        var told = "";
+        for (var i = 0; i < 100 && !told.Contains("screen.setting.max"); i++)
+        {
+            await Task.Delay(20);
+            told = System.Text.Encoding.UTF8.GetString(((MemoryStream)errors.Stream).ToArray());
+        }
+        await Assert.That(told).Contains("screen.setting.max").Because("the refused frame is told where the app's errors go");
         view.Close();
     }
 }

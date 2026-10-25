@@ -31,12 +31,17 @@ public sealed class @this : screen.@this
     // the app's image<png> type, the type its picture is born holding
     private readonly global::app.type.@this _png;
 
+    // a frame it was given and refused (past screen.setting.max, one its bytes can't make): told where the app's
+    // errors go, as the window tells it
+    private readonly Action<global::app.error.@this> _report;
+
     private @this(string title, int width, int height, Func<global::app.type.item.@this, Task> said, Func<Task> closing,
-        global::app.type.@this png)
+        Action<global::app.error.@this> report, global::app.type.@this png)
         : base(title, width, height)
     {
         _said = said;
         _closing = closing;
+        _report = report;
         _png = png;
         _shown = new Shown(width, height, Decoded);
         new Thread(Apply) { IsBackground = true, Name = "screen view: " + title }.Start();
@@ -52,6 +57,7 @@ public sealed class @this : screen.@this
             => call == null ? Task.CompletedTask
                 : global::app.module.on.code.Gate.Call(call, new global::app.data.@this("!data", value, context: context), context);
         var view = new @this(title, width, height, value => Call(onInput, value), () => Call(onClose, (Text)"{\"closed\":true}"),
+            error => _ = context.Actor.Channel.Report(context.Error(error)),
             context.App.type.list[new global::app.type.@this("image", "png"), context]);
         return context.Ok<screen.@this>(view);
     }
@@ -160,9 +166,9 @@ public sealed class @this : screen.@this
             {
                 if (_shown.Apply(m, max) != null) Interlocked.Increment(ref _frames);
             }
-            // a bad message is skipped — one past the max refused before its decode, or one its own bytes contradict;
-            // what follows puts the picture right
-            catch (global::app.error.AppException) { }
+            // refused (a rectangle past the max): told; one its own bytes contradict is skipped — what follows puts
+            // the picture right
+            catch (global::app.error.AppException ex) { _report(ex.Error); }
             catch (Exception ex) when (ex is ArgumentException or IndexOutOfRangeException or InvalidOperationException) { }
             _bytes += m.Length;
             Stats(System.Diagnostics.Stopwatch.GetTimestamp() - started);

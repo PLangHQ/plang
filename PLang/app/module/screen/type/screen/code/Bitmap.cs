@@ -48,10 +48,11 @@ internal sealed class Bitmap
     }
 
     /// <summary>Whether a picture <paramref name="width"/>×<paramref name="height"/> has pixels <paramref name="max"/>
-    /// holds: the one rule for a picture and for each rectangle of a frame. Width × height fits a long for any two ints;
-    /// × 4 is taken off the max instead, so nothing overflows.</summary>
+    /// holds, and that one array can hold: the one rule for a picture and for each rectangle of a frame. Width × height
+    /// fits a long for any two ints; × 4 is taken off the bound instead, so nothing overflows — and with the bound at
+    /// most an array's length, the pixels' size is an int wherever it is counted.</summary>
     internal static bool Fits(int width, int height, global::app.type.item.size.@this max)
-        => width >= 0 && height >= 0 && (long)width * height <= max.Value / 4;
+        => width >= 0 && height >= 0 && (long)width * height <= Math.Min(max.Value, Array.MaxLength) / 4;
 
     /// <summary>A copy of <paramref name="bitmap"/>, its pixels its own.</summary>
     internal Bitmap(Bitmap bitmap) : this(bitmap.Width, bitmap.Height, (byte[])bitmap.Pixels.Clone()) { }
