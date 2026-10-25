@@ -299,7 +299,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public @this(string absolutePath,
         string? environment = null,
         Wiring wiring = Wiring.console)
-        : this(absolutePath, new global::app.origin.code(wiring == Wiring.console), environment) { }
+        : this(absolutePath, new global::app.origin.code(wiring), environment) { }
 
     /// <summary>An app made by <paramref name="actor"/>, the actor that calls: its folder is its own, and its lists are
     /// layers over the caller's app's. Its life ends with its caller's; it is who its caller is.</summary>
