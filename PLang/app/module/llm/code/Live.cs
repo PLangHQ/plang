@@ -18,13 +18,10 @@ public sealed class Live : IAnswer
     {
         var context = action.Context;
         var llm = await context.Setting.Get<global::app.module.llm.setting.@this>();
-        var secret = await llm.Asked(context);
-        if (!secret.Success) return secret;
-        var key = (await secret.Value())!.ToString();
+        var key = await ((global::app.module.llm.setting.IKey)llm).Asked(context);
+        if (!key.Success) return key;
 
-        var headers = new Dictionary<string, object>();
-        if (!string.IsNullOrEmpty(key))
-            headers["Authorization"] = $"Bearer {key}";
+        var headers = new Dictionary<string, object> { ["Authorization"] = $"Bearer {await key.Value()}" };
         var streamed = await action.IsStreamed();
 
         var send = new request(context)

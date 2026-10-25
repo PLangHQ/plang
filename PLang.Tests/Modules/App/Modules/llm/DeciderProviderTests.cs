@@ -23,6 +23,8 @@ public class DeciderProviderTests
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).Testing();
         _handler = LlmTestHelper.SetupMockHttp(_app);
+        // the decider is asked with a key: a test one, so no one is asked for it
+        Ctx.Setting.Set("llm.decider.setting.key", LlmTestHelper.Key);
     }
 
     [After(Test)]
