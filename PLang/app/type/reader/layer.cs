@@ -9,6 +9,9 @@ internal sealed class layer : @this
 
     internal layer(@this under) => _under = under;
 
+    // a layer scans nothing: the readers shipped are the code's, read through the readers under it
+    private protected override shipped Shipped { get; } = new();
+
     private protected override Read? Payload(string typeName, string? kind)
         => base.Payload(typeName, kind) ?? _under.Of(typeName, kind);
 

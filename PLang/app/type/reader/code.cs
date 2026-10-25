@@ -4,5 +4,11 @@ namespace app.type.reader;
 /// them.</summary>
 internal sealed class code : @this
 {
-    internal code(global::app.type.list.@this.Code code) : base(code, [typeof(@this).Assembly]) { }
+    // The readers the code's assembly ships, made once, the first time any is asked for.
+    private readonly Lazy<shipped> _shipped;
+
+    internal code(global::app.type.list.@this.Code code)
+        => _shipped = new(() => new shipped(code, [typeof(@this).Assembly]), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);
+
+    private protected override shipped Shipped => _shipped.Value;
 }
