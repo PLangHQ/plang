@@ -226,6 +226,43 @@
         "health": "docs only",
         "notes": "Satisfied."
       }
+    },
+    {
+      "id": "ba5a534c-6f07-4a09-a916-a4ab495a2f2b",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T08:32:43Z",
+      "intent": "Read identity Default.cs and image/this.cs whole (N12) and record the full bench row at the tip (N15)",
+      "before": {
+        "assumptions": "tip 2401279ed; 23 lines changed in the two files since review6",
+        "risk": "stale restore voided the first row"
+      },
+      "plan": ".bot/fast-apps/codeanalyzer/v7/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/fast-apps/codeanalyzer/review7.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Both files pass with notes; no blocking."
+        },
+        {
+          "paths": [
+            "Tools/Bench/record.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Two rows appended (full; build/ptest/sweep after restore); first row annotated void for its test/sweep/build columns. Held memory flat; clean build 75.7 s not settled."
+        }
+      ],
+      "timestamp_end": "2026-10-25T08:32:43Z",
+      "after": {
+        "status": "review7 written: .bot/fast-apps/codeanalyzer/review7.md",
+        "health": "pass with notes",
+        "notes": "dev.sh does not restore dependents when a referenced project's packages change; one more quiet clean-build row needed"
+      }
     }
   ]
 }

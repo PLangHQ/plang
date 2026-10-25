@@ -50,6 +50,8 @@ per birth + dispose; a request app is born, a goal loaded and run, disposed, × 
 | Date | Branch | Commit | Load | Sub birth | Root birth | Sub request | Root request | Held, sub (MB) | Held, root (MB) | `plang --test` | C# sweep | Build, clean | Build, incr. |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 <!-- rows -->
+| 2026-10-25 | fast-apps | 2401279ed (review7-after-restore) | 2.81 | - | - | - | - | - | - | 5.3 s (298 pass, 1 fail) | 40.5 s (red: Wire) | 75.7 s | 8.6 s |
+| 2026-10-25 | fast-apps | 2401279ed (review7-tip: birth, request and held are valid; `plang --test`, sweep and build ran on a stale restore, 9.0.2 in the test projects' assets, and are void: see the next row) | 2.49 | 0.14 ms, 110 KB | 17.90 ms, 2358 KB | 1.82 ms, 540 KB | 16.68 ms, 3821 KB | 1.6 → 2.1 → 2.1 → 2.1 → 1.9 | 0.1 → 1.9 → 1.9 → 1.9 → 1.1 | 5.2 s (0 pass, 0 fail) | 34.9 s (red: Modules,Types,Wire,Data,Generator,Runtime) | 162.5 s | 9.2 s |
 | 2026-10-25 | fast-apps | fb4e80b9d / d050b9f50 (builds only, 5 runs) | 2.9 at start | - | - | - | - | - | - | - | - | 33.8–53.8 s (93.4 once beside a neighbour's build) | 9.5–14.9 s (22.7 once) |
 | 2026-10-25 | fast-apps | d050b9f50 (review5-d050b9f50) | 12.71 | 0.27 ms, 110 KB | 29.83 ms, 2360 KB | - | - | - | - | - | - | 98.3 s | 15.6 s |
 | 2026-10-25 | fast-apps | dec53e6c4 (review4 N1) | 2.59 | 0.15 ms, 110 KB | 18.62 ms, 2359 KB | - | - | - | - | - | - | - | - |
