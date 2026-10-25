@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "comment": "Writes in parallel to a goal channel: each call of the goal sees its own message, whatever else is written meanwhile.",
+  "comment": "Each write to a goal channel is answered by its own call of the goal, 20 writes at once.",
   "step": [
     {
       "index": 0,
@@ -95,7 +95,7 @@
     },
     {
       "index": 2,
-      "text": "foreach %items%, call Each item=%item%, in parallel, write to %task%",
+      "text": "foreach %items%, call Ask item=%item%, in parallel, write to %task%",
       "line": {
         "number": 5,
         "indent": 0
@@ -160,7 +160,7 @@
               "type": {
                 "name": "goal"
               },
-              "value": "Each"
+              "value": "Ask"
             },
             {
               "name": "Parameter",
@@ -225,7 +225,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 2 uses variable.set, which the decider was not sure of (0.84)"
+          "message": "step 2 uses variable.set, which the decider was not sure of (0.88)"
         }
       ]
     },
@@ -266,11 +266,11 @@
   ],
   "child": [
     {
-      "name": "Each",
+      "name": "Ask",
       "step": [
         {
           "index": 0,
-          "text": "write %item% to \"shown\" channel",
+          "text": "write %item% to \"shown\" channel, write to %answer%",
           "line": {
             "number": 9,
             "indent": 0
@@ -306,12 +306,121 @@
                   "value": "shown"
                 }
               ]
+            },
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%answer%",
+                  "variable": [
+                    {
+                      "text": "%answer%",
+                      "code": [
+                        {
+                          "variable": "answer"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!data%",
+                  "variable": [
+                    {
+                      "text": "%!data%",
+                      "code": [
+                        {
+                          "variable": "!data"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "assert %answer% equals %item%, \"the write was answered by its own message\"",
+          "line": {
+            "number": 10,
+            "indent": 0
+          },
+          "code": [
+            {
+              "module": "assert",
+              "name": "equals",
+              "property": [
+                {
+                  "name": "Expected",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%item%",
+                  "variable": [
+                    {
+                      "text": "%item%",
+                      "code": [
+                        {
+                          "variable": "item"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Actual",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%answer%",
+                  "variable": [
+                    {
+                      "text": "%answer%",
+                      "code": [
+                        {
+                          "variable": "answer"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Message",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "the write was answered by its own message"
+                }
+              ]
             }
           ]
         }
       ],
       "visibility": "Private",
-      "hash": "f31e659e70ac9999c2e95c751eaefa82be1310c830f9dde0b600985e97a37992"
+      "hash": "91e41bec0f02e807714b643323847f653e0c843367d885d846d1330fc685a768"
     },
     {
       "name": "Shown",
@@ -320,7 +429,7 @@
           "index": 0,
           "text": "set %seen% = %message%",
           "line": {
-            "number": 12,
+            "number": 13,
             "indent": 0
           },
           "code": [
@@ -380,7 +489,7 @@
           "index": 1,
           "text": "sleep for 100ms",
           "line": {
-            "number": 13,
+            "number": 14,
             "indent": 0
           },
           "code": [
@@ -401,36 +510,18 @@
         },
         {
           "index": 2,
-          "text": "assert %seen% equals %message%, \"the goal channel's call kept its own message\"",
+          "text": "return %seen%",
           "line": {
-            "number": 14,
+            "number": 15,
             "indent": 0
           },
           "code": [
             {
-              "module": "assert",
-              "name": "equals",
+              "module": "goal",
+              "name": "return",
               "property": [
                 {
-                  "name": "Expected",
-                  "type": {
-                    "name": "item",
-                    "template": "plang"
-                  },
-                  "value": "%message%",
-                  "variable": [
-                    {
-                      "text": "%message%",
-                      "code": [
-                        {
-                          "variable": "message"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "name": "Actual",
+                  "name": "Data",
                   "type": {
                     "name": "item",
                     "template": "plang"
@@ -446,13 +537,15 @@
                       ]
                     }
                   ]
-                },
+                }
+              ],
+              "default": [
                 {
-                  "name": "Message",
+                  "name": "depth",
                   "type": {
-                    "name": "text"
+                    "name": "number"
                   },
-                  "value": "the goal channel's call kept its own message"
+                  "value": 1
                 }
               ]
             }
@@ -460,10 +553,10 @@
         }
       ],
       "visibility": "Private",
-      "hash": "6b484a7c9ed0818d768a0dbfa8a857b19ed7af36febe597011a1d2760e8b14d3"
+      "hash": "86424e288ab84bb83f567d4ef9d55aad5eeca1e781cc24b5c17f5496c06c3b29"
     }
   ],
   "visibility": "Public",
-  "file": "ParallelWritesSeeTheirOwn.test.goal",
-  "hash": "b5f2b17b512499764c146b65b4aa773533b8061cf5716a487ea2bf8603dc4587"
+  "file": "EachWriteSeesItsOwnMessage.test.goal",
+  "hash": "645798b68cca0bf3192a59f0496c409e20225d67d5b96c986ef5a6167b0cf1d3"
 }
