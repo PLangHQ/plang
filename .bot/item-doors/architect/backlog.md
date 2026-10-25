@@ -20,6 +20,11 @@ Checks to make before the release, not branches:
 - **Brotli** (Ingi: "let's not remove it yet, but keep eye on it before we release plang 2.0b"). The archive module's `brotli` kind (`archive/type/archive/kind/brotli/this.cs`) uses .NET's `BrotliStream`, Google's C library bundled in the runtime (10.0.13 today). A crafted `.br` can make Google's decoder read past its buffer (fixed upstream Feb 2026, released Oct 2026; bugsink.com/blog/bye-bye-brotli). Unpacking is capped by `archive.setting.Max` (`compression/this.cs:47`), and plang's HTTP client doesn't decompress responses. Before 2.0b: check whether the .NET runtime it ships on carries the fixed brotli. If not, drop the kind (gzip and zip cover packing).
 - **The release goals** (Ingi, 2026-10-25, bugs 2: "2.yes"). `Publish/Publish.goal:20` publishes the deleted PlangWindowForms for win-x64, and `Publish/Nuget.goal` packs and pushes the deleted PlangTests as `PlangLibrary.Tests`. Drop those steps, then run the release pipeline end to end once before publishing.
 
+## From json-lines
+
+- **The build's nothing-altered check misses a dict literal's keys** (plang-builder, json-lines 12): in 1 of 4 cache-skip builds the builder wrote `{"a": 1}`'s key as `k`, and the check passed it. The committed .pr is good. The check (`Documentation/v0.2/build-checks.md`) should compare a literal's keys too. The builder bot's.
+- **Only item's kinds are walkable at `app.type.kind`** (json-lines 12): another type's kinds (`%!app.type.number.kind.int%`) aren't, since `type.Get("kind")` answers nothing for a type whose own kind is empty (`type/this.cs:905`). Needed only when another type's kind has settings.
+
 ## From bugs (the auditor's X1–X10, `.bot/bugs/auditor/final.md`, and the line)
 
 - X1: the duration, clipboard and input readers still throw a raw FormatException (`duration/serializer/Reader.cs:24,27`); bugs fixed only N11's four.
