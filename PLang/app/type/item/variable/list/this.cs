@@ -430,7 +430,7 @@ public partial class @this
     public void Clear()
     {
         var toRemove = _variables
-            .Where(kvp => !kvp.Key.StartsWith("!") && kvp.Value is not data.DynamicData)
+            .Where(kvp => !kvp.Key.StartsWith("!"))
             .Select(kvp => kvp.Key)
             .ToList();
 
@@ -449,9 +449,6 @@ public partial class @this
         var clone = new @this(_context);
         foreach (var kvp in _variables)
         {
-            // Data.DynamicData (Now, GUID, etc.) — already in clone from constructor
-            if (kvp.Value is data.DynamicData) continue;
-
             // System context vars (! prefix) — skip, they're per-execution
             if (kvp.Key.StartsWith("!")) continue;
 
@@ -497,10 +494,8 @@ public partial class @this
 
     /// <summary>
     /// Captures user-visible variables for failure diagnostics (e.g. assertion errors).
-    /// Excludes:
-    ///  - infrastructure vars (!-prefixed, e.g. !app, !filesystem)
-    ///  - dynamic system vars (Now, NowUtc, GUID) — always-fresh, no diagnostic value
-    /// Each variable rides whole — its Data (name, type, value), held by reference — keyed by its
+    /// Excludes the infrastructure rows (!-prefixed, e.g. !data, !event); the system variables (Now, GUID, !app) live
+    /// apart from the rows, so they are never among them. Each variable rides whole — its Data (name, type, value), held by reference — keyed by its
     /// name, so <c>%!error.Variables.foo%</c> navigates to it. Called when an error happens (assert,
     /// and every recorded error under --debug). ConcurrentDictionary enumeration is snapshot-style
     /// and safe during concurrent writes.
@@ -511,7 +506,6 @@ public partial class @this
         foreach (var kvp in _variables)
         {
             if (kvp.Key.StartsWith("!")) continue;
-            if (kvp.Value is data.DynamicData) continue;
             vars.Set(kvp.Key, kvp.Value);
         }
         return vars;
