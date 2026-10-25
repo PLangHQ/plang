@@ -2,6 +2,16 @@
 
 What came up on item-doors and goes on after it, so nothing waits on us (Ingi, 2026-10-23: "put this into the list of next branches, so we can continue … then everybody can finish it and not wait for us"). Each is a starting point, not a design; Ingi decides each when its branch starts. Newest first.
 
+## What runtime2 needs before it replaces v0.1 (Ingi, 2026-10-25: "yes that is what I mean. I agree on the order")
+
+In this order, one branch at a time, after packages and the three-yeses branch:
+1. Stores per actor and an app per request (items 4 and 10; 317a). A webserver can't run without it.
+2. Snapshot and resume (`test/plan/snapshot/start.md`): an ask over a stateless channel.
+3. The LLM provider and writer (parked branches): the builder's quality.
+4. Returns (801).
+
+`Documentation/Runtime2/todos.md` is being triaged by plang-docs (Ingi's "1 yes"): done and stale entries go, citing their evidence; open ones stay, short, grouped under the themes above, and are walked through with Ingi one theme at a time.
+
 ## To discuss with Ingi
 
 0. **A new C# project** (Ingi, 2026-10-23: "is this a new c# project, start from scratch, copy over what we need, same intent just structred differently", then "I actually want to discuss new project, but that can be later add it to the list"). Not discussed yet. Starting points: the ABP idea (Ingi: "app based pattern, app.snapshot.start() { .. }", every node entered by its Start, its body a block that navigates from the root), handlers as blocks with their carriers resolved before Start (§3), and what fast-apps learns about a birth.
@@ -18,6 +28,7 @@ What came up on item-doors and goes on after it, so nothing waits on us (Ingi, 2
 
 5. **`type.list.Of(name, kind, …)` by parts, the by-name constructor the list's own** (decision 198, Ingi: "sounds good"): approved and never built. 96 sites still write `new global::app.type.@this("…")` (`size/this.cs:38,63`, `duration/this.cs:60,84`, …); 211a built only `Of(kind, …)` (`type/list/this.cs:138`). With it, F2 (a standard's entry found by a type built from names).
 6. **N1–N18** in `.bot/item-doors/auditor/final.md` §"Next-branch", each with file:line. Among them: N1, `identity.export` hands the step the identity whose text is its public key while its question says the key leaves (fails safe; it goes with 307's critical actions); N3, a failed "always" save is silent; N4, a one-time "y" on the os folder replaces its standing grant; N5, PersistedGrantCannotOverrideStoresTests pins nothing; N9, egress never re-signs a Data that holds a signature (latent; a ruling with a red test); N10, json `Number()` doesn't check its token; N11, type readers throw raw FormatException; N14/N15, Windows `%path%` and a culture-sensitive `StartsWith`.
+   **Checked against packages' tip, 2026-10-25:** N18 is done (docs, at fast-apps' merge). All the others still stand. N1 is narrower: fast-apps made export never make a key to hand out, but it still answers the identity, whose text is its public key, under a question that says the private key leaves. Placement proposed to Ingi: the bugs (N2–N5, N8, N10, N11, N14–N17) on one branch after packages; N7 goes with snapshot (the answer on resume); N9 goes with stores and request apps (the first forwarded Data); N6 and N12 wait for their first user; N13 is the architect's ruling; N1 waits on the architect's security call.
 
 7. **The done plans' tests move into the concept tree** (CLAUDE.md "Running plang Tests"). fast-apps' four plang tests (`test/plan/fast-apps/app/type/plugin/*`, `app/event/*`) join them (fast-apps 97: the builder was offline at its merge, and a moved test's `.pr` is the builder's to rebuild). item-doors' nine (`test/plan/item-doors/app/goal/*`, `app/type/**`) go to `test/app/…` at the same paths, and app-systems' and kind-is-type's plan folders are in the same state. `start.md`, `start.goal` and `done.list` stay as each plan's record. The builder rebuilds the moved tests' `.pr`; nobody hand-edits them. This was not done before the merge: runtime2 takes no commit of its own, so it goes on the next branch.
 8. **The Windows run of LinkSpotTests (the junction test), StoresFolderTests and RealPathGateReCheckProbeTests**, and, from fast-apps 54, the sub app containment probes (`SubAppContainmentProbeTests`, `SubAppStoresShapesProbeTests`, `SubAppRootTests`) on a case-insensitive disk, waiting for room on the host's C: drive. A folder link is removed with `Directory.Delete(p, recursive: false)` (`path/file/filesystem/this.cs:108`), which never deletes contents, so the worst a red can show is a delete that fails. A red is fixed on a branch off runtime2.
