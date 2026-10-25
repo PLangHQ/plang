@@ -48,12 +48,6 @@ public sealed class @this : global::app.store.@this
         Context = context;
     }
 
-    /// <summary>
-    /// An in-memory store, a database of its own. The database lives as long as this instance.
-    /// </summary>
-    public static @this InMemory(actor.context.@this context)
-        => new @this(null, () => true, context);
-
     // The database, opened once — every verb awaits the same open.
     private Task<string> Opened()
     {
