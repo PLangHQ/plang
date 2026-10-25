@@ -1,6 +1,4 @@
 using System.Collections.Concurrent;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using Media = global::app.module.screen.type.screen.code.Media;
 using Rect = global::app.module.screen.type.screen.display.code.Rect;
 using Shown = global::app.module.screen.type.screen.code.Shown;
@@ -65,9 +63,10 @@ public sealed class @this : screen.@this
             byte[] copy;
             lock (_shown.Lock) copy = (byte[])_shown.Pixels.Clone();
             _media.Draw(copy, new Rect(0, 0, _shown.Width, _shown.Height));   // the videos it plays itself, where the page shows them
-            using var image = Image.LoadPixelData<Bgra32>(copy, _shown.Width, _shown.Height);
-            using var png = new MemoryStream();
-            image.SaveAsPng(png);
+            var info = new SkiaSharp.SKImageInfo(_shown.Width, _shown.Height, SkiaSharp.SKColorType.Bgra8888, SkiaSharp.SKAlphaType.Unpremul);
+            using var pixels = SkiaSharp.SKData.CreateCopy(copy);
+            using var image = SkiaSharp.SKImage.FromPixels(info, pixels, info.RowBytes);
+            using var png = image.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100);
             return new global::app.type.item.image.@this(png.ToArray(), _png);
         }
     }

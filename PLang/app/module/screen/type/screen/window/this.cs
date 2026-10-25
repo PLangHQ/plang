@@ -1,7 +1,5 @@
 using app.error;
 using app.Utils;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using Native = global::app.module.screen.type.screen.window.code.Window;
 using Text = global::app.type.item.text.@this;
 
@@ -133,7 +131,7 @@ public sealed class @this : screen.@this
         {
             if (Pixels(encoded) is { } px) _window.Present(px.bgra, px.w, px.h);
         }
-        catch (Exception ex) when (ex is UnknownImageFormatException or InvalidImageContentException)
+        catch (FormatException ex)
         {
             return context.Error(new ActionError("Not an image: " + ex.Message, "BadFrame", 400));
         }
@@ -151,10 +149,13 @@ public sealed class @this : screen.@this
 
     private static (byte[] bgra, int w, int h)? Pixels(byte[] encoded)
     {
-        using var image = Image.Load<Bgra32>(encoded);
-        var bgra = new byte[image.Width * image.Height * 4];
-        image.CopyPixelDataTo(bgra);
-        return (bgra, image.Width, image.Height);
+        // straight (unpremultiplied) BGRA, as the window shows it
+        var info = SkiaSharp.SKBitmap.DecodeBounds(encoded);
+        if (info.Width <= 0 || info.Height <= 0) throw new FormatException("the frame is no image format");
+        using var decoded = SkiaSharp.SKBitmap.Decode(encoded,
+            new SkiaSharp.SKImageInfo(info.Width, info.Height, SkiaSharp.SKColorType.Bgra8888, SkiaSharp.SKAlphaType.Unpremul))
+            ?? throw new FormatException("the frame's pixels can't be read");
+        return (decoded.Bytes, decoded.Width, decoded.Height);
     }
 
     // "key":"value" from a one-line JSON message, without parsing a 200 KB frame line
