@@ -75,6 +75,8 @@
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="9.0.2" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.21" />
     <PackageReference Include="Nethereum.Util" Version="4.29.0" />
+    <!-- Nethereum.Util asks for Newtonsoft.Json 11.0.2 (High, GHSA-5crp-9r3c-p9vr); the patched one is taken instead -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="NSec.Cryptography" Version="24.4.0" />
     <PackageReference Include="SixLabors.ImageSharp" Version="2.1.13" />
     <PackageReference Include="System.Runtime.Caching" Version="9.0.2" />
