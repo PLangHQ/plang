@@ -12,7 +12,7 @@ public class AskAnswerTests
     private sealed class TestMessageChannel : global::app.channel.type.message.@this
     {
         private readonly global::app.actor.context.@this _ctx;
-        public TestMessageChannel(string name, global::app.actor.context.@this ctx)
+        public TestMessageChannel(global::app.channel.list.@this channels, string name, global::app.actor.context.@this ctx) : base(channels)
         {
             Name = name;
             _ctx = ctx;
@@ -26,7 +26,7 @@ public class AskAnswerTests
 
     private static global::app.channel.type.stream.@this Console(global::app.@this app, string typed)
     {
-        var input = new global::app.channel.type.stream.@this("input", new MemoryStream(System.Text.Encoding.UTF8.GetBytes(typed)),
+        var input = new global::app.channel.type.stream.@this(app.actor.list.User.Channel, "input", new MemoryStream(System.Text.Encoding.UTF8.GetBytes(typed)),
             global::app.channel.ChannelDirection.Input, ownsStream: true) { Mime = "text/plain" };
         app.actor.list.User.Channel.Register(input);
         return input;
@@ -82,7 +82,7 @@ public class AskAnswerTests
     {
         await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var ctx = app.actor.list.User.Context;
-        app.actor.list.User.Channel.Register(new TestMessageChannel("input", app.actor.list.User.Context));
+        app.actor.list.User.Channel.Register(new TestMessageChannel(app.actor.list.User.Channel, "input", app.actor.list.User.Context));
 
         var pending = await Asked(ctx);
         await Assert.That(pending.Peek()).IsTypeOf<Ask>();

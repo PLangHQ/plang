@@ -24,7 +24,7 @@ public class EntryGateTests : System.IAsyncDisposable
         System.IO.File.WriteAllText(System.IO.Path.Combine(root, "a.txt"), "a");
         app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).TestSigning();
         user = app.actor.list.User.Context;
-        channel = new Asking(user);
+        channel = new Asking(user.Actor!.Channel, user);
         app.actor.list.User.Channel.Register(channel);
     }
 
@@ -35,7 +35,7 @@ public class EntryGateTests : System.IAsyncDisposable
     {
         private readonly global::app.actor.context.@this _ctx;
         public int Count { get; private set; }
-        public Asking(global::app.actor.context.@this ctx)
+        public Asking(global::app.channel.list.@this channels, global::app.actor.context.@this ctx) : base(channels)
         {
             _ctx = ctx; Name = "input";
             Direction = global::app.channel.ChannelDirection.Bidirectional;

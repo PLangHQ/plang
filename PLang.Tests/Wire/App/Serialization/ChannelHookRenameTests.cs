@@ -16,7 +16,7 @@ public class ChannelHookRenameTests : System.IAsyncDisposable
     [Test]
     public async Task ChannelBase_WriteAsync_InvokesWriteBetweenFireBeforeAndFireAfter()
     {
-        var ch = new ProbeChannel(app.actor.list.User.Context);
+        var ch = new ProbeChannel(app.actor.list.User.Channel, app.actor.list.User.Context);
         await ch.WriteAsync(app.Ok("hello"));
         await Assert.That(ch.WriteWasCalled).IsTrue();
         await Assert.That(ch.Sequence.Count).IsEqualTo(1);
@@ -28,7 +28,7 @@ public class ChannelHookRenameTests : System.IAsyncDisposable
         public List<string> Sequence { get; } = new();
         public bool WriteWasCalled => Sequence.Contains("Write");
         private readonly global::app.actor.context.@this _ctx;
-        public ProbeChannel(global::app.actor.context.@this ctx) { _ctx = ctx; }
+        public ProbeChannel(global::app.channel.list.@this channels, global::app.actor.context.@this ctx) : base(channels) { _ctx = ctx; }
 
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
         {

@@ -32,7 +32,7 @@ public class Stage4_ChannelResolutionTests
     public async Task ChannelsGet_NamedChannel_ReturnsThatChannel()
     {
         var app = new global::app.@this("/tmp/s4b", global::PLang.Tests.Parent.Actor).Testing();
-        var logger = StreamChannel.Memory("logger");
+        var logger = StreamChannel.Memory(app.actor.list.User.Channel, "logger");
         app.actor.list.User.Channel.Register(logger);
         var ch = app.actor.list.User.Channel.Get("logger");
         await Assert.That((Channel?)ch).IsEqualTo((Channel)logger);
@@ -51,7 +51,7 @@ public class Stage4_ChannelResolutionTests
     {
         var app = new global::app.@this("/tmp/s4d", global::PLang.Tests.Parent.Actor).Testing();
         var captured = new MemoryStream();
-        app.actor.list.User.Channel.Register(new StreamChannel("output", captured, ChannelDirection.Output, ownsStream: false)
+        app.actor.list.User.Channel.Register(new StreamChannel(app.actor.list.User.Channel, "output", captured, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
 
         var write = new global::app.module.output.Write(app.actor.list.User.Context) { Data = app.Ok("hello-default"),
@@ -69,7 +69,7 @@ public class Stage4_ChannelResolutionTests
     {
         var app = new global::app.@this("/tmp/s4e", global::PLang.Tests.Parent.Actor).Testing();
         var loggerCapture = new MemoryStream();
-        app.actor.list.User.Channel.Register(new StreamChannel("logger", loggerCapture, ChannelDirection.Output, ownsStream: false)
+        app.actor.list.User.Channel.Register(new StreamChannel(app.actor.list.User.Channel, "logger", loggerCapture, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
 
         var write = new global::app.module.output.Write(app.actor.list.User.Context) { Data = app.Ok("targetted"),
@@ -86,7 +86,7 @@ public class Stage4_ChannelResolutionTests
     {
         // Plan rule 7: relay don't repackage. Channel.WriteAsync receives full Data.
         var app = new global::app.@this("/tmp/s4f", global::PLang.Tests.Parent.Actor).Testing();
-        var probe = new EnvelopeProbeChannel(app.actor.list.User.Context);
+        var probe = new EnvelopeProbeChannel(app.actor.list.User.Channel, app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(probe);
 
         var data = app.Ok("payload");
@@ -116,7 +116,7 @@ public class Stage4_ChannelResolutionTests
     {
         public Data? Received { get; private set; }
         private readonly global::app.actor.context.@this _ctx;
-        public EnvelopeProbeChannel(global::app.actor.context.@this ctx)
+        public EnvelopeProbeChannel(global::app.channel.list.@this channels, global::app.actor.context.@this ctx) : base(channels)
         {
             _ctx = ctx;
             Name = "probe";

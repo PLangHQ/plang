@@ -13,7 +13,7 @@ public class BuildInGoalFrameTests
         await using var app = new global::app.@this(root, wiring: global::app.Wiring.none).Testing().Building();
         var context = app.actor.list.User.Context;
         var warned = new MemoryStream();
-        app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this("builder", warned,
+        app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(app.actor.list.User.Channel, "builder", warned,
             global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = "application/json" });
 
         var goal = global::app.goal.@this.Parse("Start\n- file.read(Path=\"data.json\")\n",
@@ -36,7 +36,7 @@ public class BuildInGoalFrameTests
         await using var app = new global::app.@this(root, wiring: global::app.Wiring.none).Testing().Building();
         var context = app.actor.list.User.Context;
         var warned = new MemoryStream();
-        app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this("builder", warned,
+        app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(app.actor.list.User.Channel, "builder", warned,
             global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = "application/json" });
 
         var goal = global::app.goal.@this.Parse(
@@ -109,7 +109,7 @@ public class BuildInGoalFrameTests
         System.IO.Directory.CreateDirectory(root);
         var app = new global::app.@this(root, wiring: global::app.Wiring.none).Testing().Building();
         var warned = new MemoryStream();
-        app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this("builder", warned,
+        app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(app.actor.list.User.Channel, "builder", warned,
             global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = "application/json" });
         return (app, root, warned);
     }

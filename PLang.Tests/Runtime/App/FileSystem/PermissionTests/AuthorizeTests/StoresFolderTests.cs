@@ -21,7 +21,7 @@ public class StoresFolderTests : System.IAsyncDisposable
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(key)!);
         System.IO.File.WriteAllText(key, "the identity's private key");
         app = new global::app.@this(root).TestSigning();
-        channel = new Asking(app.actor.list.User.Context);
+        channel = new Asking(app.actor.list.User.Channel, app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(channel);
     }
 
@@ -32,7 +32,7 @@ public class StoresFolderTests : System.IAsyncDisposable
     {
         private readonly global::app.actor.context.@this _ctx;
         public int Count { get; private set; }
-        public Asking(global::app.actor.context.@this ctx)
+        public Asking(global::app.channel.list.@this channels, global::app.actor.context.@this ctx) : base(channels)
         {
             _ctx = ctx; Name = "input";
             Direction = global::app.channel.ChannelDirection.Bidirectional;

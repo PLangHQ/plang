@@ -92,7 +92,7 @@ public class OnEventTests
     public async Task APathThatReachesNothingAtBuild_IsAWarning_NamingTheHop(string path, string hop)
     {
         var builder = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new StreamChannel("builder", builder, ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
+        _app.actor.list.User.Channel.Register(new StreamChannel(_app.actor.list.User.Channel, "builder", builder, ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
         var action = Make.Action(Ctx, "on", "event", ("Event", path), ("When", "before"), ("Action", Make.Call(Ctx, "Log")));
         var (handler, error) = await action.Bind(Ctx);
         await Assert.That(error).IsNull();
@@ -109,7 +109,7 @@ public class OnEventTests
     public async Task APathThatReachesAnEventAtBuild_WarnsNothing()
     {
         var builder = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new StreamChannel("builder", builder, ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
+        _app.actor.list.User.Channel.Register(new StreamChannel(_app.actor.list.User.Channel, "builder", builder, ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
         var (handler, _) = await Make.Action(Ctx, "on", "event", ("Event", "%!app.type.goal.on.start%"), ("When", "before"),
             ("Action", Make.Call(Ctx, "Log"))).Bind(Ctx);
 

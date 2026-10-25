@@ -220,7 +220,7 @@ abstract class app.channel.this : app.type.item.this, System.IAsyncDisposable, S
   abstract Ask(app.module.output.ask action, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   abstract Read(System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   abstract Write(app.data.this data, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
-  ctor()
+  ctor(app.channel.list.this channels)
   override IsLeaf : System.Boolean { get; }
   protected Read(System.Byte[] raw, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   protected ResolveEncoding() : System.Text.Encoding
@@ -238,7 +238,7 @@ abstract class app.channel.this : app.type.item.this, System.IAsyncDisposable, S
   virtual WriteAsync(app.data.this data, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
 
 class app.channel.type.console.this : app.channel.type.stream.this
-  ctor(System.String name, System.IO.Stream stream, app.channel.ChannelDirection direction)
+  ctor(app.channel.list.this channels, System.String name, System.IO.Stream stream, app.channel.ChannelDirection direction)
   protected override Format(app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.kind.this>
 
 class app.channel.type.file.this : app.channel.this
@@ -251,7 +251,7 @@ class app.channel.type.file.this : app.channel.this
 class app.channel.type.goal.this : app.channel.type.session.this, app.type.item.ICreate<app.channel.type.goal.this>
   Goal : app.goal.step.action.this { get; }
   IsExecuting : System.Boolean { get; }
-  ctor(System.String name, app.goal.step.action.this goal, app.actor.this actor, app.type.item.choice.this<app.channel.ChannelDirection> direction = …, app.type.item.number.this buffer = …, System.Nullable<System.TimeSpan> timeout = …, app.type.item.text.this mime = …, System.String encoding = …, System.String encryption = …, System.String signing = …)
+  ctor(app.channel.list.this channels, System.String name, app.goal.step.action.this goal, app.type.item.choice.this<app.channel.ChannelDirection> direction = …, app.type.item.number.this buffer = …, System.Nullable<System.TimeSpan> timeout = …, app.type.item.text.this mime = …, System.String encoding = …, System.String encryption = …, System.String signing = …)
   override Ask(app.module.output.ask action, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   override Available : System.Boolean { get; }
   override Close() : System.Void
@@ -262,7 +262,7 @@ class app.channel.type.goal.this : app.channel.type.session.this, app.type.item.
   static Takes(app.type.this other) : System.Boolean
 
 abstract class app.channel.type.message.this : app.channel.this
-  ctor()
+  ctor(app.channel.list.this channels)
   override Ask(app.module.output.ask action, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
 
 class app.channel.type.noop.this : app.channel.this
@@ -272,14 +272,14 @@ class app.channel.type.noop.this : app.channel.this
   override Write(app.data.this data, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
 
 abstract class app.channel.type.session.this : app.channel.this
-  ctor()
+  ctor(app.channel.list.this channels)
 
 class app.channel.type.stream.this : app.channel.type.session.this
   End : System.String { get; set; } [Debug]
   Framed : System.Boolean { get; init; } [Debug]
   KeepsLast : System.Boolean { get; init; } [Debug]
   Stream : System.IO.Stream { get; }
-  ctor(System.String name, System.IO.Stream stream, app.channel.ChannelDirection direction = …, System.Boolean ownsStream = …)
+  ctor(app.channel.list.this channels, System.String name, System.IO.Stream stream, app.channel.ChannelDirection direction = …, System.Boolean ownsStream = …)
   override Ask(app.module.output.ask action, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   override CanRead : System.Boolean { get; }
   override CanWrite : System.Boolean { get; }
@@ -287,12 +287,12 @@ class app.channel.type.stream.this : app.channel.type.session.this
   override DisposeAsync() : System.Threading.Tasks.ValueTask
   override Read(System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   override Write(app.data.this data, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
-  static Memory(System.String name, app.channel.ChannelDirection direction = …) : app.channel.type.stream.this
+  static Memory(app.channel.list.this channels, System.String name, app.channel.ChannelDirection direction = …) : app.channel.type.stream.this
 
 class app.channel.type.test.this : app.channel.type.session.this
   Test : app.test.this { get; }
   Text : app.type.item.text.this { get; }
-  ctor(app.test.this test = …)
+  ctor(app.channel.list.this channels, app.test.this test = …)
   override Ask(app.module.output.ask action, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   override Read(System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   override Write(app.data.this data, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>

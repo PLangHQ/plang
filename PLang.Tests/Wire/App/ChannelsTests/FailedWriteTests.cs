@@ -8,7 +8,7 @@ public class FailedWriteTests
         await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var user = app.actor.list.User.Context;
         var capture = new MemoryStream();
-        var channel = new global::app.channel.type.stream.@this("out", capture,
+        var channel = new global::app.channel.type.stream.@this(app.actor.list.User.Channel, "out", capture,
             global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = mime, Framed = framed };
         app.actor.list.User.Channel.Register(channel);
 
@@ -35,7 +35,7 @@ public class FailedWriteTests
         await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var user = app.actor.list.User.Context;
         var capture = new MemoryStream();
-        var output = new global::app.channel.type.stream.@this("out", capture,
+        var output = new global::app.channel.type.stream.@this(app.actor.list.User.Channel, "out", capture,
             global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = "application/plang" };
         app.actor.list.User.Channel.Register(output);
         var sent = new global::app.error.@this("the disk is full", "DiskFull", 507)
@@ -43,7 +43,7 @@ public class FailedWriteTests
         await output.WriteAsync(user.Error(sent));
 
         await using var reader = new global::app.@this("/test2", wiring: global::app.Wiring.none).Testing();
-        var input = new global::app.channel.type.stream.@this("in", new MemoryStream(capture.ToArray()),
+        var input = new global::app.channel.type.stream.@this(reader.actor.list.User.Channel, "in", new MemoryStream(capture.ToArray()),
             global::app.channel.ChannelDirection.Input, ownsStream: true) { Mime = "application/plang" };
         reader.actor.list.User.Channel.Register(input);
         var read = await input.ReadAsync();

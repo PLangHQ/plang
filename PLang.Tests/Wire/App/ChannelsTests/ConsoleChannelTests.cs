@@ -16,7 +16,7 @@ public class ConsoleChannelTests
             await set.IsSuccess();
         }
         var stream = new MemoryStream();
-        app.actor.list.User.Channel.Register(new global::app.channel.type.console.@this(
+        app.actor.list.User.Channel.Register(new global::app.channel.type.console.@this(app.actor.list.User.Channel,
             global::app.channel.list.@this.Output, stream, global::app.channel.ChannelDirection.Output));
         return (app, stream);
     }
@@ -112,9 +112,9 @@ public class ConsoleChannelTests
         else await (await app.type.list.Format(format)!.Encode(input, context.Ok("Ada"), context)).IsSuccess();
         input.Write(System.Text.Encoding.UTF8.GetBytes("\n"));
         input.Position = 0;
-        app.actor.list.User.Channel.Register(new global::app.channel.type.console.@this(
+        app.actor.list.User.Channel.Register(new global::app.channel.type.console.@this(app.actor.list.User.Channel,
             global::app.channel.list.@this.Output, output, global::app.channel.ChannelDirection.Output));
-        app.actor.list.User.Channel.Register(new global::app.channel.type.console.@this(
+        app.actor.list.User.Channel.Register(new global::app.channel.type.console.@this(app.actor.list.User.Channel,
             global::app.channel.list.@this.Input, input, global::app.channel.ChannelDirection.Input));
 
         var ask = new global::app.module.output.ask(context)

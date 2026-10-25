@@ -17,7 +17,7 @@ public class OpenAiImageDenialTests
     {
         private readonly string _answer;
         private readonly global::app.actor.context.@this _ctx;
-        public CannedChannel(string answer, global::app.actor.context.@this ctx) { _answer = answer; _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public CannedChannel(global::app.channel.list.@this channels, string answer, global::app.actor.context.@this ctx) : base(channels) { _answer = answer; _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(_ctx.Ok(_answer));
@@ -34,7 +34,7 @@ public class OpenAiImageDenialTests
     [Test] public async Task ImageAttachment_PathOutsideRoot_DeniedAnswer_NotIncludedInRequest()
     {
         var app = NewApp(out _);
-        app.actor.list.User.Channel.Register(new CannedChannel("n", app.actor.list.User.Context));
+        app.actor.list.User.Channel.Register(new CannedChannel(app.actor.list.User.Channel, "n", app.actor.list.User.Context));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "img.png");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);

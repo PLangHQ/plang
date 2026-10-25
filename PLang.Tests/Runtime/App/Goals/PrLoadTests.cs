@@ -180,7 +180,7 @@ public class PrLoadTests : System.IAsyncDisposable
         built.Step[1].Line = new() { Indent = 1 };
         built.Step[1].Warning.Add(new global::app.warning.@this(_app.type.list) { Key = "Unsure", Message = "step 1 uses output.write" });
         var output = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(_app.actor.list.User.Channel,
             global::app.channel.list.@this.Output, output, ChannelDirection.Output, ownsStream: true) { Mime = "text/plain" });
 
         var goal = await RealGoalLoad.ViaChannel(_app, built);

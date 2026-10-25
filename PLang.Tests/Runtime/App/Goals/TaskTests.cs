@@ -18,7 +18,7 @@ public class TaskTests
     {
         _app = new global::app.@this("/tmp/task-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         _errors = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(
+        _app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(_app.actor.list.User.Channel,
             global::app.channel.list.@this.Error, _errors, global::app.channel.ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain", Framed = true });
     }
@@ -643,7 +643,7 @@ public class TaskTests
     private async Task<(string Written, global::app.type.item.dict.@this Answer)> LoopedOver(object collection, bool inParallel, bool key = false)
     {
         var written = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(
+        _app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(_app.actor.list.User.Channel,
             global::app.channel.list.@this.Output, written, global::app.channel.ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain", Framed = true });
         await Load("Each", Make.Step("write the item", Make.Action(Ctx, "output", "write", ("Data", key ? "%key%=%item%;" : "%item%;"))));

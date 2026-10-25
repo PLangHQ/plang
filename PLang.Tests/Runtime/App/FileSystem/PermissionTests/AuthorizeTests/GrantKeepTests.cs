@@ -78,7 +78,7 @@ public class GrantKeepTests : System.IAsyncDisposable
         var outside = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-grantkeep-out-" + System.Guid.NewGuid().ToString("N")[..8])).FullName;
         System.IO.File.WriteAllText(System.IO.Path.Combine(outside, "x.txt"), "outside");
         await using var broken = Broken();
-        broken.actor.list.User.Channel.Register(new Answering(broken.actor.list.User.Context, "a"));
+        broken.actor.list.User.Channel.Register(new Answering(broken.actor.list.User.Channel, broken.actor.list.User.Context, "a"));
         var user = broken.actor.list.User.Context;
 
         var read = await user.File(System.IO.Path.Combine(outside, "x.txt")).Read(user);
@@ -99,7 +99,7 @@ public class GrantKeepTests : System.IAsyncDisposable
     private sealed class Answering : global::app.channel.@this
     {
         private readonly global::app.actor.context.@this _ctx; private readonly string _answer;
-        public Answering(global::app.actor.context.@this ctx, string answer)
+        public Answering(global::app.channel.list.@this channels, global::app.actor.context.@this ctx, string answer) : base(channels)
         { _ctx = ctx; _answer = answer; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));

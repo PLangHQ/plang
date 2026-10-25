@@ -25,7 +25,7 @@ public class FormatEncodeContractTests : System.IAsyncDisposable
             new global::app.Attributes.FormatAttribute("xprobe", "application/x-probe", ".xprobe"), app.type.list["binary"],
             (stream, data, context, view, encoding, ct) => { last = data; return Task.FromResult(context.Ok()); })]);
 
-        var ch = new global::app.channel.type.stream.@this(
+        var ch = new global::app.channel.type.stream.@this(app.actor.list.User.Channel,
             "probe", new MemoryStream(), global::app.channel.ChannelDirection.Output)
         {
             Mime = "application/x-probe",

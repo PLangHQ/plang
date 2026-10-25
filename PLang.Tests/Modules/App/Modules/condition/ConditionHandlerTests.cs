@@ -93,7 +93,7 @@ public class ConditionHandlerTests : IDisposable
     private async Task<string> Written(string text, params Action[] actions)
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(_app.actor.list.User.Channel,
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain", Framed = true });

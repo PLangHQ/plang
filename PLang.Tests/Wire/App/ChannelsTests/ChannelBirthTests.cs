@@ -15,7 +15,8 @@ public class ChannelBirthTests
     [Test]
     public async Task AStreamChannelThatNeverReads_HoldsNoReadBuffer()
     {
-        var born = Bytes(() => new global::app.channel.type.console.@this("output", System.IO.Stream.Null, global::app.channel.ChannelDirection.Output));
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+        var born = Bytes(() => new global::app.channel.type.console.@this(app.actor.list.User.Channel, "output", System.IO.Stream.Null, global::app.channel.ChannelDirection.Output));
 
         await Assert.That(born).IsLessThan(32 * 1024L).Because("the 64 KB read-ahead is the first read's to make");
     }
@@ -23,7 +24,8 @@ public class ChannelBirthTests
     [Test]
     public async Task AChannelsSettings_AreMadeWhenRead()
     {
-        var born = Bytes(() => new global::app.channel.type.console.@this("output", System.IO.Stream.Null, global::app.channel.ChannelDirection.Output));
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+        var born = Bytes(() => new global::app.channel.type.console.@this(app.actor.list.User.Channel, "output", System.IO.Stream.Null, global::app.channel.ChannelDirection.Output));
 
         await Assert.That(born).IsLessThan(4 * 1024L).Because("a channel's direction, buffer and mime are made when read, unless given");
     }
@@ -57,7 +59,7 @@ public class ChannelBirthTests
         await using var app = new global::app.@this("/channel-birth", global::PLang.Tests.Parent.Actor).Testing();
         var line = new string('x', 100_000);
         var stream = new System.IO.MemoryStream(System.Text.Encoding.UTF8.GetBytes(line + "\nnext\n"));
-        var channel = new global::app.channel.type.console.@this("long", stream, global::app.channel.ChannelDirection.Bidirectional);
+        var channel = new global::app.channel.type.console.@this(app.actor.list.User.Channel, "long", stream, global::app.channel.ChannelDirection.Bidirectional);
         app.actor.list.User.Channel.Register(channel);
 
         var first = await channel.Read();

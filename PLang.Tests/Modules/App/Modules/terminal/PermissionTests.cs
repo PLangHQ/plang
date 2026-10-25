@@ -37,7 +37,7 @@ public class PermissionTests : IDisposable
     private async Task<global::app.data.@this> Sh(string script, object? permission, string answer = "a", string sh = "//bin/sh",
         bool wire = false, Dictionary<string, object?>? environment = null, params (string, object?)[] more)
     {
-        Context.Actor!.Channel.Register(new CannedAnswerChannel(answer));
+        Context.Actor!.Channel.Register(new CannedAnswerChannel(Context.Actor!.Channel, answer));
         var parameters = new List<(string, object?)> { ("App", sh), ("Parameter", new List<object?> { "-c", script }) };
         if (permission != null) parameters.Add(("Permission", permission));
         if (environment != null) parameters.Add(("Environment", environment));
@@ -292,7 +292,7 @@ public class PermissionTests : IDisposable
     /// builder writes a step), written as a .pr and read back.</summary>
     private async Task<global::app.data.@this> Built(string formal, string answer = "a")
     {
-        Context.Actor!.Channel.Register(new CannedAnswerChannel(answer));
+        Context.Actor!.Channel.Register(new CannedAnswerChannel(Context.Actor!.Channel, answer));
         var made = Make.Goal(Context, "Run" + Guid.NewGuid().ToString("N")[..6], Make.Step("run it"));
         var step = new global::app.goal.step.@this(Context.App.type.list) { Goal = made };
         var read = await new global::app.goal.step.action.formal.Reader(step, Context.App.module.list).Read(formal, Context);

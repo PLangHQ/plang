@@ -20,7 +20,7 @@ public class ConsentAskTests : System.IAsyncDisposable
     private async Task<global::app.data.@this> Asked(System.Exception thrown)
     {
         var user = app.actor.list.User;
-        user.Channel.Register(new Throwing(user.Context, thrown));
+        user.Channel.Register(new Throwing(user.Channel, user.Context, thrown));
         var request = Grant.Request(user, "/elsewhere", Verb.read);
         return await user.Permission.Ask("Allow it? (y/n)", request, user.Context, _ => Task.FromResult(user.Context.Ok()));
     }
@@ -67,7 +67,7 @@ public class ConsentAskTests : System.IAsyncDisposable
     private sealed class Throwing : global::app.channel.@this
     {
         private readonly global::app.actor.context.@this _ctx; private readonly System.Exception _thrown;
-        public Throwing(global::app.actor.context.@this ctx, System.Exception thrown)
+        public Throwing(global::app.channel.list.@this channels, global::app.actor.context.@this ctx, System.Exception thrown) : base(channels)
         { _ctx = ctx; _thrown = thrown; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));

@@ -113,7 +113,7 @@ public class Stage3_GoalChannelTests
 
         // Register "builder" AFTER "sink" exists. Old code froze foundational
         // before this; this test passes only because no freeze is involved.
-        var builder = StreamChannel.Memory("builder");
+        var builder = StreamChannel.Memory(app.actor.list.User.Channel, "builder");
         app.actor.list.User.Channel.Register(builder);
 
         // Inside sink's body, "builder" must still resolve.

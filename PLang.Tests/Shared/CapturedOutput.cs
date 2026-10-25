@@ -8,7 +8,7 @@ public sealed class CapturedOutput
 
     public CapturedOutput(global::app.@this app)
     {
-        app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(
+        app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(app.actor.list.User.Channel,
             global::app.channel.list.@this.Output, _stream,
             global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = "text/plain", Framed = true });
     }

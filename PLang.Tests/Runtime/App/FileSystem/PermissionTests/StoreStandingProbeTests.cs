@@ -16,7 +16,7 @@ public class StoreStandingProbeTests
     {
         public int Asked;
         private readonly global::app.actor.context.@this _ctx;
-        public Asking(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public Asking(global::app.channel.list.@this channels, global::app.actor.context.@this ctx) : base(channels) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
@@ -28,7 +28,7 @@ public class StoreStandingProbeTests
     {
         var root = NewRoot(System.IO.Path.GetTempPath());
         await using var app = new global::app.@this(root).TestSigning();
-        var asking = new Asking(app.actor.list.User.Context);
+        var asking = new Asking(app.actor.list.User.Channel, app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(asking);
         var user = app.actor.list.User.Context;
         var r = await user.File(System.IO.Path.Combine(root, ".data", "secret.key")).Read(user);

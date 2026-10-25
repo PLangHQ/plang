@@ -119,7 +119,7 @@ public class HandlerShapeTests
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-hs2-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
         var app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
-        app.actor.list.User.Channel.Register(new CannedNoChannel(app.actor.list.User.Context));
+        app.actor.list.User.Channel.Register(new CannedNoChannel(app.actor.list.User.Channel, app.actor.list.User.Context));
 
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-foreign-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(outOfRoot);
@@ -141,7 +141,7 @@ public class HandlerShapeTests
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-n1-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
         var app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
-        app.actor.list.User.Channel.Register(new CannedNoChannel(app.actor.list.User.Context));
+        app.actor.list.User.Channel.Register(new CannedNoChannel(app.actor.list.User.Channel, app.actor.list.User.Context));
 
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-n1-foreign-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(outOfRoot);
@@ -157,7 +157,7 @@ public class HandlerShapeTests
     private sealed class CannedNoChannel : global::app.channel.@this
     {
         private readonly global::app.actor.context.@this _ctx;
-        public CannedNoChannel(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public CannedNoChannel(global::app.channel.list.@this channels, global::app.actor.context.@this ctx) : base(channels) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(_ctx.Ok("n"));

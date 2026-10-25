@@ -17,7 +17,7 @@ public class ProgramTests : IDisposable
     {
         _root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "plang_program_" + Guid.NewGuid().ToString("N"))).FullName;
         _app = new global::app.@this(_root, global::PLang.Tests.Parent.Actor).Testing();
-        Context.Actor!.Channel.Register(new CannedAnswerChannel("a"));
+        Context.Actor!.Channel.Register(new CannedAnswerChannel(Context.Actor!.Channel, "a"));
     }
 
     public void Dispose()

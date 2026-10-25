@@ -36,9 +36,9 @@ public class Stage6_EntryPointWiringTests
     public async Task ChannelsVerify_FailsFast_WhenOutputMissing()
     {
         await using var app = new global::app.@this("/tmp/s6d", wiring: global::app.Wiring.none).Testing();
-        app.actor.list.User.Channel.Register(new StreamChannel("error", new MemoryStream(),
+        app.actor.list.User.Channel.Register(new StreamChannel(app.actor.list.User.Channel, "error", new MemoryStream(),
             ChannelDirection.Output, ownsStream: true));
-        app.actor.list.User.Channel.Register(new StreamChannel("input", new MemoryStream(),
+        app.actor.list.User.Channel.Register(new StreamChannel(app.actor.list.User.Channel, "input", new MemoryStream(),
             ChannelDirection.Input, ownsStream: true));
 
         var result = app.actor.list.User.Channel.Verify();
@@ -50,9 +50,9 @@ public class Stage6_EntryPointWiringTests
     public async Task ChannelsVerify_FailsFast_WhenErrorMissing()
     {
         await using var app = new global::app.@this("/tmp/s6e", wiring: global::app.Wiring.none).Testing();
-        app.actor.list.User.Channel.Register(new StreamChannel("output", new MemoryStream(),
+        app.actor.list.User.Channel.Register(new StreamChannel(app.actor.list.User.Channel, "output", new MemoryStream(),
             ChannelDirection.Output, ownsStream: true));
-        app.actor.list.User.Channel.Register(new StreamChannel("input", new MemoryStream(),
+        app.actor.list.User.Channel.Register(new StreamChannel(app.actor.list.User.Channel, "input", new MemoryStream(),
             ChannelDirection.Input, ownsStream: true));
 
         var result = app.actor.list.User.Channel.Verify();
@@ -64,9 +64,9 @@ public class Stage6_EntryPointWiringTests
     public async Task ChannelsVerify_FailsFast_WhenInputMissing()
     {
         await using var app = new global::app.@this("/tmp/s6f", wiring: global::app.Wiring.none).Testing();
-        app.actor.list.User.Channel.Register(new StreamChannel("output", new MemoryStream(),
+        app.actor.list.User.Channel.Register(new StreamChannel(app.actor.list.User.Channel, "output", new MemoryStream(),
             ChannelDirection.Output, ownsStream: true));
-        app.actor.list.User.Channel.Register(new StreamChannel("error", new MemoryStream(),
+        app.actor.list.User.Channel.Register(new StreamChannel(app.actor.list.User.Channel, "error", new MemoryStream(),
             ChannelDirection.Output, ownsStream: true));
 
         var result = app.actor.list.User.Channel.Verify();
@@ -89,7 +89,7 @@ public class Stage6_EntryPointWiringTests
     {
         await using var app = new global::app.@this("/tmp/s6j").Testing();
         var errorCapture = new MemoryStream();
-        app.actor.list.User.Channel.Register(new StreamChannel("error", errorCapture,
+        app.actor.list.User.Channel.Register(new StreamChannel(app.actor.list.User.Channel, "error", errorCapture,
             ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
 

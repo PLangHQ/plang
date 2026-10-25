@@ -62,7 +62,7 @@ public class SubAppContainmentProbeTests : System.IAsyncDisposable
     {
         private readonly global::app.actor.context.@this _ctx;
         public List<string> Questions { get; } = new();
-        public Asking(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public Asking(global::app.channel.list.@this channels, global::app.actor.context.@this ctx) : base(channels) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override async Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
@@ -75,7 +75,7 @@ public class SubAppContainmentProbeTests : System.IAsyncDisposable
     // every actor of the app answers 'n' to a question (never reads a console)
     private static Asking Mute(global::app.actor.@this actor)
     {
-        var ch = new Asking(actor.Context);
+        var ch = new Asking(actor.Channel, actor.Context);
         actor.Channel.Register(ch);
         return ch;
     }

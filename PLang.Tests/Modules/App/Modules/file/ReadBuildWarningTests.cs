@@ -10,7 +10,7 @@ public class ReadBuildWarningTests
         System.IO.Directory.CreateDirectory(root);
         var app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
         var warnings = new System.IO.MemoryStream();
-        app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(
+        app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(app.actor.list.User.Channel,
             "builder", warnings, global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
         return (app, warnings);
     }

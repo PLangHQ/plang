@@ -14,10 +14,10 @@ public class MissingKeyTests
         var app = new global::app.@this("/tmp/llmkey-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         var written = new System.IO.MemoryStream();
         var user = app.actor.list.User;
-        user.Channel.Register(new global::app.channel.type.stream.@this(global::app.channel.list.@this.Output, written,
+        user.Channel.Register(new global::app.channel.type.stream.@this(user.Channel, global::app.channel.list.@this.Output, written,
             global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = "text/plain", Framed = true });
         if (typed != null)
-            user.Channel.Register(new global::app.channel.type.stream.@this(global::app.channel.list.@this.Input,
+            user.Channel.Register(new global::app.channel.type.stream.@this(user.Channel, global::app.channel.list.@this.Input,
                 new System.IO.MemoryStream(System.Text.Encoding.UTF8.GetBytes(typed)), global::app.channel.ChannelDirection.Input, ownsStream: true));
         return (app, written);
     }

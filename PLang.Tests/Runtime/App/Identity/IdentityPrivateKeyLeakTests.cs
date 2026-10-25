@@ -57,7 +57,7 @@ public class IdentityPrivateKeyLeakTests : System.IAsyncDisposable
     [Test]
     public async Task Export_Refuses_UntilCriticalActions()
     {
-        app.actor.list.User.Channel.Register(new Asking(User, "a"));
+        app.actor.list.User.Channel.Register(new Asking(app.actor.list.User.Channel, User, "a"));
         var got = await Export();
         await Assert.That(got.Error?.Key).IsEqualTo("ExportWaitsForCriticalActions");
         await Assert.That(got.Success ? ((IdentityRecord?)await got.Value())?.PrivateKey : null).IsNotEqualTo(Key);
@@ -67,7 +67,7 @@ public class IdentityPrivateKeyLeakTests : System.IAsyncDisposable
     [Test]
     public async Task TheExportQuestion_IsNeverAsked()
     {
-        var asking = new Asking(User, "a");
+        var asking = new Asking(app.actor.list.User.Channel, User, "a");
         app.actor.list.User.Channel.Register(asking);
         await Export();
         await Assert.That(asking.Count).IsEqualTo(0);
@@ -96,7 +96,7 @@ public class IdentityPrivateKeyLeakTests : System.IAsyncDisposable
         private readonly global::app.actor.context.@this _ctx;
         private readonly string _answer;
         public int Count { get; private set; }
-        public Asking(global::app.actor.context.@this ctx, string answer) { _ctx = ctx; _answer = answer; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public Asking(global::app.channel.list.@this channels, global::app.actor.context.@this ctx, string answer) : base(channels) { _ctx = ctx; _answer = answer; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)

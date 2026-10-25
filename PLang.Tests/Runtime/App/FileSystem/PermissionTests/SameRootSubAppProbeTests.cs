@@ -23,7 +23,7 @@ public class SameRootSubAppProbeTests : System.IAsyncDisposable
         System.IO.File.WriteAllText(System.IO.Path.Combine(outside, "o.txt"), "outside");
         // NO Permission access here: every test below starts with a view that was never made
         app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).TestSigning();
-        userChannel = new Asking(app.actor.list.User.Context);
+        userChannel = new Asking(app.actor.list.User.Channel, app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(userChannel);
     }
 
@@ -39,7 +39,7 @@ public class SameRootSubAppProbeTests : System.IAsyncDisposable
         private readonly global::app.actor.context.@this _ctx;
         public List<string> Questions { get; } = new();
         public string Answer { get; set; } = "n";
-        public Asking(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public Asking(global::app.channel.list.@this channels, global::app.actor.context.@this ctx) : base(channels) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override async Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)

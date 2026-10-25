@@ -44,7 +44,7 @@ public class Stage7_AppServicesTests
         {
             await using var s = app.Services.New(parent: app.actor.list.User);
             captured = s;
-            disposedCh = StreamChannel.Memory("input");
+            disposedCh = StreamChannel.Memory(s.Channels, "input");
             s.Channels.Register(disposedCh);
             await Assert.That(app.Services.Count).IsEqualTo(1);
         }
@@ -58,8 +58,8 @@ public class Stage7_AppServicesTests
         await using var app = new global::app.@this("/tmp/s7f", global::PLang.Tests.Parent.Actor).Testing();
         await using var sA = app.Services.New(parent: app.actor.list.User);
         await using var sB = app.Services.New(parent: app.actor.list.User);
-        sA.Channels.Register(StreamChannel.Memory("input"));
-        sB.Channels.Register(StreamChannel.Memory("input"));
+        sA.Channels.Register(StreamChannel.Memory(sA.Channels, "input"));
+        sB.Channels.Register(StreamChannel.Memory(sB.Channels, "input"));
         await Assert.That(sA.Channels.Get("input")).IsNotEqualTo(sB.Channels.Get("input"));
     }
 

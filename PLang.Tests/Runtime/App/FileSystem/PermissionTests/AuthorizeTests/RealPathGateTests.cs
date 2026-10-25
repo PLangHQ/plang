@@ -22,7 +22,7 @@ public class RealPathGateTests : System.IAsyncDisposable
         System.IO.File.WriteAllText(System.IO.Path.Combine(root, "a.txt"), "inside");
         app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).TestSigning();
         user = app.actor.list.User.Context;
-        channel = new Asking(user);
+        channel = new Asking(user.Actor!.Channel, user);
         app.actor.list.User.Channel.Register(channel);
     }
 
@@ -37,7 +37,7 @@ public class RealPathGateTests : System.IAsyncDisposable
     {
         private readonly global::app.actor.context.@this _ctx;
         public int Count { get; private set; }
-        public Asking(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public Asking(global::app.channel.list.@this channels, global::app.actor.context.@this ctx) : base(channels) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
@@ -74,7 +74,7 @@ public class RealPathGateTests : System.IAsyncDisposable
         var alias = System.IO.Path.Combine(outside, "alias");
         System.IO.Directory.CreateSymbolicLink(alias, root);
         await using var aliased = new global::app.@this(alias, global::PLang.Tests.Parent.Actor).TestSigning();
-        var asking = new Asking(aliased.actor.list.User.Context);
+        var asking = new Asking(aliased.actor.list.User.Channel, aliased.actor.list.User.Context);
         aliased.actor.list.User.Channel.Register(asking);
         var ctx = aliased.actor.list.User.Context;
 

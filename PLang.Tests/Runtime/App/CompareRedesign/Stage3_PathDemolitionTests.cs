@@ -54,7 +54,7 @@ public class Stage3_PathDemolitionTests
     // Written out through a plang-formatted stream channel — the channel opens the value before its format writes it.
     private static async Task<string> WriteOut(Data data)
     {
-        await using var channel = new global::app.channel.type.stream.@this("out", new System.IO.MemoryStream()) { Mime = "application/plang" };
+        await using var channel = new global::app.channel.type.stream.@this(data.Context.Actor!.Channel, "out", new System.IO.MemoryStream()) { Mime = "application/plang" };
         var written = await channel.Write(data);
         await written.IsSuccess();
         return System.Text.Encoding.UTF8.GetString(((System.IO.MemoryStream)channel.Stream).ToArray());
@@ -258,7 +258,7 @@ public class Stage3_PathDemolitionTests
         var bytes = new byte[] { 0, 1, 2, 250, 251, 252, 253 };
         File.WriteAllBytes(Path.Combine(dir, "blob.bin"), bytes);
 
-        await using var console = new global::app.channel.type.stream.@this("out", new System.IO.MemoryStream());
+        await using var console = new global::app.channel.type.stream.@this(app.actor.list.User.Channel, "out", new System.IO.MemoryStream());
         var toConsole = await console.Write(await Read(context, context.File(Path.Combine(dir, "blob.bin"))));
         await toConsole.IsSuccess();
         await Assert.That(Encoding.UTF8.GetString(((System.IO.MemoryStream)console.Stream).ToArray()).TrimEnd())

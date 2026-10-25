@@ -25,7 +25,7 @@ public class ImageFormatTests
     {
         await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var capture = new System.IO.MemoryStream();
-        var channel = new StreamChannel("img", capture, ChannelDirection.Output, ownsStream: false) { Mime = "image/png" };
+        var channel = new StreamChannel(app.actor.list.User.Channel, "img", capture, ChannelDirection.Output, ownsStream: false) { Mime = "image/png" };
         app.actor.list.User.Channel.Register(channel);
 
         var written = await channel.Write(app.actor.list.User.Context.Ok(app.actor.list.User.Context.Image(Png, "png")));
