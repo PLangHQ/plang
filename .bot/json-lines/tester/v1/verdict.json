@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "No new red names; sampled tests red without their change; llm gate saved and live clean; three minor findings (cursor test repeats the production call, llm tool-result-as-text unpinned, two plan test names absent)." }
