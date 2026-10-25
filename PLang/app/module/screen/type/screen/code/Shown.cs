@@ -81,7 +81,7 @@ internal sealed class Shown
                     : [];
         }
         catch (Exception ex) when (ex is System.Text.Json.JsonException or FormatException or InvalidOperationException
-                                       or IndexOutOfRangeException or KeyNotFoundException)
+                                       or IndexOutOfRangeException or KeyNotFoundException or ArgumentNullException)
         {
             var error = new global::app.error.@this($"Not an image: the frame line can't be read: {ex.Message}", "BadFrame", 400);
             error.list.Add(global::app.error.@this.FromException(ex));

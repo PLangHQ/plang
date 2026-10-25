@@ -57,7 +57,7 @@ public sealed class @this : screen.@this
             => call == null ? Task.CompletedTask
                 : global::app.module.on.code.Gate.Call(call, new global::app.data.@this("!data", value, context: context), context);
         var view = new @this(title, width, height, value => Call(onInput, value), () => Call(onClose, (Text)"{\"closed\":true}"),
-            error => _ = context.Actor.Channel.Report(context.Error(error)),
+            Report(context),
             context.App.type.list[new global::app.type.@this("image", "png"), context]);
         return context.Ok<screen.@this>(view);
     }

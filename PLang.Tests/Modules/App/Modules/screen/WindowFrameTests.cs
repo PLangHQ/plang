@@ -91,6 +91,7 @@ public class WindowFrameTests : System.IAsyncDisposable
     [Arguments("{\"rects\":[[0,0,4,4,\"not base64!\"]]}")]
     [Arguments("{\"rect\":[0,0,4,4],\"qoi\":\"not base64!\"}")]
     [Arguments("{\"rects\":[[0,0]]}")]
+    [Arguments("{\"rects\":[[0,0,4,4,null]]}")]
     public async Task ATextFrameWithABadRectangle_IsBadFrame(string line)
     {
         var max = await Max();

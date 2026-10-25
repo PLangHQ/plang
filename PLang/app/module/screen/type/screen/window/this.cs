@@ -31,8 +31,7 @@ public sealed class @this : screen.@this
         var window = new Native(title, width, height, context.App.type.list,
             onEvent: e => events.Writer.TryWrite(e),
             onClosed: () => { events.Writer.TryWrite(closedLine); errors.Writer.TryComplete(); },
-            // a frame it refused, on its own threads: reported where the app's errors go (no step waits for it)
-            report: error => _ = context.Actor.Channel.Report(context.Error(error)),
+            report: Report(context),
             onError: json => errors.Writer.TryWrite(json));
         var failed = window.Show();
         if (failed != null)
