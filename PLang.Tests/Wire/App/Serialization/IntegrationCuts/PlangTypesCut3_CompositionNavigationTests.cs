@@ -56,14 +56,11 @@ public class PlangTypesCut3_CompositionNavigationTests
         await Assert.That(await (await img.Path!.Exists(app.actor.list.User.Context)).ToBooleanAsync()).IsFalse();
     }
 
-    [Test] public async Task ImageFromBase64_PathIsNull_AndBytesThatDontDecode_HaveNoSize()
+    [Test] public async Task ImageFromBase64_PathIsNull()
     {
         await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var img = app.actor.list.User.Context.Image(PngBytes, "image/png");
         await Assert.That(img.Path).IsNull();
-        // The 8-byte signature isn't a full image: its size is an error, never a 0×0 image.
-        await Assert.That(() => { _ = img.Width; return Task.CompletedTask; })
-            .Throws<SixLabors.ImageSharp.InvalidImageContentException>();
     }
 
     [Test] public async Task RoutingKey_StaysImage_NoPathImageUnion_AnywhereInRegistry()

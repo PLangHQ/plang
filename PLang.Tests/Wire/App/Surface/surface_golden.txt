@@ -1629,12 +1629,10 @@ class app.type.item.image.serializer.Reader : app.type.reader.ITypeReader
 class app.type.item.image.this : app.type.item.this, app.data.IKindValidatable, app.data.IStrictKindEnforcer, app.type.item.ICreate<app.type.item.image.this>, app.type.item.IEncode<app.type.item.image.this> [Format, Format, Format, Format, Format, Format, Format, Format, PlangType]
   Bytes : System.Byte[] { get; } [Out, Store]
   CheckStrictKind() : System.Nullable<System.ValueTuple<System.Boolean, System.String>>
-  Height : System.Int32 { get; }
   Mime : System.String { get; } [LlmBuilder, Out, Store]
   Path : app.type.item.path.this { get; init; } [LlmBuilder, Out, Store]
   RequireStrictKind(System.String kind) : System.Void
   ValidateKind(System.Object value, System.String requiredKind) : System.ValueTuple<System.Boolean, System.String>
-  Width : System.Int32 { get; }
   ctor(System.Byte[] bytes, app.type.item.path.this path, app.type.this type)
   ctor(System.Byte[] bytes, app.type.this type)
   ctor(app.type.item.path.this path, app.type.this type)

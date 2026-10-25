@@ -63,15 +63,6 @@ public class ImageValueTests : System.IAsyncDisposable
         await Assert.That(app.actor.list.User.Context.Ok(img).Type.kind.Name).IsEqualTo("jpg");
     }
 
-    [Test] public async Task Image_WidthHeight_LazyEvaluation()
-    {
-        // Width/Height computed on first access via SixLabors.ImageSharp.
-        // Empty/garbage bytes degrade to (0, 0) without throwing.
-        var img = app.actor.list.User.Context.Image(System.Array.Empty<byte>(), "image/png");
-        await Assert.That(img.Width).IsEqualTo(0);
-        await Assert.That(img.Height).IsEqualTo(0);
-    }
-
     [Test] public async Task Image_IBooleanResolvable_NonEmptyBytes_Truthy()
         => await Assert.That(await app.actor.list.User.Context.Image(PngHeader, "image/png").AsBooleanAsync(app.actor.list.User.Context)).IsTrue();
 
