@@ -34,7 +34,7 @@ public sealed partial class @this
         code = new Code();
         _origin = origin;
         var under = origin.type;
-        Reader = new reader.layer(code, under.Reader);
+        Reader = new reader.layer(under.Reader);
         // the scan is the list under's: this list reads no class of its own until it loads one
         base.Add(under);
     }

@@ -47,7 +47,7 @@ public abstract class @this
     private readonly ConcurrentDictionary<(string Type, string Kind), ITypeReader> _runtimeTyped = new();
 
     // The readers the assemblies ship, made once, the first time any is asked for.
-    private readonly Lazy<shipped> _shipped;
+    private readonly Lazy<shipped>? _shipped;
 
     // The readers an assembly ships under its serializer folders, from the code's facts: each token reader the code
     // made (the token-stream table), each whole-payload decode as it is.
@@ -69,13 +69,15 @@ public abstract class @this
         }
     }
 
-    /// <param name="assemblies">The assemblies scanned for <c>serializer/&lt;kind&gt;.cs</c> classes: the code's, its
-    /// own; a layer's, none.</param>
+    /// <param name="assemblies">The assemblies scanned for <c>serializer/&lt;kind&gt;.cs</c> classes: the code's own.</param>
     private protected @this(global::app.type.list.@this.Code code, List<Assembly> assemblies)
         => _shipped = new(() => new shipped(code, assemblies), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);
 
-    // The shipped readers, through the one door that makes them.
-    private shipped Shipped => _shipped.Value;
+    /// <summary>Readers that ship none: a layer's, which reads the shipped ones through the readers under it.</summary>
+    private protected @this() { }
+
+    // The shipped readers, through the one door that makes them; none for readers that ship none.
+    private shipped? Shipped => _shipped?.Value;
 
     /// <summary>
     /// Returns the <see cref="Read"/> delegate registered for
@@ -97,23 +99,19 @@ public abstract class @this
     public ITypeReader? Typed(string typeName, string? kind) => Token(typeName, kind);
 
     // The whole-payload decode these readers hold for the type and kind, in the precedence Of names.
-    private protected virtual Read? Payload(string typeName, string? kind)
-    {
-        var k = string.IsNullOrEmpty(kind) ? AnyKind : kind!;
-        if (_runtime.TryGetValue((typeName, k), out var rt)) return rt;
-        if (Shipped.Payloads.TryGetValue((typeName, k), out var gen)) return gen;
-        if (_runtime.TryGetValue((typeName, AnyKind), out var rtAny)) return rtAny;
-        return Shipped.Payloads.TryGetValue((typeName, AnyKind), out var genAny) ? genAny : null;
-    }
+    private protected virtual Read? Payload(string typeName, string? kind) => Find(_runtime, Shipped?.Payloads, typeName, kind);
 
     // The token reader these readers hold for the type and kind, in the precedence Typed names.
-    private protected virtual ITypeReader? Token(string typeName, string? kind)
+    private protected virtual ITypeReader? Token(string typeName, string? kind) => Find(_runtimeTyped, Shipped?.Tokens, typeName, kind);
+
+    // The entry for the type and kind, in the one precedence both tables are read by: runtime-exact → shipped-exact →
+    // runtime-"*" → shipped-"*".
+    private T? Find<T>(ConcurrentDictionary<(string Type, string Kind), T> runtime, Dictionary<(string Type, string Kind), T>? shipped,
+        string typeName, string? kind) where T : class
     {
         var k = string.IsNullOrEmpty(kind) ? AnyKind : kind!;
-        if (_runtimeTyped.TryGetValue((typeName, k), out var rt)) return rt;
-        if (Shipped.Tokens.TryGetValue((typeName, k), out var gen)) return gen;
-        if (_runtimeTyped.TryGetValue((typeName, AnyKind), out var rtAny)) return rtAny;
-        return Shipped.Tokens.TryGetValue((typeName, AnyKind), out var genAny) ? genAny : null;
+        return runtime.GetValueOrDefault((typeName, k)) ?? shipped?.GetValueOrDefault((typeName, k))
+            ?? runtime.GetValueOrDefault((typeName, AnyKind)) ?? shipped?.GetValueOrDefault((typeName, AnyKind));
     }
 
     /// <summary>
@@ -158,7 +156,7 @@ public abstract class @this
     {
         foreach (var key in _runtime.Keys)
             if (string.Equals(key.Kind, kind, System.StringComparison.OrdinalIgnoreCase)) return key.Type;
-        foreach (var key in Shipped.Payloads.Keys)
+        foreach (var key in (IEnumerable<(string Type, string Kind)>?)Shipped?.Payloads.Keys ?? [])
             if (string.Equals(key.Kind, kind, System.StringComparison.OrdinalIgnoreCase)) return key.Type;
         return null;
     }

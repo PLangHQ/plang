@@ -7,7 +7,7 @@ internal sealed class layer : @this
     // The readers of the list this layer's list is over.
     private readonly @this _under;
 
-    internal layer(global::app.type.list.@this.Code code, @this under) : base(code, []) => _under = under;
+    internal layer(@this under) => _under = under;
 
     private protected override Read? Payload(string typeName, string? kind)
         => base.Payload(typeName, kind) ?? _under.Of(typeName, kind);
