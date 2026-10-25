@@ -86,6 +86,24 @@ public class GrantKeepTests : System.IAsyncDisposable
         await read.IsFailure();
     }
 
+    // the same at the transfer's own door: an out-of-root copy answered "a" where the always can't be saved fails, and
+    // nothing is copied
+    [Test]
+    public async Task AnAlwaysAnswer_WhoseSaveFailed_IsNotAYes_ForACopy()
+    {
+        var outside = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-grantkeep-copy-" + System.Guid.NewGuid().ToString("N")[..8])).FullName;
+        System.IO.File.WriteAllText(System.IO.Path.Combine(outside, "x.txt"), "outside");
+        await using var broken = Broken();
+        broken.actor.list.User.Channel.Register(new Answering(broken.actor.list.User.Channel, broken.actor.list.User.Context, "a"));
+        var user = broken.actor.list.User.Context;
+        var into = System.IO.Path.Combine(outside, "copied.txt");
+
+        var copied = await user.File(System.IO.Path.Combine(outside, "x.txt")).CopyTo(user.File(into), overwrite: true, subfolder: true, user);
+
+        await copied.IsFailure();
+        await Assert.That(System.IO.File.Exists(into)).IsFalse();
+    }
+
     // an app whose settings' database is a file of text
     private global::app.@this Broken()
     {
