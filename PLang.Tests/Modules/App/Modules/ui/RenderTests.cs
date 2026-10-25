@@ -110,6 +110,29 @@ public class RenderTests : IDisposable
             .IsEqualTo("{\"a\":1,\"b\":\"Þór\"}|\"50% of %x%\"|\"Þór\"|{\"a\":1,\"b\":\"Þór\"}");
     }
 
+    // a page renders `{{ x | json }}` as it is: a value holding </script> never closes the page's script — the json
+    // carries no < > &, and reads back as the value
+    [Test]
+    public async Task Render_JsonFilter_IsSafeInAPage()
+    {
+        var context = _app.actor.list.User.Context;
+        const string hostile = "</script><img src=x onerror=alert(1)>&amp;";
+        await context.Variable.Set("s", context.Text(hostile));
+        var action = new Render(context)
+        {
+            Template = (global::app.type.item.text.@this)"<script>var s = {{ s | json }};</script>",
+            IsFile = (global::app.type.item.@bool.@this)false
+        };
+
+        var result = await _provider.Render(action);
+
+        await result.IsSuccess();
+        var page = (await result.Value())!.ToString()!;
+        var json = page["<script>var s = ".Length..^";</script>".Length];
+        await Assert.That(json).DoesNotContain("<").And.DoesNotContain(">").And.DoesNotContain("&");
+        await Assert.That(System.Text.Json.JsonSerializer.Deserialize<string>(json)).IsEqualTo(hostile);
+    }
+
     // --- Batch 1: Core Render Behavior ---
 
     [Test]
