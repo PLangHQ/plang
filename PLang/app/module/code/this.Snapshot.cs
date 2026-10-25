@@ -31,13 +31,9 @@ public sealed partial class @this : ISnapshot
         var types = s.Context.App.type.list;
         // what was made so far: a shipped provider nothing asked for is neither registered nor chosen, and a registry
         // never used holds neither
-        if (System.Threading.Volatile.Read(ref _table) is not { } table)
-        {
-            s.Write("registrations", registrations);
-            s.Write("defaultOverrides", overrides);
-            return;
-        }
+        var table = System.Threading.Volatile.Read(ref _table);
 
+        if (table != null)
         foreach (var (type, dict) in table.Providers)
         {
             table.Defaults.TryGetValue(type, out var currentDefaultName);
