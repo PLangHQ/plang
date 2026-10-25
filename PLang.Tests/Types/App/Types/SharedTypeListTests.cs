@@ -52,7 +52,7 @@ public class SharedTypeListTests
 
         var refused = await Assert.ThrowsAsync<global::app.error.AppException>(() =>
         {
-            child.type.list.Add(new ProbeKind(image));
+            child.type.list.Add([new ProbeKind(image)]);
             return Task.CompletedTask;
         });
 

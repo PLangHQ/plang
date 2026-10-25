@@ -29,7 +29,7 @@ public class OriginTests
         await using var app = new global::app.@this("/root").Testing();
         var image = app.type.list["image"];
 
-        app.type.list.Add(new ProbeKind(image));
+        app.type.list.Add([new ProbeKind(image)]);
 
         await Assert.That(image.kind["webpo"]).IsNotNull().Because("the code under an app is its own to change");
     }
@@ -50,7 +50,7 @@ public class OriginTests
         await using var one = new global::app.@this("/one").Testing();
         await using var two = new global::app.@this("/two").Testing();
 
-        one.type.list.Add(new ProbeKind(one.type.list["image"]));
+        one.type.list.Add([new ProbeKind(one.type.list["image"])]);
 
         await Assert.That(two.type.list["image"]).IsNotSameReferenceAs(one.type.list["image"]).Because("each app's code is its own");
         await Assert.That(two.type.list["image"].kind["webpo"]).IsNull();

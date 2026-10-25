@@ -3131,7 +3131,6 @@ abstract class app.type.kind.this<T> : app.type.kind.this
 class app.type.list.this : app.type.item.list.this<app.type.this>
   Add(System.Reflection.Assembly assembly, app.actor.context.this context) : app.data.this
   Add(System.Type clr, app.actor.context.this context, System.String name = …) : app.data.this
-  Add(app.type.kind.this kind) : System.Void
   Contains(System.String name) : System.Boolean
   Extension(System.String extension, app.actor.context.this context) : app.type.this
   Format(System.String named) : app.type.kind.this

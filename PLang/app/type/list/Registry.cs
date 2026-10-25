@@ -220,12 +220,9 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         return context.Ok(added);
     }
 
-    /// <summary>Adds a kind to the type it is a kind of — a closed set to choice, a scheme to path.
-    /// A kind of the same name on that type is replaced.</summary>
-    public void Add(global::app.type.kind.@this kind) => Add([kind]);
-
-    // Kinds added as one: each guarded against the formats held, and against the others, before any is held — a
-    // refused one leaves nothing held. No result to answer, so the refusal travels whole.
+    /// <summary>Adds kinds as one, each to the type it is a kind of — a closed set to choice, a scheme to path; a kind of
+    /// the same name on that type is replaced. Each is guarded against the formats held, and against the others, before
+    /// any is held — a refused one leaves nothing held. No result to answer, so the refusal travels whole.</summary>
     internal void Add(IReadOnlyList<global::app.type.kind.@this> kinds)
     {
         if (Guard(kinds) is { } refused) throw new global::app.error.AppException(refused);
