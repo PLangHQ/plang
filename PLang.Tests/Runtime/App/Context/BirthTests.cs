@@ -142,6 +142,24 @@ public class BirthTests
     }
 
     [Test]
+    public async Task ARequestReadsItsSettingClassesFacts_OncePerCode()
+    {
+        var root = System.IO.Path.Combine(Fixture.Root(), "test");
+        async Task Request()
+        {
+            await using var app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
+            var loaded = await app.goal.Load("/module/condition/if/basic/Condition.test.goal");
+            await (await ((await loaded.Value()) as global::app.goal.@this)!.Start(app.actor.list.User.Context)).IsSuccess();
+        }
+        for (var i = 0; i < 5; i++) await Request();
+        var from = System.GC.GetTotalAllocatedBytes(true);
+        for (var i = 0; i < 20; i++) await Request();
+        var born = (System.GC.GetTotalAllocatedBytes(true) - from) / 20;
+
+        await Assert.That(born).IsLessThan(1_475_000L).Because("a setting class's path and members are its code's facts, read once per code");
+    }
+
+    [Test]
     public async Task AnActorsPermissionView_IsOneView()
     {
         var actor = new global::app.actor.@this(new global::app.actor.role.user(), global::PLang.Tests.Parent.Actor.App);
