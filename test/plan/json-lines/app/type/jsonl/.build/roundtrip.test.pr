@@ -177,41 +177,9 @@
     },
     {
       "index": 3,
-      "text": "delete file 'roundtrip.jsonl'",
-      "line": {
-        "number": 6,
-        "indent": 0
-      },
-      "code": [
-        {
-          "module": "file",
-          "name": "delete",
-          "property": [
-            {
-              "name": "Path",
-              "type": {
-                "name": "path"
-              },
-              "value": "roundtrip.jsonl"
-            }
-          ],
-          "default": [
-            {
-              "name": "recursive",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "index": 4,
       "text": "assert %back.count% equals 3",
       "line": {
-        "number": 7,
+        "number": 6,
         "indent": 0
       },
       "code": [
@@ -252,10 +220,10 @@
       ]
     },
     {
-      "index": 5,
+      "index": 4,
       "text": "assert %back% equals %rows%",
       "line": {
-        "number": 8,
+        "number": 7,
         "indent": 0
       },
       "code": [
@@ -302,9 +270,41 @@
           ]
         }
       ]
+    },
+    {
+      "index": 5,
+      "text": "delete file 'roundtrip.jsonl'",
+      "line": {
+        "number": 8,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "delete",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "roundtrip.jsonl"
+            }
+          ],
+          "default": [
+            {
+              "name": "recursive",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
     }
   ],
   "visibility": "Public",
   "file": "RoundTrip.test.goal",
-  "hash": "a9047c1387b771cdd2ec0c32203f5b6cc5f89df46929d29ff132eb3db155c715"
+  "hash": "de742c855acb9e577e9757d4df1fb6abbb498f411f454cdfa2b6ca9a27da732f"
 }
