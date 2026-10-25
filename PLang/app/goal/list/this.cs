@@ -59,7 +59,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     // The goal held from `pr` while its .pr is as it was read; null when none is held, or the file changed since —
     // then it is read again.
     private async Task<goal.@this?> Current(global::app.type.item.path.@this pr, actor.context.@this context)
-        => this[pr] is { } held && await held.IsFresh(pr, context) ? held : null;
+        => this[pr] is { } held && await held.IsFresh(context) ? held : null;
 
     // The goal at `source` as the app's origin loads it, as itself — held by this app too and loaded here through this
     // app's own on.load; null when the origin gives none. A goal never goes up from a sub app: the parent reads it, so
@@ -103,7 +103,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         try
         {
             // the .pr as it is before the read: a change during it is read again on the next use
-            var stamp = await pr.Stat(context);
+            var stat = await pr.Stat(context);
             // The .pr lands as a file reference; its value is the content its format decodes — a goal.
             var read = await pr.Read(context);
             var content = read.Success ? await read.Value() : null;
@@ -113,7 +113,8 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
                 return context.Error(read.Error ?? new global::app.error.@this(
                     $"Failed to parse goal file: {pr} — read produced {content.GetType().Name}, not a goal"));
 
-            goal.Read = new goal.@this.Stamp(stamp.Success ? await stamp.Value() : null);
+            goal.Stamp = stat.Success && await stat.Value() is { } then
+                ? new goal.@this.stamp.stat(then) : new goal.@this.stamp.unknown();
             Add(goal);
             return await goal.on.load.After(goal, read, context);
         }

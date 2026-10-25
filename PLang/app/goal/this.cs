@@ -349,21 +349,37 @@ public sealed partial class @this
     // A goal by its location, as item's ILoad door asks it: the app's goals load it.
     public static Task<data.@this> Load(global::app.type.item.path.@this source, global::app.@this app) => app.goal.list.Load(source);
 
-    /// <summary>What the goal knows of the .pr it was read from: the file's stat then — none when the stat failed, so
-    /// it is read again. Null for a goal not read from a file, which is as it is.</summary>
-    internal Stamp? Read { get; set; }
+    /// <summary>What the goal knows of the .pr it was read from; a goal not read from a file has none.</summary>
+    internal stamp Stamp { get; set; } = new stamp.none();
 
-    /// <summary>A goal's .pr as it was read: its stat, when there was one.</summary>
-    internal sealed record Stamp(global::app.type.item.path.@this.StatInfo? Stat);
-
-    /// <summary>Whether <paramref name="pr"/> is as it was when this goal was read from it.</summary>
-    internal async Task<bool> IsFresh(global::app.type.item.path.@this pr, actor.context.@this context)
+    /// <summary>A goal's .pr as the goal was read from it — each kind says whether the file is still as it was.</summary>
+    internal abstract record stamp
     {
-        if (Read is not { } read) return true;
-        if (read.Stat is not { } then) return false;
-        var now = await pr.Stat(context);
-        return now.Success && await now.Value() is { } stat && stat.Same(then);
+        internal abstract Task<bool> IsFresh(global::app.type.item.path.@this pr, actor.context.@this context);
+
+        /// <summary>Not read from a file: the goal is as it is.</summary>
+        internal sealed record none : stamp
+        {
+            internal override Task<bool> IsFresh(global::app.type.item.path.@this pr, actor.context.@this context) => Task.FromResult(true);
+        }
+
+        /// <summary>Read from a file whose stat failed: what it held then is unknown, so it is read again.</summary>
+        internal sealed record unknown : stamp
+        {
+            internal override Task<bool> IsFresh(global::app.type.item.path.@this pr, actor.context.@this context) => Task.FromResult(false);
+        }
+
+        /// <summary>Read from a file with this stat: still as it was while its stat is the same.</summary>
+        internal sealed record stat(global::app.type.item.path.@this.StatInfo Then) : stamp
+        {
+            internal override async Task<bool> IsFresh(global::app.type.item.path.@this pr, actor.context.@this context)
+                => await pr.Stat(context) is { Success: true } now && await now.Value() is { } info && info.Same(Then);
+        }
     }
+
+    /// <summary>Whether the .pr this goal was read from is as it was then.</summary>
+    internal Task<bool> IsFresh(actor.context.@this context)
+        => PrPath is { } pr ? Stamp.IsFresh(pr, context) : Task.FromResult(true);
 
     /// <summary>A goal starts through the goal type's events, then its own.</summary>
     protected internal override global::app.type.item.@this? Level(int depth, actor.context.@this context) => depth switch
