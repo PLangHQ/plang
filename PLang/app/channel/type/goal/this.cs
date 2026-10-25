@@ -114,13 +114,14 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
         if (!IsOpen)
             return data.Context.Error(new ServiceError($"Channel '{Name}' is closed", "ChannelClosed", 400));
 
-        var context = Actor.Context;
+        // A write runs the goal as goal.call runs one: in the writer's flow — the context the written value carries,
+        // so a parallel iteration's write is its own (a variable lives on its context, never across flows). Written by
+        // the channel's own actor, the goal runs right there; by another, in a context made from the writer's, which
+        // the channel's actor runs.
+        var writer = data.Context ?? Actor.Context;
+        using var made = writer.Actor == Actor ? null : writer.Child(Actor, ct);
+        var context = made ?? writer;
 
-        // Channels are not a fork — `write out %x%` is just a function call from
-        // the user's POV, and the channel layer is the plumbing under it. Whatever
-        // upstream operator forked the flow (parallel foreach iteration, async
-        // call, listener accept-loop, etc.) has already pushed a Calls overlay,
-        // and AsyncLocal carries it down to here.
         // The written value is the call's argument %message% — bound as goal.call binds its own
         // arguments, in a frame that ends with the run. (%!data% is the action before's
         // result; the call's own run replaces it before the goal's first step reads it.)
@@ -148,10 +149,16 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
         {
             await using (context.call.Push(bound, await context.call.Setting())) return await Goal.Start(context);
         }
-        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+        catch (AppException refused)
         {
-            return context.Error(new ServiceError(
-                $"Goal channel '{Name}' failed: {ex.Message}", "GoalChannelError") { Exception = ex });
+            return context.Error(refused.Error);
+        }
+        // anything else broke inside the goal's run: the channel's own failure, holding it as its cause
+        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+        {
+            var failure = new ServiceError($"Goal channel '{Name}' failed", "GoalChannelError");
+            failure.list.Add(global::app.error.@this.FromException(ex));
+            return context.Error(failure);
         }
         finally
         {
