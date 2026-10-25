@@ -195,18 +195,18 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     /// <summary>A goal's frame: the goal starting, born with its call's <paramref name="names"/>.</summary>
     internal @this(global::app.type.@this type, global::app.call.list.@this stack, global::app.goal.@this goal,
         global::app.call.setting.@this setting, IEnumerable<global::app.data.@this>? names)
-        : this(type, goal, null, null, stack.Caller(), stack, stack.Variables, setting, names) { }
+        : this(type, goal, null, null, stack.Current, stack, stack.Variables, setting, names) { }
 
     /// <summary>A step's frame: its goal and itself.</summary>
     internal @this(global::app.type.@this type, global::app.call.list.@this stack, global::app.goal.step.@this step,
         global::app.call.setting.@this setting)
-        : this(type, step.Goal, step, null, stack.Caller(), stack, stack.Variables, setting) { }
+        : this(type, step.Goal, step, null, stack.Current, stack, stack.Variables, setting) { }
 
     /// <summary>An action's frame: its step's goal, its step and itself; <paramref name="variables"/> the store a diff
     /// captures, else the stack's.</summary>
     internal @this(global::app.type.@this type, global::app.call.list.@this stack, global::app.goal.step.action.@this action,
         global::app.call.setting.@this setting, Variables? variables)
-        : this(type, action.Step?.Goal, action.Step, action, stack.Caller(), stack, variables ?? stack.Variables, setting) { }
+        : this(type, action.Step?.Goal, action.Step, action, stack.Current, stack, variables ?? stack.Variables, setting) { }
 
     /// <summary>
     /// Every frame's making: it holds back-references to the owning stack and the frame current when it was pushed, so

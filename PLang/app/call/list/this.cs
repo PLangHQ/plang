@@ -204,20 +204,12 @@ public sealed partial class @this : global::app.type.item.@this
     public call.@this Push(global::app.goal.step.action.@this action, setting.@this setting, Variables? variables = null)
         => Enter(new call.@this(Call, this, action, setting, variables));
 
-    // The frame a frame pushed now is called from — the current one; past MaxDepth (the caller's own depth) the
-    // overflow.
-    internal call.@this? Caller()
-    {
-        var caller = _current.Value;
-        if (caller != null && caller.Depth >= MaxDepth) throw new CallStackOverflowException(MaxDepth);
-        return caller;
-    }
-
     // The frame becomes current: it joins its caller's children (Children owns its own lock + FIFO eviction), and a
     // frame that starts an empty chain is the run's root — reassigned each time, so %!call.Root% is the live run's,
-    // never a stale one already popped.
+    // never a stale one already popped. A frame past MaxDepth (its caller's depth) is the overflow, and joins nothing.
     private call.@this Enter(call.@this frame)
     {
+        if (frame.Caller is { } caller && caller.Depth >= MaxDepth) throw new CallStackOverflowException(MaxDepth);
         frame.Caller?.Children.Add(frame);
         if (_current.Value == null) _root = frame;
         _current.Value = frame;

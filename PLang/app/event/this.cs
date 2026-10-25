@@ -59,7 +59,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     private bool IsBoundAt(global::app.type.item.@this level, global::app.actor.context.@this context,
         System.Func<@this, binding.list.@this> side)
     {
-        foreach (var @event in Out(level, context))
+        foreach (var @event in Outward(level, context))
             if (side(@event).Count > 0) return true;
         return false;
     }
@@ -70,12 +70,11 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     internal async System.Threading.Tasks.ValueTask<global::app.data.@this?> BeforeAt(global::app.type.item.@this level,
         global::app.type.item.@this item, global::app.actor.context.@this context, global::app.data.@this result)
     {
-        if (!IsBoundBefore(level, context)) return null;
-        var answer = result;
-        foreach (var @event in Out(level, context))
+        global::app.data.@this? answer = null;
+        foreach (var @event in Outward(level, context))
         {
             if (@event.before is not { Count: > 0 } side) continue;
-            answer = await side.Start(item, answer, context);
+            answer = await side.Start(item, answer ?? result, context);
             if (!answer.Success || answer.Handled) return answer;
         }
         return answer;
@@ -83,16 +82,16 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
 
     // This event where it is bound at a level, outward: the level's own events (what its program bound when it was
     // read), then each actor's hold in the asker's app (what was bound while a program ran), in the actor list's order.
-    private protected Outward Out(global::app.type.item.@this level, global::app.actor.context.@this context)
+    private protected outward Outward(global::app.type.item.@this level, global::app.actor.context.@this context)
         => new(this, level, context.App.actor.list);
 
     // The same places inward: each actor's hold, last actor first, then the level's own events.
-    private protected Inward In(global::app.type.item.@this level, global::app.actor.context.@this context)
+    private protected inward Inward(global::app.type.item.@this level, global::app.actor.context.@this context)
         => new(this, level, context.App.actor.list);
 
     // The places of one level, outward, walked without allocating; each answers the event by its name if a binding
     // made it there.
-    private protected struct Outward
+    private protected struct outward
     {
         private readonly @this _event;
         private readonly global::app.type.item.@this _level;
@@ -102,7 +101,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
         private bool _owned;
         private int _next;
 
-        internal Outward(@this @event, global::app.type.item.@this level, global::app.actor.list.@this actors)
+        internal outward(@this @event, global::app.type.item.@this level, global::app.actor.list.@this actors)
         {
             _event = @event;
             _level = level;
@@ -113,7 +112,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
             Current = null!;
         }
 
-        public readonly Outward GetEnumerator() => this;
+        public readonly outward GetEnumerator() => this;
 
         public @this Current { get; private set; }
 
@@ -131,7 +130,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     }
 
     // The places of one level, inward, walked without allocating.
-    private protected struct Inward
+    private protected struct inward
     {
         private readonly @this _event;
         private readonly global::app.type.item.@this _level;
@@ -140,7 +139,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
         private int _next;
         private bool _owned;
 
-        internal Inward(@this @event, global::app.type.item.@this level, global::app.actor.list.@this actors)
+        internal inward(@this @event, global::app.type.item.@this level, global::app.actor.list.@this actors)
         {
             _event = @event;
             _level = level;
@@ -150,7 +149,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
             Current = null!;
         }
 
-        public readonly Inward GetEnumerator() => this;
+        public readonly inward GetEnumerator() => this;
 
         public @this Current { get; private set; }
 
@@ -186,10 +185,9 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     {
         var answer = result ?? context.Ok();
         for (; item.Level(depth, context) is { } level; depth++)
-            foreach (var @event in Out(level, context))
+            if (await BeforeAt(level, item, context, answer) is { } answered)
             {
-                if (@event.before is not { Count: > 0 } side) continue;
-                answer = await side.Start(item, answer, context);
+                answer = answered;
                 if (!answer.Success || answer.Handled) return answer;
             }
         return answer;
@@ -212,7 +210,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
         global::app.data.@this result, int depth, global::app.actor.context.@this context)
     {
         for (; depth >= 0; depth--)
-            foreach (var @event in In(item.Level(depth, context)!, context))
+            foreach (var @event in Inward(item.Level(depth, context)!, context))
                 if (@event.after is { Count: > 0 } side) result = await side.Start(item, result, context);
         return result;
     }

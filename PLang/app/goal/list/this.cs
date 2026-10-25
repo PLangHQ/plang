@@ -49,7 +49,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         if (source is not global::app.type.item.path.file.@this file)
             return context.Error(new global::app.error.@this($"{source}: a goal is built from a .goal file, which this isn't", "GoalNotAFile", 400));
         var pr = file.Pr;
-        var loaded = await Current(pr, context) is { } held ? context.Ok(held)
+        var loaded = await Fresh(pr, context) is { } held ? context.Ok(held)
             : await Inherited(source, context) ?? await Read(pr, context);
         if (loaded.Success && await loaded.Value() is goal.@this { IsSetup: true })
             return context.Error(new global::app.error.@this($"{pr}: a setup goal runs only through setup.", "SetupGoal", 400));
@@ -58,7 +58,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
 
     // The goal held from `pr` while its .pr is as it was read; null when none is held, or the file changed since —
     // then it is read again.
-    private async Task<goal.@this?> Current(global::app.type.item.path.@this pr, actor.context.@this context)
+    private async Task<goal.@this?> Fresh(global::app.type.item.path.@this pr, actor.context.@this context)
         => this[pr] is { } held && await held.IsFresh(context) ? held : null;
 
     // The goal at `source` as the app's origin loads it, as itself — held by this app too and loaded here through this
@@ -80,7 +80,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         if (_reading.TryAdd(pr, ours.Task) is false && _reading.TryGetValue(pr, out var inFlight)) return await inFlight;
         try
         {
-            var answer = await Current(pr, context) is { } held ? context.Ok(held) : await Decode(pr, context);
+            var answer = await Fresh(pr, context) is { } held ? context.Ok(held) : await Decode(pr, context);
             ours.SetResult(answer);
             return answer;
         }
