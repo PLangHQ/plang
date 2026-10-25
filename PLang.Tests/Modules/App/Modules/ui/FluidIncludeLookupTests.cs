@@ -1,4 +1,4 @@
-namespace PLang.Tests.App.Modules.Ui;
+namespace PLang.Tests.App.Modules.ui;
 
 /// <summary>Fluid's include lookup: a literal include is read through the gate, a name by a variable is refused, and
 /// a <c>..</c> in a name gets no further than the gate lets it (security, packages).</summary>

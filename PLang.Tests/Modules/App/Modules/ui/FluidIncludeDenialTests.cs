@@ -3,7 +3,7 @@ using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using PLangEngine = global::app.@this;
 
-namespace PLang.Tests.App.Modules.Ui;
+namespace PLang.Tests.App.Modules.ui;
 
 /// <summary>
 /// Fluid include-denial tests. Drives
