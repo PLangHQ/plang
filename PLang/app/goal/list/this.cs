@@ -36,39 +36,89 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     // The .pr reads in flight, by the .pr: the apps loading one goal at once make one read.
     private readonly System.Collections.Concurrent.ConcurrentDictionary<global::app.type.item.path.@this, Task<data.@this>> _reading = new();
 
-    /// <summary>The goal at <paramref name="source"/> as the app's origin answers it, as itself — held by this app too
-    /// and loaded here through this app's own on.load; null when the origin gives none. A goal never goes up from a sub
-    /// app: the parent reads it, so nothing of this app is in a goal its sub apps share.</summary>
-    internal async Task<data.@this?> Take(global::app.type.item.path.@this source, actor.context.@this context)
+    /// <summary>
+    /// The goal <paramref name="source"/> (a <c>.goal</c>) is built to, as this app loads it from its .pr: the one held
+    /// while its .pr is as it was read; else, while its origin's goals are this app's too, the one its origin loads, as
+    /// itself; else this app's own read — one read in flight for each .pr. A setup goal is refused — it runs only
+    /// through setup.
+    /// </summary>
+    internal async Task<data.@this> Load(global::app.type.item.path.@this source)
     {
-        if (await App.origin.Goal(source, App) is not { } loaded) return null;
-        if (!loaded.Success || await loaded.Value() is not goal.@this taken) return loaded;
-        Add(taken);
-        return await taken.on.load.After(taken, context.Ok(taken), context);
+        var pr = goal.@this.Pr(source);
+        var context = App.actor.list.System.Context;
+        var loaded = await Current(pr, context) is { } held ? context.Ok(held)
+            : await Inherited(source, context) ?? await Read(pr, context);
+        if (loaded.Success && await loaded.Value() is goal.@this { IsSetup: true })
+            return context.Error(new global::app.error.@this($"{pr}: a setup goal runs only through setup.", "SetupGoal", 400));
+        return loaded;
     }
 
-    /// <summary>The goal held from <paramref name="pr"/> while its .pr is as it was read; null when none is held, or the
-    /// file changed since — then it is read again.</summary>
-    internal async Task<goal.@this?> Held(global::app.type.item.path.@this pr, actor.context.@this context)
-        => this[pr] is { } held && await held.Fresh(pr, context) ? held : null;
+    // The goal held from `pr` while its .pr is as it was read; null when none is held, or the file changed since —
+    // then it is read again.
+    private async Task<goal.@this?> Current(global::app.type.item.path.@this pr, actor.context.@this context)
+        => this[pr] is { } held && await held.IsFresh(pr, context) ? held : null;
 
-    /// <summary>The read of <paramref name="pr"/> — one at a time for each .pr: a load that finds one in flight awaits it.</summary>
-    internal async Task<data.@this> Reading(global::app.type.item.path.@this pr, Func<Task<data.@this>> read)
+    // The goal at `source` as the app's origin loads it, as itself — held by this app too and loaded here through this
+    // app's own on.load; null when the origin gives none. A goal never goes up from a sub app: the parent reads it, so
+    // nothing of this app is in a goal its sub apps share.
+    private async Task<data.@this?> Inherited(global::app.type.item.path.@this source, actor.context.@this context)
     {
-        var mine = new TaskCompletionSource<data.@this>(TaskCreationOptions.RunContinuationsAsynchronously);
-        if (_reading.TryAdd(pr, mine.Task) is false && _reading.TryGetValue(pr, out var theirs)) return await theirs;
+        if (await App.origin.Goal(source, App) is not { } loaded) return null;
+        if (!loaded.Success || await loaded.Value() is not goal.@this inherited) return loaded;
+        Add(inherited);
+        return await inherited.on.load.After(inherited, context.Ok(inherited), context);
+    }
+
+    // The read of `pr` — one at a time for each .pr: a load that finds one in flight awaits it. Whoever takes the slot
+    // asks for the held goal again first: a read that ended between that load's ask and its turn has added it.
+    private async Task<data.@this> Read(global::app.type.item.path.@this pr, actor.context.@this context)
+    {
+        var ours = new TaskCompletionSource<data.@this>(TaskCreationOptions.RunContinuationsAsynchronously);
+        if (_reading.TryAdd(pr, ours.Task) is false && _reading.TryGetValue(pr, out var inFlight)) return await inFlight;
         try
         {
-            var answer = await read();
-            mine.SetResult(answer);
+            var answer = await Current(pr, context) is { } held ? context.Ok(held) : await Decode(pr, context);
+            ours.SetResult(answer);
             return answer;
         }
         catch (Exception ex)
         {
-            mine.SetException(ex);
+            ours.SetException(ex);
             throw;
         }
-        finally { _reading.TryRemove(new KeyValuePair<global::app.type.item.path.@this, Task<data.@this>>(pr, mine.Task)); }
+        finally { _reading.TryRemove(new KeyValuePair<global::app.type.item.path.@this, Task<data.@this>>(pr, ours.Task)); }
+    }
+
+    // One .pr decoded into a goal and held here, through the goal's load: what is bound before a goal loads is the goal
+    // type's (its own, and each actor's hold), handed the .pr (there is no goal yet), and a failure or a Handled answer
+    // is the load's answer with nothing read; what is bound after it runs across the goal's levels, handed the goal.
+    private async Task<data.@this> Decode(global::app.type.item.path.@this pr, actor.context.@this context)
+    {
+        if (await App.goal.type.Before("load", pr, context, context.Ok()) is { } answer
+            && (!answer.Success || answer.Handled))
+            return answer;
+        try
+        {
+            // the .pr as it is before the read: a change during it is read again on the next use
+            var stamp = await pr.Stat(context);
+            // The .pr lands as a file reference; its value is the content its format decodes — a goal.
+            var read = await pr.Read(context);
+            var content = read.Success ? await read.Value() : null;
+            if (!read.Success || content is null || content.IsNull)
+                return context.Error(read.Error ?? new global::app.error.@this($"Failed to read goal file: {pr}"));
+            if (content is not goal.@this goal)
+                return context.Error(read.Error ?? new global::app.error.@this(
+                    $"Failed to parse goal file: {pr} — read produced {content.GetType().Name}, not a goal"));
+
+            goal.Read = new goal.@this.Stamp(stamp.Success ? await stamp.Value() : null);
+            Add(goal);
+            return await goal.on.load.After(goal, read, context);
+        }
+        // a refused .pr names itself — its reader was born knowing the file
+        catch (Exception ex)
+        {
+            return context.Error(global::app.error.@this.FromException(ex));
+        }
     }
 
     /// <summary>
@@ -96,8 +146,18 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         }
     }
 
-    // The goal held for each .pr, beside the rows: changed only by Add, under the gate; read without it.
+    // The goal held for each .pr, beside the rows: changed only by Add and Remove, under the gate; read without it.
     private readonly System.Collections.Concurrent.ConcurrentDictionary<global::app.type.item.path.@this, goal.@this> _held = new();
+
+    /// <summary>Takes a goal out of the list, and out of the goals held by their .pr with it.</summary>
+    public override async System.Threading.Tasks.ValueTask<bool> Remove(object? value, actor.context.@this context)
+    {
+        if (!await base.Remove(value, context)) return false;
+        lock (_gate)
+            foreach (var (pr, held) in _held)
+                if (!Items().Any(each => ReferenceEquals(each, held))) _held.TryRemove(pr, out _);
+        return true;
+    }
 
     /// <summary>
     /// The goal a call names, as seen from the goal it is called FROM. The caller's own chain answers
@@ -152,7 +212,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
             if (!await (await goal.@this.Pr(at).Exists(context)).ToBooleanAsync())
                 return context.Error<goal.@this>(new Error(
                     $"Goal {at} exists but isn't built; run plang build", "GoalNotBuilt", 404));
-            return data.@this<goal.@this>.From(await goal.@this.Load(at, App));
+            return data.@this<goal.@this>.From(await Load(at));
         }
 
         // The .goal file in `at`'s folder whose goal name is `at`'s, spelled as the file is; null when none answers to
@@ -262,7 +322,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         foreach (var source in wants.Os.Value ? _app.Concat(_system) : _app)
         {
             if (!seen.Add(source.ToString()!) || goals.Any(g => Equals(g.Path, source))) continue;
-            var loaded = await global::app.goal.@this.Load(source, App);
+            var loaded = await Load(source);
             if (!loaded.Success)
             {
                 await (App.Debug?.Write($"goal.list: {source} left out — {loaded.Error?.Message}") ?? Task.CompletedTask);

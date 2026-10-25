@@ -184,7 +184,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     // types when it is read, so a goal its app reads reaches only its app's) and shares its folder (a .pr is then the same
     // file in both)
     async Task<global::app.data.@this?> global::app.origin.@this.Goal(global::app.type.item.path.@this source, global::app.@this app)
-        => app.HasCode || !Equals(app.filesystem.root, App.filesystem.root) ? null : await global::app.goal.@this.Load(source, App);
+        => app.HasCode || !Equals(app.filesystem.root, App.filesystem.root) ? null : await App.goal.list.Load(source);
 
     Identity? global::app.origin.@this.Identity(global::app.@this app) => Identity ?? DefaultIdentity;
 

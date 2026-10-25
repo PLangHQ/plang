@@ -89,31 +89,27 @@ public sealed partial class @this
 
     /// <summary>The goal's .goal file — where its .pr is found. A sub-goal is in its parent's file.</summary>
     [Debug, LlmBuilder]
-    public global::app.type.item.path.@this? Path { get => Parent?.Path ?? _path; set => _path = value; }
+    public global::app.type.item.path.@this? Path
+    {
+        get => Parent?.Path ?? _path;
+        set
+        {
+            _path = value;
+            // the .pr it is built to, worked out where its file is given
+            _pr = value is { Absolute.Length: > 0 } source ? Pr(source) : null;
+        }
+    }
     private global::app.type.item.path.@this? _path;
+    private global::app.type.item.path.@this? _pr;
 
     /// <summary>The folder holding this goal's source .goal file — what a relative path in it resolves against.
     /// Null for a goal with no Path.</summary>
     public global::app.type.item.path.@this? Folder => Path?.Parent;
 
-    /// <summary>The .pr this goal is built to (<see cref="Pr"/>); none without a Path. Made once from its Path, again
-    /// only when the Path is another.</summary>
+    /// <summary>The .pr this goal is built to (<see cref="Pr"/>), worked out where its Path is set; a sub-goal's is its
+    /// parent's; none without a Path.</summary>
     [Debug]
-    public global::app.type.item.path.@this? PrPath
-    {
-        get
-        {
-            if (Path is not { Absolute.Length: > 0 } source) return null;
-            if (System.Threading.Volatile.Read(ref _pr) is { } made && ReferenceEquals(made.Source, source)) return made.Pr;
-            var pr = Pr(source);
-            System.Threading.Volatile.Write(ref _pr, new Built(source, pr));
-            return pr;
-        }
-    }
-
-    // The .pr made from the Path it was made from, held whole so a read never sees one without the other.
-    private sealed record Built(global::app.type.item.path.@this Source, global::app.type.item.path.@this Pr);
-    private Built? _pr;
+    public global::app.type.item.path.@this? PrPath => Parent?.PrPath ?? _pr;
 
     /// <summary>The .pr a .goal is built to: <c>X.goal</c> → <c>.build/x.pr</c> beside it. A static on the goal type by
     /// exception — a rule about where a goal's build lands, read before there is a goal: by <see cref="PrPath"/>,
@@ -356,63 +352,23 @@ public sealed partial class @this
     /// and what is bound after it runs across the goal's levels, handed the goal. A setup goal is refused — it runs
     /// only through setup.
     /// </summary>
-    public static async Task<data.@this> Load(global::app.type.item.path.@this source, global::app.@this app)
-    {
-        var pr = Pr(source);
-        var context = app.actor.list.System.Context;
-        // the goal held while its .pr is as it was read; else, while the parent's goals are this app's too, the one
-        // the parent loads, as itself; else this app's own read — one read in flight for each .pr, which asks for the
-        // held goal again first: a read that ended between this load's ask and its turn has added it
-        var loaded = await app.goal.list.Held(pr, context) is { } goal ? context.Ok(goal)
-            : await app.goal.list.Take(source, context) ?? await app.goal.list.Reading(pr, async () =>
-                await app.goal.list.Held(pr, context) is { } held ? context.Ok(held) : await Read(pr, app));
-        if (loaded.Success && await loaded.Value() is @this { IsSetup: true })
-            return context.Error(new global::app.error.@this($"{pr}: a setup goal runs only through setup.", "SetupGoal", 400));
-        return loaded;
-    }
+    // A goal by its location, as item's ILoad door asks it: the app's goals load it.
+    public static Task<data.@this> Load(global::app.type.item.path.@this source, global::app.@this app) => app.goal.list.Load(source);
 
-    // The .pr's stat when this goal was read from it: a changed file is read again.
-    private global::app.type.item.path.@this.StatInfo? _read;
+    /// <summary>What the goal knows of the .pr it was read from: the file's stat then — none when the stat failed, so
+    /// it is read again. Null for a goal not read from a file, which is as it is.</summary>
+    internal Stamp? Read { get; set; }
 
-    /// <summary>Whether <paramref name="pr"/> is as it was when this goal was read from it; a goal not read from a file
-    /// is as it is.</summary>
-    internal async Task<bool> Fresh(global::app.type.item.path.@this pr, actor.context.@this context)
+    /// <summary>A goal's .pr as it was read: its stat, when there was one.</summary>
+    internal sealed record Stamp(global::app.type.item.path.@this.StatInfo? Stat);
+
+    /// <summary>Whether <paramref name="pr"/> is as it was when this goal was read from it.</summary>
+    internal async Task<bool> IsFresh(global::app.type.item.path.@this pr, actor.context.@this context)
     {
-        if (_read is not { } read) return true;
+        if (Read is not { } read) return true;
+        if (read.Stat is not { } then) return false;
         var now = await pr.Stat(context);
-        return now.Success && await now.Value() is { } stat && stat.Same(read);
-    }
-
-    // One .pr read into a goal and held, through the goal's load.
-    private static async Task<data.@this> Read(global::app.type.item.path.@this pr, global::app.@this app)
-    {
-        var context = app.actor.list.System.Context;
-        // what is bound before a goal loads is the goal type's (its own, and each actor's hold), handed the .pr
-        if (await app.goal.type.Before("load", pr, context, context.Ok()) is { } answer
-            && (!answer.Success || answer.Handled))
-            return answer;
-        try
-        {
-            // the .pr as it is before the read: a change during it is read again on the next use
-            var stamp = await pr.Stat(context);
-            // The .pr lands as a file reference; its value is the content its format decodes — a goal.
-            var read = await pr.Read(context);
-            var content = read.Success ? await read.Value() : null;
-            if (!read.Success || content is null || content.IsNull)
-                return context.Error(read.Error ?? new global::app.error.@this($"Failed to read goal file: {pr}"));
-            if (content is not @this goal)
-                return context.Error(read.Error ?? new global::app.error.@this(
-                    $"Failed to parse goal file: {pr} — read produced {content.GetType().Name}, not a goal"));
-
-            goal._read = stamp.Success ? await stamp.Value() : null;
-            app.goal.list.Add(goal);
-            return await goal.on.load.After(goal, read, context);
-        }
-        // a refused .pr names itself — its reader was born knowing the file
-        catch (Exception ex)
-        {
-            return context.Error(global::app.error.@this.FromException(ex));
-        }
+        return now.Success && await now.Value() is { } stat && stat.Same(then);
     }
 
     /// <summary>A goal starts through the goal type's events, then its own.</summary>
