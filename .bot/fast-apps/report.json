@@ -1,0 +1,33 @@
+{
+  "branch": "fast-apps",
+  "sessions": [
+    {
+      "id": "be96ae57-56bf-4ad9-bc51-b0afd019bb50",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T01:32:13Z",
+      "intent": "OBP review of the whole fast-apps production diff (decision 61)",
+      "before": {
+        "assumptions": "98624ab6a..4d28eda40, 69 files; deferred items not re-raised unless worse",
+        "risk": "layered lists and lazy births hide shared-state writes"
+      },
+      "plan": ".bot/fast-apps/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/fast-apps/codeanalyzer/review.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "OBP review of 98624ab6a..4d28eda40 by three region readers plus spot checks; 3 blocking, 15 non-blocking. Read only."
+        }
+      ],
+      "timestamp_end": "2026-10-25T01:38:36Z",
+      "after": {
+        "status": "review written: .bot/fast-apps/codeanalyzer/review.md",
+        "health": "fail: 3 blocking (test-only code, flag at four doors, own-ness by ReferenceEquals)",
+        "notes": "no build/tests/ObpScan; findings 3 and 5-16 mostly the readers' with spot checks"
+      }
+    }
+  ]
+}
