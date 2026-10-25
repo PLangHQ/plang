@@ -345,7 +345,7 @@ public partial class @this
     {
         if (_context.call.Current is { } frame && frame.TryGet(name, out _))
             return true;
-        return _variables.ContainsKey(name) || _system[name] != null || (Outer?.Contains(name) ?? false);
+        return _variables.ContainsKey(name) || _system.Contains(name) || (Outer?.Contains(name) ?? false);
     }
 
     /// <summary>
@@ -384,7 +384,7 @@ public partial class @this
         get
         {
             // the current call's, then this memory's own, then the system's under it
-            var names = (_context.call.Current?.Names ?? []).Concat(_variables.Keys).Concat(_system.All.Select(each => each.Key))
+            var names = (_context.call.Current?.Names ?? []).Concat(_variables.Keys).Concat(_system.Names)
                 .Where(n => !n.StartsWith('!'))
                 .Distinct(StringComparer.OrdinalIgnoreCase);
             var variables = new global::app.type.item.list.@this<global::app.type.item.variable.@this>(
@@ -404,7 +404,7 @@ public partial class @this
     public IEnumerable<string> GetNames()
         // this memory's own, then the system's under it that no own name shadows
         => _variables.Keys.Where(k => !k.StartsWith("!"))
-            .Concat(_system.All.Select(each => each.Key).Where(name => !name.StartsWith('!') && !_variables.ContainsKey(name)));
+            .Concat(_system.Names.Where(name => !name.StartsWith('!') && !_variables.ContainsKey(name)));
 
     /// <summary>
     /// Gets all variables ordered by last update.

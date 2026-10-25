@@ -9,42 +9,59 @@ namespace app.type.item.variable.list;
 /// </summary>
 internal sealed class system
 {
+    // The system variables, by name, in the order they are read: what each one is made as. A constant — readonly, no
+    // row ever added or changed, the same for every app: each maker is handed the system it makes for and captures
+    // nothing of an app.
+    private static readonly (string Name, System.Func<system, data.@this> Make)[] Table =
+    [
+        ("Now", system => new data.DynamicData("Now", asker => asker.Ok(DateTimeOffset.Now), system._context, system.Datetime)),
+        ("NowUtc", system => new data.DynamicData("NowUtc", asker => asker.Ok(DateTimeOffset.UtcNow), system._context, system.Datetime)),
+        ("GUID", system => new data.DynamicData("GUID", asker => asker.Ok(Guid.NewGuid()), system._context,
+            system._context.App.type.list[typeof(global::app.type.item.guid.@this)])),
+        // the app's own identity, without its private key
+        ("MyIdentity", system => new data.DynamicData("MyIdentity", asker => asker.Ok(asker.Actor.DefaultIdentity?.Public()), system._context)),
+        // who the asking actor acts for: its identity's public key, else, in a local run, the app's own
+        ("Identity", system => new data.DynamicData("Identity",
+            asker => asker.Ok((asker.Actor.Identity ?? asker.Actor.DefaultIdentity)?.PublicKey), system._context)),
+        // the app and the context this memory is, as the app's shortcuts (/system/shortcut/) read their asker's place
+        ("!app", system => new data.DynamicData("!app", asker => asker.Ok(system._context.App), system._context)),
+        ("!context", system => new data.DynamicData("!context", asker => asker.Ok(system._memory.Context), system._context)),
+    ];
+
     // the memory these are under: its context is the one they are read in (a context born over a memory takes it)
     private readonly @this _memory;
-    private data.@this? _now, _nowUtc, _guid, _myIdentity, _identity, _app, _self;
+
+    // each variable as made, by its row in the table; none until one is asked for
+    private data.@this?[]? _made;
 
     internal system(@this memory) => _memory = memory;
 
     private actor.context.@this _context => _memory.Context;
 
     /// <summary>The system variable <paramref name="name"/> names, made on its first ask; null for any other name.</summary>
-    internal data.@this? this[string name]
-        => Is(name, "Now") ? _now ??= new data.DynamicData("Now", asker => asker.Ok(DateTimeOffset.Now), _context, Datetime)
-         : Is(name, "NowUtc") ? _nowUtc ??= new data.DynamicData("NowUtc", asker => asker.Ok(DateTimeOffset.UtcNow), _context, Datetime)
-         : Is(name, "GUID") ? _guid ??= new data.DynamicData("GUID", asker => asker.Ok(Guid.NewGuid()), _context,
-             _context.App.type.list[typeof(global::app.type.item.guid.@this)])
-         // the app's own identity, without its private key
-         : Is(name, "MyIdentity") ? _myIdentity ??= new data.DynamicData("MyIdentity", asker => asker.Ok(asker.Actor.DefaultIdentity?.Public()), _context)
-         // who the asking actor acts for: its identity's public key, else, in a local run, the app's own
-         : Is(name, "Identity") ? _identity ??= new data.DynamicData("Identity",
-             asker => asker.Ok((asker.Actor.Identity ?? asker.Actor.DefaultIdentity)?.PublicKey), _context)
-         // the app and the context this memory is, as the app's shortcuts (/system/shortcut/) read their asker's place
-         : Is(name, "!app") ? _app ??= new data.DynamicData("!app", asker => asker.Ok(_context.App), _context)
-         : Is(name, "!context") ? _self ??= new data.DynamicData("!context", asker => asker.Ok(_memory.Context), _context)
-         : null;
+    internal data.@this? this[string name] => Row(name) is var row and >= 0 ? this[row] : null;
 
-    /// <summary>Every system variable, in the order they are named — each made as it is reached.</summary>
+    // the variable of the table's row, made on its first ask
+    private data.@this this[int row] => (_made ??= new data.@this?[Table.Length])[row] ??= Table[row].Make(this);
+
+    /// <summary>Whether <paramref name="name"/> is a system variable's — asked without making it.</summary>
+    internal bool Contains(string name) => Row(name) >= 0;
+
+    /// <summary>The system variables' names, in the order they are read.</summary>
+    internal IEnumerable<string> Names => Table.Select(each => each.Name);
+
+    /// <summary>Every system variable, in the order they are read — each made as it is reached.</summary>
     internal IEnumerable<KeyValuePair<string, data.@this>> All
     {
         get
         {
-            foreach (var name in (string[])["Now", "NowUtc", "GUID", "MyIdentity", "Identity", "!app", "!context"])
-                yield return new(name, this[name]!);
+            for (var row = 0; row < Table.Length; row++)
+                yield return new(Table[row].Name, this[row]);
         }
     }
 
     private global::app.type.@this Datetime => _context.App.type.list[typeof(global::app.type.item.datetime.@this)];
 
-    // a name is a system variable's whatever its case, as every variable's name is
-    private bool Is(string name, string system) => @this.Comparer.Equals(name, system);
+    // the table's row for a name, whatever its case, as every variable's name is; -1 for none
+    private static int Row(string name) => System.Array.FindIndex(Table, each => @this.Comparer.Equals(each.Name, name));
 }
