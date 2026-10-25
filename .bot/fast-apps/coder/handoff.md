@@ -84,14 +84,39 @@ saved about 300 B, inside the noise, with no red test.
   - a kind a sub app adds to its maker's type, refused as TypesShared until the kind lookup starts from the asker's app;
   - a sub app's loaded code going away with it (a collectible load context, class-keyed caches held by their app).
 
+## Review (codeanalyzer, NEEDS WORK) — answered under decision 63
+
+| finding | answer | hash |
+|---|---|---|
+| 1 | sqlite.InMemory gone; tests use the provider's door | bd4732e0e |
+| 2 | one empty-answer door (`database`: blank \| connected); the table makes itself (65) | d14e10a22, 41206d2e2 |
+| 3 | Full/Member at the entry's list; one comparison in the holder; `_own` count (68) | c2377ffbb |
+| 4 | event.Of(on) and 9 overrides gone; golden re-pinned (63) | 143121054 |
+| 5, 14 | the goal list owns its load; .pr and freshness are the goal's facts | 8e28cc663 |
+| 6, 15 | the actor holds the run-time bindings (`actor.on`); contexts make none | 47b8940da |
+| 7 | what is made once and kept goes through LazyInitializer; facts stay `??=` | 6c6f78414 |
+| 8 | copies take `Carried?.Copy()`; the readers' `HasX` stay (decision 69) | 8da5d8da8 |
+| 9 | one constant table, name → maker (70); Contains makes nothing | c19db36c2 |
+| 10 | a token reader made once per code | eeee72db0 |
+| 11 | Hold stays `error?` (no context on the load path, 73); `module.Remove → data` held for Ingi (72) | — |
+| 12 | the origin answers Console (an actor: true, 73); public flag held for Ingi (72) | b8b41e61c |
+| 13 | the type ctor sets `_list` first and asks Facts | 9099a6f60 |
+| 16 | test.setting `Width`; `found` → `files` | f407a379c |
+| 17 | names as decision 73 rules them | 9ed3b1348, 5d942c7af |
+| 18 | on.event holds nothing until its parameters resolve; `Under` one-or-none; `_chunks` a System.Array | 5d942c7af |
+
+Not done from 18 (each reaches the locked core): the channel list's late stamp in `Adopt`, debug's nine `item is goal`
+filters (need a typed `Bind<T>`), Class pinning DLL types (19 part 3).
+
 ## Where a reviewer looks first
 
 - `origin/{this,code}.cs` and the actor's explicit `origin` members (`actor/this.cs`): every part a birth asks for,
-  the refusals below a layer, a sub app's folder rule.
-- `type/list/{this,Registry}.cs`: lookups walk `Under` (the chunk rows typed); a kind below the layer goes to the
-  origin.
-- `channel/list/this.cs` `Table`, `module/code/this.cs` `Tables`, `variable/list/this.cs` `Table` / `_variables`: each
-  is one door that makes its table on first use.
-- `store/sqlite/this.cs` `IsBlank`, and `IStore.Open(file, Func<bool> memory, context)`.
+  the refusals below a layer, a sub app's folder rule, `Console`.
+- `type/list/{this,Registry}.cs`: lookups ask `Under` (the one list below, or none); a kind below the layer goes to
+  the origin.
+- `channel/list/this.cs` `Rows`, `module/code/this.cs` `Rows`, `variable/list/this.cs` `Rows` / `_variables`: each is
+  one door that makes its rows on first use (the variable list's read door answers empty without making).
+- `store/sqlite/this.cs` `Database` (blank | connected) and its `table`; `IStore.Open(file, Func<bool> memory, context)`.
+- `actor/this.cs` `on`: the run-time bindings, let go with the actor.
 - Bound tests that count process-wide bytes run `[NotInParallel]`
   (`BirthTests.ARequestReadsItsSettingClassesFacts_OncePerCode`).
