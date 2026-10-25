@@ -170,7 +170,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         }
         catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
         {
-            Complete(Status.Fail, new ServiceError(ex.Message, "TestRunError", 500) { Exception = ex });
+            Complete(Status.Fail, global::app.error.@this.FromException(ex));
         }
         finally
         {
