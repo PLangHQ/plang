@@ -481,8 +481,11 @@ public class Fluid : ITemplate
                 foreach (var name in new Included().In(next))
                 {
                     var asked = name.EndsWith(Extension, StringComparison.OrdinalIgnoreCase) ? name : name + Extension;
-                    if (!_named.Add(asked) || await Text(asked) is not { } text) continue;
-                    _read[asked] = text;
+                    if (!_named.Add(asked)) continue;
+                    // Fluid asks for the name as written first, then with the extension: both answer the same text
+                    _named.Add(name);
+                    if (await Text(asked) is not { } text) continue;
+                    _read[asked] = _read[name] = text;
                     if (parser.TryParse(text, out var partial, out _)) pending.Enqueue(partial);
                 }
         }
