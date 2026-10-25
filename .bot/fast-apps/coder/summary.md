@@ -15,8 +15,13 @@ makes only what is asked for.
   births, class facts read once per code, the goal list's index and parallel discovery.
 - Decision 63, codeanalyzer's review: every finding answered, one cause per commit (table in `handoff.md`). Held for
   Ingi: `module.Remove` answering `data` (11), the public default-true `autoWireConsoleChannels` (12).
-- Next: stage 6 (decision 64): a faster C# build (measure with `-bl`, remove unused packages; project files, build
-  settings and dev.sh only).
+- Decisions 75–83, the re-reviews (review2, review3): every finding fixed or ruled, one commit each; the hashes are
+  in the replies to the architect. Among them, a data-safety fix (83): an app a testing app's actor makes is
+  testing from its birth (`origin.Testing`), so no test run writes a real `.data`.
+- Stage 6 (decision 64) is done: 56 unused packages removed, PLang on the plain SDK, test projects carry one
+  runtime's native assets. A test bin ~270 → 30–42 MB, a checkout 3.3 → 1.5 GB, a no-change build 7.3 → ~4 s.
+  `stage6/result.md` has the numbers; the clean-build bench row still needs a quiet machine.
+- Next: codeanalyzer's review of the tip, and its bench row.
 
 ## Code example
 
