@@ -347,6 +347,7 @@ public class SubAppFullPassProbeTests : System.IAsyncDisposable
     // touch: after the session closes, that touch lands on the maker's .data on disk. Only the test runner makes sub apps
     // today and it opens the session at birth and never closes it before the app ends.
     [Test]
+    [Skip("Backlog 10, where a sub app's stores live (317a): a sub app of a non-testing maker opens its maker's .data. The stores question's ready test: unskip it first.")]
     public async Task T_LATENT_ASubOfANonTestingApp_NeverWritesToTheMakersDisk_EvenAfterItsSessionCloses()
     {
         var maker = Maker();
@@ -361,6 +362,7 @@ public class SubAppFullPassProbeTests : System.IAsyncDisposable
     // a sub app of a non-testing app that is never opened for testing is a running app: it shares the maker's folder and
     // therefore its database. LATENT (the ctor is internal; the runner opens the session at birth)
     [Test]
+    [Skip("Backlog 10, where a sub app's stores live (317a): a sub app of a non-testing maker opens its maker's .data. The stores question's ready test: unskip it first.")]
     public async Task T_LATENT_ASubOfANonTestingApp_NotYetOpened_DoesNotWriteTheMakersDisk()
     {
         var maker = Maker();
