@@ -138,6 +138,23 @@ public class JsonlKindTests
         await Assert.That(await Written(app, dict)).IsEqualTo("{\"file\":{\"a\":[1,2]},\"name\":\"x\"}\n");
     }
 
+    // a dump of a template writes tokens around its record; a line is a whole record, so it is refused, nothing written
+    [Test]
+    public async Task ATemplateInADump_IsRefused_WritingNoLine()
+    {
+        await using var app = App();
+        var context = app.actor.list.User.Context;
+        var template = new global::app.data.@this("x", new Text("%missing%",
+            app.type.list[new global::app.type.@this("text", template: new global::app.type.item.template.kind.plang.@this()), context]), context: context);
+        using var stream = new System.IO.MemoryStream();
+
+        var encoded = await app.type.list.Mime("application/jsonl").Encode(stream, template, context, global::app.View.Debug);
+
+        await encoded.IsFailure();
+        await Assert.That(encoded.Error!.Key).IsEqualTo("JsonSerializeError");
+        await Assert.That(stream.Length).IsEqualTo(0L);
+    }
+
     // characters pasted as json that are no json are refused, never written broken
     [Test]
     public async Task ContentThatIsNoJson_IsRefused()

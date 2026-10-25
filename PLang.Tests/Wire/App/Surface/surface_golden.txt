@@ -1860,8 +1860,6 @@ class app.type.item.kind.jsonl.Writer : app.type.format.IWriter
   Long(System.Int64 value) : System.Void
   Name(System.String name) : System.Void
   Null() : System.Void
-  Record(app.data.this element) : System.Threading.Tasks.ValueTask
-  Record(app.type.item.this value) : System.Threading.Tasks.ValueTask
   String(System.String value) : System.Void
   TimeSpan(System.TimeSpan value) : System.Void
   Value(System.Object normalized) : System.Void

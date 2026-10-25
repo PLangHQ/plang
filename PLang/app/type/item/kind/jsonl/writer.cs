@@ -40,14 +40,14 @@ public sealed class Writer : IWriter
     public System.Threading.Tasks.ValueTask Write(global::app.type.item.@this value) => value.Write(this);
 
     /// <summary><paramref name="value"/> as one record: its json, then the line's end.</summary>
-    public async System.Threading.Tasks.ValueTask Record(global::app.type.item.@this value)
+    internal async System.Threading.Tasks.ValueTask Record(global::app.type.item.@this value)
     {
         await value.Output(_json);
         await Ended();
     }
 
     /// <summary>A Data as one record (a list's element, whole): its json, then the line's end.</summary>
-    public async System.Threading.Tasks.ValueTask Record(global::app.data.@this element)
+    internal async System.Threading.Tasks.ValueTask Record(global::app.data.@this element)
     {
         await element.Output(_json);
         await Ended();
@@ -73,24 +73,28 @@ public sealed class Writer : IWriter
         await _stream.WriteAsync(End, Context.CancellationToken);
     }
 
-    public void Null() => _json.Null();
-    public void Bool(bool value) => _json.Bool(value);
-    public void Int(int value) => _json.Int(value);
-    public void Long(long value) => _json.Long(value);
-    public void Float(float value) => _json.Float(value);
-    public void Double(double value) => _json.Double(value);
-    public void String(string value) => _json.String(value);
-    public void DateTime(System.DateTime value) => _json.DateTime(value);
-    public void DateTimeOffset(System.DateTimeOffset value) => _json.DateTimeOffset(value);
-    public void TimeSpan(System.TimeSpan value) => _json.TimeSpan(value);
-    public void Guid(System.Guid value) => _json.Guid(value);
-    public void Enum(System.Enum value) => _json.Enum(value);
-    public void Decimal(decimal value) => _json.Decimal(value);
-    public void Bytes(byte[] value, global::app.type.kind.@this kind) => _json.Bytes(value, kind);
-    public void BeginArray(int count) => _json.BeginArray(count);
-    public void EndArray() => _json.EndArray();
-    public void BeginObject() => _json.BeginObject();
-    public void Name(string name) => _json.Name(name);
-    public void EndObject() => _json.EndObject();
-    public void Value(object? normalized) => _json.Value(normalized);
+    // A line is a whole record: a token written beside one (a Debug view's "written" around a template) would split a
+    // record across lines and leave the rest unsent, so each refuses — the encode answers it as JsonSerializeError.
+    private const string Whole = "JSON Lines writes whole records, never a bare token";
+
+    public void Null() => throw new System.InvalidOperationException(Whole);
+    public void Bool(bool value) => throw new System.InvalidOperationException(Whole);
+    public void Int(int value) => throw new System.InvalidOperationException(Whole);
+    public void Long(long value) => throw new System.InvalidOperationException(Whole);
+    public void Float(float value) => throw new System.InvalidOperationException(Whole);
+    public void Double(double value) => throw new System.InvalidOperationException(Whole);
+    public void String(string value) => throw new System.InvalidOperationException(Whole);
+    public void DateTime(System.DateTime value) => throw new System.InvalidOperationException(Whole);
+    public void DateTimeOffset(System.DateTimeOffset value) => throw new System.InvalidOperationException(Whole);
+    public void TimeSpan(System.TimeSpan value) => throw new System.InvalidOperationException(Whole);
+    public void Guid(System.Guid value) => throw new System.InvalidOperationException(Whole);
+    public void Enum(System.Enum value) => throw new System.InvalidOperationException(Whole);
+    public void Decimal(decimal value) => throw new System.InvalidOperationException(Whole);
+    public void Bytes(byte[] value, global::app.type.kind.@this kind) => throw new System.InvalidOperationException(Whole);
+    public void BeginArray(int count) => throw new System.InvalidOperationException(Whole);
+    public void EndArray() => throw new System.InvalidOperationException(Whole);
+    public void BeginObject() => throw new System.InvalidOperationException(Whole);
+    public void Name(string name) => throw new System.InvalidOperationException(Whole);
+    public void EndObject() => throw new System.InvalidOperationException(Whole);
+    public void Value(object? normalized) => throw new System.InvalidOperationException(Whole);
 }
