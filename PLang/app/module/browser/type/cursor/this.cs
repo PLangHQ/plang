@@ -23,5 +23,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         return default;
     }
 
+    /// <summary>The line it goes up as, beside a browser's frames: written as text, one compact line whatever json's
+    /// layout — the window finds the cursor in a text line only.</summary>
+    internal async System.Threading.Tasks.Task<string?> Line(global::app.actor.context.@this context)
+    {
+        using var stream = new System.IO.MemoryStream();
+        var encoded = await context.App.type.list["text"].kind.Encode(stream, context.Ok(this), context);
+        return encoded.Success ? System.Text.Encoding.UTF8.GetString(stream.ToArray()) : null;
+    }
+
     public override string ToString() => _css;
 }

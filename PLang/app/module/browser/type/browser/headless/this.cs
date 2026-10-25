@@ -199,11 +199,8 @@ public sealed class @this : browser.@this
                 var css = value.GetString()!;
                 if (css == _lastCursor) return;
                 _lastCursor = css;
-                // the cursor goes up as the line it is, beside the frames: written as text, one compact line whatever
-                // json's layout
-                using var stream = new MemoryStream();
-                var encoded = await context.App.type.list["text"].kind.Encode(stream, context.Ok(new cursor.@this(css)), context);
-                if (encoded.Success) await _emit!(Encoding.UTF8.GetString(stream.ToArray()));
+                // the cursor goes up as its line, beside the frames
+                if (await new cursor.@this(css).Line(context) is { } line) await _emit!(line);
             }
             catch (Exception ex) when (ex is TimeoutException or JsonException or IOException or InvalidOperationException)
             {

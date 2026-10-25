@@ -17,8 +17,10 @@ Stage1
 / JsonlKindTests (CrLfLines_Read, ABlankLine_IsSkipped, ABadLine_IsRefused_NamingItsNumber)
 
 Stage2
-/ errors.jsonl keeps one record per line with json formatted — C# test WindowErrorsTests (ARecord_IsOneLine)
-/ the cursor line is one line beside the frames, ended once — C# test HeadlessCursorTests (TheCursor_IsOneLine_EndedOnce)
+/ errors.jsonl keeps one record per line with json formatted — C# test ErrorsKeptTests
+/ (AnErrorThatCameUp_IsKept_AsARecordPerLine)
+/ the cursor line is one compact text line beside the frames, found by the window — C# test HeadlessCursorTests
+/ (TheCursor_IsOneCompactLine_WithJsonFormatted, TheWindow_FindsTheCursorInTheLine)
 
 Stage3
 / json is written formatted by default, compact when the setting says — plang test
@@ -26,5 +28,7 @@ Stage3
 - call /plan/json-lines/app/type/json/LayoutSetting
 / the setting never reaches plang's wire, a digest or a .pr — C# test JsonLayoutSettingTests
 / (TheWire_IsUntouched, ADigest_IsUntouched, APr_IsUntouched)
+/ an llm tool result is a message's text: a leaf bare, a structure compact whatever json's layout — C# test
+/ QueryToolTests (Query_ToolResult_IsText_ALeafBare_AStructureCompact)
 / a saved llm answer is served whichever way its file was written — C# test LlmAnswersFileTests
 / (ACompactFile_IsServed_WhenFormatted, AFormattedFile_IsServed_WhenCompact)
