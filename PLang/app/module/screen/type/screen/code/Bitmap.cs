@@ -52,7 +52,18 @@ internal sealed class Bitmap
     /// fits a long for any two ints; × 4 is taken off the bound instead, so nothing overflows — and with the bound at
     /// most an array's length, the pixels' size is an int wherever it is counted.</summary>
     internal static bool Fits(int width, int height, global::app.type.item.size.@this max)
-        => width >= 0 && height >= 0 && (long)width * height <= Math.Min(max.Value, Array.MaxLength) / 4;
+        => width >= 0 && height >= 0 && Fits((long)width * height, max);
+
+    /// <summary>Whether <paramref name="pixels"/> pixels, one picture's or a frame's rectangles' together, fit
+    /// <paramref name="max"/> and one array.</summary>
+    internal static bool Fits(long pixels, global::app.type.item.size.@this max)
+        => pixels >= 0 && pixels <= Math.Min(max.Value, Array.MaxLength) / 4;
+
+    /// <summary>Whether <paramref name="bytes"/> of QOI can hold a picture <paramref name="width"/>×<paramref name="height"/>:
+    /// one QOI byte covers at most 62 pixels (a run), so a picture claiming more than that is no QOI of its bytes —
+    /// refused before a buffer of its claimed size is made.</summary>
+    internal static bool Encodes(int width, int height, int bytes)
+        => (long)width * height <= 62L * bytes;
 
     /// <summary>A copy of <paramref name="bitmap"/>, its pixels its own.</summary>
     internal Bitmap(Bitmap bitmap) : this(bitmap.Width, bitmap.Height, (byte[])bitmap.Pixels.Clone()) { }

@@ -84,6 +84,37 @@ public class WindowFrameTests : System.IAsyncDisposable
         await Assert.That(refused!.Error.Key).IsEqualTo("BadFrame");
     }
 
+    // a rectangle no bigger than the max but claiming more pixels than its bytes can hold as QOI (5 bytes for 5000×5000)
+    // is refused before a buffer of its claimed size is made
+    [Test]
+    public async Task ARectangleItsBytesCantHold_IsBadFrame_BeforeAnyRent()
+    {
+        var max = await Max();
+        var refused = await Assert.That(() => new Shown(W, H).Apply(Frame(5000, 5000, [1, 2, 3, 4, 5]), max))
+            .Throws<global::app.error.AppException>();
+        await Assert.That(refused!.Error.Message).Contains("bytes of QOI");
+    }
+
+    // a frame's rectangles together fit the max, not each alone: three that each fit 1 MiB of pixels but not together
+    // are the frame's BadFrame (each with bytes enough to be QOI of its size)
+    [Test]
+    public async Task RectanglesThatFitAloneButNotTogether_AreBadFrame()
+    {
+        await (await new global::app.type.item.variable.parser.@this("%!screen.setting.max%", Context.App.type.list).Variable.Single()
+            .Set(Context.Ok(Context.Text("1 MiB")), Context)).IsSuccess();
+        var max = await Max();
+        var part = new byte[1500];
+        using var m = new MemoryStream();
+        m.WriteByte(1);
+        m.Write(BitConverter.GetBytes((ushort)3));
+        var i32 = new byte[4];
+        void Int(int v) { BinaryPrimitives.WriteInt32LittleEndian(i32, v); m.Write(i32); }
+        for (var i = 0; i < 3; i++) { Int(0); Int(0); Int(300); Int(300); Int(part.Length); m.Write(part); }
+
+        var refused = await Assert.That(() => new Shown(W, H).Apply(m.ToArray(), max)).Throws<global::app.error.AppException>();
+        await Assert.That(refused!.Error.Message).Contains("together");
+    }
+
     // a text frame's rectangles — {"rects":[[x,y,w,h,"<qoi base64>"],…]} — through the same door: one past the max, or
     // one whose QOI isn't base64, is the frame's BadFrame, answered whole (never a throw out of a parallel decode)
     [Test]

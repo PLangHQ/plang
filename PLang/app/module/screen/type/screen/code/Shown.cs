@@ -96,7 +96,13 @@ internal sealed class Shown
     // the pixels sees half of it.
     private Rect? Put(Part[] parts, global::app.type.item.size.@this max, byte[]? move = null)
     {
-        foreach (var part in parts) Bound(part.W, part.H, max);
+        foreach (var part in parts) Bound(part, max);
+        // the frame's rectangles together fit the max too, not each alone: a frame of many is no larger than one
+        var pixels = parts.Sum(part => (long)part.W * part.H);
+        if (!Bitmap.Fits(pixels, max))
+            throw new global::app.error.AppException(new global::app.error.@this(
+                $"Not an image: a frame's {parts.Length} rectangles claim {pixels} pixels together, more than screen.setting.max ({max}) holds; raise it with --screen.setting.max=1GiB",
+                "BadFrame", 400));
         var decoded = new byte[]?[parts.Length];
         var rented = new bool[parts.Length];
         for (var i = 0; i < parts.Length; i++)
@@ -126,13 +132,17 @@ internal sealed class Shown
         lock (Lock) picture.Pixels.AsSpan(0, Math.Min(picture.Pixels.Length, Bitmap.Pixels.Length)).CopyTo(Bitmap.Pixels);
     }
 
-    // a rectangle's pixels may take at most the max, by the picture's own rule
-    private static void Bound(int w, int h, global::app.type.item.size.@this max)
+    // a rectangle's pixels may take at most the max, by the picture's own rule, and a QOI one no more than its bytes can
+    // hold (a video's picture is its decoder's to judge)
+    private static void Bound(Part part, global::app.type.item.size.@this max)
     {
-        if (!Bitmap.Fits(w, h, max))
-            throw new global::app.error.AppException(new global::app.error.@this(
-                $"Not an image: a rectangle claims {w}×{h}, more pixels than screen.setting.max ({max}) holds; raise it with --screen.setting.max=1GiB",
-                "BadFrame", 400));
+        var why = !Bitmap.Fits(part.W, part.H, max)
+            ? $"a rectangle claims {part.W}×{part.H}, more pixels than screen.setting.max ({max}) holds; raise it with --screen.setting.max=1GiB"
+            : !part.IsVideo && !Bitmap.Encodes(part.W, part.H, part.Bytes.Length)
+                ? $"a rectangle claims {part.W}×{part.H}, more pixels than its {part.Bytes.Length} bytes of QOI can hold"
+                : null;
+        if (why != null)
+            throw new global::app.error.AppException(new global::app.error.@this("Not an image: " + why, "BadFrame", 400));
     }
 
     // a QOI rectangle's pixels, in a rented buffer the caller gives back; null when it isn't QOI of that size
