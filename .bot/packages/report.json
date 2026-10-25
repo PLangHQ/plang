@@ -173,6 +173,34 @@
         "health": "pass",
         "notes": "tester and security next"
       }
+    },
+    {
+      "id": "a874d603-f21b-4c32-bb57-ad8a7ad8123c",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T13:07:24Z",
+      "timestamp_end": "2026-10-25T13:07:24Z",
+      "intent": "Review packages 18/19: screen.setting.max and the SurfaceTests.Diff clamp",
+      "before": {
+        "assumptions": "ce2e14bb0, 0a3d1f030",
+        "risk": "a locked-surface addition; a per-draw setting read on a hot path"
+      },
+      "plan": ".bot/packages/codeanalyzer/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/packages/codeanalyzer/review4.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "PASS; notes: Draw reads the setting on every draw, _max is a mirror."
+        }
+      ],
+      "after": {
+        "status": "review4 written",
+        "health": "pass",
+        "notes": "tester and security next"
+      }
     }
   ]
 }
