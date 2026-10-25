@@ -13,7 +13,7 @@ exact parser — eyeball the top hits. The exact home is an H4 pass in
 emit it as a WARNING, never a build error, because ~20% of long methods are
 legitimate.
 
-Usage:  python3 tools/obp-longmethods.py [root]      # root defaults to PLang
+Usage:  python3 Tools/obp-longmethods.py [root]      # root defaults to PLang
 Output: line-span distribution + the top 40 longest method bodies, ranked.
 """
 import os, re, sys

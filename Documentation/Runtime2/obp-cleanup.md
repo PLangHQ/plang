@@ -114,7 +114,7 @@ Each entry: **location · the smell · the OBP-clean target · status · found-i
 
 **How to find them (the durable part — the file list isn't):**
 
-- **Quick, zero-build:** `python3 tools/obp-longmethods.py [root]` (root defaults to `PLang`). Masks strings/comments so interpolated `{}` and `//` don't skew the brace count, then ranks every method/ctor/local-function body by line span and prints a distribution + the top 40. Heuristic — eyeball the hits.
+- **Quick, zero-build:** `python3 Tools/obp-longmethods.py [root]` (root defaults to `PLang`). Masks strings/comments so interpolated `{}` and `//` don't skew the brace count, then ranks every method/ctor/local-function body by line span and prints a distribution + the top 40. Heuristic — eyeball the hits.
 - **Exact, durable home:** add it to `Tools/ObpScan`'s table (each member already answers its own Lines and Shape). Roslyn gives the body line span exactly — `m.Body?.GetLocation().GetLineSpan()` end−start — no brace-masking heuristics. This is where the file's "promote detection into ObpScan" plan lands for this smell.
 - **As a gate it must be a WARNING, never a build error.** ~20% of long methods are legitimate (below), so a hard `PLNGxxx` would false-positive on parsers and dispatchers. Length flags a candidate; a human makes the call.
 

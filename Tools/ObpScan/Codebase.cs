@@ -44,6 +44,20 @@ public sealed class Codebase : IDisposable
             .ToList();
     }
 
+    /// <summary>The source-defined types declared in a file under <paramref name="folder"/>.</summary>
+    public async Task<IReadOnlyList<TypeScan>> Under(string folder)
+    {
+        var compilation = await _project.GetCompilationAsync()
+            ?? throw new InvalidOperationException("no compilation");
+        var root = Path.GetFullPath(folder) + Path.DirectorySeparatorChar;
+        var all = new List<INamedTypeSymbol>();
+        Collect(compilation.Assembly.GlobalNamespace, all);
+        return all
+            .Where(t => t.Locations.Any(l => l.IsInSource && l.SourceTree!.FilePath.StartsWith(root, StringComparison.Ordinal)))
+            .Select(t => new TypeScan(t, _project.Solution))
+            .ToList();
+    }
+
     private static void Collect(INamespaceSymbol ns, List<INamedTypeSymbol> acc)
     {
         acc.AddRange(ns.GetTypeMembers());

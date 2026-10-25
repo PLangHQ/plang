@@ -45,6 +45,14 @@ public sealed class Member
         _ => false,
     };
 
+    /// <summary>Where the member is declared: <c>file:line</c>, the file relative to <paramref name="root"/>.</summary>
+    public string Where(string root)
+    {
+        if (_symbol.Locations.FirstOrDefault(l => l.IsInSource) is not { } location) return "";
+        var span = location.GetLineSpan();
+        return $"{Path.GetRelativePath(root, span.Path)}:{span.StartLinePosition.Line + 1}";
+    }
+
     /// <summary>Source lines the declaration spans — the length fingerprint.</summary>
     public int Lines
     {

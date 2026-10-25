@@ -19,6 +19,16 @@ public sealed class TypeScan
 
     public string FullName => $"{_type.ContainingNamespace?.ToDisplayString()}.{_type.Name}".TrimStart('.');
 
+    /// <summary>One line per member that carries a shape flag — <c>file:line  Type.Member  flags</c> — for a scan over a
+    /// tree, where caller sets are not asked for.</summary>
+    public IEnumerable<string> Shapes(string root)
+    {
+        var declNs = _type.ContainingNamespace?.ToDisplayString() ?? "";
+        foreach (var member in _type.GetMembers().Where(Member.IsScannable).Select(s => new Member(s, declNs)))
+            if (member.Shape is { Length: > 0 } shape)
+                yield return $"{member.Where(root)}  {_type.Name}.{member.Name}  {shape}";
+    }
+
     public async Task<string> Render()
     {
         var declNs = _type.ContainingNamespace?.ToDisplayString() ?? "";
