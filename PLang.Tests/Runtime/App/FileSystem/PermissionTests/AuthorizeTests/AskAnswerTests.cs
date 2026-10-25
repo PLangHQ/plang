@@ -18,8 +18,7 @@ public class AskAnswerTests : System.IAsyncDisposable
     {
         outside = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-askanswer-" + System.Guid.NewGuid().ToString("N")[..8])).FullName;
         System.IO.File.WriteAllText(System.IO.Path.Combine(outside, "secret.txt"), "outside");
-        // made from the code: an app exports only an identity it holds itself, so its own default identity is the one asked about
-        app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-askanswer-root-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+        app =new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-askanswer-root-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         user = app.actor.list.User.Context;
         channel = new Counting(user);
         app.actor.list.User.Channel.Register(channel);
@@ -40,6 +39,14 @@ public class AskAnswerTests : System.IAsyncDisposable
             Count++;
             return Task.FromResult(action.Context.Ok("n"));
         }
+    }
+
+    // identity.export on the app's own default identity, made first (identity.get asks nothing): an app gives out only
+    // an identity it holds
+    private async Task<global::app.data.@this> Export()
+    {
+        await (await user.Action("identity.get()")).Start(user);
+        return await (await user.Action("identity.export()")).Start(user);
     }
 
     private async Task Answering() => await (await (await user.Action("variable.set(Name=\"!ask.answer\", Value=\"a\")")).Start(user)).IsSuccess();
@@ -70,7 +77,7 @@ public class AskAnswerTests : System.IAsyncDisposable
     [Test] public async Task ABindingOnTheInputsAsk_DoesNotAnswerAnExport()
     {
         Binding();
-        await Refused(await (await user.Action("identity.export()")).Start(user));
+        await Refused(await Export());
     }
 
     [Test] public async Task AStepSettingTheAskAnswer_IsStillAskedForARead()
@@ -82,7 +89,7 @@ public class AskAnswerTests : System.IAsyncDisposable
     [Test] public async Task AStepSettingTheAskAnswer_IsStillAskedForAnExport()
     {
         await Answering();
-        await Refused(await (await user.Action("identity.export()")).Start(user));
+        await Refused(await Export());
     }
 
     [Test] public async Task AStepSettingTheAskAnswer_IsStillAskedForACopy()

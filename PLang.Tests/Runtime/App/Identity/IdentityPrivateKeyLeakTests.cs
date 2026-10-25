@@ -34,13 +34,21 @@ public class IdentityPrivateKeyLeakTests : System.IAsyncDisposable
         return await action.Start(User);
     }
 
+    // identity.export on an app whose default identity is made first (identity.get asks nothing): an app gives out
+    // only an identity it holds
+    private async Task<global::app.data.@this> Export()
+    {
+        await Run("identity.get()");
+        return await Run("identity.export()");
+    }
+
     // ---- what the action hands the step ----
 
     // export is the one door to the key: refused without the actor's yes (a closed input answers no)
     [Test]
     public async Task Export_WithoutTheActorsYes_IsRefused()
     {
-        var got = await Run("identity.export()");
+        var got = await Export();
         await Assert.That(got.Success).IsFalse();
         await Assert.That(got.Error!.Key).IsEqualTo("PermissionDenied");
     }
@@ -51,7 +59,7 @@ public class IdentityPrivateKeyLeakTests : System.IAsyncDisposable
     {
         var asking = new Asking(User, "a");
         app.actor.list.User.Channel.Register(asking);
-        var got = await Run("identity.export()");
+        var got = await Export();
         await Assert.That(((IdentityRecord)(await got.Value())!).PrivateKey).IsEqualTo(Key);
         await Run("identity.export()");
         await Assert.That(asking.Count).IsEqualTo(2);
@@ -64,7 +72,7 @@ public class IdentityPrivateKeyLeakTests : System.IAsyncDisposable
     {
         var asking = new Asking(User, "n");
         app.actor.list.User.Channel.Register(asking);
-        await Run("identity.export()");
+        await Export();
         await Assert.That(asking.Question).Contains("send anywhere");
         await Assert.That(asking.Question).Contains("this call only");
         await Assert.That(asking.Question).Contains("every time");
@@ -131,7 +139,7 @@ public class IdentityPrivateKeyLeakTests : System.IAsyncDisposable
     [Test]
     public async Task ExportedIdentity_SavedToAPrFile_DoesNotCarryThePrivateKey()
     {
-        var got = await Run("identity.export()");
+        var got = await Export();
         await User.Variable.Set("id", await got.Value());
         var saved = await (await User.Action("file.save(Path=\"/out.pr\", Value=%id%)")).Start(User);
         await Assert.That(saved.Success).IsTrue();
@@ -151,7 +159,7 @@ public class IdentityPrivateKeyLeakTests : System.IAsyncDisposable
     [Test]
     public async Task ExportedIdentity_InASnapshotsWire_DoesNotCarryThePrivateKey()
     {
-        var got = await Run("identity.export()");
+        var got = await Export();
         await User.Variable.Set("id", await got.Value());
         var wire = await app.SnapshotToWire(app.Snapshot(User));
         await Assert.That(wire.Contains(Key)).IsFalse();

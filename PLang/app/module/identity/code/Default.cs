@@ -197,23 +197,23 @@ public sealed class Default : IIdentity
     public async Task<data.@this<Identity>> ExportAsync(Export action)
     {
         var name = action.Name == null ? null : (await action.Name.Value())?.Clr<string>();
-        var identity = await ResolveIdentityAsync(action, name);
-        if (!identity.Success) return identity;
-        var exported = (await identity.Value())!;
-        // an app gives out only an identity it holds itself: one its origin answers (a sub app's, its maker's) is the
-        // maker's, never the sub app's to give — refused before anyone is asked
+        // an app gives out only an identity it holds itself — the one named, else its default; one its origin answers
+        // (a sub app's, its maker's) is never asked for, and none is made to be given out
         var (items, err) = await LoadAll(action);
         if (err != null) return action.Context.Error<Identity>(err);
-        if (!items.Exists(i => string.Equals(i.PublicKey, exported.PublicKey, StringComparison.Ordinal)))
-            return action.Context.Error<Identity>(new ActionError(
-                $"the identity '{exported.Name}' is not this app's own: it is the app's that made this one, and only that app gives out its key",
-                "IdentityNotOwn", 403));
+        var exported = name != null
+            ? items!.Find(i => string.Equals(i.Name, name, StringComparison.Ordinal))
+            : items!.Find(i => i.IsDefault && !i.IsArchived);
+        if (exported == null)
+            return action.Context.Error<Identity>(name != null
+                ? new ActionError($"Identity '{name}' not found", "NotFound", 404)
+                : new ActionError("this app holds no default identity of its own to give out", "IdentityNotOwn", 404));
         // what a yes means, said plainly: the key leaves as text the step can send anywhere — this once
         if (await Consent(action, $"export the private key of the identity '{exported.Name}' — the step gets the key as text it " +
                 "can send anywhere, for this call only; you are asked every time, and the answer is never kept", exported.Name,
                 global::app.type.item.permission.Verb.read) is { } refused)
             return data.@this<Identity>.From(refused);
-        return identity;
+        return action.Context.Ok<Identity>(exported);
     }
 
     // --- Internal helpers ---
