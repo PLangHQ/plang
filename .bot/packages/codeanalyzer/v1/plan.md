@@ -1,0 +1,4 @@
+# v1 plan: packages review (tip 63a299efb; 0e8097701, d8190936e, 59ff8bbe4 outside the build)
+
+Parent runtime2 55302f8a5. Read whole every production file the branch touched (action/this.Schema.cs, action/this.cs, crypto/code/Default.cs, keccak256/this.cs, screen view and window, ui/code/Fluid.cs, image/this.cs and this.Parse.cs, PLang.csproj, PLangConsole.csproj, native.targets) and the three ObpScan commits. Judge the window's `Pixels` and `ValidateKind`. Tests added: red without their change (mutation, announced, reverted). Per commit (15): `./dev.sh build`, then `plang --test` with the llm tag excluded and no OpenAI key in the environment; the llm tests once, at the tip. Bench at the tip against fast-apps' last row; bin sizes against the parent; a publish for win-x64 and linux-x64. Read only; commit .bot/packages/codeanalyzer, Tools/Bench/record.md and the session log.
+Output: .bot/packages/codeanalyzer/review.md, v1/verdict.json, summary.md, report.json.

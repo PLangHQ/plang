@@ -13,16 +13,99 @@
       },
       "plan": ".bot/packages/coder/v1/plan.md",
       "actions": [
-        {"paths": ["PLang/PLang.csproj", "PLang.Tests/Directory.Build.props", "PLang.Tests/Shared/PLang.Tests.Shared.csproj"], "type": "modify", "category": "config", "confidence": "high", "context": "Packages to latest, one per commit; Roslyn kept at 4.13.0 as ruled (packages 3)"},
-        {"paths": ["PLang/app/module/ui/code/Fluid.cs", "PLang.Tests/Modules/App/Modules/ui/RenderTests.cs"], "type": "modify", "category": "code", "confidence": "high", "context": "Fluid 2.40 asks for an include by its name as written first; one key per include; the file left better (packages 3)"},
-        {"paths": ["PLang/app/module/crypto/type/hash/kind/keccak256/this.cs", "PLang/app/module/crypto/code/Default.cs", "PLang/app/goal/step/action/this.cs", "PLang.Tests/Modules/App/Modules/crypto/HashActionTests.cs"], "type": "modify", "category": "code", "confidence": "high", "context": "Nethereum and Newtonsoft out, Keccak from BouncyCastle (Ingi's wish, packages 3)"},
-        {"paths": ["PLang/app/goal/step/action/this.Schema.cs"], "type": "modify", "category": "code", "confidence": "high", "context": "An older race: the flag was set before the value on a shared catalog row; TUnit 1.76's scheduling exposed it"},
-        {"paths": ["PLang/PLang.csproj"], "type": "decision", "category": "config", "confidence": "high", "context": "ImageSharp 4 needs a licence key for any non-Debug build: stopped, and reported to Ingi via the architect"}
+        {
+          "paths": [
+            "PLang/PLang.csproj",
+            "PLang.Tests/Directory.Build.props",
+            "PLang.Tests/Shared/PLang.Tests.Shared.csproj"
+          ],
+          "type": "modify",
+          "category": "config",
+          "confidence": "high",
+          "context": "Packages to latest, one per commit; Roslyn kept at 4.13.0 as ruled (packages 3)"
+        },
+        {
+          "paths": [
+            "PLang/app/module/ui/code/Fluid.cs",
+            "PLang.Tests/Modules/App/Modules/ui/RenderTests.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Fluid 2.40 asks for an include by its name as written first; one key per include; the file left better (packages 3)"
+        },
+        {
+          "paths": [
+            "PLang/app/module/crypto/type/hash/kind/keccak256/this.cs",
+            "PLang/app/module/crypto/code/Default.cs",
+            "PLang/app/goal/step/action/this.cs",
+            "PLang.Tests/Modules/App/Modules/crypto/HashActionTests.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Nethereum and Newtonsoft out, Keccak from BouncyCastle (Ingi's wish, packages 3)"
+        },
+        {
+          "paths": [
+            "PLang/app/goal/step/action/this.Schema.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "An older race: the flag was set before the value on a shared catalog row; TUnit 1.76's scheduling exposed it"
+        },
+        {
+          "paths": [
+            "PLang/PLang.csproj"
+          ],
+          "type": "decision",
+          "category": "config",
+          "confidence": "high",
+          "context": "ImageSharp 4 needs a licence key for any non-Debug build: stopped, and reported to Ingi via the architect"
+        }
       ],
       "after": {
         "status": "blocked on the ImageSharp licence decision",
         "health": "Debug sweep at baseline (Wire's six), plang 298/303; the gate passes with ImageSharp at 2.1.13 only",
         "notes": "No vulnerable package in any project after the upgrades"
+      }
+    },
+    {
+      "id": "d95d09a2-ac38-4599-b86c-30ef163f9342",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T12:34:30Z",
+      "timestamp_end": "2026-10-25T12:34:30Z",
+      "intent": "Review the packages branch: touched files whole, tests red under mutation, 15 per-commit runs, bench at the tip",
+      "before": {
+        "assumptions": "tip 63a299efb vs runtime2 55302f8a5; behaviour unchanged",
+        "risk": "OpenAI spend from plang --test; Win32-only window code cannot be run here"
+      },
+      "plan": ".bot/packages/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/packages/codeanalyzer/review.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "FAIL: F1 window Pixels stray helper over a raw tuple (picture type missing), F2 TIFF sniff changes FromBytes with no test, F3 unused usings. 15 commits identical; llm goals once; tests red under announced, reverted mutations; bench in band."
+        },
+        {
+          "paths": [
+            "Tools/Bench/record.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "packages-tip bench row (the sweep and plang --test cells explain the no-key run)."
+        }
+      ],
+      "after": {
+        "status": "review written",
+        "health": "fail",
+        "notes": "coder next for F1-F3"
       }
     }
   ]
