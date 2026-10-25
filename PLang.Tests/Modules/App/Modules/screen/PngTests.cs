@@ -43,7 +43,7 @@ public class PngTests
         for (var i = 0; i < 100 && read?.Pixels.SequenceEqual(shown) != true; i++)
         {
             await Task.Delay(20);
-            read = new Bitmap(view.Picture.Bytes);
+            read = new Bitmap(view.Picture.Bytes, W, H);
         }
 
         await Assert.That(read).IsNotNull();
@@ -56,9 +56,10 @@ public class PngTests
     public async Task BytesThatAreNoImage_AreRefusedAsAFrame()
         => await RefusedAsBadFrame([1, 2, 3, 4, 5, 6, 7, 8]);
 
-    private static async Task RefusedAsBadFrame(byte[] bytes)
+    // refused when drawn on a screen width × height (this test's, unless named)
+    private static async Task RefusedAsBadFrame(byte[] bytes, int width = W, int height = H)
     {
-        var refused = await Assert.That(() => new Bitmap(bytes)).Throws<global::app.error.AppException>();
+        var refused = await Assert.That(() => new Bitmap(bytes, width, height)).Throws<global::app.error.AppException>();
         await Assert.That(refused!.Error.Key).IsEqualTo("BadFrame");
     }
 
@@ -75,7 +76,25 @@ public class PngTests
         Chunk(png, "IHDR", header);
         Chunk(png, "IDAT", [1, 2, 3, 4, 5]);
         Chunk(png, "IEND", []);
+        await RefusedAsBadFrame(png.ToArray(), 50000, 50000);
+    }
+
+    // a frame whose header claims more than the screen: refused before the decoder makes a pixel
+    [Test]
+    public async Task APngThatClaimsMoreThanTheScreen_IsRefusedAsAFrame()
+    {
+        using var png = new MemoryStream();
+        png.Write([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+        var header = new byte[13];
+        BinaryPrimitives.WriteUInt32BigEndian(header, 8000);
+        BinaryPrimitives.WriteUInt32BigEndian(header.AsSpan(4), 8000);
+        header[8] = 8; header[9] = 6;   // 8-bit RGBA
+        Chunk(png, "IHDR", header);
+        Chunk(png, "IDAT", [1, 2, 3, 4, 5]);
+        Chunk(png, "IEND", []);
         await RefusedAsBadFrame(png.ToArray());
+        await Assert.That(() => new Bitmap(png.ToArray(), W, H)).Throws<global::app.error.AppException>()
+            .WithMessageContaining("more than the screen's");
     }
 
     private static void Chunk(MemoryStream png, string kind, byte[] data)

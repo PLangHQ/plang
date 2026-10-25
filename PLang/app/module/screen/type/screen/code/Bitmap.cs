@@ -13,31 +13,38 @@ internal sealed class Bitmap
     /// <summary>A blank one, its pixels pinned: a canvas that lives as long as its screen.</summary>
     internal Bitmap(int width, int height) : this(width, height, GC.AllocateArray<byte>(width * height * 4, pinned: true)) { }
 
-    /// <summary>An encoded picture (PNG, JPEG) read; bytes that read as no picture are an AppException carrying
-    /// BadFrame (the decoder's own exception its cause, when it threw one).</summary>
-    internal Bitmap(byte[] encoded)
+    /// <summary>An encoded picture (PNG, JPEG) read for a screen <paramref name="width"/> × <paramref name="height"/>.
+    /// One that reads as no picture, or whose header claims more than the screen (refused before its pixels are
+    /// made), is an AppException carrying BadFrame, the decoder's own exception its cause when it threw one.</summary>
+    internal Bitmap(byte[] encoded, int width, int height)
     {
         var info = SkiaSharp.SKBitmap.DecodeBounds(encoded);
-        SkiaSharp.SKBitmap? decoded = null;
+        // the sides compared one by one: no product of what the header claims is ever made
+        var why = info.Width <= 0 || info.Height <= 0 ? "no image format reads the frame"
+            : info.Width > width || info.Height > height ? $"the frame claims {info.Width}×{info.Height}, more than the screen's {width}×{height}"
+            : null;
         Exception? cause = null;
-        if (info.Width > 0 && info.Height > 0)
+        if (why == null)
             try
             {
-                decoded = SkiaSharp.SKBitmap.Decode(encoded,
+                using var decoded = SkiaSharp.SKBitmap.Decode(encoded,
                     new SkiaSharp.SKImageInfo(info.Width, info.Height, SkiaSharp.SKColorType.Bgra8888, SkiaSharp.SKAlphaType.Unpremul));
+                if (decoded != null)
+                {
+                    (Width, Height, Pixels) = (decoded.Width, decoded.Height, decoded.Bytes);
+                    return;
+                }
+                why = "the frame's pixels can't be read";
             }
             catch (Exception ex)
             {
                 // the decoder throws a plain Exception on a picture it can't make (a header past what its data holds)
                 cause = ex;
+                why = ex.Message;
             }
-        if (decoded == null)
-        {
-            var error = new global::app.error.@this("Not an image: " + (cause?.Message ?? "no image format reads the frame"), "BadFrame", 400);
-            if (cause != null) error.list.Add(global::app.error.@this.FromException(cause));
-            throw new global::app.error.AppException(error, cause);
-        }
-        using (decoded) (Width, Height, Pixels) = (decoded.Width, decoded.Height, decoded.Bytes);
+        var error = new global::app.error.@this("Not an image: " + why, "BadFrame", 400);
+        if (cause != null) error.list.Add(global::app.error.@this.FromException(cause));
+        throw new global::app.error.AppException(error, cause);
     }
 
     /// <summary>A copy of <paramref name="bitmap"/>, its pixels its own.</summary>

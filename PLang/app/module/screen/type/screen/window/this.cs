@@ -1,6 +1,5 @@
 using app.error;
 using app.Utils;
-using Bitmap = global::app.module.screen.type.screen.code.Bitmap;
 using Native = global::app.module.screen.type.screen.window.code.Window;
 using Text = global::app.type.item.text.@this;
 
@@ -130,7 +129,7 @@ public sealed class @this : screen.@this
 
         try
         {
-            _window.Present(new Bitmap(encoded));
+            _window.Present(encoded);
         }
         catch (AppException ex)
         {
@@ -151,7 +150,7 @@ public sealed class @this : screen.@this
     {
         try
         {
-            _window.Present(new Bitmap(Frame(line)));
+            _window.Present(Frame(line));
         }
         catch (AppException ex)
         {

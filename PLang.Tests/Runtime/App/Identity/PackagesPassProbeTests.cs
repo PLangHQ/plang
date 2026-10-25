@@ -119,7 +119,7 @@ public class PackagesPassProbeTests
         var peakBefore = System.Diagnostics.Process.GetCurrentProcess().PeakWorkingSet64;
         global::app.error.AppException? refused = null;
         global::app.module.screen.type.screen.code.Bitmap? decoded = null;
-        try { decoded = new global::app.module.screen.type.screen.code.Bitmap(png); }
+        try { decoded = new global::app.module.screen.type.screen.code.Bitmap(png, 1920, 1080); }
         catch (global::app.error.AppException ex) { refused = ex; }
         var peakAfter = System.Diagnostics.Process.GetCurrentProcess().PeakWorkingSet64;
 
