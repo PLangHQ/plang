@@ -23,14 +23,17 @@ None of it is new design. Each item is a fix whose direction is already decided;
 
 Today `llm.query` caches by default (`module/llm/query.cs:95`, `Cache`), in `app.store`'s `LlmCache` table (`module/llm/code/OpenAi.cs:37,156,474`). A test's app has an in-memory store that starts empty (`test/list/this.cs:34`), so every run asks OpenAI again.
 
-After: a test's LLM answers are kept in a file beside the test and committed. A run reads them first. A question that isn't in the file is asked live once and added to it. Nothing else in the test's store leaves memory.
+After: a test's requests to OpenAI and their answers are kept in a file beside the test (`LlmCache.test.goal` → `LlmCache.test.llm.json`) and committed. The file stands where OpenAI stands, not where the cache stands (decision 4): a request in the file is answered from it, and one that isn't goes live once and is added. `LlmCache` stays the one cache, in the test's in-memory store as now, so `LlmCache.test.goal` still shows a miss and then a hit. Tool rounds and retries are requests too, so they are recorded as well. The cache skips them (`OpenAi.cs:153`).
 
-Constraints for the shape (the coder proposes it, the architect reviews):
-- One cache. The `LlmCache` rows stay the llm's one cache; the file is where a testing app keeps that table, not a second cache beside it.
-- The file is text a reviewer can read in a diff.
-- `LlmCache.test.goal` still proves the cache itself: a first ask misses, a second hits. It must not pass just because the file already holds the answer.
-- A changed prompt is a new question: its old answer is never served for it.
-- The gate runs the llm tests live once, with the file ignored, to check that OpenAI still accepts the requests.
+This is a feature of `plang --test` for every plang app's tests, not just ours.
+
+- One sender for the request, chosen once for the app: live, or the test's saved answers. There's no `if testing` where the request is sent.
+- The file is text a reviewer reads in a diff: one list of {request, response}, in first-asked order. It holds the request body and the endpoint path, never a header, so the key never lands in it.
+- A changed prompt is a different body, so it's a new entry; its old answer is never served for it.
+- The key is asked only when a request goes out live.
+- On a pass, the file is rewritten to the entries the run used.
+- A streamed ask always goes live.
+- `test.setting.llm`: `saved | live`, default `saved`. The gate runs the llm tests once with `live`, which ignores the file and writes nothing, to check that OpenAI still accepts the requests.
 
 ### 2. Consent answers what really happened
 
