@@ -111,13 +111,13 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
 
     private async Task<global::app.data.@this> InvokeGoal(global::app.data.@this data, CancellationToken ct)
     {
-        if (!IsOpen)
-            return data.Context.Error(new ServiceError($"Channel '{Name}' is closed", "ChannelClosed", 400));
-
         // A write runs the goal as goal.call runs one: the channel's actor runs it in the writer's flow — the context
         // the written value carries, so a parallel iteration's write is its own (a variable lives on its context,
-        // never across flows).
-        return await (data.Context ?? Actor.Context).Run(Actor, context => Call(data, context));
+        // never across flows). A closed channel answers so in that flow too.
+        var writer = data.Context ?? Actor.Context;
+        if (!IsOpen)
+            return writer.Error(new ServiceError($"Channel '{Name}' is closed", "ChannelClosed", 400));
+        return await writer.Run(Actor, context => Call(data, context));
     }
 
     // The goal run for one write, in the context the channel's actor runs it in.
