@@ -39,7 +39,7 @@ namespace PLang
 			// ctor's non-interactive auto-wire and bind real stdin explicitly so
 			// `output.ask` prompts read the user's keystrokes. Ad-hoc/test apps
 			// keep the EOF-sink input from auto-wire.
-			var app = new global::app.@this(startupDirectory, autoWireConsoleChannels: false);
+			var app = new global::app.@this(startupDirectory, wiring: global::app.Wiring.none);
 			global::app.@this.WireDefaultConsoleChannels(app.actor.list.System);
 			global::app.@this.WireDefaultConsoleChannels(app.actor.list.User);
 

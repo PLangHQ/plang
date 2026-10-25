@@ -39,7 +39,7 @@ public class AskAnswerTests
 
     [Test] public async Task ConsoleAsk_WritesTheTextItself()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var ctx = app.actor.list.User.Context;
         Console(app, "Ada\n");
 
@@ -55,7 +55,7 @@ public class AskAnswerTests
 
     [Test] public async Task TheAnswer_RendersInATemplate()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var ctx = app.actor.list.User.Context;
         Console(app, "Ada\n");
         await ctx.Variable.Set("name", await Asked(ctx));
@@ -66,7 +66,7 @@ public class AskAnswerTests
 
     [Test] public async Task TheAnswer_Compares()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var ctx = app.actor.list.User.Context;
         Console(app, "Ingi\n");
         await ctx.Variable.Set("name", await Asked(ctx));
@@ -80,7 +80,7 @@ public class AskAnswerTests
     // A message channel suspends on a pending Ask; resumed, the ask answers with the answer as it came.
     [Test] public async Task MessageAsk_Suspends_ThenResumesWithTheAnswerAsIs()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var ctx = app.actor.list.User.Context;
         app.actor.list.User.Channel.Register(new TestMessageChannel("input", app.actor.list.User.Context));
 
@@ -99,7 +99,7 @@ public class AskAnswerTests
     // What a before-binding answers in the channel's place is the ask's answer, as it is.
     [Test] public async Task ABeforeBindingsAnswer_RidesAsItIs()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var ctx = app.actor.list.User.Context;
         var input = Console(app, "never read\n");
         var given = ctx.Text("from the binding");

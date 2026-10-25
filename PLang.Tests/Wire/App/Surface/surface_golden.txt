@@ -37,6 +37,10 @@ abstract class app.View
   static readonly Out : app.View
   static readonly Store : app.View
 
+enum app.Wiring
+  static const console : app.Wiring
+  static const none : app.Wiring
+
 class app.call.Diff : System.IEquatable<app.call.Diff>
   At : System.DateTimeOffset { get; init; }
   Before : System.Object { get; init; }
@@ -983,7 +987,7 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnap
   Version : System.String { get; } [Out, Store]
   actor : app.type.node.current.this<app.actor.this, app.actor.list.this> { get; } [LlmBuilder, Out]
   call(app.actor.context.this context) : app.call.list.this [LlmBuilder]
-  ctor(System.String absolutePath, System.String environment = …, System.Boolean autoWireConsoleChannels = …)
+  ctor(System.String absolutePath, System.String environment = …, app.Wiring wiring = …)
   data(app.actor.context.this context) : app.data.this [LlmBuilder]
   error : app.type.node.current.this<app.error.this, app.error.list.this> { get; } [LlmBuilder, Out]
   event(app.actor.context.this context) : app.data.this [LlmBuilder]
