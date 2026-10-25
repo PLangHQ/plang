@@ -291,12 +291,14 @@ public partial class @this
     /// null when absent. Content reads still go through the async <see cref="Get"/> door; this is
     /// the in-memory rung only.
     /// </summary>
-    public data.@this? Peek(string name)
+    public data.@this? Peek(string name) => string.IsNullOrEmpty(name) ? null : Find(name);
+
+    // What a name holds: the frames of this context's calls first, inner first; then this memory's own, then the
+    // system's under it (a task's %!context% is its own), then its outer memory's (a task's caller's); null when none.
+    private data.@this? Find(string name)
     {
-        if (string.IsNullOrEmpty(name)) return null;
         if (_context.call.Current is { } frame && frame.TryGet(name, out var framed)) return framed;
-        // this memory's own, then the system's under it (a task's %!context% is its own), then its outer memory's
-        return _variables.TryGetValue(name, out var v) ? v : _system[name] ?? Outer?.Peek(name);
+        return _variables.TryGetValue(name, out var row) ? row : _system[name] ?? Outer?.Find(name);
     }
 
     /// <summary>The value-counterpart to <see cref="Get"/>: hand back the VALUE a
@@ -309,15 +311,8 @@ public partial class @this
     /// through its own code. The frames of this context's calls win, inner first, over its memory; a task's reads
     /// fall through to its caller's. NotFound when nothing is bound.</summary>
     public System.Threading.Tasks.ValueTask<data.@this> Get(string name)
-    {
-        if (string.IsNullOrEmpty(name))
-            return System.Threading.Tasks.ValueTask.FromResult(_context.NotFound(name ?? ""));
-        if (_context.call.Current is { } frame && frame.TryGet(name, out var framed))
-            return System.Threading.Tasks.ValueTask.FromResult(framed);
-        if (_variables.TryGetValue(name, out var root)) return System.Threading.Tasks.ValueTask.FromResult(root);
-        if (_system[name] is { } system) return System.Threading.Tasks.ValueTask.FromResult(system);
-        return Outer?.Get(name) ?? System.Threading.Tasks.ValueTask.FromResult(_context.NotFound(name));
-    }
+        => System.Threading.Tasks.ValueTask.FromResult(
+            (string.IsNullOrEmpty(name) ? null : Find(name)) ?? _context.NotFound(name ?? ""));
 
     /// <summary>
     /// Typed ask on the variable store — returns <c>Data&lt;T&gt;</c>. Identity hop:
@@ -343,7 +338,7 @@ public partial class @this
     }
 
     /// <summary>
-    /// Checks if a variable exists.
+    /// Checks if a variable exists — the chain <see cref="Peek"/> reads, asked without making a system variable.
     /// </summary>
     public bool Contains(string name)
     {
