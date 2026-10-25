@@ -63,7 +63,7 @@ birth or request path.
 | N1 | minor, deferred | `PLang/app/module/screen/type/screen/window/code/Window.cs:236,305,320` | a message's own `w*h` is multiplied for QOI parts, in the Windows-only duplicate; its own QOI decoder and delta logic beside `code/Qoi.cs`, `Shown.cs` | with Ingi (11, 14); the bugs branch |
 | N2 | minor, deferred | `Window.cs:110-116` and `:198-201` | `Offer` keeps the first decoder, so the first draw's `context` is captured for every later frame; and a `Patch` before the first `Offer` installs a no-op decoder so frames are never decoded (pre-existing, `decode = _ => null` before this branch). Windows-only, unreproduced here. | Windows item with Ingi |
 | N3 | nit, deferred | `window/this.cs:18,117` | `_max` mirrors the setting and is read on `Draw` for patches too (the architect's own note, 21) | Windows item |
-| N4 | nit | `PLang/app/module/ui/code/Fluid.cs:63` | `template.Clr<string>() ?? ""` replaced `.ToString()`: a template that is not text now becomes an empty template. Not reachable through the `.pr` types today; I did not test it. | next touch of Fluid |
+| N4 | nit | `PLang/app/module/ui/code/Fluid.cs:65` | `template.Clr<string>() ?? ""` replaced `.ToString()`: a template that is not text now becomes an empty template. Not reachable through the `.pr` types today; I did not test it. | next touch of Fluid |
 
 No critical or major finding. Reviews assessed: codeanalyzer (PASS 18/19) agrees; tester (PASS, six mutations) agrees;
 security (PASS, S1 closed, probes by concept after 6e8e7b74f) agrees; the rename left the 11 probe tests green, now in
