@@ -49,8 +49,8 @@ public abstract class @this
     // The readers the assemblies ship, made once, the first time any is asked for.
     private readonly Lazy<shipped> _shipped;
 
-    // The readers an assembly ships under its serializer folders, from the code's facts: each token reader made for
-    // these readers (the token-stream table), each whole-payload decode as it is.
+    // The readers an assembly ships under its serializer folders, from the code's facts: each token reader the code
+    // made (the token-stream table), each whole-payload decode as it is.
     private sealed class shipped
     {
         internal readonly Dictionary<(string Type, string Kind), Read> Payloads = new();
@@ -61,8 +61,8 @@ public abstract class @this
             foreach (var assembly in assemblies)
             {
                 var library = code[assembly];
-                foreach (var (type, kind, made) in library.Typed)
-                    Tokens[(type, kind)] = (ITypeReader)made.Invoke(null);
+                foreach (var (type, reader) in library.Typed)
+                    Tokens[(type, reader.Kind)] = reader;
                 foreach (var (type, kind, read) in library.Read)
                     Payloads[(type, kind)] = read;
             }

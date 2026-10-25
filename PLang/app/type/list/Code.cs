@@ -248,22 +248,20 @@ public sealed partial class @this
         public void Deconstruct(out System.Type clr, out string owner) => (clr, owner) = (Clr, Owner!);
     }
 
-    /// <summary>A token reader a serializer folder ships — the type it reads, the kind its own instance names (one made
-    /// here to ask it), and its constructor, so each list makes the reader it holds.</summary>
+    /// <summary>A token reader a serializer folder ships — the type it reads, and the reader, made once per code: it
+    /// holds nothing of an app's, so every list holds the same one. Its kind is the one it names.</summary>
     internal sealed class Token
     {
         internal string Type { get; }
-        internal string Kind { get; }
-        internal ConstructorInfo Made { get; }
+        internal global::app.type.reader.ITypeReader Reader { get; }
 
         internal Token(string type, ConstructorInfo made)
         {
             Type = type;
-            Kind = ((global::app.type.reader.ITypeReader)made.Invoke(null)).Kind;
-            Made = made;
+            Reader = (global::app.type.reader.ITypeReader)made.Invoke(null);
         }
 
-        public void Deconstruct(out string type, out string kind, out ConstructorInfo made) => (type, kind, made) = (Type, Kind, Made);
+        public void Deconstruct(out string type, out global::app.type.reader.ITypeReader reader) => (type, reader) = (Type, Reader);
     }
 
     /// <summary>A whole-payload reader a serializer folder ships — its static Read, by the type and kind it reads, as a
