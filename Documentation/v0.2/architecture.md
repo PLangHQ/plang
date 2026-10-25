@@ -391,7 +391,8 @@ Each channel has a Stream, Direction (Input/Output/Bidirectional), and a `Mime` 
 ### Serializers
 
 Routes MIME type to serializer (each `ISerializer` declares `Type` and `Extension`):
-- `application/json` (`Json`) — JSON view of `data.Value`
+- `application/json` (`Json`) — JSON view of `data.Value`, laid out as `%!app.type.kind.json.setting.layout%` says (`formatted`, the default, or `compact`), every character as itself
+- `application/x-ndjson` (the `jsonl` kind) — one compact json record per line, a list one line per element
 - `text/plain` (`Text`) — `data.Value.ToString()`
 - `application/plang` (the single PLang wire serializer) — full Data shape `{name, type, value, properties, signature}`, composed over `Json` with `Wire` + `Transport.ForOutbound` + `Sensitive.Strip` modifiers (`Wire` was named `WireJsonConverter` before `data-normalize`)
 

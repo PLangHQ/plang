@@ -1,7 +1,7 @@
 # CLI Changes (v0.2, `cli-app-property-override`)
 
 A command-line flag is a setting's path: `--<path>=<value>` sets `%!<path>%`, and `app.` may be left out
-(`--channel.setting.format=plang`, `--build.setting.cache=skip`, `--test.setting.parallel=1`, `--debug.setting.goal=Start`).
+(`--channel.setting.format=plang`, `--build.setting.cache=skip`, `--test.setting.parallel=1`, `--debug.setting.goal=Start`, `--type.kind.json.setting.layout=compact`).
 Several options at once are a dict at the setting's path (`--debug.setting={"goal":"Start","step":3}`). The walk is
 **strict** — a path no setting answers, an unknown key, or a value outside a closed type (`choice`) is rejected, and the
 refusal names the path. The mode words `--build`, `--test` and `--debug` alone switch their mode on (so does writing one of
