@@ -13,11 +13,8 @@ namespace app.module.screen.type.screen.code;
 /// </summary>
 internal sealed class Shown(int width, int height, Func<uint, ReadOnlyMemory<byte>, int, int, byte[]?>? video = null)
 {
-    internal int Width { get; } = width;
-    internal int Height { get; } = height;
-
-    /// <summary>The picture: <see cref="Width"/> × <see cref="Height"/> BGRA pixels. Read under <see cref="Lock"/>.</summary>
-    internal byte[] Pixels { get; } = GC.AllocateArray<byte>(width * height * 4, pinned: true);
+    /// <summary>The picture. Its pixels are read under <see cref="Lock"/>.</summary>
+    internal Bitmap Bitmap { get; } = new(width, height);
 
     internal Lock Lock { get; } = new();
 
@@ -79,14 +76,14 @@ internal sealed class Shown(int width, int height, Func<uint, ReadOnlyMemory<byt
         int dx = BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(17)), dy = BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(21));
         var left = Math.Max(x, Math.Max(0, -dx));
         var top = Math.Max(y, Math.Max(0, -dy));
-        var right = Math.Min(x + w, Math.Min(Width, Width - dx));
-        var bottom = Math.Min(y + h, Math.Min(Height, Height - dy));
+        var right = Math.Min(x + w, Math.Min(Bitmap.Width, Bitmap.Width - dx));
+        var bottom = Math.Min(y + h, Math.Min(Bitmap.Height, Bitmap.Height - dy));
         if (right <= left || bottom <= top) return null;
         var bytes = (right - left) * 4;
         for (var i = 0; i < bottom - top; i++)
         {
             var row = dy > 0 ? bottom - 1 - i : top + i;
-            Pixels.AsSpan((row * Width + left) * 4, bytes).CopyTo(Pixels.AsSpan(((row + dy) * Width + left + dx) * 4, bytes));
+            Bitmap.Pixels.AsSpan((row * Bitmap.Width + left) * 4, bytes).CopyTo(Bitmap.Pixels.AsSpan(((row + dy) * Bitmap.Width + left + dx) * 4, bytes));
         }
         return new Rect(left + dx, top + dy, right - left, bottom - top);
     }
@@ -94,11 +91,11 @@ internal sealed class Shown(int width, int height, Func<uint, ReadOnlyMemory<byt
     // a rectangle's pixels in, cut to the screen
     private Rect? Copy(int x, int y, int w, int h, byte[] rect)
     {
-        var rows = Math.Min(h, Height - y);
-        var cols = Math.Min(w, Width - x);
+        var rows = Math.Min(h, Bitmap.Height - y);
+        var cols = Math.Min(w, Bitmap.Width - x);
         if (rows <= 0 || cols <= 0 || x < 0 || y < 0) return null;
         for (var row = 0; row < rows; row++)
-            rect.AsSpan(row * w * 4, cols * 4).CopyTo(Pixels.AsSpan(((y + row) * Width + x) * 4));
+            rect.AsSpan(row * w * 4, cols * 4).CopyTo(Bitmap.Pixels.AsSpan(((y + row) * Bitmap.Width + x) * 4));
         return new Rect(x, y, cols, rows);
     }
 }

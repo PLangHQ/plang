@@ -1,12 +1,12 @@
 using System.Buffers.Binary;
+using Bitmap = app.module.screen.type.screen.code.Bitmap;
 using Qoi = app.module.screen.type.screen.code.Qoi;
 using View = app.module.screen.type.screen.view.@this;
-using Window = app.module.screen.type.screen.window.@this;
 
 namespace PLang.Tests.App.actions.screen;
 
 /// <summary>
-/// A screen's picture as PNG: the view writes the pixels it shows as a PNG image, and the window reads a PNG frame
+/// A screen's picture as PNG: the view writes the pixels it shows as a PNG image, and a bitmap reads a PNG frame
 /// back into the same straight BGRA pixels, alpha and all. Bytes that are no image are refused, never shown.
 /// </summary>
 public class PngTests
@@ -39,20 +39,20 @@ public class PngTests
         await Assert.That(view.Show(Frame(shown))).IsTrue();
 
         // the view applies frames on its own thread: its picture is read until it holds the frame
-        (byte[] bgra, int w, int h)? read = null;
-        for (var i = 0; i < 100 && read?.bgra.SequenceEqual(shown) != true; i++)
+        Bitmap? read = null;
+        for (var i = 0; i < 100 && read?.Pixels.SequenceEqual(shown) != true; i++)
         {
             await Task.Delay(20);
-            read = Window.Pixels(view.Picture.Bytes);
+            read = new Bitmap(view.Picture.Bytes);
         }
 
         await Assert.That(read).IsNotNull();
-        await Assert.That((read!.Value.w, read.Value.h)).IsEqualTo((W, H));
-        await Assert.That(read.Value.bgra.SequenceEqual(shown)).IsTrue();
+        await Assert.That((read!.Width, read.Height)).IsEqualTo((W, H));
+        await Assert.That(read.Pixels.SequenceEqual(shown)).IsTrue();
         view.Close();
     }
 
     [Test]
     public async Task BytesThatAreNoImage_AreRefusedAsAFrame()
-        => await Assert.That(() => Window.Pixels([1, 2, 3, 4, 5, 6, 7, 8])).Throws<FormatException>();
+        => await Assert.That(() => new Bitmap([1, 2, 3, 4, 5, 6, 7, 8])).Throws<FormatException>();
 }

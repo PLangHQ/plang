@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Bitmap = global::app.module.screen.type.screen.code.Bitmap;
 using Media = global::app.module.screen.type.screen.code.Media;
 using Rect = global::app.module.screen.type.screen.display.code.Rect;
 using Shown = global::app.module.screen.type.screen.code.Shown;
@@ -60,14 +61,10 @@ public sealed class @this : screen.@this
     {
         get
         {
-            byte[] copy;
-            lock (_shown.Lock) copy = (byte[])_shown.Pixels.Clone();
-            _media.Draw(copy, new Rect(0, 0, _shown.Width, _shown.Height));   // the videos it plays itself, where the page shows them
-            var info = new SkiaSharp.SKImageInfo(_shown.Width, _shown.Height, SkiaSharp.SKColorType.Bgra8888, SkiaSharp.SKAlphaType.Unpremul);
-            using var pixels = SkiaSharp.SKData.CreateCopy(copy);
-            using var image = SkiaSharp.SKImage.FromPixels(info, pixels, info.RowBytes);
-            using var png = image.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100);
-            return new global::app.type.item.image.@this(png.ToArray(), _png);
+            Bitmap bitmap;
+            lock (_shown.Lock) bitmap = new Bitmap(_shown.Bitmap);
+            _media.Draw(bitmap.Pixels, new Rect(0, 0, bitmap.Width, bitmap.Height));   // the videos it plays itself, where the page shows them
+            return new global::app.type.item.image.@this(bitmap.Png, _png);
         }
     }
 

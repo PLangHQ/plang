@@ -52,7 +52,7 @@ public class ShownTests
         var shown = new Shown(W, H);
         var screen = Random(W * H * 4, 1);
         await Assert.That(shown.Apply(Frame(null, (new Rect(0, 0, W, H), screen)))).IsEqualTo(new Rect(0, 0, W, H));
-        await Assert.That(shown.Pixels.SequenceEqual(screen)).IsTrue();
+        await Assert.That(shown.Bitmap.Pixels.SequenceEqual(screen)).IsTrue();
 
         // PlangOS scrolls rows 8.. up by 6 and sends the strip at the bottom
         var scrolled = (byte[])screen.Clone();
@@ -61,7 +61,7 @@ public class ShownTests
         var fresh = Random(W * 6 * 4, 2);
         for (var y = 0; y < 6; y++) fresh.AsSpan(y * W * 4, W * 4).CopyTo(scrolled.AsSpan((H - 6 + y) * W * 4));
         shown.Apply(Frame((0, 14, W, H - 14, 0, -6), (strip, fresh)));
-        await Assert.That(shown.Pixels.SequenceEqual(scrolled)).IsTrue();
+        await Assert.That(shown.Bitmap.Pixels.SequenceEqual(scrolled)).IsTrue();
     }
 
     [Test]
@@ -73,8 +73,8 @@ public class ShownTests
         var r = new Rect(10, 5, 20, 7);
         var px = Random(r.Width * r.Height * 4, 4);
         await Assert.That(shown.Apply(Frame(null, (r, px)))).IsEqualTo(r);
-        await Assert.That(Rows(shown.Pixels, r).SequenceEqual(px)).IsTrue();
-        await Assert.That(Rows(shown.Pixels, new Rect(0, 0, W, 5)).SequenceEqual(Rows(screen, new Rect(0, 0, W, 5)))).IsTrue();
+        await Assert.That(Rows(shown.Bitmap.Pixels, r).SequenceEqual(px)).IsTrue();
+        await Assert.That(Rows(shown.Bitmap.Pixels, new Rect(0, 0, W, 5)).SequenceEqual(Rows(screen, new Rect(0, 0, W, 5)))).IsTrue();
     }
 
     [Test]
@@ -84,6 +84,6 @@ public class ShownTests
         var frame = Frame(null, (new Rect(0, 0, 8, 8), Random(8 * 8 * 4, 5)));
         await Assert.That(shown.Apply([2, (byte)'x'])).IsNull();
         await Assert.That(shown.Apply(frame[..(frame.Length / 2)])).IsNull();
-        await Assert.That(shown.Pixels.All(b => b == 0)).IsTrue();
+        await Assert.That(shown.Bitmap.Pixels.All(b => b == 0)).IsTrue();
     }
 }

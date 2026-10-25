@@ -1,5 +1,6 @@
 using app.error;
 using app.Utils;
+using Bitmap = global::app.module.screen.type.screen.code.Bitmap;
 using Native = global::app.module.screen.type.screen.window.code.Window;
 using Text = global::app.type.item.text.@this;
 
@@ -117,7 +118,7 @@ public sealed class @this : screen.@this
             // step returns at once, so input behind it never waits) or the pointer the page wants.
             var line = t.Clr<string>() ?? "";
             if (line.StartsWith("{\"rect", StringComparison.Ordinal)) _window.Patch(line);   // {"rects":…} or {"rect":…}
-            else if (line.Contains("\"frame\":\"", StringComparison.Ordinal)) _window.Offer(line, Decode);
+            else if (line.Contains("\"frame\":\"", StringComparison.Ordinal)) _window.Offer(line, offered => Present(offered, context));
             else if (Field(line, "cursor") is { } css) _window.Cursor(css);
             return context.Ok();
         }
@@ -129,7 +130,7 @@ public sealed class @this : screen.@this
 
         try
         {
-            if (Pixels(encoded) is { } px) _window.Present(px.bgra, px.w, px.h);
+            _window.Present(new Bitmap(encoded));
         }
         catch (FormatException ex)
         {
@@ -144,21 +145,18 @@ public sealed class @this : screen.@this
 
     internal override void Close() => _window.Close();
 
-    private static (byte[] bgra, int w, int h)? Decode(string line)
-        => Frame(line) is { } encoded ? Pixels(encoded) : null;
-
-    // the frame's encoded picture (PNG, JPEG) as straight BGRA; bytes no image format reads are a FormatException.
-    // Internal: a window is made only over a native Win32 window (Start), so a test reaches the decode here, not
-    // through Draw.
-    internal static (byte[] bgra, int w, int h)? Pixels(byte[] encoded)
+    // a browser's frame line, on the window's decode thread: its picture shown, or, when it is none, the error
+    // reported (no step waits for it to answer)
+    private void Present(string line, global::app.actor.context.@this context)
     {
-        // straight (unpremultiplied) BGRA, as the window shows it
-        var info = SkiaSharp.SKBitmap.DecodeBounds(encoded);
-        if (info.Width <= 0 || info.Height <= 0) throw new FormatException("the frame is no image format");
-        using var decoded = SkiaSharp.SKBitmap.Decode(encoded,
-            new SkiaSharp.SKImageInfo(info.Width, info.Height, SkiaSharp.SKColorType.Bgra8888, SkiaSharp.SKAlphaType.Unpremul))
-            ?? throw new FormatException("the frame's pixels can't be read");
-        return (decoded.Bytes, decoded.Width, decoded.Height);
+        try
+        {
+            _window.Present(new Bitmap(Frame(line)));
+        }
+        catch (FormatException ex)
+        {
+            _ = context.Actor.Channel.Report(context.Error(new ActionError("Not an image: " + ex.Message, "BadFrame", 400)));
+        }
     }
 
     // "key":"value" from a one-line JSON message, without parsing a 200 KB frame line
@@ -172,17 +170,7 @@ public sealed class @this : screen.@this
         return end < 0 ? null : line[start..end];
     }
 
-    // {"frame":"<base64>",...} → the image bytes; anything else → null
-    private static byte[]? Frame(string? line)
-    {
-        if (line == null) return null;
-        const string key = "\"frame\":\"";
-        var start = line.IndexOf(key, StringComparison.Ordinal);
-        if (start < 0) return null;
-        start += key.Length;
-        var end = line.IndexOf('"', start);
-        if (end < 0) return null;
-        try { return Convert.FromBase64String(line[start..end]); }
-        catch (FormatException) { return null; }
-    }
+    // {"frame":"<base64>",...} → the image bytes; a line without them is a FormatException
+    private static byte[] Frame(string line)
+        => Field(line, "frame") is { } base64 ? Convert.FromBase64String(base64) : throw new FormatException("the line holds no frame");
 }

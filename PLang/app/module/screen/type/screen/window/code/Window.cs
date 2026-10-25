@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using Bitmap = global::app.module.screen.type.screen.code.Bitmap;
 using Media = global::app.module.screen.type.screen.code.Media;
 using Rect = global::app.module.screen.type.screen.display.code.Rect;
 
@@ -23,8 +24,8 @@ internal sealed class Window
     private readonly WndProc proc;          // held: the OS calls it for the window's whole life
     private readonly ManualResetEventSlim ready = new();
     private readonly object gate = new();
-    private byte[] pixels;
-    private int frameWidth, frameHeight;
+    // what it shows: a picture presented whole, or the window's own canvas the changed rectangles go into
+    private Bitmap bitmap;
     private IntPtr hwnd;
     private long lastMove;
     private string? error;
@@ -41,8 +42,7 @@ internal sealed class Window
     {
         this.title = title; this.width = width; this.height = height; this.types = types;
         this.onEvent = onEvent; this.onClosed = onClosed; this.onError = onError;
-        pixels = new byte[width * height * 4];
-        frameWidth = width; frameHeight = height;
+        bitmap = new Bitmap(width, height);
         proc = Proc;
         // a video's new picture: its place painted again (the picture drawn in at the paint)
         media.Presented += place =>
@@ -64,10 +64,10 @@ internal sealed class Window
     // this one's; a frame half put in is at worst one tick wrong
     private bool Shows(Rect place, (byte r, byte g, byte b) key)
     {
-        var px = pixels;
-        int w = frameWidth, h = frameHeight;
-        if (px.Length != w * h * 4) return true;
-        var area = place.Clip(new Rect(0, 0, w, h));
+        var shown = bitmap;
+        var px = shown.Pixels;
+        var w = shown.Width;
+        var area = place.Clip(new Rect(0, 0, w, shown.Height));
         var magenta = key == (255, 0, 255);
         for (var y = area.Y; y < area.Bottom; y += 8)
             for (var x = area.X; x < area.Right; x += 8)
@@ -90,10 +90,10 @@ internal sealed class Window
         return error;
     }
 
-    /// <summary>New pixels (BGRA, top row first) for the window; drawn at the next paint.</summary>
-    public void Present(byte[] bgra, int w, int h)
+    /// <summary>A new picture for the window; drawn at the next paint.</summary>
+    public void Present(Bitmap bitmap)
     {
-        lock (gate) { pixels = bgra; frameWidth = w; frameHeight = h; }
+        lock (gate) this.bitmap = bitmap;
         Interlocked.Increment(ref Frames);
         if (hwnd != IntPtr.Zero) InvalidateRect(hwnd, IntPtr.Zero, false);
     }
@@ -102,12 +102,12 @@ internal sealed class Window
 
     private string? offered;
     private readonly AutoResetEvent offer = new(false);
-    private Func<string, (byte[] bgra, int w, int h)?>? decode;
+    private Action<string>? decode;
 
     /// <summary>Hands the window an encoded frame and returns at once. A decoder thread takes the
-    /// newest one; frames offered while it decodes replace each other, so the window never falls
-    /// behind and nothing waits on it (input included).</summary>
-    public void Offer(string frame, Func<string, (byte[] bgra, int w, int h)?> decoder)
+    /// newest one to <paramref name="decoder"/>, which presents it; frames offered while it decodes
+    /// replace each other, so the window never falls behind and nothing waits on it (input included).</summary>
+    public void Offer(string frame, Action<string> decoder)
     {
         if (decode == null)
         {
@@ -146,8 +146,7 @@ internal sealed class Window
 
             var frame = Interlocked.Exchange(ref offered, null);
             if (frame == null) continue;
-            try { if (decode!(frame) is { } px) Present(px.bgra, px.w, px.h); }
-            catch { /* a bad frame is skipped; the next one replaces it */ }
+            decode!(frame);
         }
     }
 
@@ -198,7 +197,7 @@ internal sealed class Window
     {
         if (decode == null)
         {
-            decode = _ => null;
+            decode = _ => { };
             new Thread(Decode) { IsBackground = true, Name = "screen decode: " + title }.Start();
         }
         if (update is byte[] m && IsVideo(m)) Interlocked.Increment(ref videosWaiting);
@@ -336,15 +335,15 @@ internal sealed class Window
         // (PlangOS sends it cut already; this only guards the copy)
         var left = Math.Max(x, Math.Max(0, -dx));
         var top = Math.Max(y, Math.Max(0, -dy));
-        var right = Math.Min(x + w, Math.Min(frameWidth, frameWidth - dx));
-        var bottom = Math.Min(y + h, Math.Min(frameHeight, frameHeight - dy));
-        if (right <= left || bottom <= top || pixels.Length != frameWidth * frameHeight * 4) return null;
+        var right = Math.Min(x + w, Math.Min(bitmap.Width, bitmap.Width - dx));
+        var bottom = Math.Min(y + h, Math.Min(bitmap.Height, bitmap.Height - dy));
+        if (right <= left || bottom <= top) return null;
         var bytes = (right - left) * 4;
         // rows in the order that doesn't overwrite what is still to be moved; within a row BlockCopy is overlap-safe
         for (var i = 0; i < bottom - top; i++)
         {
             var row = dy > 0 ? bottom - 1 - i : top + i;
-            Buffer.BlockCopy(pixels, (row * frameWidth + left) * 4, pixels, ((row + dy) * frameWidth + left + dx) * 4, bytes);
+            Buffer.BlockCopy(bitmap.Pixels, (row * bitmap.Width + left) * 4, bitmap.Pixels, ((row + dy) * bitmap.Width + left + dx) * 4, bytes);
         }
         return new RECT { left = left + dx, top = top + dy, right = right + dx, bottom = bottom + dy };
     }
@@ -362,16 +361,13 @@ internal sealed class Window
     /// <summary>A rectangle's pixels into the frame. Under the gate; the area, or null.</summary>
     private RECT? Copy(int x, int y, int w, int h, byte[] rect)
     {
-        if (frameWidth != width || frameHeight != height || pixels.Length != width * height * 4)
-        {
-            pixels = new byte[width * height * 4];
-            frameWidth = width; frameHeight = height;
-        }
+        // a picture presented whole of another size gives way to a canvas the window's size
+        if (bitmap.Width != width || bitmap.Height != height) bitmap = new Bitmap(width, height);
         var rows = Math.Min(h, height - y);
         var cols = Math.Min(w, width - x);
         if (rows <= 0 || cols <= 0 || x < 0 || y < 0) return null;
         for (var row = 0; row < rows; row++)
-            Buffer.BlockCopy(rect, row * w * 4, pixels, ((y + row) * width + x) * 4, cols * 4);
+            Buffer.BlockCopy(rect, row * w * 4, bitmap.Pixels, ((y + row) * width + x) * 4, cols * 4);
         return new RECT { left = x, top = y, right = x + w, bottom = y + h };
     }
 
@@ -706,7 +702,7 @@ internal sealed class Window
                 bmiHeader = new BITMAPINFOHEADER
                 {
                     biSize = (uint)Marshal.SizeOf<BITMAPINFOHEADER>(),
-                    biWidth = frameWidth, biHeight = -frameHeight,   // negative: top row first
+                    biWidth = bitmap.Width, biHeight = -bitmap.Height,   // negative: top row first
                     biPlanes = 1, biBitCount = 32, biCompression = 0,
                 },
             };
@@ -714,20 +710,20 @@ internal sealed class Window
             // pixels, the videos drawn in at their places, the key colour anywhere else black. Never the frame's own
             // pixels first and the video over them after: shown between the two, the key colour blinked (ruv.is)
             var painted = new Rect(ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right - ps.rcPaint.left, ps.rcPaint.bottom - ps.rcPaint.top)
-                .Clip(new Rect(0, 0, frameWidth, frameHeight));
-            if (media.Any && !painted.Empty && pixels.Length == frameWidth * frameHeight * 4)
+                .Clip(new Rect(0, 0, bitmap.Width, bitmap.Height));
+            if (media.Any && !painted.Empty)
             {
                 var bytes = painted.Width * painted.Height * 4;
                 if (composed.Length < bytes) composed = new byte[bytes];
                 for (var y = 0; y < painted.Height; y++)
-                    Buffer.BlockCopy(pixels, ((painted.Y + y) * frameWidth + painted.X) * 4, composed, y * painted.Width * 4, painted.Width * 4);
+                    Buffer.BlockCopy(bitmap.Pixels, ((painted.Y + y) * bitmap.Width + painted.X) * 4, composed, y * painted.Width * 4, painted.Width * 4);
                 media.Draw(composed.AsSpan(0, bytes), painted);
                 var part = info;
                 part.bmiHeader.biWidth = painted.Width;
                 part.bmiHeader.biHeight = -painted.Height;
                 SetDIBitsToDevice(ps.hdc, painted.X, painted.Y, (uint)painted.Width, (uint)painted.Height, 0, 0, 0, (uint)painted.Height, composed, ref part, 0);
             }
-            else SetDIBitsToDevice(ps.hdc, 0, 0, (uint)frameWidth, (uint)frameHeight, 0, 0, 0, (uint)frameHeight, pixels, ref info, 0);
+            else SetDIBitsToDevice(ps.hdc, 0, 0, (uint)bitmap.Width, (uint)bitmap.Height, 0, 0, 0, (uint)bitmap.Height, bitmap.Pixels, ref info, 0);
         }
         EndPaint(h, ref ps);
     }
