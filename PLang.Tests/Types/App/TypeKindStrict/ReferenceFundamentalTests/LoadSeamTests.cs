@@ -115,8 +115,8 @@ public class LoadSeamTests
     }
 
     // A plang-formatted stream channel over memory — the door a value leaves the program through.
-    private static global::app.channel.type.stream.@this PlangChannel() =>
-        new("out", new System.IO.MemoryStream()) { Mime = "application/plang" };
+    private global::app.channel.type.stream.@this PlangChannel() =>
+        new(_app.actor.list.User.Channel, "out", new System.IO.MemoryStream()) { Mime = "application/plang" };
 
     private static string Written(global::app.channel.type.stream.@this channel) =>
         Encoding.UTF8.GetString(((System.IO.MemoryStream)channel.Stream).ToArray());
@@ -138,7 +138,7 @@ public class LoadSeamTests
     {
         // The console is a text channel: bytes there show as their size.
         var img = PathBackedPng("console.png");
-        await using var channel = new global::app.channel.type.stream.@this("out", new System.IO.MemoryStream());
+        await using var channel = new global::app.channel.type.stream.@this(_app.actor.list.User.Channel, "out", new System.IO.MemoryStream());
 
         var result = await channel.Write(_app.actor.list.User.Context.Ok(img));
         await result.IsSuccess();

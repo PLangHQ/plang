@@ -16,7 +16,7 @@ public class StartGoalTests
         // Capture the REAL output channel — the goal runs through the real output.write,
         // which writes the resolved value to this stream (no hand-rolled handler).
         var captureStream = new System.IO.MemoryStream();
-        engine.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(
+        engine.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(engine.actor.list.User.Channel,
             global::app.channel.list.@this.Output, captureStream,
             global::app.channel.ChannelDirection.Output, ownsStream: true) { Mime = "text/plain" });
 

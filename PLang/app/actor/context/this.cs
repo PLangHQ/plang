@@ -71,6 +71,16 @@ public sealed class @this : IDisposable
     public @this Child(ActorType runner, CancellationToken token)
         => new(App, runner, parent: this, parentToken: token);
 
+    /// <summary>What <paramref name="actor"/> answers, running <paramref name="then"/> in this flow: right here when it
+    /// is this context's own actor; else in a context made from this one (<see cref="Child"/>, a fresh memory, so no
+    /// actor reads another's variables), which that actor runs and which ends with the run.</summary>
+    internal async Task<data.@this> Run(ActorType actor, Func<@this, Task<data.@this>> then)
+    {
+        if (actor == Actor) return await then(this);
+        using var made = Child(actor, CancellationToken);
+        return await then(made);
+    }
+
     /// <summary>
     /// Pushes a timeout CTS so all sub-calls use it. Used by the timeout.after modifier.
     /// </summary>

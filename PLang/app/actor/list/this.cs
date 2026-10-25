@@ -34,7 +34,8 @@ public sealed class @this : global::app.type.item.list.@this<actor.@this>, IAsyn
     {
         if (named == null || await named.Given() is null) return await then(asker);
         // the typed carrier's own door: the name as written (text) is made the choice it names
-        return await named.Use(name => then(this[name].Context));
+        // the named actor runs it in the asker's flow
+        return await named.Use(name => asker.Run(this[name], then));
     }
 
     public async ValueTask DisposeAsync()

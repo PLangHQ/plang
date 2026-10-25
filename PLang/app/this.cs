@@ -291,15 +291,15 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public keepalive.@this KeepAlive { get; } = new();
 
     /// <summary>An app made from the code: a new code of its own, under its layers.</summary>
-    /// <param name="autoWireConsoleChannels">Whether its System and User are born with the console's standard channels,
-    /// wired when each first uses its channels. Their input is a non-blocking EOF sink: a prompt fails fast with
-    /// ChannelEof instead of reading the shared process stdin (which deadlocks under parallel tests); a caller that wants
-    /// to answer registers its own input/ask channel. The one interactive owner, the CLI (Executor), is made without
-    /// them and calls WireDefaultConsoleChannels to bind real stdin.</param>
+    /// <param name="wiring">What its System and User are born wired to: the console's standard channels (the default),
+    /// wired when each first uses its channels, their input a non-blocking EOF sink — a prompt fails fast with ChannelEof
+    /// instead of reading the shared process stdin (which deadlocks under parallel tests); a caller that wants to answer
+    /// registers its own input/ask channel. Or none: the one interactive owner, the CLI (Executor), is made so and calls
+    /// WireDefaultConsoleChannels to bind real stdin.</param>
     public @this(string absolutePath,
         string? environment = null,
-        bool autoWireConsoleChannels = true)
-        : this(absolutePath, new global::app.origin.code(autoWireConsoleChannels), environment) { }
+        Wiring wiring = Wiring.console)
+        : this(absolutePath, new global::app.origin.code(wiring), environment) { }
 
     /// <summary>An app made by <paramref name="actor"/>, the actor that calls: its folder is its own, and its lists are
     /// layers over the caller's app's. Its life ends with its caller's; it is who its caller is.</summary>
@@ -370,9 +370,9 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// Wires the console standard streams onto the given actor's Channels under
     /// the well-known names ("output", "error", "input"), with real interactive
     /// stdin as the input source. The interactive CLI (Executor) calls this for
-    /// System and User after constructing the App with autoWireConsoleChannels:false.
+    /// System and User after constructing the App with Wiring.none.
     /// Non-interactive constructions (tests, embedded, the test runner's child
-    /// app) get the EOF-sink input via the ctor's auto-wire instead.
+    /// app) are made with Wiring.console, whose input is an EOF sink.
     /// </summary>
     public static void WireDefaultConsoleChannels(global::app.actor.@this actor)
         => WireConsoleChannels(actor, interactiveInput: true);

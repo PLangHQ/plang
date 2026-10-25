@@ -139,4 +139,28 @@ public class ValidatePathTests
         var resolved = global::app.type.item.path.file.@this.ValidatePath(inRoot, app);
         await Assert.That(resolved).IsEqualTo(inRoot);
     }
+
+    // a folder beside the root whose name starts with the root's (<root>2) is no place in the root: written plang-rooted,
+    // it is anchored under the root like any other, never taken as a location already in it
+    [Test] public async Task ASiblingWithTheRootsPrefix_IsNotUnderIt()
+    {
+        if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS()) return; // a single-slash absolute is plang-rooted on Unix
+        var app = NewApp(out var root);
+        var sibling = root + "2/file.txt";
+        var resolved = global::app.type.item.path.file.@this.ValidatePath(sibling, app);
+        await Assert.That(resolved).IsNotEqualTo(sibling);
+        await Assert.That(resolved.StartsWith(root + System.IO.Path.DirectorySeparatorChar)).IsTrue().Because(resolved);
+    }
+
+    // the one containment rule, asked of a location still a string: the folder itself and what is under it past a
+    // separator, never a sibling that starts with its name
+    [Test] public async Task TheRootHolds_ItselfAndWhatIsUnderIt_NotASibling()
+    {
+        var app = NewApp(out var root);
+        var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+        await Assert.That(app.filesystem.root.Holds(root, comparison)).IsTrue();
+        await Assert.That(app.filesystem.root.Holds(System.IO.Path.Combine(root, "a", "b.txt"), comparison)).IsTrue();
+        await Assert.That(app.filesystem.root.Holds(root + "2", comparison)).IsFalse();
+        await Assert.That(app.filesystem.root.Holds(root + "2" + System.IO.Path.DirectorySeparatorChar + "x", comparison)).IsFalse();
+    }
 }

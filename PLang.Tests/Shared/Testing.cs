@@ -34,7 +34,7 @@ public static class AppTesting
     {
         // every actor's input answers yes: the consent a change to the app's identities (or an exported key) asks for
         foreach (var actor in new[] { app.actor.list.System, app.actor.list.User })
-            actor.Channel.Register(new global::PLang.Tests.App.Types.PathTests.Contract.CannedAnswerChannel("y"));
+            actor.Channel.Register(new global::PLang.Tests.App.Types.PathTests.Contract.CannedAnswerChannel(actor.Channel, "y"));
         return app;
     }
 

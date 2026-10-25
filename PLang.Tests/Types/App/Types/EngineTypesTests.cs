@@ -7,7 +7,7 @@ public class EngineTypesTests
     [Before(Test)]
     public void Setup()
     {
-        _types = new global::app.origin.code().type;
+        _types = new global::app.origin.code(global::app.Wiring.none).type;
     }
 
     // --- Clr: PLang name → CLR type ---

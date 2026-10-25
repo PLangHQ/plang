@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "bugs 3c845fcf8: no Critical/High open; F1 Low (saved llm answers match case-insensitively, tests only), F2 Low (frame bound per rectangle: ~1 GB allocated for a 40 KB frame), Fluid plain {{ x }} unencoded noted" }

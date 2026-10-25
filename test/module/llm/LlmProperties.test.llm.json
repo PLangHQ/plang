@@ -1,0 +1,54 @@
+[
+  {
+    "request": {
+      "model": "gpt-5.4-nano",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a helpful assistant"
+        },
+        {
+          "role": "user",
+          "content": "Say hello"
+        }
+      ],
+      "temperature": 0.5,
+      "max_completion_tokens": 50
+    },
+    "response": {
+      "id": "chatcmpl-Ecv6PSIjExZLqpTc4CFf5owMfYlKh",
+      "object": "chat.completion",
+      "created": 1792944673,
+      "model": "gpt-5.4-nano-2026-03-17",
+      "choices": [
+        {
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": "Hello! \uD83D\uDC4B How can I help you today?",
+            "refusal": null,
+            "annotations": []
+          },
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 17,
+        "completion_tokens": 14,
+        "total_tokens": 31,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "service_tier": "default",
+      "system_fingerprint": null
+    }
+  }
+]

@@ -74,7 +74,7 @@ public class IfHandlerTests : IDisposable
     private async Task<string> Written(string text, params Action[] actions)
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(_app.actor.list.User.Channel,
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain", Framed = true });
@@ -91,7 +91,7 @@ public class IfHandlerTests : IDisposable
         var ctx = _app.actor.list.User.Context;
         var output = await Written("if true, write true-branch",
             await ctx.Action("condition.if(Left=true, Operator=\"==\", Right=true) { output.write(Data=\"true-branch\") }"));
-        await Assert.That(output).IsEqualTo("true-branch" + System.Environment.NewLine);
+        await Assert.That(output).IsEqualTo("true-branch\n");
     }
 
     [Test]
@@ -110,7 +110,7 @@ public class IfHandlerTests : IDisposable
         var output = await Written("if 10 > 5 write then-branch, else write else-branch",
             await ctx.Action("condition.if(Left=10, Operator=\">\", Right=5) { output.write(Data=\"then-branch\") }"),
             await ctx.Action("condition.else() { output.write(Data=\"else-branch\") }"));
-        await Assert.That(output).IsEqualTo("then-branch" + System.Environment.NewLine);
+        await Assert.That(output).IsEqualTo("then-branch\n");
     }
 
     [Test]
@@ -120,7 +120,7 @@ public class IfHandlerTests : IDisposable
         var output = await Written("if 3 > 5 write then-branch, else write else-branch",
             await ctx.Action("condition.if(Left=3, Operator=\">\", Right=5) { output.write(Data=\"then-branch\") }"),
             await ctx.Action("condition.else() { output.write(Data=\"else-branch\") }"));
-        await Assert.That(output).IsEqualTo("else-branch" + System.Environment.NewLine);
+        await Assert.That(output).IsEqualTo("else-branch\n");
     }
 
     [Test]
@@ -396,7 +396,7 @@ public class IfHandlerTests : IDisposable
     {
         await Event();
         var written = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(_app.actor.list.User.Channel,
             global::app.channel.list.@this.Output, written,
             ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });

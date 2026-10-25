@@ -10,8 +10,8 @@ public sealed class @this : global::app.channel.type.stream.@this
 {
     /// <summary>A console channel over <paramref name="stream"/>, the process's — never owned: the process closes it.
     /// What it writes is framed: each message ends with a newline when its format is written in lines.</summary>
-    public @this(string name, global::System.IO.Stream stream, ChannelDirection direction)
-        : base(name, stream, direction, ownsStream: false)
+    public @this(global::app.channel.list.@this channels, string name, global::System.IO.Stream stream, ChannelDirection direction)
+        : base(channels, name, stream, direction, ownsStream: false)
     {
         Framed = direction != ChannelDirection.Input;
     }

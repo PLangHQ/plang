@@ -32,7 +32,7 @@ A setting class marked `[Own]` (`permission`, `identity`) belongs to its actor's
 
 - It takes no run value: `Under()` takes none for it, the setting node's `Set` refuses it (403), and the `setting.save` and `setting.remove` actions refuse it (a step removing the identity row would lose the key). Its row is written only by its owner's code (`Permission.Add` after the prompt, the identity's code) through `actor.Setting.Save`.
 - An `[Own]` row read without a signature is refused loudly (`SettingUnsigned`, 403); a row that can't be read names its key and says to delete it and set it again.
-- An identity's private key is never carried by `get`, `list` or `create` (`Identity.Public()`), nor by `%MyIdentity%`. `export` is its only door: it asks every time, never persisted, and a yes hands the step the key as plain text it can send anywhere, for this call only. Signing reads the full identity through the owner door `GetOrCreateDefaultAsync`.
+- An identity's private key is never carried by `get`, `list` or `create` (`Identity.Public()`), nor by `%MyIdentity%`. `export` is its only door, and it refuses (`ExportWaitsForCriticalActions`, 403) until critical actions exist, which ask more than a yes before a key leaves the app; nothing is asked and no key is handed out. Signing reads the full identity through the owner door `GetOrCreateDefaultAsync`.
 - `create`, `rename`, `archive`, `unarchive` and `setDefault` ask through `Permission.Ask`; first-run and the owner's own code never ask.
 
 What the permission prompts guard, and what they do not: `filesystem-permission.md`, "What the prompts guard".

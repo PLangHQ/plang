@@ -62,7 +62,7 @@ public class SubAppContainmentProbeTests : System.IAsyncDisposable
     {
         private readonly global::app.actor.context.@this _ctx;
         public List<string> Questions { get; } = new();
-        public Asking(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public Asking(global::app.channel.list.@this channels, global::app.actor.context.@this ctx) : base(channels) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override async Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
@@ -75,7 +75,7 @@ public class SubAppContainmentProbeTests : System.IAsyncDisposable
     // every actor of the app answers 'n' to a question (never reads a console)
     private static Asking Mute(global::app.actor.@this actor)
     {
-        var ch = new Asking(actor.Context);
+        var ch = new Asking(actor.Channel, actor.Context);
         actor.Channel.Register(ch);
         return ch;
     }
@@ -267,11 +267,11 @@ public class SubAppContainmentProbeTests : System.IAsyncDisposable
 
         // its stores folder is its own; its standing grants are the role's, on the os and on its own stores only
         await Assert.That(app.filesystem.store.Absolute).IsEqualTo(System.IO.Path.Combine(app.filesystem.root.Absolute, ".data"));
-        var field = typeof(global::app.actor.permission.@this).GetField("_inMemory",
+        var field = typeof(global::app.actor.permission.@this).GetField("_standing",
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
         foreach (var actor in new[] { app.actor.list.System, app.actor.list.User })
         {
-            var paths = ((System.Collections.IEnumerable)field.GetValue(actor.Permission)!).Cast<global::app.data.@this>()
+            var paths = ((System.Collections.IEnumerable)field.GetValue(actor.Permission)!).Cast<(global::app.type.item.path.@this Place, global::app.data.@this Grant)>().Select(s => s.Grant)
                 .Select(d => ((Grant)d.Peek()!).Path).ToList();
             foreach (var path in paths)
                 await Assert.That(path.StartsWith(app.filesystem.os.Absolute, System.StringComparison.Ordinal)

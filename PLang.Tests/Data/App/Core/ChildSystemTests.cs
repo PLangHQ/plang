@@ -49,7 +49,7 @@ public class ChildSystemTests
     public async Task AChildsSystem_KeepsItsOwnMemoryChannelsAndSettings()
     {
         await System.Context.Variable.Set("seen", "the child's");
-        System.Channel.Register(new global::app.channel.type.console.@this("child-only", global::System.IO.Stream.Null,
+        System.Channel.Register(new global::app.channel.type.console.@this(System.Channel, "child-only",global::System.IO.Stream.Null,
             global::app.channel.ChannelDirection.Output));
         var address = System.Setting.Address(typeof(global::app.setting.@this), "environment");
         await System.Setting.Set(address, new global::app.type.item.text.@this("child", _child.type.list[typeof(global::app.type.item.text.@this)])).IsSuccess();

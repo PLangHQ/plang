@@ -89,7 +89,7 @@ Execute a PLang goal from within a template:
 <p>Latest data: {% callGoal 'GetLatestStats' %}</p>
 ```
 
-The goal runs and its return value is inserted into the template output. If the goal fails, an `[Error: ...]` message appears inline.
+The goal runs and its return value is written into the template output, as any value is: in an html template it is escaped (see HTML Encoding). If the goal fails, the render fails with the goal's error.
 
 ## File vs Inline Detection
 
@@ -111,9 +111,13 @@ Set `IsFile` explicitly to override:
 
 ## HTML Encoding
 
-Output is HTML-encoded by default for XSS prevention. `{{ name }}` where name is `<script>alert(1)</script>` renders as `&lt;script&gt;alert(1)&lt;/script&gt;`.
+An html template (a `.html` or `.htm` file) escapes every value it writes, for XSS prevention: `{{ name }}`, `{{ name | text }}`, and the result of `{% callGoal %}`. `{{ name }}` where name is `<script>alert(1)</script>` renders as `&lt;script&gt;alert(1)&lt;/script&gt;`.
 
-Use the Liquid `raw` filter if you need unescaped HTML from a trusted source.
+Every other template (`.txt`, `.llm`, `.json`, `.md`, …, and an inline one) writes its values as they are.
+
+Use the `raw` filter (`{{ html | raw }}`) to write html from a trusted source as it is in a page.
+
+`{{ x | json }}` writes the value as json, the way plang's json format shows it, for a page that embeds data (`<script>const data = {{ x | json }};</script>`). `<`, `>` and `&` come out as `<`, `>` and `&`, which json reads back as the same characters, so a value holding `</script>` can't close the page's script. A page writes it as it is (a `"` stays a `"`). So `| json` belongs inside a `<script>`, never inside an attribute: there json's own quotes close the attribute (`data-x="{{ x | json }}"` lets a value add its own attributes). For an attribute, write the value plainly (`data-x="{{ x }}"`), which a page escapes.
 
 ## Security
 

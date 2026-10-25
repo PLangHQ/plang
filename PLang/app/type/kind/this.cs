@@ -316,8 +316,8 @@ public class @this : global::app.type.@this
     /// from json, audio from text). An error <c>Data</c> when the source can't become this kind.</summary>
     public virtual global::System.Threading.Tasks.ValueTask<global::app.data.@this> Convert(
         global::app.data.@this source, global::app.actor.context.@this ctx)
-        => throw new System.NotSupportedException(
-            $"cannot convert {source.Type?.Name} into kind '{Name}'");
+        => new(ctx.Error(new global::app.error.@this(
+            $"cannot convert {source.Type?.Name} into kind '{Name}'", "NotConvertible", 400)));
 
     /// <summary>A kind held AS A VALUE writes its own name — <c>%x!type.kind%</c> is "json", "decimal" — in every
     /// format. The kind is a type, but its face is the subtype word, never a type's identity or word; navigation reaches

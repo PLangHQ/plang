@@ -13,9 +13,9 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     [Test]
     public async Task StreamChannel_WriteCore_WritesDataViaSerializer()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var captureStream = new MemoryStream();
-        var ch = new StreamChannel("c", captureStream, ChannelDirection.Output, ownsStream: false)
+        var ch = new StreamChannel(app.actor.list.User.Channel, "c", captureStream, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" };
         app.actor.list.User.Channel.Register(ch);
 
@@ -30,7 +30,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     public async Task StreamChannel_ReadCore_ReadsBytes_StampsTextViaMime()
     {
         var ms = new MemoryStream(global::System.Text.Encoding.UTF8.GetBytes("hello"));
-        var ch = new StreamChannel("c", ms, ChannelDirection.Input, ownsStream: false)
+        var ch = new StreamChannel(app.actor.list.User.Channel, "c", ms, ChannelDirection.Input, ownsStream: false)
         { Mime = "text/plain" };
         app.actor.list.User.Channel.Register(ch);
         var result = await ch.Read();
@@ -45,7 +45,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     [Test]
     public async Task StreamChannel_MemoryFactory_CreatesBidirectionalChannel()
     {
-        var ch = StreamChannel.Memory("m");
+        var ch = StreamChannel.Memory(app.actor.list.User.Channel, "m");
         await Assert.That(ch.Direction).IsEqualTo(ChannelDirection.Bidirectional);
         await Assert.That(ch.CanRead).IsTrue();
         await Assert.That(ch.CanWrite).IsTrue();
@@ -54,7 +54,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     [Test]
     public async Task StreamChannel_OutputFactory_CreatesWriteOnlyChannel()
     {
-        var ch = new StreamChannel("o", new MemoryStream(), global::app.channel.ChannelDirection.Output, ownsStream: false);
+        var ch = new StreamChannel(app.actor.list.User.Channel, "o", new MemoryStream(), global::app.channel.ChannelDirection.Output, ownsStream: false);
         app.actor.list.User.Channel.Register(ch);
         await Assert.That(ch.Direction).IsEqualTo(ChannelDirection.Output);
         await Assert.That(ch.CanWrite).IsTrue();
@@ -67,7 +67,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     [Test]
     public async Task StreamChannel_InputFactory_CreatesReadOnlyChannel()
     {
-        var ch = new StreamChannel("i", new MemoryStream(), global::app.channel.ChannelDirection.Input, ownsStream: false);
+        var ch = new StreamChannel(app.actor.list.User.Channel, "i", new MemoryStream(), global::app.channel.ChannelDirection.Input, ownsStream: false);
         await Assert.That(ch.Direction).IsEqualTo(ChannelDirection.Input);
         await Assert.That(ch.CanRead).IsTrue();
         await Assert.That(ch.CanWrite).IsFalse();
@@ -79,8 +79,8 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     [Test]
     public async Task StreamChannel_WriteCore_FailsWithWriteError_OnUnderlyingStreamThrow()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
-        var ch = new StreamChannel("c", new ThrowingStream(throwOnWrite: true), ChannelDirection.Output, ownsStream: false);
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+        var ch = new StreamChannel(app.actor.list.User.Channel, "c", new ThrowingStream(throwOnWrite: true), ChannelDirection.Output, ownsStream: false);
         app.actor.list.User.Channel.Register(ch);
         var result = await ch.Write(app.Ok("x"));
         await result.IsFailure();
@@ -92,7 +92,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     [Test]
     public async Task StreamChannel_ReadCore_FailsWithReadError_OnUnderlyingStreamThrow()
     {
-        var ch = new StreamChannel("c", new ThrowingStream(throwOnRead: true), ChannelDirection.Input, ownsStream: false);
+        var ch = new StreamChannel(app.actor.list.User.Channel, "c", new ThrowingStream(throwOnRead: true), ChannelDirection.Input, ownsStream: false);
         app.actor.list.User.Channel.Register(ch);
         var result = await ch.Read();
         await result.IsFailure();
@@ -103,7 +103,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     public async Task StreamChannel_Ask_BlocksOnStdinUntilInputArrives()
     {
         var ms = new MemoryStream(global::System.Text.Encoding.UTF8.GetBytes("answer\n"));
-        var ch = new StreamChannel("i", ms, ChannelDirection.Bidirectional, ownsStream: false)
+        var ch = new StreamChannel(app.actor.list.User.Channel, "i", ms, ChannelDirection.Bidirectional, ownsStream: false)
         { Mime = "text/plain" };
         app.actor.list.User.Channel.Register(ch);
         var result = await ch.Ask(new global::app.module.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "", context: app.actor.list.User.Context) });
@@ -120,7 +120,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
         // start byte, so a UTF-8 reader would yield U+FFFD instead of 'é'.
         var bytes = new byte[] { 0xE9, 0x0A };
         var ms = new MemoryStream(bytes);
-        var ch = new StreamChannel("i", ms, ChannelDirection.Bidirectional, ownsStream: false)
+        var ch = new StreamChannel(app.actor.list.User.Channel, "i", ms, ChannelDirection.Bidirectional, ownsStream: false)
         {
             Mime = "text/plain",
             Encoding = "iso-8859-1"
@@ -135,7 +135,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     public async Task StreamChannel_Ask_WaitsPastTheChannelsTimeout_ForItsAnswer()
     {
         // A question waits for its answer: the answer comes after the channel's Timeout, and is taken.
-        var ch = new StreamChannel("i", new LateStream("late answer\n", TimeSpan.FromMilliseconds(300)), ChannelDirection.Input, ownsStream: false)
+        var ch = new StreamChannel(app.actor.list.User.Channel, "i", new LateStream("late answer\n", TimeSpan.FromMilliseconds(300)), ChannelDirection.Input, ownsStream: false)
         {
             Mime = "text/plain",
             Timeout = TimeSpan.FromMilliseconds(50)
@@ -150,8 +150,8 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     public async Task OutputAsk_EndsWhenTheRunIsCancelled()
     {
         // The run's cancellation (a timeout on the ask, a test's timeout, Ctrl-C) is what ends a waiting ask.
-        await using var own = new global::app.@this("/tmp/s2c-" + System.Guid.NewGuid().ToString("N")[..6], autoWireConsoleChannels: false).Testing();
-        own.actor.list.User.Channel.Register(new StreamChannel(global::app.channel.list.@this.Input, new BlockingStream(), ChannelDirection.Input, ownsStream: false) { Mime = "text/plain" });
+        await using var own = new global::app.@this("/tmp/s2c-" + System.Guid.NewGuid().ToString("N")[..6], wiring: global::app.Wiring.none).Testing();
+        own.actor.list.User.Channel.Register(new StreamChannel(own.actor.list.User.Channel, global::app.channel.list.@this.Input, new BlockingStream(), ChannelDirection.Input, ownsStream: false) { Mime = "text/plain" });
         var ctx = own.actor.list.User.Context;
 
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
@@ -197,7 +197,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     public async Task StreamChannel_OwnsStreamTrue_DisposesUnderlyingStream()
     {
         var ms = new TrackingMemoryStream();
-        var ch = new StreamChannel("c", ms, ChannelDirection.Bidirectional, ownsStream: true);
+        var ch = new StreamChannel(app.actor.list.User.Channel, "c", ms, ChannelDirection.Bidirectional, ownsStream: true);
         await ch.DisposeAsync();
         await Assert.That(ms.Disposed).IsTrue();
     }
@@ -206,7 +206,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     public async Task StreamChannel_OwnsStreamFalse_LeavesUnderlyingStreamOpen()
     {
         var ms = new TrackingMemoryStream();
-        var ch = new StreamChannel("c", ms, ChannelDirection.Bidirectional, ownsStream: false);
+        var ch = new StreamChannel(app.actor.list.User.Channel, "c", ms, ChannelDirection.Bidirectional, ownsStream: false);
         await ch.DisposeAsync();
         await Assert.That(ms.Disposed).IsFalse();
     }
@@ -305,16 +305,16 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     [Test]
     public async Task StreamChannel_WriteText_HonorsLatin1Encoding()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var capture = new MemoryStream();
-        var ch = new StreamChannel("c", capture, ChannelDirection.Output, ownsStream: false)
+        var ch = new StreamChannel(app.actor.list.User.Channel, "c", capture, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain", Encoding = "iso-8859-1", Framed = true };
         app.actor.list.User.Channel.Register(ch);
 
         // 'é' is one byte in latin-1 (0xE9) but two bytes in UTF-8.
         await ch.WriteText("é");
 
-        var expected = global::System.Text.Encoding.Latin1.GetBytes("é" + global::System.Environment.NewLine);
+        var expected = global::System.Text.Encoding.Latin1.GetBytes("é\n");
         await Assert.That(capture.ToArray()).IsEquivalentTo(expected);
         await Assert.That(capture.ToArray()[0]).IsEqualTo((byte)0xE9);
     }
@@ -323,9 +323,9 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     [Test]
     public async Task StreamChannel_Unframed_WritesNoNewline()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var capture = new MemoryStream();
-        var ch = new StreamChannel("c", capture, ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" };
+        var ch = new StreamChannel(app.actor.list.User.Channel, "c", capture, ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" };
         app.actor.list.User.Channel.Register(ch);
 
         await ch.WriteText("value");
@@ -337,8 +337,8 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     [Test]
     public async Task StreamChannel_WriteText_FiresOnWrite()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
-        var ch = StreamChannel.Memory("output");
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+        var ch = StreamChannel.Memory(app.actor.list.User.Channel, "output");
         app.actor.list.User.Channel.Register(ch);
         string? seen = null;
         app.actor.list.User.on.Bind(ch, "write", global::app.@event.When.before, async (_, data, ctx) =>
@@ -356,7 +356,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     public async Task StreamChannel_Read_HonorsLatin1Encoding()
     {
         var ms = new MemoryStream(new byte[] { 0xE9 });
-        var ch = new StreamChannel("c", ms, ChannelDirection.Input, ownsStream: false)
+        var ch = new StreamChannel(app.actor.list.User.Channel, "c", ms, ChannelDirection.Input, ownsStream: false)
         { Mime = "text/plain", Encoding = "iso-8859-1" };
         app.actor.list.User.Channel.Register(ch);
 
@@ -368,9 +368,9 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     [Test]
     public async Task StreamChannel_UnknownEncoding_IsAnErrorNamingIt()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var capture = new MemoryStream();
-        var ch = new StreamChannel("c", capture, ChannelDirection.Output, ownsStream: false)
+        var ch = new StreamChannel(app.actor.list.User.Channel, "c", capture, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain", Encoding = "totally-not-an-encoding" };
         app.actor.list.User.Channel.Register(ch);
 

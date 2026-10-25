@@ -42,8 +42,8 @@ public class PipeTests : IDisposable
     public async Task AFramedChannel_ReadsOneMessageAtATime_EndedByItsEnd()
     {
         var bytes = System.Text.Encoding.UTF8.GetBytes("first\0second\0unended");
-        var channel = new global::app.channel.type.stream.@this("pipe", new MemoryStream(bytes), ownsStream: true)
-            { Framed = true, End = "\0", Actor = Context.Actor! };
+        var channel = new global::app.channel.type.stream.@this(Context.Actor!.Channel, "pipe", new MemoryStream(bytes), ownsStream: true)
+            { Framed = true, End = "\0" };
         await Assert.That((await (await channel.Read()).Value())?.ToString()).IsEqualTo("first");
         await Assert.That((await (await channel.Read()).Value())?.ToString()).IsEqualTo("second");
         var ended = await channel.Read();
@@ -56,8 +56,8 @@ public class PipeTests : IDisposable
     public async Task AChannelOfLines_TakesCrLfAsTheEnd_Too()
     {
         var bytes = System.Text.Encoding.UTF8.GetBytes("one\r\ntwo\n");
-        var channel = new global::app.channel.type.stream.@this("out", new MemoryStream(bytes), ownsStream: true)
-            { Framed = true, End = "\n", Actor = Context.Actor! };
+        var channel = new global::app.channel.type.stream.@this(Context.Actor!.Channel, "out", new MemoryStream(bytes), ownsStream: true)
+            { Framed = true, End = "\n" };
         await Assert.That((await (await channel.Read()).Value())?.ToString()).IsEqualTo("one");
         await Assert.That((await (await channel.Read()).Value())?.ToString()).IsEqualTo("two");
     }
@@ -67,8 +67,8 @@ public class PipeTests : IDisposable
     [Test]
     public async Task AChannelOfLines_ThatKeepsTheLast_TakesTheUnendedPartAtTheEnd()
     {
-        var channel = new global::app.channel.type.stream.@this("out", new MemoryStream("one\ntwo"u8.ToArray()), ownsStream: true)
-            { Framed = true, End = "\n", KeepsLast = true, Actor = Context.Actor! };
+        var channel = new global::app.channel.type.stream.@this(Context.Actor!.Channel, "out", new MemoryStream("one\ntwo"u8.ToArray()), ownsStream: true)
+            { Framed = true, End = "\n", KeepsLast = true };
         await Assert.That((await (await channel.Read()).Value())?.ToString()).IsEqualTo("one");
         await Assert.That((await (await channel.Read()).Value())?.ToString()).IsEqualTo("two");
         await Assert.That((await channel.Read()).Error?.Key).IsEqualTo("ChannelEnded");
@@ -79,8 +79,8 @@ public class PipeTests : IDisposable
     public async Task AChannel_ReadsTextInItsEncoding()
     {
         var bytes = System.Text.Encoding.Unicode.GetBytes("hé þú\nnæst\n");
-        var channel = new global::app.channel.type.stream.@this("out", new MemoryStream(bytes), ownsStream: true)
-            { Framed = true, End = "\n", Encoding = "utf-16", Actor = Context.Actor! };
+        var channel = new global::app.channel.type.stream.@this(Context.Actor!.Channel, "out", new MemoryStream(bytes), ownsStream: true)
+            { Framed = true, End = "\n", Encoding = "utf-16" };
         await Assert.That((await (await channel.Read()).Value())?.ToString()).IsEqualTo("hé þú");
         await Assert.That((await (await channel.Read()).Value())?.ToString()).IsEqualTo("næst");
     }
@@ -158,7 +158,7 @@ public class PipeTests : IDisposable
     /// <summary>terminal.open with Pipe: the program, its pipe a channel of its own.</summary>
     private async Task<global::app.module.terminal.type.process.@this> Open(string script, params (string, object?)[] more)
     {
-        Context.Actor!.Channel.Register(new CannedAnswerChannel("a"));
+        Context.Actor!.Channel.Register(new CannedAnswerChannel(Context.Actor!.Channel, "a"));
         var parameters = new List<(string, object?)> { ("App", "//bin/sh"), ("Parameter", new List<object?> { "-c", script }), ("Pipe", true) };
         parameters.AddRange(more);
         var goal = Make.Goal(Context, "Open" + Guid.NewGuid().ToString("N")[..6],

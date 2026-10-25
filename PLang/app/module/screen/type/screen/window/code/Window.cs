@@ -3,6 +3,7 @@ using System.Text.Json;
 using Bitmap = global::app.module.screen.type.screen.code.Bitmap;
 using Media = global::app.module.screen.type.screen.code.Media;
 using Rect = global::app.module.screen.type.screen.display.code.Rect;
+using Shown = global::app.module.screen.type.screen.code.Shown;
 
 namespace app.module.screen.type.screen.window.code;
 
@@ -23,9 +24,10 @@ internal sealed class Window
     private readonly Action onClosed;
     private readonly WndProc proc;          // held: the OS calls it for the window's whole life
     private readonly ManualResetEventSlim ready = new();
+    // held while which screen it shows is swapped: its pixels are read and written under the screen's own lock
     private readonly object gate = new();
     // what it shows: a picture presented whole, or the window's own canvas the changed rectangles go into
-    private Bitmap bitmap;
+    private Shown shown;
     private IntPtr hwnd;
     private long lastMove;
     private string? error;
@@ -36,13 +38,16 @@ internal sealed class Window
 
     // an error PlangOS showed (kind 14, its json): the host keeps it
     private readonly Action<byte[]>? onError;
+    // a frame it was given and refused (past screen.setting.max, no image): told where the window's errors go
+    private readonly Action<global::app.error.@this> report;
 
     public Window(string title, int width, int height, global::app.type.list.@this types,
-        Action<global::app.type.item.@this> onEvent, Action onClosed, Action<byte[]>? onError = null)
+        Action<global::app.type.item.@this> onEvent, Action onClosed, Action<global::app.error.@this> report,
+        Action<byte[]>? onError = null)
     {
         this.title = title; this.width = width; this.height = height; this.types = types;
-        this.onEvent = onEvent; this.onClosed = onClosed; this.onError = onError;
-        bitmap = new Bitmap(width, height);
+        this.onEvent = onEvent; this.onClosed = onClosed; this.report = report; this.onError = onError;
+        shown = Canvas();
         proc = Proc;
         // a video's new picture: its place painted again (the picture drawn in at the paint)
         media.Presented += place =>
@@ -64,10 +69,10 @@ internal sealed class Window
     // this one's; a frame half put in is at worst one tick wrong
     private bool Shows(Rect place, (byte r, byte g, byte b) key)
     {
-        var shown = bitmap;
-        var px = shown.Pixels;
-        var w = shown.Width;
-        var area = place.Clip(new Rect(0, 0, w, shown.Height));
+        var picture = shown.Bitmap;
+        var px = picture.Pixels;
+        var w = picture.Width;
+        var area = place.Clip(new Rect(0, 0, w, picture.Height));
         var magenta = key == (255, 0, 255);
         for (var y = area.Y; y < area.Bottom; y += 8)
             for (var x = area.X; x < area.Right; x += 8)
@@ -90,31 +95,46 @@ internal sealed class Window
         return error;
     }
 
-    /// <summary>A new picture for the window; drawn at the next paint.</summary>
-    public void Present(Bitmap bitmap)
+    /// <summary>A new picture for the window, the whole screen; drawn at the next paint. Of the screen's size it goes in
+    /// at 0,0; of another, the screen changed size: the window shows a screen of that size holding it.</summary>
+    public void Present(Bitmap picture)
     {
-        lock (gate) this.bitmap = bitmap;
+        lock (gate)
+        {
+            if (picture.Width == shown.Bitmap.Width && picture.Height == shown.Bitmap.Height) shown.Put(picture);
+            else shown = new Shown(picture, Picture);
+        }
         Interlocked.Increment(ref Frames);
         if (hwnd != IntPtr.Zero) InvalidateRect(hwnd, IntPtr.Zero, false);
     }
 
+    // the window's own canvas, its size: what the changed rectangles go into
+    private Shown Canvas() => new(width, height, Picture);
+
     // ---- newest frame only: offering is instant, decoding runs on its own thread ------------
 
-    private string? offered;
-    private readonly AutoResetEvent offer = new(false);
-    private Action<string>? decode;
+    // a frame offered, the newest: its line and the most its picture may take, as the step that drew it read it
+    private sealed record Offered(string Frame, global::app.type.item.size.@this Max);
 
-    /// <summary>Hands the window an encoded frame and returns at once. A decoder thread takes the
-    /// newest one to <paramref name="decoder"/>, which presents it; frames offered while it decodes
-    /// replace each other, so the window never falls behind and nothing waits on it (input included).</summary>
-    public void Offer(string frame, Action<string> decoder)
+    private Offered? offered;
+    private readonly AutoResetEvent offer = new(false);
+    private int decoding;   // the decode thread started (once)
+
+    /// <summary>Hands the window an encoded frame (a browser's line, <c>{"frame":"&lt;base64&gt;",…}</c>), its picture
+    /// at most <paramref name="max"/>, and returns at once. A decoder thread takes the newest one and presents it;
+    /// frames offered while it decodes replace each other, so the window never falls behind and nothing waits on it
+    /// (input included). One that is no picture is reported, never shown.</summary>
+    public void Offer(string frame, global::app.type.item.size.@this max)
     {
-        if (decode == null)
-        {
-            decode = decoder;
+        Interlocked.Exchange(ref offered, new Offered(frame, max));
+        Wake();
+    }
+
+    // the decode thread, started on first use, told there is work
+    private void Wake()
+    {
+        if (Interlocked.Exchange(ref decoding, 1) == 0)
             new Thread(Decode) { IsBackground = true, Name = "screen decode: " + title }.Start();
-        }
-        Interlocked.Exchange(ref offered, frame);
         offer.Set();
     }
 
@@ -124,8 +144,9 @@ internal sealed class Window
         {
             offer.WaitOne(500);
             // changed rectangles build on each other: all of them, in order
-            while (patches.TryDequeue(out var patch))
+            while (patches.TryDequeue(out var queued))
             {
+                var (patch, max) = queued;
                 var started = System.Diagnostics.Stopwatch.GetTimestamp();
                 try
                 {
@@ -137,22 +158,52 @@ internal sealed class Window
                         if (echo[0] == 3) picture.Add(ms); else pipe.Add(ms);
                         continue;
                     }
-                    var applied = patch is byte[] binary ? ApplyBinary(binary) : Apply((string)patch);
+                    var applied = patch is byte[] binary ? ApplyBinary(binary, max) : Apply((string)patch, max);
                     if (applied) Interlocked.Increment(ref Frames);
                 }
-                catch { /* a bad update is skipped */ }
+                // refused (a rectangle past the max): told; one its own bytes contradict is skipped — what follows
+                // puts the picture right
+                catch (global::app.error.AppException ex) { report(ex.Error); }
+                catch (Exception ex) when (ex is JsonException or FormatException or ArgumentException
+                                               or IndexOutOfRangeException or InvalidOperationException or KeyNotFoundException) { }
                 Stats(System.Diagnostics.Stopwatch.GetTimestamp() - started);
             }
 
-            var frame = Interlocked.Exchange(ref offered, null);
-            if (frame == null) continue;
-            decode!(frame);
+            if (Interlocked.Exchange(ref offered, null) is not { } frame) continue;
+            try { Present(new Bitmap(Frame(frame.Frame), frame.Max)); }
+            catch (global::app.error.AppException ex) { report(ex.Error); }
         }
+    }
+
+    // {"frame":"<base64>",...} → the image bytes; a line without them is an AppException carrying BadFrame
+    private static byte[] Frame(string line)
+    {
+        if (Field(line, "frame") is not { } base64)
+            throw new global::app.error.AppException(new global::app.error.@this("Not an image: the line holds no frame", "BadFrame", 400));
+        try { return Convert.FromBase64String(base64); }
+        catch (FormatException ex)
+        {
+            var error = new global::app.error.@this("Not an image: the frame isn't base64", "BadFrame", 400);
+            error.list.Add(global::app.error.@this.FromException(ex));
+            throw new global::app.error.AppException(error, ex);
+        }
+    }
+
+    /// <summary>"key":"value" from a one-line JSON message, without parsing a 200 KB frame line; null when it has none.</summary>
+    internal static string? Field(string line, string key)
+    {
+        var marker = "\"" + key + "\":\"";
+        var start = line.IndexOf(marker, StringComparison.Ordinal);
+        if (start < 0) return null;
+        start += marker.Length;
+        var end = line.IndexOf('"', start);
+        return end < 0 ? null : line[start..end];
     }
 
     // ---- changed rectangles: {"rect":[x,y,w,h],"z":"<base64 deflate(BGRA rows)>"} --------------
 
-    private readonly System.Collections.Concurrent.ConcurrentQueue<object> patches = new();   // text lines or binary messages
+    // text lines or binary messages, each with the most a rectangle of it may take
+    private readonly System.Collections.Concurrent.ConcurrentQueue<(object Update, global::app.type.item.size.@this Max)> patches = new();
 
     /// <summary>
     /// A message from PlangOS's screen, [u8 kind][payload]: 1 a frame's rectangles, 7 a frame that
@@ -163,14 +214,14 @@ internal sealed class Window
     /// False when it isn't one (an image, say). Its first message
     /// tells PlangOS the codecs Windows decodes here: from then on PlangOS passes those videos on.
     /// </summary>
-    public bool Take(byte[] message)
+    public bool Take(byte[] message, global::app.type.item.size.@this max)
     {
         if (message.Length == 0) return false;
         if (Interlocked.Exchange(ref told, 1) == 0 && media.Codecs is { Length: > 0 } codecs)
             onEvent((global::app.type.item.text.@this)("{\"codecs\":" + JsonSerializer.Serialize(codecs) + "}"));
         switch (message[0])
         {
-            case 1 or 3 or 4 or 7: PatchBinary(message); return true;
+            case 1 or 3 or 4 or 7: PatchBinary(message, max); return true;
             case 2: Cursor(System.Text.Encoding.UTF8.GetString(message, 1, message.Length - 1)); return true;
             case 5: Clipboard(System.Text.Encoding.UTF8.GetString(message, 1, message.Length - 1)); return true;
             case 9: onEvent((global::app.type.item.text.@this)("{\"guest\":" + System.Text.Encoding.UTF8.GetString(message, 1, message.Length - 1) + "}")); return true;
@@ -186,72 +237,59 @@ internal sealed class Window
     private int told;          // PlangOS told the codecs (once)
     private byte[] composed = [];   // the part of a paint where a video shows: the frame's pixels with the video in
 
-    /// <summary>Queues a changed rectangle; applied in order by the decoder thread.</summary>
-    public void Patch(string line) => Enqueue(line);
+    /// <summary>Queues a changed rectangle, at most <paramref name="max"/>; applied in order by the decoder thread.</summary>
+    public void Patch(string line, global::app.type.item.size.@this max) => Enqueue(line, max);
 
     /// <summary>Queues a binary frame message ([1][u16 count] then per rectangle
     /// [i32 x][i32 y][u32 w][u32 h][u32 n][n bytes QOI]); applied in order like the text ones.</summary>
-    public void PatchBinary(byte[] message) => Enqueue(message);
+    public void PatchBinary(byte[] message, global::app.type.item.size.@this max) => Enqueue(message, max);
 
-    private void Enqueue(object update)
+    private void Enqueue(object update, global::app.type.item.size.@this max)
     {
-        if (decode == null)
-        {
-            decode = _ => { };
-            new Thread(Decode) { IsBackground = true, Name = "screen decode: " + title }.Start();
-        }
         if (update is byte[] m && IsVideo(m)) Interlocked.Increment(ref videosWaiting);
-        patches.Enqueue(update);
-        offer.Set();
+        patches.Enqueue((update, max));
+        Wake();
     }
 
-    // A binary frame — [1] its rectangles, or [7] a move and then its rectangles: all bands decoded
-    // on all cores, then the whole frame put in under the gate, so no paint shows half of it (the
-    // moved pixels without what the move uncovered); only then is it marked for painting.
-    private bool ApplyBinary(byte[] m)
+    // When a newer video picture waits behind this one, this one is only decoded (the newer needs it), not shown:
+    // behind, the window catches up instead of falling further behind. Set by the decode thread for the message it
+    // applies.
+    private bool newest = true;
+
+    // A binary frame — [1] its rectangles, or [7] a move and then its rectangles — put in by the screen whole, so no
+    // paint shows half of it; only then is what changed marked for painting.
+    private bool ApplyBinary(byte[] m, global::app.type.item.size.@this max)
     {
-        var at = m[0] == 7 ? 25 : 1;
-        var count = BitConverter.ToUInt16(m, at);
-        var parts = new (int x, int y, int w, int h, int at, int n)[count];
-        at += 2;
-        for (var i = 0; i < count; i++)
-        {
-            int x = BitConverter.ToInt32(m, at), y = BitConverter.ToInt32(m, at + 4);
-            int w = (int)BitConverter.ToUInt32(m, at + 8), h = (int)BitConverter.ToUInt32(m, at + 12);
-            var n = (int)BitConverter.ToUInt32(m, at + 16);
-            parts[i] = (x, y, w, h, at + 20, n);
-            at += 20 + n;
-        }
-        var decoded = new byte[]?[count];
-        // a video's pictures in order, one stream at a time; the lossless ones on all cores. When a
-        // newer video picture waits behind this one, this one is only decoded (the newer needs it),
-        // not shown: behind, the window catches up instead of falling further behind.
-        var newest = !IsVideo(m) || Interlocked.Decrement(ref videosWaiting) == 0;
-        for (var i = 0; i < count; i++)
-            if (parts[i].n > 8 && m.AsSpan(parts[i].at, 4).SequenceEqual("h264"u8))
-                decoded[i] = Picture(BitConverter.ToUInt32(m, parts[i].at + 4), m.AsSpan(parts[i].at + 8, parts[i].n - 8), parts[i].w, parts[i].h, newest);
-        Parallel.For(0, count, i =>
-        {
-            if (decoded[i] == null && !m.AsSpan(parts[i].at, 4).SequenceEqual("h264"u8))
-                decoded[i] = Qoi(m.AsSpan(parts[i].at, parts[i].n).ToArray(), parts[i].w * parts[i].h);
-        });
+        newest = !IsVideo(m) || Interlocked.Decrement(ref videosWaiting) == 0;
         Interlocked.Add(ref statBytes, m.Length);
-        var areas = new List<RECT>(count + 1);
+        return Painted(Screen().Apply(m, max));
+    }
+
+    // the screen the rectangles go into: the window's own canvas, made again its size after a picture presented whole
+    // of another
+    private Shown Screen()
+    {
         lock (gate)
         {
-            if (m[0] == 7 && Move(m) is { } moved) areas.Add(moved);
-            for (var i = 0; i < count; i++)
-                if (decoded[i] is { } px && Copy(parts[i].x, parts[i].y, parts[i].w, parts[i].h, px) is { } area) areas.Add(area);
+            if (shown.Bitmap.Width != width || shown.Bitmap.Height != height) shown = Canvas();
+            return shown;
         }
-        // repaint only what changed: WM_PAINT's clip is these areas, so GDI copies just these pixels
-        if (hwnd != IntPtr.Zero)
-            foreach (var area in areas)
-            {
-                var a = area;
-                InvalidateArea(hwnd, ref a, false);
-            }
-        return areas.Count > 0;
     }
+
+    // the area a change touched, marked for painting: WM_PAINT's clip is it, so GDI copies just these pixels
+    private bool Painted(Rect? changed)
+    {
+        if (changed is not { } area) return false;
+        if (hwnd != IntPtr.Zero)
+        {
+            var a = new RECT { left = area.X, top = area.Y, right = area.Right, bottom = area.Bottom };
+            InvalidateArea(hwnd, ref a, false);
+        }
+        return true;
+    }
+
+    // a video's picture for the screen: the next of its stream, shown only when it is the newest
+    private byte[]? Picture(uint id, ReadOnlyMemory<byte> h264, int w, int h) => Picture(id, h264.Span, w, h, newest);
 
     // ---- a video playing in PlangOS: an H.264 stream for its part of the screen ----------------
 
@@ -289,86 +327,12 @@ internal sealed class Window
         }
     }
 
-    // {"rects":[[x,y,w,h,"<qoi>"],…]} (one frame) or {"rect":[x,y,w,h],"qoi":"…"} (one rectangle)
-    private bool Apply(string line)
+    // {"rects":[[x,y,w,h,"<qoi>"],…]} (one frame, a big change in bands) or {"rect":[x,y,w,h],"qoi":"…"} (one
+    // rectangle): the screen reads, bounds, decodes and cuts it, as it does a binary frame
+    private bool Apply(string line, global::app.type.item.size.@this max)
     {
-        using var doc = JsonDocument.Parse(line);
-        var root = doc.RootElement;
-        var any = false;
-        if (root.TryGetProperty("rects", out var list))
-        {
-            // a big change arrives as bands: decode them on all cores, then copy them in
-            var parts = list.EnumerateArray()
-                .Select(e => (x: e[0].GetInt32(), y: e[1].GetInt32(), w: e[2].GetInt32(), h: e[3].GetInt32(), qoi: e[4].GetString()!))
-                .ToArray();
-            var decoded = new byte[]?[parts.Length];
-            Parallel.For(0, parts.Length, i => decoded[i] = Qoi(Convert.FromBase64String(parts[i].qoi), parts[i].w * parts[i].h));
-            for (var i = 0; i < parts.Length; i++)
-                if (decoded[i] is { } px)
-                {
-                    Interlocked.Add(ref statBytes, parts[i].qoi.Length);
-                    any |= Blit(parts[i].x, parts[i].y, parts[i].w, parts[i].h, px);
-                }
-        }
-        else if (root.TryGetProperty("rect", out var r) && root.TryGetProperty("qoi", out var q))
-            any = Apply(r[0].GetInt32(), r[1].GetInt32(), r[2].GetInt32(), r[3].GetInt32(), q.GetString()!);
-        return any;
-    }
-
-    private bool Apply(int x, int y, int w, int h, string qoi)
-    {
-        var rect = Qoi(Convert.FromBase64String(qoi), w * h);
-        if (rect == null) return false;
-        Interlocked.Add(ref statBytes, qoi.Length);
-        return Blit(x, y, w, h, rect);
-    }
-
-    /// <summary>A frame's move (a window dragged): [7][i32 x][i32 y][u32 w][u32 h][i32 dx][i32 dy]…
-    /// The pixels are here already: they move here, and aren't sent again. Under the gate; the
-    /// area they landed on, or null.</summary>
-    private RECT? Move(byte[] m)
-    {
-        int x = BitConverter.ToInt32(m, 1), y = BitConverter.ToInt32(m, 5);
-        int w = BitConverter.ToInt32(m, 9), h = BitConverter.ToInt32(m, 13);
-        int dx = BitConverter.ToInt32(m, 17), dy = BitConverter.ToInt32(m, 21);
-        // the source, cut to what is on the screen both where it is and where it lands
-        // (PlangOS sends it cut already; this only guards the copy)
-        var left = Math.Max(x, Math.Max(0, -dx));
-        var top = Math.Max(y, Math.Max(0, -dy));
-        var right = Math.Min(x + w, Math.Min(bitmap.Width, bitmap.Width - dx));
-        var bottom = Math.Min(y + h, Math.Min(bitmap.Height, bitmap.Height - dy));
-        if (right <= left || bottom <= top) return null;
-        var bytes = (right - left) * 4;
-        // rows in the order that doesn't overwrite what is still to be moved; within a row BlockCopy is overlap-safe
-        for (var i = 0; i < bottom - top; i++)
-        {
-            var row = dy > 0 ? bottom - 1 - i : top + i;
-            Buffer.BlockCopy(bitmap.Pixels, (row * bitmap.Width + left) * 4, bitmap.Pixels, ((row + dy) * bitmap.Width + left + dx) * 4, bytes);
-        }
-        return new RECT { left = left + dx, top = top + dy, right = right + dx, bottom = bottom + dy };
-    }
-
-    /// <summary>One rectangle of a text frame, put in and marked for painting.</summary>
-    private bool Blit(int x, int y, int w, int h, byte[] rect)
-    {
-        RECT? area;
-        lock (gate) area = Copy(x, y, w, h, rect);
-        if (area is not { } a) return false;
-        if (hwnd != IntPtr.Zero) InvalidateArea(hwnd, ref a, false);
-        return true;
-    }
-
-    /// <summary>A rectangle's pixels into the frame. Under the gate; the area, or null.</summary>
-    private RECT? Copy(int x, int y, int w, int h, byte[] rect)
-    {
-        // a picture presented whole of another size gives way to a canvas the window's size
-        if (bitmap.Width != width || bitmap.Height != height) bitmap = new Bitmap(width, height);
-        var rows = Math.Min(h, height - y);
-        var cols = Math.Min(w, width - x);
-        if (rows <= 0 || cols <= 0 || x < 0 || y < 0) return null;
-        for (var row = 0; row < rows; row++)
-            Buffer.BlockCopy(rect, row * w * 4, bitmap.Pixels, ((y + row) * width + x) * 4, cols * 4);
-        return new RECT { left = x, top = y, right = x + w, bottom = y + h };
+        Interlocked.Add(ref statBytes, line.Length);
+        return Painted(Screen().Apply(line, max));
     }
 
     // ---- live numbers in the title: updates/s, MB/s, time to apply ------------------------------
@@ -434,47 +398,6 @@ internal sealed class Window
             + ",\"picture\":" + picture.Json() + ",\"pipe\":" + pipe.Json() + video + "}}";
         onEvent((global::app.type.item.text.@this)stats);
         statUpdates = 0; statTicks = 0; statSince = now;
-    }
-
-    /// <summary>QOI decoder (qoiformat.org): 4 channels out, in the order they went in (BGRA here).</summary>
-    private static byte[]? Qoi(byte[] d, int pixelCount)
-    {
-        if (d.Length < 22 || d[0] != (byte)'q' || d[1] != (byte)'o' || d[2] != (byte)'i' || d[3] != (byte)'f') return null;
-        var outp = new byte[pixelCount * 4];
-        var index = new byte[64 * 4];
-        byte c0 = 0, c1 = 0, c2 = 0, c3 = 255;
-        int p = 14, run = 0;
-        var end = d.Length - 8;
-        for (var o = 0; o < outp.Length; o += 4)
-        {
-            if (run > 0) run--;
-            else if (p < end)
-            {
-                int b = d[p++];
-                if (b == 0xFE) { c0 = d[p++]; c1 = d[p++]; c2 = d[p++]; }
-                else if (b == 0xFF) { c0 = d[p++]; c1 = d[p++]; c2 = d[p++]; c3 = d[p++]; }
-                else switch (b >> 6)
-                {
-                    case 0: var i = (b & 63) * 4; c0 = index[i]; c1 = index[i + 1]; c2 = index[i + 2]; c3 = index[i + 3]; break;
-                    case 1:
-                        c0 = unchecked((byte)(c0 + ((b >> 4) & 3) - 2));
-                        c1 = unchecked((byte)(c1 + ((b >> 2) & 3) - 2));
-                        c2 = unchecked((byte)(c2 + (b & 3) - 2));
-                        break;
-                    case 2:
-                        int b2 = d[p++]; var vg = (b & 63) - 32;
-                        c0 = unchecked((byte)(c0 + vg - 8 + ((b2 >> 4) & 15)));
-                        c1 = unchecked((byte)(c1 + vg));
-                        c2 = unchecked((byte)(c2 + vg - 8 + (b2 & 15)));
-                        break;
-                    case 3: run = b & 63; break;
-                }
-                var h = ((c0 * 3 + c1 * 5 + c2 * 7 + c3 * 11) % 64) * 4;
-                index[h] = c0; index[h + 1] = c1; index[h + 2] = c2; index[h + 3] = c3;
-            }
-            outp[o] = c0; outp[o + 1] = c1; outp[o + 2] = c2; outp[o + 3] = c3;
-        }
-        return outp;
     }
 
     // ---- cursor: the page says what it is (CSS names) ------------------------------------------
@@ -695,8 +618,10 @@ internal sealed class Window
     private void Paint(IntPtr h)
     {
         BeginPaint(h, out var ps);
-        lock (gate)
+        var screen = shown;
+        lock (screen.Lock)
         {
+            var bitmap = screen.Bitmap;
             var info = new BITMAPINFO
             {
                 bmiHeader = new BITMAPINFOHEADER

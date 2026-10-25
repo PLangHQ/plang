@@ -57,7 +57,7 @@ public class HttpPathRedirectTests
         // redirect target must hit the gate and get denied by the canned 'n'.
         var origin = server.MapRedirect(302, secret);
         await Grant(context, origin);
-        context.Actor!.Channel.Register(new CannedAnswerChannel("n"));
+        context.Actor!.Channel.Register(new CannedAnswerChannel(context.Actor!.Channel, "n"));
 
         var result = await context.Url(origin).Touch(context);
 

@@ -181,12 +181,7 @@ public class LlmIntegrationTests
         var snapshot = LlmSnapshotHelper.TryLoadSnapshot(testName, messages);
 
         if (snapshot != null)
-        {
-            var handler = new SnapshotReplayHandler(new List<string> { snapshot });
-            var httpProvider = new Default(handler) { Name = "snapshot" };
-            _app.Code.Register<IHttp>(httpProvider);
-            _app.Code.SetDefault<IHttp>("snapshot");
-        }
+            LlmTestHelper.Mock(_app, new SnapshotReplayHandler(new List<string> { snapshot }));
         else if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("OPENAI_API_KEY")))
         {
             return null; // skip
@@ -216,12 +211,7 @@ public class LlmIntegrationTests
         CaptureHandler? captureHandler = null;
 
         if (multiSnapshot != null)
-        {
-            var handler = new SnapshotReplayHandler(multiSnapshot);
-            var httpProvider = new Default(handler) { Name = "snapshot" };
-            _app.Code.Register<IHttp>(httpProvider);
-            _app.Code.SetDefault<IHttp>("snapshot");
-        }
+            LlmTestHelper.Mock(_app, new SnapshotReplayHandler(multiSnapshot));
         else if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("OPENAI_API_KEY")))
         {
             return null;

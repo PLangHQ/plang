@@ -82,7 +82,7 @@ public class ErrorHandleTests
 
     private global::app.channel.type.stream.@this CaptureDebug()
     {
-        _app.actor.list.System.Channel.Register(global::app.channel.type.stream.@this.Memory(global::app.channel.list.@this.Debug));
+        _app.actor.list.System.Channel.Register(global::app.channel.type.stream.@this.Memory(_app.actor.list.System.Channel, global::app.channel.list.@this.Debug));
         return (global::app.channel.type.stream.@this)_app.actor.list.System.Channel.Get(global::app.channel.list.@this.Debug)!;
     }
 

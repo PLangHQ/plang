@@ -18,7 +18,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
 
     private global::app.channel.@this Registered(string name)
     {
-        var ch = StreamChannel.Memory(name);
+        var ch = StreamChannel.Memory(app.actor.list.User.Channel, name);
         app.actor.list.User.Channel.Register(ch);
         return ch;
     }
@@ -30,7 +30,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     [Test]
     public async Task AChannel_IsAnItem_WithItsOwnEvents()
     {
-        var ch = StreamChannel.Memory("c");
+        var ch = StreamChannel.Memory(app.actor.list.User.Channel, "c");
         await Assert.That(ch.on.write.before.Count).IsEqualTo(0);
         await Assert.That(ReferenceEquals(ch.Clone(), ch)).IsTrue();
         await Assert.That(app.type.list["channel"].Namespace).IsEqualTo("app.channel");
@@ -89,7 +89,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     [Test]
     public async Task ATransportFailure_IsAnErrorResult_AndAfterWriteSeesIt()
     {
-        var ch = new ThrowOnWriteChannel("c", app.actor.list.User.Context);
+        var ch = new ThrowOnWriteChannel(app.actor.list.User.Channel, "c", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
         Data? received = null;
         Bind(ch, "write", When.after, (_, result, ctx) => { received = result; return Task.FromResult(ctx.Ok()); });
@@ -171,7 +171,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     public async Task AfterAsk_OnASessionChannel_IsHandedTheAnswer()
     {
         var ms = new MemoryStream(global::System.Text.Encoding.UTF8.GetBytes("answer\n"));
-        var ch = new StreamChannel("i", ms, ChannelDirection.Bidirectional, ownsStream: false) { Mime = "text/plain" };
+        var ch = new StreamChannel(app.actor.list.User.Channel, "i", ms, ChannelDirection.Bidirectional, ownsStream: false) { Mime = "text/plain" };
         app.actor.list.User.Channel.Register(ch);
         Data? received = null;
         Bind(ch, "ask", When.after, (_, result, ctx) => { received = result; return Task.FromResult(ctx.Ok()); });
@@ -187,7 +187,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     public async Task AnAskCancelledWhileWaiting_AnswersCancelled()
     {
         var pipe = new global::System.IO.Pipelines.Pipe();
-        var ch = new StreamChannel("i3", pipe.Reader.AsStream(), ChannelDirection.Input, ownsStream: false) { Mime = "text/plain" };
+        var ch = new StreamChannel(app.actor.list.User.Channel, "i3", pipe.Reader.AsStream(), ChannelDirection.Input, ownsStream: false) { Mime = "text/plain" };
         app.actor.list.User.Channel.Register(ch);
         using var stop = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
 
@@ -203,7 +203,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     public async Task TwoAsks_TwoAnswersInTheStream_EachGetsItsOwn()
     {
         var ms = new MemoryStream(global::System.Text.Encoding.UTF8.GetBytes("first\nsecond\n"));
-        var ch = new StreamChannel("i2", ms, ChannelDirection.Bidirectional, ownsStream: false) { Mime = "text/plain" };
+        var ch = new StreamChannel(app.actor.list.User.Channel, "i2", ms, ChannelDirection.Bidirectional, ownsStream: false) { Mime = "text/plain" };
         app.actor.list.User.Channel.Register(ch);
         global::app.module.output.ask Ask() => new(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "", context: app.actor.list.User.Context) };
 
@@ -217,7 +217,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     [Test]
     public async Task AfterAsk_OnAMessageChannel_Fires()
     {
-        var ch = new MessageProbeChannel("m", app.actor.list.User.Context);
+        var ch = new MessageProbeChannel(app.actor.list.User.Channel, "m", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
         var fired = false;
         Bind(ch, "ask", When.after, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); });
@@ -231,10 +231,10 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     public async Task TheChannelTypesWrite_FiresForEveryChannel_UserAndServiceAlike()
     {
         await using var app = new global::app.@this("/tmp/s8-cross", global::PLang.Tests.Parent.Actor).Testing();
-        var userLogger = StreamChannel.Memory("logger");
-        var serviceLogger = StreamChannel.Memory("logger");
+        var userLogger = StreamChannel.Memory(app.actor.list.User.Channel, "logger");
         app.actor.list.User.Channel.Register(userLogger);
         await using var svc = app.Services.New(parent: app.actor.list.User);
+        var serviceLogger = StreamChannel.Memory(svc.Channels, "logger");
         svc.Channels.Register(serviceLogger);
         var hits = 0;
         app.actor.list.User.on.Bind(app.type.list["channel"], "write", When.before,
@@ -261,7 +261,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     private sealed class ThrowOnWriteChannel : Channel
     {
         private readonly global::app.actor.context.@this _ctx;
-        public ThrowOnWriteChannel(string name, global::app.actor.context.@this ctx) { Name = name; _ctx = ctx; }
+        public ThrowOnWriteChannel(global::app.channel.list.@this channels, string name, global::app.actor.context.@this ctx) : base(channels) { Name = name; _ctx = ctx; }
         public override Task<Data> Write(Data data, CancellationToken ct = default)
             => throw new IOException("boom");
         public override Task<Data> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
@@ -271,7 +271,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     private sealed class MessageProbeChannel : global::app.channel.type.message.@this
     {
         private readonly global::app.actor.context.@this _ctx;
-        public MessageProbeChannel(string name, global::app.actor.context.@this ctx) { Name = name; _ctx = ctx; }
+        public MessageProbeChannel(global::app.channel.list.@this channels, string name, global::app.actor.context.@this ctx) : base(channels) { Name = name; _ctx = ctx; }
         public override Task<Data> Write(Data data, CancellationToken ct = default) => Task.FromResult(data.Context.Ok());
         public override Task<Data> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<Data> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(action.Context.Ok("answer-from-resume"));

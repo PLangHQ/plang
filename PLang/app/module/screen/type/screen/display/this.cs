@@ -74,7 +74,7 @@ public sealed class @this : screen.@this
         // and its errorlog channel: what the shell writes there (an error it showed) goes up beside the frames, for
         // the host to keep — the shell names the door, the display never reads what goes through
         if (output != null)
-            context.Actor.Channel.Register(new global::app.channel.type.stream.@this("errorlog", new code.Errorlog(display),
+            context.Actor.Channel.Register(new global::app.channel.type.stream.@this(context.Actor.Channel, "errorlog", new code.Errorlog(display),
                 global::app.channel.ChannelDirection.Output) { Framed = true, Mime = "application/json" });
 
         var opened = context.Ok<screen.@this>(screen);

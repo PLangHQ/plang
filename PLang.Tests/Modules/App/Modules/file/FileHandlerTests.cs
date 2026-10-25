@@ -535,7 +535,7 @@ public class FileHandlerTests : IDisposable
         System.IO.File.WriteAllText(TempPath("real.txt"), "I exist");
 
         var captureStream = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(_app.actor.list.User.Channel,
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain", Framed = true });
@@ -565,14 +565,14 @@ public class FileHandlerTests : IDisposable
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
-        await Assert.That(output).IsEqualTo("true" + System.Environment.NewLine);
+        await Assert.That(output).IsEqualTo("true\n");
     }
 
     [Test]
     public async Task Integration_FileNotExists_FlowsThroughVariables_ToOutput()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(_app.actor.list.User.Channel,
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain", Framed = true });
@@ -596,6 +596,6 @@ public class FileHandlerTests : IDisposable
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
-        await Assert.That(output).IsEqualTo("false" + System.Environment.NewLine);
+        await Assert.That(output).IsEqualTo("false\n");
     }
 }

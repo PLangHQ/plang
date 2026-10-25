@@ -6,7 +6,7 @@ namespace PLang.Tests.App.FileSystem.PermissionTests.AuthorizeTests;
 
 /// The actor's consent is its own answer, from its input: a step can't answer the gate's question for it. A step that
 /// sets %!ask.answer% (the resume sentinel a stateless channel pre-binds) is still asked, on its input — a closed
-/// input answers no — for an out-of-root read, an identity's export, a bundled copy.
+/// input answers no — for an out-of-root read, an identity's creation, a bundled copy.
 public class AskAnswerTests : System.IAsyncDisposable
 {
     private readonly string outside;
@@ -20,7 +20,7 @@ public class AskAnswerTests : System.IAsyncDisposable
         System.IO.File.WriteAllText(System.IO.Path.Combine(outside, "secret.txt"), "outside");
         app =new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-askanswer-root-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         user = app.actor.list.User.Context;
-        channel = new Counting(user);
+        channel = new Counting(user.Actor!.Channel, user);
         app.actor.list.User.Channel.Register(channel);
     }
 
@@ -31,7 +31,7 @@ public class AskAnswerTests : System.IAsyncDisposable
     {
         private readonly global::app.actor.context.@this _ctx;
         public int Count { get; private set; }
-        public Counting(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public Counting(global::app.channel.list.@this channels, global::app.actor.context.@this ctx) : base(channels) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
@@ -41,13 +41,9 @@ public class AskAnswerTests : System.IAsyncDisposable
         }
     }
 
-    // identity.export on the app's own default identity, made first (identity.get asks nothing): an app gives out only
-    // an identity it holds
-    private async Task<global::app.data.@this> Export()
-    {
-        await (await user.Action("identity.get()")).Start(user);
-        return await (await user.Action("identity.export()")).Start(user);
-    }
+    // identity.create: a change to the app's identities, which asks the actor every time
+    private async Task<global::app.data.@this> Create()
+        => await (await user.Action("identity.create(Name=\"mine\")")).Start(user);
 
     private async Task Answering() => await (await (await user.Action("variable.set(Name=\"!ask.answer\", Value=\"a\")")).Start(user)).IsSuccess();
 
@@ -74,10 +70,10 @@ public class AskAnswerTests : System.IAsyncDisposable
         await Refused(await user.File(System.IO.Path.Combine(outside, "secret.txt")).Read(user));
     }
 
-    [Test] public async Task ABindingOnTheInputsAsk_DoesNotAnswerAnExport()
+    [Test] public async Task ABindingOnTheInputsAsk_DoesNotAnswerAnIdentityCreate()
     {
         Binding();
-        await Refused(await Export());
+        await Refused(await Create());
     }
 
     [Test] public async Task AStepSettingTheAskAnswer_IsStillAskedForARead()
@@ -86,10 +82,10 @@ public class AskAnswerTests : System.IAsyncDisposable
         await Refused(await user.File(System.IO.Path.Combine(outside, "secret.txt")).Read(user));
     }
 
-    [Test] public async Task AStepSettingTheAskAnswer_IsStillAskedForAnExport()
+    [Test] public async Task AStepSettingTheAskAnswer_IsStillAskedForAnIdentityCreate()
     {
         await Answering();
-        await Refused(await Export());
+        await Refused(await Create());
     }
 
     [Test] public async Task AStepSettingTheAskAnswer_IsStillAskedForACopy()

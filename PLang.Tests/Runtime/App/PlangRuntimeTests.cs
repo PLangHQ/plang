@@ -34,7 +34,7 @@ public class PlangRuntimeTests : IDisposable
     public async Task Kernel_Execute_RunsStepActions()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(_app.actor.list.User.Channel,
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain", Framed = true });
@@ -62,7 +62,7 @@ public class PlangRuntimeTests : IDisposable
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
-        await Assert.That(output).IsEqualTo("hello kernel" + System.Environment.NewLine);
+        await Assert.That(output).IsEqualTo("hello kernel\n");
     }
 
     // --- Step 2: IEvent + Event resolution ---
@@ -98,7 +98,7 @@ public class PlangRuntimeTests : IDisposable
     public async Task PlangRuntime_SimpleGoal_ExecutesThroughRunGoal()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(_app.actor.list.User.Channel,
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain", Framed = true });
@@ -114,6 +114,6 @@ public class PlangRuntimeTests : IDisposable
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
-        await Assert.That(output).IsEqualTo("hello runtime" + System.Environment.NewLine);
+        await Assert.That(output).IsEqualTo("hello runtime\n");
     }
 }

@@ -52,7 +52,7 @@ public sealed class Identity : global::app.type.item.@this, global::app.type.ite
     public override string ToString() => PublicKey;
 
     /// <summary>This identity as a step may hold it: every member but its private key, which stays in its owner's
-    /// setting (signing reads it there; only <c>identity.export</c>, asked each time, hands it out).</summary>
+    /// setting (signing reads it there; <c>identity.export</c> refuses until critical actions hand it out).</summary>
     internal Identity Public() => new(Name, Type)
     {
         PublicKey = PublicKey,

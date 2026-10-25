@@ -1,0 +1,66 @@
+/ bugs: the fixes item-doors' audit, the goal channel's race and packages' Windows window left, plus Ingi's three
+/ yeses from fast-apps. This goal is the plan's index and its proof: each stage is a goal, each comment a behaviour we
+/ want, and the step under it runs the test that proves it. The plang here is intent: each test is written so it goes
+/ red before its stage, and the coder makes it green. The text is start.md.
+Start
+- call Stage1
+- call Stage2
+- call Stage3
+- call Stage4
+- call Stage5
+- call Stage6
+- call Stage7
+
+Stage1
+/ an llm test asks OpenAI nothing when its answers are in its file: a run with no key passes — plang test
+/ /module/llm (each of the six, no OPENAI_API_KEY)
+/ a question not in the file is asked once and added to it; the second run asks nothing — C# test
+/ LlmAnswersFileTests (ANewQuestion_IsAskedOnce_ThenRead)
+/ a changed prompt is a new question: the old answer is never served for it — C# test LlmAnswersFileTests
+/ (AChangedPrompt_IsNotServedTheOldAnswer)
+/ the key never lands in the file: it holds the request body and the endpoint path, never a header — C# test
+/ LlmAnswersFileTests (TheKey_IsNeverInTheFile)
+/ test.setting.llm=live asks OpenAI and writes nothing — C# test LlmAnswersFileTests (Live_WritesNothing)
+/ the cache's own test still proves the cache: a first ask misses, a second hits
+- call /module/llm/LlmCache
+
+Stage2
+/ export refuses: exporting a private key waits for critical actions — C# test IdentityPrivateKeyLeakTests
+/ (Export_Refuses_UntilCriticalActions, TheExportQuestion_IsNeverAsked)
+/ a failed "always" save answers its error, not Ok — C# test GrantKeepTests (AFailedAlwaysSave_AnswersItsError)
+/ a one-time yes on the os folder keeps its standing grant: read and execute stay — C# test GrantKeepTests
+/ (AOneTimeYes_KeepsTheStandingGrant)
+/ a persisted grant can't open the stores' folder, with the grant really saved — C# test
+/ PersistedGrantCannotOverrideStoresTests (Find is non-null after the persist)
+/ a bug inside an ask surfaces as itself, not as a "no"; a cancelled input is a "no" — C# test ConsentAskTests
+/ (ABugInTheAsk_IsNotADenial, ACancelledInput_IsADenial)
+
+Stage3
+/ a json number slot holding true is refused, naming the slot — C# test JsonReaderTests (ANumberSlot_RefusesABool)
+/ a bad size, parallel or choice from a peer lands as its own error, never a 500 — C# test TypeReaderErrorTests
+/ (one case per reader)
+
+Stage4
+/ each write to a goal channel sees its own message, 20 writes at once
+- call /channel/goal/EachWriteSeesItsOwnMessage
+/ each iteration of a parallel foreach that writes to a goal channel sees its own message
+- call /channel/goal/ParallelWritesSeeTheirOwn
+
+Stage5
+/ each command line plang can't read is refused, naming the argument — C# test StartRefusalTests (a second
+/ positional, a dotted positional, --test=module/x, --debug=false with a debug setting, a repeat differing in case)
+/ %path% is the landed root, not the folder as typed — C# test StartRefusalTests (APath_IsSeededFromTheRoot)
+
+Stage6
+/ a path beside the root that starts with its name is not in it (/root2 is not under /root) — C# test
+/ ValidatePathTests (ASiblingWithTheRootsPrefix_IsNotUnderIt)
+/ OsTrustTests passes on Windows: no / separator in its compare — the Windows run
+/ the window applies frames through Shown and decodes QOI through Qoi; a frame larger than screen.setting.max is
+/ BadFrame before any decode, whatever its message says — C# test WindowFrameTests (Linux, through the shared code)
+/ a patch before the first frame decodes nothing and breaks nothing — the Windows run (APatchBeforeTheFirstFrame:
+/ the window's decode thread is Win32's)
+
+Stage7
+/ module.remove answers data: true removed, false not there, ModuleShared refused — C# test ModuleRemoveTests
+/ an app is born with the console's channels or without, by a choice that names both — C# test AppConsoleTests
+/ a channel is born in its list: its list and actor are set at birth, never after — C# test ChannelBirthTests

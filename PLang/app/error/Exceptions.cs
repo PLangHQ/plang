@@ -107,16 +107,20 @@ public class VariableNotFoundException : AppException
 }
 
 /// <summary>
-/// Exception thrown when call stack depth exceeds the limit.
+/// A frame refused because the call stack is too deep: past its depth limit, or with the thread's stack run short.
 /// </summary>
 public class CallStackOverflowException : AppException
 {
-    public int MaxDepth { get; }
+    /// <summary>The depth the call stack stopped at.</summary>
+    public int Depth { get; }
 
     public CallStackOverflowException(int maxDepth)
-        : base($"Call stack overflow: exceeded {maxDepth} frames", "CallStackOverflow", 500)
+        : this(maxDepth, $"Call stack overflow: exceeded {maxDepth} frames") { }
+
+    public CallStackOverflowException(int depth, string message)
+        : base(message, "CallStackOverflow", 500)
     {
-        MaxDepth = maxDepth;
+        Depth = depth;
     }
 }
 

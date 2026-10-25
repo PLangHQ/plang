@@ -110,6 +110,29 @@ public class RenderTests : IDisposable
             .IsEqualTo("{\"a\":1,\"b\":\"Þór\"}|\"50% of %x%\"|\"Þór\"|{\"a\":1,\"b\":\"Þór\"}");
     }
 
+    // a page renders `{{ x | json }}` as it is: a value holding </script> never closes the page's script — the json
+    // carries no < > &, and reads back as the value
+    [Test]
+    public async Task Render_JsonFilter_IsSafeInAPage()
+    {
+        var context = _app.actor.list.User.Context;
+        const string hostile = "</script><img src=x onerror=alert(1)>&amp;";
+        await context.Variable.Set("s", context.Text(hostile));
+        var action = new Render(context)
+        {
+            Template = (global::app.type.item.text.@this)"<script>var s = {{ s | json }};</script>",
+            IsFile = (global::app.type.item.@bool.@this)false
+        };
+
+        var result = await _provider.Render(action);
+
+        await result.IsSuccess();
+        var page = (await result.Value())!.ToString()!;
+        var json = page["<script>var s = ".Length..^";</script>".Length];
+        await Assert.That(json).DoesNotContain("<").And.DoesNotContain(">").And.DoesNotContain("&");
+        await Assert.That(System.Text.Json.JsonSerializer.Deserialize<string>(json)).IsEqualTo(hostile);
+    }
+
     // --- Batch 1: Core Render Behavior ---
 
     [Test]
@@ -607,9 +630,11 @@ public class RenderTests : IDisposable
 
         var result = await _provider.Render(action);
 
-        // Fluid throws FileNotFoundException for missing includes — caught as RenderError
+        // Fluid throws FileNotFoundException for missing includes — the render's error, the fault its cause whole
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("RenderError");
+        await Assert.That(result.Error.list).Count().IsEqualTo(1);
+        await Assert.That(result.Error.list[0].Message).Contains("FileNotFoundException");
     }
 
     [Test]
@@ -724,6 +749,86 @@ public class RenderTests : IDisposable
         await result.IsSuccess();
         var output = (await result.Value())?.ToString() ?? "";
         await Assert.That(output).Contains("Footer content");
+    }
+
+    // --- A page escapes what it writes; any other template writes values as they are ---
+
+    private const string Script = "<script>alert('x')</script>";
+
+    private async Task<string> RenderFile(string name, string content)
+    {
+        WriteTemplateFile(name, content);
+        var context = _app.actor.list.User.Context;
+        context.Variable.Set(new Data("x", Script, context: context));
+        var result = await _provider.Render(new Render(context)
+            { Template = (global::app.type.item.text.@this)name, IsFile = (global::app.type.item.@bool.@this)true });
+        await result.IsSuccess();
+        return (await result.Value())?.ToString() ?? "";
+    }
+
+    [Test]
+    public async Task AnHtmlTemplate_EscapesAValue()
+    {
+        var output = await RenderFile("page.html", "{{ x }}");
+        await Assert.That(output).DoesNotContain("<script>");
+        await Assert.That(output).Contains("&lt;script&gt;");
+    }
+
+    [Test]
+    public async Task AnHtmTemplate_EscapesAValue()
+        => await Assert.That(await RenderFile("page.htm", "{{ x }}")).Contains("&lt;script&gt;");
+
+    [Test]
+    public async Task ATextTemplate_WritesAValueAsItIs()
+        => await Assert.That(await RenderFile("page.txt", "{{ x }}")).IsEqualTo(Script);
+
+    [Test]
+    public async Task AnInlineTemplate_WritesAValueAsItIs()
+    {
+        var context = _app.actor.list.User.Context;
+        context.Variable.Set(new Data("x", Script, context: context));
+        var result = await _provider.Render(new Render(context)
+            { Template = (global::app.type.item.text.@this)"{{ x }}", IsFile = (global::app.type.item.@bool.@this)false });
+        await result.IsSuccess();
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo(Script);
+    }
+
+    [Test]
+    public async Task Raw_InAnHtmlTemplate_WritesTheValueAsItIs()
+        => await Assert.That(await RenderFile("page.html", "{{ x | raw }}")).IsEqualTo(Script);
+
+    [Test]
+    public async Task Text_InAnHtmlTemplate_IsEscaped()
+        => await Assert.That(await RenderFile("page.html", "{{ x | text }}")).Contains("&lt;script&gt;");
+
+    // the json filter makes its own output safe for a script; a page writes it as it is, so it reads back the same
+    [Test]
+    public async Task Json_InAnHtmlTemplate_ReadsBackAsTheSameJson()
+    {
+        var output = await RenderFile("page.html", "{{ x | json }}");
+        await Assert.That(output).DoesNotContain("&quot;");
+        await Assert.That(System.Text.Json.JsonSerializer.Deserialize<string>(output)).IsEqualTo(Script);
+    }
+
+    [Test]
+    public async Task CallGoal_InAnHtmlTemplate_IsEscaped()
+    {
+        var goal = new Goal(_app.type.list)
+        {
+            Name = "Shouter",
+            Path = global::app.type.item.path.@this.Resolve("/Shouter.goal", _app.actor.list.User.Context),
+            Step = new GoalSteps(_app.type.list)
+            {
+                MakeStep("variable", "set",
+                    new Dictionary<string, object?> { { "name", "said" }, { "value", Script } },
+                    index: 0, text: "set said")
+            }
+        };
+        _app.goal.list.Add(goal);
+
+        var output = await RenderFile("called.html", "{% callGoal 'Shouter' %}");
+        await Assert.That(output).DoesNotContain("<script>");
+        await Assert.That(output).Contains("&lt;script&gt;");
     }
 
     // --- Helper for creating steps (from EngineTests pattern) ---

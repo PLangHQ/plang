@@ -115,13 +115,12 @@ public class ExecutorTests
         await Assert.That(error.Error!.Key).IsEqualTo("UnknownSetting");
     }
 
-    // --debug=Start routes to Debug.Apply which sets IsEnabled and parses the argument.
-    // A string value (vs dict) is accepted — scalar values set the IsEnabled bit only.
+    // --debug.setting.goal=Start, debug's setting for one goal, turns debug on.
     [Test]
     public async Task Configure_DebugFlag_InvokesDebugApply()
     {
         var executor = NewExecutor();
-        var (engine, error) = await executor.Configure(new[] { "Start.goal", "--debug=Start" });
+        var (engine, error) = await executor.Configure(new[] { "Start.goal", "--debug.setting.goal=Start" });
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
@@ -226,7 +225,7 @@ public class ExecutorTests
     public async Task Configure_TestAndDebugFlags_BothApplied()
     {
         var executor = NewExecutor();
-        var (engine, error) = await executor.Configure(new[] { "--test", "--debug=Start" });
+        var (engine, error) = await executor.Configure(new[] { "--test", "--debug" });
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();

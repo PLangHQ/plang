@@ -22,7 +22,7 @@ public class Stage5MessagesEndToEndTests
             "plang-s5-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
         var app = new global::app.@this(root).TestIdentity();
-        app.actor.list.User.Channel.Register(new CannedChannel(answer, app.actor.list.User.Context));
+        app.actor.list.User.Channel.Register(new CannedChannel(app.actor.list.User.Channel, answer, app.actor.list.User.Context));
 
         // Simulate /apps/Email/system.sqlite living outside the app root.
         var foreignDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
@@ -38,7 +38,7 @@ public class Stage5MessagesEndToEndTests
         private readonly string _answer;
         private readonly global::app.actor.context.@this _ctx;
         public int AskCount { get; private set; }
-        public CannedChannel(string answer, global::app.actor.context.@this ctx) { _answer = answer; _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public CannedChannel(global::app.channel.list.@this channels, string answer, global::app.actor.context.@this ctx) : base(channels) { _answer = answer; _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
@@ -51,7 +51,7 @@ public class Stage5MessagesEndToEndTests
     private sealed class StatelessChannel : global::app.channel.type.message.@this
     {
         private readonly global::app.actor.context.@this _ctx;
-        public StatelessChannel(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public StatelessChannel(global::app.channel.list.@this channels, global::app.actor.context.@this ctx) : base(channels) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
     }
@@ -60,7 +60,7 @@ public class Stage5MessagesEndToEndTests
     {
         var (app, _) = Setup("UNUSED");
         // Override channel: stateless.
-        app.actor.list.User.Channel.Register(new StatelessChannel(app.actor.list.User.Context));
+        app.actor.list.User.Channel.Register(new StatelessChannel(app.actor.list.User.Channel, app.actor.list.User.Context));
         var foreignFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-email-x", "system.sqlite");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(foreignFile)!);
@@ -111,7 +111,7 @@ public class Stage5MessagesEndToEndTests
         // App #2 on the same root. Channel here has zero "a" answers — any
         // prompt that fires means the persisted grant was missed.
         var app2 = new global::app.@this(root).TestIdentity();
-        var statelessProbe = new StatelessChannel(app2.actor.list.User.Context);
+        var statelessProbe = new StatelessChannel(app2.actor.list.User.Channel, app2.actor.list.User.Context);
         app2.actor.list.User.Channel.Register(statelessProbe);
         var path2 = app2.actor.list.User.Context.File(foreignFile);
         var secondRead = await path2.Touch(app2.actor.list.User.Context);
@@ -135,7 +135,7 @@ public class Stage5MessagesEndToEndTests
         // Advance clock by 10 minutes — past the default 5-minute
         // live-read window, which a stored grant does not get.
         var app2 = new global::app.@this(root).TestIdentity();
-        var statelessProbe = new StatelessChannel(app2.actor.list.User.Context);
+        var statelessProbe = new StatelessChannel(app2.actor.list.User.Channel, app2.actor.list.User.Context);
         app2.actor.list.User.Channel.Register(statelessProbe);
         // Replace the DynamicData NowUtc with a static Data (the DynamicData's
         // override Value getter ignores `_value`, so Set("NowUtc", offset)
@@ -167,7 +167,7 @@ public class Stage5MessagesEndToEndTests
         // app2: two reads. Each Find re-deserializes the grant → two real
         // VerifySignature passes → step 4 would NonceReplay the second.
         var app2 = new global::app.@this(root).TestIdentity();
-        app2.actor.list.User.Channel.Register(new StatelessChannel(app2.actor.list.User.Context));
+        app2.actor.list.User.Channel.Register(new StatelessChannel(app2.actor.list.User.Channel, app2.actor.list.User.Context));
         var path2 = app2.actor.list.User.Context.File(foreignFile);
         var read1 = await path2.Touch(app2.actor.list.User.Context);   // verify #1 — nonce cached
         var read2 = await path2.Touch(app2.actor.list.User.Context);   // verify #2 — nonce replay if step 4 active

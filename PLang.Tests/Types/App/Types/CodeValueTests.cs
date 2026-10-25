@@ -37,7 +37,7 @@ public class CodeValueTests : System.IAsyncDisposable
 
     [Test] public async Task Code_PlangTypeAttribute_Registered()
     {
-        var types = new global::app.origin.code().type;
+        var types = new global::app.origin.code(global::app.Wiring.none).type;
         await Assert.That(types.Clr("code")).IsEqualTo(typeof(code));
     }
 }

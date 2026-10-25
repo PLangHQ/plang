@@ -44,7 +44,7 @@ public class ComposedActionsAreObservableTests
         var ctx = app.actor.list.User.Context;
         var seen = new List<string>();
         Watch(app, "output", "ask", seen);
-        var input = new Asked(ctx);
+        var input = new Asked(ctx.Actor!.Channel, ctx);
         app.actor.list.User.Channel.Register(input);
         var request = global::app.type.item.permission.@this.Request(ctx.Actor!, "/elsewhere", global::app.type.item.permission.Verb.write);
 
@@ -59,7 +59,7 @@ public class ComposedActionsAreObservableTests
     {
         private readonly global::app.actor.context.@this _ctx;
         public int Count { get; private set; }
-        public Asked(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public Asked(global::app.channel.list.@this channels, global::app.actor.context.@this ctx) : base(channels) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)

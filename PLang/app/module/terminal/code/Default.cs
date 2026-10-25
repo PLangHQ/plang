@@ -56,7 +56,7 @@ public sealed class Default : ITerminal
             // listed among its named channels: each program has its own): messages each ended — a newline, until the
             // one who reads it sets another end
             var channel = os.Pipe is { } pair
-                ? new global::app.channel.type.stream.@this("pipe", pair, ownsStream: true) { Framed = true, Actor = context.Actor! }
+                ? new global::app.channel.type.stream.@this(context.Actor.Channel, "pipe", pair, ownsStream: true) { Framed = true }
                 : null;
             return context.Ok<Process>(new Process(context.App.type.list[typeof(Process)])
             {

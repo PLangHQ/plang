@@ -12,7 +12,7 @@ public class AskAnswerTests
     private sealed class TestMessageChannel : global::app.channel.type.message.@this
     {
         private readonly global::app.actor.context.@this _ctx;
-        public TestMessageChannel(string name, global::app.actor.context.@this ctx)
+        public TestMessageChannel(global::app.channel.list.@this channels, string name, global::app.actor.context.@this ctx) : base(channels)
         {
             Name = name;
             _ctx = ctx;
@@ -26,7 +26,7 @@ public class AskAnswerTests
 
     private static global::app.channel.type.stream.@this Console(global::app.@this app, string typed)
     {
-        var input = new global::app.channel.type.stream.@this("input", new MemoryStream(System.Text.Encoding.UTF8.GetBytes(typed)),
+        var input = new global::app.channel.type.stream.@this(app.actor.list.User.Channel, "input", new MemoryStream(System.Text.Encoding.UTF8.GetBytes(typed)),
             global::app.channel.ChannelDirection.Input, ownsStream: true) { Mime = "text/plain" };
         app.actor.list.User.Channel.Register(input);
         return input;
@@ -39,7 +39,7 @@ public class AskAnswerTests
 
     [Test] public async Task ConsoleAsk_WritesTheTextItself()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var ctx = app.actor.list.User.Context;
         Console(app, "Ada\n");
 
@@ -55,7 +55,7 @@ public class AskAnswerTests
 
     [Test] public async Task TheAnswer_RendersInATemplate()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var ctx = app.actor.list.User.Context;
         Console(app, "Ada\n");
         await ctx.Variable.Set("name", await Asked(ctx));
@@ -66,7 +66,7 @@ public class AskAnswerTests
 
     [Test] public async Task TheAnswer_Compares()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var ctx = app.actor.list.User.Context;
         Console(app, "Ingi\n");
         await ctx.Variable.Set("name", await Asked(ctx));
@@ -80,9 +80,9 @@ public class AskAnswerTests
     // A message channel suspends on a pending Ask; resumed, the ask answers with the answer as it came.
     [Test] public async Task MessageAsk_Suspends_ThenResumesWithTheAnswerAsIs()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var ctx = app.actor.list.User.Context;
-        app.actor.list.User.Channel.Register(new TestMessageChannel("input", app.actor.list.User.Context));
+        app.actor.list.User.Channel.Register(new TestMessageChannel(app.actor.list.User.Channel, "input", app.actor.list.User.Context));
 
         var pending = await Asked(ctx);
         await Assert.That(pending.Peek()).IsTypeOf<Ask>();
@@ -99,7 +99,7 @@ public class AskAnswerTests
     // What a before-binding answers in the channel's place is the ask's answer, as it is.
     [Test] public async Task ABeforeBindingsAnswer_RidesAsItIs()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var ctx = app.actor.list.User.Context;
         var input = Console(app, "never read\n");
         var given = ctx.Text("from the binding");

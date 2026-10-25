@@ -14,7 +14,7 @@ public class ErrorShowTests : System.IAsyncDisposable
 
     public ErrorShowTests()
     {
-        _app.actor.list.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(_app.actor.list.User.Channel,
             global::app.channel.list.@this.Error, _errorOut, ChannelDirection.Output, ownsStream: true) { Mime = "text/plain" });
     }
 
@@ -37,7 +37,7 @@ public class ErrorShowTests : System.IAsyncDisposable
         System.IO.Directory.CreateDirectory(root);
         await using var app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
         var shownOut = new System.IO.MemoryStream();
-        app.actor.list.User.Channel.Register(new StreamChannel(
+        app.actor.list.User.Channel.Register(new StreamChannel(app.actor.list.User.Channel,
             global::app.channel.list.@this.Error, shownOut, ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
 
         var result = await app.Start();

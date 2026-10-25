@@ -48,7 +48,7 @@ public static class RealGoalLoad
             return ((await found.Value()) as global::app.goal.@this)!;
         }
         var ms = new System.IO.MemoryStream(System.Text.Encoding.UTF8.GetBytes(prJson));
-        var channel = new global::app.channel.type.stream.@this(
+        var channel = new global::app.channel.type.stream.@this(app.actor.list.User.Channel,
             "real-load", ms, global::app.channel.ChannelDirection.Input, ownsStream: true)
         {
             Mime = "application/plang-goal",

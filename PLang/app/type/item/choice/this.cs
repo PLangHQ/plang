@@ -61,10 +61,6 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
     string IChoice.Symbol => ToString();
 
 
-    /// <summary>The one symbol→choice resolution home — the wire form is the option's SYMBOL
-    /// (an enum member's name, a named-set registry key like "=="). Shared by the ICreate core
-    /// and the wire reader. THROWS FormatException on an unknown symbol (no data.Fail in scope;
-    /// the born path turns it into MaterializeFailed named to the binding).</summary>
     /// <summary>Reads one option off the wire. The written form is the option's SYMBOL, but a
     /// NUMBER also appears on disk: every .pr built before this field became a choice carries the
     /// enum's ordinal, and 790 of them still do. <see cref="Parse"/> accepts an ordinal in its
@@ -75,8 +71,10 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
             ? reader.Number().ToString() ?? ""
             : reader.String(), type);
 
-    /// <summary>The option <paramref name="symbol"/> names, born holding <paramref name="type"/>. THROWS
-    /// FormatException naming the options when it names none.</summary>
+    /// <summary>The option <paramref name="symbol"/> names, born holding <paramref name="type"/> — the one
+    /// symbol→choice home (an enum member's name, a named-set key like "=="), shared by the ICreate core and the wire
+    /// reader. One it names none of is declined: a <see cref="global::app.error.DeclinedException"/> carrying
+    /// ChoiceInvalid, naming the options.</summary>
     public static @this<T> Parse(string symbol, global::app.type.@this type)
     {
         // the set — the type's kind, the app's {choice, <set>} — answers the member its symbol names: an enum's, a
@@ -86,8 +84,10 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
         try { return new((T)set.Member(symbol), type); }
         catch (System.ArgumentException ex)
         {
-            throw new System.FormatException(
-                $"'{symbol}' is not a {set.Name} option. Valid: {string.Join(", ", set.Values ?? [])}", ex);
+            var error = new global::app.error.@this($"'{symbol}' is not a {set.Name} option. Valid: {string.Join(", ", set.Values ?? [])}",
+                "ChoiceInvalid", 400) { FixSuggestion = $"Valid options: {string.Join(", ", set.Values ?? [])}" };
+            error.list.Add(global::app.error.@this.FromException(ex));
+            throw new global::app.error.DeclinedException(error);
         }
     }
 
@@ -101,17 +101,16 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
         return symbol is null ? null : Parse(symbol, type);
     }
 
-    /// <summary>The courier — converts Parse's throw to data.Fail with the option list;
+    /// <summary>The courier — answers Parse's decline on data, its error whole;
     /// declines fail typed. A value is born holding the declared type, else the app's for its set.</summary>
     public static @this<T>? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
         if (raw is @this<T> self) return self;
         type ??= data.Context.App.type.list[typeof(@this<T>)];
         try { if (Create(raw, type) is { } choice) return choice; }
-        catch (System.FormatException ex)
+        catch (global::app.error.DeclinedException declined)
         {
-            data.Fail(new global::app.error.@this(ex.Message, "ChoiceInvalid", 400)
-                { FixSuggestion = $"Valid options: {string.Join(", ", type.Values ?? [])}" });
+            data.Fail(declined.Error);
             return null;
         }
         data.Fail(new global::app.error.@this(

@@ -14,7 +14,7 @@ public sealed class @this : global::app.channel.@this
 {
     private readonly global::app.actor.context.@this _context;
 
-    public @this(string name, global::app.actor.context.@this context)
+    public @this(string name, global::app.actor.context.@this context) : base(context.Actor.Channel)
     {
         Name = name;
         Direction = ChannelDirection.Bidirectional;

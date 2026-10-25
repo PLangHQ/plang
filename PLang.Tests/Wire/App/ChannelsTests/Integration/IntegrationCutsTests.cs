@@ -13,11 +13,11 @@ public class IntegrationCutsTests
         var userOutput = new MemoryStream();
         var userError = new MemoryStream();
         var userInput = new MemoryStream();
-        app.actor.list.User.Channel.Register(new StreamChannel("output", userOutput, ChannelDirection.Output, ownsStream: false)
+        app.actor.list.User.Channel.Register(new StreamChannel(app.actor.list.User.Channel, "output", userOutput, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
-        app.actor.list.User.Channel.Register(new StreamChannel("error", userError, ChannelDirection.Output, ownsStream: false)
+        app.actor.list.User.Channel.Register(new StreamChannel(app.actor.list.User.Channel, "error", userError, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
-        app.actor.list.User.Channel.Register(new StreamChannel("input", userInput, ChannelDirection.Input, ownsStream: false)
+        app.actor.list.User.Channel.Register(new StreamChannel(app.actor.list.User.Channel, "input", userInput, ChannelDirection.Input, ownsStream: false)
         { Mime = "text/plain" });
         global::app.@this.WireDefaultConsoleChannels(app.actor.list.System);
 
@@ -44,9 +44,9 @@ public class IntegrationCutsTests
         await using var app = new global::app.@this("/tmp/cut3", global::PLang.Tests.Parent.Actor).Testing();
         var auditCapture = new MemoryStream();
         var metricsCapture = new MemoryStream();
-        var audit = new StreamChannel("audit.external", auditCapture, ChannelDirection.Output, ownsStream: false)
+        var audit = new StreamChannel(app.actor.list.User.Channel, "audit.external", auditCapture, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" };
-        var metrics = new StreamChannel("metrics", metricsCapture, ChannelDirection.Output, ownsStream: false)
+        var metrics = new StreamChannel(app.actor.list.User.Channel, "metrics", metricsCapture, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" };
         app.actor.list.User.Channel.Register(audit);
         app.actor.list.User.Channel.Register(metrics);
@@ -83,7 +83,7 @@ public class IntegrationCutsTests
     {
         private readonly Action _onInvoke;
         public GoalChannelProbe(string name, global::app.goal.step.action.@this call, global::app.actor.@this actor, Action onInvoke)
-            : base(name, call, actor) { _onInvoke = onInvoke; }
+            : base(actor.Channel, name, call) { _onInvoke = onInvoke; }
         public override Task<Data> Write(Data data, CancellationToken ct = default)
         {
             _onInvoke();

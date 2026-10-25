@@ -16,7 +16,7 @@ public class CleanupBindingsTests
     private global::app.type.list.@this _types = null!;
 
     [Before(Test)]
-    public void Setup() => _types = new global::app.origin.code().type;
+    public void Setup() => _types = new global::app.origin.code(global::app.Wiring.none).type;
 
     [Test] public async Task DateTime_PlangName_ResolvesToDateTimeOffset_NotSystemDateTime()
     {

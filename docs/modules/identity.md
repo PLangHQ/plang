@@ -124,7 +124,7 @@ Cannot set an archived identity as default.
 
 ### export
 
-Export an identity's full data including the private key.
+The door to an identity's private key. It refuses for now (`ExportWaitsForCriticalActions`, 403): a private key leaves the app only through a critical action, which asks more than a yes, and until those exist no key is handed out and nothing is asked.
 
 ```plang
 - export identity 'alice', write to %exported%
@@ -136,7 +136,7 @@ Export an identity's full data including the private key.
 |------|------|----------|-------------|
 | Name | string | no | Identity name. Omit to export the default |
 
-Returns the full identity data including the private key.
+Answers the refusal; `%exported%` is not set.
 
 ## %MyIdentity%
 

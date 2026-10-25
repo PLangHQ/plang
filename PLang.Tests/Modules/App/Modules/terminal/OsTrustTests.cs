@@ -21,7 +21,7 @@ public class OsTrustTests : IDisposable
     {
         _root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "plang_trust_" + Guid.NewGuid().ToString("N"))).FullName;
         _app = new global::app.@this(_root, global::PLang.Tests.Parent.Actor).Testing();
-        Context.Actor!.Channel.Register(new CannedAnswerChannel("n"));
+        Context.Actor!.Channel.Register(new CannedAnswerChannel(Context.Actor!.Channel, "n"));
     }
 
     public void Dispose()
@@ -51,7 +51,7 @@ public class OsTrustTests : IDisposable
     {
         var goal = await Goal(Os(name), steps);
         goal.Path = global::app.type.item.path.file.@this.Resolve(Os(name), Context);
-        await Assert.That(goal.Folder!.Absolute.StartsWith(_app.filesystem.os.Absolute.TrimEnd('/') + "/", StringComparison.Ordinal))
+        await Assert.That(goal.Folder!.IsUnder(_app.filesystem.os).Value)
             .IsTrue().Because("the goal is one of plang's own, under the os folder");
         return goal;
     }
@@ -63,7 +63,7 @@ public class OsTrustTests : IDisposable
     {
         public List<string> Asked { get; } = new();
         private readonly global::app.actor.context.@this _ctx;
-        public Questions(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public Questions(global::app.channel.list.@this channels, global::app.actor.context.@this ctx) : base(channels) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
             => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default)
@@ -80,7 +80,7 @@ public class OsTrustTests : IDisposable
     [Arguments(global::app.type.item.permission.Verb.delete)]
     public async Task ChangingAFileUnderTheOsFolder_IsAsked_SayingWhatAYesMeans(global::app.type.item.permission.Verb verb)
     {
-        var questions = new Questions(Context);
+        var questions = new Questions(Context.Actor!.Channel, Context);
         Context.Actor!.Channel.Register(questions);
         var file = Context.File(Os("Changed.goal"));
         var asked = await file.Authorize(verb, Context);
@@ -92,7 +92,7 @@ public class OsTrustTests : IDisposable
     [Test]
     public async Task ReadingUnderTheOsFolder_OrWritingInTheAppsRoot_SaysNothingOfIt()
     {
-        var questions = new Questions(Context);
+        var questions = new Questions(Context.Actor!.Channel, Context);
         Context.Actor!.Channel.Register(questions);
         await (await Context.File(Path.Combine(_root, "own.txt")).Authorize(global::app.type.item.permission.Verb.write, Context)).IsSuccess();
         await Context.File(Os("Read.goal")).Authorize(global::app.type.item.permission.Verb.read, Context);
@@ -220,7 +220,7 @@ public class OsTrustTests : IDisposable
     [Test]
     public async Task AUsersOwnStart_StillTakesItsSetting()
     {
-        Context.Actor!.Channel.Register(new CannedAnswerChannel("a"));
+        Context.Actor!.Channel.Register(new CannedAnswerChannel(Context.Actor!.Channel, "a"));
         var user = await Goal("/OwnEnv.goal", Make.Step("set the setting", SetMark()), Make.Step("show the environment", Env()));
         var ran = await _app.Start(user, Context);
         await ran.IsSuccess();
@@ -231,7 +231,7 @@ public class OsTrustTests : IDisposable
     private MemoryStream CaptureOutput()
     {
         var captured = new MemoryStream();
-        Context.Actor!.Channel.Register(new global::app.channel.type.stream.@this(global::app.channel.list.@this.Output, captured,
+        Context.Actor!.Channel.Register(new global::app.channel.type.stream.@this(Context.Actor!.Channel, global::app.channel.list.@this.Output, captured,
             global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
         return captured;
     }
@@ -261,7 +261,7 @@ public class OsTrustTests : IDisposable
     public async Task AUsersOwnStart_StillEchoes()
     {
         var captured = CaptureOutput();
-        Context.Actor!.Channel.Register(new CannedAnswerChannel("a"));
+        Context.Actor!.Channel.Register(new CannedAnswerChannel(Context.Actor!.Channel, "a"));
         var user = await Goal("/OwnEcho.goal", Make.Step("set echo", SetEcho()), Make.Step("say it", Say("own-word")));
         var ran = await _app.Start(user, Context);
         await ran.IsSuccess();
@@ -284,7 +284,7 @@ public class OsTrustTests : IDisposable
     private async Task<global::app.data.@this> RunWithSecret(Func<string, Make.StepDef[]> steps)
     {
         var secret = "PLANG_TEST_" + Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
-        Context.Actor!.Channel.Register(new CannedAnswerChannel("a"));
+        Context.Actor!.Channel.Register(new CannedAnswerChannel(Context.Actor!.Channel, "a"));
         System.Environment.SetEnvironmentVariable(secret, "s");
         try { return await _app.Start(await Goal("/Env" + Guid.NewGuid().ToString("N")[..6] + ".goal", steps(secret)), Context); }
         finally { System.Environment.SetEnvironmentVariable(secret, null); }

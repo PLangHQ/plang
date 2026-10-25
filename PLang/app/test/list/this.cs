@@ -34,7 +34,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         // opened on the default actor first: the app is testing from here, so a store its setting's read opens (the
         // settings' own) opens in memory
         var user = _app.actor.list.User;
-        var session = new global::app.channel.type.test.@this(test);
+        var session = new global::app.channel.type.test.@this(user.Channel, test);
         // the channel the default actor has under the session's name (a test's own session is its output)
         var channel = user.Channel.Get(session.Name);
         user.Channel.Register(session);
@@ -53,7 +53,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
     /// wait for it.</summary>
     public global::app.channel.type.test.@this Open(global::app.actor.@this actor, global::app.test.@this? test = null)
     {
-        var session = new global::app.channel.type.test.@this(test);
+        var session = new global::app.channel.type.test.@this(actor.Channel, test);
         actor.Channel.Register(session);
         return session;
     }

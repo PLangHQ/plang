@@ -33,7 +33,7 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
             return Incomplete($"goal channel '{name}' needs its {nameof(Goal)}: the goal.call each write runs");
         // Direction, buffer and mime are plang values the channel holds as they are; the rest are lowered here
         // to what the transport uses.
-        return new @this(name, goal, ctx.Actor,
+        return new @this(ctx.Actor.Channel, name, goal,
             direction: Setting(nameof(Direction)) as global::app.type.item.choice.@this<ChannelDirection>,
             buffer: Setting(nameof(Buffer)) as global::app.type.item.number.@this,
             timeout: Setting(nameof(Timeout)) is global::app.type.item.duration.@this after ? (TimeSpan)after : null,
@@ -69,17 +69,17 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
     /// finds no channel there instead of looping back into itself.</summary>
     public override bool Available => !IsExecuting;
 
-    /// <summary>A channel named <paramref name="name"/> that runs <paramref name="goal"/> for <paramref name="actor"/>.
-    /// A setting that isn't given keeps the channel's own default. Without a direction, a channel called
-    /// <c>input</c> or <c>output</c> is that way, and any other both ways (a goal channel can answer an ask).</summary>
-    protected @this(string name, global::app.goal.step.action.@this goal, global::app.actor.@this actor,
+    /// <summary>A channel named <paramref name="name"/> that runs <paramref name="goal"/> for the actor whose channels
+    /// <paramref name="channels"/> are. A setting that isn't given keeps the channel's own default. Without a direction,
+    /// a channel called <c>input</c> or <c>output</c> is that way, and any other both ways (a goal channel can answer an
+    /// ask).</summary>
+    protected @this(global::app.channel.list.@this channels, string name, global::app.goal.step.action.@this goal,
         global::app.type.item.choice.@this<ChannelDirection>? direction = null, global::app.type.item.number.@this? buffer = null,
         TimeSpan? timeout = null, global::app.type.item.text.@this? mime = null,
-        string? encoding = null, string? encryption = null, string? signing = null)
+        string? encoding = null, string? encryption = null, string? signing = null) : base(channels)
     {
         Name = name;
         Goal = goal;
-        Actor = actor;
         Direction = direction
             ?? (string.Equals(name, list.@this.Input, StringComparison.OrdinalIgnoreCase) ? ChannelDirection.Input
               : string.Equals(name, list.@this.Output, StringComparison.OrdinalIgnoreCase) ? ChannelDirection.Output
@@ -111,16 +111,18 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
 
     private async Task<global::app.data.@this> InvokeGoal(global::app.data.@this data, CancellationToken ct)
     {
+        // A write runs the goal as goal.call runs one: the channel's actor runs it in the writer's flow — the context
+        // the written value carries, so a parallel iteration's write is its own (a variable lives on its context,
+        // never across flows). A closed channel answers so in that flow too.
+        var writer = data.Context ?? Actor.Context;
         if (!IsOpen)
-            return data.Context.Error(new ServiceError($"Channel '{Name}' is closed", "ChannelClosed", 400));
+            return writer.Error(new ServiceError($"Channel '{Name}' is closed", "ChannelClosed", 400));
+        return await writer.Run(Actor, context => Call(data, context));
+    }
 
-        var context = Actor.Context;
-
-        // Channels are not a fork — `write out %x%` is just a function call from
-        // the user's POV, and the channel layer is the plumbing under it. Whatever
-        // upstream operator forked the flow (parallel foreach iteration, async
-        // call, listener accept-loop, etc.) has already pushed a Calls overlay,
-        // and AsyncLocal carries it down to here.
+    // The goal run for one write, in the context the channel's actor runs it in.
+    private async Task<global::app.data.@this> Call(global::app.data.@this data, global::app.actor.context.@this context)
+    {
         // The written value is the call's argument %message% — bound as goal.call binds its own
         // arguments, in a frame that ends with the run. (%!data% is the action before's
         // result; the call's own run replaces it before the goal's first step reads it.)
@@ -148,10 +150,16 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
         {
             await using (context.call.Push(bound, await context.call.Setting())) return await Goal.Start(context);
         }
-        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+        catch (AppException ex)
         {
-            return context.Error(new ServiceError(
-                $"Goal channel '{Name}' failed: {ex.Message}", "GoalChannelError") { Exception = ex });
+            return context.Error(ex.Error);
+        }
+        // anything else broke inside the goal's run: the channel's own failure, holding it as its cause
+        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+        {
+            var failure = new ServiceError($"Goal channel '{Name}' failed", "GoalChannelError");
+            failure.list.Add(global::app.error.@this.FromException(ex));
+            return context.Error(failure);
         }
         finally
         {

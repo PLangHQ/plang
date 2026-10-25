@@ -21,10 +21,11 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         {
             var carrier = new global::app.data.@this("", context: ctx.Context);
             return ctx.Context.App.type.list[new global::app.type.@this("size", kind), ctx.Context].Make(text, carrier)
-                ?? throw new System.FormatException(carrier.Error?.Message ?? $"'{text}' is not a size in {kind}.");
+                ?? throw new global::app.error.DeclinedException(carrier.Error
+                    ?? new global::app.error.@this($"'{text}' is not a size in {kind}.", "SizeInvalid", 400));
         }
         return global::app.type.item.size.@this.Resolve(text, ctx.Context)
-            ?? throw new System.FormatException(
-                $"'{text}' is not a size — write a number and its unit: IEC (500 KiB) or SI (100 MB).");
+            ?? throw new global::app.error.DeclinedException(new global::app.error.@this(
+                $"'{text}' is not a size — write a number and its unit: IEC (500 KiB) or SI (100 MB).", "SizeInvalid", 400));
     }
 }

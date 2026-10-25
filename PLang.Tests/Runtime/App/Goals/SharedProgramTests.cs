@@ -201,10 +201,13 @@ public class SharedProgramTests
     {
         await _app.actor.list.User.Context.Variable.Set("city", "Reykjavik");
         await _app.actor.list.System.Context.Variable.Set("city", "Nowhere");
-        var callee = await ReadFromPr("Weather", global::PLang.Tests.Shared.Make.Step("remember the city",
-            global::PLang.Tests.Shared.Make.Action(_app.actor.list.User.Context, "variable", "set",
-                ("Name", Var("Name", "seen")),
-                ("Value", "%place%"))));
+        var callee = await ReadFromPr("Weather",
+            global::PLang.Tests.Shared.Make.Step("remember the city",
+                global::PLang.Tests.Shared.Make.Action(_app.actor.list.User.Context, "variable", "set",
+                    ("Name", Var("Name", "seen")),
+                    ("Value", "%place%"))),
+            global::PLang.Tests.Shared.Make.Step("return %seen%",
+                global::PLang.Tests.Shared.Make.Action(_app.actor.list.User.Context, "goal", "return", ("Data", "%seen%"))));
         _app.goal.list.Add(callee);
         var call = await ActionFromPr("goal", "call", ("Name", "Weather"), ("Actor", "system"),
             // an argument row the programmer wrote with a %variable% is marked on its row, as the builder writes it
@@ -215,7 +218,8 @@ public class SharedProgramTests
         var result = await call.Start(_app.actor.list.User.Context);
 
         await result.IsSuccess();
-        await Assert.That((await (await _app.actor.list.System.Context.Variable.Get("seen")).Value()).ToString()).IsEqualTo("Reykjavik");
+        // the callee read the caller's city: what it answers is what it remembered
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("Reykjavik");
         // The property still holds the same unloaded value — the call read its own Data.
         await Assert.That(ReferenceEquals(property.Value, held)).IsTrue();
     }

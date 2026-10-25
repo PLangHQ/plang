@@ -20,7 +20,7 @@ public class UnpackedLinkTests : IDisposable
         _outside = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "plang_link_out_" + Guid.NewGuid().ToString("N"))).FullName;
         System.IO.File.WriteAllText(Path.Combine(_outside, "secret.txt"), "outside");
         _app = new global::app.@this(_root, global::PLang.Tests.Parent.Actor).Testing();
-        _channel = new Asking(Context);
+        _channel = new Asking(Context.Actor!.Channel, Context);
         _app.actor.list.User.Channel.Register(_channel);
     }
 
@@ -38,7 +38,7 @@ public class UnpackedLinkTests : IDisposable
     {
         private readonly global::app.actor.context.@this _ctx;
         public int Count { get; private set; }
-        public Asking(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public Asking(global::app.channel.list.@this channels, global::app.actor.context.@this ctx) : base(channels) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)

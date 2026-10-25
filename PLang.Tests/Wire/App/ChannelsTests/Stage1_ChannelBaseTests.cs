@@ -10,7 +10,8 @@ public class Stage1_ChannelBaseTests
     [Test]
     public async Task ChannelBase_Properties_RoundTripOnConcreteSubtype()
     {
-        var ch = new StreamChannel("custom", new MemoryStream(), ChannelDirection.Bidirectional, ownsStream: true)
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+        var ch = new StreamChannel(app.actor.list.User.Channel, "custom", new MemoryStream(), ChannelDirection.Bidirectional, ownsStream: true)
         {
             Buffer = 8192L,
             Timeout = TimeSpan.FromSeconds(45),
@@ -32,7 +33,8 @@ public class Stage1_ChannelBaseTests
     [Test]
     public async Task ChannelBase_Defaults_MatchSpecTable()
     {
-        var ch = StreamChannel.Memory("d");
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+        var ch = StreamChannel.Memory(app.actor.list.User.Channel, "d");
         await Assert.That(ch.Buffer).IsEqualTo(4096L);
         await Assert.That(ch.Timeout).IsEqualTo(TimeSpan.FromSeconds(30));
         await Assert.That(ch.Mime.ToString()).IsEqualTo("text/plain");
@@ -68,7 +70,8 @@ public class Stage1_ChannelBaseTests
     [Test]
     public async Task Encryption_DefaultsNull_SigningDefaultsAuto()
     {
-        var ch = StreamChannel.Memory("d");
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+        var ch = StreamChannel.Memory(app.actor.list.User.Channel, "d");
         await Assert.That(ch.Encryption).IsNull();
         await Assert.That(ch.Signing).IsEqualTo("auto");
     }
@@ -88,10 +91,10 @@ public class Stage1_ChannelBaseTests
     {
         // Mime drives serializer selection. Default "text/plain" → text serializer.
         // Switching Mime to "application/json" → JSON serializer.
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
 
         var captureA = new MemoryStream();
-        var jsonCh = new StreamChannel("json", captureA, ChannelDirection.Output, ownsStream: false)
+        var jsonCh = new StreamChannel(app.actor.list.User.Channel, "json", captureA, ChannelDirection.Output, ownsStream: false)
         { Mime = "application/json" };
         app.actor.list.User.Channel.Register(jsonCh);
         await jsonCh.Write(app.Ok(new { name = "x" }));
@@ -100,7 +103,7 @@ public class Stage1_ChannelBaseTests
         await Assert.That(jsonText).Contains("\"name\"");
 
         var captureB = new MemoryStream();
-        var textCh = new StreamChannel("txt", captureB, ChannelDirection.Output, ownsStream: false)
+        var textCh = new StreamChannel(app.actor.list.User.Channel, "txt", captureB, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" };
         app.actor.list.User.Channel.Register(textCh);
         await textCh.Write(app.Ok("plain hello"));

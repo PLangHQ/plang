@@ -22,7 +22,7 @@ public class DotDotTraversalRegressionTests
     {
         private readonly string _answer;
         private readonly global::app.actor.context.@this _ctx;
-        public CannedChannel(string answer, global::app.actor.context.@this ctx) { _answer = answer; _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public CannedChannel(global::app.channel.list.@this channels, string answer, global::app.actor.context.@this ctx) : base(channels) { _answer = answer; _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(action.Context.Ok(_answer));
@@ -91,7 +91,7 @@ public class DotDotTraversalRegressionTests
         try
         {
             // Channel that denies any AuthGate prompt.
-            app.actor.list.User.Channel.Register(new CannedChannel("n", app.actor.list.User.Context));
+            app.actor.list.User.Channel.Register(new CannedChannel(app.actor.list.User.Channel, "n", app.actor.list.User.Context));
 
                 await using var inGoal = context.call.Push(new Goal(app.type.list)
             {

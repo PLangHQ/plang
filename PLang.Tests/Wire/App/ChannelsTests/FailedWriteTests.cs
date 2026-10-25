@@ -5,10 +5,10 @@ public class FailedWriteTests
 {
     private static async Task<string> Written(string mime, bool framed)
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var user = app.actor.list.User.Context;
         var capture = new MemoryStream();
-        var channel = new global::app.channel.type.stream.@this("out", capture,
+        var channel = new global::app.channel.type.stream.@this(app.actor.list.User.Channel, "out", capture,
             global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = mime, Framed = framed };
         app.actor.list.User.Channel.Register(channel);
 
@@ -32,18 +32,18 @@ public class FailedWriteTests
     [Test]
     public async Task AFailedResult_ReadBackThroughAnotherApp_IsTheSameFailure()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var user = app.actor.list.User.Context;
         var capture = new MemoryStream();
-        var output = new global::app.channel.type.stream.@this("out", capture,
+        var output = new global::app.channel.type.stream.@this(app.actor.list.User.Channel, "out", capture,
             global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = "application/plang" };
         app.actor.list.User.Channel.Register(output);
         var sent = new global::app.error.@this("the disk is full", "DiskFull", 507)
             { list = { new global::app.error.@this("quota reached", "Quota", 507) } };
         await output.WriteAsync(user.Error(sent));
 
-        await using var reader = new global::app.@this("/test2", autoWireConsoleChannels: false).Testing();
-        var input = new global::app.channel.type.stream.@this("in", new MemoryStream(capture.ToArray()),
+        await using var reader = new global::app.@this("/test2", wiring: global::app.Wiring.none).Testing();
+        var input = new global::app.channel.type.stream.@this(reader.actor.list.User.Channel, "in", new MemoryStream(capture.ToArray()),
             global::app.channel.ChannelDirection.Input, ownsStream: true) { Mime = "application/plang" };
         reader.actor.list.User.Channel.Register(input);
         var read = await input.ReadAsync();
@@ -64,8 +64,8 @@ public class FailedWriteTests
     public async Task AFailedResult_SignedBetweenActors_ArrivesAsTheSameFailure()
     {
         var root = Path.Combine(Path.GetTempPath(), "plang_failed_" + Guid.NewGuid().ToString("N")[..8]);
-        await using var sender = new global::app.@this(Path.Combine(root, "sender"), autoWireConsoleChannels: false);
-        await using var receiver = new global::app.@this(Path.Combine(root, "receiver"), autoWireConsoleChannels: false);
+        await using var sender = new global::app.@this(Path.Combine(root, "sender"), wiring: global::app.Wiring.none);
+        await using var receiver = new global::app.@this(Path.Combine(root, "receiver"), wiring: global::app.Wiring.none);
         var from = sender.actor.list.User.Context;
         var to = receiver.actor.list.User.Context;
 

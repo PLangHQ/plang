@@ -4,7 +4,9 @@ What came up on item-doors and goes on after it, so nothing waits on us (Ingi, 2
 
 ## What runtime2 needs before it replaces v0.1 (Ingi, 2026-10-25: "yes that is what I mean. I agree on the order")
 
-In this order, one branch at a time, after packages and the three-yeses branch:
+In this order, one branch at a time, after packages and `bugs` (cut 2026-10-25 from runtime2 3a29633f8; it takes N1, N3–N5, N8, N10, N11, N14–N17 below, the goal channel's race, the LLM tests' answers in a file, the Windows window, and the three yeses as its stage 7; plan `.bot/bugs/architect/plan/start.md`):
+0. JSON Lines (Ingi, 2026-10-25, bugs 45: "2.yes"), a small branch: a json-lines kind (`.jsonl`, `application/x-ndjson`, always compact) for the three line writers. With it comes the json writer's setting (`%!type.json.setting.format%`, `formatted | compact`, default formatted), and the six `.llm.json` files are rewritten from themselves.
+0b. Windows (Ingi, 2026-10-25, bugs 52: "2. yes"): a path plang writes uses `/` on every OS, with the OS form only at the System.IO call, and the whole C# suite passes on Windows. The list is under "From bugs" below.
 1. Stores per actor and an app per request (items 4 and 10; 317a). A webserver can't run without it.
 2. Snapshot and resume (`test/plan/snapshot/start.md`): an ask over a stateless channel.
 3. The LLM provider and writer (parked branches): the builder's quality.
@@ -16,6 +18,22 @@ In this order, one branch at a time, after packages and the three-yeses branch:
 
 Checks to make before the release, not branches:
 - **Brotli** (Ingi: "let's not remove it yet, but keep eye on it before we release plang 2.0b"). The archive module's `brotli` kind (`archive/type/archive/kind/brotli/this.cs`) uses .NET's `BrotliStream`, Google's C library bundled in the runtime (10.0.13 today). A crafted `.br` can make Google's decoder read past its buffer (fixed upstream Feb 2026, released Oct 2026; bugsink.com/blog/bye-bye-brotli). Unpacking is capped by `archive.setting.Max` (`compression/this.cs:47`), and plang's HTTP client doesn't decompress responses. Before 2.0b: check whether the .NET runtime it ships on carries the fixed brotli. If not, drop the kind (gzip and zip cover packing).
+- **The release goals** (Ingi, 2026-10-25, bugs 2: "2.yes"). `Publish/Publish.goal:20` publishes the deleted PlangWindowForms for win-x64, and `Publish/Nuget.goal` packs and pushes the deleted PlangTests as `PlangLibrary.Tests`. Drop those steps, then run the release pipeline end to end once before publishing.
+
+## From bugs (the auditor's X1–X10, `.bot/bugs/auditor/final.md`, and the line)
+
+- X1: the duration, clipboard and input readers still throw a raw FormatException (`duration/serializer/Reader.cs:24,27`); bugs fixed only N11's four.
+- X2: other containment copies outside `path.Holds` (`path/file/this.cs:132–140`, `build/code/Default.cs:39`).
+- X3: `Window.cs:203`'s stale `z` deflate comment.
+- X4: `module/remove.cs:16` is a bare `Task<Data>`, and its teaching.
+- X5: `OsTrustTests`' `'/'` at `:141,151,169`.
+- X6: stale "auto-wire" wording after `app.Wiring`.
+- X7: docs: `bans.md:35`, `good_to_know.md:110`, `filesystem-permission.md:71`.
+- X9: no test that a streamed ask goes live past the saved answers.
+- Debug builds unchecked, Release checked (`PLang.csproj:38–39`): an overflow only Release throws can't be seen by a test (the auditor's B1). Whether Debug checks too is Ingi's.
+- The Linux view's message queue is unbounded (security, bugs 32).
+- The Windows run (item 8 below) gains APatchBeforeTheFirstFrame and a case-blind disk.
+- **The Windows suite (bugs 46–48; a `windows` branch, if Ingi says yes):** runtime2 3a29633f8 fails 182 of 5,429 C# tests on Windows (`/shared/wintest/parent-failures.md`). About 130 are paths plang writes in Windows form (a snapshot's `goalPrPath` is `\.build\g.pr`), which is Ingi's question: `/` on every OS, the OS form only at the System.IO call. 21 are `/bin/sh`; then CRLF checkouts (`core.autocrlf`, so a `.gitattributes`), byte bounds set by measuring on Linux (152 KB at a sub app's first ask), Test_Complete's ≥1 ms, an interactive `/etc/passwd` ask in Data, the `.data ` lookalike (the refusal is right on Windows), a restore race (`-m:1`), and `terminal/type/process/this.cs:232` (the OS newline to a child's stdin, a stray CR for a wsl.exe child). Security asks for a probe of the stores reached by a case variant on a case-blind disk (`.DATA\setting`), run on Windows (bugs 51).
 
 ## Very far backlog: image formats and metadata (Ingi, 2026-10-25, after packages 7)
 

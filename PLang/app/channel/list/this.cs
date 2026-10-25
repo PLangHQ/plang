@@ -51,13 +51,13 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
     private void Wire(ConcurrentDictionary<string, channel.@this> channels, bool interactiveInput)
     {
         if (!channels.ContainsKey(Output))
-            channels.TryAdd(Output, Adopt(new type.console.@this(Output, Console.OpenStandardOutput(), ChannelDirection.Output)));
+            channels.TryAdd(Output, new type.console.@this(this, Output, Console.OpenStandardOutput(), ChannelDirection.Output));
         if (!channels.ContainsKey(Error))
-            channels.TryAdd(Error, Adopt(new type.console.@this(Error, Console.OpenStandardError(), ChannelDirection.Output)));
+            channels.TryAdd(Error, new type.console.@this(this, Error, Console.OpenStandardError(), ChannelDirection.Output));
         if (!channels.ContainsKey(Input))
-            channels.TryAdd(Input, Adopt(interactiveInput
-                ? new type.console.@this(Input, Console.OpenStandardInput(), ChannelDirection.Input)
-                : type.stream.@this.Memory(Input, ChannelDirection.Input)));
+            channels.TryAdd(Input, interactiveInput
+                ? new type.console.@this(this, Input, Console.OpenStandardInput(), ChannelDirection.Input)
+                : type.stream.@this.Memory(this, Input, ChannelDirection.Input));
     }
 
     /// <summary>
@@ -68,9 +68,8 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
     public app.@this App => _app;
 
     /// <summary>
-    /// The actor this collection belongs to, born with it. <see cref="Register"/> stamps it onto each
-    /// registered channel, whose events fire in its context. Null for Service-owned Channels (Service is not
-    /// an Actor).
+    /// The actor this collection belongs to, born with it: the actor of every channel born of it, whose events fire in
+    /// its context. Null for Service-owned Channels (Service is not an Actor).
     /// </summary>
     internal global::app.actor.@this? Actor { get; }
 
@@ -144,28 +143,29 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
     public channel.@this? Get(string name)
         => Rows.TryGetValue(name, out var channel) && channel.Available ? channel : null;
 
+    /// <summary>Makes <paramref name="channel"/>, one born of these channels, reached here by its name.</summary>
     public void Register(channel.@this channel)
     {
-        Adopt(channel);
+        Born(channel);
         Rows[channel.Name] = channel;
     }
 
-    /// <summary>Registers <paramref name="channel"/> in place of the one by its name, which is disposed after — one
-    /// write, so the name always resolves (a default channel is replaced this way, never left out).</summary>
+    /// <summary>Registers <paramref name="channel"/>, one born of these channels, in place of the one by its name,
+    /// which is disposed after — one write, so the name always resolves (a default channel is replaced this way, never
+    /// left out).</summary>
     public async Task Set(channel.@this channel)
     {
-        Adopt(channel);
+        Born(channel);
         channel.@this? old = null;
         Rows.AddOrUpdate(channel.Name, channel, (_, previous) => { old = previous; return channel; });
         if (old != null && !ReferenceEquals(old, channel)) await old.DisposeAsync();
     }
 
-    // A channel registered here belongs to this list and, unless it names another, to its actor. Answers the channel.
-    private channel.@this Adopt(channel.@this channel)
+    // Only a channel born of these channels is named here: one of another actor's is plang itself broken.
+    private void Born(channel.@this channel)
     {
-        channel.Channels = this;
-        if (channel.Actor == null) channel.Actor = Actor!;
-        return channel;
+        if (!ReferenceEquals(channel.Channels, this))
+            throw new InvalidOperationException($"channel '{channel.Name}' was born of another actor's channels; it is registered only where it was born");
     }
 
     /// <summary>Removes the channel named <paramref name="name"/>. A default channel can't be — the boot invariant

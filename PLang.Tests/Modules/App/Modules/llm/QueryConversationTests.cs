@@ -209,6 +209,17 @@ public class QueryConversationTests
         await Assert.That(_handler.LastRequest!.Headers.Authorization?.ToString()).IsEqualTo("Bearer sk-from-the-setting");
     }
 
+    // a mocked app is sent with the test key, never the environment's: a request that missed the mock spends nothing
+    [Test]
+    public async Task AMockedApp_SendsTheTestKey()
+    {
+        Answers("answer");
+
+        await Ask("hello");
+
+        await Assert.That(_handler.LastRequest!.Headers.Authorization?.ToString()).IsEqualTo("Bearer " + LlmTestHelper.Key);
+    }
+
     // with nothing saved, the key is the environment's; and it never shows where a setting is written out
     [Test]
     public async Task TheKey_DefaultsToTheEnvironment_AndNeverShows()

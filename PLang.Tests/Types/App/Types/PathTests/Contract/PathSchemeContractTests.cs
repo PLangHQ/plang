@@ -26,14 +26,14 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
     /// <summary>Registers the "allow" channel on the caller's actor and returns the path.</summary>
     private Path Authorized(Path p)
     {
-        context.Actor!.Channel.Register(new CannedAnswerChannel("a"));
+        context.Actor!.Channel.Register(new CannedAnswerChannel(context.Actor!.Channel, "a"));
         return p;
     }
 
     /// <summary>Registers the "deny" channel on the caller's actor and returns the path.</summary>
     private Path Denied(Path p)
     {
-        context.Actor!.Channel.Register(new CannedAnswerChannel("n"));
+        context.Actor!.Channel.Register(new CannedAnswerChannel(context.Actor!.Channel, "n"));
         return p;
     }
 

@@ -14,16 +14,24 @@ namespace PLang.Tests.App.Modules.llm;
 /// </summary>
 internal static class LlmTestHelper
 {
+    /// <summary>The key a mocked app's queries are sent with: a mocked test never needs a real key, and a request that
+    /// misses the mock can never spend one.</summary>
+    internal const string Key = "sk-test-mock";
+
     /// <summary>
-    /// Registers a MockHttpMessageHandler on the engine's HTTP provider
-    /// and returns the handler for configuring responses.
+    /// Registers a MockHttpMessageHandler on the engine's HTTP provider (<see cref="Mock"/>) and returns the handler
+    /// for configuring responses.
     /// </summary>
-    internal static MockHttpMessageHandler SetupMockHttp(PLangEngine engine)
+    internal static MockHttpMessageHandler SetupMockHttp(PLangEngine engine) => Mock(engine, new MockHttpMessageHandler());
+
+    /// <summary>The engine's HTTP answered by <paramref name="handler"/>, and the engine given the test key (on the
+    /// system actor, so a test's own key on the user still wins).</summary>
+    internal static T Mock<T>(PLangEngine engine, T handler) where T : HttpMessageHandler
     {
-        var handler = new MockHttpMessageHandler();
-        var provider = new Default(handler) { Name = "test" };
-        engine.Code.Register<IHttp>(provider);
+        engine.Code.Register<IHttp>(new Default(handler) { Name = "test" });
         engine.Code.SetDefault<IHttp>("test");
+        var setting = engine.actor.list.System.Setting;
+        setting.Set(setting.Address(typeof(global::app.module.llm.setting.@this), "key"), Key);
         return handler;
     }
 

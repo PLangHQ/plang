@@ -8,10 +8,10 @@ namespace app.origin;
 internal sealed class code : @this
 {
     /// <summary>The code, its types scanned from its facts on first ask, path's schemes among them; the app it is made
-    /// for born with the console's standard channels when <paramref name="console"/>.</summary>
-    internal code(bool console = false)
+    /// for born wired as <paramref name="wiring"/> says.</summary>
+    internal code(Wiring wiring)
     {
-        Console = console;
+        _wiring = wiring;
         type = new global::app.type.list.@this(this);
         // path's schemes, each a kind of path that builds its own path subclass — added as one
         var path = type[typeof(global::app.type.item.path.@this)];
@@ -26,7 +26,10 @@ internal sealed class code : @this
 
     public global::app.type.item.path.file.filesystem.@this Filesystem(string absolutePath) => new(absolutePath);
 
-    public bool Console { get; }
+    private readonly Wiring _wiring;
+
+    // the one place the wiring is asked: the app's actors are born with the console's channels, or with none
+    public bool Console => _wiring == Wiring.console;
 
     public bool Testing => false;
 
@@ -49,6 +52,6 @@ internal sealed class code : @this
 
     public void Register(global::app.module.@this module, string action, System.Type type) => module.Add(action, type);
 
-    public System.Threading.Tasks.ValueTask<bool> Remove(global::app.module.@this module, global::app.actor.context.@this context)
+    public System.Threading.Tasks.ValueTask<global::app.data.@this<global::app.type.item.@bool.@this>> Remove(global::app.module.@this module, global::app.actor.context.@this context)
         => module.Root.Drop(module, context);
 }

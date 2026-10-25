@@ -7,4 +7,6 @@ namespace app.channel.type.session;
 /// </summary>
 public abstract class @this : Channel
 {
+    /// <summary>A session born of <paramref name="channels"/>, its actor's channels.</summary>
+    protected @this(global::app.channel.list.@this channels) : base(channels) { }
 }

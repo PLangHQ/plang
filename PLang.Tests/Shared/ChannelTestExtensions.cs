@@ -7,7 +7,7 @@ public static class ChannelTestExtensions
     public static global::app.channel.@this CreateMemoryChannel(this global::app.channel.list.@this channels, string name,
         global::app.channel.ChannelDirection direction = global::app.channel.ChannelDirection.Bidirectional)
     {
-        var channel = global::app.channel.type.stream.@this.Memory(name, direction);
+        var channel = global::app.channel.type.stream.@this.Memory(channels, name, direction);
         channels.Register(channel);
         return channel;
     }

@@ -64,17 +64,30 @@ by per-sub-option boolean ≥. Defaulted to full capability so a hand-written
      other → re-prompt with "Invalid answer '{x}'." prefix
 ```
 
-The y/a split is what the user sees at the prompt; the system encodes it
-as **two grant homes**:
+The y/a split is what the user sees at the prompt; the actor's permission view
+(`actor.Permission`) keeps grants in **three homes**, behind one `Find`:
 
-- **Session ("y")** — unsigned `Data<PermissionRecord>` in
-  `actor.Permission._inMemory`. Lives until App disposes.
-- **Persisted ("a")** — signed via `Data.EnsureSigned()`, routed to
-  `app.SettingsStore` table `permission`. Survives `new app()` on the
-  same root.
+- **Standing** — what the actor's role stands on the app's folders (the os
+  folder, the stores' folder). In memory for the run, never asked, never
+  persisted; only a `Stand` replaces one, and no revoke reaches it.
+- **Once ("y")** — unsigned, in memory, until the app exits. Kept beside the
+  standing grants, never in their place: a "y" on a place a standing grant
+  covers adds a grant, it does not replace it.
+- **Persisted ("a")** — the actor's own permission setting
+  (`%!app.actor.permission.setting%`), one row holding all its saved grants,
+  signed whole when saved and verified whole when read (a tampered row reads as
+  no grants). Survives `new app()` on the same root.
 
-`Permission.Add` routes by signature presence (`signed.RawSignature != null`
-→ sqlite; else in-memory). Same `Path` overwrites in either home.
+`Find` walks standing, once, then persisted. `Add(grant, persist)` routes by
+the user's answer and answers the save's result: an "always" whose save failed
+is not a yes. The path verbs return that failure, one-verb and move/copy doors
+alike, and do the I/O only after every grant is kept. The same `Path` twice
+overwrites in its own home.
+
+Only "nobody could answer" is a no, answered as `PermissionDenied` holding the
+cause: a cancelled ask, an input whose stream closed or transport broke, or one
+that says it is unanswered. Any other failure inside the ask surfaces as its own
+error (through `Error.FromException`), never as `PermissionDenied`.
 
 ## In-root short-circuit
 
@@ -107,7 +120,7 @@ The rest follows from that:
 - **A file is a tree of one.** A file copied or moved into an existing folder is judged as that one entry under the folder's landing, by the same `Refusal` a folder's tree gets, before anything is touched. A move's destination that is anything else (a file, a link, nothing) is the entry itself, replaced.
 - **A link in a tree is an entry of its own.** A copy re-creates it as written, a delete removes it, a move renames it; nothing reads through it. A recursive delete asks the gate for every entry first, then removes each alone, children first.
 - **Ask once, check all, then do.** A copy, a move or a recursive delete asks the user once at the top (the answer covers all), and asks the gate about every entry it touches, both ends, before anything is touched. An entry the gate refuses refuses the whole verb, so there is no half-copy. `list` leaves out the entries the gate refuses.
-- **The anchors are landed once.** `app.filesystem.root`, `.os` and the stores' folder are paths, each landed once and kept for the app; the one containment question is the path's own `IsUnder`.
+- **The anchors are landed once.** `app.filesystem.root`, `.os` and the stores' folder are paths, each landed once and kept for the app; the one containment question is the path's own `IsUnder`, which asks `root.Holds(location)` (`path/this.cs`): the folder itself, or a location past a separator (`/root2` is not under `/root`). A path still being resolved asks `Holds` too (`path/file/this.Validate.cs`), with the root's comparison, so the rule is one wherever it is asked.
 - **An unpacked link points inside its folder.** An archive unpack refuses a link whose target, read as the OS reads it, leaves the folder it was made in.
 - **A place that can't be told is refused.** Links that loop or run past 40 answer `LinkLoop` (403) at every door.
 

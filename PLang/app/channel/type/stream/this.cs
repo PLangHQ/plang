@@ -20,9 +20,11 @@ public class @this : global::app.channel.type.session.@this
     [System.Text.Json.Serialization.JsonIgnore]
     public global::System.IO.Stream Stream { get; }
 
-    public @this(string name, global::System.IO.Stream stream,
+    /// <summary>A channel born of <paramref name="channels"/> over <paramref name="stream"/>, closed with it when it
+    /// owns it.</summary>
+    public @this(global::app.channel.list.@this channels, string name, global::System.IO.Stream stream,
         ChannelDirection direction = ChannelDirection.Bidirectional,
-        bool ownsStream = true)
+        bool ownsStream = true) : base(channels)
     {
         Name = name;
         Stream = stream;
@@ -30,17 +32,18 @@ public class @this : global::app.channel.type.session.@this
         _ownsStream = ownsStream;
     }
 
-    /// <summary>In-memory bidirectional channel (testing / capture).</summary>
-    public static @this Memory(string name, ChannelDirection direction = ChannelDirection.Bidirectional)
-        => new(name, new MemoryStream(), direction, ownsStream: true);
+    /// <summary>In-memory bidirectional channel (testing / capture), born of <paramref name="channels"/>.</summary>
+    public static @this Memory(global::app.channel.list.@this channels, string name, ChannelDirection direction = ChannelDirection.Bidirectional)
+        => new(channels, name, new MemoryStream(), direction, ownsStream: true);
 
     /// <summary>Each text message ends with <see cref="End"/> — console and pipe ergonomics (NDJSON) — and a read takes
     /// one message. A stream that carries one value (a file, a request body) is not framed.</summary>
     [global::app.Debug] public bool Framed { get; init; }
 
-    /// <summary>What ends each message on a framed channel: a newline unless set. DevTools' pipe ends each with NUL — its
-    /// reader sets that when it takes the channel.</summary>
-    [global::app.Debug] public string End { get; set; } = System.Environment.NewLine;
+    /// <summary>What ends each message on a framed channel: a line's LF unless set, on every OS (a line protocol — the
+    /// console, a pipe, NDJSON — ends a line at its LF; a CR before it is read as part of the end). DevTools' pipe ends
+    /// each with NUL — its reader sets that when it takes the channel.</summary>
+    [global::app.Debug] public string End { get; set; } = "\n";
 
     /// <summary>What is left unended when the stream ends is a message too — a program's last line, written with no
     /// newline (<c>printf out</c>). Unset, it was never a message and is dropped (a pipe's half-written message).</summary>
@@ -180,7 +183,8 @@ public class @this : global::app.channel.type.session.@this
     private int _held;
 
     /// <summary>The next message, without its end; null when the stream ends first (a part read before the end is
-    /// dropped: it was never a message). Lines ended by a newline take CR LF as their end too (a Windows program's).</summary>
+    /// dropped: it was never a message). Lines ended by an LF take CR LF as their end too (a Windows program's), so a
+    /// channel reads both on every OS.</summary>
     private async Task<byte[]?> Message(CancellationToken ct)
     {
         var encoding = ResolveEncoding();

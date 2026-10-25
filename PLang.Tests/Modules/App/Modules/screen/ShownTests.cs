@@ -9,9 +9,16 @@ namespace PLang.Tests.App.actions.screen;
 /// The host's picture of PlangOS's screen, kept by the frame messages PlangOS sends: a rectangle put where it says, a
 /// move that shifts the pixels the host has and the strip that fills what it uncovered — the same picture as PlangOS's.
 /// </summary>
-public class ShownTests
+public class ShownTests : System.IAsyncDisposable
 {
     private const int W = 64, H = 48;
+
+    private readonly global::app.@this _app = new global::app.@this("/showntests", global::PLang.Tests.Parent.Actor).Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
+
+    // screen.setting.max as an app has it by default
+    private async Task<global::app.type.item.size.@this> Max()
+        => (await _app.actor.list.User.Context.Setting.Get<global::app.module.screen.setting.@this>()).Max;
 
     private static byte[] Random(int bytes, int seed)
     {
@@ -51,7 +58,7 @@ public class ShownTests
     {
         var shown = new Shown(W, H);
         var screen = Random(W * H * 4, 1);
-        await Assert.That(shown.Apply(Frame(null, (new Rect(0, 0, W, H), screen)))).IsEqualTo(new Rect(0, 0, W, H));
+        await Assert.That(shown.Apply(Frame(null, (new Rect(0, 0, W, H), screen)), await Max())).IsEqualTo(new Rect(0, 0, W, H));
         await Assert.That(shown.Bitmap.Pixels.SequenceEqual(screen)).IsTrue();
 
         // PlangOS scrolls rows 8.. up by 6 and sends the strip at the bottom
@@ -60,7 +67,7 @@ public class ShownTests
         var strip = new Rect(0, H - 6, W, 6);
         var fresh = Random(W * 6 * 4, 2);
         for (var y = 0; y < 6; y++) fresh.AsSpan(y * W * 4, W * 4).CopyTo(scrolled.AsSpan((H - 6 + y) * W * 4));
-        shown.Apply(Frame((0, 14, W, H - 14, 0, -6), (strip, fresh)));
+        shown.Apply(Frame((0, 14, W, H - 14, 0, -6), (strip, fresh)), await Max());
         await Assert.That(shown.Bitmap.Pixels.SequenceEqual(scrolled)).IsTrue();
     }
 
@@ -69,10 +76,10 @@ public class ShownTests
     {
         var shown = new Shown(W, H);
         var screen = Random(W * H * 4, 3);
-        shown.Apply(Frame(null, (new Rect(0, 0, W, H), screen)));
+        shown.Apply(Frame(null, (new Rect(0, 0, W, H), screen)), await Max());
         var r = new Rect(10, 5, 20, 7);
         var px = Random(r.Width * r.Height * 4, 4);
-        await Assert.That(shown.Apply(Frame(null, (r, px)))).IsEqualTo(r);
+        await Assert.That(shown.Apply(Frame(null, (r, px)), await Max())).IsEqualTo(r);
         await Assert.That(Rows(shown.Bitmap.Pixels, r).SequenceEqual(px)).IsTrue();
         await Assert.That(Rows(shown.Bitmap.Pixels, new Rect(0, 0, W, 5)).SequenceEqual(Rows(screen, new Rect(0, 0, W, 5)))).IsTrue();
     }
@@ -82,8 +89,8 @@ public class ShownTests
     {
         var shown = new Shown(W, H);
         var frame = Frame(null, (new Rect(0, 0, 8, 8), Random(8 * 8 * 4, 5)));
-        await Assert.That(shown.Apply([2, (byte)'x'])).IsNull();
-        await Assert.That(shown.Apply(frame[..(frame.Length / 2)])).IsNull();
+        await Assert.That(shown.Apply([2, (byte)'x'], await Max())).IsNull();
+        await Assert.That(shown.Apply(frame[..(frame.Length / 2)], await Max())).IsNull();
         await Assert.That(shown.Bitmap.Pixels.All(b => b == 0)).IsTrue();
     }
 }

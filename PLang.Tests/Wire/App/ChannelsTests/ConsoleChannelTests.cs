@@ -9,14 +9,14 @@ public class ConsoleChannelTests
 
     private static async Task<(global::app.@this App, MemoryStream Out)> Console(string? format)
     {
-        var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
+        var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         if (format != null)
         {
             var set = await app.actor.list.System.Setting.Flag("app.channel.setting", new Dictionary<string, object?> { ["format"] = format }, app.actor.list.System.Context);
             await set.IsSuccess();
         }
         var stream = new MemoryStream();
-        app.actor.list.User.Channel.Register(new global::app.channel.type.console.@this(
+        app.actor.list.User.Channel.Register(new global::app.channel.type.console.@this(app.actor.list.User.Channel,
             global::app.channel.list.@this.Output, stream, global::app.channel.ChannelDirection.Output));
         return (app, stream);
     }
@@ -38,7 +38,7 @@ public class ConsoleChannelTests
 
         await written.IsSuccess();
         await Assert.That(System.Text.Encoding.UTF8.GetString(stream.ToArray()))
-            .IsEqualTo($"[{Video.Length} bytes]{System.Environment.NewLine}");
+            .IsEqualTo($"[{Video.Length} bytes]\n");
     }
 
     [Test]
@@ -64,7 +64,7 @@ public class ConsoleChannelTests
 
         await written.IsSuccess();
         var text = System.Text.Encoding.UTF8.GetString(stream.ToArray());
-        await Assert.That(text.EndsWith(System.Environment.NewLine)).IsTrue();
+        await Assert.That(text.EndsWith('\n')).IsTrue();
         await Assert.That(text.TrimStart().StartsWith('{')).IsTrue();
         await Assert.That(text).Contains("hello");
     }
@@ -73,7 +73,7 @@ public class ConsoleChannelTests
     [Test]
     public async Task AFormatNoTypeReads_IsRefusedWhenSet()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
 
         var set = await app.actor.list.System.Setting.Flag("app.channel.setting", new Dictionary<string, object?> { ["format"] = "nonsense" }, app.actor.list.System.Context);
 
@@ -101,7 +101,7 @@ public class ConsoleChannelTests
     [Arguments("plang")]
     public async Task AnAsk_GoesOutAsTheFormatShowsIt(string? format)
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         if (format != null)
             await (await app.actor.list.System.Setting.Flag("app.channel.setting", new Dictionary<string, object?> { ["format"] = format }, app.actor.list.System.Context)).IsSuccess();
         var context = app.actor.list.User.Context;
@@ -112,9 +112,9 @@ public class ConsoleChannelTests
         else await (await app.type.list.Format(format)!.Encode(input, context.Ok("Ada"), context)).IsSuccess();
         input.Write(System.Text.Encoding.UTF8.GetBytes("\n"));
         input.Position = 0;
-        app.actor.list.User.Channel.Register(new global::app.channel.type.console.@this(
+        app.actor.list.User.Channel.Register(new global::app.channel.type.console.@this(app.actor.list.User.Channel,
             global::app.channel.list.@this.Output, output, global::app.channel.ChannelDirection.Output));
-        app.actor.list.User.Channel.Register(new global::app.channel.type.console.@this(
+        app.actor.list.User.Channel.Register(new global::app.channel.type.console.@this(app.actor.list.User.Channel,
             global::app.channel.list.@this.Input, input, global::app.channel.ChannelDirection.Input));
 
         var ask = new global::app.module.output.ask(context)
@@ -127,12 +127,41 @@ public class ConsoleChannelTests
         await Assert.That((await answer.Value())?.ToString()).IsEqualTo("Ada");
         var asked = System.Text.Encoding.UTF8.GetString(output.ToArray());
         if (format == null)
-            await Assert.That(asked).IsEqualTo($"what is your name?{System.Environment.NewLine}");
+            await Assert.That(asked).IsEqualTo("what is your name?\n");
         else
         {
             await Assert.That(asked.TrimStart().StartsWith('{')).IsTrue();
             await Assert.That(asked).Contains("\"ask\"");
             await Assert.That(asked).Contains("what is your name?");
         }
+    }
+
+    // A line ends at its LF on every OS: a console reads a Linux file's LF lines and a Windows program's CR LF lines
+    // alike, and writes an LF
+    [Test]
+    public async Task AConsole_ReadsLfAndCrLfLinesAlike()
+    {
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+        var input = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("unix\nwindows\r\nlast\n"));
+        var channel = new global::app.channel.type.console.@this(app.actor.list.User.Channel, "lines", input,
+            global::app.channel.ChannelDirection.Bidirectional);
+        app.actor.list.User.Channel.Register(channel);
+
+        var read = new List<string?>();
+        for (var i = 0; i < 3; i++) read.Add((await (await channel.Read()).Value())?.ToString());
+
+        await Assert.That(read).IsEquivalentTo(new[] { "unix", "windows", "last" });
+    }
+
+    [Test]
+    public async Task AConsole_WritesAnLf()
+    {
+        var (app, stream) = await Console(null);
+        await using var _ = app;
+
+        await (await app.actor.list.User.Channel[global::app.channel.list.@this.Output]
+            .WriteAsync(app.actor.list.User.Context.Ok("hello"))).IsSuccess();
+
+        await Assert.That(System.Text.Encoding.UTF8.GetString(stream.ToArray())).IsEqualTo("hello\n");
     }
 }

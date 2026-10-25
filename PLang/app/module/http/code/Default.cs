@@ -85,7 +85,7 @@ public sealed class Default : IHttp
             {
                 // The body is a channel the value is written to: it opens the value (a file sends its content)
                 // and the content-type's format writes it; one value, so no line framing.
-                await using var body = new global::app.channel.type.stream.@this("body", new MemoryStream(),
+                await using var body = new global::app.channel.type.stream.@this(action.Context.Actor.Channel, "body", new MemoryStream(),
                     global::app.channel.ChannelDirection.Output, ownsStream: true) { Mime = contentType };
                 var serialized = await body.Write(action.Body!);
                 if (!serialized.Success) return serialized;

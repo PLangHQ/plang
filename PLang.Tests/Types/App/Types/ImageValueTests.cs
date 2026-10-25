@@ -71,7 +71,7 @@ public class ImageValueTests : System.IAsyncDisposable
 
     [Test] public async Task Image_PlangTypeAttribute_Registered()
     {
-        var types = new global::app.origin.code().type;
+        var types = new global::app.origin.code(global::app.Wiring.none).type;
         await Assert.That(types.Clr("image")).IsEqualTo(typeof(image));
     }
 
