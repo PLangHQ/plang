@@ -142,10 +142,6 @@ public sealed class @this : screen.@this
         return context.Ok();
     }
 
-    // the most a frame's pixels take, as the setting says for this draw
-    private static async Task<global::app.type.item.size.@this> Max(global::app.actor.context.@this context)
-        => (await context.Setting.Get<global::app.module.screen.setting.@this>()).Max;
-
     /// <summary>A window that shows frames takes no input lines: its input comes out of it (OnInput).</summary>
     internal override Task<global::app.data.@this> Send(global::app.data.@this line, global::app.actor.context.@this context)
         => Task.FromResult(context.Error(new ActionError("This screen shows frames; it takes no input. screen.send is PlangOS's display (Linux).", "NotSupported", 400)));

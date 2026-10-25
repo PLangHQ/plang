@@ -73,6 +73,11 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     /// <paramref name="max"/> (<c>screen.setting.max</c>, as the sender read it). False when it takes none.</summary>
     internal virtual bool Show(byte[] message, global::app.type.item.size.@this max) => false;
 
+    /// <summary>The most a frame's picture, or each of its rectangles, takes: <c>screen.setting.max</c>, as
+    /// <paramref name="context"/>'s settings say now.</summary>
+    internal async Task<global::app.type.item.size.@this> Max(global::app.actor.context.@this context)
+        => (await context.Setting.Get<global::app.module.screen.setting.@this>()).Max;
+
     /// <summary>An element's events were reached: its clicks are its own from now on.</summary>
     internal virtual void Bind(string selector) { }
 

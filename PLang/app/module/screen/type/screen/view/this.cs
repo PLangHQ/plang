@@ -96,7 +96,7 @@ public sealed class @this : screen.@this
     }
 
     internal override async Task<global::app.data.@this> Draw(global::app.data.@this frame, global::app.actor.context.@this context)
-        => frame.Peek()?.RawBytes is { } bytes && Show(bytes, (await context.Setting.Get<global::app.module.screen.setting.@this>()).Max)
+        => frame.Peek()?.RawBytes is { } bytes && Show(bytes, await Max(context))
             ? context.Ok()
             : context.Error(new global::app.error.ActionError("A view shows what PlangOS's screen sends, nothing else.", "BadFrame", 400));
 
