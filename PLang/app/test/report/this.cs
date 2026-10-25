@@ -63,7 +63,7 @@ public sealed class @this
                     && !string.Equals(test.Goal.BuilderVersion, version, System.StringComparison.Ordinal);
                 console.AppendLine($"  [{test.Status}] {test.Goal.Path} ({test.Duration.Value.TotalMilliseconds:F0}ms)"
                     + (drift ? " [builder drift]" : ""));
-                console.Append(await test.Failure(context));
+                await test.Failure(console, context);
             }
             // the app's own goals under test — each file's public goal and its private ones; test files test them
             var goals = new List<global::app.goal.@this>();

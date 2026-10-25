@@ -25,7 +25,9 @@ public class FailureReportTests
         var run = new global::app.test.@this(runner.type.list) { Goal = goal };
         run.Complete(global::app.test.Status.Fail, (AssertionError)result.Error!);
 
-        var report = await run.Failure(reporting);
+        var written = new System.Text.StringBuilder();
+        await run.Failure(written, reporting);
+        var report = written.ToString();
         await Assert.That(report).Contains("Actual:   \"Checkout\"");
         await Assert.That(report).DoesNotContain("\"Test\"");
     }

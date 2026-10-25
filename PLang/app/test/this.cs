@@ -187,14 +187,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     }
 
     /// <summary>
-    /// Why this test failed, as the console shows it — an assertion's expected and actual and the
-    /// variables it captured, else the error's message — then what the test wrote, its ANSI escapes
-    /// stripped so a test can't forge the runner's own output. Empty unless it failed with an error.
+    /// Writes why this test failed into <paramref name="sb"/>, as the console shows it — an assertion's expected and
+    /// actual and the variables it captured, else the error's message — then what the test wrote, its ANSI escapes
+    /// stripped so a test can't forge the runner's own output. Writes nothing unless it failed with an error.
     /// </summary>
-    public async System.Threading.Tasks.Task<string> Failure(global::app.actor.context.@this context)
+    public async System.Threading.Tasks.Task Failure(System.Text.StringBuilder sb, global::app.actor.context.@this context)
     {
-        if (Status != Status.Fail || Error == null) return "";
-        var sb = new System.Text.StringBuilder();
+        if (Status != Status.Fail || Error == null) return;
         sb.AppendLine("    FAIL: " + Goal.Path);
         if (Error is AssertionError assert)
         {
@@ -220,7 +219,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             foreach (var line in Ansi.Replace(output, "").Split('\n'))
                 sb.AppendLine("        " + line);
         }
-        return sb.ToString();
     }
 
     private static readonly System.Text.RegularExpressions.Regex Ansi =
