@@ -181,10 +181,7 @@ public sealed partial class @this : global::app.type.item.@this
     /// <param name="setting">What the stack captures, as its async caller read it (<see cref="Setting"/>).</param>
     /// <param name="names">The variables its frame is born with — a goal call's parameters.</param>
     public call.@this Push(global::app.goal.@this goal, setting.@this setting, IEnumerable<global::app.data.@this>? names = null)
-    {
-        if (IsFull) throw new CallStackOverflowException(MaxDepth);
-        return Enter(new call.@this(Call, this, goal, setting, names));
-    }
+        => Push((goal, setting, names), static (stack, s) => new call.@this(stack.Call, stack, s.goal, s.setting, s.names));
 
     /// <summary>Pushes a frame that only binds <paramref name="names"/> (a loop's item, a handler's error) — for
     /// <paramref name="held"/> when its runner supplies them to that one call (a tool call's state).</summary>
@@ -200,22 +197,20 @@ public sealed partial class @this : global::app.type.item.@this
 
     /// <summary>Pushes the frame of a step starting: its goal and itself.</summary>
     public call.@this Push(global::app.goal.step.@this step, setting.@this setting)
-    {
-        if (IsFull) throw new CallStackOverflowException(MaxDepth);
-        return Enter(new call.@this(Call, this, step, setting));
-    }
+        => Push((step, setting), static (stack, s) => new call.@this(stack.Call, stack, s.step, s.setting));
 
     /// <summary>Pushes the frame of an action starting: its step's goal, its step and itself — an action composed
     /// in C# holds no step. <paramref name="variables"/> is the store for diff capture (when Diff is on).</summary>
     public call.@this Push(global::app.goal.step.action.@this action, setting.@this setting, Variables? variables = null)
-    {
-        if (IsFull) throw new CallStackOverflowException(MaxDepth);
-        return Enter(new call.@this(Call, this, action, setting, variables));
-    }
+        => Push((action, setting, variables), static (stack, s) => new call.@this(stack.Call, stack, s.action, s.setting, s.variables));
 
-    // Whether the stack is as deep as it goes: a call frame (a goal's, a step's, an action's) pushed now would be the
-    // overflow, refused before anything of it is made.
-    private bool IsFull => _current.Value is { } caller && caller.Depth >= MaxDepth;
+    // A call frame (a goal's, a step's, an action's) pushed: past MaxDepth (its caller's depth) it is the overflow,
+    // refused before anything of it is made. Its state rides in, so the making captures nothing.
+    private call.@this Push<TState>(TState state, Func<@this, TState, call.@this> make)
+    {
+        if (_current.Value is { } caller && caller.Depth >= MaxDepth) throw new CallStackOverflowException(MaxDepth);
+        return Enter(make(this, state));
+    }
 
     // The frame becomes current: it joins its caller's children (Children owns its own lock + FIFO eviction), and a
     // frame that starts an empty chain is the run's root — reassigned each time, so %!call.Root% is the live run's,
