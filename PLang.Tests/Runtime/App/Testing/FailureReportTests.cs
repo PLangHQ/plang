@@ -26,7 +26,7 @@ public class FailureReportTests
         run.Complete(global::app.test.Status.Fail, (AssertionError)result.Error!);
 
         var written = new System.Text.StringBuilder();
-        await run.Failure(written, reporting);
+        await run.Explain(written, reporting);
         var report = written.ToString();
         await Assert.That(report).Contains("Actual:   \"Checkout\"");
         await Assert.That(report).DoesNotContain("\"Test\"");

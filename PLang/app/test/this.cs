@@ -191,7 +191,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// actual and the variables it captured, else the error's message — then what the test wrote, its ANSI escapes
     /// stripped so a test can't forge the runner's own output. Writes nothing unless it failed with an error.
     /// </summary>
-    public async System.Threading.Tasks.Task Failure(System.Text.StringBuilder sb, global::app.actor.context.@this context)
+    public async System.Threading.Tasks.Task Explain(System.Text.StringBuilder sb, global::app.actor.context.@this context)
     {
         if (Status != Status.Fail || Error == null) return;
         sb.AppendLine("    FAIL: " + Goal.Path);

@@ -182,7 +182,7 @@ public sealed partial class @this : global::app.type.item.@this
     /// <param name="names">The variables its frame is born with — a goal call's parameters.</param>
     public call.@this Push(global::app.goal.@this goal, setting.@this setting, IEnumerable<global::app.data.@this>? names = null)
     {
-        Deepen();
+        if (IsFull) throw new CallStackOverflowException(MaxDepth);
         return Enter(new call.@this(Call, this, goal, setting, names));
     }
 
@@ -201,7 +201,7 @@ public sealed partial class @this : global::app.type.item.@this
     /// <summary>Pushes the frame of a step starting: its goal and itself.</summary>
     public call.@this Push(global::app.goal.step.@this step, setting.@this setting)
     {
-        Deepen();
+        if (IsFull) throw new CallStackOverflowException(MaxDepth);
         return Enter(new call.@this(Call, this, step, setting));
     }
 
@@ -209,16 +209,13 @@ public sealed partial class @this : global::app.type.item.@this
     /// in C# holds no step. <paramref name="variables"/> is the store for diff capture (when Diff is on).</summary>
     public call.@this Push(global::app.goal.step.action.@this action, setting.@this setting, Variables? variables = null)
     {
-        Deepen();
+        if (IsFull) throw new CallStackOverflowException(MaxDepth);
         return Enter(new call.@this(Call, this, action, setting, variables));
     }
 
-    // A call frame (a goal's, a step's, an action's) deepens the stack: past MaxDepth (its caller's depth) it is the
-    // overflow, before anything of the frame is made.
-    private void Deepen()
-    {
-        if (_current.Value is { } caller && caller.Depth >= MaxDepth) throw new CallStackOverflowException(MaxDepth);
-    }
+    // Whether the stack is as deep as it goes: a call frame (a goal's, a step's, an action's) pushed now would be the
+    // overflow, refused before anything of it is made.
+    private bool IsFull => _current.Value is { } caller && caller.Depth >= MaxDepth;
 
     // The frame becomes current: it joins its caller's children (Children owns its own lock + FIFO eviction), and a
     // frame that starts an empty chain is the run's root — reassigned each time, so %!call.Root% is the live run's,

@@ -50,14 +50,14 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
             return context.Error(new global::app.error.@this($"{source}: a goal is built from a .goal file, which this isn't", "GoalNotAFile", 400));
         var pr = file.Pr;
         var loaded = await Fresh(pr, context) is { } held ? context.Ok(held)
-            : await Inherited(source, context) ?? await Built(pr, source, context) ?? await Read(pr, context);
+            : await Inherited(source, context) ?? await Unbuilt(pr, source, context) ?? await Read(pr, context);
         if (loaded.Success && await loaded.Value() is goal.@this { IsSetup: true })
             return context.Error(new global::app.error.@this($"{pr}: a setup goal runs only through setup.", "SetupGoal", 400));
         return loaded;
     }
 
     // The refusal of a .goal with no .pr; null when it is built.
-    private async Task<data.@this?> Built(global::app.type.item.path.@this pr, global::app.type.item.path.@this source,
+    private async Task<data.@this?> Unbuilt(global::app.type.item.path.@this pr, global::app.type.item.path.@this source,
         actor.context.@this context)
         => await (await pr.Exists(context)).ToBooleanAsync() ? null
             : context.Error(new global::app.error.@this($"Goal {source} isn't built; run plang build", "GoalNotBuilt", 404));

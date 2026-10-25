@@ -59,23 +59,23 @@ public sealed partial class @this : IAsyncDisposable
         }
     }
 
-    private table? _rows;
+    private table? _table;
     private readonly object _gate = new();
 
-    // The rows as they are now: made, knowing what the code ships, on the first use — the one door every other reads
+    // The table as it is now: made, knowing what the code ships, on the first use — the one door every other reads
     // through.
-    private table Rows
+    private table Table
     {
         get
         {
-            if (System.Threading.Volatile.Read(ref _rows) is { } rows) return rows;
+            if (System.Threading.Volatile.Read(ref _table) is { } table) return table;
             lock (_gate)
             {
-                if (_rows is { } again) return again;
-                rows = new table();
-                Ship(rows);
-                System.Threading.Volatile.Write(ref _rows, rows);
-                return rows;
+                if (_table is { } again) return again;
+                table = new table();
+                Ship(table);
+                System.Threading.Volatile.Write(ref _table, table);
+                return table;
             }
         }
     }
@@ -89,8 +89,8 @@ public sealed partial class @this : IAsyncDisposable
         if (_disposed) return;
         _disposed = true;
         // a registry never used made no provider, so it has none to dispose
-        if (System.Threading.Volatile.Read(ref _rows) is not { } rows) return;
-        foreach (var provider in rows.Providers.Values.SelectMany(p => p.Values))
+        if (System.Threading.Volatile.Read(ref _table) is not { } table) return;
+        foreach (var provider in table.Providers.Values.SelectMany(p => p.Values))
         {
             if (provider is IAsyncDisposable asyncProv)
                 await asyncProv.DisposeAsync();
@@ -119,7 +119,7 @@ public sealed partial class @this : IAsyncDisposable
     // provider comes back directly beside a typed error.
     public (T? Provider, global::app.error.@this? Error) Get<T>(string? name = null) where T : class, ICode
     {
-        if (Rows.Of(typeof(T)) is not { } typeDict)
+        if (Table.Of(typeof(T)) is not { } typeDict)
             return (null, new ActionError($"No {typeof(T).Name} provider registered", "ProviderNotFound", 404));
 
         if (!string.IsNullOrEmpty(name))
@@ -129,7 +129,7 @@ public sealed partial class @this : IAsyncDisposable
             return ((T)provider, null);
         }
 
-        if (Rows.Defaults.TryGetValue(typeof(T), out var defaultName) && typeDict.TryGetValue(defaultName, out var chosen))
+        if (Table.Defaults.TryGetValue(typeof(T), out var defaultName) && typeDict.TryGetValue(defaultName, out var chosen))
             return ((T)chosen, null);
 
         return (null, new ActionError($"No default {typeof(T).Name} provider registered", "ProviderNotFound", 404));
@@ -157,17 +157,17 @@ public sealed partial class @this : IAsyncDisposable
     /// Lists all providers for a specific type.
     /// </summary>
     public IReadOnlyList<T> List<T>() where T : class, ICode
-        => Rows.Of(typeof(T)) is { } typeDict ? typeDict.Values.Cast<T>().ToList() : Array.Empty<T>();
+        => Table.Of(typeof(T)) is { } typeDict ? typeDict.Values.Cast<T>().ToList() : Array.Empty<T>();
 
     /// <summary>
     /// Lists all providers across all types — every one the code ships among them, so each is made.
     /// </summary>
     public IReadOnlyList<ICode> List()
     {
-        var rows = Rows;
-        foreach (var type in rows.Shipped.Keys) rows.Of(type);
+        var table = Table;
+        foreach (var type in table.Shipped.Keys) table.Of(type);
         var result = new List<ICode>();
-        foreach (var typeDict in rows.Providers.Values)
+        foreach (var typeDict in table.Providers.Values)
             result.AddRange(typeDict.Values);
         return result;
     }
@@ -176,7 +176,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Iterates the provider instances made so far, across all types: one the code ships and nothing asked for is
     /// none of them. Used for disposal and inspection.
     /// </summary>
-    public IEnumerable<ICode> All() => (System.Threading.Volatile.Read(ref _rows)?.Providers.Values ?? [])
+    public IEnumerable<ICode> All() => (System.Threading.Volatile.Read(ref _table)?.Providers.Values ?? [])
         .SelectMany(dict => dict.Values);
 
     /// <summary>
@@ -184,7 +184,7 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     /// <remarks>Answered from what the code ships and what was made, making nothing.</remarks>
     public bool Has<T>() where T : class, ICode
-        => Rows.Shipped.ContainsKey(typeof(T)) || Rows.Providers.TryGetValue(typeof(T), out var typeDict) && !typeDict.IsEmpty;
+        => Table.Shipped.ContainsKey(typeof(T)) || Table.Providers.TryGetValue(typeof(T), out var typeDict) && !typeDict.IsEmpty;
 
     // --- Non-generic methods (single source of truth) ---
 
@@ -195,17 +195,17 @@ public sealed partial class @this : IAsyncDisposable
         // A provider is engine plumbing, never a plang value — the registration
         // just succeeds. Returning the provider as the value would wrap a CLR
         // service in a Data (a throwaway clr); the value is never read.
-        => Put(Rows, providerType, provider) ? Context.Ok()
+        => Put(Table, providerType, provider) ? Context.Ok()
             : Context.Error(new ActionError($"Provider '{provider.Name}' already registered for {providerType.Name}", "ProviderExists", 409));
 
-    // Registers provider for providerType in rows; the first for a type becomes its default. False when a provider
+    // Registers provider for providerType in table; the first for a type becomes its default. False when a provider
     // of its name is already there.
-    private bool Put(table rows, System.Type providerType, ICode provider)
+    private bool Put(table table, System.Type providerType, ICode provider)
     {
-        var typeDict = rows.Of(providerType)
-            ?? rows.Providers.GetOrAdd(providerType, _ => new ConcurrentDictionary<string, ICode>(StringComparer.OrdinalIgnoreCase));
+        var typeDict = table.Of(providerType)
+            ?? table.Providers.GetOrAdd(providerType, _ => new ConcurrentDictionary<string, ICode>(StringComparer.OrdinalIgnoreCase));
         if (!typeDict.TryAdd(provider.Name, provider)) return false;
-        rows.Defaults.TryAdd(providerType, provider.Name);
+        table.Defaults.TryAdd(providerType, provider.Name);
         return true;
     }
 
@@ -213,7 +213,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Lists all providers registered for a runtime-resolved type (typed C# access).
     /// </summary>
     public IReadOnlyList<ICode> List(System.Type providerType)
-        => Rows.Of(providerType) is { } typeDict ? typeDict.Values.ToList() : Array.Empty<ICode>();
+        => Table.Of(providerType) is { } typeDict ? typeDict.Values.ToList() : Array.Empty<ICode>();
 
     /// <summary>
     /// Removes a named provider by runtime-resolved type. Cannot remove the default.
@@ -223,13 +223,13 @@ public sealed partial class @this : IAsyncDisposable
         if (string.IsNullOrEmpty(name))
             return Context.Error(new ActionError("Provider name is required", "ValidationError", 400));
 
-        if (Rows.Of(providerType) is not { } typeDict)
+        if (Table.Of(providerType) is not { } typeDict)
             return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
         if (!typeDict.TryGetValue(name, out var provider))
             return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
-        if (Rows.Defaults.TryGetValue(providerType, out var defaultName)
+        if (Table.Defaults.TryGetValue(providerType, out var defaultName)
             && string.Equals(defaultName, provider.Name, StringComparison.OrdinalIgnoreCase))
             return Context.Error(new ActionError($"Cannot remove default provider '{name}'. Set another as default first.", "CannotRemoveDefault", 400));
 
@@ -245,46 +245,46 @@ public sealed partial class @this : IAsyncDisposable
         if (string.IsNullOrEmpty(name))
             return Context.Error(new ActionError("Provider name is required", "ValidationError", 400));
 
-        if (Rows.Of(providerType) is not { } typeDict)
+        if (Table.Of(providerType) is not { } typeDict)
             return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
         if (!typeDict.TryGetValue(name, out var newDefault))
             return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
         // One slot per interface — the provider's other interfaces keep their own default.
-        Rows.Defaults[providerType] = newDefault.Name;
+        Table.Defaults[providerType] = newDefault.Name;
         return Context.Ok();
     }
 
-    // What the code ships for each interface, into the rows as they are made — each provider made the first time its
+    // What the code ships for each interface, into the table as it is made — each provider made the first time its
     // interface is asked for. Each module owns its default provider — this is the single registration point. Every
     // built-in is stamped so the snapshot capture skips them: a fresh App's registry holds the same set, so they don't
     // ride along in the payload.
-    private void Ship(table rows)
+    private void Ship(table table)
     {
         var ed25519 = new Lazy<ICode>(() => new Ed25519());
-        Ship<ISigning>(rows, ed25519);
-        Ship<IKey>(rows, ed25519);
-        Ship<IIdentity>(rows, new(() => new global::app.module.identity.code.Default()));
-        Ship<ICrypto>(rows, new(() => new global::app.module.crypto.code.Default()));
-        Ship<global::app.module.math.code.IMath>(rows, new(() => new global::app.module.math.code.Default()));
-        Ship<global::app.module.http.code.IHttp>(rows, new(() => new global::app.module.http.code.Default()));
-        Ship<global::app.module.archive.code.IArchive>(rows, new(() => new global::app.module.archive.code.Default()));
-        Ship<global::app.module.terminal.code.ITerminal>(rows, new(() => new global::app.module.terminal.code.Default()));
-        Ship<global::app.module.browser.code.IBrowser>(rows, new(() => new global::app.module.browser.code.Chromium()));
+        Ship<ISigning>(table, ed25519);
+        Ship<IKey>(table, ed25519);
+        Ship<IIdentity>(table, new(() => new global::app.module.identity.code.Default()));
+        Ship<ICrypto>(table, new(() => new global::app.module.crypto.code.Default()));
+        Ship<global::app.module.math.code.IMath>(table, new(() => new global::app.module.math.code.Default()));
+        Ship<global::app.module.http.code.IHttp>(table, new(() => new global::app.module.http.code.Default()));
+        Ship<global::app.module.archive.code.IArchive>(table, new(() => new global::app.module.archive.code.Default()));
+        Ship<global::app.module.terminal.code.ITerminal>(table, new(() => new global::app.module.terminal.code.Default()));
+        Ship<global::app.module.browser.code.IBrowser>(table, new(() => new global::app.module.browser.code.Chromium()));
         // the screen: on Windows a window that shows frames; on Linux (PlangOS) the display that makes them
-        Ship<global::app.module.screen.code.IScreen>(rows, new(() => OperatingSystem.IsWindows()
+        Ship<global::app.module.screen.code.IScreen>(table, new(() => OperatingSystem.IsWindows()
             ? new global::app.module.screen.code.Default()
             : new global::app.module.screen.code.Wayland()));
-        Ship<global::app.module.condition.code.IEvaluator>(rows, new(() => new global::app.module.condition.code.Default()));
-        Ship<global::app.module.assert.code.IAssert>(rows, new(() => new global::app.module.assert.code.Default()));
-        Ship<ITemplate>(rows, new(() => new global::app.module.ui.code.Fluid()));
-        Ship<global::app.module.llm.code.ILlm>(rows, new(() => new global::app.module.llm.code.OpenAi()));
-        Ship<global::app.module.llm.code.IDecider>(rows, new(() => new global::app.module.llm.code.TypeSafe()));
-        Ship<global::app.module.build.code.IBuilder>(rows, new(() => new global::app.module.build.code.Default()));
-        Ship<global::app.data.code.IGrep>(rows, new(() => new global::app.data.code.Default()));
-        Ship<global::app.store.code.IStore>(rows, new(() => new global::app.store.code.Sqlite()));
+        Ship<global::app.module.condition.code.IEvaluator>(table, new(() => new global::app.module.condition.code.Default()));
+        Ship<global::app.module.assert.code.IAssert>(table, new(() => new global::app.module.assert.code.Default()));
+        Ship<ITemplate>(table, new(() => new global::app.module.ui.code.Fluid()));
+        Ship<global::app.module.llm.code.ILlm>(table, new(() => new global::app.module.llm.code.OpenAi()));
+        Ship<global::app.module.llm.code.IDecider>(table, new(() => new global::app.module.llm.code.TypeSafe()));
+        Ship<global::app.module.build.code.IBuilder>(table, new(() => new global::app.module.build.code.Default()));
+        Ship<global::app.data.code.IGrep>(table, new(() => new global::app.data.code.Default()));
+        Ship<global::app.store.code.IStore>(table, new(() => new global::app.store.code.Sqlite()));
     }
 
-    private void Ship<T>(table rows, Lazy<ICode> provider) where T : class, ICode => rows.Shipped[typeof(T)] = provider;
+    private void Ship<T>(table table, Lazy<ICode> provider) where T : class, ICode => table.Shipped[typeof(T)] = provider;
 }
