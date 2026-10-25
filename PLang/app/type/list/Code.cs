@@ -341,5 +341,5 @@ public sealed partial class @this
 
     /// <summary>A class that is a kind of a family: the family's name, its kind's name, the kind class over the family,
     /// and the reader it ships, when it ships one.</summary>
-    internal sealed record Subclass(System.Type Clr, string Family, string Kind, System.Type Class, System.Type? Reader);
+    internal sealed record Subclass(System.Type Clr, string Family, string Kind, System.Type Type, System.Type? Reader);
 }

@@ -333,7 +333,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         foreach (var subclass in library.Subclasses)
             if (Named(subclass.Family) is { } owner && owner.kind[subclass.Kind] == null)
             {
-                if (Hold((global::app.type.kind.@this)System.Activator.CreateInstance(subclass.Class, subclass.Kind, subclass.Clr, owner)!) is { } refused)
+                if (Hold((global::app.type.kind.@this)System.Activator.CreateInstance(subclass.Type, subclass.Kind, subclass.Clr, owner)!) is { } refused)
                     return refused;
 
                 // a subclass kind that ships its own reader (separator) reads under its family and kind — a
