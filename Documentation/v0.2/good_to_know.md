@@ -13,6 +13,7 @@ Notes are split across the topic docs below. Each section title maps to its doc 
 - [`code-modules.md`](code-modules.md) — app.module.code — Pluggable Implementations
 - [`obp-smells.md`](obp-smells.md) — OBP named smell catalog (worked examples), naming tells, variant design
 - [`object_pattern_formal.md`](object_pattern_formal.md) — the OBP pattern (philosophy + the 3 laws + the rules)
+- [`apps.md`](apps.md) — Apps, origins and what they share; a birth that makes what's asked; the speed record and the build
 - [`filesystem-permission.md`](filesystem-permission.md) — the permission gate: what the prompts guard, where a verb is judged, the stores' folder
 - [`callbacks.md`](callbacks.md) — callbacks, sealing, and a signed value that arrives
 - [`io-channels.md`](io-channels.md) — channels, their formats and the console
@@ -110,4 +111,10 @@ Notes are split across the topic docs below. Each section title maps to its doc 
 - The console's format — `%!app.channel.setting.format%` (`txt` / `plang` / `json` / `bin`) → `io-channels.md`
 - Command-line flags are setting paths — `--<path>=<value>`, `app.` optional; `--debug={…}` and `--callstack={…}` are refused → `cli-changes.md`
 - The app's anchors are paths — `app.filesystem.root` / `app.filesystem.os` (`%!app.filesystem.root%`) → `bans.md`, `filesystem-permission.md`
+- An app is made from an origin (the code or an actor); its type list, module registry and goals are layers over it → `apps.md`
+- A sub app is made in its maker's folder or under it, never in its maker's stores folder; a sub app of a testing app tests from birth → `apps.md`
+- A binding made while a program runs is held on its actor (`actor.on`); `Own()` serves only read-time clauses → `apps.md`
+- A run never writes an object its app shares; a type takes no history → `apps.md`
+- A birth makes only what's asked; each part at its first use, pinned by a bytes test → `apps.md`
+- `Tools/Bench` and its speed record; the packages and the SDK; the rebase trap → `apps.md`
 - `date` / `datetime` / `time` ship an `ITypeReader` (`serializer/Reader.cs`) so `as date`/`as datetime`/`as time` literals materialize through `source` + the reader, not an eager `Convert` hook. → `type-system.md`

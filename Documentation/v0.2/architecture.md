@@ -121,8 +121,7 @@ asker's place): `%!goal%`, `%!step%`, `%!error%`, `%!test%`, `%!channel%`. Any o
 
 ### Child contexts
 
-`CreateChild()` — new context with cloned variables, parent reference maintained.
-`Clone()` — sibling context, copies data dictionary.
+`context.Child(runner, token)` (`actor/context/this.cs:71`) — the context a task runs in: its own calls, whose first frame keeps every write the task makes and reads through to the parent context's frames and memory, live; its own cancellation; its settings chained to the parent's. The app is the same.
 
 ---
 

@@ -186,6 +186,46 @@
         "health": "pass (OBP); ImageSharp advisories open",
         "notes": "no build/tests/ObpScan"
       }
+    },
+    {
+      "id": "d0c5-fast-apps-docs-v1",
+      "bot": "docs",
+      "timestamp_start": "2026-10-25T11:00:00Z",
+      "timestamp_end": "2026-10-25T12:00:00Z",
+      "intent": "Docs pass before the fast-apps merge: origin/layers, hold, shared-write rule, bench; CLAUDE.md proposals.",
+      "before": {
+        "assumptions": "The log is claims; the code at the tip is truth.",
+        "risk": "A rule written from the log that the code no longer holds."
+      },
+      "plan": ".bot/fast-apps/docs/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "Documentation/v0.2/apps.md",
+            "Documentation/v0.2/good_to_know.md",
+            "Documentation/v0.2/architecture.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Each rule checked against the tip with file:line."
+        },
+        {
+          "paths": [
+            "CLAUDE.md",
+            "test/plan/fast-apps/start.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Three proposals applied; plan corrected."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "docs only",
+        "notes": "Satisfied."
+      }
     }
   ]
 }
