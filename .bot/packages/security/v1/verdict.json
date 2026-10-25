@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "packages c3d9c2f50: no critical/high. Medium S1: Skia decodes a frame at its header's claimed size, no bound (60 KB PNG -> +504 MB; not a regression). NSec 26, BouncyCastle keccak, magic-byte sniff, Fluid includes and the 19-project vulnerable table all clean." }
