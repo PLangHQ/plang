@@ -53,8 +53,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         }
     }
 
-    // The chunk rows' lists as they were at the last change, made from the rows' snapshot and dropped with it.
-    private @this[]? _chunks;
+    // The chunk rows' lists as they were at the last change, made from the rows' snapshot and dropped with it — as the
+    // one list type its subclass admits as a chunk (a TList[]).
+    private System.Array? _chunks;
 
     /// <summary>The lists this one's chunk rows read through, in row order, as the <typeparamref name="TList"/> its
     /// subclass admits as a chunk — what a list that is a layer over another reads its misses from. None for a list no

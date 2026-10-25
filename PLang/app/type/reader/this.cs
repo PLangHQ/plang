@@ -61,9 +61,9 @@ public abstract class @this
             foreach (var assembly in assemblies)
             {
                 var library = code[assembly];
-                foreach (var (type, reader) in library.Typed)
+                foreach (var (type, reader) in library.Tokens)
                     Tokens[(type, reader.Kind)] = reader;
-                foreach (var (type, kind, read) in library.Read)
+                foreach (var (type, kind, read) in library.Payloads)
                     Payloads[(type, kind)] = read;
             }
         }

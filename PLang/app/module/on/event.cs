@@ -68,12 +68,11 @@ public partial class OnEvent : IContext
             return Context.Error<global::app.@event.binding.@this>(global::app.@event.on.@this.Empty.NoEvent(path));
 
         // each carrier is opened through its door: the first that doesn't resolve (a %variable% holding nothing, a
-        // name that is none of the choice's) is the answer
+        // name that is none of the choice's) is the answer, and nothing is held for it
         // held by the actor that binds, never on the item: it fires in this app alone and goes with it
         var hold = Context.Actor!.on;
-        var @event = hold[item][named.Name]!;
         return data.@this<global::app.@event.binding.@this>.From(await When.Use(when => Scope.Use(scope => Action.Use(call =>
             Task.FromResult<data.@this>(Context.Ok<global::app.@event.binding.@this>(hold.Bind(item, named.Name, when.Value,
-                (side, actor) => new global::app.@event.binding.action.@this(side, @event, call, actor, scope.Value))))))));
+                (side, actor) => new global::app.@event.binding.action.@this(side, hold[item][named.Name]!, call, actor, scope.Value))))))));
     }
 }

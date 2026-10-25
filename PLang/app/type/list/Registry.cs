@@ -64,17 +64,10 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
 
     // The type a name names as the guard has recorded it so far — this list's own, else the list under's (the scan
     // reads it as it fills the set).
-    private global::app.type.@this? Named(string name)
-    {
-        if (_named.GetValueOrDefault(name) is { } type) return type;
-        foreach (var under in Under)
-            if (under.Named(name) is { } named) return named;
-        return null;
-    }
+    private global::app.type.@this? Named(string name) => _named.GetValueOrDefault(name) ?? Under?.Named(name);
 
-    // The lists this one is a layer over, as type lists: the only list a type list admits as a row (Admit). None for the
-    // code's, one for a layer.
-    private @this[] Under => Chunks<@this>();
+    // The list this one is a layer over: the only list a type list admits as a row (Admit). None for the code's.
+    private @this? Under => Chunks<@this>() is [var under] ? under : null;
 
     // Every type's class to the type, the first that has it, as the set stands (naming reads the set while the scan
     // fills it). Kept by the guard beside the names, so a lookup by class never walks the set.
@@ -82,13 +75,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         = System.Collections.Immutable.ImmutableDictionary<System.Type, global::app.type.@this>.Empty;
 
     // The type a class defines: this list's own, else the list under's.
-    private global::app.type.@this? Classed(System.Type clr)
-    {
-        if (_classed.GetValueOrDefault(clr) is { } type) return type;
-        foreach (var under in Under)
-            if (under.Classed(clr) is { } classed) return classed;
-        return null;
-    }
+    private global::app.type.@this? Classed(System.Type clr) => _classed.GetValueOrDefault(clr) ?? Under?.Classed(clr);
 
     /// <summary>Whether this list, a layer, holds types of its own — what its app loaded over the list under it.</summary>
     internal bool HasOwn => !_named.IsEmpty;
@@ -228,7 +215,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             foreach (var type in Items())
                 if (type.kind[key] is { } taken
                     && !(ReferenceEquals(taken.Owner, kind.Owner) && string.Equals(taken.Name, kind.Name, StringComparison.OrdinalIgnoreCase)))
-                    throw new InvalidOperationException(Taken(key, taken, kind).Message);
+                    throw new InvalidOperationException(Collision(key, taken, kind).Message);
         if (Hold(kind) is { } refused) throw new global::app.error.AppException(refused);
     }
 
@@ -266,11 +253,11 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                 foreach (var kind in root.Kinds)
                     foreach (var key in kind.Mime.Concat(kind.Extension))
                         if (!seen.TryAdd(key, kind) && !ReferenceEquals(seen[key], kind))
-                            return Taken(key, seen[key], kind);
+                            return Collision(key, seen[key], kind);
         return null;
     }
 
-    private static error.@this Taken(string key, global::app.type.kind.@this taken, global::app.type.kind.@this kind)
+    private static error.@this Collision(string key, global::app.type.kind.@this taken, global::app.type.kind.@this kind)
         => new($"'{key}' is already the format '{taken.Owner?.Name}{(taken.IsEmpty ? "" : "/" + taken.Name)}' — "
                + $"'{kind.Owner?.Name}{(kind.IsEmpty ? "" : "/" + kind.Name)}' cannot answer to it too.", "TypeLoadCollision", 400);
 
@@ -288,7 +275,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             if (Named(type) is { } owner
                 && Hold((global::app.type.kind.@this)System.Activator.CreateInstance(clr, owner)!) is { } refused)
                 return refused;
-        foreach (var mark in library.Marked)
+        foreach (var mark in library.Marks)
         {
             var t = mark.Clr;
             // each format a type's class declares, a kind of that type — written by the class's own encode, read by

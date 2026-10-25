@@ -26,8 +26,8 @@ public sealed partial class @this : IAsyncDisposable
     /// first use, so an app that asks for none makes none.</summary>
     public @this(actor.context.@this context) => Context = context;
 
-    // The registry's tables, made at its first use, with the built-in providers.
-    private sealed class tables
+    // The registry's rows, made at its first use, with the providers the code ships.
+    private sealed class rows
     {
         internal readonly ConcurrentDictionary<System.Type, ConcurrentDictionary<string, ICode>> Providers = new();
         // The default's name per interface. A default is selection, and selection is the registry's: one
@@ -38,30 +38,30 @@ public sealed partial class @this : IAsyncDisposable
         internal readonly ConcurrentDictionary<System.Type, string> BuiltIn = new();
     }
 
-    private tables? _tables;
+    private rows? _rows;
     private readonly object _gate = new();
 
-    // The tables as they are now: made, with the built-ins registered, on the first use — the one door every other
-    // reads through.
-    private tables Tables
+    // The rows as they are now: made, with the shipped providers registered, on the first use — the one door every
+    // other reads through.
+    private rows Rows
     {
         get
         {
-            if (System.Threading.Volatile.Read(ref _tables) is { } made) return made;
+            if (System.Threading.Volatile.Read(ref _rows) is { } rows) return rows;
             lock (_gate)
             {
-                if (_tables is { } held) return held;
-                var tables = new tables();
-                BuiltIns(tables);
-                System.Threading.Volatile.Write(ref _tables, tables);
-                return tables;
+                if (_rows is { } again) return again;
+                rows = new rows();
+                Ship(rows);
+                System.Threading.Volatile.Write(ref _rows, rows);
+                return rows;
             }
         }
     }
 
-    private ConcurrentDictionary<System.Type, ConcurrentDictionary<string, ICode>> _providers => Tables.Providers;
-    private ConcurrentDictionary<System.Type, string> _defaults => Tables.Defaults;
-    private ConcurrentDictionary<System.Type, string> _builtInDefaults => Tables.BuiltIn;
+    private ConcurrentDictionary<System.Type, ConcurrentDictionary<string, ICode>> _providers => Rows.Providers;
+    private ConcurrentDictionary<System.Type, string> _defaults => Rows.Defaults;
+    private ConcurrentDictionary<System.Type, string> _builtInDefaults => Rows.BuiltIn;
 
     /// <summary>
     /// Disposes every registered provider instance (IAsyncDisposable preferred,
@@ -72,8 +72,8 @@ public sealed partial class @this : IAsyncDisposable
         if (_disposed) return;
         _disposed = true;
         // a registry never used made no provider, so it has none to dispose
-        if (System.Threading.Volatile.Read(ref _tables) is not { } tables) return;
-        foreach (var provider in tables.Providers.Values.SelectMany(p => p.Values))
+        if (System.Threading.Volatile.Read(ref _rows) is not { } rows) return;
+        foreach (var provider in rows.Providers.Values.SelectMany(p => p.Values))
         {
             if (provider is IAsyncDisposable asyncProv)
                 await asyncProv.DisposeAsync();
@@ -182,16 +182,16 @@ public sealed partial class @this : IAsyncDisposable
         // A provider is engine plumbing, never a plang value — the registration
         // just succeeds. Returning the provider as the value would wrap a CLR
         // service in a Data (a throwaway clr); the value is never read.
-        => Put(Tables, providerType, provider) ? Context.Ok()
+        => Put(Rows, providerType, provider) ? Context.Ok()
             : Context.Error(new ActionError($"Provider '{provider.Name}' already registered for {providerType.Name}", "ProviderExists", 409));
 
-    // Registers provider for providerType in tables; the first for a type becomes its default. False when a provider
+    // Registers provider for providerType in rows; the first for a type becomes its default. False when a provider
     // of its name is already there.
-    private bool Put(tables tables, System.Type providerType, ICode provider)
+    private bool Put(rows rows, System.Type providerType, ICode provider)
     {
-        var typeDict = tables.Providers.GetOrAdd(providerType, _ => new ConcurrentDictionary<string, ICode>(StringComparer.OrdinalIgnoreCase));
+        var typeDict = rows.Providers.GetOrAdd(providerType, _ => new ConcurrentDictionary<string, ICode>(StringComparer.OrdinalIgnoreCase));
         if (!typeDict.TryAdd(provider.Name, provider)) return false;
-        tables.Defaults.TryAdd(providerType, provider.Name);
+        rows.Defaults.TryAdd(providerType, provider.Name);
         return true;
     }
 
@@ -244,40 +244,40 @@ public sealed partial class @this : IAsyncDisposable
         return Context.Ok();
     }
 
-    // The built-in providers, into tables as they are made. Each module owns its default provider — this is the single
-    // registration point. Every built-in is stamped so the snapshot capture skips them: a fresh App's registry holds
-    // the same set, so they don't ride along in the payload.
-    private void BuiltIns(tables tables)
+    // The providers the code ships, into the rows as they are made. Each module owns its default provider — this is the
+    // single registration point. Every built-in is stamped so the snapshot capture skips them: a fresh App's registry
+    // holds the same set, so they don't ride along in the payload.
+    private void Ship(rows rows)
     {
         var ed25519 = new Ed25519();
-        BuiltIn<ISigning>(tables, ed25519);
-        BuiltIn<IKey>(tables, ed25519);
-        BuiltIn<IIdentity>(tables, new global::app.module.identity.code.Default());
-        BuiltIn<ICrypto>(tables, new global::app.module.crypto.code.Default());
-        BuiltIn<global::app.module.math.code.IMath>(tables, new global::app.module.math.code.Default());
-        BuiltIn<global::app.module.http.code.IHttp>(tables, new global::app.module.http.code.Default());
-        BuiltIn<global::app.module.archive.code.IArchive>(tables, new global::app.module.archive.code.Default());
-        BuiltIn<global::app.module.terminal.code.ITerminal>(tables, new global::app.module.terminal.code.Default());
-        BuiltIn<global::app.module.browser.code.IBrowser>(tables, new global::app.module.browser.code.Chromium());
+        Ship<ISigning>(rows,ed25519);
+        Ship<IKey>(rows,ed25519);
+        Ship<IIdentity>(rows,new global::app.module.identity.code.Default());
+        Ship<ICrypto>(rows,new global::app.module.crypto.code.Default());
+        Ship<global::app.module.math.code.IMath>(rows,new global::app.module.math.code.Default());
+        Ship<global::app.module.http.code.IHttp>(rows,new global::app.module.http.code.Default());
+        Ship<global::app.module.archive.code.IArchive>(rows,new global::app.module.archive.code.Default());
+        Ship<global::app.module.terminal.code.ITerminal>(rows,new global::app.module.terminal.code.Default());
+        Ship<global::app.module.browser.code.IBrowser>(rows,new global::app.module.browser.code.Chromium());
         // the screen: on Windows a window that shows frames; on Linux (PlangOS) the display that makes them
-        BuiltIn<global::app.module.screen.code.IScreen>(tables, OperatingSystem.IsWindows()
+        Ship<global::app.module.screen.code.IScreen>(rows,OperatingSystem.IsWindows()
             ? new global::app.module.screen.code.Default()
             : new global::app.module.screen.code.Wayland());
-        BuiltIn<global::app.module.condition.code.IEvaluator>(tables, new global::app.module.condition.code.Default());
-        BuiltIn<global::app.module.assert.code.IAssert>(tables, new global::app.module.assert.code.Default());
-        BuiltIn<ITemplate>(tables, new global::app.module.ui.code.Fluid());
-        BuiltIn<global::app.module.llm.code.ILlm>(tables, new global::app.module.llm.code.OpenAi());
-        BuiltIn<global::app.module.llm.code.IDecider>(tables, new global::app.module.llm.code.TypeSafe());
-        BuiltIn<global::app.module.build.code.IBuilder>(tables, new global::app.module.build.code.Default());
-        BuiltIn<global::app.data.code.IGrep>(tables, new global::app.data.code.Default());
-        BuiltIn<global::app.store.code.IStore>(tables, new global::app.store.code.Sqlite());
+        Ship<global::app.module.condition.code.IEvaluator>(rows,new global::app.module.condition.code.Default());
+        Ship<global::app.module.assert.code.IAssert>(rows,new global::app.module.assert.code.Default());
+        Ship<ITemplate>(rows,new global::app.module.ui.code.Fluid());
+        Ship<global::app.module.llm.code.ILlm>(rows,new global::app.module.llm.code.OpenAi());
+        Ship<global::app.module.llm.code.IDecider>(rows,new global::app.module.llm.code.TypeSafe());
+        Ship<global::app.module.build.code.IBuilder>(rows,new global::app.module.build.code.Default());
+        Ship<global::app.data.code.IGrep>(rows,new global::app.data.code.Default());
+        Ship<global::app.store.code.IStore>(rows,new global::app.store.code.Sqlite());
     }
 
-    private void BuiltIn<T>(tables tables, T provider) where T : class, ICode
+    private void Ship<T>(rows rows, T provider) where T : class, ICode
     {
         provider.IsBuiltIn = true;
-        Put(tables, typeof(T), provider);
+        Put(rows, typeof(T), provider);
         // the type's "natural" default name, once — the first built-in for a type becomes its default by being first
-        tables.BuiltIn.TryAdd(typeof(T), provider.Name);
+        rows.BuiltIn.TryAdd(typeof(T), provider.Name);
     }
 }

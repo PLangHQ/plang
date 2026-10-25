@@ -78,8 +78,8 @@ public sealed partial class @this : ISnapshot
     {
         var providers = this;
 
-        var registrations = await Rows<Registration>(s, "registrations");
-        var overrides = await Rows<DefaultOverride>(s, "defaultOverrides");
+        var registrations = await Captured<Registration>(s, "registrations");
+        var overrides = await Captured<DefaultOverride>(s, "defaultOverrides");
 
         // Step 1 — registrations
         foreach (var reg in registrations)
@@ -161,7 +161,7 @@ public sealed partial class @this : ISnapshot
     /// <summary>The captured rows of one entry, each read through its own typed ask — the same door
     /// every value goes through, so nothing lowers to CLR here. Absent entry → empty, the same
     /// answer a captured empty list gives.</summary>
-    private static async System.Threading.Tasks.Task<List<T>> Rows<T>(
+    private static async System.Threading.Tasks.Task<List<T>> Captured<T>(
         global::app.snapshot.@this s, string key)
         where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {

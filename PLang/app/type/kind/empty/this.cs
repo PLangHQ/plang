@@ -17,14 +17,14 @@ public sealed class @this : global::app.type.kind.@this
     // look, never by asking each kind in turn. Made on the first look after kinds came in, from the kinds as they were
     // then, and made again only when they've changed since: a type taking its kinds one by one makes its tables once,
     // and one that holds no kind never makes them. Replaced whole, read without the gate.
-    private volatile Tables? _tables;
+    private volatile lookup? _lookup;
 
     // The key tables of one set of kinds — the array they were made from, so a look knows they still answer it.
-    private sealed record Tables(global::app.type.kind.@this[] From,
+    private sealed record lookup(global::app.type.kind.@this[] From,
         System.Collections.Generic.Dictionary<string, global::app.type.kind.@this> Keys,
         System.Collections.Generic.Dictionary<string, global::app.type.kind.@this> Extensions)
     {
-        internal static Tables Of(global::app.type.kind.@this[] kinds)
+        internal static lookup Of(global::app.type.kind.@this[] kinds)
         {
             var keys = new System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>(System.StringComparer.OrdinalIgnoreCase);
             var extensions = new System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>(System.StringComparer.OrdinalIgnoreCase);
@@ -38,17 +38,17 @@ public sealed class @this : global::app.type.kind.@this
     }
 
     // The tables of the kinds as an addition last published them — made now when they were made from others.
-    private Tables Current
+    private lookup Lookup
     {
         get
         {
             var kinds = _kinds;
-            if (_tables is { } made && ReferenceEquals(made.From, kinds)) return made;
+            if (_lookup is { } lookup && ReferenceEquals(lookup.From, kinds)) return lookup;
             lock (_gate)
             {
                 kinds = _kinds;
-                if (_tables is { } again && ReferenceEquals(again.From, kinds)) return again;
-                return _tables = Tables.Of(kinds);
+                if (_lookup is { } again && ReferenceEquals(again.From, kinds)) return again;
+                return _lookup = lookup.Of(kinds);
             }
         }
     }
@@ -124,11 +124,11 @@ public sealed class @this : global::app.type.kind.@this
             if (_kinds.Length == 0) return null;
             var semicolon = name.IndexOf(';');
             // the tables of the kinds as they stand, read once
-            var tables = Current;
-            return name.StartsWith('.') ? tables.Extensions.GetValueOrDefault(name[1..])
-                   : tables.Keys.GetValueOrDefault(name)
-                     ?? (semicolon >= 0 ? tables.Keys.GetValueOrDefault(name[..semicolon].Trim()) : null)
-                     ?? tables.Extensions.GetValueOrDefault(name);
+            var lookup = Lookup;
+            return name.StartsWith('.') ? lookup.Extensions.GetValueOrDefault(name[1..])
+                   : lookup.Keys.GetValueOrDefault(name)
+                     ?? (semicolon >= 0 ? lookup.Keys.GetValueOrDefault(name[..semicolon].Trim()) : null)
+                     ?? lookup.Extensions.GetValueOrDefault(name);
         }
     }
 

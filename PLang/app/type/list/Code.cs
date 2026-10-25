@@ -38,15 +38,15 @@ public sealed partial class @this
 
         internal Class(System.Type clr)
         {
-            Alias = Declared<IReadOnlyList<string>>("Alias") ?? [];
-            Owned = Declared<IReadOnlyList<global::app.type.convert.OwnedClr>>("OwnedClrTypes") ?? [];
+            Alias = Static<IReadOnlyList<string>>("Alias") ?? [];
+            Owned = Static<IReadOnlyList<global::app.type.convert.OwnedClr>>("OwnedClrTypes") ?? [];
             // declared by the class itself: a base that is internal (reference) leaves its subclasses (file, url) named
             Internal = clr.GetProperty("Internal", BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
                 ?.GetValue(null) is true;
-            Offer = Declared<IReadOnlyList<global::app.type.item.@this>>("Offer");
+            Offer = Static<IReadOnlyList<global::app.type.item.@this>>("Offer");
             _clr = clr;
 
-            T? Declared<T>(string member) where T : class
+            T? Static<T>(string member) where T : class
                 => clr.GetProperty(member, BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
                     ?.GetValue(null) as T;
         }
@@ -76,16 +76,18 @@ public sealed partial class @this
         /// (<c>app.module.llm.setting</c> is <c>llm.setting</c>), a type's where types are (<c>app.type.item.size.setting</c>
         /// is <c>app.type.size.setting</c>), a class declared inside what it configures through its owner
         /// (<c>app.module.llm.decider.setting</c> is <c>llm.decider.setting</c>). Worked out once per code.</summary>
-        internal string Path => _path ??= Where();
-
-        // The path a class of options is read by, from where the class is declared.
-        private string Where()
+        internal string Path
         {
-            var path = _clr is { DeclaringType: { } owner } ? $"{_clr.Namespace}.{owner.Name}.{_clr.Name}" : _clr.Namespace!;
-            const string module = "app.module.", at = "app.type.item.";
-            return path.StartsWith(module) ? path[module.Length..]
-                : path.StartsWith(at) ? "app.type." + path[at.Length..]
-                : path;
+            get
+            {
+                if (_path != null) return _path;
+                // where the class is declared, then that as it is read
+                var path = _clr is { DeclaringType: { } owner } ? $"{_clr.Namespace}.{owner.Name}.{_clr.Name}" : _clr.Namespace!;
+                const string module = "app.module.", at = "app.type.item.";
+                return _path = path.StartsWith(module) ? path[module.Length..]
+                    : path.StartsWith(at) ? "app.type." + path[at.Length..]
+                    : path;
+            }
         }
 
         private (PropertyInfo Member, global::app.module.DefaultAttribute? Declared, ConstructorInfo? Empty)[]? _defaults;
@@ -125,16 +127,16 @@ public sealed partial class @this
 
         /// <summary>Each class the second pass marks: the formats it declares, whether it is the list, whether it is a
         /// closed set.</summary>
-        internal IReadOnlyList<Mark> Marked { get; }
+        internal IReadOnlyList<Mark> Marks { get; }
 
         /// <summary>Each class that is a kind of a family, with its family, its kind and the reader it ships.</summary>
         internal IReadOnlyList<Subclass> Subclasses { get; }
 
         /// <summary>The token readers it ships under a serializer folder: the type they read, the kind each names.</summary>
-        internal IReadOnlyList<Token> Typed { get; }
+        internal IReadOnlyList<Token> Tokens { get; }
 
         /// <summary>The whole-payload readers it ships under a serializer folder, by the type and kind they read.</summary>
-        internal IReadOnlyList<Payload> Read { get; }
+        internal IReadOnlyList<Payload> Payloads { get; }
 
         internal Library(Assembly assembly)
         {
@@ -164,8 +166,8 @@ public sealed partial class @this
                     && t.GetConstructor([typeof(global::app.type.@this)]) != null)
                 .Select(t => new KindClass(t)).Where(each => each.Owner != null).ToList();
             // a Mark is asked of every class (a value: nothing made for one with none), kept for one that has one
-            Marked = Classes.Select(t => new Mark(t)).Where(mark => mark.Codec != null || mark.List || mark.Choice).ToList();
-            (Typed, Read) = Readers(assembly);
+            Marks = Classes.Select(t => new Mark(t)).Where(mark => mark.Codec != null || mark.List || mark.Choice).ToList();
+            (Tokens, Payloads) = Readers(assembly);
         }
 
         // The token readers the assembly ships, by their serializer namespace — a subclass kind's own reader is the one in

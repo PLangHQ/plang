@@ -246,10 +246,10 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         // the app's iec); one that can't be null and declares none holds the empty value its own class is born as,
         // holding the app's type for it: an empty list or dict, a nested setting at its defaults, the machine's culture
         // — which members those are, their defaults and their empty constructors, is the class's, read once per code
-        foreach (var (member, defaulted, empty) in Type.Facts(node.GetType()).Defaults)
+        foreach (var (member, @default, empty) in Type.Facts(node.GetType()).Defaults)
         {
             if (member.GetValue(node) != null) continue;
-            if (defaulted is { } @default)
+            if (@default != null)
             {
                 var asked = new global::app.data.@this(member.Name, context: context);
                 if (context.App.type.list[member.PropertyType].Make(@default.Value, asked) is { } value

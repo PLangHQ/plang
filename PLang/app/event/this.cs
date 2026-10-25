@@ -28,13 +28,13 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     /// <summary>Whether anything is bound on this event, before or after it, at any of <paramref name="item"/>'s
     /// levels — so a door whose before is handed something it would have to make asks first.</summary>
     public bool IsBound(global::app.type.item.@this item, global::app.actor.context.@this context)
-        => Bound(item, context, BeforeSide).Outer >= 0 || Bound(item, context, AfterSide).Outer >= 0;
+        => Reach(item, context, BeforeSide).Outer >= 0 || Reach(item, context, AfterSide).Outer >= 0;
 
     private static readonly System.Func<@this, binding.list.@this> BeforeSide = e => e.before;
     private static readonly System.Func<@this, binding.list.@this> AfterSide = e => e.after;
 
     // The outermost and innermost of the item's levels with something bound on one side; -1 when none has.
-    private (int Outer, int Inner) Bound(global::app.type.item.@this item, global::app.actor.context.@this context,
+    private (int Outer, int Inner) Reach(global::app.type.item.@this item, global::app.actor.context.@this context,
         System.Func<@this, binding.list.@this> side)
     {
         int outer = -1, inner = -1;
@@ -176,7 +176,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
         global::app.actor.context.@this context, global::app.data.@this? result = null)
     {
         // nothing bound at any level: nothing to start, so nothing awaited or made
-        var outer = Bound(item, context, BeforeSide).Outer;
+        var outer = Reach(item, context, BeforeSide).Outer;
         return outer >= 0 ? Before(item, outer, context, result) : default;
     }
 
@@ -203,7 +203,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
         global::app.data.@this result, global::app.actor.context.@this context)
     {
         // nothing bound at any level: the result as it stands, nothing awaited
-        var inner = Bound(item, context, AfterSide).Inner;
+        var inner = Reach(item, context, AfterSide).Inner;
         return inner >= 0 ? After(item, result, inner, context) : new(result);
     }
 
