@@ -25,7 +25,8 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
     {
         try
         {
-            await data.Output(new Writer(stream, view, context));
+            await using var writer = new Writer(stream, view, context);
+            await data.Output(writer);
             return context.Ok();
         }
         // a record that refused itself is the encode's answer, as in json

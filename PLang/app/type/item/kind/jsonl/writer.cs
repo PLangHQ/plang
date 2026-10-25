@@ -8,7 +8,7 @@ namespace app.type.item.kind.jsonl;
 /// one record by default; a list's elements are its records (<c>item.Write(jsonl.Writer)</c>). A record writes itself
 /// through the json writer, so every token below goes into the record in progress.
 /// </summary>
-public sealed class Writer : IWriter
+public sealed class Writer : IWriter, System.IAsyncDisposable
 {
     private static readonly byte[] End = [(byte)'\n'];
 
@@ -18,7 +18,7 @@ public sealed class Writer : IWriter
     private readonly System.IO.Stream _stream;
     private readonly System.IO.MemoryStream _record = new();   // the record in progress, before it is a line
     private readonly Utf8JsonWriter _utf8;
-    private readonly Utf8JsonWriter _line;
+    private Utf8JsonWriter? _line;   // a record laid again on one line; made the first time one is
     private readonly global::app.type.item.kind.json.Writer _json;
 
     /// <summary>A JSON Lines writer onto <paramref name="stream"/>, for <paramref name="view"/>, asked by
@@ -27,7 +27,6 @@ public sealed class Writer : IWriter
     {
         _stream = stream;
         _utf8 = new Utf8JsonWriter(_record, Compact);
-        _line = new Utf8JsonWriter(stream, Compact);
         _json = new global::app.type.item.kind.json.Writer(_utf8, view, context);
         Kind = context.App.type.list["item"].kind["jsonl"]!;
     }
@@ -64,6 +63,7 @@ public sealed class Writer : IWriter
         else
         {
             using var document = JsonDocument.Parse(record);
+            _line ??= new Utf8JsonWriter(_stream, Compact);
             document.RootElement.WriteTo(_line);
             await _line.FlushAsync(Context.CancellationToken);
             _line.Reset();
@@ -71,6 +71,14 @@ public sealed class Writer : IWriter
         _record.SetLength(0);
         _utf8.Reset();
         await _stream.WriteAsync(End, Context.CancellationToken);
+    }
+
+    /// <summary>The writer's json writers and its record buffer let go; the stream stays its owner's.</summary>
+    public async System.Threading.Tasks.ValueTask DisposeAsync()
+    {
+        await _utf8.DisposeAsync();
+        if (_line != null) await _line.DisposeAsync();
+        await _record.DisposeAsync();
     }
 
     // A line is a whole record: a token written beside one (a Debug view's "written" around a template) would split a

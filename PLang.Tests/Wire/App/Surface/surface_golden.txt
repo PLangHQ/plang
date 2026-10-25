@@ -1849,7 +1849,7 @@ class app.type.item.kind.json.this : app.type.kind.this<app.type.item.this>, app
   override Read(System.Object obj, app.type.reader.ITypeReader reader, System.String kind, app.actor.context.this context) : System.Object
   override Report : System.String { get; }
 
-class app.type.item.kind.jsonl.Writer : app.type.format.IWriter
+class app.type.item.kind.jsonl.Writer : System.IAsyncDisposable, app.type.format.IWriter
   BeginArray(System.Int32 count) : System.Void
   BeginObject() : System.Void
   Bool(System.Boolean value) : System.Void
@@ -1858,6 +1858,7 @@ class app.type.item.kind.jsonl.Writer : app.type.format.IWriter
   DateTime(System.DateTime value) : System.Void
   DateTimeOffset(System.DateTimeOffset value) : System.Void
   Decimal(System.Decimal value) : System.Void
+  DisposeAsync() : System.Threading.Tasks.ValueTask
   Double(System.Double value) : System.Void
   EndArray() : System.Void
   EndObject() : System.Void
