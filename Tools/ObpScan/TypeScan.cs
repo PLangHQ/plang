@@ -31,20 +31,21 @@ public sealed class TypeScan
 
         var sb = new StringBuilder();
         sb.AppendLine().AppendLine($"## {FullName}").AppendLine();
-        sb.AppendLine("| Member | Lines | Name flag | Callers (namespaces) | Ownership hint |");
-        sb.AppendLine("|--------|-------|-----------|----------------------|----------------|");
+        sb.AppendLine("| Member | Lines | Name flag | Shape flag | Callers (namespaces) | Ownership hint |");
+        sb.AppendLine("|--------|-------|-----------|------------|----------------------|----------------|");
 
         var summary = new Summary();
         for (int i = 0; i < members.Count; i++)
         {
             var member = members[i];
             var ownership = member.Judge(callers[i]);
-            summary.Add(member.Name, member.Lines, ownership);
+            var shape = member.Shape;
+            summary.Add(member.Name, member.Lines, shape, ownership);
 
             var lenCell = member.Lines > 15 ? $"**{member.Lines}**" : member.Lines.ToString();
             var callerCell = callers[i].Count == 0 ? "(none/internal)"
                 : string.Join(", ", callers[i].Distinct().Select(Concept.Short).Take(4));
-            sb.AppendLine($"| {member.Name} | {lenCell} | {member.Name.Flag} | {callerCell} | {ownership.Verdict} |");
+            sb.AppendLine($"| {member.Name} | {lenCell} | {member.Name.Flag} | {shape} | {callerCell} | {ownership.Verdict} |");
         }
 
         sb.Append(summary.Footer());

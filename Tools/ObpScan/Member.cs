@@ -22,6 +22,8 @@ public sealed class Member
     public static bool IsScannable(ISymbol m)
     {
         if (m.IsImplicitlyDeclared) return false;
+        // a public field is scanned for its shape (a mutable collection exposed); other fields are the type's own state
+        if (m is IFieldSymbol { DeclaredAccessibility: Accessibility.Public }) return true;
         if (m is not (IMethodSymbol or IPropertySymbol)) return false;
         if (m is IMethodSymbol ms && ms.MethodKind is MethodKind.PropertyGet or MethodKind.PropertySet
             or MethodKind.Constructor or MethodKind.StaticConstructor) return false;
@@ -85,6 +87,52 @@ public sealed class Member
                                  callers.Distinct().Select(Concept.Short).First());
         return new Ownership("own", null);
     }
+
+    /// <summary>The member's shape verdict — what its signature shows about a collection, the smells a name can't:
+    /// a verb-named method handing back a raw collection (the collection should be the API, its own type), a
+    /// <c>GetX</c> beside a member <c>X</c> (one thing exposed twice), a public mutable collection (its add and evict
+    /// discipline lives in other files). Empty when none.</summary>
+    public string Shape
+    {
+        get
+        {
+            if (IsContract) return "";
+            var flags = new List<string>();
+            if (_symbol is IMethodSymbol { DeclaredAccessibility: Accessibility.Public } method
+                && Name.HasVerb && IsCollection(Unwrap(method.ReturnType)))
+                flags.Add("**RAW-COLLECTION**");
+            if (_symbol.Name is { Length: > 3 } name && name.StartsWith("Get", StringComparison.Ordinal)
+                && char.IsUpper(name[3]) && _symbol.ContainingType.GetMembers(name[3..]).Any())
+                flags.Add($"**GET-TWIN** ({name[3..]})");
+            if (_symbol.DeclaredAccessibility == Accessibility.Public && IsMutableCollection(_symbol switch
+                {
+                    IPropertySymbol p => p.Type,
+                    IFieldSymbol f => f.Type,
+                    _ => null,
+                }))
+                flags.Add("**MUTABLE-COLLECTION**");
+            return string.Join(", ", flags);
+        }
+    }
+
+    // a Task<T> / ValueTask<T> is what it completes with
+    private static ITypeSymbol Unwrap(ITypeSymbol type)
+        => type is INamedTypeSymbol { Name: "Task" or "ValueTask", TypeArguments.Length: 1 } task
+           && task.ContainingNamespace?.ToDisplayString() == "System.Threading.Tasks"
+            ? Unwrap(task.TypeArguments[0])
+            : type;
+
+    // an array, or a generic collection from System.Collections (List, IEnumerable, IReadOnlyList, Dictionary, …)
+    private static bool IsCollection(ITypeSymbol type)
+        => type is IArrayTypeSymbol
+           || type is INamedTypeSymbol { IsGenericType: true } named
+              && named.ContainingNamespace?.ToDisplayString() is { } ns && ns.StartsWith("System.Collections", StringComparison.Ordinal);
+
+    // a collection anyone holding it can grow: List, Dictionary, HashSet, SortedDictionary, Queue, Stack
+    private static bool IsMutableCollection(ITypeSymbol? type)
+        => type is INamedTypeSymbol { IsGenericType: true } named
+           && named.ContainingNamespace?.ToDisplayString() == "System.Collections.Generic"
+           && named.Name is "List" or "Dictionary" or "HashSet" or "SortedDictionary" or "Queue" or "Stack";
 
     private bool ImplementsInterface
         => _symbol.ContainingType.AllInterfaces.Any(i => i.GetMembers(_symbol.Name).Any());

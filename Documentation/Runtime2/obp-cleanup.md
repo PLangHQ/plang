@@ -8,7 +8,7 @@ Reference: `Documentation/v0.2/object_pattern_formal.md` (the formal pattern + 9
 
 Each entry: **location · the smell · the OBP-clean target · status · found-in**.
 
-**Tooling & sequencing.** `tools/ObpScan` (syntax-only Roslyn scanner — run it over a root, get the H1/H2/H3 worklist) is the scanner for *this* pass. The plan is: **clean up the backlog below first, scanner-assisted; then promote the detection into a build-time `DiagnosticAnalyzer`** (a `PLNGxxx` diagnostic). Order matters — gating CI before the cleanup would just fail on the known backlog; the analyzer goes in once the violations are gone, to stop *new* ones.
+**Tooling & sequencing.** `Tools/ObpScan` (its Shape flag column: RAW-COLLECTION, GET-TWIN, MUTABLE-COLLECTION — the H1/H2/H3 below) is the scanner for *this* pass. The plan is: **clean up the backlog below first, scanner-assisted; then promote the detection into a build-time `DiagnosticAnalyzer`** (a `PLNGxxx` diagnostic). Order matters — gating CI before the cleanup would just fail on the known backlog; the analyzer goes in once the violations are gone, to stop *new* ones.
 
 ---
 
@@ -59,7 +59,7 @@ Each entry: **location · the smell · the OBP-clean target · status · found-i
 
 ## 4. Registry family — collection-proxy verbs (ObpScan H1)
 
-**Location:** the `*.list` registries and `module`. Surfaced by `tools/ObpScan` (H1).
+**Location:** the `*.list` registries and `module`. Surfaced by `Tools/ObpScan` (RAW-COLLECTION, H1).
 
 **Found-in:** `type-kind-strict` (2026-05-31). Generalises #1 (type registry) to the whole family.
 
@@ -115,7 +115,7 @@ Each entry: **location · the smell · the OBP-clean target · status · found-i
 **How to find them (the durable part — the file list isn't):**
 
 - **Quick, zero-build:** `python3 tools/obp-longmethods.py [root]` (root defaults to `PLang`). Masks strings/comments so interpolated `{}` and `//` don't skew the brace count, then ranks every method/ctor/local-function body by line span and prints a distribution + the top 40. Heuristic — eyeball the hits.
-- **Exact, durable home:** add an **H4 pass to `tools/ObpScan`** (it already walks `MethodDeclarationSyntax` for H1/H2). Roslyn gives the body line span exactly — `m.Body?.GetLocation().GetLineSpan()` end−start — no brace-masking heuristics. This is where the file's "promote detection into ObpScan" plan lands for this smell.
+- **Exact, durable home:** add it to `Tools/ObpScan`'s table (each member already answers its own Lines and Shape). Roslyn gives the body line span exactly — `m.Body?.GetLocation().GetLineSpan()` end−start — no brace-masking heuristics. This is where the file's "promote detection into ObpScan" plan lands for this smell.
 - **As a gate it must be a WARNING, never a build error.** ~20% of long methods are legitimate (below), so a hard `PLNGxxx` would false-positive on parsers and dispatchers. Length flags a candidate; a human makes the call.
 
 **Threshold:** review band starts ~60 lines; **>100 lines is a strong candidate.** Triage top-down — the finder ranks by span.
