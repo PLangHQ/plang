@@ -1,16 +1,17 @@
 # codeanalyzer summary (fast-apps)
 
-**Version:** v1
+**Version:** v2
 
-**What this is:** An OBP review of the whole fast-apps production diff (decision 61): `98624ab6a..4d28eda40`, 69 files. A new app is made from an origin, its lists are layers over the origin's, a run-time binding is held on its actor, a birth makes only what's asked for. Read only; not built or run. Report: `.bot/fast-apps/codeanalyzer/review.md`.
+**What this is:** A re-review of the coder's fixes for my v1 (decisions 63/65/66/74) and, under the boy scout rule (66), every file the branch touched read whole: 79 files, 16.4k lines, tip 5d942c7af. Read only; not built or run; the speed bench (`Tools/Bench`) is not in the tree, so no row this round. Report: `.bot/fast-apps/codeanalyzer/review2.md`.
 
-**What was done:** Three region readers read the files whole; I spot-checked the blocking findings. The architecture holds (no `caller == null`, no `_parent` null, no `Shared`, no static added, nothing run-time written onto a shared object, lazy tables published safely). Three findings block by the branch's own rules: `sqlite.InMemory` is production code only tests call (35); `IsBlank` is a flag checked at four sqlite doors (33); "is this layer's own?" is asked by `ReferenceEquals` at the module registry and the type list, with "has code of its own" answered by two owners (40). Fifteen more are non-blocking (dead `event.Of(on)` and nine overrides, a static `goal.Load`, the hold's route spelled at five sites, a publish idiom copied eleven times, names).
+**What was done:** Three readers read the files whole; I re-grepped the blocking claim. Fixed at the root: v1 1, 2, 3, 9, 10, 13, 15 and the `EnsureTable`/run-if-not-yet doors; partly: 5, 7, 12, 14, 16, 17, 18; ruled items checked as ruled. New blocking: `Registry.Under` answers a null for "the code's list has nothing under it", the shape decision 40 ruled out. The boy scout read also puts the rule-35 members only tests call (`Registry.Add(kind)`, `context.CreateChild/Clone`, `test/list` `Made`, the stream's `ReadAllTextAsync`) on the blocking list. Non-blocking: the store decides "in memory" per verb, `system.cs:45` back to `??=`, dead `DynamicData` checks, a delegate allocated per read of `Context.Setting`, older smells by file.
 
-**Next:** the coder fixes the three blocking findings; the architect rules on 4–18; I re-check the blocking ones.
+**Next:** the coder fixes the blocking ones and the cheap renames and deletions; the speed record joins when `Tools/Bench` lands.
 
 **Code example:**
 ```csharp
-// today: three verbs each test a flag and build their own empty answer        store/sqlite/this.cs:123,148,238,262
-if (IsBlank) return Context.Ok<T>(default!);
-// root: one door hands back the connection or the typed empty answer; no verb asks
+// new blocking: a layer and the bottom told apart by a null     type/list/Registry.cs:70,67,78
+private @this? Under => Chunks<@this>() is [var under] ? under : null;
+private type? Named(string name) => _named.GetValueOrDefault(name) ?? Under?.Named(name);
+// root: two kinds, as the reader has them (code asks its own rows; layer adds under.Named(name))
 ```

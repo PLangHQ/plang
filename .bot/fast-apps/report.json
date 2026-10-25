@@ -28,6 +28,34 @@
         "health": "fail: 3 blocking (test-only code, flag at four doors, own-ness by ReferenceEquals)",
         "notes": "no build/tests/ObpScan; findings 3 and 5-16 mostly the readers' with spot checks"
       }
+    },
+    {
+      "id": "86efbd48-a13f-4e4c-9318-785180e1acf2",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T02:55:11Z",
+      "intent": "Re-review fast-apps fixes (63/65/66/74) and every touched file whole, older smells included",
+      "before": {
+        "assumptions": "tip 5d942c7af; 79 touched files; ruled items checked as ruled",
+        "risk": "renames across files can hide a fix that moved a smell; older smells in touched files now in scope"
+      },
+      "plan": ".bot/fast-apps/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/fast-apps/codeanalyzer/review2.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Re-review of fixes + 79 touched files read whole by three readers; blocking: Registry.Under null, rule-35 members; many older smells marked. Read only."
+        }
+      ],
+      "timestamp_end": "2026-10-25T03:03:35Z",
+      "after": {
+        "status": "review2 written: .bot/fast-apps/codeanalyzer/review2.md",
+        "health": "fail: 2 blocking groups; 15 of 18 v1 findings fixed at the root",
+        "notes": "no build/tests/ObpScan/bench; allocation findings from reading"
+      }
     }
   ]
 }
