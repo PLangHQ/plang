@@ -215,8 +215,7 @@ public class @this : global::app.type.@this
     /// positional vs named differently. The list kind indexes, the dict kind keys, the <c>*</c>
     /// kind reflects a property — each owns its own descend.</summary>
     public virtual (bool found, object? node) Descend(object obj, string key, bool isIndex, global::app.actor.context.@this ctx)
-        => throw new global::app.error.AppException(new global::app.error.@this(
-            $"kind '{Name}' is not navigable: it holds no '{key}'", "NotNavigable", 400));
+        => throw new System.NotSupportedException($"kind '{Name}' is not navigable");
 
     /// <summary>Build the child <c>Data</c> for a landed node. Default: a node that already IS
     /// a Data rides through as itself; otherwise the raw node becomes a child Data (the ctor
@@ -229,8 +228,7 @@ public class @this : global::app.type.@this
     /// <summary>Each child of a container, for <c>foreach</c> — array elements or object members.</summary>
     public virtual System.Collections.Generic.IEnumerable<global::app.data.@this> Enumerate(
         object obj, global::app.actor.context.@this ctx)
-        => throw new global::app.error.AppException(new global::app.error.@this(
-            $"kind '{Name}' is not enumerable", "NotEnumerable", 400));
+        => throw new System.NotSupportedException($"kind '{Name}' is not enumerable");
 
     /// <summary>Whether a host of this kind holds its children by position (an array) rather than by name (an
     /// object's members).</summary>
