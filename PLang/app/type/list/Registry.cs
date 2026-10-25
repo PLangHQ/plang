@@ -109,7 +109,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         // plang's own assemblies: a refusal here is plang broken
         foreach (var assembly in Assemblies)
             if (Enlist(assembly) is { } refused) throw new InvalidOperationException(refused.Message);
-        if (Guard() is { } clash) throw new InvalidOperationException(clash.Message);
+        if (Guard(Held()) is { } clash) throw new InvalidOperationException(clash.Message);
     }
 
     /// <summary>The guard every slot passes: the types hold types, and every name a type answers to — its
@@ -216,7 +216,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             added.Add(this[NameOf(clr)!]);
         }
         // a loaded assembly's kinds are the program's: a refusal is the load's answer
-        if ((Enlist(assembly) ?? Guard()) is { } refused) return context.Error(refused);
+        if ((Enlist(assembly) ?? Guard(Held())) is { } refused) return context.Error(refused);
         return context.Ok(added);
     }
 
@@ -225,54 +225,36 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     /// any is held — a refused one leaves nothing held. No result to answer, so the refusal travels whole.</summary>
     internal void Add(IReadOnlyList<global::app.type.kind.@this> kinds)
     {
-        if (Guard(kinds) is { } refused) throw new global::app.error.AppException(refused);
+        // the held formats are walked only when one of the kinds answers to a MIME or an extension at all
+        if (kinds.Any(kind => kind.Mime.Count + kind.Extension.Count > 0) && Guard(Held().Concat(kinds)) is { } refused)
+            throw new global::app.error.AppException(refused);
+        // those of a type below this layer first: its origin holds every one (the code) or none (an actor), so a
+        // refusal comes before any of the batch is held; then this list's own
         foreach (var kind in kinds)
-            if (Hold(kind) is { } unheld) throw new global::app.error.AppException(unheld);
+            if (!Holds(kind) && _origin.Hold(kind) is { } unheld) throw new global::app.error.AppException(unheld);
+        foreach (var kind in kinds)
+            if (Holds(kind)) Put(kind);
     }
 
-    // The first of `kinds` answering to a MIME or an extension a held format (or one before it in `kinds`) already
-    // answers to; a kind of the same name on the same type replaces that one. The held formats are read only when one
-    // of `kinds` answers to any key.
-    private error.@this? Guard(IReadOnlyList<global::app.type.kind.@this> kinds)
+    // Holds a kind (the startup scan calls it while loading). Answers the refusal; null when the kind is held.
+    private error.@this? Hold(global::app.type.kind.@this kind)
     {
-        Dictionary<string, global::app.type.kind.@this>? seen = null;
-        foreach (var kind in kinds)
-            foreach (var key in kind.Mime.Concat(kind.Extension))
-            {
-                seen ??= Formats();
-                if (seen.TryGetValue(key, out var taken)
-                    && !(ReferenceEquals(taken.Owner, kind.Owner) && string.Equals(taken.Name, kind.Name, StringComparison.OrdinalIgnoreCase)))
-                    return Collision(key, taken, kind);
-                seen[key] = kind;
-            }
+        if (!Holds(kind)) return _origin.Hold(kind);
+        Put(kind);
         return null;
     }
 
-    // Every held format by each key it answers to, the first that answers.
-    private Dictionary<string, global::app.type.kind.@this> Formats()
+    // Whether the kind's type is one of this list's own rows — the fact itself, not a flag: a change to its own rows
+    // this list holds; one to a row below it is its origin's to answer.
+    private bool Holds(global::app.type.kind.@this kind) => ReferenceEquals(kind.Owner?.Types ?? this, this);
+
+    // Every kind held on this list's types.
+    private IEnumerable<global::app.type.kind.@this> Held()
     {
-        var formats = new Dictionary<string, global::app.type.kind.@this>(StringComparer.OrdinalIgnoreCase);
         foreach (var type in Items())
             if (type.kind is global::app.type.kind.empty.@this root)
                 foreach (var kind in root.Kinds)
-                    foreach (var key in kind.Mime.Concat(kind.Extension))
-                        formats.TryAdd(key, kind);
-        return formats;
-    }
-
-    // Holds a kind (the startup scan calls it while loading), asked of the list that holds its type. Answers the
-    // refusal; null when the kind is held.
-    private error.@this? Hold(global::app.type.kind.@this kind)
-        => (kind.Owner?.Types ?? this).Hold(kind, this);
-
-    // A kind asked of this list, the one holding its type, by `asker`.
-    private error.@this? Hold(global::app.type.kind.@this kind, @this asker)
-    {
-        // the fact itself, not a flag: a change to the asker's own rows it holds, one to a row below it is its origin's
-        // to answer
-        if (!ReferenceEquals(this, asker)) return asker._origin.Hold(kind);
-        Put(kind);
-        return null;
+                    yield return kind;
     }
 
     /// <summary>Puts a kind on the empty kind of the type it was born holding.</summary>
@@ -283,18 +265,20 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         root.Add(kind);
     }
 
-    // The guard every format passes once a scan has held its kinds: a MIME or an extension is one format's —
-    // a second kind answering to it would make the walk's answer depend on the order the types came in.
-    // One pass over the held kinds; what it sees is dropped when it returns. Answers the first clash.
-    private error.@this? Guard()
+    // The guard every format passes: a MIME or an extension is one format's — a second kind answering to it would make
+    // the walk's answer depend on the order the types came in; a kind of the same name on the same type replaces that
+    // one. One pass over the kinds; what it sees is dropped when it returns. Answers the first clash.
+    private error.@this? Guard(IEnumerable<global::app.type.kind.@this> kinds)
     {
         var seen = new Dictionary<string, global::app.type.kind.@this>(StringComparer.OrdinalIgnoreCase);
-        foreach (var type in Items())
-            if (type.kind is global::app.type.kind.empty.@this root)
-                foreach (var kind in root.Kinds)
-                    foreach (var key in kind.Mime.Concat(kind.Extension))
-                        if (!seen.TryAdd(key, kind) && !ReferenceEquals(seen[key], kind))
-                            return Collision(key, seen[key], kind);
+        foreach (var kind in kinds)
+            foreach (var key in kind.Mime.Concat(kind.Extension))
+            {
+                if (seen.TryGetValue(key, out var taken)
+                    && !(ReferenceEquals(taken.Owner, kind.Owner) && string.Equals(taken.Name, kind.Name, StringComparison.OrdinalIgnoreCase)))
+                    return Collision(key, taken, kind);
+                seen[key] = kind;
+            }
         return null;
     }
 
