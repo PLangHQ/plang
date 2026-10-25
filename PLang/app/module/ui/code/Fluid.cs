@@ -131,10 +131,10 @@ public class Fluid : ITemplate
 
         // `{{ x | json }}` writes the value through plang's json format, as the json writer shows it (liquid's
         // `json: true` indent is not honoured). Liquid's own json filter reflects the C# object behind the value
-        // (IsSequence, RawBytes, …). The value is taken as it is: a text holding %…% is those characters. A page
-        // renders it as it is (no encoder), so the json is made safe for the page here, whatever the json format
-        // writes: < > & escaped, which json reads back the same — they can stand only inside a json string, so a
-        // value's </script> never closes the page's script. Safe as it is, a page writes it unescaped: a `"` stays a `"`.
+        // (IsSequence, RawBytes, …). The value is taken as it is: a text holding %…% is those characters. The json is
+        // made safe for a page's script here, whatever the json format writes: < > & escaped, which json reads back
+        // the same — they can stand only inside a json string, so a value's </script> never closes the page's script.
+        // Safe as it is, a page writes it unescaped: a `"` stays a `"`, so it belongs in a script, never an attribute.
         options.Filters.AddFilter("json", async (input, _, _) =>
         {
             var value = new global::app.data.@this("", input is Item plang ? plang.Held

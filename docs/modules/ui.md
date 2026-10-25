@@ -117,7 +117,7 @@ Every other template (`.txt`, `.llm`, `.json`, `.md`, …, and an inline one) wr
 
 Use the `raw` filter (`{{ html | raw }}`) to write html from a trusted source as it is in a page.
 
-`{{ x | json }}` writes the value as json, the way plang's json format shows it, for a page that embeds data (`<script>const data = {{ x | json }};</script>`). `<`, `>` and `&` come out as `<`, `>` and `&`, which json reads back as the same characters, so a value holding `</script>` can't close the page's script. A page writes it as it is (a `"` stays a `"`).
+`{{ x | json }}` writes the value as json, the way plang's json format shows it, for a page that embeds data (`<script>const data = {{ x | json }};</script>`). `<`, `>` and `&` come out as `<`, `>` and `&`, which json reads back as the same characters, so a value holding `</script>` can't close the page's script. A page writes it as it is (a `"` stays a `"`). So `| json` belongs inside a `<script>`, never inside an attribute: there json's own quotes close the attribute (`data-x="{{ x | json }}"` lets a value add its own attributes). For an attribute, write the value plainly (`data-x="{{ x }}"`), which a page escapes.
 
 ## Security
 
