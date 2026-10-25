@@ -33,7 +33,7 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
             return Incomplete($"goal channel '{name}' needs its {nameof(Goal)}: the goal.call each write runs");
         // Direction, buffer and mime are plang values the channel holds as they are; the rest are lowered here
         // to what the transport uses.
-        return new @this(name, goal, ctx.Actor,
+        return new @this(ctx.Actor.Channel, name, goal,
             direction: Setting(nameof(Direction)) as global::app.type.item.choice.@this<ChannelDirection>,
             buffer: Setting(nameof(Buffer)) as global::app.type.item.number.@this,
             timeout: Setting(nameof(Timeout)) is global::app.type.item.duration.@this after ? (TimeSpan)after : null,
@@ -69,17 +69,17 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
     /// finds no channel there instead of looping back into itself.</summary>
     public override bool Available => !IsExecuting;
 
-    /// <summary>A channel named <paramref name="name"/> that runs <paramref name="goal"/> for <paramref name="actor"/>.
-    /// A setting that isn't given keeps the channel's own default. Without a direction, a channel called
-    /// <c>input</c> or <c>output</c> is that way, and any other both ways (a goal channel can answer an ask).</summary>
-    protected @this(string name, global::app.goal.step.action.@this goal, global::app.actor.@this actor,
+    /// <summary>A channel named <paramref name="name"/> that runs <paramref name="goal"/> for the actor whose channels
+    /// <paramref name="channels"/> are. A setting that isn't given keeps the channel's own default. Without a direction,
+    /// a channel called <c>input</c> or <c>output</c> is that way, and any other both ways (a goal channel can answer an
+    /// ask).</summary>
+    protected @this(global::app.channel.list.@this channels, string name, global::app.goal.step.action.@this goal,
         global::app.type.item.choice.@this<ChannelDirection>? direction = null, global::app.type.item.number.@this? buffer = null,
         TimeSpan? timeout = null, global::app.type.item.text.@this? mime = null,
-        string? encoding = null, string? encryption = null, string? signing = null)
+        string? encoding = null, string? encryption = null, string? signing = null) : base(channels)
     {
         Name = name;
         Goal = goal;
-        Actor = actor;
         Direction = direction
             ?? (string.Equals(name, list.@this.Input, StringComparison.OrdinalIgnoreCase) ? ChannelDirection.Input
               : string.Equals(name, list.@this.Output, StringComparison.OrdinalIgnoreCase) ? ChannelDirection.Output

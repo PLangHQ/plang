@@ -11,6 +11,9 @@ namespace app.channel.type.message;
 /// </summary>
 public abstract class @this : Channel
 {
+    /// <summary>A message channel born of <paramref name="channels"/>, its actor's channels.</summary>
+    protected @this(global::app.channel.list.@this channels) : base(channels) { }
+
     public override Task<data.@this> Ask(module.output.ask action, CancellationToken ct = default)
     {
         // A pending Ask: an IExitsGoal, so the step loop short-circuits. Snapshot carries enough

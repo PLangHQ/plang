@@ -12,8 +12,8 @@ public sealed class @this : global::app.channel.type.session.@this
 {
     private readonly StringBuilder _text = new();
 
-    /// <summary>The run's own session (<paramref name="test"/> null) or one test's.</summary>
-    public @this(global::app.test.@this? test = null)
+    /// <summary>The run's own session (<paramref name="test"/> null) or one test's, born of <paramref name="channels"/>.</summary>
+    public @this(global::app.channel.list.@this channels, global::app.test.@this? test = null) : base(channels)
     {
         Test = test;
         Name = test == null ? "test" : global::app.channel.list.@this.Output;

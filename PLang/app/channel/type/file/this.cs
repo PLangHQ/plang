@@ -14,7 +14,9 @@ public sealed class @this : global::app.channel.@this
     /// <summary>The file written — it owns the gate and the bytes on disk.</summary>
     [global::app.Debug] public global::app.type.item.path.file.@this Path { get; }
 
-    public @this(global::app.type.item.path.file.@this path, global::app.actor.context.@this context)
+    /// <summary>A channel to <paramref name="path"/>, born of the asking actor's channels and never named in them: a
+    /// write's own, made per write.</summary>
+    public @this(global::app.type.item.path.file.@this path, global::app.actor.context.@this context) : base(context.Actor.Channel)
     {
         Path = path ?? throw new ArgumentNullException(nameof(path));
         Name = path.ToString();

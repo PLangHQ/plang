@@ -20,10 +20,16 @@ public enum ChannelDirection
 /// to extend — they pick the one matching their transport's nature:
 ///   - <see cref="Session.@this"/>: kept-open connection. Ask blocks until answer arrives.
 ///   - <see cref="Message.@this"/>: one-shot exchange. Ask returns Suspend; resume via callback.
+///
+/// A channel is born of its actor's channels, and is reached by name only once it is registered there.
 /// </summary>
 [global::app.Attributes.PlangType("channel")]
 public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDisposable
 {
+    /// <summary>A channel born of <paramref name="channels"/>, its actor's channels: they are its owner from birth, and
+    /// its actor is theirs. Being reached by name there is a separate act (<see cref="list.@this.Register"/>).</summary>
+    protected @this(global::app.channel.list.@this channels) => Channels = channels;
+
     /// <summary>A structure — written through the reflection kind, its [Out]/[Debug] members.</summary>
     public override bool IsLeaf => false;
 
@@ -88,16 +94,16 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     public DateTime Created { get; } = DateTime.UtcNow;
 
     /// <summary>
-    /// The actor this channel belongs to — set by the Channels collection on Register. Its context is the one
-    /// the channel's events fire in.
+    /// The actor this channel belongs to — its channels' actor (null for a Service's channels, which belong to no
+    /// actor). Its context is the one the channel's events fire in.
     /// </summary>
-    public global::app.actor.@this Actor { get; internal set; } = null!;
+    public global::app.actor.@this Actor => Channels.Actor!;
 
     /// <summary>
-    /// The Channels collection this channel belongs to — set by
-    /// <see cref="app.channel.list.@this.Register"/>; the channel's events fire in its context.
+    /// The channels this one was born of — its actor's; whether it is reached by name there is whether it was
+    /// registered (<see cref="app.channel.list.@this.Register"/>).
     /// </summary>
-    public global::app.channel.list.@this Channels { get; internal set; } = null!;
+    public global::app.channel.list.@this Channels { get; }
 
     /// <summary>
     /// Whether reading is supported. Default tracks Direction + IsOpen; concretes can override.
@@ -128,9 +134,9 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     /// </summary>
     public abstract Task<global::app.data.@this> Ask(module.output.ask action, CancellationToken ct = default);
 
-    // The context the channel's events fire in — its actor's, else its list's app's system context (a
-    // Service-owned list has no actor); null for a channel that belongs to no list.
-    private protected global::app.actor.context.@this? Context => Actor?.Context ?? Channels?.App.actor.list.System.Context;
+    // The context the channel's events fire in — its actor's, else its channels' app's system context (a
+    // Service-owned list has no actor).
+    private protected global::app.actor.context.@this Context => Channels.Actor?.Context ?? Channels.App.actor.list.System.Context;
 
     /// <summary>Whether the channel takes writes now — a list's <c>Get</c> answers only a channel that does.
     /// A goal channel doesn't while its own goal body runs, so a body writing to its own name can't loop.</summary>
