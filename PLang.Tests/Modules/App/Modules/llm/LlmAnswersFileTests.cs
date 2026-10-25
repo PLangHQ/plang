@@ -141,4 +141,60 @@ public class LlmAnswersFileTests
             await Assert.That(kept[0]!["request"]!.ToJsonString()).IsEqualTo(entries[name]["request"]!.ToJsonString());
         }
     }
+
+    // plang's own LlmQuery test, run by the test itself (test.Start) in an app whose OpenAI is a mock answering
+    // "from OpenAI", its answers file beside it saying "from the file": what the run asked of OpenAI, what it got, and
+    // whether the file changed
+    private async Task<(int Calls, string? Answered, bool FileUnchanged, global::app.test.@this Test)> RunLlmQuery(global::app.module.llm.type.answer llm)
+    {
+        var folder = System.IO.Path.Combine(_root, "module", "llm");
+        System.IO.Directory.CreateDirectory(System.IO.Path.Combine(folder, ".build"));
+        var source = System.IO.Path.Combine(Fixture.Root(), "test", "module", "llm");
+        System.IO.File.Copy(System.IO.Path.Combine(source, "LlmQuery.test.goal"), System.IO.Path.Combine(folder, "LlmQuery.test.goal"));
+        System.IO.File.Copy(System.IO.Path.Combine(source, ".build", "llmquery.test.pr"), System.IO.Path.Combine(folder, ".build", "llmquery.test.pr"));
+        var file = System.IO.Path.Combine(folder, "LlmQuery.test.llm.json");
+        var saved = System.Text.Json.Nodes.JsonNode.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(source, "LlmQuery.test.llm.json")))!.AsArray();
+        saved[0]!["response"]!["choices"]![0]!["message"]!["content"] = "from the file";
+        System.IO.File.WriteAllText(file, saved.ToJsonString());
+        var before = System.IO.File.ReadAllBytes(file);
+
+        await using var app = new global::app.@this(_root, global::PLang.Tests.Parent.Actor).Testing();
+        var openAi = LlmTestHelper.SetupMockHttp(app);
+        openAi.Handler = _ => Task.FromResult(LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("from OpenAI")));
+        var context = app.actor.list.User.Context;
+        await (await context.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["llm"] = llm.ToString() }, context)).IsSuccess();
+        var goal = (global::app.goal.@this)(await (await app.goal.Load("/module/llm/LlmQuery.test.goal")).Value())!;
+        var test = await global::app.test.@this.From(goal, context);
+        // the answer the run's step got: what the query wrote to %result%
+        string? answered = null;
+        app.actor.list.User.on.Bind(app.type.list["step"], "start", global::app.@event.When.after, async (_, _, ctx) =>
+        {
+            if (await ctx.Variable.Get("result") is { IsInitialized: true } result) answered = (await result.Value())?.ToString();
+            return ctx.Ok();
+        }, global::app.@event.binding.Scope.actor);
+
+        await test.Start(app, context);
+        return (openAi.CallCount, answered, before.SequenceEqual(System.IO.File.ReadAllBytes(file)), test);
+    }
+
+    // test.setting.llm=live: the run asks OpenAI, never the file — one call out, OpenAI's answer, the file as it was
+    [Test]
+    public async Task Live_WritesNothing()
+    {
+        var run = await RunLlmQuery(global::app.module.llm.type.answer.live);
+        await Assert.That(run.Test.Status).IsEqualTo(global::app.test.Status.Pass).Because(run.Test.Error?.Message ?? "");
+        await Assert.That(run.Calls).IsEqualTo(1);
+        await Assert.That(run.Answered).IsEqualTo("from OpenAI").Because("live reads nothing of the file");
+        await Assert.That(run.FileUnchanged).IsTrue().Because("live writes nothing to the file");
+    }
+
+    // the default, saved: the same run answered from the file, OpenAI not asked
+    [Test]
+    public async Task Saved_AnswersFromTheFile()
+    {
+        var run = await RunLlmQuery(global::app.module.llm.type.answer.saved);
+        await Assert.That(run.Test.Status).IsEqualTo(global::app.test.Status.Pass).Because(run.Test.Error?.Message ?? "");
+        await Assert.That(run.Calls).IsEqualTo(0);
+        await Assert.That(run.Answered).IsEqualTo("from the file");
+    }
 }

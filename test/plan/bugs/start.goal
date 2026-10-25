@@ -19,7 +19,7 @@ Stage1
 / a changed prompt is a new question: the old answer is never served for it — C# test LlmAnswersFileTests
 / (AChangedPrompt_IsNotServedTheOldAnswer)
 / the key never lands in the file: it holds the request body and the endpoint path, never a header — C# test
-/ LlmAnswersFileTests (TheKey_NeverLandsInTheFile)
+/ LlmAnswersFileTests (TheKey_IsNeverInTheFile)
 / test.setting.llm=live asks OpenAI and writes nothing — C# test LlmAnswersFileTests (Live_WritesNothing)
 / the cache's own test still proves the cache: a first ask misses, a second hits
 - call /module/llm/LlmCache
