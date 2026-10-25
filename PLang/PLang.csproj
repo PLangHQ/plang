@@ -48,6 +48,7 @@
     <InternalsVisibleTo Include="PLang.Tests.Data" />
     <InternalsVisibleTo Include="PLang.Tests.Generator" />
     <InternalsVisibleTo Include="PLang.Tests.Runtime" />
+    <InternalsVisibleTo Include="PLang.Tests.Bench" />
   </ItemGroup>
 
   <ItemGroup>

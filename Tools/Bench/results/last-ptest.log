@@ -1,0 +1,889 @@
+{"id":"21cec424506b","message":"it broke before anyone waited","key":"BrokeEarly","status":400,"createdUtc":"2026-10-25T04:10:36.7957898Z"}
+Test summary: 303 total, 298 pass, 1 fail, 0 timeout, 3 stale, 1 skipped
+  [Pass] /app/data/ReadConfigJson_NavigateMaterialisesField.test.goal (48ms)
+  [Pass] /app/data/PropertiesBangNavigation.test.goal (13ms)
+  [Pass] /app/AppFactsArePlangValues.test.goal (26ms)
+  [Pass] /app/data/DataTypeReadsEntity.test.goal (22ms)
+  [Pass] /app/data/VariableRendersValueOnly.test.goal (21ms)
+  [Pass] /app/data/ReadConfigJson_UntouchedIsJsonString.test.goal (13ms)
+  [Pass] /app/data/PropertiesBangChainedNavigation.test.goal (5ms)
+  [Pass] /app/data/AsJson_ResolvesTypeUnknown.test.goal (8ms)
+  [Pass] /app/data/Plane_DataKeyVsProperty.test.goal (10ms)
+  [Pass] /app/data/ReadCsv_LandsAsTable.test.goal (16ms)
+  [Pass] /app/data/NavigationOnTypeUnknown_AsksForAsType.test.goal (34ms)
+  [Pass] /app/setting/AppNameIsItsSetting.test.goal (30ms)
+  [Pass] /app/data/Cut2.test.goal (50ms)
+  [Pass] /app/data/Narrow_ChainWideBangBothBranches.test.goal (97ms)
+  [Pass] /app/type/PluginTypeJoinsTheApp.test.goal (54ms)
+  [Pass] /app/type/AppListsItsTypes.test.goal (49ms)
+  [Pass] /app/type/OneNameOneType.test.goal (65ms)
+  [Pass] /app/setting/UnknownSettingIsAnError.test.goal (54ms)
+  [Pass] /app/callstack/HandledFlagSetWhenRecoverySucceeds.test.goal (35ms)
+  [Pass] /app/callstack/OuterErrorVarVisibleAfterInnerHandlerCloses.test.goal (45ms)
+  [Pass] /app/callstack/DepthRestoresAfterCall.test.goal (45ms)
+  [Pass] /app/callstack/CrossFileChain.test.goal (74ms)
+  [Pass] /app/callstack/DepthIncreasesOnGoalCall.test.goal (59ms)
+  [Pass] /app/callstack/HandledFlagFalseWhenRecoveryFails.test.goal (22ms)
+  [Pass] /app/callstack/InnerErrorVarShadowsOuter.test.goal (45ms)
+  [Pass] /app/deepnavigation/DeepNavigation.test.goal (23ms)
+  [Pass] /app/stepresult/StepResult.test.goal (21ms)
+  [Pass] /app/actor/OneDoorToAnActor.test.goal (43ms)
+  [Pass] /app/callstack/ErrorVarIsNullOutsideHandler.test.goal (46ms)
+  [Pass] /app/channel/ChannelIndexMissThrows.test.goal (74ms)
+  [Pass] /app/variable/NowIsReadFresh.test.goal (82ms)
+  [Pass] /module/loop/Loop.test.goal (82ms)
+  [Pass] /app/callstack/Audit.test.goal (204ms)
+  [Pass] /module/assert/AssertComplete.test.goal (35ms)
+  [Pass] /module/output/Output.test.goal (33ms)
+  [Pass] /module/assert/Assert.test.goal (71ms)
+  [Pass] /module/error/ThrowAttachesData.test.goal (73ms)
+  [Pass] /module/list/ListOps2.test.goal (156ms)
+  [Pass] /module/build/BuilderSanity.test.goal (105ms)
+  [Pass] /module/on/ClausesCompose.test.goal (157ms)
+  [Pass] /module/on/DataIsLeftAloneAfterAClause.test.goal (159ms)
+  [Pass] /module/list/ListOps.test.goal (480ms)
+  [Pass] /app/callstack/IndirectGoalCycleThrows.test.goal (918ms)
+  [Pass] /module/signing/RoundTripAfterRawSignatureDeletion.test.goal (244ms)
+  [Pass] /module/signing/SignAndVerifyRoundTrip.test.goal (5ms)
+  [Pass] /module/signing/ASignatureHoldsTheValueItSigned.test.goal (3ms)
+  [Pass] /module/signing/SignedDataSurvivesInList.test.goal (19ms)
+  [Pass] /module/file/File.test.goal (39ms)
+  [Pass] /app/callstack/DirectGoalCycleThrows.test.goal (1278ms)
+  [Pass] /module/math/IntDivSevenByTwoIsThree.test.goal (10ms)
+  [Pass] /module/math/DivideSevenByTwoIsThreeHalves.test.goal (7ms)
+  [Pass] /module/math/AddRoundTripDecimal.test.goal (4ms)
+  [Pass] /module/math/BigIntegerSumOverflowsUInt_LandsCorrect.test.goal (7ms)
+  [Pass] /module/math/OverflowThrowSettingHonored.test.goal (5ms)
+  [Pass] /module/math/Math2.test.goal (4ms)
+  [Pass] /module/math/DoublePlusDecimal_Errors.test.goal (4ms)
+  [Pass] /module/math/Cut1_LiteralKindArithmeticOutput.test.goal (3ms)
+  [Pass] /module/archive/CompressRoundTrip.test.goal (128ms)
+  [Pass] /module/math/OverflowPromoteWidens.test.goal (7ms)
+  [Pass] /app/data/operator/IsType.test.goal (4ms)
+  [Pass] /app/permission/grantastorespersisted/Start.test.goal (25ms)
+  [Pass] /app/type/list/TypedListHoldsItsType.test.goal (2ms)
+  [Pass] /module/math/Math.test.goal (49ms)
+  [Pass] /app/type/list/ListIsItemSortsAsBefore.test.goal (5ms)
+  [Pass] /app/type/date/DateIsDateNotDatetime.test.goal (2ms)
+  [Pass] /app/type/date/DateBareIsoOnJson.test.goal (3ms)
+  [Pass] /app/type/date/DateReturnsDateOnly.test.goal (2ms)
+  [Pass] /app/type/date/DateDatetimeSortFamiliesSeparate.test.goal (2ms)
+  [Pass] /app/type/datetime/DatetimeBornNative.test.goal (3ms)
+  [Pass] /app/type/datetime/DatetimeAcceptsClrDateTime.test.goal (1ms)
+  [Pass] /app/type/image/ReadPhotoStampsImage.test.goal (5ms)
+  [Pass] /app/type/dict/DictIsItemKeepsNoOrder.test.goal (8ms)
+  [Pass] /app/type/text/TextBornNative.test.goal (2ms)
+  [Pass] /app/type/text/TextEmptyIsFalsy.test.goal (2ms)
+  [Pass] /app/type/text/TextForEachDoesNotIterateChars.test.goal (5ms)
+  [Pass] /app/type/text/TextBareOnJson.test.goal (2ms)
+  [Pass] /app/type/text/TextLengthOp.test.goal (2ms)
+  [Pass] /app/type/path/PhotoPathExistsNavigation.test.goal (3ms)
+  [Pass] /app/type/path/PhotoPathExistsMissingFile.test.goal (6ms)
+  [Pass] /app/type/path/AsPathIsABirth.test.goal (11ms)
+  [Pass] /app/type/path/PathRoundTripAfterNormalize.test.goal (2ms)
+  [Skipped] /app/type/duration/DurationPartsAndCompare.test.goal (0ms)
+  [Pass] /app/type/duration/DurationRoundTrip.test.goal (2ms)
+  [Pass] /app/type/duration/KeepsItsKind.test.goal (5ms)
+  [Fail] /app/type/item/BareLiteralJudgedByForm.test.goal (5ms)
+    FAIL: /app/type/item/BareLiteralJudgedByForm.test.goal
+      Expected: "date"
+      Actual:   "text"
+      Variables:
+        %birthday% = "2026-01-01"
+  [Pass] /app/type/item/SetChildOnAValueIsAnError.test.goal (7ms)
+  [Pass] /app/type/item/JsonReadIsItemUntilTouch.test.goal (3ms)
+  [Pass] /app/type/time/TimeIsTimeNotUnhandled.test.goal (2ms)
+  [Pass] /app/type/file/CreateFiresOnBirth.test.goal (5ms)
+  [Pass] /app/type/time/TimeReturnsTimeOnly.test.goal (2ms)
+  [Pass] /app/type/bool/BoolBornNative.test.goal (2ms)
+  [Pass] /app/type/bool/BoolBareOnJson.test.goal (2ms)
+  [Pass] /app/type/bool/IfBoolTruthy.test.goal (3ms)
+  [Pass] /app/type/null/NullsSortLast.test.goal (5ms)
+  [Pass] /app/type/null/NullBareOnJson.test.goal (2ms)
+  [Pass] /app/type/null/ExplicitNullIsAPresentNullValue.test.goal (2ms)
+  [Pass] /app/actor/switch/ActorSwitch.test.goal (2ms)
+  [Pass] /module/loop/foreach/LoopItemEndsWithTheLoop.test.goal (3ms)
+  [Pass] /module/loop/foreach/BodyWritesReachTheCaller.test.goal (4ms)
+  [Pass] /module/list/query/PartialFieldFilters.test.goal (9ms)
+  [Pass] /module/list/query/GroupThenOrder.test.goal (11ms)
+  [Pass] /module/list/query/WhereVariable.test.goal (4ms)
+  [Pass] /module/list/query/WhereUnsetVariableIsNotFound.test.goal (8ms)
+  [Pass] /module/list/query/InputUnchanged.test.goal (3ms)
+  [Pass] /module/list/query/Distinct.test.goal (5ms)
+  [Pass] /module/list/query/Cut4.test.goal (11ms)
+  [Pass] /module/list/query/WhereAnd.test.goal (4ms)
+  [Pass] /module/list/query/UnknownField.test.goal (10ms)
+  [Pass] /module/list/query/SqlOrder.test.goal (3ms)
+  [Pass] /module/list/query/OrderUnknownField.test.goal (10ms)
+  [Pass] /module/list/query/WrittenOrder.test.goal (10ms)
+  [Pass] /module/list/query/WhereOr.test.goal (5ms)
+  [Pass] /module/list/query/Failure_SortMixedIncomparable.test.goal (7ms)
+  [Pass] /module/list/query/OrderUnsetVariable.test.goal (8ms)
+  [Pass] /module/list/query/OrderBy.test.goal (6ms)
+  [Pass] /module/goal/return/GoalCallReturn.test.goal (2ms)
+  [Pass] /module/assert/containsoperands/ContainsOperands.test.goal (5ms)
+  [Pass] /module/goal/missing/GoalCallMissing.test.goal (4ms)
+  [Pass] /module/goal/dynamic/GoalCallDynamic.test.goal (3ms)
+  [Pass] /module/goal/call/SubGoalCallResolves.test.goal (4ms)
+  [Pass] /module/goal/call/PlainCallWaits.test.goal (104ms)
+  [Pass] /module/goal/call/ParameterEndsWithTheCall.test.goal (2ms)
+  [Pass] /module/llm/LlmSchema.test.goal (1693ms)
+  [Pass] /module/llm/LlmCache.test.goal (1637ms)
+  [Pass] /module/task/cancel/WaitOnCancelledFails.test.goal (15ms)
+  [Pass] /module/task/cancel/CancelAnswer.test.goal (7ms)
+  [Pass] /module/task/cancel/CancelStops.test.goal (10ms)
+  [Pass] /module/task/wait/FailedTaskFailsWait.test.goal (10ms)
+  [Pass] /module/llm/LlmQuery.test.goal (1570ms)
+  [Pass] /module/llm/LlmFormat.test.goal (1741ms)
+  [Pass] /module/llm/LlmProperties.test.goal (1550ms)
+  [Pass] /module/condition/if/MissingIsEmpty.test.goal (8ms)
+  [Pass] /module/condition/if/IfReturnReturns.test.goal (3ms)
+  [Pass] /module/condition/compare/Failure_DictOrderNumber.test.goal (10ms)
+  [Pass] /module/condition/compare/Plane_NullComparisonsWork.test.goal (5ms)
+  [Pass] /module/condition/compare/Failure_DictEqNumber.test.goal (8ms)
+  [Pass] /module/condition/compare/Plane_MembershipNeverErrors.test.goal (4ms)
+  [Pass] /module/condition/compare/Cut1.test.goal (7ms)
+  [Pass] /module/task/wait/WaitAnswersResult.test.goal (203ms)
+  [Pass] /module/task/wait/WaitForList.test.goal (206ms)
+  [Pass] /module/condition/compare/Failure_DictOrderDict.test.goal (13ms)
+  [Pass] /module/identity/autocreate/IdentityAutoCreate.test.goal (8ms)
+  [Pass] /module/condition/compare/Cut5.test.goal (22ms)
+  [Pass] /module/setting/settingscrud/Start.test.goal (22ms)
+  [Pass] /module/callback/errorcallbackoutsidehandler/Start.test.goal (7ms)
+  [Pass] /module/callback/errorcallbacksurface/Start.test.goal (24ms)
+  [Pass] /module/callback/inprocessresume/Start.test.goal (12ms)
+  [Pass] /module/callback/runcallbackverb/Start.test.goal (13ms)
+  [Pass] /module/crypto/hashsha256/HashSHA256.test.goal (5ms)
+  [Pass] /module/crypto/hashdefault/HashDefault.test.goal (8ms)
+  [Pass] /module/crypto/hashobject/HashObject.test.goal (12ms)
+  [Pass] /module/crypto/providerswap/ProviderSwap.test.goal (7ms)
+  [Pass] /module/crypto/verifywronghash/VerifyWrongHash.test.goal (10ms)
+  [Pass] /module/build/goals/BuilderParseGoal.test.goal (19ms)
+  [Pass] /module/test/assert/TestAssertFailureSnapshotsVariables.test.goal (20ms)
+  [Pass] /module/task/wait/WaitForSeveral.test.goal (303ms)
+  [Pass] /module/test/report/TestReportWritesJunitXml.test.goal (42ms)
+  [Pass] /module/test/report/TestReportMasksSensitiveVariablesJunit.test.goal (54ms)
+  [Pass] /module/test/report/TestReportRendersFailureWithVariables.test.goal (44ms)
+  [Pass] /module/test/report/TestReportMasksSensitiveVariables.test.goal (19ms)
+  [Pass] /module/test/report/TestReportWritesTheRunAsJson.test.goal (21ms)
+  [Pass] /module/test/discover/TestDiscoverReportsStaleWhenPrMissing.test.goal (14ms)
+  [Pass] /module/test/discover/TestDiscoverFindsTestGoals.test.goal (13ms)
+  [Pass] /module/test/integration/TestSystemTestGoalDoesNotUseForeach.test.goal (4ms)
+  [Pass] /module/test/tag/TestTagAccumulatesUserTagsOnRun.test.goal (28ms)
+  [Pass] /module/test/edgecase/TestDiscoverHandlesIcelandicGoalNames.test.goal (8ms)
+  [Pass] /module/test/integration/TestSystemTestGoalRespectsTagFilter.test.goal (6ms)
+  [Pass] /module/test/integration/TestSystemTestGoalReportsTimeoutViaTestStart.test.goal (7ms)
+  [Pass] /module/test/run/TestRunReportsAssertionFailure.test.goal (16ms)
+  [Pass] /module/on/error/RetryFirstReturnsRecoveryValue.test.goal (15ms)
+  [Pass] /module/on/error/MultiActionRecoveryLastActionPropagates.test.goal (8ms)
+  [Pass] /module/test/run/TestRunIsolatesMemoryStackBetweenTests.test.goal (23ms)
+  [Pass] /module/on/error/PerActionErrorScope.test.goal (8ms)
+  [Pass] /module/on/error/GoalFirstReturnsRecoveryValue.test.goal (13ms)
+  [Pass] /module/on/error/RetryOnceMeansOneRetry.test.goal (13ms)
+  [Pass] /module/on/error/OnErrorRetry.test.goal (8ms)
+  [Pass] /module/on/timeout/TimeoutProducesCancellation.test.goal (4ms)
+  [Pass] /module/channel/writetocustomchannel/Start.test.goal (8ms)
+  [Pass] /module/on/cache/RecoveryIsNeverCached.test.goal (14ms)
+  [Pass] /module/channel/writetounknownchannel/Start.test.goal (2ms)
+  [Pass] /module/channel/set/CallbackWriteReachesTheCaller.test.goal (3ms)
+  [Pass] /module/channel/goalchannelrecursion/Start.test.goal (9ms)
+  [Pass] /module/signing/contractmismatch/SigningContractMismatch.test.goal (13ms)
+  [Pass] /module/signing/tamper/PropertyAddedAfterSigningFailsVerify.test.goal (12ms)
+  [Pass] /module/signing/tamper/ContentChangedAfterSigningFailsVerify.test.goal (9ms)
+  [Pass] /module/signing/verifyunsigned/SigningVerifyUnsigned.test.goal (3ms)
+  [Pass] /module/file/list/Cut3.test.goal (7ms)
+  [Pass] /module/file/read/Cut6.test.goal (4ms)
+  [Pass] /module/file/delete/MissingIsNotFoundIgnored.test.goal (8ms)
+  [Pass] /module/file/exists/IfExists.test.goal (4ms)
+  [Pass] /module/debug/tag/TagBareLabelWritesTrue.test.goal (7ms)
+  [Pass] /module/debug/tag/TagWritesPairsOntoCurrentCall.test.goal (7ms)
+  [Pass] /module/variable/op/VariableOps.test.goal (12ms)
+  [Pass] /module/signing/expired/SigningExpired.test.goal (70ms)
+  [Pass] /module/variable/basic/Variables.test.goal (4ms)
+  [Pass] /module/variable/indexing/VariableIndexing.test.goal (6ms)
+  [Pass] /module/variable/scoping/VariableScoping.test.goal (11ms)
+  [Pass] /module/task/wait/LateWaitGetsFailure.test.goal (512ms)
+  [Pass] /module/goal/call/ParallelAnswersATask.test.goal (1007ms)
+  [Pass] /module/on/timeout/RetryGetsAFreshDeadline.test.goal (210ms)
+  [Pass] /plan/kind-is-type/app/type/SettingClassIsAType.test.goal (7ms)
+  [Pass] /plan/kind-is-type/app/type/ShortNameFindsTheType.test.goal (5ms)
+  [Pass] /plan/fast-apps/app/event/BindingStaysInItsTest.test.goal (10ms)
+  [Pass] /plan/fast-apps/app/event/SiblingDoesNotSeeTheBinding.test.goal (4ms)
+  [Pass] /module/goal/call/TaskListedWhileRunning.test.goal (1008ms)
+  [Pass] /plan/item-doors/app/goal/GoalIsOfTypeGoal.test.goal (8ms)
+  [Pass] /plan/item-doors/app/goal/AppGoalListIsTheGoals.test.goal (5ms)
+  [Pass] /plan/item-doors/app/goal/RunningGoalIsAppGoal.test.goal (5ms)
+  [Pass] /plan/item-doors/app/type/AppTypeIndexesByName.test.goal (4ms)
+  [Pass] /module/ui/render/RenderTakesNamedArguments.test.goal (154ms)
+  [Pass] /module/ui/renderfile/RenderFile.test.goal (158ms)
+  [Pass] /module/ui/renderinline/RenderInline.test.goal (144ms)
+  [Pass] /module/ui/renderinclude/RenderInclude.test.goal (135ms)
+  [Pass] /app/type/kind/strict/SetAsImageStrictNoKind.test.goal (8ms)
+  [Pass] /app/type/kind/strict/SetAsTextSlashMarkdownNormalises.test.goal (8ms)
+  [Pass] /app/type/kind/strict/SetAsTextSlashMarkdownStrictUnverifiable.test.goal (9ms)
+  [Pass] /app/permission/authorize/statefulauthorizegrantsandcontinues/Start.test.goal (18ms)
+  [Pass] /app/type/kind/strict/SetAsTextUppercase.test.goal (4ms)
+  [Pass] /app/type/kind/strict/SetAsTextWithMdExtension.test.goal (3ms)
+  [Pass] /app/type/kind/strict/SetAsTextDefaultNoValidation.test.goal (5ms)
+  [Pass] /app/type/kind/strict/SetIntLiteralIsNumberInt.test.goal (13ms)
+  [Pass] /app/type/kind/strict/SetAsImageGifStrictMatching.test.goal (13ms)
+  [Pass] /app/type/kind/strict/SetAsImageGifStrictMismatch.test.goal (13ms)
+  [Pass] /module/list/query/build/WriteBack.test.goal (6ms)
+  [Pass] /module/loop/foreach/empty/ForeachEmpty.test.goal (6ms)
+  [Pass] /module/list/query/build/WriteBackInsertPosition.test.goal (7ms)
+  [Pass] /module/loop/foreach/dictionary/ForeachDictionary.test.goal (27ms)
+  [Pass] /module/list/query/build/HighestFirst.test.goal (10ms)
+  [Pass] /module/list/query/build/OnePart.test.goal (10ms)
+  [Pass] /module/list/query/build/ManyPart.test.goal (11ms)
+  [Pass] /app/type/item/json/JsonFileIsEmptyAsItsValue.test.goal (32ms)
+  [Pass] /module/list/query/build/WriteBackConsumed.test.goal (11ms)
+  [Pass] /module/condition/if/substepstrue/ConditionSubStepsTrue.test.goal (11ms)
+  [Pass] /module/condition/if/basic/Condition.test.goal (12ms)
+  [Pass] /module/condition/if/elsebranch/ConditionElseBranch.test.goal (12ms)
+  [Pass] /module/condition/if/nested/ConditionNested.test.goal (11ms)
+  [Pass] /module/condition/if/substepsfalse/ConditionSubStepsFalse.test.goal (6ms)
+  [Pass] /module/condition/compound/and/ConditionCompoundAnd.test.goal (13ms)
+  [Pass] /module/condition/file/filenotexists/ConditionFileNotExists.test.goal (10ms)
+  [Pass] /module/condition/file/fileexistssubsteps/ConditionFileExistsSubSteps.test.goal (11ms)
+  [Pass] /module/llm/LlmContinue.test.goal (2314ms)
+  [Pass] /module/condition/operator/not/ConditionNot.test.goal (8ms)
+  [Pass] /module/condition/compound/or/ConditionCompoundOr.test.goal (17ms)
+  [Pass] /module/condition/operator/lessthan/ConditionLessThan.test.goal (13ms)
+  [Pass] /module/condition/operator/gte/ConditionGTE.test.goal (13ms)
+  [Pass] /module/condition/operator/greaterthan/ConditionGreaterThan.test.goal (15ms)
+  [Pass] /module/condition/operator/notequals/ConditionNotEquals.test.goal (15ms)
+  [Pass] /module/condition/operator/contains/ConditionContains.test.goal (7ms)
+  [Pass] /module/condition/operator/startswith/ConditionStartsWith.test.goal (16ms)
+  [Pass] /module/condition/operator/equals/ConditionEquals.test.goal (8ms)
+  [Pass] /module/condition/operator/lte/ConditionLTE.test.goal (14ms)
+  [Pass] /module/condition/operator/truthy/ConditionTruthy.test.goal (12ms)
+  [Pass] /module/condition/operator/falsy/ConditionFalsy.test.goal (12ms)
+  [Pass] /module/condition/operator/endswith/ConditionEndsWith.test.goal (13ms)
+  [Pass] /module/on/error/goalfirst/ErrorGoalFirst.test.goal (24ms)
+  [Pass] /module/on/error/retry/Retry.test.goal (17ms)
+  [Pass] /module/on/error/chain/ErrorChain.test.goal (16ms)
+  [Pass] /module/on/error/nested/ErrorNested.test.goal (31ms)
+  [Pass] /module/on/error/mixed/ErrorMixed.test.goal (27ms)
+  [Pass] /module/on/error/inhandler/ErrorInHandler.test.goal (21ms)
+  [Pass] /module/on/error/prop/ErrorProps.test.goal (41ms)
+  [Pass] /module/on/event/afteraction/EventAfterAction.test.goal (7ms)
+  [Pass] /module/on/cache/basic/Cache.test.goal (29ms)
+  [Pass] /module/on/event/afterstep/EventAfterStep.test.goal (19ms)
+  [Pass] /module/on/error/multilingual/OnErrorMultilingual.test.goal (44ms)
+  [Pass] /module/on/event/basic/Events.test.goal (23ms)
+  [Pass] /module/channel/remove/custom/Start.test.goal (14ms)
+  [Pass] /module/channel/event/addonask/Start.test.goal (19ms)
+  [Pass] /module/channel/remove/rolechannelrefused/Start.test.goal (10ms)
+  [Pass] /module/channel/set/withconfig/Start.test.goal (8ms)
+  [Pass] /module/channel/set/explicitactor/Start.test.goal (4ms)
+  [Pass] /module/channel/set/replaceoutputwithgoal/Start.test.goal (10ms)
+  [Pass] /module/channel/event/addbeforewrite/Start.test.goal (30ms)
+  [Pass] /module/channel/set/contextactor/Start.test.goal (9ms)
+  [Pass] /module/variable/contextvars/system/SystemVariables.test.goal (11ms)
+  [Pass] /plan/kind-is-type/app/type/list/ListKnowsItsElement.test.goal (7ms)
+  [Pass] /plan/kind-is-type/app/type/json/ArrayIsAList.test.goal (12ms)
+  [Pass] /plan/kind-is-type/app/type/json/ReadIntoIsADict.test.goal (12ms)
+  [Pass] /plan/kind-is-type/app/type/kind/SameKindNameUnderTwoTypes.test.goal (12ms)
+  [Pass] /plan/kind-is-type/app/type/number/DecimalIsANumber.test.goal (3ms)
+  [Pass] /plan/item-doors/app/type/AppTypeIsTheTypeSystem.test.goal (211ms)
+  [Pass] /module/variable/contextvars/advanced/ContextVars2.test.goal (19ms)
+  [Pass] /plan/kind-is-type/module/file/read/AsTextKeepsText.test.goal (10ms)
+  [Pass] /plan/kind-is-type/module/file/read/AsTextLandsTextUncaptured.test.goal (8ms)
+  [Pass] /plan/kind-is-type/app/type/separator/NamedValuesBelongToTheType.test.goal (10ms)
+  [Pass] /plan/kind-is-type/app/type/item/JsonIsItemsKind.test.goal (12ms)
+  [Pass] /plan/kind-is-type/module/variable/set/AsJsonKeepsJson.test.goal (10ms)
+  [Stale] /plan/snapshot/module/callback/askvarsresumebindsvalue/Start.test.goal (0ms)
+  [Stale] /plan/snapshot/module/callback/statefulaskmidgoalbindsvalue/Start.test.goal (0ms)
+  [Stale] /plan/snapshot/module/callback/statelesscrossgoalresumes/Start.test.goal (0ms)
+  [Pass] /plan/kind-is-type/app/type/csv/ReadIntoIsATable.test.goal (16ms)
+  [Pass] /plan/kind-is-type/app/type/json/PassedOnUnread.test.goal (30ms)
+  [Pass] /plan/kind-is-type/module/variable/set/AsListOfPathKeepsTheElement.test.goal (3ms)
+  [Pass] /plan/kind-is-type/module/variable/set/NoAsNoType.test.goal (6ms)
+  [Pass] /plan/kind-is-type/module/variable/set/AsIsoDurationKeepsIso.test.goal (6ms)
+  [Pass] /plan/kind-is-type/module/variable/set/AsDecimalKeepsDecimal.test.goal (6ms)
+  [Pass] /plan/item-doors/app/type/text/TextKindIsText.test.goal (8ms)
+  [Pass] /plan/fast-apps/app/type/plugin/SiblingDoesNotSeeThePluginType.test.goal (12ms)
+  [Pass] /plan/item-doors/app/type/dict/key/KeyIsTheFirstKey.test.goal (8ms)
+  [Pass] /plan/item-doors/app/type/image/BytesKnowItsMime.test.goal (10ms)
+  [Pass] /plan/item-doors/app/type/text/NamedTypeIsRegistered.test.goal (10ms)
+  [Pass] /plan/fast-apps/app/type/plugin/PluginTypeJoinsOnlyItsApp.test.goal (13ms)
+  [Pass] /module/test/run/TestRunEnforcesTimeout.test.goal (1021ms)
+
+Module.action coverage:
+  [x] archive.pack
+  [x] archive.unpack
+  [x] assert.contains
+  [x] assert.equals
+  [x] assert.greaterThan
+  [x] assert.isFalse
+  [x] assert.isNotNull
+  [x] assert.isNull
+  [x] assert.isTrue
+  [x] assert.lessThan
+  [x] assert.notContains
+  [x] assert.notEquals
+  [ ] browser.send
+  [ ] browser.start
+  [ ] browser.stop
+  [ ] build.appSave
+  [ ] build.fold
+  [x] build.goals
+  [ ] build.goalsSave
+  [ ] build.load
+  [ ] build.match
+  [ ] build.pick
+  [ ] build.unreached
+  [x] callback.start
+  [x] channel.remove
+  [x] channel.set
+  [ ] code.list
+  [x] code.load
+  [ ] code.remove
+  [x] code.setDefault
+  [x] condition.compare
+  [x] condition.else
+  [x] condition.elseif
+  [x] condition.if
+  [ ] crypto.decrypt
+  [ ] crypto.encrypt
+  [x] crypto.hash
+  [x] crypto.verify
+  [x] debug.tag
+  [x] error.throw
+  [x] file.copy
+  [x] file.delete
+  [x] file.exists
+  [x] file.list
+  [x] file.move
+  [x] file.read
+  [x] file.save
+  [x] goal.call
+  [x] goal.return
+  [ ] http.download
+  [x] http.request
+  [ ] http.upload
+  [ ] identity.archive
+  [ ] identity.create
+  [ ] identity.export
+  [ ] identity.get
+  [ ] identity.list
+  [ ] identity.rename
+  [ ] identity.setDefault
+  [ ] identity.unarchive
+  [x] list.add
+  [x] list.any
+  [x] list.contains
+  [x] list.count
+  [x] list.first
+  [x] list.flatten
+  [x] list.get
+  [x] list.indexof
+  [x] list.join
+  [x] list.last
+  [x] list.query
+  [x] list.range
+  [x] list.remove
+  [x] list.reverse
+  [x] list.set
+  [x] list.split
+  [ ] llm.decider
+  [x] llm.query
+  [x] loop.foreach
+  [x] math.abs
+  [x] math.add
+  [x] math.ceiling
+  [x] math.divide
+  [x] math.floor
+  [x] math.intdiv
+  [x] math.max
+  [x] math.min
+  [x] math.modulo
+  [x] math.multiply
+  [x] math.power
+  [x] math.random
+  [x] math.round
+  [x] math.sqrt
+  [x] math.subtract
+  [ ] module.add
+  [ ] module.remove
+  [ ] on.cache
+  [ ] on.cancel
+  [x] on.error
+  [x] on.event
+  [ ] on.input
+  [ ] on.timeout
+  [ ] on.unbind
+  [ ] output.ask
+  [x] output.write
+  [ ] screen.close
+  [ ] screen.draw
+  [ ] screen.listen
+  [ ] screen.open
+  [ ] screen.send
+  [x] setting.remove
+  [x] setting.save
+  [x] signing.sign
+  [x] signing.verify
+  [ ] snapshot.resume
+  [x] task.cancel
+  [x] task.wait
+  [ ] terminal.open
+  [ ] terminal.send
+  [ ] terminal.start
+  [ ] terminal.stop
+  [ ] terminal.wait
+  [x] test.discover
+  [x] test.report
+  [x] test.start
+  [x] test.tag
+  [ ] timer.end
+  [x] timer.sleep
+  [ ] timer.start
+  [x] ui.render
+  [x] variable.clear
+  [ ] variable.exists
+  [ ] variable.get
+  [x] variable.remove
+  [x] variable.set
+  [ ] window.call
+  [ ] window.close
+  [ ] window.navigate
+  [ ] window.open
+  [ ] window.post
+  [ ] window.reload
+  [ ] window.screenshot
+  total: 87/142
+
+Goals reached:
+  [x] /app/callstack/ChainMiddle
+  [x] /app/callstack/ChainOuter
+  [x] /app/callstack/ChainThrows
+  [x] /app/callstack/CycleA
+  [x] /app/callstack/CycleB
+  [x] /app/callstack/Inner
+  [x] /app/callstack/OuterRecoveryWithInnerThrow
+  [ ] /app/callstack/SlowGoal
+  [x] /app/callstack/ThrowItem
+  [ ] /app/deepnavigation/Start
+  [x] /app/permission/authorize/statefulauthorizegrantsandcontinues/VerbBasedAnswerer
+  [x] /app/permission/grantastorespersisted/ProbeAnswerer
+  [ ] /app/permission/Start
+  [x] /module/build/AddItem
+  [x] /module/build/Finalize
+  [ ] /module/build/goals/parsegoal/parse_test/Test
+  [ ] /module/build/goals/parse_test/Test
+  [ ] /module/build/goals/system/parse_test/Test
+  [ ] /module/build/goals/test/runtime2/builder/parsegoal/parse_test/Test
+  [x] /module/build/MarkBig
+  [ ] /module/cache/dynamickey/ReadDynamic
+  [ ] /module/cache/sliding/ReadCached
+  [x] /module/channel/event/addbeforewrite/ApprovalGoal
+  [x] /module/channel/event/addbeforewrite/AuditLog
+  [x] /module/channel/event/addonask/CaptchaGoal
+  [x] /module/channel/goalchannelrecursion/EchoBack
+  [x] /module/channel/goalchannelrecursion/InspectError
+  [ ] /module/channel/remove/custom/Logger
+  [x] /module/channel/set/contextactor/OutputGoal
+  [ ] /module/channel/set/explicitactor/SystemOutputGoal
+  [x] /module/channel/set/replaceoutputwithgoal/OutputGoal
+  [ ] /module/channel/set/withconfig/AuditLog
+  [x] /module/channel/writetocustomchannel/Logger
+  [x] /module/condition/compound/and/DoThing
+  [ ] /module/condition/compound/mixed/WhenContains
+  [ ] /module/condition/compound/mixed/WhenEqual
+  [ ] /module/condition/compound/mixed/WhenFalse
+  [ ] /module/condition/compound/mixed/WhenGreater
+  [ ] /module/condition/compound/mixed/WhenLess
+  [ ] /module/condition/compound/mixed/WhenNotEqual
+  [ ] /module/condition/compound/or/DoThing
+  [ ] /module/condition/file/fileexists/ProcessFile
+  [x] /module/condition/file/filenotexists/WhenExists
+  [x] /module/condition/file/filenotexists/WhenMissing
+  [x] /module/condition/if/basic/SetFalse
+  [x] /module/condition/if/basic/SetTrue
+  [x] /module/condition/if/basic/SetWrong
+  [x] /module/condition/if/elsebranch/WhenBig
+  [x] /module/condition/if/elsebranch/WhenSmall
+  [x] /module/condition/operator/contains/WhenContains
+  [x] /module/condition/operator/endswith/WhenEnds
+  [x] /module/condition/operator/equals/WhenEqual
+  [x] /module/condition/operator/falsy/HandleFalse
+  [x] /module/condition/operator/falsy/HandleTrue
+  [x] /module/condition/operator/greaterthan/WhenGreater
+  [x] /module/condition/operator/gte/WhenGTE
+  [x] /module/condition/operator/lessthan/WhenLess
+  [x] /module/condition/operator/lte/WhenLTE
+  [x] /module/condition/operator/not/WhenFalse
+  [x] /module/condition/operator/notequals/WhenNotEqual
+  [x] /module/condition/operator/startswith/WhenStarts
+  [x] /module/condition/operator/truthy/HandleTrue
+  [ ] /module/error/call/CatchError
+  [ ] /module/error/call/ThrowTestError
+  [ ] /module/error/multiplerecovery/Start
+  [ ] /module/error/multistepwithrecovery/Start
+  [ ] /module/error/requiredparamcheck/Start
+  [ ] /module/error/retryonly/BareRetryCatcher
+  [ ] /module/error/retryonly/BareRetryGoal
+  [ ] /module/error/retryonly/TimedRetryCatcher
+  [ ] /module/error/retryonly/TimedRetryGoal
+  [ ] /module/error/simplegoalcall/Start
+  [ ] /module/error/simplegoalcall/Start#DoStuff
+  [ ] /module/error/simplerecovery/Start
+  [ ] /module/error/type/CatchFileError
+  [ ] /module/error/type/CatchThrow
+  [ ] /module/error/type/ThrowUserError
+  [ ] /module/goal/basic/Greet
+  [ ] /module/goal/dynamic/TargetGoal
+  [x] /module/goal/missing/HandleMissing
+  [ ] /module/goal/relative/sub/SubGoal
+  [x] /module/goal/return/ComputeAnswer
+  [ ] /module/http/postbodypin/PostBodyPin
+  [ ] /module/list/mutation/AddProduct
+  [ ] /module/list/Start
+  [x] /module/loop/CountItem
+  [x] /module/loop/foreach/dictionary/ProcessEntry
+  [x] /module/loop/foreach/empty/ProcessItem
+  [ ] /module/loop/foreach/stringnotiterable/Inc
+  [ ] /module/loop/ProcessItem
+  [ ] /module/loop/Start
+  [ ] /module/on/cache/basic/CachedGoal
+  [x] /module/on/cache/basic/ReadCached
+  [ ] /module/on/cache/basic/ReadWithKey
+  [ ] /module/on/cache/basic/Start
+  [ ] /module/on/error/chain/AlwaysFails
+  [x] /module/on/error/chain/HandleError
+  [x] /module/on/error/goalfirst/AlwaysFails
+  [x] /module/on/error/goalfirst/GoalFirstHandler
+  [x] /module/on/error/inhandler/BadHandler
+  [x] /module/on/error/inhandler/OuterHandler
+  [x] /module/on/error/inhandler/ThrowOriginal
+  [x] /module/on/error/inhandler/ThrowWithBadHandler
+  [x] /module/on/error/mixed/MixedCatcher
+  [x] /module/on/error/mixed/MixedThrow
+  [x] /module/on/error/multilingual/CatchArabic
+  [x] /module/on/error/multilingual/CatchEnglish
+  [x] /module/on/error/multilingual/CatchIcelandic
+  [x] /module/on/error/multilingual/CatchJapanese
+  [x] /module/on/error/multilingual/CatchKorean
+  [x] /module/on/error/multilingual/CatchSwahili
+  [x] /module/on/error/multilingual/ThrowError
+  [ ] /module/on/error/nested/InnerGoal
+  [ ] /module/on/error/nested/InnerHandler
+  [x] /module/on/error/nested/OuterGoal
+  [ ] /module/on/error/nested/ThrowInnerError
+  [ ] /module/on/error/prop/InspectError
+  [x] /module/on/error/prop/ThrowCustomError
+  [x] /module/on/error/retry/HandleRetryError
+  [x] /module/on/event/afteraction/CaptureWrite
+  [x] /module/on/event/afterstep/TrackAfterStep
+  [x] /module/on/event/basic/LogAfter
+  [x] /module/on/event/basic/LogBefore
+  [ ] /module/on/event/basic/OnVarSet
+  [ ] /module/on/event/basic/Start
+  [x] /module/on/event/basic/TestGoal
+  [ ] /module/on/event/beforestep/TrackStep
+  [ ] /module/on/event/multiple/HandlerA
+  [ ] /module/on/event/multiple/HandlerB
+  [ ] /module/on/event/override/OverrideFileRead
+  [ ] /module/on/event/override/Start
+  [ ] /module/on/event/priority/HighPriority
+  [ ] /module/on/event/priority/LowPriority
+  [ ] /module/on/event/remove/Counter
+  [ ] /module/on/event/wildcard/WildcardHandler
+  [x] /module/test/assert/_fixtures/failsvar.fixture
+  [ ] /module/test/discover/_fixtures/alpha.fixture
+  [ ] /module/test/discover/_fixtures/beta.fixture
+  [ ] /module/test/discover/_fixtures/gamma.fixture
+  [ ] /module/test/discover/_stale/ready.fixture
+  [ ] /module/test/edgecase/_fixtures/Próf.fixture
+  [x] /module/test/report/_fixtures_fail/failsvar.fixture
+  [x] /module/test/report/_fixtures_pass/trivial.fixture
+  [x] /module/test/report/_fixtures_sensitive/sensitivefail.fixture
+  [x] /module/test/run/_fail/failing.fixture
+  [x] /module/test/run/_isolation/AIsolationPollute.fixture
+  [x] /module/test/run/_isolation/BIsolationProbe.fixture
+  [x] /module/test/run/_timeout/slow.fixture
+  [ ] /module/variable/basic/Start
+  [ ] /module/variable/indexing/Start
+  [x] /module/variable/scoping/CaptureItem
+  [x] /module/variable/scoping/InnerGoal
+  [x] /module/variable/scoping/InnerWithParam
+  [ ] /plan/item-doors/start
+  [ ] /plan/item-doors/start#Stage1
+  [ ] /plan/item-doors/start#Stage2
+  [ ] /plan/item-doors/start#Stage3
+  [ ] /plan/item-doors/start#Stage4
+  [ ] /plan/item-doors/start#Stage5
+  [ ] /plan/kind-is-type/start
+  [ ] /plan/kind-is-type/start#Stage0
+  [ ] /plan/kind-is-type/start#Stage1
+  [ ] /plan/kind-is-type/start#Stage2
+  [ ] /plan/kind-is-type/start#Stage3
+  [ ] /plan/kind-is-type/start#Stage4
+  [ ] /plan/kind-is-type/start#Stage5
+  [ ] /plan/list-query/start
+  [ ] /plan/list-query/start#Stage1
+  [ ] /plan/list-query/start#Stage2
+  [ ] /plan/list-query/start#Stage3
+  [ ] /plan/snapshot/start
+  [ ] /plan/snapshot/start#Stage1
+  [ ] /plan/snapshot/start#Stage2
+  [ ] /plan/snapshot/start#Stage3
+  [ ] /plan/snapshot/start#Stage4
+  [ ] /plan/task/start
+  [ ] /plan/task/start#Stage1
+  [ ] /plan/task/start#Stage2
+  [ ] /plan/task/start#Stage3
+  [ ] /plan/task/start#Stage4
+  [ ] /SetDeciderKey
+  public: 83/158, private: 0/23
+
+  Goals no test reached:
+    /app/callstack/SlowGoal
+    /app/deepnavigation/Start
+    /app/permission/Start
+    /module/build/goals/parsegoal/parse_test/Test
+    /module/build/goals/parse_test/Test
+    /module/build/goals/system/parse_test/Test
+    /module/build/goals/test/runtime2/builder/parsegoal/parse_test/Test
+    /module/cache/dynamickey/ReadDynamic
+    /module/cache/sliding/ReadCached
+    /module/channel/remove/custom/Logger
+    /module/channel/set/explicitactor/SystemOutputGoal
+    /module/channel/set/withconfig/AuditLog
+    /module/condition/compound/mixed/WhenContains
+    /module/condition/compound/mixed/WhenEqual
+    /module/condition/compound/mixed/WhenFalse
+    /module/condition/compound/mixed/WhenGreater
+    /module/condition/compound/mixed/WhenLess
+    /module/condition/compound/mixed/WhenNotEqual
+    /module/condition/compound/or/DoThing
+    /module/condition/file/fileexists/ProcessFile
+    /module/error/call/CatchError
+    /module/error/call/ThrowTestError
+    /module/error/multiplerecovery/Start
+    /module/error/multistepwithrecovery/Start
+    /module/error/requiredparamcheck/Start
+    /module/error/retryonly/BareRetryCatcher
+    /module/error/retryonly/BareRetryGoal
+    /module/error/retryonly/TimedRetryCatcher
+    /module/error/retryonly/TimedRetryGoal
+    /module/error/simplegoalcall/Start
+    /module/error/simplegoalcall/Start#DoStuff
+    /module/error/simplerecovery/Start
+    /module/error/type/CatchFileError
+    /module/error/type/CatchThrow
+    /module/error/type/ThrowUserError
+    /module/goal/basic/Greet
+    /module/goal/dynamic/TargetGoal
+    /module/goal/relative/sub/SubGoal
+    /module/http/postbodypin/PostBodyPin
+    /module/list/mutation/AddProduct
+    /module/list/Start
+    /module/loop/foreach/stringnotiterable/Inc
+    /module/loop/ProcessItem
+    /module/loop/Start
+    /module/on/cache/basic/CachedGoal
+    /module/on/cache/basic/ReadWithKey
+    /module/on/cache/basic/Start
+    /module/on/error/chain/AlwaysFails
+    /module/on/error/nested/InnerGoal
+    /module/on/error/nested/InnerHandler
+    /module/on/error/nested/ThrowInnerError
+    /module/on/error/prop/InspectError
+    /module/on/event/basic/OnVarSet
+    /module/on/event/basic/Start
+    /module/on/event/beforestep/TrackStep
+    /module/on/event/multiple/HandlerA
+    /module/on/event/multiple/HandlerB
+    /module/on/event/override/OverrideFileRead
+    /module/on/event/override/Start
+    /module/on/event/priority/HighPriority
+    /module/on/event/priority/LowPriority
+    /module/on/event/remove/Counter
+    /module/on/event/wildcard/WildcardHandler
+    /module/test/discover/_fixtures/alpha.fixture
+    /module/test/discover/_fixtures/beta.fixture
+    /module/test/discover/_fixtures/gamma.fixture
+    /module/test/discover/_stale/ready.fixture
+    /module/test/edgecase/_fixtures/Próf.fixture
+    /module/variable/basic/Start
+    /module/variable/indexing/Start
+    /plan/item-doors/start
+    /plan/item-doors/start#Stage1
+    /plan/item-doors/start#Stage2
+    /plan/item-doors/start#Stage3
+    /plan/item-doors/start#Stage4
+    /plan/item-doors/start#Stage5
+    /plan/kind-is-type/start
+    /plan/kind-is-type/start#Stage0
+    /plan/kind-is-type/start#Stage1
+    /plan/kind-is-type/start#Stage2
+    /plan/kind-is-type/start#Stage3
+    /plan/kind-is-type/start#Stage4
+    /plan/kind-is-type/start#Stage5
+    /plan/list-query/start
+    /plan/list-query/start#Stage1
+    /plan/list-query/start#Stage2
+    /plan/list-query/start#Stage3
+    /plan/snapshot/start
+    /plan/snapshot/start#Stage1
+    /plan/snapshot/start#Stage2
+    /plan/snapshot/start#Stage3
+    /plan/snapshot/start#Stage4
+    /plan/task/start
+    /plan/task/start#Stage1
+    /plan/task/start#Stage2
+    /plan/task/start#Stage3
+    /plan/task/start#Stage4
+    /SetDeciderKey
+
+Branch coverage (condition.if):
+  /app/callstack/ThrowItem.goal:1: {✅ true, ✅ false}
+  /app/data/Cut2.test.goal:10: {❌ true, ✅ false}
+  /app/data/Cut2.test.goal:5: {❌ true, ✅ false}
+  /app/data/Narrow_ChainWideBangBothBranches.test.goal:5: {❌ true, ✅ false}
+  /app/data/Narrow_ChainWideBangBothBranches.test.goal:8: {❌ true, ✅ false}
+  /app/data/Narrow_ChainWideBangBothBranches.test.goal:9: {❌ true, ✅ false}
+  /app/data/ReadCsv_LandsAsTable.test.goal:3: {❌ true, ✅ false}
+  /app/data/operator/IsType.test.goal:2: {✅ true, ❌ false}
+  /app/data/operator/IsType.test.goal:5: {❌ true, ✅ false}
+  /app/data/operator/IsType.test.goal:8: {❌ true, ✅ false}
+  /app/permission/authorize/statefulauthorizegrantsandcontinues/VerbBasedAnswerer.goal:1: {✅ true, ✅ false}
+  /app/permission/authorize/statefulauthorizegrantsandcontinues/VerbBasedAnswerer.goal:2: {❌ true, ✅ false}
+  /app/permission/authorize/statefulauthorizegrantsandcontinues/VerbBasedAnswerer.goal:3: {✅ true, ❌ false}
+  /app/type/bool/IfBoolTruthy.test.goal:3: {✅ true, ❌ false}
+  /app/type/bool/IfBoolTruthy.test.goal:5: {❌ true, ✅ false}
+  /app/type/date/DateBareIsoOnJson.test.goal:2: {✅ true, ❌ false}
+  /app/type/duration/DurationPartsAndCompare.test.goal:5: {❌ true, ❌ false}
+  /app/type/item/json/JsonFileIsEmptyAsItsValue.test.goal:10: {✅ true, ❌ false}
+  /app/type/item/json/JsonFileIsEmptyAsItsValue.test.goal:2: {✅ true, ❌ false}
+  /app/type/item/json/JsonFileIsEmptyAsItsValue.test.goal:6: {✅ true, ❌ false}
+  /module/build/BuilderSanity.test.goal:3: {✅ true, ❌ false}
+  /module/condition/compare/Cut1.test.goal:13: {✅ true, ❌ false}
+  /module/condition/compare/Cut1.test.goal:4: {✅ true, ❌ false}
+  /module/condition/compare/Cut1.test.goal:6: {✅ true, ❌ false}
+  /module/condition/compare/Cut5.test.goal:14: {❌ true, ✅ false}
+  /module/condition/compare/Cut5.test.goal:4: {❌ true, ✅ false}
+  /module/condition/compare/Cut5.test.goal:8: {✅ true, ❌ false}
+  /module/condition/compare/Failure_DictEqNumber.test.goal:3: {❌ true, ✅ false}
+  /module/condition/compare/Failure_DictOrderDict.test.goal:3: {❌ true, ✅ false}
+  /module/condition/compare/Plane_MembershipNeverErrors.test.goal:5: {❌ true, ✅ false}
+  /module/condition/compare/Plane_NullComparisonsWork.test.goal:12: {❌ true, ✅ false}
+  /module/condition/compare/Plane_NullComparisonsWork.test.goal:4: {❌ true, ✅ false}
+  /module/condition/compare/Plane_NullComparisonsWork.test.goal:8: {❌ true, ✅ false}
+  /module/condition/compound/and/ConditionCompoundAnd.test.goal:0: {✅ true}
+  /module/condition/compound/and/ConditionCompoundAnd.test.goal:2: {✅ true, ❌ false}
+  /module/condition/compound/or/ConditionCompoundOr.test.goal:2: {❌ if, ✅ elseif}
+  /module/condition/file/fileexistssubsteps/ConditionFileExistsSubSteps.test.goal:2: {✅ true, ❌ false}
+  /module/condition/file/filenotexists/ConditionFileNotExists.test.goal:0: {❌ if, ✅ else}
+  /module/condition/if/IfReturnReturns.test.goal:0: {✅ true, ✅ false}
+  /module/condition/if/MissingIsEmpty.test.goal:12: {✅ true, ❌ false}
+  /module/condition/if/MissingIsEmpty.test.goal:15: {✅ true, ❌ false}
+  /module/condition/if/MissingIsEmpty.test.goal:18: {❌ true, ✅ false}
+  /module/condition/if/MissingIsEmpty.test.goal:2: {✅ true, ❌ false}
+  /module/condition/if/MissingIsEmpty.test.goal:5: {❌ true, ✅ false}
+  /module/condition/if/MissingIsEmpty.test.goal:8: {✅ true, ❌ false}
+  /module/condition/if/basic/Condition.test.goal:1: {✅ true, ❌ false}
+  /module/condition/if/basic/Condition.test.goal:4: {❌ if, ✅ else}
+  /module/condition/if/elsebranch/ConditionElseBranch.test.goal:1: {❌ if, ✅ else}
+  /module/condition/if/nested/ConditionNested.test.goal:4: {✅ true, ❌ false}
+  /module/condition/if/nested/ConditionNested.test.goal:5: {✅ false}
+  /module/condition/if/substepsfalse/ConditionSubStepsFalse.test.goal:2: {❌ true, ✅ false}
+  /module/condition/if/substepstrue/ConditionSubStepsTrue.test.goal:2: {✅ true, ❌ false}
+  /module/condition/operator/contains/ConditionContains.test.goal:1: {✅ true, ❌ false}
+  /module/condition/operator/endswith/ConditionEndsWith.test.goal:1: {✅ true, ❌ false}
+  /module/condition/operator/equals/ConditionEquals.test.goal:1: {✅ true, ❌ false}
+  /module/condition/operator/falsy/ConditionFalsy.test.goal:1: {❌ if, ✅ else}
+  /module/condition/operator/greaterthan/ConditionGreaterThan.test.goal:1: {✅ true, ❌ false}
+  /module/condition/operator/gte/ConditionGTE.test.goal:1: {✅ true, ❌ false}
+  /module/condition/operator/lessthan/ConditionLessThan.test.goal:1: {✅ true, ❌ false}
+  /module/condition/operator/lte/ConditionLTE.test.goal:1: {✅ true, ❌ false}
+  /module/condition/operator/not/ConditionNot.test.goal:1: {✅ true, ❌ false}
+  /module/condition/operator/notequals/ConditionNotEquals.test.goal:1: {✅ true, ❌ false}
+  /module/condition/operator/startswith/ConditionStartsWith.test.goal:1: {✅ true, ❌ false}
+  /module/condition/operator/truthy/ConditionTruthy.test.goal:1: {✅ true, ❌ false}
+  /module/file/exists/IfExists.test.goal:2: {✅ true, ❌ false}
+  /module/file/exists/IfExists.test.goal:3: {❌ true, ✅ false}
+  /module/on/cache/RecoveryIsNeverCached.test.goal:1: {✅ true, ✅ false}
+  /module/on/timeout/RetryGetsAFreshDeadline.test.goal:1: {✅ true, ✅ false}
+  /plan/kind-is-type/app/type/csv/ReadIntoIsATable.test.goal:2: {✅ true, ❌ false}
+  /plan/kind-is-type/app/type/item/JsonIsItemsKind.test.goal:3: {❌ true, ✅ false}
+  /plan/kind-is-type/app/type/json/ArrayIsAList.test.goal:2: {✅ true, ❌ false}
+  /plan/kind-is-type/app/type/json/ReadIntoIsADict.test.goal:2: {✅ true, ❌ false}
+  /plan/kind-is-type/app/type/separator/NamedValuesBelongToTheType.test.goal:1: {✅ true, ❌ false}
+
+  Sites: 73 total (7 complete, 65 partial, 1 unreached)
+  Branches: 77/144 covered (53%)
+
+  Untested branches:
+    /app/data/Cut2.test.goal:10  true
+    /app/data/Cut2.test.goal:5  true
+    /app/data/Narrow_ChainWideBangBothBranches.test.goal:5  true
+    /app/data/Narrow_ChainWideBangBothBranches.test.goal:8  true
+    /app/data/Narrow_ChainWideBangBothBranches.test.goal:9  true
+    /app/data/ReadCsv_LandsAsTable.test.goal:3  true
+    /app/data/operator/IsType.test.goal:2  false
+    /app/data/operator/IsType.test.goal:5  true
+    /app/data/operator/IsType.test.goal:8  true
+    /app/permission/authorize/statefulauthorizegrantsandcontinues/VerbBasedAnswerer.goal:2  true
+    /app/permission/authorize/statefulauthorizegrantsandcontinues/VerbBasedAnswerer.goal:3  false
+    /app/type/bool/IfBoolTruthy.test.goal:3  false
+    /app/type/bool/IfBoolTruthy.test.goal:5  true
+    /app/type/date/DateBareIsoOnJson.test.goal:2  false
+    /app/type/duration/DurationPartsAndCompare.test.goal:5  true, false
+    /app/type/item/json/JsonFileIsEmptyAsItsValue.test.goal:10  false
+    /app/type/item/json/JsonFileIsEmptyAsItsValue.test.goal:2  false
+    /app/type/item/json/JsonFileIsEmptyAsItsValue.test.goal:6  false
+    /module/build/BuilderSanity.test.goal:3  false
+    /module/condition/compare/Cut1.test.goal:13  false
+    /module/condition/compare/Cut1.test.goal:4  false
+    /module/condition/compare/Cut1.test.goal:6  false
+    /module/condition/compare/Cut5.test.goal:14  true
+    /module/condition/compare/Cut5.test.goal:4  true
+    /module/condition/compare/Cut5.test.goal:8  false
+    /module/condition/compare/Failure_DictEqNumber.test.goal:3  true
+    /module/condition/compare/Failure_DictOrderDict.test.goal:3  true
+    /module/condition/compare/Plane_MembershipNeverErrors.test.goal:5  true
+    /module/condition/compare/Plane_NullComparisonsWork.test.goal:12  true
+    /module/condition/compare/Plane_NullComparisonsWork.test.goal:4  true
+    /module/condition/compare/Plane_NullComparisonsWork.test.goal:8  true
+    /module/condition/compound/and/ConditionCompoundAnd.test.goal:2  false
+    /module/condition/compound/or/ConditionCompoundOr.test.goal:2  if
+    /module/condition/file/fileexistssubsteps/ConditionFileExistsSubSteps.test.goal:2  false
+    /module/condition/file/filenotexists/ConditionFileNotExists.test.goal:0  if
+    /module/condition/if/MissingIsEmpty.test.goal:12  false
+    /module/condition/if/MissingIsEmpty.test.goal:15  false
+    /module/condition/if/MissingIsEmpty.test.goal:18  true
+    /module/condition/if/MissingIsEmpty.test.goal:2  false
+    /module/condition/if/MissingIsEmpty.test.goal:5  true
+    /module/condition/if/MissingIsEmpty.test.goal:8  false
+    /module/condition/if/basic/Condition.test.goal:1  false
+    /module/condition/if/basic/Condition.test.goal:4  if
+    /module/condition/if/elsebranch/ConditionElseBranch.test.goal:1  if
+    /module/condition/if/nested/ConditionNested.test.goal:4  false
+    /module/condition/if/substepsfalse/ConditionSubStepsFalse.test.goal:2  true
+    /module/condition/if/substepstrue/ConditionSubStepsTrue.test.goal:2  false
+    /module/condition/operator/contains/ConditionContains.test.goal:1  false
+    /module/condition/operator/endswith/ConditionEndsWith.test.goal:1  false
+    /module/condition/operator/equals/ConditionEquals.test.goal:1  false
+    /module/condition/operator/falsy/ConditionFalsy.test.goal:1  if
+    /module/condition/operator/greaterthan/ConditionGreaterThan.test.goal:1  false
+    /module/condition/operator/gte/ConditionGTE.test.goal:1  false
+    /module/condition/operator/lessthan/ConditionLessThan.test.goal:1  false
+    /module/condition/operator/lte/ConditionLTE.test.goal:1  false
+    /module/condition/operator/not/ConditionNot.test.goal:1  false
+    /module/condition/operator/notequals/ConditionNotEquals.test.goal:1  false
+    /module/condition/operator/startswith/ConditionStartsWith.test.goal:1  false
+    /module/condition/operator/truthy/ConditionTruthy.test.goal:1  false
+    /module/file/exists/IfExists.test.goal:2  false
+    /module/file/exists/IfExists.test.goal:3  true
+    /plan/kind-is-type/app/type/csv/ReadIntoIsATable.test.goal:2  false
+    /plan/kind-is-type/app/type/item/JsonIsItemsKind.test.goal:3  true
+    /plan/kind-is-type/app/type/json/ArrayIsAList.test.goal:2  false
+    /plan/kind-is-type/app/type/json/ReadIntoIsADict.test.goal:2  false
+    /plan/kind-is-type/app/type/separator/NamedValuesBelongToTheType.test.goal:1  false
+TestRunFailed (400): 3 tests could not load: no .pr; 1 test failed.
+  at /system/test.goal:7
+    - test.report
+

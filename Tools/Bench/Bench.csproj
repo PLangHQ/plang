@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Named like a test project so PLang.csproj's InternalsVisibleTo reaches the door a runner uses (new app.@this(path, actor)). -->
+    <AssemblyName>PLang.Tests.Bench</AssemblyName>
+    <RootNamespace>Bench</RootNamespace>
+    <!-- dev tool only — not part of the solution build/ship -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\PLang\PLang.csproj" />
+    <!-- the test session and the no-crypto signing a test's app is born with (AppTesting.Testing) -->
+    <ProjectReference Include="..\..\PLang.Tests\Shared\PLang.Tests.Shared.csproj" />
+  </ItemGroup>
+
+  <!-- <OutDir>/os links to the repo's os tree, as in a run. -->
+  <Import Project="..\..\os.targets" />
+
+</Project>
