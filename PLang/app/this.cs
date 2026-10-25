@@ -291,23 +291,27 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public keepalive.@this KeepAlive { get; } = new();
 
     /// <summary>An app made from the code: a new code of its own, under its layers.</summary>
+    /// <param name="autoWireConsoleChannels">Whether its System and User are born with the console's standard channels,
+    /// wired when each first uses its channels. Their input is a non-blocking EOF sink: a prompt fails fast with
+    /// ChannelEof instead of reading the shared process stdin (which deadlocks under parallel tests); a caller that wants
+    /// to answer registers its own input/ask channel. The one interactive owner, the CLI (Executor), is made without
+    /// them and calls WireDefaultConsoleChannels to bind real stdin.</param>
     public @this(string absolutePath,
         string? environment = null,
         bool autoWireConsoleChannels = true)
-        : this(absolutePath, new global::app.origin.code(), environment, autoWireConsoleChannels) { }
+        : this(absolutePath, new global::app.origin.code(autoWireConsoleChannels), environment) { }
 
     /// <summary>An app made by <paramref name="actor"/>, the actor that calls: its folder is its own, and its lists are
     /// layers over the caller's app's. Its life ends with its caller's; it is who its caller is.</summary>
-    internal @this(string absolutePath, global::app.actor.@this actor) : this(absolutePath, actor, null, true) { }
+    internal @this(string absolutePath, global::app.actor.@this actor) : this(absolutePath, actor, null) { }
 
-    private @this(string absolutePath, global::app.origin.@this origin, string? environment, bool autoWireConsoleChannels)
+    private @this(string absolutePath, global::app.origin.@this origin, string? environment)
     {
         this.origin = origin;
         // the app's disk, holding the app's folder as what / is — first, as its origin answers it: a folder a sub app
         // may not be made in is refused before anything of the app is made
         filesystem = origin.Filesystem(absolutePath);
         _shutdownCts = origin.Shutdown();
-        Console = autoWireConsoleChannels;
         Id = Guid.NewGuid().ToString("N")[..12];
         var trimmed = absolutePath.TrimEnd('/', '\\');
         var lastSep = trimmed.LastIndexOfAny(['/', '\\']);
@@ -361,15 +365,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         });
 
     }
-
-    /// <summary>Whether the app's System and User are born with the console's standard channels, wired when each first
-    /// uses its channels — the app's choice at its birth. Ad-hoc constructions (sub-process test fixtures, embedded
-    /// scenarios, C# tests, the <c>plang --test</c> child app) are NOT the interactive terminal owner, so their input is a
-    /// non-blocking EOF sink: a prompt fails fast with ChannelEof instead of reading the shared process stdin (which
-    /// deadlocks under parallel tests). A caller that wants to answer registers its own input/ask channel. The one
-    /// interactive owner, the CLI (Executor), is made without them and calls WireDefaultConsoleChannels to bind real
-    /// stdin.</summary>
-    internal bool Console { get; }
 
     /// <summary>
     /// Verifies the all-three-roles invariant on every I/O actor (System, User).

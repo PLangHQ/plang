@@ -7,9 +7,11 @@ namespace app.origin;
 /// </summary>
 internal sealed class code : @this
 {
-    /// <summary>The code, its types scanned from its facts on first ask, path's schemes among them.</summary>
-    internal code()
+    /// <summary>The code, its types scanned from its facts on first ask, path's schemes among them; the app it is made
+    /// for born with the console's standard channels when <paramref name="console"/>.</summary>
+    internal code(bool console = false)
     {
+        Console = console;
         type = new global::app.type.list.@this(this);
         // path's schemes, each a kind of path that builds its own path subclass
         var path = type[typeof(global::app.type.item.path.@this)];
@@ -21,6 +23,8 @@ internal sealed class code : @this
     public System.Threading.CancellationTokenSource Shutdown() => new();
 
     public global::app.type.item.path.file.filesystem.@this Filesystem(string absolutePath) => new(absolutePath);
+
+    public bool Console { get; }
 
     public global::app.type.list.@this type { get; }
 

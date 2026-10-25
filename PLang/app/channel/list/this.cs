@@ -16,11 +16,11 @@ namespace app.channel.list;
 public sealed class @this : global::app.type.item.@this, IAsyncDisposable
 {
     // The channels by name, made on the list's first use — with the console's standard ones when the list was born
-    // standard (an actor that never writes makes none).
+    // with them (an actor that never writes makes none).
     private ConcurrentDictionary<string, channel.@this>? _table;
     private readonly object _gate = new();
-    // whether the list's first rows are the console's standard channels: the app's choice, made at its birth
-    private readonly bool _standard;
+    // whether the list's first rows are the console's standard channels: as the app's origin answers, at its birth
+    private readonly bool _console;
     private readonly app.@this _app;
 
     // The channels by name, as they are now: made, wired, on the first use — the one door every other reads through.
@@ -33,7 +33,7 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
             {
                 if (_table is { } made) return made;
                 var channels = new ConcurrentDictionary<string, channel.@this>(StringComparer.OrdinalIgnoreCase);
-                if (_standard) Wire(channels, interactiveInput: false);
+                if (_console) Wire(channels, interactiveInput: false);
                 System.Threading.Volatile.Write(ref _table, channels);
                 return channels;
             }
@@ -96,15 +96,15 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
     public static readonly string[] Defaults = [Output, Error, Input];
 
     /// <summary>The channels of <paramref name="actor"/> — or of a Service, which is no actor (null).</summary>
-    public @this(app.@this app, global::app.actor.@this? actor) : this(app, actor, standard: false) { }
+    public @this(app.@this app, global::app.actor.@this? actor) : this(app, actor, console: false) { }
 
-    /// <summary>The channels of <paramref name="actor"/>, whose first rows, when <paramref name="standard"/>, are the
+    /// <summary>The channels of <paramref name="actor"/>, whose first rows, when <paramref name="console"/>, are the
     /// console's standard channels, wired at the list's first use with an input that reads as EOF (no shared stdin).</summary>
-    internal @this(app.@this app, global::app.actor.@this? actor, bool standard) : base(app.type.list[typeof(@this)])
+    internal @this(app.@this app, global::app.actor.@this? actor, bool console) : base(app.type.list[typeof(@this)])
     {
         _app = app;
         Actor = actor;
-        _standard = standard;
+        _console = console;
     }
 
     /// <summary>

@@ -15,6 +15,11 @@ internal interface @this
     /// app may be anywhere; a sub app is made in its maker's folder or under it, and anywhere else is refused.</summary>
     global::app.type.item.path.file.filesystem.@this Filesystem(string absolutePath);
 
+    /// <summary>Whether the app's System and User are born with the console's standard channels (an input that reads as
+    /// EOF): the code, as the app it is made for was asked to be; an actor, always — a sub app is never the terminal's
+    /// owner, which wires its own.</summary>
+    bool Console { get; }
+
     /// <summary>The types the app's type list is a layer over: the code's own; an actor's app's.</summary>
     global::app.type.list.@this type { get; }
 

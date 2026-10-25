@@ -184,6 +184,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         return filesystem;
     }
 
+    // a sub app is never the terminal's owner: its actors write to the console and read an input that is EOF, whatever
+    // its maker wired for itself
+    bool global::app.origin.@this.Console => true;
+
     global::app.type.list.@this global::app.origin.@this.type => App.type.list;
 
     global::app.module.@this global::app.origin.@this.Module(global::app.@this app) => App.module;
