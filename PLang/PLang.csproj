@@ -66,6 +66,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.7.0" />
     <PackageReference Include="DeepCloner" Version="0.10.4" />
     <PackageReference Include="Fluid.Core" Version="2.40.0" />
     <PackageReference Include="IDisposableAnalyzers" Version="4.0.8">
@@ -74,9 +75,6 @@
     </PackageReference>
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="10.0.13" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.13" />
-    <PackageReference Include="Nethereum.Util" Version="7.0.0" />
-    <!-- Nethereum.Util asks for Newtonsoft.Json 11.0.2 (High, GHSA-5crp-9r3c-p9vr); the patched one is taken instead -->
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="NSec.Cryptography" Version="26.4.0" />
     <PackageReference Include="SixLabors.ImageSharp" Version="4.1.3" />
     <PackageReference Include="System.Runtime.Caching" Version="10.0.13" />

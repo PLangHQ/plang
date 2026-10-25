@@ -70,6 +70,14 @@ public class HashActionTests
         await Assert.That(digest.ToBase64()).IsEqualTo("TgNleupFqU/H1HuoJsjWZ8DR5uM6ZKA27ET1j6EtbEU=");
     }
 
+    [Test]
+    public async Task Keccak256_OfNothing_IsThePublishedDigest()
+    {
+        var digest = await Hashed("", "keccak256");
+        await Assert.That(System.Convert.ToHexString(digest.Bytes).ToLowerInvariant())
+            .IsEqualTo("c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");
+    }
+
     // ---- each value pours its own bytes into the digest ----
 
     // a dict hashes its json text in its own key order, as before the value poured itself
@@ -92,11 +100,14 @@ public class HashActionTests
 
         var ofPath = await Hashed(global::app.type.item.path.@this.Resolve("/x.bin", Ctx), "sha256");
         var ofText = await Hashed("x.bin", "sha256");
-        var ofKeccak = await Hashed(global::app.type.item.path.@this.Resolve("/x.bin", Ctx), "keccak256");
+        System.IO.File.WriteAllText(System.IO.Path.Combine(_tempDir, "abc.txt"), "abc");
+        var ofKeccak = await Hashed(global::app.type.item.path.@this.Resolve("/abc.txt", Ctx), "keccak256");
 
         await Assert.That(ofPath.Bytes).IsEquivalentTo(System.Security.Cryptography.SHA256.HashData(bytes));
         await Assert.That(ofText.Bytes).IsEquivalentTo(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes("x.bin")));
-        await Assert.That(ofKeccak.Bytes).IsEquivalentTo(new Nethereum.Util.Sha3Keccack().CalculateHash(bytes));
+        // a file's keccak, read by stream, is the published digest of what it holds
+        await Assert.That(System.Convert.ToHexString(ofKeccak.Bytes).ToLowerInvariant())
+            .IsEqualTo("4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45");
     }
 
     // a path the actor may not read is refused as a read, never hashed

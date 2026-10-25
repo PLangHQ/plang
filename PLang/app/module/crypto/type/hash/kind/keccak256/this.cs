@@ -1,18 +1,19 @@
 namespace app.module.crypto.type.hash.kind.keccak256;
 
-/// <summary>The <c>keccak256</c> digest — a kind of hash. Its digest gathers the bytes and hashes them once at the end:
-/// the incremental keccak this app can reach (BouncyCastle's) is present twice, ambiguously, so keccak256 holds what it
-/// is given until its hash is read.</summary>
+/// <summary>The <c>keccak256</c> digest — a kind of hash: BouncyCastle's Keccak at 256 bits (the original Keccak
+/// padding, not FIPS SHA-3), taking the bytes as they come.</summary>
 public sealed class @this : kind.@this
 {
     public @this(global::app.type.@this owner) : base("keccak256", owner) { }
 
     public override digest.@this Digest()
     {
-        var gathered = new System.IO.MemoryStream();
-        return new digest.@this(this, gathered.Write, () =>
+        var keccak = new Org.BouncyCastle.Crypto.Digests.KeccakDigest(256);
+        return new digest.@this(this, keccak.BlockUpdate, () =>
         {
-            using (gathered) return new Nethereum.Util.Sha3Keccack().CalculateHash(gathered.ToArray());
+            var hash = new byte[keccak.GetDigestSize()];
+            keccak.DoFinal(hash, 0);
+            return hash;
         });
     }
 }
