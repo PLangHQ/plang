@@ -62,6 +62,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     [global::app.LlmBuilder]
     public context.@this Context { get; }
 
+    /// <summary>The bindings this actor made while a program ran, on the items each is on — every run-time binding,
+    /// whatever its scope, whichever of its contexts bound it; an event reads the holds of every actor of the asker's
+    /// app, and the binding decides whether it fires. Let go with the actor.</summary>
+    internal global::app.@event.on.list.@this on { get; }
+
     /// <summary>
     /// Per-actor permission view — signed grants on paths, keyed by verb
     /// + sub-options. <c>Find/Add/Revoke</c>. Routes "y" grants to an
@@ -124,6 +129,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         : base(app.type.list[typeof(@this)])
     {
         Role = role;
+        on = new(this);
         App = app;
         _fallback = fallback;
         _cts = parentToken == default
@@ -211,6 +217,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         _cts.Cancel();
         _cts.Dispose();
+        on.Clear();
         Context.Dispose();
         await _channels.DisposeAsync();
         // the settings' store, when this actor's settings are the chain's root that made it

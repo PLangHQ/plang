@@ -48,7 +48,7 @@ public class OnEventTests
         var binding = await Bind("%!app.type.goal.on.start%", "before", "Log");
 
         // held on the binding actor's context, never on the type entry
-        var before = _app.actor.list.User.Context.on[_app.type.list["goal"]].start.before;
+        var before = _app.actor.list.User.on[_app.type.list["goal"]].start.before;
         await Assert.That(before.Count).IsEqualTo(1);
         await Assert.That(_app.type.list["goal"].on.start.before.Count).IsEqualTo(0);
         await Assert.That(before[0]).IsSameReferenceAs(binding);
@@ -61,7 +61,7 @@ public class OnEventTests
         // file.read nothing is bound on answers the shared empty events; the binding is held for it alone
         await Bind("%!app.module.file.read.on.start%", "before", "Log");
 
-        var held = _app.actor.list.User.Context.on;
+        var held = _app.actor.list.User.on;
         await Assert.That(held[_app.Module("file")["read"]!].start.before.Count).IsEqualTo(1);
         await Assert.That(held[_app.Module("file")["save"]!].start.before.Count).IsEqualTo(0);
         await Assert.That(held[_app.Module("file")].start.before.Count).IsEqualTo(0);
@@ -249,7 +249,7 @@ public class OnEventTests
         }.Start();
 
         await unbound.IsSuccess();
-        await Assert.That(_app.actor.list.User.Context.on[_app.type.list["goal"]].start.before.Count).IsEqualTo(0);
+        await Assert.That(_app.actor.list.User.on[_app.type.list["goal"]].start.before.Count).IsEqualTo(0);
     }
 
     [Test]

@@ -13,7 +13,7 @@ public class KeepsItsKeyTests : System.IAsyncDisposable
     [Test] public async Task AStepsKeyedFailure_IsItsResultsKey()
     {
         var goal = Make.Goal(Ctx, "Start", "/Start.goal", Make.Step("write out hi", Make.Action(Ctx, "output", "write", ("Data", "hi"))));
-        app.actor.list.User.Context.on.Bind(app.type.list["action"], "start", global::app.@event.When.before,
+        app.actor.list.User.on.Bind(app.type.list["action"], "start", global::app.@event.When.before,
             (item, result, c) => Task.FromException<global::app.data.@this>(new global::app.error.AppException("refused", "MyRefusal", 418)),
             global::app.@event.binding.Scope.actor);
 

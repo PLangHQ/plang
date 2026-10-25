@@ -67,18 +67,20 @@ public sealed class @this
             }
         }
 
+        // Debug watches user execution, so its bindings are the User actor's (where user goals run) — Debug itself is
+        // born with System's context. They are held by the User, as long as the app lives.
+        var hold = _context.App.actor.list.User.on;
+
         // The watch binds after every set and remove of a variable the User actor makes, for the watched names.
         if (setting.Variables.CountRaw > 0)
         {
             var watched = await Watched();
-            // held on the User's context: the User's bindings
-            var user = _context.App.actor.list.User.Context.on;
             var variables = _context.App.variable.type;
             bool Watches(global::app.type.item.@this item, actor.context.@this _)
                 => item is global::app.type.item.variable.@this variable && watched.Contains(variable.Name);
-            user.Bind(variables, "set", When.after, (item, result, context) => Set((global::app.type.item.variable.@this)item, result, context),
+            hold.Bind(variables, "set", When.after, (item, result, context) => Set((global::app.type.item.variable.@this)item, result, context),
                 global::app.@event.binding.Scope.actor, Watches);
-            user.Bind(variables, "remove", When.after, (item, _, context) => Remove((global::app.type.item.variable.@this)item, context),
+            hold.Bind(variables, "remove", When.after, (item, _, context) => Remove((global::app.type.item.variable.@this)item, context),
                 global::app.@event.binding.Scope.actor, Watches);
         }
 
@@ -117,10 +119,7 @@ public sealed class @this
             }
         }
 
-        // Debug watches user execution, so its bindings on the step, goal (and action) types' on.start are the
-        // User actor's (where user goals run) — Debug itself is born with System's context. They are held on the
-        // User's context, as long as the app lives.
-        var held = _context.App.actor.list.User.Context.on;
+        // the step, goal (and action) types' on.start
         var types = _context.App.type.list;
         var step = setting.Step?.ToInt32();
         // debug attaches where the goal named starts (no goal named is every goal), or at its step named, and follows
@@ -129,26 +128,26 @@ public sealed class @this
         var goals = types["goal"];
 
         // the marks, bound before the watchers so a frame is marked before it is shown
-        held.Bind(goals, "start", When.before, (item, _, context) => Attach((global::app.goal.@this)item, context, step),
+        hold.Bind(goals, "start", When.before, (item, _, context) => Attach((global::app.goal.@this)item, context, step),
             global::app.@event.binding.Scope.actor, (item, _) => item is global::app.goal.@this);
         if (step != null)
-            held.Bind(steps, "start", When.before, (item, _, context) => Attach((global::app.goal.step.@this)item, context, step.Value),
+            hold.Bind(steps, "start", When.before, (item, _, context) => Attach((global::app.goal.step.@this)item, context, step.Value),
                 global::app.@event.binding.Scope.actor, (item, _) => item is global::app.goal.step.@this);
 
-        held.Bind(steps, "start", When.before, (item, _, context) => Before((global::app.goal.step.@this)item, context),
+        hold.Bind(steps, "start", When.before, (item, _, context) => Before((global::app.goal.step.@this)item, context),
             global::app.@event.binding.Scope.actor, (item, context) => item is global::app.goal.step.@this && Debugged(context));
-        held.Bind(steps, "start", When.after, (item, _, context) => After((global::app.goal.step.@this)item, context),
+        hold.Bind(steps, "start", When.after, (item, _, context) => After((global::app.goal.step.@this)item, context),
             global::app.@event.binding.Scope.actor, (item, context) => item is global::app.goal.step.@this && Debugged(context));
 
-        held.Bind(goals, "start", When.after, (item, _, context) => After((global::app.goal.@this)item, context),
+        hold.Bind(goals, "start", When.after, (item, _, context) => After((global::app.goal.@this)item, context),
             global::app.@event.binding.Scope.actor, (item, context) => item is global::app.goal.@this && Debugged(context));
 
         if (setting.Level.Value == global::app.module.debug.Level.Action)
         {
             var actions = types["action"];
-            held.Bind(actions, "start", When.before, (item, _, context) => Before((global::app.goal.step.action.@this)item, context),
+            hold.Bind(actions, "start", When.before, (item, _, context) => Before((global::app.goal.step.action.@this)item, context),
                 global::app.@event.binding.Scope.actor, (item, context) => item is global::app.goal.step.action.@this && Debugged(context));
-            held.Bind(actions, "start", When.after, (item, _, context) => After((global::app.goal.step.action.@this)item, context),
+            hold.Bind(actions, "start", When.after, (item, _, context) => After((global::app.goal.step.action.@this)item, context),
                 global::app.@event.binding.Scope.actor, (item, context) => item is global::app.goal.step.action.@this && Debugged(context));
         }
         return null;

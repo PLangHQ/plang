@@ -45,7 +45,7 @@ public class FramesTests
 
         // what the step type's after-binding sees, per step of the caller
         var seen = new List<(global::app.goal.step.@this ending, global::app.goal.step.@this? inPlay, global::app.goal.@this? goal)>();
-        _app.actor.list.User.Context.on.Bind(_app.type.list["step"], "start", global::app.@event.When.after, (item, _, c) =>
+        _app.actor.list.User.on.Bind(_app.type.list["step"], "start", global::app.@event.When.after, (item, _, c) =>
         {
             if (item is global::app.goal.step.@this step && ReferenceEquals(step.Goal, caller))
                 seen.Add((step, c.call.Step, c.call.Goal));
@@ -73,7 +73,7 @@ public class FramesTests
         var (caller, _) = await CallerAndCallee();
 
         var took = new List<TimeSpan?>();
-        _app.actor.list.User.Context.on.Bind(_app.type.list["step"], "start", global::app.@event.When.after, (item, _, c) =>
+        _app.actor.list.User.on.Bind(_app.type.list["step"], "start", global::app.@event.When.after, (item, _, c) =>
         {
             if (item is global::app.goal.step.@this step && ReferenceEquals(step.Goal, caller))
                 took.Add(c.call.Current?.Duration(c)?.Value);

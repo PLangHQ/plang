@@ -74,7 +74,7 @@ public class SetTests
         var context = _app.actor.list.User.Context;
         var births = new List<string>();
         foreach (var name in new[] { "path", "number" })
-            _app.actor.list.User.Context.on.Bind(_app.type.list[name], "create", global::app.@event.When.after,
+            _app.actor.list.User.on.Bind(_app.type.list[name], "create", global::app.@event.When.after,
                 (_, data, c) => { births.Add(data.Type.Name); return Task.FromResult(data); },
                 global::app.@event.binding.Scope.actor);
 
@@ -92,7 +92,7 @@ public class SetTests
         var context = _app.actor.list.User.Context;
         var births = new List<string>();
         var number = _app.type.list["number"];
-        _app.actor.list.User.Context.on.Bind(number, "create", global::app.@event.When.after,
+        _app.actor.list.User.on.Bind(number, "create", global::app.@event.When.after,
             (_, data, c) => { births.Add(data.Type.Name); return Task.FromResult(data); },
             global::app.@event.binding.Scope.actor);
         var unread = number.Make("42", context);

@@ -52,14 +52,14 @@ public class IntegrationCutsTests
         app.actor.list.User.Channel.Register(metrics);
 
         // Before a write to audit: refuse a value containing "REJECT" — the refusal is the write's answer.
-        app.actor.list.User.Context.on.Bind(audit, "write", global::app.@event.When.before, (_, payload, ctx) =>
+        app.actor.list.User.on.Bind(audit, "write", global::app.@event.When.before, (_, payload, ctx) =>
             Task.FromResult(payload.Peek()?.ToString() is { } s && s.Contains("REJECT")
                 ? ctx.Error(new global::app.error.@this("rejected by approval", "Rejected", 400))
                 : ctx.Ok()),
             global::app.@event.binding.Scope.actor);
 
         // After a write to audit (it runs on every result): count the writes that went through.
-        app.actor.list.User.Context.on.Bind(audit, "write", global::app.@event.When.after, async (_, result, ctx) =>
+        app.actor.list.User.on.Bind(audit, "write", global::app.@event.When.after, async (_, result, ctx) =>
         {
             if (result.Success) await metrics.WriteAsync(app.Ok("+1"));
             return ctx.Ok();

@@ -33,8 +33,8 @@ public class LoadTests
     {
         await using var app = new global::app.@this(Fixtures(), global::PLang.Tests.Parent.Actor).Testing();
         var handed = new List<global::app.type.item.@this>();
-        app.actor.list.System.Context.on.Bind(app.goal.type, "load", When.before, (item, _, ctx) => { handed.Add(item); return Task.FromResult(ctx.Ok()); }, Scope.app);
-        app.actor.list.System.Context.on.Bind(app.goal.type, "load", When.after, (item, _, ctx) => { handed.Add(item); return Task.FromResult(ctx.Ok()); }, Scope.app);
+        app.actor.list.System.on.Bind(app.goal.type, "load", When.before, (item, _, ctx) => { handed.Add(item); return Task.FromResult(ctx.Ok()); }, Scope.app);
+        app.actor.list.System.on.Bind(app.goal.type, "load", When.after, (item, _, ctx) => { handed.Add(item); return Task.FromResult(ctx.Ok()); }, Scope.app);
 
         var loaded = await app.goal.Load(Pr);
 
@@ -48,7 +48,7 @@ public class LoadTests
     [Test] public async Task AFailingBeforeLoad_IsTheAnswer_AndNothingIsRead()
     {
         await using var app = new global::app.@this(Fixtures(), global::PLang.Tests.Parent.Actor).Testing();
-        app.actor.list.System.Context.on.Bind(app.goal.type, "load", When.before,
+        app.actor.list.System.on.Bind(app.goal.type, "load", When.before,
             (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Refused", 400))), Scope.app);
 
         var loaded = await app.goal.Load(Pr);
@@ -61,7 +61,7 @@ public class LoadTests
     [Test] public async Task ACancellingBeforeLoad_IsTheAnswer_AndNothingIsRead()
     {
         await using var app = new global::app.@this(Fixtures(), global::PLang.Tests.Parent.Actor).Testing();
-        app.actor.list.System.Context.on.Bind(app.goal.type, "load", When.before, (_, _, ctx) =>
+        app.actor.list.System.on.Bind(app.goal.type, "load", When.before, (_, _, ctx) =>
         {
             var instead = ctx.Ok("instead");
             instead.Handled = true;
@@ -77,7 +77,7 @@ public class LoadTests
     [Test] public async Task AFailingAfterLoad_IsTheAnswer()
     {
         await using var app = new global::app.@this(Fixtures(), global::PLang.Tests.Parent.Actor).Testing();
-        app.actor.list.System.Context.on.Bind(app.goal.type, "load", When.after,
+        app.actor.list.System.on.Bind(app.goal.type, "load", When.after,
             (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Broke", 400))), Scope.app);
 
         var loaded = await app.goal.Load(Pr);
@@ -90,7 +90,7 @@ public class LoadTests
     {
         await using var app = new global::app.@this(Fixtures(), global::PLang.Tests.Parent.Actor).Testing();
         var loads = 0;
-        app.actor.list.System.Context.on.Bind(app.goal.type, "load", When.after, (_, _, ctx) => { loads++; return Task.FromResult(ctx.Ok()); }, Scope.app);
+        app.actor.list.System.on.Bind(app.goal.type, "load", When.after, (_, _, ctx) => { loads++; return Task.FromResult(ctx.Ok()); }, Scope.app);
 
         await (await app.goal.Load(Pr)).IsSuccess();
         await (await app.goal.Load(Pr)).IsSuccess();

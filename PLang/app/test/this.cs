@@ -177,7 +177,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         bool Own(global::app.goal.step.@this step) => string.Equals(step.Goal.Path?.ToString(), entry, System.StringComparison.Ordinal);
         return
         [
-            context.Actor!.Context.on.Bind(context.App.type.list["step"], "start", global::app.@event.When.after, (item, _, ctx) =>
+            context.Actor!.on.Bind(context.App.type.list["step"], "start", global::app.@event.When.after, (item, _, ctx) =>
             {
                 if (item is global::app.goal.step.@this step && Own(step) && ctx.call.Current?.Duration(ctx) is { } elapsed)
                     Timings.Add(new global::app.test.timing.@this { Step = step, Elapsed = elapsed });

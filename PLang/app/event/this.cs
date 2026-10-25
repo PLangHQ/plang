@@ -125,7 +125,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
                 if (_level.on.Bound(_event.Name) is { } own) { Current = own; return true; }
             }
             while (_next < _count)
-                if (_actors[_next++].Context.on.Of(_level)?.Bound(_event.Name) is { } held) { Current = held; return true; }
+                if (_actors[_next++].on.Of(_level)?.Bound(_event.Name) is { } held) { Current = held; return true; }
             return false;
         }
     }
@@ -157,7 +157,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
         public bool MoveNext()
         {
             while (_next >= 0)
-                if (_actors[_next--].Context.on.Of(_level)?.Bound(_event.Name) is { } held) { Current = held; return true; }
+                if (_actors[_next--].on.Of(_level)?.Bound(_event.Name) is { } held) { Current = held; return true; }
             if (_owned) return false;
             _owned = true;
             if (_level.on.Bound(_event.Name) is not { } own) return false;
