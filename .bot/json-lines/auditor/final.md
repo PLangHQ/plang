@@ -64,3 +64,9 @@ test-side member is `PLang.Tests/Shared/JsonLayoutExtensions.Compact` (a test fi
 - X4 docs: `Documentation/` still says json is compact/HTML-escaped where it does (grep `application/json` in data-spec, good_to_know); the
   `docs` bot should check the json-setting page.
 - X5 the Windows window's real Draw of the cursor line (Chromium cannot run in a test).
+
+## Update — C1, C2 closed at 4cc522da0 (PASS)
+C1: renames read in the diff (list `Keyed` keeps the double-checked lock as it was; `Chunks` same logic; item/Create names). `held` stays:
+it is the archive's own type. C2: `window/this.cs` Kept writes a debug line for a failed encode and for a failed Append, then goes on.
+Surface golden unchanged. Sweep: Wire's 6 baseline reds only (Modules 1,419, Types 1,000, Data 879, Generator 191, Runtime 1,390 green).
+`plang --test`, llm included, no key: see the reply; tree clean. Verdict: **PASS**, next docs (X4 first).
