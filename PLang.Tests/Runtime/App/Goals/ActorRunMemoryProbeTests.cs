@@ -21,7 +21,7 @@ public class ActorRunMemoryProbeTests
 
         var call = Make.Action(flow, "goal", "call", ("Name", "Peek"), ("Actor", runsAs));
         var answer = await call.Start(flow);
-        return answer.Success ? (await answer.Value())?.ToString() : "ERR:" + answer.Error?.Key;
+        return answer.Success ? (await answer.Value())?.ToString() ?? "" : "ERR:" + answer.Error?.Key;
     }
 
     // control: the probe can see a variable when the actor is the caller's own (the goal runs in the caller's memory)
@@ -37,6 +37,8 @@ public class ActorRunMemoryProbeTests
     public async Task AGoalRunForTheOtherActor_DoesNotReadTheCallersVariable(string caller, string runsAs, bool inGoal)
     {
         var seen = await Peek(caller, runsAs, inGoal);
-        await Assert.That(seen ?? "").DoesNotContain("CALLERS-SECRET");
+        // the goal did run and looked for %secret%: it answers that no such variable is there — not another failure,
+        // not the value
+        await Assert.That(seen).IsEqualTo("ERR:VariableNotFound");
     }
 }
