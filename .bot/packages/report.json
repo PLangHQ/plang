@@ -1,0 +1,19 @@
+{
+  "branch": "packages",
+  "sessions": [
+    {
+      "id": "6b0e2f4a-8d1c-4c57-9a3e-2f7d5b1c9e40",
+      "bot": "coder",
+      "timestamp_start": "2026-10-25T09:30:00Z",
+      "timestamp_end": "",
+      "intent": "Bring PLang's NuGet packages up to date, one package per commit, the suites holding at runtime2's baseline",
+      "before": {
+        "assumptions": "Each package is a drop-in except where its major changes an API. ImageSharp 4.x changes the screen module's and DetectFormat's calls. NSec 26 is the one signing rests on.",
+        "risk": "A major breaking an API beyond a mechanical fix (stop and report). Roslyn moving past the SDK's compiler."
+      },
+      "plan": ".bot/packages/coder/v1/plan.md",
+      "actions": [],
+      "after": {}
+    }
+  ]
+}
