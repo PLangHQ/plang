@@ -307,7 +307,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     // The formats whose size the image type reads from their header, by the name the bytes' magic gives them. A
     // constant: readonly, never written, the same for every app. TIFF is not among them: its decoder can be held by
-    // 24 bytes (a BigTIFF's IFD count), so its header is never read.
+    // 24 bytes (a BigTIFF's IFD count), so its header is never read. Identify keeps an ICC profile's bytes without
+    // parsing them; reading an image's ICC profile entries, its metadata or EXIF parses them, and that parse allocates
+    // from unvalidated dimensions (GHSA-gwg2-r3hj-4w44): nothing reads them while ImageSharp is at or below 4.1.1.
     private static readonly System.Collections.Generic.HashSet<string> Sized =
         new(["JPEG", "PNG", "GIF", "BMP", "WEBP"], System.StringComparer.OrdinalIgnoreCase);
 
