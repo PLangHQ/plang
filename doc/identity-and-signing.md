@@ -48,7 +48,7 @@ export: ExportWaitsForCriticalActions
 
 A step `export identity 'alice', write to %exported%, on error write out …` printed that error key and went on. The refusal is by design: a private key leaves the app only through a critical action that asks more than a yes, and until those exist no key is handed out and nothing is asked (`os/system/modules/identity/export.description.md`).
 
-This refusal covers the `export` action. It does not mean the key is unreadable: the files in `.data/` were `rw-r--r--`. Whether the private key is plain in one of them was not checked.
+This refusal covers the `export` action. It does not mean the key is unreadable: the files in `.data/` were `rw-r--r--`, (the settings' store folder opens as `rwx------`, see [keys](keys.md); the folder these files were in was not checked). Whether the private key is plain in one of them was not checked.
 
 ## Tests
 

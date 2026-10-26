@@ -25,8 +25,7 @@ A rebuild with nothing changed builds no goal. A request count was not taken for
 
 A step such as `ask the model "…"` builds to `llm.query`. At run it sends a POST to the model endpoint (`https://api.openai.com/v1/chat/completions` by default) with `Authorization`, and a body with `model`, `messages`, `temperature` and `max_completion_tokens`.
 
-What the `messages` held, as seen: the step's text as written, with a variable still unreplaced. `ask the model "Say hello to %name%"` sent `Say hello to %name%`, and `ask the model %prompt%` sent `%prompt%`. The variable's value was not sent. This is a finding against the module's behaviour; do not rely on the variable's value reaching, or not reaching, the model until it is fixed.
-
+What the `messages` hold: the step's text with each variable replaced by its value, so `ask the model "Say hello to %name%"` sends the value of `%name%` and the value is what leaves the machine. A variable that does not exist fails the step instead of being sent as written. A value that itself contains `%secret%` is sent as that text, never read again. Read at `PLang/app/module/llm/query.cs:62-83` and `code/OpenAi.cs:70-74`; run as C# tests, not as a live request: `RequiredVariableTests` (4 of 4 pass) and `MessageRenderProbeTests` (2 of 2 pass).
 The file a goal read earlier in the same run (`FILECONTENT456`) was not in the request.
 
 ## http

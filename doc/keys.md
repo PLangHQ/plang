@@ -13,7 +13,7 @@ A key is read from the app's saved setting, else from the environment variable. 
 In the app's settings store, `.data/setting/data.sqlite`, under the app's folder.
 
 - A search of that file for the saved decider key found it, in plain text. It is not encrypted there. (Checked by searching the file for the key from the file it came from, without displaying either.)
-- The file's mode on Linux was `rw-r--r--`, readable by any user on the machine who can reach the folder.
+- The file's mode on Linux was `rw-r--r--`, but the folder it is in, `.data/setting/`, is `rwx------`: opening the store sets it (`PLang/app/store/sqlite/this.cs:109-114`), and a folder made by an earlier version is set the next time the app opens. Another user of the machine cannot reach the file through that folder. `.data/` itself stayed `rwxr-xr-x`. The file's own mode is not what protects it. Run: an old app folder (`.data` 755, `.data/setting` 755, `data.sqlite` 644) opened with this build ended with `.data/setting` at 700 and the rest unchanged. On Windows nothing is set, and a mode is lost when the folder is copied through git or a zip.
 - Another actor inside the app is refused reads of `.data/` (see [files and permissions](files-and-permissions.md)). The operating system's file permissions are what stop another user of the machine.
 
 Whether the identity's private key is stored the same way was not checked.

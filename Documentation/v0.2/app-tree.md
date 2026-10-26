@@ -131,55 +131,16 @@ moved onto the channel itself as `Channel.Goal.@this.IsExecuting`
 
 ## modules — the registered action set
 
-Discovered at startup and exposed under `app.Module["<name>"]` /
-`app.Module.<name>` (PascalCase property). Each lives at
-`PLang/app/module/<name>/`.
+Discovered at startup and reached at `app.module` (the registry; the lookup verb is `app.Module(name)`). Each lives at `PLang/app/module/<name>/`:
 
 ```
-app.Module
-├── environment    — app lifecycle (execute, shutdown, …)   [renamed from "app" during the app-lowercase rename]
-├── assert         — test assertions
-├── builder        — builder-side actions (note: builder.app action renamed to builder.load)
-├── cache          — cache.set / cache.get / cache.invalidate
-├── callback       — signed callback URLs / handlers
-├── channel        — channel register/write/read
-├── code           — provider routing (run code against a [Code] target)
-├── condition      — if / else
-├── crypto         — hash / encrypt / decrypt
-├── debug          — debug.write / debug.dump
-├── error          — error.handle / error.wrap / error.rethrow
-├── event          — event subscribe / raise
-├── file           — read / save / copy / move / delete / exists / list
-├── goal           — goal.call / goal.return
-├── http           — http.request / http.serve
-├── identity       — identity.create / identity.sign
-├── list           — list.add / list.filter / list.map …
-├── llm            — llm.ask / llm.tool
-├── loop           — foreach
-├── math           — arithmetic + comparison
-├── mock           — test mocks
-├── module         — module discovery / introspection
-├── output         — output.write (user-facing channel)
-├── settings       — settings.get / settings.set
-├── signing        — signing.sign / signing.verify
-├── test           — *.test.goal runner glue
-├── timeout        — bounded async
-├── timer          — schedule / interval
-├── ui             — UI surface actions
-└── variable       — variable.set / variable.append / variable.delete
+archive  assert  browser  build  cache  callback  channel  code  condition
+crypto  debug  error  file  goal  http  identity  list  llm  loop  math
+module  on  output  screen  setting  signing  snapshot  task  terminal
+test  timer  ui  variable  window
 ```
 
-The handler for each action is a record under `module/<name>/`, paired
-with a `*Handler` partial completed by the source generator
-(`PLang.Generators`). See `Documentation/v0.2/object_pattern_formal.md`
-for OBP rules and `good_to_know.md` for the property-kind contract
-(`Data<T>` vs `[Code] T`).
-
-`app.Module.Schema` (under `app/module/Schema/`, PascalCase) is **not** a
-registered action module — it's the LLM action catalog object owned by
-Module. Build a snapshot with `app.Module.Schema.Build()`; the builder
-template and the trace viewer read from there. Lives next to the
-action-module folders for proximity to what it describes.
+An action is a partial class in its module's folder, named for the action (`module/build/load.cs` is `build.load`) and completed by the source generator (`PLang.Generators`). What each module and action does is in the catalog (`os/system/modules/catalog.md`). See `Documentation/v0.2/object_pattern_formal.md` for OBP rules and `good_to_know.md` for the property-kind contract (`Data<T>` vs `[Code] T`).
 
 ## Data — the universal result wrapper
 
