@@ -1,10 +1,10 @@
 {
   "name": "Start",
-  "comment": "A run saved inside Sub (run.snapshot, written by Record.goal) resumed in this test's own app goes on from its save:\nthe save answers again, Sub's next step reads the context's %name% and its frame's %city%, and Record goes on after\nthe call. The step before the save doesn't run again (%count% stays 1). The resumed Record writes its snapshot to\n%where%, which this test points into its own workspace, so the committed run.snapshot stays as it is.",
+  "comment": "A run saved inside Sub (run.json, written by Record.goal) resumed in this test's own app goes on from its save:\nthe save answers again, Sub's next step reads the context's %name% and its frame's %city%, and Record goes on after\nthe call. The step before the save doesn't run again (%count% stays 1). The resumed Record writes its snapshot to\n%where%, which this test points into its own workspace, so the committed run.json stays as it is.",
   "step": [
     {
       "index": 0,
-      "text": "read file 'run.snapshot', write to %snapshot%",
+      "text": "read file 'run.json', write to %snapshot%",
       "line": {
         "number": 6,
         "indent": 0
@@ -19,7 +19,7 @@
               "type": {
                 "name": "path"
               },
-              "value": "run.snapshot"
+              "value": "run.json"
             }
           ]
         },
@@ -61,6 +61,16 @@
                   ]
                 }
               ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "file",
+                "kind": "json"
+              }
             }
           ],
           "default": [
@@ -77,7 +87,7 @@
     },
     {
       "index": 1,
-      "text": "set %snapshot.actor.list.user.context.variable.where% = 'workspace/rerun.snapshot'",
+      "text": "set %snapshot.actor.list.user.context.variable.where% = 'workspace/rerun.json'",
       "line": {
         "number": 7,
         "indent": 0
@@ -127,7 +137,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "workspace/rerun.snapshot"
+              "value": "workspace/rerun.json"
             }
           ],
           "default": [
@@ -178,7 +188,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 2 uses snapshot.resume, which the decider was not sure of (0.96)"
+          "message": "step 2 uses snapshot.resume, which the decider was not sure of (0.97)"
         }
       ]
     },
@@ -307,7 +317,7 @@
     },
     {
       "index": 6,
-      "text": "read file 'workspace/rerun.snapshot', write to %rerun%",
+      "text": "read file 'workspace/rerun.json', write to %rerun%",
       "line": {
         "number": 12,
         "indent": 0
@@ -322,7 +332,7 @@
               "type": {
                 "name": "path"
               },
-              "value": "workspace/rerun.snapshot"
+              "value": "workspace/rerun.json"
             }
           ]
         },
@@ -364,6 +374,16 @@
                   ]
                 }
               ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "file",
+                "kind": "json"
+              }
             }
           ],
           "default": [
@@ -414,7 +434,7 @@
     },
     {
       "index": 8,
-      "text": "delete file 'workspace/rerun.snapshot'",
+      "text": "delete file 'workspace/rerun.json'",
       "line": {
         "number": 14,
         "indent": 0
@@ -429,7 +449,7 @@
               "type": {
                 "name": "path"
               },
-              "value": "workspace/rerun.snapshot"
+              "value": "workspace/rerun.json"
             }
           ],
           "default": [
@@ -447,5 +467,5 @@
   ],
   "visibility": "Public",
   "file": "FreshAppGoesOn.test.goal",
-  "hash": "f90fba17ed031b007dc337535af6c49ee2af9612a535146ec3ee7b5c2c57e929"
+  "hash": "e90abcb646538e1a969c19dd0965c9e0de155507e89dc6b2bf53680c817e54ee"
 }

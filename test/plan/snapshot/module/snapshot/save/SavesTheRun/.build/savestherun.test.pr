@@ -118,7 +118,7 @@
     },
     {
       "index": 2,
-      "text": "save %snapshot% to 'workspace/saved.snapshot'",
+      "text": "save %snapshot% to 'workspace/saved.json'",
       "line": {
         "number": 6,
         "indent": 0
@@ -133,7 +133,7 @@
               "type": {
                 "name": "path"
               },
-              "value": "workspace/saved.snapshot"
+              "value": "workspace/saved.json"
             },
             {
               "name": "Value",
@@ -159,13 +159,13 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 2 uses file.save, which the decider was not sure of (0.95)"
+          "message": "step 2 uses file.save, which the decider was not sure of (0.97)"
         }
       ]
     },
     {
       "index": 3,
-      "text": "read file 'workspace/saved.snapshot', write to %back% as snapshot",
+      "text": "read file 'workspace/saved.json', write to %back% as snapshot",
       "line": {
         "number": 7,
         "indent": 0
@@ -180,7 +180,7 @@
               "type": {
                 "name": "path"
               },
-              "value": "workspace/saved.snapshot"
+              "value": "workspace/saved.json"
             },
             {
               "name": "Type",
@@ -313,7 +313,7 @@
     },
     {
       "index": 5,
-      "text": "delete file 'workspace/saved.snapshot'",
+      "text": "delete file 'workspace/saved.json'",
       "line": {
         "number": 9,
         "indent": 0
@@ -328,7 +328,7 @@
               "type": {
                 "name": "path"
               },
-              "value": "workspace/saved.snapshot"
+              "value": "workspace/saved.json"
             }
           ],
           "default": [
@@ -346,5 +346,5 @@
   ],
   "visibility": "Public",
   "file": "SavesTheRun.test.goal",
-  "hash": "d483789c56ca2d78553dfda574eec159b5f1b27f6c2b9f999666064edf14d721"
+  "hash": "66d90ac0228c83e89dd333806aad7584eb6f7d74c51f759804c2e7dc3f0b7786"
 }
