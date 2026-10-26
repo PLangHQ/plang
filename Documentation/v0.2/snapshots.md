@@ -1,120 +1,151 @@
 # Snapshots
 
-A snapshot is a typed capture of the App tree's current state — enough to suspend execution, ship the bytes through a wire (or a file), reconstruct a fresh App on the other side, and resume from where it stopped. It's the foundation `ErrorCallback` rides on; `AskCallback` does not use the full snapshot but uses the same `Snapshot.@this` shape for its slim wire format.
+A snapshot is a run's state as a value: kept somewhere (a file, a db row) and resumed later, in this process or a fresh
+one.
 
-The design is OBP through-and-through: each subsystem captures into its own subtree and reconstructs from that subtree on Restore. References across subsystems are by name, never by pointer. Restore order is data-driven (the section names in the snapshot), not hard-coded.
-
-## The classifier — `ISnapshotted`
-
-`PLang/app/snapshot/ISnapshotted.cs`:
-
-```csharp
-public interface ISnapshotted
-{
-    void Capture(@this s);
-    static abstract void Restore(@this s, actor.context.@this ctx);
-}
+```plang
+- save snapshot, write to %snapshot%
+- save %snapshot% to file 'run.txt'
+… later, in a fresh app …
+- read file 'run.txt', write to %snapshot% as snapshot
+- resume %snapshot%
 ```
 
-The type system is the bucket assignment. Subsystems that implement `ISnapshotted` participate in snapshot/restore. Subsystems that don't are reconstructed on App build instead — Modules, Goals, Channels, Cache, the action registry. There is no third bucket and no per-call opt-in.
+`snapshot.save` answers the snapshot (a `Data<snapshot>`); keeping it is the developer's own step. `snapshot.resume`
+puts it back and goes on from where it was saved. Both verbs live in `PLang/app/module/snapshot/`.
 
-Implementers in v1: `app.@this`, `app.callstack.@this`, `app.callstack.call.@this`, `app.variable.@this`, `app.error.@this`, `app.error.trail.@this`, `app.module.code.@this`, `app.statics.@this`, `app.module.builder.@this`, `app.tester.@this`.
+## Who takes part: `ISnapshot`
 
-## The container — `Snapshot.@this`
+A part is a class that implements `ISnapshot` (`PLang/app/snapshot/ISnapshot.cs`), with two members:
 
-`PLang/app/snapshot/this.cs` is the typed read/write surface. It's a tree of named sections; each section is itself a `@this` so a subsystem with nested `ISnapshotted` properties can give each child its own subtree without leaking storage to the children.
+- `Store(snapshot, context)` writes the part's own state into the node at its place;
+- `Start(snapshot, context)` comes back from what that node holds.
 
-```csharp
-public sealed class @this
-{
-    @this Section(string name);             // get-or-create a subsection
-    bool   HasSection(string name);
-    IReadOnlyCollection<string> SectionNames;
-    void   Write<T>(string key, T value);
-    T?     Read<T>(string key);
-    bool   Has(string key);
-}
-```
+Both answer Data: a part that can't store or start answers why, never a throw. Both default to doing nothing, so a part
+that only holds parts (the actors, an actor, a context) writes nothing of its own.
 
-A subsystem captures into the subtree it was given:
+The parts today: the app (what it keeps), Code (`module/code/this.Snapshot.cs`: the DLLs a run took in, the providers
+registered in-process, each kind's default), the actors, each actor, each actor's context, a context's variables
+(`type/item/variable/list/this.Snapshot.cs`) and its calls (`call/list/this.Snapshot.cs`).
 
-```csharp
-public partial class @this : ISnapshotted   // app.variable.@this
-{
-    public void Capture(Snapshot.@this s)
-    {
-        foreach (var v in _variables.Values)
-            s.Write($"var:{v.Name}", v.Value);
-    }
-}
-```
+A class that doesn't implement it is rebuilt from the app's own files instead: modules, goals, channels, the cache, the
+filesystem.
 
-And on Restore reads from the same subtree:
+## The walk
 
-```csharp
-public static void Restore(Snapshot.@this s, actor.context.@this ctx)
-{
-    foreach (var key in s.Keys.Where(k => k.StartsWith("var:")))
-        ctx.App.Variables.Set(key.Substring(4), s.Read<object>(key));
-}
-```
+`app.Snapshot(context)` walks the live app from `app` (`snapshot/this.Store.cs`). A part's parts are its public members
+whose declared type is an `ISnapshot`, depth first, in declaration order; no other member is read. Each part is stored
+at the node of its member path from the app (`actor.list.User.Context.Variable`), never under a name it picks. A node
+that holds nothing is left out.
 
-Each subsystem owns the wire shape of its own subtree. Callers never inspect the entries.
+Starting walks the stored tree the same way: each live part at a stored place starts from its node, in the order it was
+stored (Code before the actors). A live part with no node held nothing when it was saved, and stays as it is.
 
-## The orchestrator — `app.@this.Snapshot()` / `app.@this.Restore()`
+**Each part is walked in its own context.** A part's answer carries a context, and the walk goes on into its parts in
+that answer's context. A part answers in the context it was handed; an actor's context answers in itself. So a context's
+variables and calls are stored and started in their own actor's context, both ways.
 
-`PLang/app/this.Snapshot.cs` is App's partial. It walks the type-implementing-`ISnapshotted` properties on App, calls `Capture` on each into a named subsection, and returns the full tree. Restore is the inverse: it walks `SectionNames` on the captured tree and dispatches each name to the right subsystem's `Restore`. **Section presence is the gate** — if a section isn't in the snapshot, the corresponding subsystem stays at its build-time default. This is what lets `ErrorCallback`'s narrow wire (CallStack + Variables only) round-trip cleanly: missing sections are simply absent.
+A save from inside a task is refused (`SnapshotInTask`): a task's context is no member of anything the walk reaches.
 
-## Referent integrity
+## Coming back as the right actor: the `In` door
 
-Restore is **strict**. No silent fallback. Every name resolution that fails surfaces a typed error before the run can continue:
+Every Data a restore puts into live memory answers as the actor whose memory it goes into, never as whoever read the
+snapshot's text. A part takes stored Data only through the snapshot's door, `snapshot.In(context)` (and `In(key,
+context)`): each entry cloned, so the run never shares a value with the snapshot, and born again in the part's context.
+What is still unread (a value through text) opens in that context too. `snapshot.Read<T>(key, context)` takes a list
+entry the same way; a row that doesn't read is the answer, its own error whole.
 
-- Goal stub doesn't resolve in the live app.goals registry → hard error.
-- Captured goal hash differs from the live goal's hash → `CallbackGoalHashMismatch`.
-- Source file backing a captured goal is missing → hard error.
+A clone never copies a context. Lists, dicts and snapshots clone by their elements, each Data through `Data.Clone`
+(which keeps its context); live or shared values (a frame, the stack, an error, an actor, a goal, a step, a channel, a
+store, the app) are themselves when cloned.
 
-The discipline is "names not refs": entries store goal/action/identity *names*, not CLR object references. On Restore the live App resolves names against its current registry. If the live App has drifted from the capture point (renamed goal, altered hash, deleted source) the restore fails loudly rather than running against half-resolved state.
+## The call stack
 
-## Per-subsystem subtrees (v1)
+A context's calls (`context.call`) are stored as they live: `root`, each frame with the frames it called under it in
+`children`, and `current`, the id of the frame the run is in. A frame writes:
 
-Each `*.Snapshot.cs` partial in `PLang/app/` owns one subsystem's subtree. Quick reference:
+- `id`, and `type`, its kind as its plang type (`call`, `binding`, `isolated`);
+- where it stands: `goal` (`address` and `hash`), `step` (its index) and `action` (`index`, `module`, `name`);
+- its own variables, as a node of their own, so they come back through `In`;
+- the names it was born with (`arguments`), its `errors`, `handled`, the `event` running in it, its `tags` and what it
+  keeps.
 
-| Subsystem | File | Subtree contents |
-|---|---|---|
-| App | `app/this.Snapshot.cs` | dispatch root — walks ISnapshotted properties |
-| CallStack | `app/callstack/this.Snapshot.cs` | per-frame entries (each frame's Capture writes goal/step/action triple + Variables snapshot) |
-| Call | `app/callstack/call/this.Snapshot.cs` | one frame: position triple + Errors slice + frame-local Variables |
-| Variables | `app/variables/this.Snapshot.cs` | name → value, plus `Variables.SnapshotAt` for time-travel reads at a captured point |
-| Errors | `app/errors/this.Snapshot.cs` | current error + Errors.Trail subtree |
-| Errors.Trail | `app/errors/trail/this.Snapshot.cs` | append-only error history |
-| Code | `app/modules/code/this.Snapshot.cs` | named code registrations (by name + type assembly-qualified) |
-| Statics | `app/statics/this.Snapshot.cs` | per-goal static bag |
-| Builder | `app/modules/builder/this.Snapshot.cs` | build-time provenance (hashes, source map) |
-| Tester | `app/tester/this.Snapshot.cs` | test-runner mode bag |
+A collection is written only when it holds something.
 
-`Variables.SnapshotAt` deserves a callout: it's a *time-travel* read, not a separate subsystem. Given a captured `Variables` subtree it answers "what was variable %x% at this point in the run?" — used by `ErrorCallback` to reconstruct local variables visible at error issue time.
+Starting a stored frame has two halves:
 
-## What's NOT in the snapshot
+1. The async half, `call.Find`: each entry taken in through `In` and opened once, its goal found by its address through
+   `app.goal` (it may load) and checked against the stored hash, and the setting it is born with (the stack's, as it is
+   now). Each is narrowed into the read copy; the stored text is never touched.
+2. Its kind's own `Create`: `call`, `binding` and `isolated` each implement `ICreate` of themselves, and the stored
+   type dispatches to it. There's no switch on the kind. A frame comes back under the stack's current frame, entering as
+   a push enters.
 
-- **Channels** — reconstructed at App build. Wire surface is per-process.
-- **Modules / action registry** — reconstructed at App build. Code identity, not run state.
-- **Goals** — reconstructed by re-loading source. Goal identity is the source file + hash, captured by name in CallStack.
-- **Cache** — intentionally not restored; cache hits across a callback boundary would silently mask drift.
-- **FileSystem handle** — sandbox is per-App-instance; the path roots are reconstructed at build.
+A goal that isn't there is the goal list's own answer. A goal whose hash changed is `CallbackGoalHashMismatch` (409).
+A step or action index out of range is `CallbackGoalNotFound`, and a live action that isn't the stored one is
+`CallbackActionMismatch`. A frame missing what it needs is `CallbackFrameIncomplete`. A goal with no address can't be
+stored (`GoalHasNoAddress`), and a save while a task runs is refused (`SnapshotWhileTaskRuns`).
 
-If a subsystem needs to round-trip across a callback, it implements `ISnapshotted`. The mechanism is uniform; there is no escape hatch.
+## Resume
 
-## Wire shape choices
+`resume %snapshot%` is a call. The restored tree goes under the resume action's frame, the way a goal call's goal goes
+under its caller. The run goes on from the frame it stopped in, outward, each frame running what is left of it (the
+stopped action again, the rest of its step, the rest of each goal), up to the resume action's frame, where it stops. The
+resuming goal then goes on once, after the resume. The resume's answer is the restored run's.
 
-- `ErrorCallback` writes the full `Snapshot.@this` but **only the CallStack and Variables sections** today. Other sections are present in-process and dropped at the wire boundary. Adding a section to the wire shape means extending `ErrorCallback.Serialize` and `Deserialize` symmetrically — `app.Restore` already gates on section presence, so missing sections stay missing on the receiving side.
-- `AskCallback` does not write a `Snapshot.@this`. Its wire is `{ ActorName, Position, Variables }` — slim by design. The resumed run boots a fresh App and only the developer-named state crosses the suspend.
+A run saved by `save snapshot` stopped inside that action, so a resumed run goes on from the save itself: `save` answers
+again (a snapshot of the resumed run), then the steps after it run.
 
-The choice between full-snapshot and slim-shape is a per-callback design call, not a framework decision. A new callback type that needs (say) five surviving variables should not write the whole snapshot just to carry them.
+A value that isn't a snapshot is answered: the typed ask's own reason when it gave one (a dict: "a snapshot is made from
+a snapshot or its text"), else `NoSnapshot` (400), naming the step that reads one.
+
+## What isn't stored
+
+- **The app's mode** (test, build, run): it's how the app was started, the host's choice, not the program's state. A
+  restore leaves the app as it was started.
+- **A one-time grant** ("y"): consent nobody gave in the run that would use it. A resumed run asks again.
+- **A sensitive value**: a variable holding one is left out, and a resumed run that needs it asks again. A `[Sensitive]`
+  member inside a value is not yet masked by the snapshot's write (a pinned red test,
+  `ASensitiveMember_IsNotInTheSnapshotsText`).
+- **A binding's held call** (`_for`): it is read only while that call binds its parameters, before anything runs under
+  the binding.
+- **What the app rebuilds from its files**: modules, goals, channels, the cache, types.
+- **A frame's history**: its diffs and timing (a resumed frame runs from now).
+- **A restored error's run**: an error comes back with its key, message, status and causes. It holds no run, so it has
+  no callback (`NoCallback`).
+
+## In a file
+
+In text a snapshot is its own typed form (`snapshot/this.Wire.cs`): its entries, each the Data it is with its type. A
+file whose format is text keeps it as that, so `save %snapshot% to file 'run.txt'` writes it, and `read file 'run.txt',
+write to %snapshot% as snapshot` reads it back exactly through the snapshot's own reader. The read must say `as
+snapshot`: a step that doesn't gets text.
+
+A `.json` file holds a value's content in JSON, with no types, by that format's nature. A snapshot read back from one is
+plain dicts and can't resume. A file whose extension has no format (`.snapshot`) takes plain bytes, so a snapshot is
+refused there.
+
+## Templates
+
+A template comes back only from bytes the gate trusts (`type/item/source.cs:76–81`), by whose bytes they are: the
+build's own `.pr` (every variable its row lists), a file or url the program read (the program's own variables), anything
+else none. Raw text and the store are trusted for none, so a template restored from them reads as written.
+
+Today a template inside a container comes back literal by every road, a file included: the bytes' origin is lost below
+the snapshot's reader (`type/this.cs:469,475`, `type/item/wire/this.cs:49`, `type/item/serializer/json.cs:103,197`).
+That gap is in the backlog.
+
+## Open
+
+- What a snapshot's text looks like to a reader: open (Ingi's question).
+- Resuming a loop mid-items, and any action that holds a running call (a tool call, an event handler): open (question
+  3). Today a resume under one runs that action again from its start.
+- Which saves are refused because they can't come back exactly: open (question 4).
+- The resume verb's name, and going on after the save instead of from it: open (question 5).
 
 ## See also
 
-- `Documentation/v0.2/callbacks.md` — the two ICallback impls that ride on this machinery.
-- `PLang/app/snapshot/{ISnapshotted,this}.cs` — the classifier and the container.
-- `PLang/app/this.Snapshot.cs` — App-level orchestrator.
-- `PLang/app/variables/this.SnapshotAt.cs` — time-travel reads.
-- `PLang/app/callstack/RestoredFrame.cs` — the position surrogate (not a Call.@this).
+- `PLang/app/snapshot/` — the snapshot, its walk (`this.Store.cs`), its text (`this.Wire.cs`), resume (`this.Resume.cs`).
+- `PLang/app/call/this.Snapshot.cs`, `call/list/this.Snapshot.cs` — a frame and the stack.
+- `PLang/app/module/snapshot/` — `save` and `resume`.
+- `Documentation/v0.2/callbacks.md` — callbacks (later).
