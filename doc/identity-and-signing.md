@@ -11,7 +11,7 @@ An identity is a name and an Ed25519 key pair. The first time a goal asks for on
 - write out 'has identity: %me.name%'
 ```
 
-printed `has identity: default` in an app that had none. `test/module/identity/autocreate` passes. Identities live in the app's `.data/` folder, which other actors are refused (see [files and permissions](files-and-permissions.md)).
+printed `has identity: default` in an app that had none. `test/module/identity/autocreate` passes. After that run, `.data/` held two SQLite files: `.data/data.sqlite`, new since the identity was made, and `.data/setting/data.sqlite`, the settings store. Which of them holds the identity was not checked. The whole `.data/` folder is refused to other actors (see [files and permissions](files-and-permissions.md)).
 
 ## Signing
 
@@ -48,7 +48,7 @@ export: ExportWaitsForCriticalActions
 
 A step `export identity 'alice', write to %exported%, on error write out …` printed that error key and went on. The refusal is by design: a private key leaves the app only through a critical action that asks more than a yes, and until those exist no key is handed out and nothing is asked (`os/system/modules/identity/export.description.md`).
 
-This refusal covers the `export` action. It does not mean the key is unreadable: the file `.data/data.sqlite` was `rw-r--r--` and holds the app's data. Whether the private key is plain in it was not checked.
+This refusal covers the `export` action. It does not mean the key is unreadable: the files in `.data/` were `rw-r--r--`. Whether the private key is plain in one of them was not checked.
 
 ## Tests
 

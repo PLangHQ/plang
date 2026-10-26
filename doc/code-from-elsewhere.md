@@ -11,7 +11,7 @@ The permission question ([files and permissions](files-and-permissions.md)) guar
 
 The design doc states it: "running an app means trusting its code; the prompts protect the user from what the User actor would do unasked, not from the app itself" (`Documentation/v0.2/filesystem-permission.md`). This was read, not run.
 
-Before you run an app you did not write, read its `.goal` files. They are plain text. Do not run its `.pr` files without the `.goal` beside them: a `.pr` is what the builder wrote, and it is not meant to be read by hand.
+Before you run an app you did not write, read its `.goal` files. Look for the things these pages describe: a path that starts with `//` (outside the folder), a step that calls an address or asks a model (it sends data out), a step that exports an identity, a step that writes a key variable with `write out`, and a goal called as another actor. This list is what the runs here touched, not a complete list of what a goal can do. They are plain text. Do not run its `.pr` files without the `.goal` beside them: a `.pr` is what the builder wrote, and it is not meant to be read by hand.
 
 ## A sub app
 

@@ -198,3 +198,14 @@ Scratch apps `tr1`–`tr4` built with the key from stdin. Local loggers on 127.0
 | 148 | code-from-elsewhere | a sub app writes no shared object | `Documentation/v0.2/apps.md`; guard `SharedEntryWritesTests` not run | unverified |
 | 149 | what-plang-does-not-guarantee | the platform of all runs is Linux | the machine | pass |
 | 150 | what-plang-does-not-guarantee | revoking an `a` grant from a goal | not run | unverified |
+
+## Cold reader, run 3 (a fresh agent given only doc/, the trust pages)
+
+Six questions answered from the pages and three checks run (1 build): a read outside the folder with nobody to answer (`PermissionDenied` after the question), a read inside `.data/` (`PermissionDenied`, no question), `identity.export` (`ExportWaitsForCriticalActions`). All matched the pages. The agent never read a key.
+
+| # | Page | Claim | Check | Result |
+|---|---|---|---|---|
+| 151 | files-and-permissions | outside read with no answer, `.data` read, `identity.export` as in rows 120, 124, 126, 145 | agent's three checks | pass |
+| 152 | first-goal | a build prints only the lines listed | the agent saw `{"action":"file.read","key":"PermissionDenied",…}` at build time | **fail** (page now describes the diagnostic lines; cause untraced) |
+| 153 | identity-and-signing | the page said identities live in `.data/data.sqlite` | the agent noted the keys page says `.data/setting/data.sqlite`; two files exist and which holds the identity was not checked | **fail** (page now says so) |
+| 154 | code-from-elsewhere | what a reviewer should look for | the agent found no list | page now has a list of what these runs touched; the list is not complete |
