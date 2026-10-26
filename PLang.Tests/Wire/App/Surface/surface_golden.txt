@@ -3510,8 +3510,6 @@ type app.module.llm.decider.setting
 
 type app.module.llm.setting
 
-type app.module.llm.type.tool.call
-
 type app.module.math.setting
 
 type app.module.math.setting.equal
@@ -3881,6 +3879,8 @@ type time
   .hour : number
 
 type timing
+
+type tool.call
 
 type type
 
