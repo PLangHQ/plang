@@ -380,11 +380,13 @@ public sealed partial class @this
     /// <summary>Whether the .pr this goal was read from is as it was then.</summary>
     internal Task<bool> IsFresh(actor.context.@this context) => Stamp.IsFresh(context);
 
-    /// <summary>A goal starts through the goal type's events, then its own.</summary>
+    /// <summary>A goal starts through the goal type's events, then its own. A goal of plang's own (<see cref="IsSystem"/>)
+    /// is none of the app's goals, so it starts through its own events alone: "each goal" never hears it, a binding on
+    /// it by name does.</summary>
     protected internal override global::app.type.item.@this? Level(int depth, actor.context.@this context) => depth switch
     {
-        0 => context.App.goal.type,
-        1 => this,
+        0 => IsSystem ? this : context.App.goal.type,
+        1 when !IsSystem => this,
         _ => null,
     };
 

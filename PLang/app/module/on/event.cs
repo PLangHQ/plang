@@ -71,13 +71,8 @@ public partial class OnEvent : IContext
         // name that is none of the choice's) is the answer, and nothing is held for it
         // held by the actor that binds, never on the item: it fires in this app alone and goes with it
         var hold = Context.Actor!.on;
-        // a program bound on each goal hears its app's own goals, never plang's system goals — one of those is bound
-        // by naming it; the goal type's events fire for goals alone
-        var filter = ReferenceEquals(item, Context.App.type.list[typeof(global::app.goal.@this)])
-            ? (fired, _) => !((global::app.goal.@this)fired).IsSystem
-            : global::app.@event.binding.@this.Always;
         return data.@this<global::app.@event.binding.@this>.From(await When.Use(when => Scope.Use(scope => Action.Use(call =>
             Task.FromResult<data.@this>(Context.Ok<global::app.@event.binding.@this>(hold.Bind(item, named.Name, when.Value,
-                (side, actor) => new global::app.@event.binding.action.@this(side, hold[item][named.Name]!, call, actor, scope.Value, filter))))))));
+                (side, actor) => new global::app.@event.binding.action.@this(side, hold[item][named.Name]!, call, actor, scope.Value))))))));
     }
 }
