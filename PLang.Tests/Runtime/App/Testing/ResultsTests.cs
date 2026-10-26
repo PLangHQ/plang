@@ -91,7 +91,7 @@ public class ResultsTests
     {
         var test = NewTest("D");
         test.Begin();
-        await Task.Delay(10); // ensure measurable duration
+        await Task.Delay(50); // past a tick of the coarsest clock (Windows' is ~15.6 ms)
         test.Complete(global::app.test.Status.Pass);
 
         await Assert.That(test.Status).IsEqualTo(global::app.test.Status.Pass);

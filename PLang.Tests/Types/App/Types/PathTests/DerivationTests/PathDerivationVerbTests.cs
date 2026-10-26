@@ -49,8 +49,8 @@ public class PathDerivationVerbTests
         var root = sep.ToString();
         var p = pathApp.actor.list.User.Context.File(root);
         var parent = p.Parent;
-        // Root returns itself — no further parent, never throws.
-        await Assert.That(parent.Absolute).IsEqualTo(root);
+        // Root returns itself — no further parent, never throws (on Windows the root is its drive's)
+        await Assert.That(parent.Absolute).IsEqualTo(p.Absolute);
     }
 
     [Test] public async Task WithName_ReplacesFileNameAndKeepsDirectory()

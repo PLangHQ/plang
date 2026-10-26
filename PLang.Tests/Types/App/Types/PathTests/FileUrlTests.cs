@@ -20,7 +20,7 @@ public class FileUrlTests : System.IAsyncDisposable
         var p = global::app.type.item.path.@this.Resolve("file:///var/plang-elsewhere/x.txt", _app.actor.list.User.Context);
 
         await Assert.That(p).IsTypeOf<global::app.type.item.path.file.@this>();
-        await Assert.That(p.Absolute).IsEqualTo("/var/plang-elsewhere/x.txt");
+        await Assert.That(p.Absolute).IsEqualTo(System.IO.Path.GetFullPath("/var/plang-elsewhere/x.txt"));
         await Assert.That(p.Raw).IsEqualTo("//var/plang-elsewhere/x.txt");
     }
 
@@ -29,7 +29,7 @@ public class FileUrlTests : System.IAsyncDisposable
     {
         var p = global::app.type.item.path.@this.Resolve("file://" + _root + "/data/a.txt", _app.actor.list.User.Context);
 
-        await Assert.That(p.Absolute).IsEqualTo(_root + "/data/a.txt");
+        await Assert.That(p.Absolute).IsEqualTo(System.IO.Path.GetFullPath(_root + "/data/a.txt"));
         await Assert.That(p.Raw).IsEqualTo("/data/a.txt");
     }
 
@@ -38,6 +38,6 @@ public class FileUrlTests : System.IAsyncDisposable
     {
         var p = global::app.type.item.path.@this.Resolve("/data/a.txt", _app.actor.list.User.Context);
 
-        await Assert.That(p.Absolute).IsEqualTo(_root + "/data/a.txt");
+        await Assert.That(p.Absolute).IsEqualTo(System.IO.Path.GetFullPath(_root + "/data/a.txt"));
     }
 }

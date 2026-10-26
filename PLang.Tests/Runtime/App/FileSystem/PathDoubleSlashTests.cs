@@ -9,7 +9,8 @@ namespace PLang.Tests.App.FileSystem;
 /// the v1 file IO wrap (PLangFile.ValidatePath × N).
 public class PathDoubleSlashTests
 {
-    [Test] public async Task DoubleSlash_PathResolve_Absolute_IsPreserved()
+    // "//" is the OS-rooted form on Unix only (a network path on Windows)
+    [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows)] public async Task DoubleSlash_PathResolve_Absolute_IsPreserved()
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-pds-" + System.Guid.NewGuid().ToString("N")[..8]);
@@ -19,7 +20,8 @@ public class PathDoubleSlashTests
         await Assert.That(path.Absolute).IsEqualTo("//tmp/plang-ds-test.txt");
     }
 
-    [Test] public async Task DoubleSlash_FsFile_WriteThenRead_RoundTrips()
+    // "//" is the OS-rooted form on Unix only (a network path on Windows)
+    [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows)] public async Task DoubleSlash_FsFile_WriteThenRead_RoundTrips()
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-pds-" + System.Guid.NewGuid().ToString("N")[..8]);

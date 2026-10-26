@@ -6,7 +6,8 @@ namespace PLang.Tests.App.FileSystem;
 
 public class DoubleSlashIoTest
 {
-    [Test] public async Task DotnetIo_DoubleSlash_WritesToRealOsPath()
+    // "//" is the OS-rooted form on Unix only (a network path on Windows)
+    [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows)] public async Task DotnetIo_DoubleSlash_WritesToRealOsPath()
     {
         var realPath = "/tmp/plang-dotnet-test-" + System.Guid.NewGuid().ToString("N")[..8] + ".txt";
         var doubleSlash = "/" + realPath; // gives "//tmp/..."

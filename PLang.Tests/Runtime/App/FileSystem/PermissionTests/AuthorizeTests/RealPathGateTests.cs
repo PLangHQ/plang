@@ -111,7 +111,9 @@ public class RealPathGateTests : System.IAsyncDisposable
 
         counting.Links = 0;
         await (await file.Authorize(global::app.type.item.permission.Verb.read, ctx)).IsSuccess();
-        var parts = file.Absolute.Split(System.IO.Path.DirectorySeparatorChar, System.StringSplitOptions.RemoveEmptyEntries).Length;
+        // one link read per part below the OS's root (a drive, on Windows, has none)
+        var parts = file.Absolute[System.IO.Path.GetPathRoot(file.Absolute)!.Length..]
+            .Split(System.IO.Path.DirectorySeparatorChar, System.StringSplitOptions.RemoveEmptyEntries).Length;
         await Assert.That(counting.Links).IsEqualTo(parts);
     }
 

@@ -162,7 +162,6 @@ public class SubAppStoresShapesProbeTests : System.IAsyncDisposable
     [Arguments("data")]
     [Arguments(".data.bak")]
     [Arguments(".dat")]
-    [Arguments(".data ")]
     public async Task C_ALookalikeBesideTheStores_IsTaken_AndItsStoresAreItsOwn_AndItReachesNothingOfTheMakers(string name)
     {
         var (sub, refused) = Birth(M(name));
@@ -171,6 +170,16 @@ public class SubAppStoresShapesProbeTests : System.IAsyncDisposable
         await Assert.That(sub.filesystem.store.IsUnder(app.filesystem.store).Value).IsFalse();
         await AssertNoReachIntoTheMakersStores(sub);
     }
+
+    // ".data " (a trailing space) is a lookalike where a name keeps its space; Windows drops it, so there it IS the
+    // stores' folder and is refused
+    [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows)]
+    public Task C_ATrailingSpaceLookalike_IsTaken()
+        => C_ALookalikeBesideTheStores_IsTaken_AndItsStoresAreItsOwn_AndItReachesNothingOfTheMakers(".data ");
+
+    [Test, RunOn(TUnit.Core.Enums.OS.Windows)]
+    public async Task C_ATrailingSpaceLookalike_OnWindows_IsTheStores_AndRefused()
+        => await Assert.That(Birth(M(".data ")).refused).IsNotNull();
 
     // ── d) the stores reached through `..` ─────────────────────────────────────
 
