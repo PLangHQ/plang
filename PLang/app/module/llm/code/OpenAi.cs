@@ -68,7 +68,9 @@ public sealed class OpenAi : ILlm
         // --- Validate ---
         // Message is there: the [IsNotNull] guard refused it before the run if a variable it holds held nothing. An empty
         // list is a ValidationError. The .NET edge: the message list lowers ITSELF to the API's CLR shape.
-        var rawMessages = (await action.Message.Value()).Clr<List<LlmMessage>>();
+        var listed = await action.Messages(context);
+        if (!listed.Success) return listed;
+        var rawMessages = (await listed.Value())?.Clr<List<LlmMessage>>();
         if (rawMessages is not { Count: > 0 })
             return context.Error(new ActionError("Messages list is empty or null", "ValidationError", 400));
 
