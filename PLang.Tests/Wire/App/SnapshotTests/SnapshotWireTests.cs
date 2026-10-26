@@ -129,6 +129,42 @@ public class SnapshotWireTests
         await Assert.That((await context.Variable.Get("s0")).IsInitialized).IsFalse();
     }
 
+    // KNOWN RED until stage 7 replaces call.Placed: a step's Index is goal-wide (a body's steps are numbered on from
+    // the step that holds them), but the restore places a frame at goal.Step[index], the list position, and the rest of
+    // a goal runs from the list position Index + 1. So in a goal whose earlier step has a body, a resume goes on at the
+    // wrong step.
+    [Test]
+    public async Task AResume_AfterAStepWithABody_GoesOnAtTheStepItStoppedIn()
+    {
+        var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-body-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        var goal = new Goal(app.type.list) { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", context) };
+        await SetStep(context, goal, 0, "s0", "zero");
+        // index 1 holds a body: its one step is index 2, numbered on, as the build numbers it
+        var holder = await SetStep(context, goal, 1, "s1", "one");
+        var body = new Step(app.type.list) { Goal = goal, Index = 2, Text = "set %s2% = two" };
+        body.Code.Add((await context.Action("variable.set(Name=%s2%, Value=\"two\")")).In(body));
+        holder.Code[0].Child.Add(body);
+        // index 3 sits at position 2 in the goal's own list, index 4 at position 3
+        var third = await SetStep(context, goal, 3, "s3", "three");
+        await SetStep(context, goal, 4, "s4", "four");
+        app.goal.list.Add(goal);
+
+        string json;
+        await using (var call = context.call.Push(third.Code[0], await context.call.Setting(), context.Variable))
+        {
+            json = await app.Snapshot(context).Saved().Text(context);
+            await call.DisposeAsync();
+        }
+
+        var result = await (await context.Snapshot(json)).Resume(context);
+
+        await result.IsSuccess();
+        await Assert.That(await context.Variable.GetValue("s3")).IsEqualTo("three");
+        await Assert.That(await context.Variable.GetValue("s4")).IsEqualTo("four");
+    }
+
     [Test]
     public async Task SerializedString_ConvertsToSnapshotViaTypeSystem_AndResumesToSuccess()
     {
