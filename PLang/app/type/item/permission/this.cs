@@ -92,9 +92,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         && PathMatches(request.Path)
         && request.Verbs.IsSubsetOf(Verbs);
 
+    // An exact grant compares as the path does (path.Holds' one rule: case aside where the OS's disk is), so it is never
+    // stricter than the containment the gate asks.
     private bool PathMatches(string requestPath) => Match switch
     {
-        Match.exact => string.Equals(Path, requestPath, StringComparison.Ordinal),
+        Match.exact => string.Equals(Path, requestPath, global::app.type.item.path.@this.RootComparison),
         Match.glob  => GlobMatches(Path, requestPath),
         _ => false,
     };
@@ -104,11 +106,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// paths (<c>/apps/*/file.txt</c>) and URLs (<c>https://api.example.com/*</c>)
     /// — the FileSystemGlobbing matcher chokes on the <c>://</c> in URLs, so the
     /// pattern is compiled to a regex instead. <c>*</c> matches within a single
-    /// segment (no <c>/</c>); <c>**</c> matches across segments; <c>?</c> is a
-    /// single non-slash char.
+    /// segment; <c>**</c> matches across segments; <c>?</c> is a single character of a segment. A segment ends at
+    /// each of the OS's separators (<c>/</c> on Linux; <c>\</c> and <c>/</c> on Windows).
     /// </summary>
     private static bool GlobMatches(string pattern, string candidate)
     {
+        // one character of a segment: anything but the OS's separators
+        var inAPart = "[^" + Regex.Escape(global::app.Utils.PathHelper.DirectorySeparatorChar.ToString())
+            + Regex.Escape(global::app.Utils.PathHelper.AltDirectorySeparatorChar.ToString()) + "]";
         var rx = new System.Text.StringBuilder("^");
         for (int i = 0; i < pattern.Length; i++)
         {
@@ -122,12 +127,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                 }
                 else
                 {
-                    rx.Append("[^/]*");
+                    rx.Append(inAPart).Append('*');
                 }
             }
             else if (c == '?')
             {
-                rx.Append("[^/]");
+                rx.Append(inAPart);
             }
             else
             {
