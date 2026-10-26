@@ -33,6 +33,29 @@ public class SnapshotThroughTextTests
     }
 
     [Test]
+    public async Task AConversationMidToolCall_KeepsTheCallItAnswers_ThroughText()
+    {
+        // a tool's answer names the call it answers; without it the provider can't send the conversation on
+        var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
+        var context = src.actor.list.User.Context;
+        var answer = new global::app.data.@this("answer", "the weather is fine", context: context);
+        answer.Properties["Messages"] = new List<LlmMessage>
+        {
+            new() { Role = "user", Content = "what's the weather?" },
+            new() { Role = "tool", Content = "sunny", ToolCallId = "call_42" },
+        };
+        await context.Variable.Set("answer", answer);
+        var text = await src.Snapshot(context).Saved().Text(context);
+
+        var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
+        var into = dst.actor.list.User.Context;
+        await dst.Restore(await into.Snapshot(text), into);
+
+        var history = (await (await into.Variable.Get("answer")).Properties.Value("Messages") as global::app.type.item.@this)?.Clr<List<LlmMessage>>();
+        await Assert.That(history!.Single(message => message.Role == "tool").ToolCallId).IsEqualTo("call_42");
+    }
+
+    [Test]
     public async Task AOneTimeGrant_IsNeverInTheSnapshotsText()
     {
         // a "y" grant read back from a file would be consent nobody gave in the run that uses it — a resumed run asks again

@@ -31,13 +31,13 @@ public class LlmTypeTests
     [Test]
     public async Task LlmMessage_ToolCallsInternalOnly_NotExposedToBuilder()
     {
-        // ToolCalls and ToolCallId should NOT have [Store] or [LlmBuilder] attributes
+        // ToolCalls and ToolCallId are the provider's, during tool conversations: never set by the builder ([LlmBuilder]).
+        // ToolCallId is stored, so a conversation saved mid-tool-call keeps the call a tool's answer names.
         var toolCallIdProp = typeof(LlmMessage).GetProperty(nameof(LlmMessage.ToolCallId))!;
         var toolCallsProp = typeof(LlmMessage).GetProperty(nameof(LlmMessage.ToolCalls))!;
 
-        await Assert.That(toolCallIdProp.GetCustomAttribute<StoreAttribute>()).IsNull();
+        await Assert.That(toolCallIdProp.GetCustomAttribute<StoreAttribute>()).IsNotNull();
         await Assert.That(toolCallIdProp.GetCustomAttribute<LlmBuilderAttribute>()).IsNull();
-        await Assert.That(toolCallsProp.GetCustomAttribute<StoreAttribute>()).IsNull();
         await Assert.That(toolCallsProp.GetCustomAttribute<LlmBuilderAttribute>()).IsNull();
 
         // Role, Text, Images SHOULD have them

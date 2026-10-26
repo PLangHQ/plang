@@ -22,7 +22,8 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
 
     // --- Tool conversation fields (internal, not exposed to builder) ---
 
-    /// <summary>For role=tool: which call this responds to.</summary>
+    /// <summary>For role=tool: which call this responds to. Stored, so a conversation saved mid-tool-call keeps it.</summary>
+    [Store]
     public string? ToolCallId { get; set; }
 
     /// <summary>For role=assistant: tools the LLM wants to call.</summary>
