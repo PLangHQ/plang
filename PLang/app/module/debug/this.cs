@@ -150,7 +150,38 @@ public sealed class @this
             hold.Bind(actions, "start", When.after, (item, _, context) => After((global::app.goal.step.action.@this)item, context),
                 global::app.@event.binding.Scope.actor, (item, context) => item is global::app.goal.step.action.@this && Debugged(context));
         }
+
+        // A goal named by its address may be one of plang's own, which starts through its own events alone, as its
+        // steps and actions do: it is looked up now and bound there, by name. (A goal is read when it is first called.)
+        if (setting.Address is { } address && await (await _context.App.goal.list.Find(address)).Value() is { } named)
+            Bind(named, hold, step, setting.Level.Value == global::app.module.debug.Level.Action);
         return null;
+    }
+
+    // Debug's bindings on one goal itself, its steps and (at the action level) their actions, as on their types.
+    private void Bind(global::app.goal.@this goal, global::app.@event.on.list.@this hold, int? index, bool actions)
+    {
+        var scope = global::app.@event.binding.Scope.actor;
+        hold.Bind(goal, "start", When.before, (item, _, context) => Attach((global::app.goal.@this)item, context, index), scope);
+        hold.Bind(goal, "start", When.after, (item, _, context) => After((global::app.goal.@this)item, context), scope,
+            (_, context) => Debugged(context));
+        foreach (var each in goal.Step.Items())
+        {
+            if (index != null)
+                hold.Bind(each, "start", When.before, (item, _, context) => Attach((global::app.goal.step.@this)item, context, index.Value), scope);
+            hold.Bind(each, "start", When.before, (item, _, context) => Before((global::app.goal.step.@this)item, context), scope,
+                (_, context) => Debugged(context));
+            hold.Bind(each, "start", When.after, (item, _, context) => After((global::app.goal.step.@this)item, context), scope,
+                (_, context) => Debugged(context));
+            if (!actions) continue;
+            foreach (var action in each.Code.Items())
+            {
+                hold.Bind(action, "start", When.before, (item, _, context) => Before((global::app.goal.step.action.@this)item, context), scope,
+                    (_, context) => Debugged(context));
+                hold.Bind(action, "start", When.after, (item, _, context) => After((global::app.goal.step.action.@this)item, context), scope,
+                    (_, context) => Debugged(context));
+            }
+        }
     }
 
     // The frames debug attached at — a named goal's own (or its step named), and each goal one of them calls — held
@@ -181,7 +212,7 @@ public sealed class @this
 
     // Whether <paramref name="goal"/> is a goal the setting names.
     private async System.Threading.Tasks.ValueTask<bool> Watches(global::app.goal.@this? goal)
-        => (await Setting()).Matches(goal?.Name);
+        => (await Setting()).Matches(goal);
 
     /// <summary>A watched variable set: where it happened and the type it now holds. Answers a plain success — the watch
     /// never fails a program.</summary>
