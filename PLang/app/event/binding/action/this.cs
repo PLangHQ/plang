@@ -13,8 +13,9 @@ public sealed class @this : global::app.@event.binding.@this
     private readonly global::app.goal.step.action.@this _call;
 
     internal @this(global::app.@event.binding.list.@this side, global::app.@event.@this @event,
-        global::app.goal.step.action.@this call, global::app.actor.@this actor, global::app.@event.binding.Scope scope)
-        : base(side, actor, scope, Always)
+        global::app.goal.step.action.@this call, global::app.actor.@this actor, global::app.@event.binding.Scope scope,
+        System.Func<global::app.type.item.@this, global::app.actor.context.@this, bool> filter)
+        : base(side, actor, scope, filter)
     {
         _event = @event;
         _call = call;

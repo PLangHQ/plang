@@ -1,0 +1,13 @@
+/ A program's "before each goal" hears its app's own goals, never plang's system goals: reading %!goal% runs plang's
+/ /system/shortcut/goal.goal, and the call bound before each goal heard only the app's goal before it.
+Start
+- before each goal, call Log
+- call goal Mine
+- set %name% = %!goal.name%
+- assert %last% equals "Mine"
+
+Mine
+- set %x% = 1
+
+Log
+- set %last% = %!event!item.name%
