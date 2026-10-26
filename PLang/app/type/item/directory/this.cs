@@ -19,7 +19,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         = new[] { typeof(@this), typeof(global::app.type.item.path.@this) };
 
     /// <summary>The location facet.</summary>
-    [global::app.LlmBuilder, global::app.Out, global::app.Store]
+    [global::app.LlmBuilder, global::app.Out, global::app.Store, global::app.Snapshot]
     public global::app.type.item.path.@this Path { get; }
 
     private global::app.type.item.list.@this<global::app.type.item.path.@this>? _list;
@@ -37,6 +37,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         @this self => self,
         global::app.type.item.path.@this path => new @this(path, data.Context!.App.type.list[typeof(@this)]),
+        // what finds it, as a snapshot keeps it: unlisted again
+        global::app.type.item.dict.@this found when found.Get<global::app.type.item.text.@this>("path", data.Context) is { } at
+            => new @this(global::app.type.item.path.@this.Resolve(at.ToString(), data.Context), data.Context.App.type.list[typeof(@this)]),
         _ => null,
     };
 

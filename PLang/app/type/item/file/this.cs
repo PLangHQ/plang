@@ -23,12 +23,20 @@ public sealed class @this : global::app.type.item.content.@this, global::app.typ
     public @this(global::app.type.item.path.@this path, global::app.actor.context.@this context, global::app.type.item.template.kind.@this? template = null)
         : base(typeof(@this), path, context, template) { }
 
+    /// <summary>A file reference at <paramref name="path"/>, its type named among <paramref name="types"/> (a goal's .pr,
+    /// worked out where no asker is).</summary>
+    internal @this(global::app.type.item.path.@this path, global::app.type.list.@this types)
+        : base(typeof(@this), path, types, null) { }
+
     /// <summary>A file is made from its path, as <paramref name="type"/> says: the reference to what is there,
-    /// nothing read, born with the declaration's template. Anything else declines.</summary>
+    /// nothing read, born with the declaration's template; and from what finds it (<c>{path}</c>, as a snapshot keeps
+    /// it), unread again. Anything else declines.</summary>
     public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data) => raw switch
     {
         @this self => self,
         global::app.type.item.path.@this path => new @this(path, data.Context, (type ?? data.Type).Template),
+        global::app.type.item.dict.@this found when found.Get<global::app.type.item.text.@this>("path", data.Context) is { } at
+            => new @this(global::app.type.item.path.@this.Resolve(at.ToString(), data.Context), data.Context, (type ?? data.Type).Template),
         _ => null,
     };
 

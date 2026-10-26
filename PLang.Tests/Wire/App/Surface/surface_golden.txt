@@ -29,6 +29,9 @@ class app.OutAttribute : System.Attribute
 class app.SensitiveAttribute : System.Attribute
   ctor()
 
+class app.SnapshotAttribute : System.Attribute
+  ctor()
+
 class app.StoreAttribute : System.Attribute
   ctor()
 
@@ -958,7 +961,7 @@ class app.module.this : app.type.item.this, app.type.item.ICreate<app.module.thi
   Guide : app.type.item.file.this { get; } [LlmBuilder]
   Item[System.String] : app.goal.step.action.this { get; }
   Match(System.String key) : System.Threading.Tasks.ValueTask<app.module.this>
-  Name : System.String { get; } [Debug, LlmBuilder, Out]
+  Name : System.String { get; } [Debug, LlmBuilder, Out, Snapshot]
   Notes : app.type.item.file.this { get; } [LlmBuilder]
   Register(System.String module, System.String actionName, System.Type type) : System.Void
   Remove(app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this<app.type.item.bool.this>>
@@ -1379,8 +1382,9 @@ abstract class app.type.item.content.this : app.type.item.this [PlangType]
   Content(app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.binary.this>>
   ContentText() : System.String
   IsLoaded : System.Boolean { get; }
-  Path : app.type.item.path.this { get; } [LlmBuilder, Out, Store]
+  Path : app.type.item.path.this { get; } [LlmBuilder, Out, Snapshot, Store]
   ctor(System.Type clr, app.type.item.path.this path, app.actor.context.this context, app.type.item.template.kind.this template)
+  ctor(System.Type clr, app.type.item.path.this path, app.type.list.this types, app.type.item.template.kind.this template)
   override Cacheable : System.Boolean { get; }
   override Open(app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.error.this>
   override ToString() : System.String
@@ -1513,7 +1517,7 @@ class app.type.item.directory.this : app.type.item.this, app.type.item.ICreate<a
   Contains(System.String needle, app.actor.context.this context) : System.Threading.Tasks.Task<System.Boolean>
   List(app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.list.this<app.type.item.path.this>>>
   Listed : app.type.item.list.this<app.type.item.path.this> { get; }
-  Path : app.type.item.path.this { get; } [LlmBuilder, Out, Store]
+  Path : app.type.item.path.this { get; } [LlmBuilder, Out, Snapshot, Store]
   ctor(app.type.item.path.this path, app.type.this type)
   override AsBooleanAsync(app.actor.context.this context) : System.Threading.Tasks.Task<System.Boolean>
   override Contains(app.data.this needle) : System.Threading.Tasks.ValueTask<System.Boolean>

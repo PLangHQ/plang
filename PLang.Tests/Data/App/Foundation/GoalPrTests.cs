@@ -4,51 +4,48 @@ using app.Utils;
 namespace PLang.Tests.App.Foundation;
 
 /// <summary>
-/// Proves Fix #10: Goal.PrPath has a no-op setter (set { }).
-/// Setting PrPath silently does nothing — it's always derived from Path.
-/// After the fix, PrPath will be init-only so the setter can only be used during construction.
-/// These tests verify PrPath derivation is correct.
+/// A goal's .pr is derived from its Path, never set: a file reference at the .pr its .goal is built to.
 /// </summary>
-public class GoalPrPathTests : System.IAsyncDisposable
+public class GoalPrTests : System.IAsyncDisposable
 {
     private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [Test]
-    public async Task PrPath_DerivedFromPath_Correctly()
+    public async Task Pr_DerivedFromPath_Correctly()
     {
         var goal = new Goal(app.type.list) { Name = "Test", Path = global::app.type.item.path.@this.Resolve("\\Test.goal".AdjustPathToOs(), app.actor.list.User.Context) };
-        await Assert.That(goal.PrPath?.ToString()).IsEqualTo("/.build/test.pr");
+        await Assert.That(goal.Pr?.Path.ToString()).IsEqualTo("/.build/test.pr");
     }
 
     [Test]
-    public async Task PrPath_SubDirectory_DerivedCorrectly()
+    public async Task Pr_SubDirectory_DerivedCorrectly()
     {
         var goal = new Goal(app.type.list) { Name = "Inner", Path = global::app.type.item.path.@this.Resolve("\\SubDir\\Inner.goal".AdjustPathToOs(), app.actor.list.User.Context) };
-        await Assert.That(goal.PrPath?.ToString()).IsEqualTo("/SubDir/.build/inner.pr");
+        await Assert.That(goal.Pr?.Path.ToString()).IsEqualTo("/SubDir/.build/inner.pr");
     }
 
     [Test]
-    public async Task PrPath_ForwardSlashPath_DerivedCorrectly()
+    public async Task Pr_ForwardSlashPath_DerivedCorrectly()
     {
         var goal = new Goal(app.type.list) { Name = "Test", Path = global::app.type.item.path.@this.Resolve("/Test.goal", app.actor.list.User.Context) };
-        await Assert.That(goal.PrPath?.ToString()).IsEqualTo("/.build/test.pr");
+        await Assert.That(goal.Pr?.Path.ToString()).IsEqualTo("/.build/test.pr");
     }
 
     [Test]
-    public async Task PrPath_NullPath_ReturnsNull()
+    public async Task Pr_NullPath_ReturnsNull()
     {
         var goal = new Goal(app.type.list) { Name = "Test" };
-        await Assert.That(goal.PrPath).IsNull();
+        await Assert.That(goal.Pr?.Path).IsNull();
     }
 
     [Test]
-    public async Task PrPath_UpdatesWhenPathChanges()
+    public async Task Pr_UpdatesWhenPathChanges()
     {
         var goal = new Goal(app.type.list) { Name = "Test", Path = global::app.type.item.path.@this.Resolve("\\Test.goal".AdjustPathToOs(), app.actor.list.User.Context) };
-        await Assert.That(goal.PrPath?.ToString()).IsEqualTo("/.build/test.pr");
+        await Assert.That(goal.Pr?.Path.ToString()).IsEqualTo("/.build/test.pr");
 
         goal.Path = global::app.type.item.path.@this.Resolve("\\Other\\Test.goal".AdjustPathToOs(), app.actor.list.User.Context);
-        await Assert.That(goal.PrPath?.ToString()).IsEqualTo("/Other/.build/test.pr");
+        await Assert.That(goal.Pr?.Path.ToString()).IsEqualTo("/Other/.build/test.pr");
     }
 }

@@ -204,9 +204,9 @@ public class Default : IBuilder
         var context = action.Context;
         var goal = (await action.Goal.Value())!;
 
-        var prPath = goal.PrPath;
+        var prPath = goal.Pr?.Path;
         if (prPath == null)
-            return context.Error(new global::app.error.ActionError("Goal has no Path set, cannot derive PrPath", "NoPrPath", 400));
+            return context.Error(new global::app.error.ActionError("Goal has no Path set, cannot derive its .pr", "NoPrPath", 400));
 
         // Final safety net before persisting: the goal judges itself. Refusing to write the .pr is
         // preferable to saving a half-built artifact the runtime can't execute.
@@ -339,7 +339,7 @@ public class Default : IBuilder
     /// </summary>
     private static async Task MergePrData(Goal goal, actor.context.@this context)
     {
-        var prPath = goal.PrPath;
+        var prPath = goal.Pr?.Path;
         if (prPath == null) return;
 
         var readResult = await prPath.Read(context);

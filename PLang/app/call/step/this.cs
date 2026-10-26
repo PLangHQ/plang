@@ -30,8 +30,7 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
         _ => null,
     };
 
-    /// <summary>The rest of the list that holds its step, from the step after it — the step knows its list. A step no
-    /// list holds has nothing after it.</summary>
+    /// <summary>The rest of the list that holds its step, from the step after it — the step knows its list.</summary>
     internal override System.Threading.Tasks.Task<global::app.data.@this> Rest(global::app.actor.context.@this context, bool again)
-        => Step!.List?.Rest(Step, context) ?? System.Threading.Tasks.Task.FromResult(context.Ok());
+        => Step!.List.Rest(Step, context);
 }

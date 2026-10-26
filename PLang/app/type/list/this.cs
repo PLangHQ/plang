@@ -148,11 +148,16 @@ public sealed partial class @this
     /// reads it: <c>.md</c> → {text, md}, agreeing with its MIME. An extension no format has is bytes of that
     /// kind (<c>.xyz</c> → {binary, xyz}); the null type for no extension.
     /// </summary>
-    public app.type.@this Extension(string extension, actor.context.@this context)
+    public app.type.@this Extension(string extension, actor.context.@this context) => Extension(extension);
+
+    /// <summary>The type a file of this extension holds, as <see cref="Extension(string, actor.context.@this)"/> answers
+    /// it — the list alone knows it, so one who holds no asker (a goal working out its .pr) asks it so.</summary>
+    internal app.type.@this Extension(string extension)
     {
         if (string.IsNullOrEmpty(extension)) return app.type.@this.Null;
-        return Held(extension.StartsWith('.') ? extension : "." + extension) is { } kind ? Of(kind, context)
-            : this[new app.type.@this("binary", extension.TrimStart('.')), context];
+        return Held(extension.StartsWith('.') ? extension : "." + extension) is { } kind
+            ? Entry(new app.type.@this(kind.Owner?.Name ?? "binary", kind.IsEmpty ? null : kind.Name))
+            : Entry(new app.type.@this("binary", extension.TrimStart('.')));
     }
 
     /// <summary>The type content of <paramref name="kind"/> is born as: its owner, with the kind unless it is the
@@ -170,8 +175,10 @@ public sealed partial class @this
     /// a name the type holds no kind by is a kind of that name with no class. A name no type answers to is
     /// its bare identity.
     /// </summary>
-    public app.type.@this this[app.type.@this type, actor.context.@this context]
-        => Full(type, type.kind is { IsEmpty: false } k ? k.Name : null);
+    public app.type.@this this[app.type.@this type, actor.context.@this context] => Entry(type);
+
+    // The list's entry for type, its kind named by the kind it carries.
+    private app.type.@this Entry(app.type.@this type) => Full(type, type.kind is { IsEmpty: false } k ? k.Name : null);
 
     /// <summary>
     /// Index by CLR type — the type entity for a live CLR type's plang identity, or null when

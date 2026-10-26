@@ -28,7 +28,7 @@ public abstract class @this : global::app.type.item.@this
     }
 
     /// <summary>The location — owns scheme, auth gate, stat and fetch.</summary>
-    [global::app.LlmBuilder, global::app.Out, global::app.Store]
+    [global::app.LlmBuilder, global::app.Out, global::app.Store, global::app.Snapshot]
     public global::app.type.item.path.@this Path { get; }
 
     // The sample: the raw bytes and the format they are in, taken together once. Null until the content is
@@ -44,11 +44,16 @@ public abstract class @this : global::app.type.item.@this
     /// holds item's json kind) — both the app's objects; only the pairing is per value, as an element kind's is.
     /// The list keeps no pairing: it keys its types by entry, not by (entry, kind object).</summary>
     protected @this(System.Type clr, global::app.type.item.path.@this path, global::app.actor.context.@this context, global::app.type.item.template.kind.@this? template)
-        : base(context.App.type.list[clr] is var entry
-               && (path.Kind(context) is { IsNull: false, kind: { IsEmpty: false } k } ? k : null) is var kind
+        : this(clr, path, context.App.type.list, template) { }
+
+    /// <summary>A reference at <paramref name="path"/>, its type and kind named among <paramref name="types"/> — all the
+    /// creator's context is asked for, so a maker that holds no asker (a goal's .pr) makes one from its own types.</summary>
+    protected @this(System.Type clr, global::app.type.item.path.@this path, global::app.type.list.@this types, global::app.type.item.template.kind.@this? template)
+        : base(types[clr] is var entry
+               && (path.Kind(types) is { IsNull: false, kind: { IsEmpty: false } k } ? k : null) is var kind
                && (kind != null || template != null)
             ? new global::app.type.@this(entry, kind, false, template)
-            : context.App.type.list[clr])
+            : types[clr])
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
         // Born from a path — its type joins this value's history, so `is path` answers from the chain.

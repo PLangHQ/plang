@@ -15,7 +15,7 @@ public partial class @this
     /// construction door sets it; reading it unset means the action was built outside a door,
     /// which is a bug, so it throws rather than answering a half-built identity. Carries [Debug]
     /// only — the wire form is written explicitly by <c>Output</c>.</summary>
-    [Debug, LlmBuilder]
+    [Debug, LlmBuilder, Snapshot]
     public global::app.module.@this Module
     {
         get => _module ?? throw new System.InvalidOperationException(
@@ -23,9 +23,14 @@ public partial class @this
         set => _module = value;
     }
 
-    [Store, LlmBuilder, Debug, Default]
+    [Store, LlmBuilder, Debug, Default, Snapshot]
     [JsonPropertyName("action")]
     public string Name { get; set; } = "";
+
+    /// <summary>Where this action stands in its step's code — what finds it there, beside its module and name; -1 for one
+    /// no step's code holds (composed in C#).</summary>
+    [Snapshot]
+    public int Index => Step?.Code.IndexOf(this) ?? -1;
 
     /// <summary>The action's own name — "read". It never borrows the module's identity; a site that
     /// wants the qualified form composes the two objects (<c>$"{a.Module}.{a.Name}"</c>).</summary>

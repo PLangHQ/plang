@@ -120,7 +120,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
                     $"Failed to parse goal file: {pr} — read produced {content.GetType().Name}, not a goal"));
 
             // the stamp holds the .pr the goal itself has
-            goal.Stamp = stat.Success && await stat.Value() is { } info && goal.PrPath is { } path
+            goal.Stamp = stat.Success && await stat.Value() is { } info && goal.Pr?.Path is { } path
                 ? new goal.@this.stamp.stat(path, info) : new goal.@this.stamp.unknown();
             Add(goal);
             return await goal.on.load.After(goal, read, context);
@@ -137,8 +137,8 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     /// </summary>
     public void Add(goal.@this goal)
     {
-        if (goal.PrPath is not { } pr)
-            throw new ArgumentException($"Goal '{goal.Name}' must have a Path set. PrPath is derived from Path and is required for keying.");
+        if (goal.Pr?.Path is not { } pr)
+            throw new ArgumentException($"Goal '{goal.Name}' must have a Path set. Its .pr is derived from Path and is required for keying.");
         lock (_gate)
         {
             // the goal held from the same .pr, found in one look, gives way — its row, by reference
@@ -263,7 +263,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
                 || canonical.Equals("/" + leaf, StringComparison.OrdinalIgnoreCase)
                 || canonical.Equals("/" + leaf + ".goal", StringComparison.OrdinalIgnoreCase));
         if (goals.FirstOrDefault(g => Written(g.Path?.ToString().Replace('\\', '/'))
-                                     || Written(g.PrPath?.ToString().Replace('\\', '/'))) is { } byPath)
+                                     || Written(g.Pr?.Path.ToString().Replace('\\', '/'))) is { } byPath)
             return byPath;
 
         if (name.Contains('/') || name.Contains('\\'))
@@ -347,5 +347,5 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     // A goal is found by its .pr. It is a fact of the goal by the time the list holds it: its Path is set as it is
     // made (the reader, a build) and a sub-goal, whose .pr is its parent's, is never a row; nothing changes a held
     // goal's Path or Parent.
-    private protected override object? Key(object? row) => (row as goal.@this)?.PrPath;
+    private protected override object? Key(object? row) => (row as goal.@this)?.Pr?.Path;
 }

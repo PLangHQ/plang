@@ -42,7 +42,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private readonly object? _registering;
 
     /// <summary>The module name — "file", "variable", "list"; empty for the app's module.</summary>
-    [Debug, Out, LlmBuilder]
+    [Debug, Out, LlmBuilder, Snapshot]
     public string Name { get; }
 
     /// <summary>The module IS its name in text — so a site composing the qualified form

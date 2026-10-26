@@ -29,7 +29,7 @@ public sealed partial class @this
     // Read-time scalars are `internal set`, not `init`: the reader constructs the goal SHELL first
     // (so its steps and sub-goals can be born holding it) and fills these as they arrive off the
     // stream. Immutable to everything outside the assembly.
-    [Store, Out, LlmBuilder, Debug, Default]
+    [Store, Out, LlmBuilder, Debug, Default, Snapshot]
     public string Name { get; internal set; } = "";
 
     /// <summary>The goal's description: the comment lines written above its name.</summary>
@@ -114,23 +114,25 @@ public sealed partial class @this
         set
         {
             _path = value;
-            // the .pr it is built to, worked out where its file is given
-            _pr = value is global::app.type.item.path.file.@this { Absolute.Length: > 0 } source ? source.Pr : null;
+            // the .pr it is built to, worked out where its file is given: a file reference, of the types this goal's own
+            // type is among
+            _pr = value is global::app.type.item.path.file.@this { Absolute.Length: > 0 } source && Type.Types is { } types
+                ? new global::app.type.item.file.@this(source.Pr, types) : null;
         }
     }
     private global::app.type.item.path.@this? _path;
-    private global::app.type.item.path.@this? _pr;
+    private global::app.type.item.file.@this? _pr;
 
     /// <summary>The folder holding this goal's source .goal file — what a relative path in it resolves against.
     /// Null for a goal with no Path.</summary>
     public global::app.type.item.path.@this? Folder => Path?.Parent;
 
-    /// <summary>The .pr this goal is built to (its file's <c>Pr</c>), worked out where its Path is set; a sub-goal's is its
-    /// parent's; none without a Path.</summary>
-    [Debug]
-    public global::app.type.item.path.@this? PrPath => Parent?.PrPath ?? _pr;
+    /// <summary>The .pr this goal is built to, a file reference (its file's <c>Pr</c>), worked out where its Path is set; a
+    /// sub-goal's is its parent's; none without a Path. In a snapshot it is part of what finds the goal.</summary>
+    [Debug, Snapshot]
+    public global::app.type.item.file.@this? Pr => Parent?.Pr ?? _pr;
 
-    [Store, Out, Debug]
+    [Store, Out, Debug, Snapshot]
     public string? Hash
     {
         get

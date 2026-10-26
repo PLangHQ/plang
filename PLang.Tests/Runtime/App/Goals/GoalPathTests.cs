@@ -17,7 +17,7 @@ public class GoalPathTests
             System.IO.Directory.CreateDirectory(System.IO.Path.Combine(dir, "old"));
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "old", "Start.goal"), "Start\n");
             var goal = global::PLang.Tests.Shared.Make.Goal(ctx, "Start", "/old/Start.goal", steps);
-            await (await goal.PrPath!.Save(ctx.Ok(goal), ctx)).IsSuccess();
+            await (await goal.Pr!.Path.Save(ctx.Ok(goal), ctx)).IsSuccess();
         }
         System.IO.Directory.Move(System.IO.Path.Combine(dir, "old"), System.IO.Path.Combine(dir, "new"));
         return dir;

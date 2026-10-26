@@ -10,7 +10,7 @@ public class GoalListIndexTests
         await using var app = new global::app.@this("/goal-index", global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.System.Context;
         var goals = Enumerable.Range(0, 400).Select(i => Make.Goal(context, "G" + i, $"/g{i}/Start.goal")).ToArray();
-        foreach (var goal in goals) _ = goal.PrPath; // each goal's .pr worked out before the count
+        foreach (var goal in goals) _ = goal.Pr?.Path; // each goal's .pr worked out before the count
 
         long Bytes(int from, int to)
         {
@@ -23,7 +23,7 @@ public class GoalListIndexTests
         var late = Bytes(300, 400);
 
         await Assert.That(late).IsLessThan(1_000_000L).Because("an add finds the goal it replaces in one look");
-        await Assert.That(app.goal.list[goals[250].PrPath!]).IsSameReferenceAs(goals[250]);
+        await Assert.That(app.goal.list[goals[250].Pr!.Path]).IsSameReferenceAs(goals[250]);
     }
 
     [Test]
@@ -38,7 +38,7 @@ public class GoalListIndexTests
         app.goal.list.Add(again);
 
         await Assert.That(app.goal.list.CountRaw).IsEqualTo(1);
-        await Assert.That(app.goal.list[again.PrPath!]).IsSameReferenceAs(again);
+        await Assert.That(app.goal.list[again.Pr!.Path]).IsSameReferenceAs(again);
     }
 
     // The index is the list's own, made from its rows: a row taken out through a door the goal list doesn't write
@@ -50,10 +50,10 @@ public class GoalListIndexTests
         var context = app.actor.list.System.Context;
         var goal = Make.Goal(context, "Start", "/g/Start.goal");
         app.goal.list.Add(goal);
-        await Assert.That(app.goal.list[goal.PrPath!]).IsSameReferenceAs(goal);
+        await Assert.That(app.goal.list[goal.Pr!.Path]).IsSameReferenceAs(goal);
 
         app.goal.list.RemoveAt(0);
 
-        await Assert.That(app.goal.list[goal.PrPath!]).IsNull();
+        await Assert.That(app.goal.list[goal.Pr!.Path]).IsNull();
     }
 }

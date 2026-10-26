@@ -13,7 +13,7 @@ public sealed partial class @this
     // A step is an item (this.Item.cs), written and read through its [Store] props.
 
 
-    [Store, Out, LlmBuilder, Debug, Default]
+    [Store, Out, LlmBuilder, Debug, Default, Snapshot]
     public int Index { get; internal set; }
 
     [Store, Out, LlmBuilder, Debug, Default]
@@ -117,9 +117,9 @@ public sealed partial class @this
 
     /// <summary>The list that holds this step — its goal's steps, or the body of the action it sits in. A birth fact,
     /// handed in where the step is made, as its goal is; the build's fold, which moves a step into a body, is the one
-    /// that says where it is then. Null for a step made loose (a fixture), which no list holds.</summary>
+    /// that says where it is then.</summary>
     [JsonIgnore]
-    public global::app.goal.step.list.@this? List { get; internal set; }
+    public global::app.goal.step.list.@this List { get; internal set; } = null!;
 
     /// <summary>A step starts through the step type's events, then its own. A step of one of plang's own goals
     /// (<see cref="global::app.goal.@this.IsSystem"/>) is none of the app's, so it starts through its own events alone;

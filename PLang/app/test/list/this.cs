@@ -144,7 +144,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
             ?? global::app.goal.@this.Parse(goalContent?.ToString() ?? "", file, context)
             ?? new global::app.goal.@this(context.App.type.list) { Path = file };
 
-        if (source.PrPath is not global::app.type.item.path.file.@this pr) return Stale(source, "no PrPath derivable from goal source");
+        if (source.Pr?.Path is not global::app.type.item.path.file.@this pr) return Stale(source, "no .pr derivable from goal source");
         var prExists = await pr.Exists(context);
         if (!prExists.Success || (await prExists.Value())?.Value != true) return Stale(source, "no .pr");
 

@@ -210,7 +210,10 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// Owned by the path + the type registry.
     /// </summary>
     public global::app.type.@this Kind(actor.context.@this context) =>
-        context.App?.type.list.Extension(Extension.ToString(), context) ?? global::app.type.@this.Null;
+        context.App?.type.list is { } types ? Kind(types) : global::app.type.@this.Null;
+
+    /// <summary>The type entity this location's extension names, among <paramref name="types"/>.</summary>
+    internal global::app.type.@this Kind(global::app.type.list.@this types) => types.Extension(Extension.ToString());
 
     // --- Live filesystem state ---
     //

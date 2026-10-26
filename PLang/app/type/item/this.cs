@@ -853,9 +853,10 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// <summary>
     /// The item writes ITSELF into <paramref name="writer"/>: the writer hands it back its own write for the writer's
     /// own class (a text writer the text look, a formal writer the formal look, any other the value's own write). A
-    /// value writing a member writes <c>member.Output(writer)</c>.
+    /// value writing a member writes <c>member.Output(writer)</c>. Every write comes through here, so the writer's view
+    /// is asked first (a snapshot writes a value found elsewhere as what finds it); any other view lets it write itself.
     /// </summary>
-    public System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer) => writer.Write(this);
+    public System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer) => writer.View.Output(this, writer);
 
     /// <summary>
     /// The value's own write, in every format it has no look of its own for: what it is, through the writer's
@@ -867,7 +868,11 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// names it. A foreign type can't declare, so it shows all its members. Resolved lazily as it reaches each node;
     /// <c>await</c>s happen here, between the writer's synchronous buffer writes.
     /// </summary>
-    protected internal virtual async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+    protected internal virtual System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer) => Members(writer);
+
+    /// <summary>The value's tagged members as its view shows them — the structure's face <see cref="Write(global::app.type.format.IWriter)"/>
+    /// writes by default, and what a view writes for a value whatever its own look (a snapshot, a value found elsewhere).</summary>
+    internal async System.Threading.Tasks.ValueTask Members(global::app.type.format.IWriter writer)
     {
         var host = Host;
         var type = host.GetType();

@@ -113,11 +113,16 @@ public abstract class View
         return answer;
     }
 
-    /// <summary>Whether <paramref name="type"/> carries any wire tag (Out, Store, Sensitive, Masked): a deliberate host
-    /// whose members are a contract. A type with none is transparent.</summary>
+    /// <summary>Whether <paramref name="type"/> carries any wire tag (Out, Store, Snapshot, Sensitive, Masked): a
+    /// deliberate host whose members are a contract. A type with none is transparent.</summary>
     internal bool Tagged(System.Type type)
         => type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-            .Any(p => Is<OutAttribute>(p) || Is<StoreAttribute>(p) || Is<SensitiveAttribute>(p) || Is<MaskedAttribute>(p));
+            .Any(p => Is<OutAttribute>(p) || Is<StoreAttribute>(p) || Is<SnapshotAttribute>(p) || Is<SensitiveAttribute>(p) || Is<MaskedAttribute>(p));
+
+    /// <summary><paramref name="value"/> written in this view — every value's write comes through here
+    /// (<c>item.Output</c>): by default the value writes itself, its own look for the writer.</summary>
+    internal virtual System.Threading.Tasks.ValueTask Output(global::app.type.item.@this value, global::app.type.format.IWriter writer)
+        => writer.Write(value);
 
     private protected bool Is<TAttribute>(System.Reflection.PropertyInfo property) where TAttribute : System.Attribute
         => property.IsDefined(typeof(TAttribute), inherit: false);
@@ -160,8 +165,21 @@ public abstract class View
     // run asks again rather than going on with a fake value
     private sealed class snapshot : store
     {
+        // a type found elsewhere (it tags what finds it, [Snapshot]) shows only that; any other shows what store keeps,
+        // never a secret
         internal override bool Shows(System.Reflection.PropertyInfo property, bool tagged)
-            => !Is<SensitiveAttribute>(property) && base.Shows(property, tagged);
+            => Found(property.ReflectedType!) ? Is<SnapshotAttribute>(property)
+                : !Is<SensitiveAttribute>(property) && base.Shows(property, tagged);
+
+        // a value found elsewhere writes what finds it, whatever its own look; any other writes itself
+        internal override System.Threading.Tasks.ValueTask Output(global::app.type.item.@this value, global::app.type.format.IWriter writer)
+            => Found(value.GetType()) ? value.Members(writer) : writer.Write(value);
+
+        // Whether a type tags what finds it: read once per type.
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, bool> _found = new();
+        private bool Found(System.Type type)
+            => _found.GetOrAdd(type, t => t.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+                .Any(Is<SnapshotAttribute>));
 
         internal override void Sensitive(string characters, global::app.type.format.IWriter writer) => writer.Null();
 
@@ -300,6 +318,12 @@ public abstract class View
 
 [AttributeUsage(AttributeTargets.Property)]
 public sealed class StoreAttribute : Attribute { }
+
+/// <summary>Marks what a value is found by (a goal's name, its .pr and hash; a file's path): in a snapshot, a value whose
+/// type tags any writes those members alone, and comes back as what they find — a value found elsewhere (the program,
+/// the disk) is never saved whole.</summary>
+[AttributeUsage(AttributeTargets.Property)]
+public sealed class SnapshotAttribute : Attribute { }
 
 /// <summary>Catalog visibility for the builder LLM. On a method it marks a member that needs the
 /// asker's context (one <c>actor.context.@this</c> parameter) — listed as a field like a property, and read
