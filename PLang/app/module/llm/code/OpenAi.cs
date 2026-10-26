@@ -66,11 +66,8 @@ public sealed class OpenAi : ILlm
         var model = ((action.Model == null ? null : await action.Model.Value())?.ToString()) is { Length: >0 } __m ? __m : llm.Model.ToString();
 
         // --- Validate ---
-        // Messages can resolve to null (not just empty): the [IsNotNull] guard checks the
-        // parameter's presence, not the lazily-resolved value, and a parent-scope %messages%
-        // reads null when on.error retries the sub-goal that asks (BuildGoal/Plan.goal:26).
-        // Null is treated as empty: a ValidationError, never a NullReferenceException.
-        // The .NET edge: the message list lowers ITSELF to the API's CLR shape.
+        // Message is there: the [IsNotNull] guard refused it before the run if a variable it holds held nothing. An empty
+        // list is a ValidationError. The .NET edge: the message list lowers ITSELF to the API's CLR shape.
         var rawMessages = (await action.Message.Value()).Clr<List<LlmMessage>>();
         if (rawMessages is not { Count: > 0 })
             return context.Error(new ActionError("Messages list is empty or null", "ValidationError", 400));
