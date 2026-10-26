@@ -27,4 +27,19 @@ public class StoreFolderModeProbeTests
         foreach (var folder in folders)
             await Assert.That(System.IO.File.GetUnixFileMode(folder) & others).IsEqualTo((System.IO.UnixFileMode)0);
     }
+
+    // a folder another OS user owns (/tmp is root's) can't take a mode from this one: the mode answers why, never throws
+    [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows)]
+    public async Task AFolderAnotherUserOwns_AnswersItsModeRefusal()
+    {
+        // as root the mode would hold, and /tmp would be closed to every other user
+        if (System.Environment.IsPrivilegedProcess) { Skip.Test("root may set any folder's mode"); return; }
+        await using var app = new global::app.@this("/tmp", global::PLang.Tests.Parent.Actor).Testing();
+        var system = app.actor.list.System.Context;
+
+        var mode = await system.File("/tmp").Mode((System.IO.UnixFileMode)0b111_000_000, system);
+
+        await mode.IsFailure();
+        await Assert.That(mode.Error!.Key).IsEqualTo("IOError");
+    }
 }
