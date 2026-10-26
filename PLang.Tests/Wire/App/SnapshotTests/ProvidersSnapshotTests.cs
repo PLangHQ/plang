@@ -17,6 +17,68 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         public Data GrepCount(Data data, string pattern) => data.Context.Ok(0L);
     }
 
+    // TypeProvider.dll brings one plang type (money) and no providers.
+    private static readonly string TypeProviderDll = System.IO.Path.GetFullPath(System.IO.Path.Combine(
+        AppContext.BaseDirectory, "..", "..", "..", "..", "Shared", "Fixtures", "dlls", "TypeProvider.dll"));
+
+    // The DLL at its OS location, with a one-time Execute (and Read) grant for the user on it: a DLL outside the app's
+    // root is asked for otherwise.
+    private static async Task<global::app.type.item.path.@this> Granted(global::app.@this app, string dll)
+    {
+        var context = app.actor.list.User.Context;
+        var path = global::app.type.item.path.@this.Resolve(new System.Uri(dll).AbsoluteUri, context);
+        var permission = new global::app.type.item.permission.@this(
+            Actor: app.actor.list.User.Name, Path: path.Location(context.Filesystem).Absolute,
+            Verbs: new HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.read, global::app.type.item.permission.Verb.execute },
+            Match: global::app.type.item.permission.Match.exact, app.type.list[typeof(global::app.type.item.permission.@this)]);
+        await app.actor.list.User.Permission.Add(
+            new global::app.data.@this<global::app.type.item.permission.@this>("", permission, context: context), persist: false);
+        return path;
+    }
+
+    [Test]
+    public async Task Code_ThroughText_ADllThatBroughtOnlyTypes_IsLoadedAgain()
+    {
+        var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
+        var context = src.actor.list.User.Context;
+        var loaded = await new global::app.module.code.load(context)
+        { Path = context.Ok<global::app.type.item.path.@this>(await Granted(src, TypeProviderDll)) }.Start();
+        await loaded.IsSuccess();
+        var text = await src.Snapshot(context).Saved().Text(context);
+
+        var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
+        var into = dst.actor.list.User.Context;
+        await Granted(dst, TypeProviderDll);
+        await Assert.That(dst.type.list.Contains("money")).IsFalse();
+        await dst.Restore(await into.Snapshot(text), into);
+
+        await Assert.That(dst.type.list.Contains("money")).IsTrue();
+    }
+
+    [Test]
+    public async Task Code_ThroughText_ADllAddedAsModules_IsAddedAgainTheSameWay()
+    {
+        var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
+        var context = src.actor.list.User.Context;
+        var added = await new global::app.module.module.Add(context)
+        {
+            Path = context.Ok<global::app.type.item.path.@this>(await Granted(src, TypeProviderDll)),
+            Namespace = context.Ok<global::app.type.item.text.@this>(new global::app.type.item.text.@this("TypeProvider", src.type.list["text"])),
+        }.Start();
+        await added.IsSuccess();
+        var text = await src.Snapshot(context).Saved().Text(context);
+
+        var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
+        var into = dst.actor.list.User.Context;
+        await Granted(dst, TypeProviderDll);
+        var snap = await into.Snapshot(text);
+        var load = (await snap.Node("Code").Rows("loaded")).Single();
+        await Assert.That((await load.Value<global::app.type.item.dict.@this>())!.Get("modules", into)!.ToBoolean()).IsTrue();
+        await dst.Restore(snap, into);
+
+        await Assert.That(dst.type.list.Contains("money")).IsTrue();
+    }
+
     [Test]
     public async Task Providers_RoundTrip_PreservesDefaultSelectionsAndRuntimeRegistrations()
     {
