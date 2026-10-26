@@ -1,12 +1,12 @@
 {
   "name": "Record",
-  "comment": "Writes run.txt beside this goal: a run stopped at its save inside Sub, for FreshAppGoesOn.test.goal to resume\nin an app of its own. Not a test. Run it again when this goal or Sub changes (the resume then answers 409, the goal's\nhash changed), from test/: plang plan/snapshot/module/snapshot/resume/FreshAppGoesOn/Record.goal",
+  "comment": "The run FreshAppGoesOn.test.goal resumes: Record calls Sub, Sub saves the run, and Record keeps the snapshot in\nworkspace/run.plang (a .plang file holds it signed, as the save signed it).",
   "step": [
     {
       "index": 0,
-      "text": "set %where% = 'run.txt'",
+      "text": "set %where% = 'workspace/run.plang'",
       "line": {
-        "number": 5,
+        "number": 4,
         "indent": 0
       },
       "code": [
@@ -36,7 +36,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "run.txt"
+              "value": "workspace/run.plang"
             }
           ],
           "default": [
@@ -55,7 +55,7 @@
       "index": 1,
       "text": "set %name% = \"Alice\"",
       "line": {
-        "number": 6,
+        "number": 5,
         "indent": 0
       },
       "code": [
@@ -104,7 +104,7 @@
       "index": 2,
       "text": "set %count% = 0",
       "line": {
-        "number": 7,
+        "number": 6,
         "indent": 0
       },
       "code": [
@@ -153,7 +153,7 @@
       "index": 3,
       "text": "call Sub city=\"Reykjavik\"",
       "line": {
-        "number": 8,
+        "number": 7,
         "indent": 0
       },
       "code": [
@@ -183,7 +183,7 @@
       "index": 4,
       "text": "set %unwound% = \"yes\"",
       "line": {
-        "number": 9,
+        "number": 8,
         "indent": 0
       },
       "code": [
@@ -232,7 +232,7 @@
       "index": 5,
       "text": "save %run% to file %where%",
       "line": {
-        "number": 10,
+        "number": 9,
         "indent": 0
       },
       "code": [
@@ -283,5 +283,5 @@
   ],
   "visibility": "Public",
   "file": "Record.goal",
-  "hash": "0367704cfa9732e82402c4cbd844b15aa3881e2501334fa51e750595222ea599"
+  "hash": "ad4d98307d959938eb6797c39f0be8dd82d8f2a77c8966b2b67f66d07e76afbd"
 }

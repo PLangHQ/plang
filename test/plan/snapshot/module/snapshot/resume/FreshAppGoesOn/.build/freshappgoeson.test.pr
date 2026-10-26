@@ -1,12 +1,35 @@
 {
   "name": "Start",
-  "comment": "A run saved inside Sub (run.txt, written by Record.goal) resumed in this test's own app goes on from its save:\nthe save answers again, Sub's next step reads the context's %name% and its frame's %city%, and Record goes on after\nthe call. The step before the save doesn't run again (%count% stays 1). The resumed Record writes its snapshot to\n%where%, which this test points into its own workspace, so the committed run.txt stays as it is.",
+  "comment": "A run saved inside Sub, kept in a .plang file (signed by this app) and read back, goes on from its save: the save\nanswers again, Sub's next step reads the context's %name% and its frame's %city%, and Record goes on after the call.\nThe step before the save doesn't run again (%count% comes back 1). What the first run set after the save is cleared\nfirst, so only the resumed run can set it again.",
   "step": [
     {
       "index": 0,
-      "text": "read file 'run.txt', write to %snapshot% as snapshot",
+      "text": "call Record",
       "line": {
         "number": 6,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "/plan/snapshot/module/snapshot/resume/FreshAppGoesOn/Record"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "read file 'workspace/run.plang', write to %snapshot%",
+      "line": {
+        "number": 7,
         "indent": 0
       },
       "code": [
@@ -19,14 +42,7 @@
               "type": {
                 "name": "path"
               },
-              "value": "run.txt"
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "type"
-              },
-              "value": "snapshot"
+              "value": "workspace/run.plang"
             }
           ]
         },
@@ -75,81 +91,9 @@
                 "name": "type"
               },
               "value": {
-                "name": "snapshot"
+                "name": "file",
+                "kind": "plang"
               }
-            }
-          ],
-          "default": [
-            {
-              "name": "default",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ]
-        }
-      ],
-      "warning": [
-        {
-          "key": "Unsure",
-          "message": "step 0 uses variable.set, which the decider was not sure of (0.86)"
-        }
-      ]
-    },
-    {
-      "index": 1,
-      "text": "set %snapshot.actor.list.user.context.variable.where% = 'workspace/rerun.txt'",
-      "line": {
-        "number": 7,
-        "indent": 0
-      },
-      "code": [
-        {
-          "module": "variable",
-          "name": "set",
-          "property": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "variable"
-              },
-              "value": "%snapshot.actor.list.user.context.variable.where%",
-              "variable": [
-                {
-                  "text": "%snapshot.actor.list.user.context.variable.where%",
-                  "code": [
-                    {
-                      "variable": "snapshot"
-                    },
-                    {
-                      "property": "actor"
-                    },
-                    {
-                      "property": "list"
-                    },
-                    {
-                      "property": "user"
-                    },
-                    {
-                      "property": "context"
-                    },
-                    {
-                      "property": "variable"
-                    },
-                    {
-                      "property": "where"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "text"
-              },
-              "value": "workspace/rerun.txt"
             }
           ],
           "default": [
@@ -166,9 +110,156 @@
     },
     {
       "index": 2,
-      "text": "resume %snapshot%",
+      "text": "set %seen% = \"not yet\"",
       "line": {
         "number": 8,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%seen%",
+              "variable": [
+                {
+                  "text": "%seen%",
+                  "code": [
+                    {
+                      "variable": "seen"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "not yet"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "set %unwound% = \"not yet\"",
+      "line": {
+        "number": 9,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%unwound%",
+              "variable": [
+                {
+                  "text": "%unwound%",
+                  "code": [
+                    {
+                      "variable": "unwound"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "not yet"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "set %count% = 99",
+      "line": {
+        "number": 10,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%count%",
+              "variable": [
+                {
+                  "text": "%count%",
+                  "code": [
+                    {
+                      "variable": "count"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 99
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "resume %snapshot%",
+      "line": {
+        "number": 11,
         "indent": 0
       },
       "code": [
@@ -196,19 +287,13 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Unsure",
-          "message": "step 2 uses snapshot.resume, which the decider was not sure of (0.95)"
-        }
       ]
     },
     {
-      "index": 3,
+      "index": 6,
       "text": "assert %seen% equals \"Alice in Reykjavik\"",
       "line": {
-        "number": 9,
+        "number": 12,
         "indent": 0
       },
       "code": [
@@ -218,13 +303,6 @@
           "property": [
             {
               "name": "Expected",
-              "type": {
-                "name": "text"
-              },
-              "value": "Alice in Reykjavik"
-            },
-            {
-              "name": "Actual",
               "type": {
                 "name": "item",
                 "template": "plang"
@@ -240,16 +318,23 @@
                   ]
                 }
               ]
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "text"
+              },
+              "value": "Alice in Reykjavik"
             }
           ]
         }
       ]
     },
     {
-      "index": 4,
+      "index": 7,
       "text": "assert %unwound% equals \"yes\"",
       "line": {
-        "number": 10,
+        "number": 13,
         "indent": 0
       },
       "code": [
@@ -259,13 +344,6 @@
           "property": [
             {
               "name": "Expected",
-              "type": {
-                "name": "text"
-              },
-              "value": "yes"
-            },
-            {
-              "name": "Actual",
               "type": {
                 "name": "item",
                 "template": "plang"
@@ -281,16 +359,23 @@
                   ]
                 }
               ]
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "text"
+              },
+              "value": "yes"
             }
           ]
         }
       ]
     },
     {
-      "index": 5,
+      "index": 8,
       "text": "assert %count% equals 1",
       "line": {
-        "number": 11,
+        "number": 14,
         "indent": 0
       },
       "code": [
@@ -300,13 +385,6 @@
           "property": [
             {
               "name": "Expected",
-              "type": {
-                "name": "number"
-              },
-              "value": 1
-            },
-            {
-              "name": "Actual",
               "type": {
                 "name": "item",
                 "template": "plang"
@@ -322,132 +400,23 @@
                   ]
                 }
               ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "index": 6,
-      "text": "read file 'workspace/rerun.txt', write to %rerun%",
-      "line": {
-        "number": 12,
-        "indent": 0
-      },
-      "code": [
-        {
-          "module": "file",
-          "name": "read",
-          "property": [
-            {
-              "name": "Path",
-              "type": {
-                "name": "path"
-              },
-              "value": "workspace/rerun.txt"
-            }
-          ]
-        },
-        {
-          "module": "variable",
-          "name": "set",
-          "property": [
-            {
-              "name": "Value",
-              "type": {
-                "name": "item",
-                "template": "plang"
-              },
-              "value": "%!data%",
-              "variable": [
-                {
-                  "text": "%!data%",
-                  "code": [
-                    {
-                      "variable": "!data"
-                    }
-                  ]
-                }
-              ]
             },
             {
-              "name": "Name",
+              "name": "Actual",
               "type": {
-                "name": "variable"
+                "name": "number"
               },
-              "value": "%rerun%",
-              "variable": [
-                {
-                  "text": "%rerun%",
-                  "code": [
-                    {
-                      "variable": "rerun"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "type"
-              },
-              "value": {
-                "name": "file"
-              }
-            }
-          ],
-          "default": [
-            {
-              "name": "default",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
+              "value": 1
             }
           ]
         }
       ]
     },
     {
-      "index": 7,
-      "text": "assert %rerun% is not empty",
+      "index": 9,
+      "text": "delete file 'workspace/run.plang'",
       "line": {
-        "number": 13,
-        "indent": 0
-      },
-      "code": [
-        {
-          "module": "assert",
-          "name": "isTrue",
-          "property": [
-            {
-              "name": "Value",
-              "type": {
-                "name": "item",
-                "template": "plang"
-              },
-              "value": "%rerun%",
-              "variable": [
-                {
-                  "text": "%rerun%",
-                  "code": [
-                    {
-                      "variable": "rerun"
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "index": 8,
-      "text": "delete file 'workspace/rerun.txt'",
-      "line": {
-        "number": 14,
+        "number": 15,
         "indent": 0
       },
       "code": [
@@ -460,7 +429,7 @@
               "type": {
                 "name": "path"
               },
-              "value": "workspace/rerun.txt"
+              "value": "workspace/run.plang"
             }
           ],
           "default": [
@@ -478,5 +447,5 @@
   ],
   "visibility": "Public",
   "file": "FreshAppGoesOn.test.goal",
-  "hash": "c7ee14d44d9aafd6e6b14d74fd6b5b657bb4bd3bd48b5cd52c8fab4f381d3aeb"
+  "hash": "8d447cf53b8eb63bf8acb7b020409959363397bec66ce5195a23cfbd0a46cb2a"
 }
