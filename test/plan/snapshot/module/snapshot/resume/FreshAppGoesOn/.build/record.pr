@@ -1,10 +1,10 @@
 {
   "name": "Record",
-  "comment": "Writes run.json beside this goal: a run stopped at its save inside Sub, for FreshAppGoesOn.test.goal to resume\nin an app of its own. Not a test. Run it again when this goal or Sub changes (the resume then answers 409, the goal's\nhash changed), from test/: plang plan/snapshot/module/snapshot/resume/FreshAppGoesOn/Record.goal",
+  "comment": "Writes run.txt beside this goal: a run stopped at its save inside Sub, for FreshAppGoesOn.test.goal to resume\nin an app of its own. Not a test. Run it again when this goal or Sub changes (the resume then answers 409, the goal's\nhash changed), from test/: plang plan/snapshot/module/snapshot/resume/FreshAppGoesOn/Record.goal",
   "step": [
     {
       "index": 0,
-      "text": "set %where% = 'run.json'",
+      "text": "set %where% = 'run.txt'",
       "line": {
         "number": 5,
         "indent": 0
@@ -36,7 +36,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "run.json"
+              "value": "run.txt"
             }
           ],
           "default": [
@@ -283,5 +283,5 @@
   ],
   "visibility": "Public",
   "file": "Record.goal",
-  "hash": "43a2c39be171044a6ef32fbc3ef0a9d7e30ff2b301c6cbd61a197e47aa3a318e"
+  "hash": "0367704cfa9732e82402c4cbd844b15aa3881e2501334fa51e750595222ea599"
 }
