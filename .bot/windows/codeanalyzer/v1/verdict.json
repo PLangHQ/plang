@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "One finding: StoreFolderModeProbeTests' summary names the doc2 slice and its red state (a comment narrating the task). Everything else holds; bench in band; mutations red." }

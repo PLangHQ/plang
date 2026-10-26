@@ -7,13 +7,68 @@
       "timestamp_start": "2026-10-26T00:40:00Z",
       "timestamp_end": "2026-10-26T01:05:00Z",
       "intent": "Cut windows from runtime2 and plan it from the 100 Windows failures, with Ingi's events yes.",
-      "before": {"assumptions": "Most failures share a few causes; the path's plang form is derived with OS functions.", "risk": "Permissions failing on Windows may be a real fail-closed bug; Windows-only reds can't be run on Linux."},
+      "before": {
+        "assumptions": "Most failures share a few causes; the path's plang form is derived with OS functions.",
+        "risk": "Permissions failing on Windows may be a real fail-closed bug; Windows-only reds can't be run on Linux."
+      },
       "plan": ".bot/windows/architect/plan/start.md",
       "actions": [
-        {"paths": ["/shared/wintest/failures-2.md", "PLang/app/type/item/path/file/this.cs", "PLang/app/type/item/path/file/this.Derivation.cs"], "type": "review", "category": "code", "confidence": "medium", "context": "Sorted the 100 failures by cause; found Raw derived by PathHelper (OS separators)."},
-        {"paths": [".bot/windows/architect/plan/start.md", ".bot/windows/architect/plan/start.goal", ".bot/windows/architect/summary.md"], "type": "create", "category": "doc", "confidence": "medium", "context": "Seven stages; events first (Linux-red); the culture bug is real on any non-English machine."}
+        {
+          "paths": [
+            "/shared/wintest/failures-2.md",
+            "PLang/app/type/item/path/file/this.cs",
+            "PLang/app/type/item/path/file/this.Derivation.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Sorted the 100 failures by cause; found Raw derived by PathHelper (OS separators)."
+        },
+        {
+          "paths": [
+            ".bot/windows/architect/plan/start.md",
+            ".bot/windows/architect/plan/start.goal",
+            ".bot/windows/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "medium",
+          "context": "Seven stages; events first (Linux-red); the culture bug is real on any non-English machine."
+        }
       ],
-      "after": {"status": "plan drafted; sent to the coder", "health": "runtime2 at b4a549d1c", "notes": "The host's step 4 (the real window) was never reported; asked again in stage 7."}
+      "after": {
+        "status": "plan drafted; sent to the coder",
+        "health": "runtime2 at b4a549d1c",
+        "notes": "The host's step 4 (the real window) was never reported; asked again in stage 7."
+      }
+    },
+    {
+      "id": "ec70d6ee-3e30-46ff-8f35-0323cd12415c",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-26T02:12:58Z",
+      "timestamp_end": "2026-10-26T02:12:58Z",
+      "intent": "Review windows b4a549d1c..1610440fc",
+      "before": {
+        "assumptions": "Windows behaviour pinned by host run",
+        "risk": "Linux cannot pin separators"
+      },
+      "plan": ".bot/windows/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/windows/codeanalyzer/review.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "FAIL: one narrating comment; mutations red; bench in band"
+        }
+      ],
+      "after": {
+        "status": "review 1 written",
+        "health": "fail",
+        "notes": "coder next"
+      }
     }
   ]
 }
