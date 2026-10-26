@@ -18,7 +18,8 @@ public partial class decider
         public static bool Internal => true;
 
         /// <summary>The key the decider is asked with — <c>%!llm.decider.setting.key%</c>; when none is saved, the
-        /// <c>TYPESAFE_API_KEY</c> environment variable's. Never shown.</summary>
+        /// <c>TYPESAFE_API_KEY</c> environment variable's. Hidden where its setting is written or dumped; a goal that
+        /// reads it and writes it out prints it.</summary>
         [Out, Store, Sensitive] public global::app.type.item.text.@this Key { get; set; }
             = System.Environment.GetEnvironmentVariable("TYPESAFE_API_KEY") ?? "";
 
