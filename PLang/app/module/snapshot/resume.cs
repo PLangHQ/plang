@@ -9,6 +9,10 @@ namespace app.module.snapshot;
 /// serializer). Read stays dumb; the type-driven rebuild is pulled here by
 /// declaring the type.
 ///
+/// <para>A run goes on only from a snapshot this app signed, as it was saved: one with no signature, one whose
+/// signature doesn't verify (a changed value, a moved view), or one signed by an identity that is not one of the app's
+/// own (another app's, or an archived one) is refused before anything is restored.</para>
+///
 /// <para>Resuming re-enters the captured CallStack position
 /// (<see cref="global::app.snapshot.@this.Resume"/>) — deterministic, no live LLM.</para>
 /// </summary>
@@ -19,14 +23,43 @@ public partial class resume : IContext
     [IsNotNull]
     public partial data.@this<global::app.snapshot.@this> Snapshot { get; init; }
 
-    /// <summary>Resumes the snapshot. A value that isn't one is the answer: the typed ask's own reason when it gave one,
-    /// else that it holds none (a text its reader reads as nothing) and the step that reads a snapshot from text.</summary>
+    /// <summary>Resumes the snapshot once its signature says this app saved it as it is. A value that isn't one is the
+    /// answer: the typed ask's own reason when it gave one, else that it holds none (a text its reader reads as nothing)
+    /// and the step that reads a snapshot from text.</summary>
     public async Task<data.@this> Start()
     {
+        if (await Signed() is { } refused) return refused;
         if (await Snapshot.Value() is { } snap) return await snap.Resume(Context);
         if (Snapshot.Error is { } error) return Context.Error(error);
         return Context.Error(new global::app.error.@this(
-            $"%{Snapshot.Name}% holds no snapshot: read one where it is kept, in text (`read file 'run.txt', write to %{Snapshot.Name}% as snapshot`)",
+            $"%{Snapshot.Name}% holds no snapshot: read one where it is kept, in a .plang file (`read file 'run.plang', write to %{Snapshot.Name}%`)",
             "NoSnapshot", 400));
+    }
+
+    // Why the snapshot can't be resumed, or null when this app signed it as it is.
+    private async Task<data.@this?> Signed()
+    {
+        // what the step gives, as it is now: a %variable% is the signed Data it holds
+        if ((await Snapshot.Follow(Context))?.Signature is not { } signature)
+            return Context.Error(new global::app.error.@this(
+                $"%{Snapshot.Name}% is not signed: a run goes on only from a snapshot this app saved (`save snapshot`), kept in a .plang file or a db row",
+                "SnapshotUnsigned", 403));
+
+        var verified = await new global::app.goal.step.action.@this(
+            new global::app.module.signing.verify(Context) { Data = Snapshot }, Context).Start(Context);
+        if (!verified.Success)
+            return Context.Error(new global::app.error.@this(
+                $"%{Snapshot.Name}%'s signature doesn't hold: it was changed after it was signed. A change made on purpose is signed again",
+                "SnapshotSignatureInvalid", 403) { list = verified.Error is { } why ? [why] : [] });
+
+        var (identities, missing) = Context.App.Code.Get<global::app.module.identity.code.IIdentity>();
+        if (identities == null) return Context.Error(missing!);
+        var listed = await identities.ListAsync(new global::app.module.identity.list(Context));
+        if (await listed.Value() is not { } own) return listed;
+        if (own.Items().Any(identity => string.Equals(identity.PublicKey, signature.Identity.ToString(), System.StringComparison.Ordinal)))
+            return null;
+        return Context.Error(new global::app.error.@this(
+            $"%{Snapshot.Name}% was signed by '{signature.Identity}', which is none of this app's identities: a snapshot goes on only in the app that saved it",
+            "SnapshotNotTheApps", 403));
     }
 }

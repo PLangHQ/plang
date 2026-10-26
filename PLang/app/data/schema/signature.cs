@@ -27,6 +27,7 @@ public sealed class signature : ISchemaReader
         // reconstruction the writer produced.
         var text = context.App.type.list[typeof(global::app.type.item.text.@this)];
         global::app.type.item.text.@this algorithm = new("ed25519", text), nonce = new("", text), identity = new("", text);
+        global::app.type.item.text.@this? view = null;
         System.DateTimeOffset created = default;
         System.DateTimeOffset? expires = null;
         // the hash's kind is what the layer says — none said, the signature is refused below, never a kind guessed
@@ -50,6 +51,7 @@ public sealed class signature : ISchemaReader
                 case "created": created = reader.DateTimeOffset(); break;
                 case "expires": expires = reader.Null() ? null : reader.DateTimeOffset(); break;
                 case "identity": identity = new(reader.String(), text); break;
+                case "view": view = new(reader.String(), text); break;
                 case "contracts":
                 {
                     reader.BeginArray();
@@ -91,8 +93,11 @@ public sealed class signature : ISchemaReader
                 $"a signature's hash is of a kind there is none of: '{hashAlgo}'", "SignatureInvalid", 400));
 
         // A signature read live off the wire is good for the signing setting's window after it was made; one read
-        // from plang's own store keeps only what its signer signed, and covers the value's stored form.
-        var stored = ctx.View == global::app.View.Store;
+        // from plang's own store keeps only what its signer signed, and covers the value's stored form. A run's state
+        // its signer marked so (the snapshot's view, inside the signed bytes) is at rest wherever it is carried; any
+        // other recorded view is judged by where it is read.
+        var stored = ctx.View == global::app.View.Store
+            || string.Equals(view?.ToString(), global::app.View.Snapshot.ToString(), System.StringComparison.OrdinalIgnoreCase);
         var datetime = context.App.type.list[typeof(global::app.type.item.datetime.@this)];
         var layer = new global::app.type.item.signature.@this(
             context.App.type.list[new global::app.type.@this("signature", algorithm.ToString()), context],
@@ -101,7 +106,7 @@ public sealed class signature : ISchemaReader
                 context.App.type.list[new global::app.type.@this("hash", hashKind.Name), context]), sig,
             expires is { } ex ? new global::app.type.item.datetime.@this(ex, datetime) : null, contracts,
             stored ? global::app.type.item.signature.Origin.Stored : global::app.type.item.signature.Origin.Live,
-            stored ? null : ctx.Window);
+            stored ? null : ctx.Window, view);
 
         // The OUTER read verifies the signature; a NESTED reconstruction (ctx.Verify == false) peels
         // without verifying — the inner Data is already covered by the outer signature, and an inner

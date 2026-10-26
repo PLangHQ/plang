@@ -10,13 +10,13 @@ public sealed partial class @this
     /// In text a snapshot is its own written form, so what a file or a db row holds reads back as it
     /// (<see cref="serializer.Reader"/>): its object of entries, each entry the Data it is with its type, in the program
     /// form a <c>.pr</c> is (goal's format). Content alone would lose what each entry is (a section reads back as a dict).
-    /// The root rides bare: no Data around it, unsigned, as plang's own store keeps it.
+    /// The root rides bare: no Data around it, unsigned, in the snapshot's own view (no secret in it).
     /// </summary>
     protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.item.text.Writer writer)
     {
         var context = writer.Context;
         using var ms = new System.IO.MemoryStream();
-        await context.App.type.list["goal"].kind.Encode(ms, context.Ok(this), context, global::app.View.Store);
+        await context.App.type.list["goal"].kind.Encode(ms, context.Ok(this), context, global::app.View.Snapshot);
         writer.String(System.Text.Encoding.UTF8.GetString(ms.ToArray()));
     }
 

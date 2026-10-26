@@ -10,6 +10,8 @@ namespace app;
 ///         <c>[Masked]</c> as <c>****</c>; a value used (rendered, resolved).</item>
 ///   <item><b>Debug</b> — a dump: every member, sensitive and masked ones as <c>****</c>; a value as written beside the
 ///         value it resolves to, with its type, or <c>not set</c>.</item>
+///   <item><b>Snapshot</b> — a run's state at rest: what Store keeps, with <c>[Sensitive]</c> members left out and a
+///         sensitive value written as null.</item>
 /// </list>
 /// A type with no Out/Store/Sensitive/Masked tag anywhere is transparent: every public member shows in Store and Out.
 /// </summary>
@@ -24,6 +26,9 @@ public abstract class View
     /// <summary>A dump.</summary>
     public static readonly View Debug = new debug();
 
+    /// <summary>A run's state at rest.</summary>
+    public static readonly View Snapshot = new snapshot();
+
     private View() { }
 
     /// <summary>Whether <paramref name="property"/> shows, on a type that is tag-aware (<paramref name="tagged"/>) or not.</summary>
@@ -32,8 +37,8 @@ public abstract class View
     /// <summary>Whether a shown <paramref name="property"/> writes <c>****</c> in place of its value.</summary>
     internal abstract bool Masks(System.Reflection.PropertyInfo property);
 
-    /// <summary>Characters nobody should see (a key, a password), as this view shows them: <c>****</c>.</summary>
-    internal virtual string Sensitive(string characters) => "****";
+    /// <summary>Characters nobody should see (a key, a password), written as this view shows them: <c>****</c>.</summary>
+    internal virtual void Sensitive(string characters, global::app.type.format.IWriter writer) => writer.String("****");
 
     /// <summary>The name <paramref name="record"/> shows under in this view, or none: a Data's name is plang's own store's
     /// (a server's binding label is not API surface).</summary>
@@ -122,7 +127,7 @@ public abstract class View
     private protected bool IsIgnored(System.Reflection.PropertyInfo property)
         => Is<System.Text.Json.Serialization.JsonIgnoreAttribute>(property) && !Is<OutAttribute>(property) && !Is<StoreAttribute>(property);
 
-    private sealed class store : View
+    private class store : View
     {
         internal override bool Shows(System.Reflection.PropertyInfo property, bool tagged)
             => !IsIgnored(property) && (!tagged || Is<StoreAttribute>(property));
@@ -130,7 +135,7 @@ public abstract class View
         // nothing is hidden from plang's own store
         internal override bool Masks(System.Reflection.PropertyInfo property) => false;
 
-        internal override string Sensitive(string characters) => characters;
+        internal override void Sensitive(string characters, global::app.type.format.IWriter writer) => writer.String(characters);
 
         internal override string? Name(global::app.data.@this record) => record.Name;
 
@@ -149,6 +154,22 @@ public abstract class View
         }
 
         public override string ToString() => "Store";
+    }
+
+    // what store keeps, but never a secret: a [Sensitive] member is left out and a sensitive value is null, so a resumed
+    // run asks again rather than going on with a fake value
+    private sealed class snapshot : store
+    {
+        internal override bool Shows(System.Reflection.PropertyInfo property, bool tagged)
+            => !Is<SensitiveAttribute>(property) && base.Shows(property, tagged);
+
+        internal override void Sensitive(string characters, global::app.type.format.IWriter writer) => writer.Null();
+
+        // a Data is named by where it is held (an entry's key): the name a reader gives it after (the variable it is read
+        // into) is no part of what was signed
+        internal override string? Name(global::app.data.@this record) => null;
+
+        public override string ToString() => "Snapshot";
     }
 
     private sealed class @out : View

@@ -5,14 +5,15 @@ one.
 
 ```plang
 - save snapshot, write to %snapshot%
-- save %snapshot% to file 'run.txt'
-… later, in a fresh app …
-- read file 'run.txt', write to %snapshot% as snapshot
+- save %snapshot% to file 'run.plang'
+… later, in a fresh app with the same identity …
+- read file 'run.plang', write to %snapshot%
 - resume %snapshot%
 ```
 
-`snapshot.save` answers the snapshot (a `Data<snapshot>`); keeping it is the developer's own step. `snapshot.resume`
-puts it back and goes on from where it was saved. Both verbs live in `PLang/app/module/snapshot/`.
+`snapshot.save` answers the snapshot (a `Data<snapshot>`), signed by the app; keeping it is the developer's own step.
+`snapshot.resume` checks the signature, puts it back and goes on from where it was saved. Both verbs live in
+`PLang/app/module/snapshot/`.
 
 ## Who takes part: `ISnapshot`
 
@@ -97,17 +98,39 @@ resuming goal then goes on once, after the resume. The resume's answer is the re
 A run saved by `save snapshot` stopped inside that action, so a resumed run goes on from the save itself: `save` answers
 again (a snapshot of the resumed run), then the steps after it run.
 
-A value that isn't a snapshot is answered: the typed ask's own reason when it gave one (a dict: "a snapshot is made from
-a snapshot or its text"), else `NoSnapshot` (400), naming the step that reads one.
+Before anything is restored, the resume checks what it was given (`module/snapshot/resume.cs`):
+
+- no signature: `SnapshotUnsigned` (403);
+- a signature that doesn't hold (a value changed after it was signed, a moved `view`): `SnapshotSignatureInvalid` (403),
+  holding verify's own error;
+- signed by an identity that is none of this app's non-archived ones (another app's, a revoked one):
+  `SnapshotNotTheApps` (403). A rotated default still opens the app's older snapshots.
+
+A signed value that isn't a snapshot is answered: the typed ask's own reason when it gave one (a dict: "a snapshot is
+made from a snapshot or its text"), else `NoSnapshot` (400), naming where one is kept.
+
+## Signed, in its own view
+
+`save` takes the state once: the walked snapshot is written in `View.Snapshot` (`View.cs`) and held as those bytes (a
+wire of type `snapshot`), then signed by the app's identity in that view. Whatever carries it later (a `.plang` file, a
+db row) carries exactly those bytes.
+
+`View.Snapshot` is Store's view with no secret in it: a `[Sensitive]` member is left out, a sensitive value is written as
+null (a resumed run asks again rather than going on with a fake value), and a Data's own name is not written (it is
+named by the key it is held under).
+
+A signature records the view it was hashed in (`view`, inside the signed bytes), and verify re-hashes in it. Only a
+recorded `snapshot` view is read at rest: no window, and its nonce is no replay, so one file can be resumed again and
+again. A signature recording `store` or `out` keeps the reader's rule: one that arrives over the wire meets the window
+and the replay check, whatever it was signed for. A signature made before signatures named their view reads as before.
 
 ## What isn't stored
 
 - **The app's mode** (test, build, run): it's how the app was started, the host's choice, not the program's state. A
   restore leaves the app as it was started.
 - **A one-time grant** ("y"): consent nobody gave in the run that would use it. A resumed run asks again.
-- **A sensitive value**: a variable holding one is left out, and a resumed run that needs it asks again. A `[Sensitive]`
-  member inside a value is not yet masked by the snapshot's write (a pinned red test,
-  `ASensitiveMember_IsNotInTheSnapshotsText`).
+- **A sensitive value**: a variable holding one is left out, a `[Sensitive]` member inside a value is left out, and a
+  sensitive value inside a container comes back null. A resumed run that needs one asks again.
 - **A binding's held call** (`_for`): it is read only while that call binds its parameters, before anything runs under
   the binding.
 - **What the app rebuilds from its files**: modules, goals, channels, the cache, types.
@@ -117,14 +140,13 @@ a snapshot or its text"), else `NoSnapshot` (400), naming the step that reads on
 
 ## In a file
 
-In text a snapshot is its own typed form (`snapshot/this.Wire.cs`): its entries, each the Data it is with its type. A
-file whose format is text keeps it as that, so `save %snapshot% to file 'run.txt'` writes it, and `read file 'run.txt',
-write to %snapshot% as snapshot` reads it back exactly through the snapshot's own reader. The read must say `as
-snapshot`: a step that doesn't gets text.
+A snapshot file is `.plang`, plang's own format: it keeps the whole Data, its signature included, and the read verifies
+it. `save %snapshot% to file 'run.plang'` and `read file 'run.plang', write to %snapshot%` are the whole road.
 
-A `.json` file holds a value's content in JSON, with no types, by that format's nature. A snapshot read back from one is
-plain dicts and can't resume. A file whose extension has no format (`.snapshot`) takes plain bytes, so a snapshot is
-refused there.
+In text a snapshot is its own typed form (`snapshot/this.Wire.cs`), written in the snapshot's view, so `read file
+'run.txt', write to %snapshot% as snapshot` still reads one back, but text keeps no signature: a resume refuses it.
+A `.json` file holds a value's content with no types; a file whose extension has no format takes plain bytes. Neither
+holds a snapshot that can resume.
 
 ## Templates
 
@@ -138,7 +160,7 @@ That gap is in the backlog.
 
 ## Open
 
-- What a snapshot's text looks like to a reader: open (Ingi's question).
+- Re-signing a snapshot after a hand edit or a fixed goal (`sign snapshot 'run.plang'`): stage 11.
 - Resuming a loop mid-items, and any action that holds a running call (a tool call, an event handler): open (question
   3). Today a resume under one runs that action again from its start.
 - Which saves are refused because they can't come back exactly: open (question 4).

@@ -81,7 +81,7 @@ public partial class @this
     /// </summary>
     [JsonIgnore]
     [LlmIgnore]
-    public global::app.type.item.signature.@this? Signature { get; private init; }
+    public global::app.type.item.signature.@this? Signature { get; private protected init; }
 
     /// <summary>Where this Data sits under its parents (<c>config.items[0]</c>) — its navigation's own bookkeeping,
     /// never a plang fact: <c>!path</c> is a reference's location.</summary>
@@ -634,6 +634,8 @@ public partial class @this
             Returned = Returned,
             ReturnDepth = ReturnDepth,
             Attachment = Attachment,
+            // the same binding: the signature it arrived in is the typed view's too (verify re-hashes what it holds)
+            Signature = Signature,
         };
         clone._item = answer ?? Empty;
         // A declined ask lands its reason on this binding (asking.Fail) and
@@ -935,6 +937,7 @@ public class @this<T> : @this
         var copy = new @this<T>(source.Name, context: source.Context)
         {
             Error = source.Error,
+            Signature = source.Signature,
         };
         // Hold the source's instance whole — no re-Build. A re-Build would re-resolve
         // a %ref%/variable value (breaking variable.set's store-as-is) and would

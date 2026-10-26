@@ -1,8 +1,7 @@
-/ Writes run.txt beside this goal: a run stopped at its save inside Sub, for FreshAppGoesOn.test.goal to resume
-/ in an app of its own. Not a test. Run it again when this goal or Sub changes (the resume then answers 409, the goal's
-/ hash changed), from test/: plang plan/snapshot/module/snapshot/resume/FreshAppGoesOn/Record.goal
+/ The run FreshAppGoesOn.test.goal resumes: Record calls Sub, Sub saves the run, and Record keeps the snapshot in
+/ workspace/run.plang (a .plang file holds it signed, as the save signed it).
 Record
-- set %where% = 'run.txt'
+- set %where% = 'workspace/run.plang'
 - set %name% = "Alice"
 - set %count% = 0
 - call Sub city="Reykjavik"

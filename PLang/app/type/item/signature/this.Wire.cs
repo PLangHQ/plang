@@ -36,6 +36,9 @@ public sealed partial class @this
             if (_expires is { } e) w.WriteString("expires", e.Value.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
             else w.WriteNull("expires");
             w.WriteString("identity", Identity.ToString());
+            // the view it was hashed in is signed too, so a reader can't move it to escape the window; a signature made
+            // before signatures named it signs as it did
+            if (View is { } view) w.WriteString("view", view.ToString());
             w.WriteStartArray("contracts");
             foreach (var c in ContractStrings()) w.WriteStringValue(c);
             w.WriteEndArray();

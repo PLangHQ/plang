@@ -32,7 +32,8 @@ public class Ed25519 : ISigning
         // The data as the view it is signed in takes it, settled once — plang's own store as written, anything that
         // crosses a copy of what it names — and the signature hashes and holds that one Data: the variable changing
         // afterwards changes nothing it holds.
-        var view = action.StoreView != null && (await action.StoreView.Value())?.Value == true ? global::app.View.Store : global::app.View.Out;
+        var view = action.View
+            ?? (action.StoreView != null && (await action.StoreView.Value())?.Value == true ? global::app.View.Store : global::app.View.Out);
         global::app.data.@this data;
         try { data = await action.Data!.Settle(view); }
         catch (global::app.error.AppException exception) { return action.Context.Error(exception.Error); }
@@ -60,7 +61,9 @@ public class Ed25519 : ISigning
             hash: hash,
             signature: new global::app.type.item.binary.@this(Array.Empty<byte>(), action.Context.App.type.list[typeof(global::app.type.item.binary.@this)]),
             expires: expires is { } e ? new global::app.type.item.datetime.@this(e, datetime) : null,
-            contracts: contracts);
+            contracts: contracts,
+            // the view it was hashed in, signed with it: verify re-hashes there, whatever carries it
+            view: new global::app.type.item.text.@this(view.ToString().ToLowerInvariant(), text));
 
         try
         {
@@ -106,11 +109,10 @@ public class Ed25519 : ISigning
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError(
                 "The signed hash names no kind — it can't be checked", "DataHashMismatch", 400));
 
-        // Re-hash in the view the data was signed in, by the kind it was signed with: one read from plang's own store
-        // is a property-bag carrying every [Store] field; hashing it in Out view (a subset) would diverge from the
-        // sign-time Store hash.
-        var view = signature.Origin.Value == global::app.type.item.signature.Origin.Stored ? global::app.View.Store : global::app.View.Out;
-        if (!(await signature.Over(bearer).Value.Digest(view, kind, action.Context)).DigestEquals(storedHash))
+        // Re-hash in the view the data was signed in, by the kind it was signed with: the view the signature records, or,
+        // for one that records none, the view its origin says (a store read is a property-bag carrying every [Store]
+        // field; hashing it in Out, a subset, would diverge).
+        if (!(await signature.Over(bearer).Value.Digest(signature.Hashed, kind, action.Context)).DigestEquals(storedHash))
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
 
         // 4. Signature verification — over the signature's canonical signing bytes.

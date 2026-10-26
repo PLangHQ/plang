@@ -26,6 +26,10 @@ public partial class sign : IContext
     /// </summary>
     public partial data.@this<global::app.type.item.@bool.@this>? StoreView { get; init; }
 
+    /// <summary>The view the data is hashed in, named from C# by a signer that knows it (a snapshot signs in its own);
+    /// no step gives it. Null: the view <see cref="StoreView"/> says.</summary>
+    internal global::app.View? View { get; init; }
+
     [Code]
     public partial ISigning Signer { get; }
 

@@ -1,14 +1,15 @@
-/ A run saved inside Sub (run.txt, written by Record.goal) resumed in this test's own app goes on from its save:
-/ the save answers again, Sub's next step reads the context's %name% and its frame's %city%, and Record goes on after
-/ the call. The step before the save doesn't run again (%count% stays 1). The resumed Record writes its snapshot to
-/ %where%, which this test points into its own workspace, so the committed run.txt stays as it is.
+/ A run saved inside Sub, kept in a .plang file (signed by this app) and read back, goes on from its save: the save
+/ answers again, Sub's next step reads the context's %name% and its frame's %city%, and Record goes on after the call.
+/ The step before the save doesn't run again (%count% comes back 1). What the first run set after the save is cleared
+/ first, so only the resumed run can set it again.
 Start
-- read file 'run.txt', write to %snapshot% as snapshot
-- set %snapshot.actor.list.user.context.variable.where% = 'workspace/rerun.txt'
+- call Record
+- read file 'workspace/run.plang', write to %snapshot%
+- set %seen% = "not yet"
+- set %unwound% = "not yet"
+- set %count% = 99
 - resume %snapshot%
 - assert %seen% equals "Alice in Reykjavik"
 - assert %unwound% equals "yes"
 - assert %count% equals 1
-- read file 'workspace/rerun.txt', write to %rerun%
-- assert %rerun% is not empty
-- delete file 'workspace/rerun.txt'
+- delete file 'workspace/run.plang'
