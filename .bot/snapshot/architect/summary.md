@@ -1,0 +1,7 @@
+# snapshot — architect's log
+
+A run's exact state, saved to disk or a db and run later (Ingi, 2026-10-26). Cut from runtime2 d72538402 (windows' merge), on Ingi's standing go ("merge the branch when done and start on snapshot"); this branch's merge waits for Ingi. The plan is `plan/start.md`; the coder places it at `test/plan/snapshot/`, replacing the 2026-10-02 plan there. Newest first; numbered from 1.
+
+| # | what | rule | detail | who | waits on |
+|---|---|---|---|---|---|
+| 1 | **The plan, six stages** (`plan/start.md`), from Ingi's decisions of 2026-10-26 and a survey of today's code | Ingi's decisions; one door | 1 `ISnapshot` is `Store` and `Start`, and `snapshot.save` walks the app tree (the app's list and hand-named sections go; the five participants are Code's providers, Variables, Kept, the app's mode, the call stack); 2 the call stack stored as it lives (root, children, current as a reference, each frame with its own variables) and started exactly (the second chain and its recursion go); 3 one door from text to a snapshot (the six `SnapshotWireTests` reds; the wire helpers go); 4 never a `[Sensitive]` value (the Store view writes them whole today); 5 `snapshot.save` and plang proofs in a fresh app; 6 the two stale docs rewritten. Out: callbacks (later), the app snapshot to a file, the error's diff history as its own type. Open for Ingi, not blocking: does `resume` stay `resume` or become `start`? | coder | its read |

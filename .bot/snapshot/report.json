@@ -1,0 +1,19 @@
+{
+  "branch": "snapshot",
+  "sessions": [
+    {
+      "id": "e4b8c2a7-9d1f-4a3e-b5c6-7f2d0e8a1b93",
+      "bot": "architect",
+      "timestamp_start": "2026-10-26T04:30:00Z",
+      "timestamp_end": "2026-10-26T04:40:00Z",
+      "intent": "Cut snapshot from runtime2 after windows and plan it from Ingi's decisions and a survey of the code.",
+      "before": {"assumptions": "ISnapshot has five participants on a fixed list; text never becomes a snapshot through the type; the Store view writes Sensitive values whole.", "risk": "Restoring the exact call stack touches the locked call memory; the plan's 2026-10-02 version is stale."},
+      "plan": ".bot/snapshot/architect/plan/start.md",
+      "actions": [
+        {"paths": ["PLang/app/snapshot/", "PLang/app/this.Snapshot.cs", "PLang/app/call/list/this.Snapshot.cs", "PLang/app/type/item/variable/list/this.Snapshot.cs"], "type": "review", "category": "code", "confidence": "high", "context": "A survey (Explore agent) mapped every participant, the resume path and the six failing wire tests."},
+        {"paths": [".bot/snapshot/architect/plan/start.md", ".bot/snapshot/architect/summary.md"], "type": "create", "category": "doc", "confidence": "medium", "context": "Six stages; callbacks and the app snapshot out."}
+      ],
+      "after": {"status": "plan sent to the coder", "health": "runtime2 at d72538402", "notes": "The merge waits for Ingi."}
+    }
+  ]
+}
