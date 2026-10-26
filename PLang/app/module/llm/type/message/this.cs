@@ -26,8 +26,10 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     [Store]
     public string? ToolCallId { get; set; }
 
-    /// <summary>For role=assistant: tools the LLM wants to call.</summary>
-    public List<ToolCall>? ToolCalls { get; set; }
+    /// <summary>For role=assistant: tools the LLM wants to call. Stored, so a conversation saved mid-tool-call keeps
+    /// them.</summary>
+    [Store]
+    public List<tool.call.@this>? ToolCalls { get; set; }
 
     /// <summary>A message holds what a step quoted by its content's own characters, never only by the escaped form a
     /// writer gives it.</summary>

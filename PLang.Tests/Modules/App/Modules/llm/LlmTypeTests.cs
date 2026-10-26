@@ -92,7 +92,7 @@ public class LlmTypeTests
     [Test]
     public async Task ToolCall_DefaultProperties_AreEmptyStrings()
     {
-        var tc = new ToolCall();
+        var tc = new global::app.module.llm.type.tool.call.@this();
         await Assert.That(tc.Id).IsEqualTo("");
         await Assert.That(tc.Name).IsEqualTo("");
         await Assert.That(tc.Arguments).IsEqualTo("");

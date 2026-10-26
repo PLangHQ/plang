@@ -42,6 +42,11 @@ public class SnapshotThroughTextTests
         answer.Properties["Messages"] = new List<LlmMessage>
         {
             new() { Role = "user", Content = "what's the weather?" },
+            new()
+            {
+                Role = "assistant",
+                ToolCalls = [new() { Id = "call_42", Name = "GetWeather", Arguments = "{\"city\":\"Reykjavik\"}" }],
+            },
             new() { Role = "tool", Content = "sunny", ToolCallId = "call_42" },
         };
         await context.Variable.Set("answer", answer);
@@ -53,6 +58,9 @@ public class SnapshotThroughTextTests
 
         var history = (await (await into.Variable.Get("answer")).Properties.Value("Messages") as global::app.type.item.@this)?.Clr<List<LlmMessage>>();
         await Assert.That(history!.Single(message => message.Role == "tool").ToolCallId).IsEqualTo("call_42");
+        // the assistant's calls come back whole
+        var call = history.Single(message => message.Role == "assistant").ToolCalls!.Single();
+        await Assert.That($"{call.Id}|{call.Name}|{call.Arguments}").IsEqualTo("call_42|GetWeather|{\"city\":\"Reykjavik\"}");
     }
 
     [Test]
