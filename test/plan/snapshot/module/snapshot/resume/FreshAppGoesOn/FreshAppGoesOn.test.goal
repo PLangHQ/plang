@@ -3,7 +3,7 @@
 / the call. The step before the save doesn't run again (%count% stays 1). The resumed Record writes its snapshot to
 / %where%, which this test points into its own workspace, so the committed run.json stays as it is.
 Start
-- read file 'run.json', write to %snapshot%
+- read file 'run.json', write to %snapshot% as snapshot
 - set %snapshot.actor.list.user.context.variable.where% = 'workspace/rerun.json'
 - resume %snapshot%
 - assert %seen% equals "Alice in Reykjavik"
