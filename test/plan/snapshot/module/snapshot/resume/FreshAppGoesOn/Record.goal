@@ -7,4 +7,4 @@ Record
 - set %count% = 0
 - call Sub city="Reykjavik"
 - set %unwound% = "yes"
-- save %snapshot% to file %where%
+- save %run% to file %where%

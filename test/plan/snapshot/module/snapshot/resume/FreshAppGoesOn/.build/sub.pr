@@ -119,7 +119,7 @@
     },
     {
       "index": 1,
-      "text": "save snapshot, write to %snapshot%",
+      "text": "save snapshot, write to %run%",
       "line": {
         "number": 4,
         "indent": 0
@@ -139,13 +139,13 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%snapshot%",
+              "value": "%run%",
               "variable": [
                 {
-                  "text": "%snapshot%",
+                  "text": "%run%",
                   "code": [
                     {
-                      "variable": "snapshot"
+                      "variable": "run"
                     }
                   ]
                 }
@@ -253,5 +253,5 @@
   ],
   "visibility": "Public",
   "file": "Sub.goal",
-  "hash": "a03b550afa9c8e8799704133d0221585a7d100fd31364749f1f537df4239d715"
+  "hash": "6c662a0c6bbfc1761734b5970d38c62920343d4f5c0292318ab640cf4b7913ef"
 }

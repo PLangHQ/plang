@@ -1,5 +1,5 @@
 / The goal the run is saved in: %city% is its call's parameter, held in its own frame.
 Sub
 - set %count% = %count% + 1
-- save snapshot, write to %snapshot%
+- save snapshot, write to %run%
 - set %seen% = "%name% in %city%"

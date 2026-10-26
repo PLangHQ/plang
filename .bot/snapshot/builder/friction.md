@@ -14,5 +14,9 @@ Architect's rephrase `save %snapshot% to file %where%`: 1 of 3 builds landed fil
 no entry", the decider answered no action; or snapshot.save at 0.90). With the target `run.json`: 0 of 5 landed
 (0.90–0.92 snapshot.save, or "has no entry"). Record.pr is therefore not committed.
 
+WORKAROUND (architect, snapshot 34): rename the variable. With `%snapshot%` → `%run%` in Record and Sub, `save %run% to
+file %where%` built file.save in 3 of 3 builds. The gap stays open: a plang developer will write
+`save %snapshot% to file %x%`, and the module-named variable still pulls snapshot.save.
+
 WANT: the fix belongs to the build, in its own branch: the variable's known type, or the step's destination, fed into the
 module question (see the common-action pre-emption note). Not a teaching edit.
