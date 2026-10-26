@@ -44,7 +44,7 @@ public sealed class @this : screen.@this
     {
         // the socket lives in the app's .run folder; programs find it through XDG_RUNTIME_DIR
         var folder = FilePath.Resolve("/.run", context);
-        await folder.Mkdir(context);
+        if (await folder.Mkdir(context) is { Success: false } made) return global::app.data.@this<screen.@this>.From(made);
         var socket = FilePath.Resolve("/.run/" + SocketName, context);
         await socket.Delete(recursive: false, context);   // a socket left by an earlier run; none there is NotFound, and fine
 
