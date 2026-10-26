@@ -1,0 +1,7 @@
+# windows — architect's log
+
+A path plang writes uses `/` on every OS, a user's event sees only its app's goals, and the C# suite passes on Windows (Ingi: bugs 52 "2. yes"; 2026-10-26 "2. yes"). Cut from runtime2 b4a549d1c. The plan's draft is `plan/start.md` + `plan/start.goal`; the coder places it at `test/plan/windows/`. Newest first; numbered from 1.
+
+| # | what | rule | detail | who | waits on |
+|---|---|---|---|---|---|
+| 1 | **The plan, seven stages** (`plan/start.md`, `plan/start.goal`) | Ingi's two yeses | From the 100 Windows failures (`/shared/wintest/failures-2.md`): 1 a user's event sees only the app's goals (red on Linux, first); 2 a path's plang form is plang's, `/` math in one place (`file/this.Derivation.cs:35–54` derives `Raw` with the OS's functions); 3 CR LF goal files read as lines, numbers read in the invariant culture (Ingi's Icelandic machine: `3.14`), `.gitattributes` LF; 4 permissions on Windows (grants not found: cause untraced); 5 tests that assume Linux say what they mean on each OS (by attribute, never runtime code); 6 a child's stdin newline, the restore race, security's case-blind probe; 7 the host's Windows run (the sweep, a real Draw, the real window). Out: the six snapshot reds. | coder | its read |

@@ -1,0 +1,20 @@
+/ windows: a path plang writes uses / on every OS, a user's event sees only its app's goals, and the C# suite passes
+/ on Windows. This goal is the plan's index and its proof: each comment a behaviour, the test under it proves it. The
+/ text is start.md.
+Start
+- call Stage1
+- call Stage2
+- call Stage3
+
+Stage1
+/ a user's "before each goal" fires for the app's own goals only, never plang's system goals — plang test
+/ /plan/windows/app/event/EachGoalIsTheAppsOwn
+- call /plan/windows/app/event/EachGoalIsTheAppsOwn
+
+Stage2
+/ a path's plang form is written with / on every OS: Combine, Parent, WithExtension, Relative and a goal's .pr — C#
+/ test PlangFormTests (and the Windows run)
+
+Stage3
+/ a .goal with CR LF line ends reads as its lines — C# test (the goal reader)
+/ a number in text reads in the invariant culture, whatever the machine's — C# test with the culture set to is-IS

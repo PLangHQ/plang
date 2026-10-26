@@ -1,0 +1,19 @@
+{
+  "branch": "windows",
+  "sessions": [
+    {
+      "id": "c7d2e9a1-4b3f-4e8a-b6c5-2f1d8e7a9b04",
+      "bot": "architect",
+      "timestamp_start": "2026-10-26T00:40:00Z",
+      "timestamp_end": "2026-10-26T01:05:00Z",
+      "intent": "Cut windows from runtime2 and plan it from the 100 Windows failures, with Ingi's events yes.",
+      "before": {"assumptions": "Most failures share a few causes; the path's plang form is derived with OS functions.", "risk": "Permissions failing on Windows may be a real fail-closed bug; Windows-only reds can't be run on Linux."},
+      "plan": ".bot/windows/architect/plan/start.md",
+      "actions": [
+        {"paths": ["/shared/wintest/failures-2.md", "PLang/app/type/item/path/file/this.cs", "PLang/app/type/item/path/file/this.Derivation.cs"], "type": "review", "category": "code", "confidence": "medium", "context": "Sorted the 100 failures by cause; found Raw derived by PathHelper (OS separators)."},
+        {"paths": [".bot/windows/architect/plan/start.md", ".bot/windows/architect/plan/start.goal", ".bot/windows/architect/summary.md"], "type": "create", "category": "doc", "confidence": "medium", "context": "Seven stages; events first (Linux-red); the culture bug is real on any non-English machine."}
+      ],
+      "after": {"status": "plan drafted; sent to the coder", "health": "runtime2 at b4a549d1c", "notes": "The host's step 4 (the real window) was never reported; asked again in stage 7."}
+    }
+  ]
+}
