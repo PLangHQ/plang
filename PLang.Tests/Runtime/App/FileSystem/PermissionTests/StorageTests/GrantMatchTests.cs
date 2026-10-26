@@ -42,6 +42,17 @@ public class GrantMatchTests
     [Test, RunOn(TUnit.Core.Enums.OS.Windows)] public async Task OnWindows_AnExactGrant_IgnoresCase()
         => await Assert.That(Allows(@"C:\Docs\a.txt", MatchMode.exact, @"c:\docs\A.TXT")).IsTrue();
 
+    // a URL's path counts case on every OS
+    [Test] public async Task AUrlGrant_KeepsCase()
+    {
+        await Assert.That(Allows("https://x.com/Admin", MatchMode.exact, "https://x.com/admin")).IsFalse();
+        await Assert.That(Allows("https://x.com/Admin/*", MatchMode.glob, "https://x.com/admin/a")).IsFalse();
+    }
+
+    // a glob compares as an exact grant does: on a case-blind disk, case aside
+    [Test, RunOn(TUnit.Core.Enums.OS.Windows)] public async Task OnWindows_AGlobGrant_IgnoresCase()
+        => await Assert.That(Allows(@"C:\Docs\*.txt", MatchMode.glob, @"c:\docs\A.TXT")).IsTrue();
+
     [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows | TUnit.Core.Enums.OS.MacOs)] public async Task OnLinux_AnExactGrant_KeepsCase()
         => await Assert.That(Allows("/docs/a.txt", MatchMode.exact, "/Docs/a.txt")).IsFalse();
 }

@@ -92,14 +92,20 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         && PathMatches(request.Path)
         && request.Verbs.IsSubsetOf(Verbs);
 
-    // An exact grant compares as the path does (path.Holds' one rule: case aside where the OS's disk is), so it is never
-    // stricter than the containment the gate asks.
+    // A grant compares as its place does, exact or glob alike: a file's place as the OS's disk names it (path.Holds' one
+    // rule, case aside where the disk is), so it is never stricter than the containment the gate asks; any other
+    // scheme's (a URL's path counts case) as written.
     private bool PathMatches(string requestPath) => Match switch
     {
-        Match.exact => string.Equals(Path, requestPath, global::app.type.item.path.@this.RootComparison),
-        Match.glob  => GlobMatches(Path, requestPath),
+        Match.exact => string.Equals(Path, requestPath, Comparison),
+        Match.glob  => GlobMatches(Path, requestPath, Comparison == StringComparison.OrdinalIgnoreCase),
         _ => false,
     };
+
+    private StringComparison Comparison
+        => global::app.type.item.path.scheme.@this.ParseScheme(Path) is "" or "file"
+            ? global::app.type.item.path.@this.RootComparison
+            : StringComparison.Ordinal;
 
     /// <summary>
     /// Glob match over the canonical-form string. Works uniformly for file
@@ -109,7 +115,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// segment; <c>**</c> matches across segments; <c>?</c> is a single character of a segment. A segment ends at
     /// each of the OS's separators (<c>/</c> on Linux; <c>\</c> and <c>/</c> on Windows).
     /// </summary>
-    private static bool GlobMatches(string pattern, string candidate)
+    private static bool GlobMatches(string pattern, string candidate, bool ignoreCase)
     {
         // one character of a segment: anything but the OS's separators
         var inAPart = "[^" + Regex.Escape(global::app.Utils.PathHelper.DirectorySeparatorChar.ToString())
@@ -141,7 +147,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         }
         rx.Append('$');
         // every character but the wildcards is escaped, so the glob's regex is always sound
-        return Regex.IsMatch(candidate, rx.ToString());
+        return Regex.IsMatch(candidate, rx.ToString(), ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None);
     }
 
     /// <summary>A grant writes its own form in every view.</summary>
