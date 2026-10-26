@@ -44,6 +44,30 @@ public class DepthTests : System.IAsyncDisposable
         await Assert.That(written.Error.Message).Contains("64");
     }
 
+    // A slice already written (a wire relayed byte-identical) is pasted whole: its own nesting counts where it lands.
+    private object Pasted(int levels)
+    {
+        var slice = new string('[', levels) + "1" + new string(']', levels);
+        var plang = (global::app.type.item.wire.kind.plang.@this)app.type.list[typeof(global::app.type.item.wire.@this)].kind["plang"]!;
+        var wire = new global::app.type.item.wire.@this(slice, app.type.list[typeof(global::app.type.item.list.@this)], plang);
+        return new List<object?> { new List<object?> { wire } };
+    }
+
+    [Test]
+    public async Task AWirePastedUnderTwoLevels_CountsItsOwnDepth()
+    {
+        var context = app.actor.list.User.Context;
+        var json = app.type.list.Mime("application/json");
+
+        using (var fits = new MemoryStream())
+            await (await json.Encode(fits, new global::app.data.@this("x", Pasted(62), context: context), context, global::app.View.Out)).IsSuccess();
+
+        using var deep = new MemoryStream();
+        var written = await json.Encode(deep, new global::app.data.@this("x", Pasted(63), context: context), context, global::app.View.Out);
+        await written.IsFailure();
+        await Assert.That(written.Error!.Key).IsEqualTo("ValueTooDeep");
+    }
+
     [Test]
     public async Task APlangWriteOfAValueTooDeep_IsRefused()
     {

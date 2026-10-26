@@ -43,8 +43,12 @@ public sealed class Writer : IWriter
     public void Float(float value) => _writer.WriteNumberValue(value);
     public void Double(double value) => _writer.WriteNumberValue(value);
     public void String(string value) => _writer.WriteStringValue(value);
-    // Verbatim — raw json (object/number) rides inline, unquoted.
-    public void Raw(string value) => _writer.WriteRawValue(value);
+    // Verbatim — raw json (object/number) rides inline, unquoted; its own nesting counts where it lands.
+    public void Raw(string value)
+    {
+        Deeper(Nesting(value));
+        _writer.WriteRawValue(value);
+    }
     public void DateTime(System.DateTime value) => _writer.WriteStringValue(value);
     public void DateTimeOffset(System.DateTimeOffset value) => _writer.WriteStringValue(value);
     public void TimeSpan(System.TimeSpan value) => _writer.WriteStringValue(value.ToString("c"));
@@ -75,12 +79,36 @@ public sealed class Writer : IWriter
     // deeper than that is refused here, where it is written, never sent for a reader to fail on.
     private const int Depth = 64;
 
-    // One level further in, or why not.
-    private void Deeper()
+    // So many levels further in (one, for an object or array begun here), or why not.
+    private void Deeper(int levels = 1)
     {
-        if (_writer.CurrentDepth >= Depth)
+        if (_writer.CurrentDepth + levels > Depth)
             throw new global::app.error.AppException(new global::app.error.@this(
                 $"a value nested deeper than {Depth} levels can't be written: plang's readers read {Depth} levels", "ValueTooDeep", 400));
+    }
+
+    // How deep the objects and arrays in a json slice go (a string's brackets are its characters, not levels).
+    private int Nesting(string json)
+    {
+        int depth = 0, deepest = 0;
+        var quoted = false;
+        for (var i = 0; i < json.Length; i++)
+        {
+            var c = json[i];
+            if (quoted)
+            {
+                if (c == '\\') i++;
+                else if (c == '"') quoted = false;
+                continue;
+            }
+            switch (c)
+            {
+                case '"': quoted = true; break;
+                case '{' or '[': deepest = System.Math.Max(deepest, ++depth); break;
+                case '}' or ']': depth--; break;
+            }
+        }
+        return deepest;
     }
     public void Name(string name) => _writer.WritePropertyName(name);
     public void EndObject() => _writer.WriteEndObject();
