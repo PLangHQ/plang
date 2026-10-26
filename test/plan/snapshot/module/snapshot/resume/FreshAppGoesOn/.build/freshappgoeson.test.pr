@@ -1,0 +1,451 @@
+{
+  "name": "Start",
+  "comment": "A run saved inside Sub (run.snapshot, written by Record.goal) resumed in this test's own app goes on from its save:\nthe save answers again, Sub's next step reads the context's %name% and its frame's %city%, and Record goes on after\nthe call. The step before the save doesn't run again (%count% stays 1). The resumed Record writes its snapshot to\n%where%, which this test points into its own workspace, so the committed run.snapshot stays as it is.",
+  "step": [
+    {
+      "index": 0,
+      "text": "read file 'run.snapshot', write to %snapshot%",
+      "line": {
+        "number": 6,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "run.snapshot"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%snapshot%",
+              "variable": [
+                {
+                  "text": "%snapshot%",
+                  "code": [
+                    {
+                      "variable": "snapshot"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %snapshot.actor.list.user.context.variable.where% = 'workspace/rerun.snapshot'",
+      "line": {
+        "number": 7,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%snapshot.actor.list.user.context.variable.where%",
+              "variable": [
+                {
+                  "text": "%snapshot.actor.list.user.context.variable.where%",
+                  "code": [
+                    {
+                      "variable": "snapshot"
+                    },
+                    {
+                      "property": "actor"
+                    },
+                    {
+                      "property": "list"
+                    },
+                    {
+                      "property": "user"
+                    },
+                    {
+                      "property": "context"
+                    },
+                    {
+                      "property": "variable"
+                    },
+                    {
+                      "property": "where"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "workspace/rerun.snapshot"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "resume %snapshot%",
+      "line": {
+        "number": 8,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "snapshot",
+          "name": "resume",
+          "property": [
+            {
+              "name": "Snapshot",
+              "type": {
+                "name": "snapshot",
+                "template": "plang"
+              },
+              "value": "%snapshot%",
+              "variable": [
+                {
+                  "text": "%snapshot%",
+                  "code": [
+                    {
+                      "variable": "snapshot"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 2 uses snapshot.resume, which the decider was not sure of (0.96)"
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %seen% equals \"Alice in Reykjavik\"",
+      "line": {
+        "number": 9,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "Alice in Reykjavik"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%seen%",
+              "variable": [
+                {
+                  "text": "%seen%",
+                  "code": [
+                    {
+                      "variable": "seen"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %unwound% equals \"yes\"",
+      "line": {
+        "number": 10,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "yes"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%unwound%",
+              "variable": [
+                {
+                  "text": "%unwound%",
+                  "code": [
+                    {
+                      "variable": "unwound"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "assert %count% equals 1",
+      "line": {
+        "number": 11,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%count%",
+              "variable": [
+                {
+                  "text": "%count%",
+                  "code": [
+                    {
+                      "variable": "count"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "read file 'workspace/rerun.snapshot', write to %rerun%",
+      "line": {
+        "number": 12,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "workspace/rerun.snapshot"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%rerun%",
+              "variable": [
+                {
+                  "text": "%rerun%",
+                  "code": [
+                    {
+                      "variable": "rerun"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "text": "assert %rerun% is not empty",
+      "line": {
+        "number": 13,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%rerun%",
+              "variable": [
+                {
+                  "text": "%rerun%",
+                  "code": [
+                    {
+                      "variable": "rerun"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "text": "delete file 'workspace/rerun.snapshot'",
+      "line": {
+        "number": 14,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "delete",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "workspace/rerun.snapshot"
+            }
+          ],
+          "default": [
+            {
+              "name": "recursive",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "visibility": "Public",
+  "file": "FreshAppGoesOn.test.goal",
+  "hash": "f90fba17ed031b007dc337535af6c49ee2af9612a535146ec3ee7b5c2c57e929"
+}
