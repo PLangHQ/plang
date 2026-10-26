@@ -13,7 +13,7 @@ A line it can't read is refused with `ArgumentRefused` (400), the error naming t
 - **A mode word turned off while its setting is written** (`--debug=false --debug.setting.goal=Start`): refused, naming both.
 - **A second goal.** The line names one goal; another bare argument is refused (`x=…` for a value, `--x=…` for a setting).
 - **A setting's path written as the goal** (`debug.setting.goal`): refused, with `--debug.setting.goal=…`.
-- **One name twice in different case** (`--Build.setting.cache=skip --build.setting.cache=none`): refused. The same spelling twice keeps the last.
+- **One name twice in different case** (`--Build.setting.cache=skip --build.setting.cache=use`): refused. The same spelling twice keeps the last.
 
 A path seeded from the line (`%path%`) comes from `app.filesystem.root`, the landed root, never the raw working folder.
 

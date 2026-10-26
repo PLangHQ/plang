@@ -155,29 +155,30 @@ The report is written under `.test/` at the app root — this path is stable reg
 
 ### `.test/results.json` (default)
 
+An array with one entry per test. A failed test also carries its `error`; a passed one does not:
+
 ```json
-{
-  "summary": { "Pass": 2, "Fail": 1, "Timeout": 0, "Stale": 0, "Skipped": 0, "Ready": 0 },
-  "builderVersion": "0.2.0",
-  "runs": [
-    {
-      "path": "Examples/MathIsSane.test.goal",
-      "entryGoal": "MathIsSane",
-      "status": "Fail",
-      "durationMs": 4.1,
-      "goalHash": "a1b2…",
-      "builderVersion": "0.2.0",
-      "tags": ["math"],
-      "error": "assert.equals failed",
-      "expected": 6,
-      "actual": 5,
-      "variables": { "a": 2, "b": 3, "sum": 5 }
-    }
-  ],
-  "branchCoverage": {
-    "Examples/MathIsSane.test.goal:4": { "declared": ["if","else"], "observed": ["if"] }
+[
+  {
+    "name": "BareLiteralJudgedByForm",
+    "path": "/app/type/item/BareLiteralJudgedByForm.test.goal",
+    "hash": "3e4d5dc8…",
+    "status": "Fail",
+    "duration": "75.7883ms",
+    "error": {
+      "id": "680183f618c4",
+      "message": "null — Expected: \"date\", Actual: \"text\"",
+      "key": "AssertionFailed",
+      "status": 400,
+      "createdUtc": "2026-10-26T01:34:38.26883Z"
+    },
+    "stdout": "",
+    "timings": [
+      { "index": 0, "text": "set %birthday% = \"2026-01-01\"", "elapsed": "13.0711ms" },
+      { "index": 1, "text": "assert %birthday!type.name% equals \"date\"", "elapsed": "37.6644ms" }
+    ]
   }
-}
+]
 ```
 
 ### `.test/junit.xml` (when `format: "junit"`)
