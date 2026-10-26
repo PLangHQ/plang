@@ -59,7 +59,9 @@ public class PathAuthorizeTests
         var path = app.actor.list.User.Context.File("/p");
 
         // Pre-seed a grant covering the request.
-        var grant = new PermissionRecord(app.actor.list.User.Name, "/p", global::app.type.item.permission.@this.AllVerbs, MatchMode.exact, app.type.list[typeof(PermissionRecord)]);
+        // a grant is on the place as the OS names it
+        var grant = new PermissionRecord(app.actor.list.User.Name, path.Location(app.actor.list.User.Context.Filesystem)!.Absolute,
+            global::app.type.item.permission.@this.AllVerbs, MatchMode.exact, app.type.list[typeof(PermissionRecord)]);
         var grantData =new global::app.data.@this<PermissionRecord>("", grant, context: context);
         await app.actor.list.User.Permission.Add(grantData, persist: true);
 
@@ -84,7 +86,9 @@ public class PathAuthorizeTests
     {
         var app = NewApp();
         var path = app.actor.list.User.Context.File("/p");
-        var grant = new PermissionRecord(app.actor.list.User.Name, "/p", global::app.type.item.permission.@this.AllVerbs, MatchMode.exact, app.type.list[typeof(PermissionRecord)]);
+        // a grant is on the place as the OS names it
+        var grant = new PermissionRecord(app.actor.list.User.Name, path.Location(app.actor.list.User.Context.Filesystem)!.Absolute,
+            global::app.type.item.permission.@this.AllVerbs, MatchMode.exact, app.type.list[typeof(PermissionRecord)]);
         await app.actor.list.User.Permission.Add(new global::app.data.@this<PermissionRecord>("", grant, context: app.actor.list.User.Context), persist: false);
         app.actor.list.System.Channel.Register(new CannedAnswerChannel(app.actor.list.System.Channel, new[] { "n" }, app.actor.list.System.Context));
 
@@ -197,7 +201,7 @@ public class PathAuthorizeTests
         var grant = await app.actor.list.User.Permission.Find(path, verb);
         await Assert.That(grant).IsNotNull();
         await Assert.That((await grant!.Value<PermissionRecord>())!.Actor).IsEqualTo(app.actor.list.User.Name);
-        await Assert.That((await grant!.Value<PermissionRecord>())!.Path).IsEqualTo("/apps/Email/file.txt");
+        await Assert.That((await grant!.Value<PermissionRecord>())!.Path).IsEqualTo(path.Location(app.actor.list.User.Context.Filesystem)!.Absolute);
         await Assert.That((await grant!.Value<PermissionRecord>())!.Match).IsEqualTo(MatchMode.exact);
     }
 
@@ -210,7 +214,7 @@ public class PathAuthorizeTests
 
         var result = await path.Authorize(global::app.type.item.permission.Verb.read, app.actor.list.User.Context);
         var denied = (global::app.error.PermissionDenied)result.Error!;
-        await Assert.That(denied.Permission.Path).IsEqualTo("/secret");
+        await Assert.That(denied.Permission.Path).IsEqualTo(path.Location(app.actor.list.User.Context.Filesystem)!.Absolute);
         await Assert.That(denied.Permission.Actor).IsEqualTo(app.actor.list.User.Name);
     }
 

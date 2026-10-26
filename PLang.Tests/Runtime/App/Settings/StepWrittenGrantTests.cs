@@ -86,7 +86,8 @@ public class StepWrittenGrantTests : System.IAsyncDisposable
     // the owner's own door still writes the row: a grant given after the prompt is saved, and found
     [Test] public async Task PermissionAdd_StillSaves_AndFindAnswersIt()
     {
-        var grant = PermissionRecord.Request(user, Outside, Verb.write, MatchMode.exact);
+        // a grant is on the place as the OS names it
+        var grant = PermissionRecord.Request(user, ctx.File(Outside).Location(ctx.Filesystem)!.Absolute, Verb.write, MatchMode.exact);
         await user.Permission.Add(new global::app.data.@this<PermissionRecord>("", grant, context: ctx), persist: true);
 
         await Assert.That(await user.Permission.Find(ctx.File(Outside), Verb.write)).IsNotNull();
