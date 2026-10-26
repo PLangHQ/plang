@@ -237,8 +237,23 @@ Scratch apps `ts1` (tests) and `st1` (settings), built with the key from stdin. 
 | 173 | settings | the refusals: `ArgumentRefused` (`--debug=Start`, second goal, setting path as the goal), `UnknownSetting`, `ChoiceInvalid` | ran each, output as quoted | pass |
 | 174 | settings | `Documentation/v0.2/cli-changes.md` uses `--build.setting.cache=none` | `none` is `ChoiceInvalid`; valid `use`, `skip` | **fail** in that doc (sent to plang-docs); not on the page |
 | 175 | settings | precedence of a flag over a saved row | the run that tried it ran a build instead | unverified |
-| 176 | modules | `PLang/app/module/` holds the 33 folders listed | `ls PLang/app/module` | pass |
+| 176 | modules | `PLang/app/module/` holds the 34 folders listed (and the table has 34 rows) | `ls PLang/app/module` | pass |
 | 177 | modules | each listed module but `cache` has `os/system/modules/<m>/module.description.md` | looped over them | pass |
 | 178 | modules | only condition, file, loop, screen have `start.md` | `ls os/system/modules/*/start.md` | pass |
 | 179 | modules | `ai`, `db`, `install`, `plang` hold prompt files and templates only | `ls` of each | pass |
 | 180 | modules | the one-line purposes | the first sentence of each `module.description.md` | pass |
+
+## Cold reader, run 4 (a fresh agent given only doc/, testing, settings, modules)
+
+Five tasks, 2 builds, key piped from a file and never printed. Passing and failing tests, a stale test, a setting read, changed for a run, kept and dropped, a flag, five refusals and the module map all matched the pages.
+
+| # | Page | Claim | Check | Result |
+|---|---|---|---|---|
+| 181 | testing-your-goals | passing and failing test, suite, one file, stale, exit codes | agent tasks 1 and 2 | pass |
+| 182 | testing-your-goals | the console failure block shows an assert's message | the agent saw the message only in `.test/junit.xml` | **fail** as implied by the page; page now says the console block does not show it |
+| 183 | testing-your-goals | staleness follows the file's text | the agent rewrote the file with the same text: not stale | pass (page now says so) |
+| 184 | testing-your-goals | how a test calls the goal under test | the agent used `call Add a=2, b=3, write to %sum%`, and it ran | pass (page now shows it) |
+| 185 | calling-goals | a mis-built call shows only as `GoalNotFound` | the agent's build gave the test's own goal as the callee: `Call stack overflow: exceeded 1500 frames` | **fail** as the only form; page now has the loop form |
+| 186 | settings | read, set for a run, keep, drop, flag, refusals | agent task 3 and 4 | pass |
+| 187 | modules | the action's `description.md` lists step texts and what they build to | for `timer/sleep`, `crypto/hash`, `error/throw` it is one line; parameter names are in `.examples.md` | **fail**; page now says so |
+| 188 | modules | the table finds sleep, hash, throw | agent task 5: `timer`, `crypto`, `error` | pass |

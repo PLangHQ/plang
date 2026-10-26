@@ -24,11 +24,19 @@ Test summary: 3 total, 1 pass, 2 fail, 0 timeout, 0 stale, 0 skipped
   [Pass] /MathIsSane.test.goal (57ms)
 ```
 
-A test runs the first goal of its file. It passes when no step fails.
+A test runs the first goal of its file. It passes when no step fails. The test may call other goals of the folder as any goal does:
+
+```plang
+AddPasses
+- call Add a=2, b=3, write to %sum%
+- assert %sum% equals 5
+```
+
+where `Add.goal` holds the goal under test. See [calling goals](calling-goals.md).
 
 ## assert
 
-`assert` demands that something holds, and fails the step with a description when it does not. `assert %sum% equals 5` is the common one. The assert actions are `equals`, `notEquals`, `contains`, `notContains`, `isTrue`, `isFalse`, `isNull`, `isNotNull`, `greaterThan` and `lessThan` (the files in `os/system/modules/assert/`). A message can follow: `assert %sum% equals 6, "sum should be six"`.
+`assert` demands that something holds, and fails the step with a description when it does not. `assert %sum% equals 5` is the common one. The assert actions are `equals`, `notEquals`, `contains`, `notContains`, `isTrue`, `isFalse`, `isNull`, `isNotNull`, `greaterThan` and `lessThan` (the files in `os/system/modules/assert/`). A message can follow: `assert %sum% equals 6, "sum should be six"`. The console failure block does not show the message; the report files do (see below).
 
 A step that only asks whether something holds, to branch, is a [condition](conditions.md), not an assert.
 
@@ -65,7 +73,7 @@ Test summary: 1 total, 0 pass, 0 fail, 0 timeout, 1 stale, 0 skipped
   [Stale] /MathIsSane.test.goal (0ms)
 ```
 
-and exits 1. Run `plang build`.
+and exits 1. Run `plang build`. Staleness follows the file's text: rewriting a test with the same text left it not stale.
 
 ## The report
 

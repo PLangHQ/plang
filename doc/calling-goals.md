@@ -53,6 +53,8 @@ GoalNotFound (404): Goal 'Early done=true' not found.
   at /Start.goal:14
 ```
 
+A call built to the wrong goal can also show as a loop. In a test file, `call Add a=2, b=3, write to %sum%` once built with the name of the test's own goal, and the run stopped with `Error: Call stack overflow: exceeded 1500 frames`. A sibling test with the same step text built correctly.
+
 Changing the step's variable name and building again fixed it; the rebuild printed `Properties rejected — retrying` and saved a right step. Look at the step in `.build/start.pr` when a run does not do what the words say. See [how a step becomes an action](how-a-step-becomes-an-action.md).
 
 For the action itself: `os/system/modules/goal/call.description.md`.

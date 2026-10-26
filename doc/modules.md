@@ -60,5 +60,5 @@ These are the folders of `PLang/app/module/`, each with what it is for and the p
 
 1. Name what the step does in one word: read, call, ask, sign, wait.
 2. Find the module above.
-3. Open the action's `description.md` in `os/system/modules/<module>/`. It lists step texts and what they build to.
+3. Open the action's `description.md` in `os/system/modules/<module>/`. It is a line or a few lines saying what the action does; for some actions (`timer/sleep`, `crypto/hash`, `error/throw`) that is one line. The step texts and the properties they build to, with the parameter names, are in `<action>.examples.md`.
 4. After a build, read the step's actions in `.build/<goal>.pr`.
