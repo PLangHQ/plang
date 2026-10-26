@@ -81,7 +81,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         var into = dst.actor.list.User.Context;
         await Granted(dst, TypeProviderDll);
         var snap = await into.Snapshot(text);
-        var record = await (await snap.Node("Code").Rows("loaded")).Single().Value<global::app.module.code.dll.@this>();
+        var record = await (await snap.Node("Code").Rows("dll")).Single().Value<global::app.module.code.dll.@this>();
         await Assert.That(record is global::app.module.code.dll.added.@this { Namespace: "TypeProvider" }).IsTrue();
         await dst.Restore(snap, into);
 
@@ -102,7 +102,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         var snap = src.Snapshot(context).Saved();
 
         // one record of the DLL: its provider is no registration of its own, and the override names its kind by plang name
-        await Assert.That((await snap.Node("Code").Records<global::app.module.code.registration.@this>("registrations"))!.Count).IsEqualTo(0);
+        await Assert.That((await snap.Node("Code").Records<global::app.module.code.registration.@this>("registration"))!.Count).IsEqualTo(0);
         var overrides = await snap.Node("Code").Records<global::app.module.code.@default.@this>("default");
         await Assert.That(overrides!.Single(o => o.Provider == "test-signing").Kind).IsEqualTo("signing");
 
@@ -125,7 +125,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
         var context = src.actor.list.User.Context;
         var snap = new Snapshot(context);
-        snap.Node("Code").Write("loaded", new List<global::app.module.code.dll.@this>
+        snap.Node("Code").Set("dll", new List<global::app.module.code.dll.@this>
         {
             new global::app.module.code.dll.loaded.@this(src.type.list[typeof(global::app.module.code.dll.loaded.@this)])
             {
@@ -148,7 +148,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         var snap = src.Snapshot(src.actor.list.User.Context).Saved();
 
         // stored by its kind's plang name and its own, never a C# type name
-        var registration = (await snap.Node("Code").Records<global::app.module.code.registration.@this>("registrations"))!.Single();
+        var registration = (await snap.Node("Code").Records<global::app.module.code.registration.@this>("registration"))!.Single();
         await Assert.That(registration.Kind).IsEqualTo("grep");
         await Assert.That(registration.Provider).IsEqualTo("custom");
 
@@ -163,7 +163,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
     public async Task Providers_Restore_AnswersTheChoicesError_ForAKindTheRuntimeDoesntDeclare()
     {
         var snap = new Snapshot(app.actor.list.User.Context);
-        snap.Node("Code").Write("default", new List<global::app.module.code.@default.@this>
+        snap.Node("Code").Set("default", new List<global::app.module.code.@default.@this>
         {
             new(app.actor.list.User.Context.App.type.list[typeof(global::app.module.code.@default.@this)])
             {
@@ -184,7 +184,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
     {
         // the default-selection name doesn't match any registered provider → a hard error
         var snap = new Snapshot(app.actor.list.User.Context);
-        snap.Node("Code").Write("default", new List<global::app.module.code.@default.@this>
+        snap.Node("Code").Set("default", new List<global::app.module.code.@default.@this>
         {
             new(app.actor.list.User.Context.App.type.list[typeof(global::app.module.code.@default.@this)])
             {
@@ -206,7 +206,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var snap = app.Snapshot(app.actor.list.User.Context).Saved();
 
-        await Assert.That((await snap.Node("Code").Records<global::app.module.code.registration.@this>("registrations"))!.Count).IsEqualTo(0);
-        await Assert.That((await snap.Node("Code").Rows("loaded")).Count).IsEqualTo(0);
+        await Assert.That((await snap.Node("Code").Records<global::app.module.code.registration.@this>("registration"))!.Count).IsEqualTo(0);
+        await Assert.That((await snap.Node("Code").Rows("dll")).Count).IsEqualTo(0);
     }
 }

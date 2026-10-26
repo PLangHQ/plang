@@ -66,9 +66,9 @@ public sealed partial class @this : ISnapshot
         }
 
         var list = types[typeof(global::app.type.item.list.@this)];
-        snapshot.Entries.Set(new data.@this("loaded", new global::app.type.item.list.@this(_loaded, list), context: context));
-        snapshot.Entries.Set(new data.@this("registrations", new global::app.type.item.list.@this(registrations, list), context: context));
-        snapshot.Entries.Set(new data.@this("default", new global::app.type.item.list.@this(defaults, list), context: context));
+        snapshot.Write("dll", new global::app.type.item.list.@this(_dll, list));
+        snapshot.Write("registration", new global::app.type.item.list.@this(registrations, list));
+        snapshot.Write("default", new global::app.type.item.list.@this(defaults, list));
         return context.Ok();
     }
 
@@ -83,8 +83,8 @@ public sealed partial class @this : ISnapshot
     async System.Threading.Tasks.Task<data.@this> ISnapshot.Start(global::app.snapshot.@this snapshot, actor.context.@this context)
     {
         // Step 1 — the DLLs the run took in; a record that doesn't read is its row's answer
-        if (snapshot.Entries.Get("loaded", context) is { } loaded)
-            foreach (var row in (await loaded.Value<global::app.type.item.list.@this>())!.Items(context))
+        if (snapshot.Entries.Get("dll", context) is { } dlls)
+            foreach (var row in (await dlls.Value<global::app.type.item.list.@this>())!.Items(context))
             {
                 if (await row.Value<dll.@this>() is not { } dll) return row;
                 var made = await dll.Start(this, context);
@@ -97,7 +97,7 @@ public sealed partial class @this : ISnapshot
             }
 
         // Step 2 — providers registered in-process
-        if ((await snapshot.Read<Registration>("registrations")).FirstOrDefault() is { } registration)
+        if ((await snapshot.Read<Registration>("registration")).FirstOrDefault() is { } registration)
             return context.Error(new global::app.error.@this(
                 $"Provider '{registration.Provider}' for {registration.Kind} was registered in-process: no DLL brought it, so it can't come back.",
                 "ProviderInProcess", 500));

@@ -33,14 +33,12 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         Entries = new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)]);
     }
 
-    /// <summary>Writes an entry, born as a plang value in this snapshot's context — the same entity
-    /// door every other value birth goes through. Scalars lift (string→text, int→number,
-    /// List&lt;snapshot&gt;→list); anything the door cannot make a value of fails HERE, at the site
-    /// that wrote it, instead of surviving as a raw object for a serializer to guess at later.
-    /// Overwrites any prior value at the same key.</summary>
-    public void Write<T>(string key, T value)
-        => Entries.Set(new global::app.data.@this(
-            key, global::app.type.item.@this.Create(value, Context), context: Context));
+    /// <summary>A collection entry, written only when it holds something — the mirror of <see cref="Read{T}"/>, which
+    /// reads an absent entry as empty. Empty is the one test the walk leaves an empty part out by.</summary>
+    internal void Write(string key, global::app.type.item.@this collection)
+    {
+        if (collection.IsTruthy()) Entries.Set(new global::app.data.@this(key, collection, context: Context));
+    }
 
     /// <summary>The rows a list entry holds, each read through its own typed ask — the same door every value goes
     /// through, so nothing lowers to CLR. An absent entry is empty, the same answer a written empty list gives.</summary>

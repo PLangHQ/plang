@@ -7,6 +7,11 @@ namespace PLang.Tests.Shared;
 /// </summary>
 public static class SnapshotReadExtensions
 {
+    /// <summary>Sets an entry, born as a plang value in the snapshot's context (string→text, int→number, a list→list),
+    /// whether or not it holds anything — a test builds the node it means to read.</summary>
+    public static void Set<T>(this Snapshot s, string key, T value)
+        => s.Entries.Set(new global::app.data.@this(key, global::app.type.item.@this.Create(value, s.Context), context: s.Context));
+
     /// <summary>True if an entry with this key was written.</summary>
     public static bool Has(this Snapshot s, string key) => s.Entries.Has(key);
 

@@ -12,6 +12,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>A kind's default, born holding <paramref name="type"/> — the app's.</summary>
     public @this(global::app.type.@this type) : base(type) { }
 
+    /// <summary>Plang keeps it for itself: no step names it.</summary>
+    public static bool Internal => true;
+
     /// <summary>A structure, not a single-token leaf.</summary>
     public override bool IsLeaf => false;
 

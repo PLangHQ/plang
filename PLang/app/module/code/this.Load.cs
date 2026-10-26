@@ -7,7 +7,7 @@ public sealed partial class @this
 {
     // Every DLL this run took in, in order, each remembered by the door it came through (dll.loaded: Register; dll.added:
     // Add). A snapshot takes each in again the same way.
-    private readonly ConcurrentQueue<dll.@this> _loaded = new();
+    private readonly ConcurrentQueue<dll.@this> _dll = new();
 
     /// <summary>
     /// The assembly at <paramref name="path"/> loaded into the app — through the path's Execute gate (a Read
@@ -51,7 +51,7 @@ public sealed partial class @this
                 if (Register(iface, instance) is { Success: false } refused) return refused;
             registered.Add(instance);
         }
-        _loaded.Enqueue(new dll.loaded.@this(context.App.type.list[typeof(dll.loaded.@this)]) { Source = source });
+        _dll.Enqueue(new dll.loaded.@this(context.App.type.list[typeof(dll.loaded.@this)]) { Source = source });
         return context.Ok(registered);
     }
 
@@ -63,7 +63,7 @@ public sealed partial class @this
     public int Add(System.Reflection.Assembly assembly, string? @namespace, global::app.type.item.path.@this source)
     {
         var count = Context.App.module.Discover(assembly, @namespace);
-        _loaded.Enqueue(new dll.added.@this(Context.App.type.list[typeof(dll.added.@this)]) { Source = source, Namespace = @namespace });
+        _dll.Enqueue(new dll.added.@this(Context.App.type.list[typeof(dll.added.@this)]) { Source = source, Namespace = @namespace });
         return count;
     }
 }

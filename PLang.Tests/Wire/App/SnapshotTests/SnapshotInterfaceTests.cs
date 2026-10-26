@@ -11,9 +11,9 @@ public class SnapshotInterfaceTests : System.IAsyncDisposable
         // A node holds typed entries; they read back through their typed asks.
         var s = new Snapshot(app.actor.list.User.Context);
         var section = s.Node("MySection");
-        section.Write("name", "alice");
-        section.Write<int>("age", 42);
-        section.Write("tags", new List<string> { "a", "b" });
+        section.Set("name", "alice");
+        section.Set<int>("age", 42);
+        section.Set("tags", new List<string> { "a", "b" });
 
         await Assert.That(await section.Text("name")).IsEqualTo("alice");
         await Assert.That(await section.Int("age")).IsEqualTo(42);

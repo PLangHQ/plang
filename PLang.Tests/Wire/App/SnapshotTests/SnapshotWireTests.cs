@@ -62,15 +62,15 @@ public class SnapshotWireTests
         var cs = snap.Node(SnapshotPathExtensions.UserCall);
         var frames = new List<global::app.snapshot.@this>();
         var f = new global::app.snapshot.@this(src.actor.list.User.Context);
-        f.Write("goalPrPath", "/.build/Start/00. Goal.pr");
-        f.Write("goalHash", "abc123");
-        f.Write("stepIndex", 3);
-        f.Write("actionIndex", 1);
-        f.Write("actionModule", "llm");
-        f.Write("actionName", "query");
-        f.Write("id", "deadbeef");
+        f.Set("goalPrPath", "/.build/Start/00. Goal.pr");
+        f.Set("goalHash", "abc123");
+        f.Set("stepIndex", 3);
+        f.Set("actionIndex", 1);
+        f.Set("actionModule", "llm");
+        f.Set("actionName", "query");
+        f.Set("id", "deadbeef");
         frames.Add(f);
-        cs.Write("frames", frames);
+        cs.Set("frames", frames);
 
         var wired = await RoundTrip(src, snap);
 
