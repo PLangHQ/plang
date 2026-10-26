@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "F1 fixed: both no-one-to-ask tests pin the ask error as the cause; dropping the line turns both red." }

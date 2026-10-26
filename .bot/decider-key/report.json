@@ -1,0 +1,103 @@
+{
+  "branch": "decider-key",
+  "sessions": [
+    {
+      "id": "a3f1c2d4-8e5b-4f6a-9c7d-1b2e3f4a5d6c",
+      "bot": "architect",
+      "timestamp_start": "2026-10-25T23:50:00Z",
+      "timestamp_end": "2026-10-25T23:58:00Z",
+      "intent": "Cut decider-key from runtime2 and plan the missing TypeSafe key's ask, as the OpenAI key's.",
+      "before": {
+        "assumptions": "llm.setting.Asked asks once and saves; the decider's setting has a Key but no ask; TypeSafe sends without one and the service answers 403.",
+        "risk": "The asking copied into a second setting (stored twice)."
+      },
+      "plan": ".bot/decider-key/architect/plan/start.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/module/llm/setting/this.cs",
+            "PLang/app/module/llm/decider.setting.cs",
+            "PLang/app/module/llm/code/TypeSafe.cs",
+            "PLang/app/module/llm/code/Live.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read the OpenAI key's ask, the decider's setting and TypeSafe's request."
+        },
+        {
+          "paths": [
+            ".bot/decider-key/architect/plan/start.md",
+            ".bot/decider-key/architect/plan/start.goal",
+            ".bot/decider-key/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "One stage; the asking written once for both keys; a wrong key out of scope."
+        }
+      ],
+      "after": {
+        "status": "plan drafted; sent to the coder",
+        "health": "runtime2 at 493b157df",
+        "notes": "doc2 found the 403 while verifying doc/."
+      }
+    },
+    {
+      "id": "72586b0f-fdbe-42f7-a75d-d89c78f926b5",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T23:53:23Z",
+      "timestamp_end": "2026-10-25T23:53:23Z",
+      "intent": "Review decider-key",
+      "before": {
+        "assumptions": "coder tip 8786cc08d",
+        "risk": "unpinned cause"
+      },
+      "plan": ".bot/decider-key/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/decider-key/codeanalyzer/review.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "FAIL F1 unpinned cause; bench in band"
+        }
+      ],
+      "after": {
+        "status": "review written",
+        "health": "fail",
+        "notes": "coder next"
+      }
+    },
+    {
+      "id": "79a55b50-124d-401b-b15f-da9fd0659ded",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T23:57:47Z",
+      "timestamp_end": "2026-10-25T23:57:47Z",
+      "intent": "Re-check decider-key F1",
+      "before": {
+        "assumptions": "6b26bd2bb tests only",
+        "risk": "assertion not red under mutation"
+      },
+      "plan": ".bot/decider-key/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/decider-key/codeanalyzer/review2.md"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "PASS; mutation red"
+        }
+      ],
+      "after": {
+        "status": "review2 written",
+        "health": "pass",
+        "notes": "tester next"
+      }
+    }
+  ]
+}

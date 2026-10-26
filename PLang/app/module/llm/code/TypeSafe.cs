@@ -25,10 +25,12 @@ public sealed class TypeSafe : IDecider
         if (questions == null || questions.CountRaw == 0)
             return context.Ok(new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)]));
 
-        // the decider's own settings: the saved row, else the environment's, else the service's endpoint
+        // the decider's own settings: the saved row, else the environment's, else the service's endpoint; its key as
+        // asked — none, and no one gave one, sends nothing
         var setting = await context.Setting.Get<global::app.module.llm.decider.setting>();
+        var key = await ((global::app.module.llm.setting.IKey)setting).Asked(context);
+        if (!key.Success) return data.@this<global::app.type.item.dict.@this>.From(key);
         var endpoint = setting.Endpoint.ToString();
-        var apiKey = setting.Key.ToString();
 
         var body = new Dictionary<string, object?>
         {
@@ -37,8 +39,7 @@ public sealed class TypeSafe : IDecider
             ["model"] = (await action.Model.Value()).ToString(),
         };
 
-        var headers = new Dictionary<string, object>();
-        if (!string.IsNullOrEmpty(apiKey)) headers["Authorization"] = $"Bearer {apiKey}";
+        var headers = new Dictionary<string, object> { ["Authorization"] = $"Bearer {await key.Value()}" };
 
         var http = new request(context)
         {

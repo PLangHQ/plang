@@ -216,20 +216,35 @@ The returned value carries metadata accessible via `%!` syntax:
 
 ## Configuration
 
-The default OpenAI implementation reads settings from:
+The default OpenAI implementation reads the module's settings. A saved value wins; when none is saved, the key and the endpoint are the environment's.
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `llm.endpoint` | `https://api.openai.com/v1/chat/completions` | API endpoint |
-| `llm.apiKey` | env `OPENAI_API_KEY` | API authentication |
-| `llm.model` | `gpt-4.1-mini` | Default model (overridden by Model parameter) |
+| `%!llm.setting.endpoint%` | env `OPENAI_API_ENDPOINT`, else `https://api.openai.com/v1/chat/completions` | API endpoint |
+| `%!llm.setting.key%` | env `OPENAI_API_KEY` | API authentication. Never shown |
+| `%!llm.setting.model%` | `gpt-5.4-nano` | Model, when the step names none |
 
 To use a different OpenAI-compatible API (e.g., Azure OpenAI, local models):
 
 ```plang
-- set setting 'llm.endpoint' to 'https://my-server.com/v1/chat/completions'
-- set setting 'llm.apiKey' to %myKey%
+- set %!llm.setting.endpoint% = 'https://my-server.com/v1/chat/completions'
+- set %!llm.setting.key% = %myKey%
 ```
+
+### A query with no key
+
+A query that finds no key asks once, secretly, and saves the answer on the asking actor's row, so it is not asked again. With no one to ask (no input, as in a script or a pipe), the query stops with `MissingLlmKey` (401): "This program uses an LLM and has no key, and no one gave one: set %!llm.setting.key% or the OPENAI_API_KEY environment variable."
+
+### The builder's key
+
+`plang build` asks the typesafe service which module and action each step means. That call has its own key and endpoint, apart from the module's:
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `%!llm.decider.setting.key%` | env `TYPESAFE_API_KEY` | The key a build is asked with. Never shown |
+| `%!llm.decider.setting.endpoint%` | env `TYPESAFE_ENDPOINT`, else `https://api.typesafe.ai/v1/systemone` | Where the build's questions go |
+
+A build that finds no key asks once, secretly (`Building needs a TypeSafe key for the decider. Paste it:`), and saves it on the asker's row. With no one to ask, the build stops with `MissingDeciderKey` (401), naming both ways to give one: "Building needs a TypeSafe key for the decider, and no one gave one: set %!llm.decider.setting.key% or the TYPESAFE_API_KEY environment variable." No request is sent without a key. A wrong key is the service's own error, not this one.
 
 The implementation is swappable via the standard `code.setDefault` action (see [code module](code.md)).
 

@@ -22,6 +22,10 @@ public class MissingKeyTests
         return (app, written);
     }
 
+    // llm's setting with no key held, asked through its key
+    private static global::app.module.llm.setting.IKey Unkeyed()
+        => new global::app.module.llm.setting.@this(new global::app.type.@this(typeof(global::app.module.llm.setting.@this))) { Key = "" };
+
     [Test]
     public async Task AMissingKey_IsAskedOnce_Saved_AndNeverShown()
     {
@@ -29,8 +33,8 @@ public class MissingKeyTests
         await using var _ = app;
         var ctx = app.actor.list.User.Context;
 
-        var first = await new global::app.module.llm.setting.@this(new global::app.type.@this(typeof(global::app.module.llm.setting.@this))) { Key = "" }.Asked(ctx);
-        var again = await (await ctx.Setting.Get<global::app.module.llm.setting.@this>()).Asked(ctx);
+        var first = await Unkeyed().Asked(ctx);
+        var again = await ((global::app.module.llm.setting.IKey)await ctx.Setting.Get<global::app.module.llm.setting.@this>()).Asked(ctx);
         var stored = await new global::app.type.item.variable.@this("%!llm.setting.key%", ctx.App.type.list).Start(ctx);
 
         await first.IsSuccess();
@@ -51,12 +55,14 @@ public class MissingKeyTests
         var ctx = app.actor.list.User.Context;
         ctx.Actor!.Channel.Remove(global::app.channel.list.@this.Input, ctx);
 
-        var asked = await new global::app.module.llm.setting.@this(new global::app.type.@this(typeof(global::app.module.llm.setting.@this))) { Key = "" }.Asked(ctx);
+        var asked = await Unkeyed().Asked(ctx);
 
         await asked.IsFailure();
         await Assert.That(asked.Error!.Key).IsEqualTo("MissingLlmKey");
         await Assert.That(asked.Error.Message).Contains("%!llm.setting.key%");
         await Assert.That(asked.Error.Message).Contains("OPENAI_API_KEY");
+        // why no one could be asked rides whole, as the cause
+        await Assert.That(asked.Error.list.Select(cause => cause.Key)).Contains("ChannelEof");
     }
 
     // a sensitive value writes **** in a text template and every view but plang's store, where it is whole
