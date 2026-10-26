@@ -13,9 +13,8 @@ namespace PLang.Tests.App.Modules.llm;
 
 /// <summary>
 /// Integration tests that run the full LLM module pipeline against OpenAI.
-/// First run: real API call → saves snapshot.
-/// Subsequent runs: replays snapshot (only HTTP transport mocked, full LLM pipeline runs).
-/// Snapshot invalidates when input or class structure changes.
+/// Each request is answered from the answer recorded for its body (only the HTTP transport is replaced; the full LLM
+/// pipeline runs). A changed request is a new question: without OPENAI_API_KEY it fails, with it it is asked once.
 /// </summary>
 public class LlmIntegrationTests
 {
@@ -56,12 +55,11 @@ public class LlmIntegrationTests
             new LlmMessage { Role = "user", Content = "What is 7 * 6?" }
         };
 
-        var result = await RunWithSnapshot("SimpleCalculation", messages, new query(Ctx) { Message = messages.ToListData<LlmMessage>(Ctx),
+        var result = await RunWithSnapshot(new query(Ctx) { Message = messages.ToListData<LlmMessage>(Ctx),
             Temperature = (global::app.type.item.number.@this)0.0,
             Limit = new global::app.module.llm.type.limit.@this(50, 10, 0),
             Cache = Ctx.Choice(global::app.module.cache.type.cache.skip)
         });
-        if (result == null) return; // skipped, no API key
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString() ?? "").Contains("42");
@@ -85,13 +83,12 @@ public class LlmIntegrationTests
             new LlmMessage { Role = "user", Content = "Write a Python function that returns the sum of two numbers." }
         };
 
-        var result = await RunWithSnapshot("PythonFormat", messages, new query(Ctx) { Message = messages.ToListData<LlmMessage>(Ctx),
+        var result = await RunWithSnapshot(new query(Ctx) { Message = messages.ToListData<LlmMessage>(Ctx),
             Format = (global::app.type.item.text.@this)"python",
             Temperature = (global::app.type.item.number.@this)0.0,
             Limit = new global::app.module.llm.type.limit.@this(200, 10, 0),
             Cache = Ctx.Choice(global::app.module.cache.type.cache.skip)
         });
-        if (result == null) return;
 
         await result.IsSuccess();
         var code = (await result.Value())?.ToString() ?? "";
@@ -112,12 +109,11 @@ public class LlmIntegrationTests
             new LlmMessage { Role = "user", Content = "My name is Alice." }
         };
 
-        var result1 = await RunWithSnapshot("ConvPart1", messages1, new query(Ctx) { Message = messages1.ToListData<LlmMessage>(Ctx),
+        var result1 = await RunWithSnapshot(new query(Ctx) { Message = messages1.ToListData<LlmMessage>(Ctx),
             Temperature = (global::app.type.item.number.@this)0.0,
             Limit = new global::app.module.llm.type.limit.@this(50, 10, 0),
             Cache = Ctx.Choice(global::app.module.cache.type.cache.skip)
         });
-        if (result1 == null) return;
         await result1.IsSuccess();
 
         // Second query continues the conversation
@@ -126,13 +122,12 @@ public class LlmIntegrationTests
             new LlmMessage { Role = "user", Content = "What is my name?" }
         };
 
-        var result2 = await RunWithSnapshot("ConvPart2", messages2, new query(Ctx) { Message = messages2.ToListData<LlmMessage>(Ctx),
+        var result2 = await RunWithSnapshot(new query(Ctx) { Message = messages2.ToListData<LlmMessage>(Ctx),
             Conversation = new global::app.module.llm.type.conversation.@this(result1),
             Temperature = (global::app.type.item.number.@this)0.0,
             Limit = new global::app.module.llm.type.limit.@this(50, 10, 0),
             Cache = Ctx.Choice(global::app.module.cache.type.cache.skip)
         });
-        if (result2 == null) return;
 
         await result2.IsSuccess();
         await Assert.That((await result2.Value())?.ToString() ?? "").Contains("Alice");
@@ -157,9 +152,8 @@ public class LlmIntegrationTests
             })
         };
 
-        // For tool calls, we use multi-snapshot (multiple HTTP round trips)
-        var result = await RunToolCallWithSnapshot("ToolCallWeather", messages, tools);
-        if (result == null) return;
+        // a tool call is several round trips, each its own request
+        var result = await RunToolCallWithSnapshot(messages, tools);
 
         await result.IsSuccess();
         // The LLM should have attempted the tool, got an error (goal doesn't exist),
@@ -172,59 +166,22 @@ public class LlmIntegrationTests
     // --- Snapshot infrastructure ---
 
     /// <summary>
-    /// Runs a query with single-turn snapshot support.
-    /// Live: uses default providers (real HTTP). Replay: mocks HTTP transport.
-    /// Returns null if no API key and no snapshot (test skipped).
+    /// Runs a query, each request it sends answered from its recording. Without OPENAI_API_KEY a request with no
+    /// recording fails the test; with it, that request is asked live once and recorded on this machine.
     /// </summary>
-    private async Task<Data?> RunWithSnapshot(string testName, List<LlmMessage> messages, query action)
+    private async Task<Data> RunWithSnapshot(query action)
     {
-        var snapshot = LlmSnapshotHelper.TryLoadSnapshot(testName, messages);
-
-        if (snapshot != null)
-            LlmTestHelper.Mock(_app, new SnapshotReplayHandler(new List<string> { snapshot }));
-        else if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("OPENAI_API_KEY")))
-        {
-            return null; // skip
-        }
-
+        Recording();
         await action.Attach(null, Ctx);
-        var result = await action.Start();
-
-        if (snapshot == null && result.Success)
-        {
-            var json = await BuildSnapshotFromResult(result);
-            if (json != null)
-                LlmSnapshotHelper.SaveSnapshot(testName, messages, json);
-        }
-
-        return result;
+        return await action.Start();
     }
 
     /// <summary>
-    /// Runs a tool-call query with multi-turn snapshot support.
-    /// The HTTP handler captures all responses during live calls.
+    /// Runs a tool-call query: one request per round trip, each answered from its own recording.
     /// </summary>
-    private async Task<Data?> RunToolCallWithSnapshot(string testName, List<LlmMessage> messages, List<global::app.goal.step.action.@this> tools)
+    private async Task<Data> RunToolCallWithSnapshot(List<LlmMessage> messages, List<global::app.goal.step.action.@this> tools)
     {
-        var multiSnapshot = LlmSnapshotHelper.TryLoadMultiSnapshot(testName, messages);
-
-        CaptureHandler? captureHandler = null;
-
-        if (multiSnapshot != null)
-            LlmTestHelper.Mock(_app, new SnapshotReplayHandler(multiSnapshot));
-        else if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("OPENAI_API_KEY")))
-        {
-            return null;
-        }
-        else
-        {
-            // Capture all responses during the live call
-            captureHandler = new CaptureHandler();
-            var httpProvider = new Default(captureHandler) { Name = "capture" };
-            _app.Code.Register<IHttp>(httpProvider);
-            _app.Code.SetDefault<IHttp>("capture");
-        }
-
+        Recording();
         var action = new query(Ctx) { Message = messages.ToListData<LlmMessage>(Ctx),
             Tool = tools.ToListData(Ctx),
             Temperature = (global::app.type.item.number.@this)0.0,
@@ -233,93 +190,47 @@ public class LlmIntegrationTests
         };
 
         await action.Attach(null, Ctx);
-        var result = await action.Start();
-
-        if (captureHandler != null && result.Success && captureHandler.Responses.Count > 0)
-        {
-            LlmSnapshotHelper.SaveMultiSnapshot(testName, messages, captureHandler.Responses);
-        }
-
-        return result;
+        return await action.Start();
     }
 
-    private static async System.Threading.Tasks.Task<string?> BuildSnapshotFromResult(Data result)
+    // the app's HTTP answered by a recording; live only with OPENAI_API_KEY set, so then without the test key
+    private void Recording()
     {
-        var rawResponse = (await result.Properties.Value("RawResponse"))?.ToString();
-        if (rawResponse == null) return null;
-
-        var model = (await result.Properties.Value("Model"))?.ToString() ?? "gpt-5.4-nano";
-        var promptTokens = (await result.Properties.Value("PromptTokens")) is int pt ? pt : 0;
-        var completionTokens = (await result.Properties.Value("CompletionTokens")) is int ct ? ct : 0;
-
-        return JsonSerializer.Serialize(new
+        var live = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("OPENAI_API_KEY"));
+        var recording = new RecordingHandler(live);
+        if (!live)
         {
-            id = "snapshot",
-            @object = "chat.completion",
-            model,
-            choices = new[]
-            {
-                new
-                {
-                    index = 0,
-                    message = new { role = "assistant", content = rawResponse },
-                    finish_reason = "stop"
-                }
-            },
-            usage = new
-            {
-                prompt_tokens = promptTokens,
-                completion_tokens = completionTokens,
-                total_tokens = promptTokens + completionTokens
-            }
-        });
+            LlmTestHelper.Mock(_app, recording);
+            return;
+        }
+        _app.Code.Register<IHttp>(new Default(recording) { Name = "recording" });
+        _app.Code.SetDefault<IHttp>("recording");
     }
 
     /// <summary>
-    /// Replays one or more saved responses in order.
+    /// Answers each request from the answer recorded for its body. A request with no recording is asked live when
+    /// <c>live</c>, and its answer recorded; otherwise it fails, naming the request's key.
     /// </summary>
-    private class SnapshotReplayHandler : HttpMessageHandler
+    private class RecordingHandler(bool live) : DelegatingHandler(new HttpClientHandler())
     {
-        private readonly List<string> _responses;
-        private int _index;
-
-        public SnapshotReplayHandler(List<string> responses) => _responses = responses;
-
-        protected override Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request, CancellationToken cancellationToken)
-        {
-            var json = _index < _responses.Count ? _responses[_index] : _responses[^1];
-            _index++;
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(json, Encoding.UTF8, "application/json")
-            });
-        }
-    }
-
-    /// <summary>
-    /// Captures all HTTP responses during a live multi-turn call.
-    /// Delegates to the real HTTP stack.
-    /// </summary>
-    private class CaptureHandler : DelegatingHandler
-    {
-        public List<string> Responses { get; } = new();
-
-        public CaptureHandler() : base(new HttpClientHandler()) { }
-
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            var body = await request.Content!.ReadAsStringAsync(cancellationToken);
+            if (LlmSnapshotHelper.Answer(body) is { } answer)
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(answer, Encoding.UTF8, "application/json")
+                };
+            if (!live)
+                throw new InvalidOperationException(
+                    $"No recorded llm answer for request {LlmSnapshotHelper.Key(body)}; run once with OPENAI_API_KEY set to record it.");
+
             var response = await base.SendAsync(request, cancellationToken);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var body = await response.Content.ReadAsStringAsync(cancellationToken);
-                Responses.Add(body);
-                response.Content = new StringContent(body, Encoding.UTF8,
-                    new System.Net.Http.Headers.MediaTypeHeaderValue("application/json"));
-            }
-
+            if (!response.IsSuccessStatusCode) return response;
+            var json = await response.Content.ReadAsStringAsync(cancellationToken);
+            LlmSnapshotHelper.Save(body, json);
+            response.Content = new StringContent(json, Encoding.UTF8, "application/json");
             return response;
         }
     }
