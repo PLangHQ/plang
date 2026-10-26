@@ -3,7 +3,7 @@
 Start
 - set %name% = "Bob"
 - save snapshot, write to %snapshot%
-- save %snapshot% to 'workspace/saved.snapshot'
-- read file 'workspace/saved.snapshot', write to %back% as snapshot
+- save %snapshot% to 'workspace/saved.json'
+- read file 'workspace/saved.json', write to %back% as snapshot
 - assert %back.actor.list.user.context.variable.name% equals "Bob"
-- delete file 'workspace/saved.snapshot'
+- delete file 'workspace/saved.json'
