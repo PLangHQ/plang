@@ -5,10 +5,9 @@ namespace PLang.Tests.App.FileSystem.PermissionTests;
 /// until the store's Open sets the folder's mode. Not on Windows (no modes there).</summary>
 public class StoreFolderModeProbeTests
 {
-    [Test]
+    [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows)]
     public async Task ASettingStoresFolder_HasNoGroupOrOtherBits()
     {
-        if (System.OperatingSystem.IsWindows()) return;
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-mode-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
         await using var app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).TestSigning();
