@@ -8,7 +8,9 @@
   <Target Name="Build">
     <MSBuild Projects="@(ProjectFile)" Targets="Build" BuildInParallel="true" Properties="Configuration=$(Configuration);RunAnalyzers=$(RunAnalyzers)" />
   </Target>
+  <!-- One project at a time: they share PLang's and Shared's obj, and restores side by side race on its assets file
+       (Windows refuses the second writer). Restoring is quick; the build stays parallel. -->
   <Target Name="Restore">
-    <MSBuild Projects="@(ProjectFile)" Targets="Restore" BuildInParallel="true" />
+    <MSBuild Projects="@(ProjectFile)" Targets="Restore" BuildInParallel="false" />
   </Target>
 </Project>

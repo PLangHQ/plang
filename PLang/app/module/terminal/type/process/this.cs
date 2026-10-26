@@ -227,9 +227,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         });
     }
 
-    /// <summary>One line on its stdin, through its input channel (one writer at a time).</summary>
+    /// <summary>One line on its stdin, through its input channel (one writer at a time), ended at LF on every OS, as a
+    /// plang line is (a CR would be part of the line to a Unix child, wsl.exe's on Windows).</summary>
     internal Task<Data> Write(string line, Context context)
-        => input.Write(context.Ok((Text)(line + System.Environment.NewLine)));
+        => input.Write(context.Ok((Text)(line + "\n")));
 
     /// <summary>Its stdout and stderr as one queue of lines, completed when both channels end.</summary>
     internal ChannelReader<(bool error, string line)> Lines()
