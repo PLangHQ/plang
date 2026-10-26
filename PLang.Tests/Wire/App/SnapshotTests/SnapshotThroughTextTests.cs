@@ -64,6 +64,28 @@ public class SnapshotThroughTextTests
     }
 
     [Test]
+    public async Task ATemplateInsideADict_ComesBackLiteral_FromRawText()
+    {
+        // raw text is bytes nobody vouches for: a value marked a template holds no variables from it, and reads as written
+        var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
+        var context = src.actor.list.User.Context;
+        await context.Variable.Set("x", "from-the-run");
+        var dict = new global::app.type.item.dict.@this(src.type.list[typeof(global::app.type.item.dict.@this)]);
+        dict.Set(new global::app.data.@this("greeting", new global::app.type.item.text.@this("%x%!", src.type.list[new global::app.type.@this("text",
+            template: new global::app.type.item.template.kind.plang.@this()), context]), context: context));
+        await context.Variable.Set("t", new global::app.data.@this("t", dict, context: context));
+        var text = await src.Snapshot(context).Saved().Text(context);
+
+        var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
+        var into = dst.actor.list.User.Context;
+        await into.Variable.Set("x", "from-the-resumed-run");
+        await dst.Restore(await into.Snapshot(text), into);
+
+        var back = await (await into.Variable.Get("t")).Value<global::app.type.item.dict.@this>();
+        await Assert.That((await back!.Get("greeting", into)!.Value())?.ToString()).IsEqualTo("%x%!");
+    }
+
+    [Test]
     public async Task AOneTimeGrant_IsNeverInTheSnapshotsText()
     {
         // a "y" grant read back from a file would be consent nobody gave in the run that uses it — a resumed run asks again
