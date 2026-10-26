@@ -50,10 +50,12 @@ You should see the PLang version number.
 
 ## LLM Setup
 
-Building PLang code requires an LLM. On your first build, you'll be prompted to set up payment:
+Building PLang code needs a TypeSafe key. Give it one of two ways:
 
-- **PLang service** — simpler setup, supports the project
-- **OpenAI API key** — cheaper, requires your own key
+- Set the `TYPESAFE_API_KEY` environment variable.
+- Run `plang build` and paste the key when it asks (`Building needs a TypeSafe key for the decider. Paste it:`). It is saved, so it is asked once.
+
+With no key and no one to ask (a script, a pipe), the build stops with `MissingDeciderKey` and names both ways. A program that calls an LLM itself (`llm.query`) uses its own key: `%!llm.setting.key%` or `OPENAI_API_KEY`, asked once the same way.
 
 A typical step costs $0.002–$0.009 to build. Running compiled code is free.
 

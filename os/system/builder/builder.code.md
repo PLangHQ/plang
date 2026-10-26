@@ -218,7 +218,7 @@ whether your fix worked. There is no second "kept mapping" cache on top; the ste
 
 The builder's `llm.query` / `llm.decider` calls pin `gpt-5.4-nano` explicitly in the goals.
 The decider goes through `IDecider` → `TypeSafe` (`PLang/app/module/llm/code/TypeSafe.cs`),
-which posts to the "systemone" endpoint. Pinning a heavier model is a blunt instrument —
+which posts to the "systemone" endpoint with the key `%!llm.decider.setting.key%` (env `TYPESAFE_API_KEY`; asked once, secretly, when none is held; `MissingDeciderKey` when no one can be asked). Pinning a heavier model is a blunt instrument —
 prefer fixing mapping quality at the prompt / catalog layer (§5) over changing the model.
 
 ---
