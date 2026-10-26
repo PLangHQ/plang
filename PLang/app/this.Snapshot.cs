@@ -34,29 +34,18 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
         return stored.Success ? context.Ok(snapshot) : global::app.data.@this<snapshot.@this>.FromError(stored.Error!, context);
     }
 
-    // The app as the root part: its mode, and the members it keeps.
+    // The app as the root part: the members it keeps. Its mode is not stored: how an app was started (test, build, run)
+    // is the host's choice, not the program's state, so a restore leaves the app as it was started.
     data.@this global::app.snapshot.ISnapshot.Store(snapshot.@this snapshot, actor.context.@this context)
     {
-        var types = context.App.type.list;
-        snapshot.Entries.Set(new data.@this("mode",
-            new global::app.type.item.choice.@this<global::app.Mode>(Mode, types[typeof(global::app.type.item.choice.@this<global::app.Mode>)]),
-            context: context));
-        snapshot.Write("kept", Kept.Dict(types));
+        snapshot.Write("kept", Kept.Dict(context.App.type.list));
         return context.Ok();
     }
 
     async System.Threading.Tasks.Task<data.@this> global::app.snapshot.ISnapshot.Start(snapshot.@this snapshot, actor.context.@this context)
     {
-        // a value that doesn't read is its entry's answer
-        if (snapshot.Entries.Get("mode", context) is { } entry)
-        {
-            if (await entry.Value<global::app.type.item.choice.@this<global::app.Mode>>() is not { } choice) return entry;
-            var mode = choice.Value;
-            Build = mode == global::app.Mode.Build ? new global::app.module.build.@this(context) : null;
-            if (mode == global::app.Mode.Test && test.list.Session == null) await test.list.Open();
-            else if (mode != global::app.Mode.Test) await test.list.Close();
-        }
-        if (snapshot.Entries.Get("kept", context) is { } kept)
+        // taken in this app's context, as every restored Data is; a value that doesn't read is its entry's answer
+        if (snapshot.In("kept", context) is { } kept)
         {
             if (await kept.Value<global::app.type.item.dict.@this>() is not { } members) return kept;
             Kept.Replace(members, context);

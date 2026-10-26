@@ -4,9 +4,10 @@ namespace app.call.list;
 
 public sealed partial class @this : global::app.snapshot.ISnapshot
 {
-    // The frame the run stopped in, put back by a snapshot's start — held until the run goes on from it (Resume), which
-    // makes it current in its own flow: a current set inside the awaited start would be undone when it returns.
-    private call.@this? _resumed;
+    // The frame the run stopped in, put back by a snapshot's start, and the frame the restored tree went under (the
+    // resuming action's; none in a fresh app) — held until the run goes on from it (Resume), which makes it current in
+    // its own flow: a current set inside the awaited start would be undone when it returns.
+    private (call.@this Stopped, call.@this? Under)? _resumed;
 
     // CallStack-level diff stream — every change of the store it was opened on, while a diff scope
     // (EnableDiffStream) is open. Independent of per-Call Diffs (which require Flags.Diff at Push
@@ -159,8 +160,9 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
 
     /// <summary>
     /// Puts the stored tree back as this stack's: walking down from <c>root</c>, each frame born again under the frame it
-    /// sits under, with the id it was saved with, where it stood, its own variables and the rest of its state; the stored
-    /// current is held for <see cref="Resume"/>. Each frame's goal is found by its address through <c>app.goal</c>, its
+    /// sits under, with the id it was saved with, where it stood, its own variables and the rest of its state. The root
+    /// goes under the frame current now — a resume inside a run is a call, so its tree goes under the resuming action's
+    /// frame — and the stored current is held, with that frame, for <see cref="Resume"/>. Each frame's goal is found by its address through <c>app.goal</c>, its
     /// hash checked against the live goal, its step and action found by index. A frame that can't come back is the answer
     /// (<c>CallbackGoalHashMismatch</c>, <see cref="CallbackGoalNotFound"/>, <see cref="CallbackActionMismatch"/>,
     /// <c>CallbackFrameIncomplete</c>).
@@ -169,15 +171,15 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     {
         try
         {
-            if (snapshot.Entries.Get("root", context) is not { } rootEntry) return context.Ok();
+            if (snapshot.In("root", context) is not { } rootEntry) return context.Ok();
             if (await rootEntry.Value<global::app.snapshot.@this>() is not { } root) return rootEntry;
             var back = new Dictionary<string, call.@this>(StringComparer.Ordinal);
             var started = await Start(root, back, context);
             if (!started.Success) return started;
-            if (snapshot.Entries.Get("current", context) is { } current)
+            if (snapshot.In("current", context) is { } current)
             {
                 if (await current.Value<global::app.type.item.text.@this>() is not { } id) return current;
-                _resumed = back.GetValueOrDefault(id.ToString());
+                _resumed = back.GetValueOrDefault(id.ToString()) is { } stopped ? (stopped, _current.Value) : null;
             }
             return context.Ok();
         }
@@ -220,18 +222,19 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     /// <summary>
     /// Goes on from the frame a snapshot's start put back as current, in this flow (which makes it current), outward:
     /// each frame ends — current goes back to its caller — and what is left of its run runs there (<c>Rest</c>): the
-    /// stopped action again and the rest of its step, the rest of each goal, the action after each call. A result that
-    /// exits the goal (an ask) is the answer.
+    /// stopped action again and the rest of its step, the rest of each goal, the action after each call — up to the frame
+    /// the restored tree went under, where it stops: a resume inside a run is a call, and the resuming goal goes on
+    /// itself, once. A result that exits the goal (an ask) is the answer; otherwise the restored run's last answer is.
     /// </summary>
     internal async System.Threading.Tasks.Task<global::app.data.@this> Resume(global::app.actor.context.@this context)
     {
-        if (_resumed is not { } current)
+        if (_resumed is not var (current, under))
             return context.Error(new ServiceError("there is no frame to go on from: the snapshot held no call", "NoFrameToResume", 400));
         _resumed = null;
         _current.Value = current;
 
         var result = context.Ok();
-        for (var frame = current; frame != null; frame = frame.Caller)
+        for (var frame = current; frame != null && !ReferenceEquals(frame, under); frame = frame.Caller)
         {
             // ending a frame is synchronous, so the current it puts back stays in this flow
             await frame.DisposeAsync();

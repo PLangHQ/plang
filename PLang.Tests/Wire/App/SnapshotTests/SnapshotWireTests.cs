@@ -29,10 +29,10 @@ public class SnapshotWireTests
     }
 
     [Test]
-    public async Task BuildAndTestingBits_SurviveWireRoundTrip()
+    public async Task BuildAndTestingBits_DontRideTheWire()
     {
-        // The App's Mode rides the wire as one value: building here, so the destination builds
-        // and its Test (Testing() sets one) is cleared.
+        // The App's mode is how it was started, the host's choice: a snapshot of a building app, through the wire,
+        // leaves a testing destination testing and not building.
         var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
         src.Build = new global::app.module.build.@this(src.actor.list.System.Context);
 
@@ -41,8 +41,8 @@ public class SnapshotWireTests
         var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
         await dst.Restore(wired, dst.actor.list.User.Context);
 
-        await Assert.That(dst.Build != null).IsTrue();
-        await Assert.That(dst.test.list.Session == null).IsTrue();
+        await Assert.That(dst.Build == null).IsTrue();
+        await Assert.That(dst.test.list.Session != null).IsTrue();
     }
 
     // The errors-trail wire test is gone with the trail itself: the run-wide error log is
@@ -234,6 +234,69 @@ public class SnapshotWireTests
         await Assert.That((await context.Variable.GetValue("entryReached"))).IsEqualTo("END");
         // Survivor var intact across the whole round-trip.
         await Assert.That((await context.Variable.GetValue("keep"))).IsEqualTo("alive");
+    }
+
+    [Test]
+    public async Task ResumeInsideARunningGoal_IsACall_GoesOnThroughTheRestoredFramesOnly()
+    {
+        // resume %snapshot% is a call: the restored tree goes under the resume action's frame and its run ends there —
+        // the resuming goal's own next step runs once, after the resume, never inside it
+        var src = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-incall-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
+        var context = src.actor.list.User.Context;
+        var sub = new Goal(src.type.list) { Name = "Sub", Path = global::app.type.item.path.@this.Resolve("/Sub.goal", context) };
+        await SetStep(context, sub, 0, "b", "B");
+        await SetStep(context, sub, 1, "saved", "here");
+        await SetStep(context, sub, 2, "after", "went on");
+        src.goal.list.Add(sub);
+        string json;
+        var setting = await context.call.Setting();
+        await using (context.call.Push(sub, setting))
+        await using (context.call.Push(sub.Step[1], setting))
+        await using (context.call.Push(sub.Step[1].Code[0], setting, context.Variable))
+            json = await src.Snapshot(context).Saved().Text(context);
+
+        var dst = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-incall-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
+        var into = dst.actor.list.User.Context;
+        var dstSub = new Goal(dst.type.list) { Name = "Sub", Path = global::app.type.item.path.@this.Resolve("/Sub.goal", into) };
+        await SetStep(into, dstSub, 0, "b", "B");
+        await SetStep(into, dstSub, 1, "saved", "here");
+        await SetStep(into, dstSub, 2, "after", "went on");
+        var outer = new Goal(dst.type.list) { Name = "Outer", Path = global::app.type.item.path.@this.Resolve("/Outer.goal", into) };
+        await SetStep(into, outer, 0, "resuming", "yes");                 // stands in for `resume %snapshot%`
+        await SetStep(into, outer, 1, "outerNext", "ran");
+        dst.goal.list.Add(dstSub); dst.goal.list.Add(outer);
+        var snap = (await new global::app.data.@this("", json, context: into).Value<global::app.snapshot.@this>())!;
+
+        var running = await into.call.Setting();
+        await using (into.call.Push(outer, running))
+        await using (into.call.Push(outer.Step[0], running))
+        await using (var resuming = into.call.Push(outer.Step[0].Code[0], running, into.Variable))
+        {
+            var result = await snap.Resume(into);
+
+            await result.IsSuccess();
+            await Assert.That(await into.Variable.GetValue("after")).IsEqualTo("went on");     // the restored run went on
+            await Assert.That(await into.Variable.GetValue("outerNext")).IsNull();             // and ended at the resume
+            await Assert.That(into.call.Current).IsSameReferenceAs(resuming);
+        }
+    }
+
+    [Test]
+    public async Task AnAppsMode_IsNotStored_ARestoreLeavesTheAppAsItWasStarted()
+    {
+        // how an app was started (test, build, run) is the host's choice, not the program's state
+        var src = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-mode-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
+        var snap = src.Snapshot(src.actor.list.User.Context).Saved();
+        await Assert.That(snap.Has("mode")).IsFalse();
+
+        var dst = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-mode-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
+        var session = dst.test.list.Session;
+        await dst.Restore(snap, dst.actor.list.User.Context);
+        await Assert.That(dst.test.list.Session).IsSameReferenceAs(session);
     }
 
     [Test]

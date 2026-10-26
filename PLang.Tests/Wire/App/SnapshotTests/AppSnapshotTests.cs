@@ -5,13 +5,14 @@ public class AppSnapshotTests
     [Test]
     public async Task App_Snapshot_StoresEachPart_AtItsMemberPath()
     {
-        // The app is the root part (its mode, its kept); each part under it is at its member path from the app.
+        // The app is the root part (its kept; its mode is how it was started, not stored); each part under it is at
+        // its member path from the app.
         var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         await app.actor.list.User.Context.Variable.Set("x", 1);
         await app.actor.list.System.Context.Variable.Set("y", 2);
         var snap = app.Snapshot(app.actor.list.User.Context).Saved();
 
-        await Assert.That(snap.Entries.Get("mode", snap.Context)).IsNotNull();
+        await Assert.That(snap.Entries.Get("mode", snap.Context)).IsNull();
         await Assert.That(snap.Entries.Get("kept", snap.Context)).IsNull();             // nothing kept: an empty node is left out
         await Assert.That(snap.Holds("Code")).IsTrue();
         await Assert.That(snap.Holds(SnapshotPathExtensions.UserVariable)).IsTrue();
@@ -42,12 +43,12 @@ public class AppSnapshotTests
 
         var snap = src.Snapshot(src.actor.list.User.Context).Saved();
 
-        var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();   // testing — restore sets it from the captured Mode
+        var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();   // testing — and it stays so
         await dst.Restore(snap, dst.actor.list.User.Context);
 
         await Assert.That((await (await dst.actor.list.User.Context.Variable.Get("x")).Value())?.ToString()).IsEqualTo("1");
-        await Assert.That(dst.Build != null).IsTrue();
-        await Assert.That(dst.test.list.Session == null).IsTrue();
+        await Assert.That(dst.Build == null).IsTrue();
+        await Assert.That(dst.test.list.Session != null).IsTrue();
     }
 
     [Test]

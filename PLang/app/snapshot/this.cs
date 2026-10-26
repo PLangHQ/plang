@@ -44,6 +44,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         foreach (var entry in Entries.Entries(context)) yield return entry.Clone().Copy(context);
     }
 
+    /// <summary>The entry at <paramref name="key"/> as <paramref name="context"/> holds it (<see cref="In(actor.context.@this)"/>);
+    /// null when none is stored.</summary>
+    internal global::app.data.@this? In(string key, global::app.actor.context.@this context)
+        => Entries.Get(key, context)?.Clone().Copy(context);
+
     /// <summary>A snapshot that holds nothing is empty, as a collection is: the walk and <see cref="Write"/> leave it out.</summary>
     public override bool IsTruthy() => Entries.IsTruthy();
 
@@ -63,7 +68,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
         var rows = new global::app.type.item.list.@this<T>(context.App.type.list[typeof(global::app.type.item.list.@this<T>)]);
-        if (Entries.Get(key, context)?.Clone().Copy(context) is { } entry)
+        if (In(key, context) is { } entry)
         {
             if (await entry.Value<global::app.type.item.list.@this>() is not { } stored) return Unread(entry);
             foreach (var row in stored.Items(context))
