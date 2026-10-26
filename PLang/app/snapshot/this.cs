@@ -42,23 +42,27 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>The rows a list entry holds, each read through its own typed ask — the same door every value goes
     /// through, so nothing lowers to CLR. An absent entry is empty, the same answer a written empty list gives. A row
-    /// that doesn't read is the answer, its own error whole.</summary>
+    /// that doesn't read is the answer, its own error whole; one that reads as nothing without saying why is answered as
+    /// <c>SnapshotRowUnread</c>, naming the key.</summary>
     internal async System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.list.@this<T>>> Read<T>(string key)
         where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
         var rows = new global::app.type.item.list.@this<T>(Context.App.type.list[typeof(global::app.type.item.list.@this<T>)]);
         if (Entries.Get(key, Context) is { } entry)
         {
-            if (await entry.Value<global::app.type.item.list.@this>() is not { } stored)
-                return global::app.data.@this<global::app.type.item.list.@this<T>>.FromError(entry.Error!, Context);
+            if (await entry.Value<global::app.type.item.list.@this>() is not { } stored) return Unread(entry);
             foreach (var row in stored.Items(Context))
             {
-                if (await row.Value<T>() is not { } value)
-                    return global::app.data.@this<global::app.type.item.list.@this<T>>.FromError(row.Error!, Context);
+                if (await row.Value<T>() is not { } value) return Unread(row);
                 rows.Add(value);
             }
         }
         return Context.Ok(rows);
+
+        global::app.data.@this<global::app.type.item.list.@this<T>> Unread(global::app.data.@this read)
+            => global::app.data.@this<global::app.type.item.list.@this<T>>.FromError(read.Error ?? new global::app.error.@this(
+                $"the snapshot's '{key}' holds a row that reads as no {(global::app.type.item.@this.NameOf(typeof(T)))}",
+                "SnapshotRowUnread", 400), Context);
     }
 
     /// <summary>The snapshot writes ITSELF: an object of its entries. One loop, because there is
