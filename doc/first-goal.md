@@ -38,6 +38,8 @@ Building goal: Start
 
 A build prints more as the goal grows. A goal with sub-goals adds `Building sub-goal: <name>` and `Sub-goal <name> done (…ms)` lines. `Properties rejected — retrying: …` lines are the builder correcting itself. With the key piped in, `Building needs a TypeSafe key for the decider. Paste it:` still prints.
 
+A line that starts with `{"action":` is a diagnostic of the builder, such as `{"action":"file.read","key":"NotFound","message":"'missing.txt' does not exist on disk"}`, or the same with `"key":"PermissionDenied"` for a file the build was not allowed to read. A build printed these and still ended `Saved`. Why the builder reads those files was not traced.
+
 A build that works ends with one line per goal:
 
 ```

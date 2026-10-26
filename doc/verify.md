@@ -158,3 +158,54 @@ Five tasks, 6 builds, key piped from a file and never printed. Local servers on 
 | 115 | caching | cached read returns the old value after the file changed | agent task 5: `first-value` twice, file held `second-value` | pass |
 | 116 | first-goal | a build prints only the folder, the count, and `Saved` lines | agent saw also sub-goal lines, the key prompt and `Properties rejected` lines | **fail** as an implied limit; page now lists the extra lines |
 | 117 | http | the page showed the echo server's fields as if PLang's | agent guessed `%reply.headers%` and got `VariableNotFound (404)` | **fail** (unclear); page now says the fields belong to the test server |
+
+## Trust slice
+
+Scratch apps `tr1`–`tr4` built with the key from stdin. Local loggers on 127.0.0.1 (ports 8767 for the decider, 8768 for the model) recorded each request's body and whether an `Authorization` header was present; key values and key lengths were not read. Row 118 is a recorded failure.
+
+| # | Page | Claim | Check | Result |
+|---|---|---|---|---|
+| 118 | keys | a key marked sensitive is never printed (`PLang/app/module/llm/setting/this.cs:19-21`, `decider.setting.cs:20-23`) | a goal with `write out %!llm.decider.setting.key%` and `write out %!llm.setting.key%` built and printed both keys in full | **fail** (reported to the architect and plang-security) |
+| 119 | files-and-permissions | in the app's folder, reads and writes are not asked | reads of `person.json`, a save of `cached.txt` ran with no question | pass |
+| 120 | files-and-permissions | `//etc/hostname` is asked: `Allow User to read //etc/hostname, which is /etc/hostname? (y/n/a)` | ran `ReadOutside` with empty stdin | pass |
+| 121 | files-and-permissions | `n` gives `PermissionDenied`, handled by `on error` | ran with `n` | pass |
+| 122 | files-and-permissions | `y` allows and is asked again next run | write answered `y`, run again: asked, denied with empty stdin | pass |
+| 123 | files-and-permissions | `a` allows and is not asked next run | read answered `a`; next run no question | pass |
+| 124 | files-and-permissions | no one to answer gives `PermissionDenied` | ran with empty stdin | pass |
+| 125 | files-and-permissions | a grant for one place does not cover another | read `//etc/hostname` granted; write to `//tmp/plang-trust-out.txt` still asked | pass |
+| 126 | files-and-permissions | `read .data/setting/data.sqlite` is refused with no question | ran `ReadStore`: `refused: PermissionDenied`, no question printed | pass |
+| 127 | files-and-permissions | the os folder: every actor reads; a user's write or delete under it is a question with a warning, refused when no one can answer | `PLang/app/type/item/path/file/this.cs:71-78`; `OsFolderGrantTests.AUserWritingOrDeletingInTheOsFolder_IsRefused` (5/5 pass) covers the no-answer refusal | pass (read at that line, the asked case not run); "written only by the system" is the design doc's wording (`Documentation/v0.2/filesystem-permission.md:94`) |
+| 128 | files-and-permissions | grants have three homes; the saved one is signed; a tampered row reads as no grants | `Documentation/v0.2/filesystem-permission.md:67-79`; not run | unverified |
+| 129 | files-and-permissions | the prompt guards the User actor, not the app's code | `Documentation/v0.2/filesystem-permission.md:13` | pass (read in the design doc); not run |
+| 130 | files-and-permissions | the tests named pass: `test/app/permission` 2, `StoreStandingProbeTests` 3, `OsFolderGrantTests` 5, `StandingTests` 2, `RoleStandingProbeTests` 18, `PermissionAllowsTests` 8 | ran them | pass |
+| 131 | keys | the saved decider key is in `.data/setting/data.sqlite` in plain text | searched the file with the key file as the pattern (`grep -c -F -f`), 1 matching line in each of two apps; neither value displayed | pass |
+| 132 | keys | the store file is `-rw-r--r--` | `ls -l .data/setting` | pass |
+| 133 | keys | the identity's private key is stored plain | not checked | unverified |
+| 134 | keys | a run with no model key stops with `MissingLlmKey (401)` naming both ways | ran the finding-i app with `OPENAI_API_KEY` unset | pass |
+| 135 | what-leaves-the-machine | a run of built goals made 0 requests to the decider or model endpoint | ran `ReadOutside` with both endpoints pointed at loggers | pass |
+| 136 | what-leaves-the-machine | a build POSTs `model`, `questions`, `state` with `Authorization`, `Content-Type`, `Content-Length`, `Host` | logger entry for one build | pass |
+| 137 | what-leaves-the-machine | the build body carried a step's literal text, the module catalog (37,499 bytes), not a file's contents, not the app path | grep of the logged body: `hunter2-literal` found, `SECRETCONTENT123` 0, folder path 0 | pass for the one request |
+| 138 | what-leaves-the-machine | a model step POSTs `model`, `messages`, `temperature`, `max_completion_tokens` | logger entry | pass |
+| 139 | what-leaves-the-machine | a variable in the message is sent unreplaced (`%name%`, `%prompt%`) | logger entries; repro at `/shared/doc2/finding-i/` | pass as seen; a defect against the module |
+| 140 | what-leaves-the-machine | a rebuild with nothing changed builds no goal | row 18c | pass; request count not taken |
+| 141 | what-leaves-the-machine | no other request than those named | not measured | unverified (no packet capture) |
+| 142 | identity-and-signing | `get identity` makes a `default` identity in an app with none | ran `tr4`: `has identity: default` | pass |
+| 143 | identity-and-signing | sign then verify prints `Valid: true` | ran `tr4` | pass |
+| 144 | identity-and-signing | the 7 named signing tests pass (9 of 9 in `test/module/signing`) | ran them | pass |
+| 145 | identity-and-signing | `identity.export` refuses with `ExportWaitsForCriticalActions` | ran `ExportKey`: `export: ExportWaitsForCriticalActions` | pass; no test found |
+| 146 | code-from-elsewhere | a sub app is never made outside its maker's folder or in its maker's stores: `OutsideItsMaker (400)` | `PLang/app/actor/this.cs:177-184`; `SubAppRootTests` 4/4 | pass |
+| 147 | code-from-elsewhere | a sub app never owns the terminal | `PLang/app/actor/this.cs:188-190` | pass (read) |
+| 148 | code-from-elsewhere | a sub app writes no shared object | `Documentation/v0.2/apps.md`; guard `SharedEntryWritesTests` not run | unverified |
+| 149 | what-plang-does-not-guarantee | the platform of all runs is Linux | the machine | pass |
+| 150 | what-plang-does-not-guarantee | revoking an `a` grant from a goal | not run | unverified |
+
+## Cold reader, run 3 (a fresh agent given only doc/, the trust pages)
+
+Six questions answered from the pages and three checks run (1 build): a read outside the folder with nobody to answer (`PermissionDenied` after the question), a read inside `.data/` (`PermissionDenied`, no question), `identity.export` (`ExportWaitsForCriticalActions`). All matched the pages. The agent never read a key.
+
+| # | Page | Claim | Check | Result |
+|---|---|---|---|---|
+| 151 | files-and-permissions | outside read with no answer, `.data` read, `identity.export` as in rows 120, 124, 126, 145 | agent's three checks | pass |
+| 152 | first-goal | a build prints only the lines listed | the agent saw `{"action":"file.read","key":"PermissionDenied",…}` at build time | **fail** (page now describes the diagnostic lines; cause untraced) |
+| 153 | identity-and-signing | the page said identities live in `.data/data.sqlite` | the agent noted the keys page says `.data/setting/data.sqlite`; two files exist and which holds the identity was not checked | **fail** (page now says so) |
+| 154 | code-from-elsewhere | what a reviewer should look for | the agent found no list | page now has a list of what these runs touched; the list is not complete |
