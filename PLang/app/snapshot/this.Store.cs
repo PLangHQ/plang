@@ -13,23 +13,23 @@ public sealed partial class @this
         => Store(part, new Dictionary<ISnapshot, ISnapshot>(ReferenceEqualityComparer.Instance), context);
 
     /// <summary>Stores <paramref name="part"/> and every part under it, from this node, each live part in
-    /// <paramref name="standIns"/> written as what stands for it (the error's throw-time variables and frames). A part
+    /// <paramref name="thrown"/> written as it stood at an error's throw (its variables and frames). A part
     /// reached a second time (an actor's app) stays where it was first stored, and a node that holds nothing is left
     /// out.</summary>
-    internal data.@this Store(ISnapshot part, Dictionary<ISnapshot, ISnapshot> standIns, actor.context.@this context)
-        => Store(part, standIns, new HashSet<ISnapshot>(ReferenceEqualityComparer.Instance), context);
+    internal data.@this Store(ISnapshot part, Dictionary<ISnapshot, ISnapshot> thrown, actor.context.@this context)
+        => Store(part, thrown, new HashSet<ISnapshot>(ReferenceEqualityComparer.Instance), context);
 
-    private data.@this Store(ISnapshot part, Dictionary<ISnapshot, ISnapshot> standIns, HashSet<ISnapshot> stored,
+    private data.@this Store(ISnapshot part, Dictionary<ISnapshot, ISnapshot> thrown, HashSet<ISnapshot> stored,
         actor.context.@this context)
     {
         stored.Add(part);
-        var own = (standIns.GetValueOrDefault(part) ?? part).Store(this, context);
+        var own = (thrown.GetValueOrDefault(part) ?? part).Store(this, context);
         if (!own.Success) return own;
         foreach (var (name, child) in Parts(part))
         {
             if (stored.Contains(child)) continue;
             var node = new @this(Context);
-            var result = node.Store(child, standIns, stored, context);
+            var result = node.Store(child, thrown, stored, context);
             if (!result.Success) return result;
             if (node.Entries.IsTruthy()) Entries.Set(new global::app.data.@this(name, node, context: Context));
         }

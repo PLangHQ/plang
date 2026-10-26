@@ -23,14 +23,14 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
             [context.call] = context.call.At(error.CallFrames),
         }, context);
 
-    private data.@this<snapshot.@this> Snapshot(Dictionary<snapshot.ISnapshot, snapshot.ISnapshot> standIns, actor.context.@this context)
+    private data.@this<snapshot.@this> Snapshot(Dictionary<snapshot.ISnapshot, snapshot.ISnapshot> thrown, actor.context.@this context)
     {
         if (!ReferenceEquals(context, context.Actor.Context))
             return global::app.data.@this<snapshot.@this>.FromError(new global::app.error.@this(
                 "a snapshot is saved from the run's own context, not from inside a task: a task's variables and frames are reached by nothing a snapshot saves",
                 "SnapshotInTask", 400), context);
         var snapshot = new snapshot.@this(context);
-        var stored = snapshot.Store(this, standIns, context);
+        var stored = snapshot.Store(this, thrown, context);
         return stored.Success ? context.Ok(snapshot) : global::app.data.@this<snapshot.@this>.FromError(stored.Error!, context);
     }
 
@@ -41,23 +41,26 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
         snapshot.Entries.Set(new data.@this("mode",
             new global::app.type.item.choice.@this<global::app.Mode>(Mode, types[typeof(global::app.type.item.choice.@this<global::app.Mode>)]),
             context: context));
-        var kept = new global::app.type.item.dict.@this(types[typeof(global::app.type.item.dict.@this)]);
-        foreach (var (name, member) in Kept.Members) kept.Set(name, member);
-        snapshot.Entries.Set(new data.@this("kept", kept, context: context));
+        snapshot.Entries.Set(new data.@this("kept", Kept.Dict(types), context: context));
         return context.Ok();
     }
 
     async System.Threading.Tasks.Task<data.@this> global::app.snapshot.ISnapshot.Start(snapshot.@this snapshot, actor.context.@this context)
     {
+        // a value that doesn't read is its entry's answer
         if (snapshot.Entries.Get("mode", context) is { } entry)
         {
-            var mode = (await entry.Value<global::app.type.item.choice.@this<global::app.Mode>>())!.Value;
+            if (await entry.Value<global::app.type.item.choice.@this<global::app.Mode>>() is not { } choice) return entry;
+            var mode = choice.Value;
             Build = mode == global::app.Mode.Build ? new global::app.module.build.@this(context) : null;
             if (mode == global::app.Mode.Test && test.list.Session == null) await test.list.Open();
             else if (mode != global::app.Mode.Test) await test.list.Close();
         }
         if (snapshot.Entries.Get("kept", context) is { } kept)
-            Kept.Replace((await kept.Value<global::app.type.item.dict.@this>())!, context);
+        {
+            if (await kept.Value<global::app.type.item.dict.@this>() is not { } members) return kept;
+            Kept.Replace(members, context);
+        }
         return context.Ok();
     }
 }

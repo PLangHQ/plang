@@ -1,4 +1,3 @@
-using System.Reflection;
 using Registration = app.module.code.registration.@this;
 using DefaultOverride = app.module.code.defaultoverride.@this;
 
@@ -31,7 +30,7 @@ public sealed partial class @this : ISnapshot
             foreach (var (type, dict) in table.Providers)
             {
                 var providerKind = new kind.@this(type).Value;
-                table.Defaults.TryGetValue(type, out var currentDefaultName);
+                table.Defaults.TryGetValue(type, out var @default);
 
                 foreach (var (name, provider) in dict)
                 {
@@ -49,15 +48,15 @@ public sealed partial class @this : ISnapshot
                 // If they differ, the user changed the selection — write an override so Start
                 // re-applies it over the built-ins a fresh app's registry holds.
                 // No built-in for the kind → write unconditionally so the chosen default survives.
-                table.BuiltIn.TryGetValue(type, out var bornDefault);
-                if (currentDefaultName != null
-                    && (bornDefault == null
-                        || !string.Equals(currentDefaultName, bornDefault, StringComparison.OrdinalIgnoreCase)))
+                table.BuiltIn.TryGetValue(type, out var builtIn);
+                if (@default != null
+                    && (builtIn == null
+                        || !string.Equals(@default, builtIn, StringComparison.OrdinalIgnoreCase)))
                 {
                     overrides.Add(new DefaultOverride(types[typeof(DefaultOverride)])
                     {
                         Kind = providerKind,
-                        ProviderName = currentDefaultName,
+                        ProviderName = @default,
                     });
                 }
             }
@@ -71,8 +70,10 @@ public sealed partial class @this : ISnapshot
 
     /// <summary>
     /// Two steps, each failure answered (no fallback to the system defaults):
-    ///   1) Replay non-built-in registrations — load each source DLL, register the provider against every
-    ///      ICode-derived interface it implements.
+    ///   1) Make each registration again the way it was first made: its source DLL through <see cref="Load"/> (the
+    ///      Execute gate, its plang types joined to the app's) and <see cref="Register(System.Reflection.Assembly, data.@this,
+    ///      global::app.type.item.path.@this, actor.context.@this)"/> — each source once, since one load registers
+    ///      every provider it brings. The stored provider must then be there, under its kind.
     ///   2) Apply default-selection overrides — the named provider must be registered.
     /// A fresh app's registry holds the built-ins, so they are present.
     /// </summary>
@@ -82,59 +83,46 @@ public sealed partial class @this : ISnapshot
         var overrides = await snapshot.Read<DefaultOverride>("defaultOverrides");
 
         // Step 1 — registrations
-        foreach (var reg in registrations)
+        var sources = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var registration in registrations)
         {
-            var named = new data.@this("kind", reg.Kind, context: context);
+            var named = new data.@this("kind", registration.Kind, context: context);
             if (await named.Value<global::app.type.item.choice.@this<kind.@this>>() is not { } providerKind) return named;
-            var providerType = providerKind.Value.Interface;
 
             // A registration made in-process (no source) can't be made again from nothing.
-            if (reg.Source == null)
+            if (registration.Source == null)
                 return context.Error(new global::app.error.@this(
-                    $"Provider '{reg.ProviderName}' for {reg.Kind} has no Source — in-process registrations cannot be restored without a loadable origin.",
+                    $"Provider '{registration.ProviderName}' for {registration.Kind} has no Source — in-process registrations cannot be restored without a loadable origin.",
                     "ProviderRestore", 500));
 
-            // The source is an OS-absolute path; prefixed with "/" so path.Resolve treats it as OS-rooted (the //
-            // convention on Linux) instead of anchoring it against the new app's root. The load passes the AuthGate.
-            var sourceForResolve = reg.Source.StartsWith("/") ? "/" + reg.Source : reg.Source;
-            var loaded = await global::app.type.item.path.@this.Resolve(sourceForResolve, context).LoadAssemblyAsync(context);
-            if (!loaded.Success)
+            if (sources.Add(registration.Source))
             {
-                var error = new global::app.error.@this($"Provider '{reg.ProviderName}' source '{reg.Source}' failed to load.", "ProviderRestore", 500);
-                error.list.Add(loaded.Error!);
-                return context.Error(error);
+                // The source is an OS-absolute path; prefixed with "/" so path.Resolve treats it as OS-rooted (the //
+                // convention on Linux) instead of anchoring it against the new app's root.
+                var source = global::app.type.item.path.@this.Resolve(
+                    registration.Source.StartsWith("/") ? "/" + registration.Source : registration.Source, context);
+                var made = await Load(source, context, (assembly, types) => Register(assembly, types, source, context));
+                if (!made.Success)
+                {
+                    var error = new global::app.error.@this(
+                        $"Provider '{registration.ProviderName}' source '{registration.Source}' failed to load.", "ProviderRestore", 500);
+                    error.list.Add(made.Error!);
+                    return context.Error(error);
+                }
             }
-            var assembly = loaded.Peek()!.Clr<Assembly>()!;
 
-            // The provider among the DLL's classes that implement the stored kind, by the name it answers to:
-            // each made once through its parameterless constructor (the contract provider/load enforces), the one
-            // with the stored name kept. Mirrors provider/load.cs.
-            var instance = assembly.GetExportedTypes()
-                .Where(t => providerType.IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
-                .Select(t => (ICode)Activator.CreateInstance(t)!)
-                .FirstOrDefault(provider => provider.Name == reg.ProviderName);
-
-            if (instance == null)
+            if (!List(providerKind.Value.Interface).Any(provider => provider.Name == registration.ProviderName))
                 return context.Error(new global::app.error.@this(
-                    $"Provider '{reg.ProviderName}' of kind {reg.Kind} not found in '{reg.Source}'.", "ProviderRestore", 500));
-
-            instance.Source = reg.Source;
-
-            // Register against every ICode-derived interface the type implements (matches provider/load.cs).
-            var interfaces = instance.GetType().GetInterfaces()
-                .Where(i => typeof(ICode).IsAssignableFrom(i) && i != typeof(ICode))
-                .ToList();
-            foreach (var iface in interfaces)
-                Register(iface, instance);
+                    $"Provider '{registration.ProviderName}' of kind {registration.Kind} not found in '{registration.Source}'.", "ProviderRestore", 500));
         }
 
         // Step 2 — default-selection overrides
-        foreach (var ov in overrides)
+        foreach (var @override in overrides)
         {
-            var named = new data.@this("kind", ov.Kind, context: context);
+            var named = new data.@this("kind", @override.Kind, context: context);
             if (await named.Value<global::app.type.item.choice.@this<kind.@this>>() is not { } providerKind) return named;
 
-            var result = SetDefault(providerKind.Value.Interface, ov.ProviderName);
+            var result = SetDefault(providerKind.Value.Interface, @override.ProviderName);
             if (!result.Success) return result;
         }
         return context.Ok();

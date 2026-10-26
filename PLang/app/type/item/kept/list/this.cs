@@ -34,6 +34,15 @@ public sealed class @this
         return copy;
     }
 
+    /// <summary>The kept members as a dict, each the Data it is under its name, in their order — what its owner's
+    /// snapshot stores, and what <see cref="Replace"/> takes back.</summary>
+    internal global::app.type.item.dict.@this Dict(global::app.type.list.@this types)
+    {
+        var dict = new global::app.type.item.dict.@this(types[typeof(global::app.type.item.dict.@this)]);
+        foreach (var (name, member) in Members) dict.Set(name, member);
+        return dict;
+    }
+
     /// <summary>Keeps exactly the members <paramref name="members"/> holds, each the Data it is — what was kept before
     /// goes. Its owner's snapshot start puts back what the owner stored.</summary>
     internal void Replace(global::app.type.item.dict.@this members, global::app.actor.context.@this context)
