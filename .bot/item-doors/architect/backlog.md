@@ -24,6 +24,10 @@ Checks to make before the release, not branches:
 
 - **A database module** (Ingi, 2026-10-26: "3 future"): runtime2 has no user-facing db module (v0.1 had one); plang keeps its own state in `/.data/*.sqlite` through `app.store`. doc2's `doc/databases.md` says there's none today.
 
+## From windows
+
+- **Debugging a system goal shows only that goal** (windows 13, Ingi: "agree"): `--debug.setting.goal=/system/builder/BuildGoal/Decide` binds Decide's own start, steps and actions, but the system goals it calls aren't shown (since windows' stage 1 they don't fire through the type). When the builder bot needs them, debug follows the calls down from the named goal.
+
 ## From decider-key
 
 - **Two concurrent asks for a missing key each prompt** (auditor N1): `IKey.Asked` (`module/llm/setting/IKey.cs`) has no gate, so two steps asking the llm or the decider at once with no key both ask the user. That's as llm's key did before. Untested.
