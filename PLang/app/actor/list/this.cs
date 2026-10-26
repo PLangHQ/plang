@@ -4,9 +4,9 @@ namespace app.actor.list;
 /// The app's actors — a list of the two, System and User, reached at <c>app.actor.list</c>; one is picked
 /// by name through the type (<c>app.actor.Get("user")</c>). System and User are its well-known members —
 /// the same instances, not a second store. Owns their lifecycle: System is the cancellation root, User
-/// links to its token, both dispose here.
+/// links to its token, both dispose here. Takes part in a snapshot as what holds the two, with nothing of its own.
 /// </summary>
-public sealed class @this : global::app.type.item.list.@this<actor.@this>, IAsyncDisposable
+public sealed class @this : global::app.type.item.list.@this<actor.@this>, IAsyncDisposable, global::app.snapshot.ISnapshot
 {
     public @this(global::app.@this app) : base(new List<object?>(), app.type.list[typeof(@this)])
     {

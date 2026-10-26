@@ -1,29 +1,23 @@
 namespace app.snapshot;
 
 /// <summary>
-/// A part of the App that snapshots and restores ITSELF. The type system is the classifier —
-/// implementing this interface puts the owner in the snapshot-and-restore bucket; not implementing
-/// it keeps it in the reconstruct-on-build bucket (Modules, Goals, Channels, Cache, …).
+/// A part of a run that takes part in a snapshot: it writes itself into the node at its place, and comes back from what
+/// it wrote. The type system is the classifier — a public member whose declared type is an <see cref="ISnapshot"/> is
+/// a part (<see cref="@this.Store(ISnapshot, actor.context.@this)"/> walks them from the app); any other member is never
+/// read, and rebuilds from the app's own files (modules, goals, channels, cache, …).
 ///
-/// The owner names its own section and owns both halves of its shape: <see cref="Capture"/> writes
-/// the section, <see cref="Restore"/> reads it back into THIS instance (the destination's live
-/// owner). References across owners are by name (the way PLang already works at runtime) — Restore
-/// never depends on pointer fixup.
+/// <para>A part's place is its member path from the app (<c>actor.list.User.Context.Variable</c>), never a name it picks.
+/// A part that only holds parts (a concept's node, the actors, an actor, its context) writes nothing of its own: both
+/// members default to nothing. References across parts are by name — a start never depends on pointer fixup.</para>
 /// </summary>
 public interface ISnapshot
 {
-    /// <summary>The name of this owner's section in the snapshot.</summary>
-    string Section { get; }
+    /// <summary>Writes this part's own state into <paramref name="snapshot"/>, the node at its place — its entries, never
+    /// its parts (the walk stores those at their own places). A state it can't write is answered, never thrown.</summary>
+    data.@this Store(@this snapshot, actor.context.@this context) => context.Ok();
 
-    /// <summary>Writes this owner's state into its section <paramref name="s"/>.</summary>
-    void Capture(@this s);
-
-    /// <summary>
-    /// Reads this owner's section <paramref name="s"/> back into this instance. Hard-errors on
-    /// referent-integrity violations (unresolvable name, hash mismatch, missing source). No
-    /// silent fallback.
-    /// </summary>
-    /// <remarks>Async because entries are plang values and the typed ask that reads them is async —
-    /// the same door every other value read goes through. Nothing here lowers to CLR.</remarks>
-    System.Threading.Tasks.Task Restore(@this s, actor.context.@this context);
+    /// <summary>Comes back from what <paramref name="snapshot"/> holds at its place. What can't come back (a goal gone,
+    /// a source that won't load) is answered, with no fallback.</summary>
+    System.Threading.Tasks.Task<data.@this> Start(@this snapshot, actor.context.@this context)
+        => System.Threading.Tasks.Task.FromResult(context.Ok());
 }

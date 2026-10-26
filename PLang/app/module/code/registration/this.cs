@@ -18,10 +18,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>A structure, not a single-token leaf.</summary>
     public override bool IsLeaf => false;
 
-    /// <summary>AssemblyQualifiedName of the provider interface — the identity that has to survive
-    /// across processes.</summary>
+    /// <summary>The kind of provider it was registered as, by its plang name (<c>signing</c>, <c>key</c>,
+    /// <see cref="kind.@this"/>) — the identity that survives across processes and versions.</summary>
     [Store, Out]
-    public string TypeName { get; init; } = "";
+    public string Kind { get; init; } = "";
 
     [Store, Out]
     public string ProviderName { get; init; } = "";
@@ -29,7 +29,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     [Store, Out]
     public string? Source { get; init; }
 
-    public override string ToString() => $"{ProviderName} ({TypeName})";
+    public override string ToString() => $"{ProviderName} ({Kind})";
 
     /// <summary>The pure core — a registration passes through; nothing else converts into one.</summary>
     public static @this? Create(object? raw) => raw as @this;

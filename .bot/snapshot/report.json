@@ -46,7 +46,7 @@
       "id": "3817d674-e8fe-42dd-b4e2-0ef7885c8235",
       "bot": "coder",
       "timestamp_start": "2026-10-26T03:00:00Z",
-      "timestamp_end": "2026-10-26T03:15:00Z",
+      "timestamp_end": "2026-10-26T13:30:00Z",
       "intent": "Push back on the snapshot plan, place it at test/plan/snapshot/, and bring stage 1's shape before code",
       "before": {
         "assumptions": "the plan's walk of the app tree can be the plang member tree",
@@ -72,12 +72,31 @@
           "category": "doc",
           "confidence": "medium",
           "context": "plang's tree reaches only call; the walk is the C# member tree by declared ISnapshot type; holders on the path take part; four rulings open"
+        },
+        {
+          "paths": [
+            "PLang/app/snapshot/ISnapshot.cs",
+            "PLang/app/snapshot/this.Store.cs",
+            "PLang/app/this.Snapshot.cs",
+            "PLang/app/module/code/this.Snapshot.cs",
+            "PLang/app/type/item/variable/list/this.Snapshot.cs",
+            "PLang/app/call/list/this.Snapshot.cs",
+            "PLang/app/type/item/kept/list/this.cs",
+            "PLang/app/type/node/this.cs",
+            "PLang/app/actor/this.cs",
+            "PLang/app/actor/list/this.cs",
+            "PLang/app/actor/context/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "stage 1: ISnapshot is Store/Start; the snapshot walks the app's member tree by declared ISnapshot type; the holders take part (Ingi, snapshot 4); provider kinds by plang name; a save inside a task is refused. Store is sync: error.Callback's getter and Ask store from sync code. call.list keeps its public Capture/Restore until 1b."
         }
       ],
       "after": {
-        "status": "design reported, waiting on the architect",
-        "health": "no code changed",
-        "notes": "the three ask tests stay until the callback list's place is named"
+        "status": "stage 1 done",
+        "health": "C#: Wire 615/616 (the carried ASensitiveMember red), Data green, Runtime 1 pre-existing (ReadmeIsACopyOfStartMd); plang: 1 pre-existing (BareLiteralJudgedByForm), the three ask tests stale as ruled",
+        "notes": "1b-1d, View.Snapshot, loops, tasks with Ingi"
       }
     }
   ]

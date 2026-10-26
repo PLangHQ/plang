@@ -15,7 +15,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     {
         if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this(typeof(global::app.module.code.registration.@this), kind), ctx.Context]);
 
-        string typeName = "", providerName = "";
+        string providerKind = "", providerName = "";
         string? source = null;
 
         reader.BeginObject();
@@ -23,7 +23,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         {
             switch (name)
             {
-                case "typeName": typeName = reader.String(); break;
+                case "kind": providerKind = reader.String(); break;
                 case "providerName": providerName = reader.String(); break;
                 case "source": source = reader.Null() ? null : reader.String(); break;
                 default: reader.Skip(); break;
@@ -33,7 +33,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
 
         return new global::app.module.code.registration.@this(ctx.Context.App.type.list[typeof(global::app.module.code.registration.@this)])
         {
-            TypeName = typeName,
+            Kind = providerKind,
             ProviderName = providerName,
             Source = source,
         };

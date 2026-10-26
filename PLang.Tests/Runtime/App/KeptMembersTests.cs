@@ -164,7 +164,7 @@ public class KeptMembersTests
         var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
         await (await Set(src.actor.list.User.Context, "%!app.home%", src.actor.list.User.Context.Text("lights"))).IsSuccess();
 
-        var snap = src.Snapshot(src.actor.list.User.Context);
+        var snap = src.Snapshot(src.actor.list.User.Context).Saved();
         await using var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
         await dst.Restore(snap, dst.actor.list.User.Context);
 

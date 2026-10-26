@@ -79,7 +79,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         await using (var outer = src.actor.list.User.Context.call.Push(a1, await src.actor.list.User.Context.call.Setting()))
         await using (var inner = src.actor.list.User.Context.call.Push(a2, await src.actor.list.User.Context.call.Setting()))
         {
-            var snap = src.Snapshot(src.actor.list.User.Context);
+            var snap = src.Snapshot(src.actor.list.User.Context).Saved();
 
             // Build dst with matching goals (same Path + Hash via identical step text).
             var (dg1, _, _) = MakeFrame("Outer2");
@@ -115,7 +115,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         await using (stack.Push(s2, await stack.Setting()))
         await using (stack.Push(a2, await stack.Setting()))
         {
-            var snap = src.Snapshot(src.actor.list.User.Context);
+            var snap = src.Snapshot(src.actor.list.User.Context).Saved();
 
             var (dg1, _, _) = MakeFrame("FrOuter");
             var (dg2, _, _) = MakeFrame("FrInner");

@@ -6,12 +6,13 @@ using app.module.identity.code;
 namespace app.actor;
 
 /// <summary>
-/// Represents an actor in the system with its own context and IO channels.
+/// Represents an actor in the system with its own context and IO channels. Takes part in a snapshot as what holds its
+/// context, with nothing of its own.
 /// </summary>
 [global::app.Attributes.PlangType("actor")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IAsyncDisposable,
     global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>, global::app.type.item.ILoad<@this>,
-    global::app.type.item.IList<@this, global::app.actor.list.@this>, global::app.origin.@this
+    global::app.type.item.IList<@this, global::app.actor.list.@this>, global::app.origin.@this, global::app.snapshot.ISnapshot
 {
     private readonly CancellationTokenSource _cts;
 

@@ -139,18 +139,37 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
 
     private sealed class Thrown(@this stack, IReadOnlyList<call.@this> chainBottomFirst) : global::app.snapshot.ISnapshot
     {
-        public string Section => stack.Section;
-
-        public void Capture(global::app.snapshot.@this s)
+        public global::app.data.@this Store(global::app.snapshot.@this snapshot, global::app.actor.context.@this context)
         {
             var ordered = new List<call.@this>(chainBottomFirst.Count);
             for (int i = chainBottomFirst.Count - 1; i >= 0; i--) // bottom-first → outer-first
                 ordered.Add(chainBottomFirst[i]);
-            CaptureFrames(s, ordered);
+            CaptureFrames(snapshot, ordered);
+            return context.Ok();
         }
 
-        public System.Threading.Tasks.Task Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
-            => stack.Restore(s, context);
+        public System.Threading.Tasks.Task<global::app.data.@this> Start(global::app.snapshot.@this snapshot, global::app.actor.context.@this context)
+            => ((global::app.snapshot.ISnapshot)stack).Start(snapshot, context);
+    }
+
+    // The stack as a part: what it captures, and its chain restored — a frame that can't come back is answered.
+    global::app.data.@this global::app.snapshot.ISnapshot.Store(global::app.snapshot.@this snapshot, global::app.actor.context.@this context)
+    {
+        Capture(snapshot);
+        return context.Ok();
+    }
+
+    async System.Threading.Tasks.Task<global::app.data.@this> global::app.snapshot.ISnapshot.Start(global::app.snapshot.@this snapshot, global::app.actor.context.@this context)
+    {
+        try
+        {
+            await Restore(snapshot, context);
+            return context.Ok();
+        }
+        catch (AppException ex)
+        {
+            return context.Error(ex.Error);
+        }
     }
 
     private static void CaptureFrames(global::app.snapshot.@this s, List<call.@this> orderedOuterFirst)

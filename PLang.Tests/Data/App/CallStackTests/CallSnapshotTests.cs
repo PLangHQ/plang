@@ -80,7 +80,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
         var (src, action) = BuildLiveAction("ResolveGoal");
         await using (var call = src.actor.list.User.Context.call.Push(action, await src.actor.list.User.Context.call.Setting()))
         {
-            var snap = src.Snapshot(src.actor.list.User.Context);
+            var snap = src.Snapshot(src.actor.list.User.Context).Saved();
 
             // Build a fresh app with the *same* goal registered.
             var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
@@ -110,15 +110,13 @@ public class CallSnapshotTests : System.IAsyncDisposable
         var (src, action) = BuildLiveAction("DisappearingGoal");
         await using (var call = src.actor.list.User.Context.call.Push(action, await src.actor.list.User.Context.call.Setting()))
         {
-            var snap = src.Snapshot(src.actor.list.User.Context);
+            var snap = src.Snapshot(src.actor.list.User.Context).Saved();
             // Restore on a fresh App that never had this goal registered.
             var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
 
-            await Assert.ThrowsAsync<CallbackGoalNotFound>(async () =>
-            {
-                await dst.Restore(snap, dst.actor.list.User.Context);
-                await Task.CompletedTask;
-            });
+            var started = await snap.Start(dst, dst.actor.list.User.Context);
+            await Assert.That(started.Success).IsFalse();
+            await Assert.That(started.Error!.Key).IsEqualTo("CallbackGoalNotFound");
         }
     }
 
@@ -128,7 +126,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
         var (src, action) = BuildLiveAction("HashGoal", "original step text");
         await using (var call = src.actor.list.User.Context.call.Push(action, await src.actor.list.User.Context.call.Setting()))
         {
-            var snap = src.Snapshot(src.actor.list.User.Context);
+            var snap = src.Snapshot(src.actor.list.User.Context).Saved();
 
             // Fresh App with the same path but different hash (different step prose).
             var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
@@ -139,13 +137,10 @@ public class CallSnapshotTests : System.IAsyncDisposable
             dstGoal.Step.Add(dstStep);
             dst.goal.list.Add(dstGoal);
 
-            var mismatch = await Assert.ThrowsAsync<CallbackGoalHashMismatch>(async () =>
-            {
-                await dst.Restore(snap, dst.actor.list.User.Context);
-                await Task.CompletedTask;
-            });
+            var started = await snap.Start(dst, dst.actor.list.User.Context);
             // a keyed program error: the resume's result carries CallbackGoalHashMismatch, not ServiceError
-            await Assert.That(mismatch!.Error.Key).IsEqualTo("CallbackGoalHashMismatch");
+            await Assert.That(started.Success).IsFalse();
+            await Assert.That(started.Error!.Key).IsEqualTo("CallbackGoalHashMismatch");
         }
     }
 
@@ -157,7 +152,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
         var (src, action) = BuildLiveAction("RecompiledGoal", "same step text");
         await using (var call = src.actor.list.User.Context.call.Push(action, await src.actor.list.User.Context.call.Setting()))
         {
-            var snap = src.Snapshot(src.actor.list.User.Context);
+            var snap = src.Snapshot(src.actor.list.User.Context).Saved();
 
             var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
             var dstGoal = new Goal(dst.type.list) { Name = "RecompiledGoal", Path = global::app.type.item.path.@this.Resolve("/RecompiledGoal.goal", app.actor.list.User.Context) };
@@ -167,13 +162,10 @@ public class CallSnapshotTests : System.IAsyncDisposable
             dstGoal.Step.Add(dstStep);
             dst.goal.list.Add(dstGoal);
 
-            var thrown = await Assert.ThrowsAsync<CallbackActionMismatch>(async () =>
-            {
-                await dst.Restore(snap, dst.actor.list.User.Context);
-                await Task.CompletedTask;
-            });
-            await Assert.That(thrown!.Message).Contains("test.test");
-            await Assert.That(thrown.Message).Contains("variable.set");
+            var started = await snap.Start(dst, dst.actor.list.User.Context);
+            await Assert.That(started.Success).IsFalse();
+            await Assert.That(started.Error!.Message).Contains("test.test");
+            await Assert.That(started.Error.Message).Contains("variable.set");
         }
     }
 
@@ -183,7 +175,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
         var (src, action) = BuildLiveAction("PureGoal");
         await using (var call = src.actor.list.User.Context.call.Push(action, await src.actor.list.User.Context.call.Setting()))
         {
-            var snap = src.Snapshot(src.actor.list.User.Context);
+            var snap = src.Snapshot(src.actor.list.User.Context).Saved();
 
             var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
             var dstGoal = new Goal(dst.type.list) { Name = "PureGoal", Path = global::app.type.item.path.@this.Resolve("/PureGoal.goal", app.actor.list.User.Context) };

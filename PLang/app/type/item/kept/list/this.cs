@@ -3,10 +3,10 @@ namespace app.type.item.kept.list;
 /// <summary>
 /// The members a thing keeps beyond its own — added by a program (<c>set %!app.home% = …</c>), kept in place for as
 /// long as the thing lives, each the Data it was given (its name, type and properties travel with it). A thing that
-/// lives on (the app, a call, an actor, a module, a goal, a step) holds one; a plain value keeps none. The app's rides
-/// its snapshot.
+/// lives on (the app, a call, an actor, a module, a goal, a step) holds one; a plain value keeps none. Its owner writes
+/// it into the owner's snapshot (the app's rides the app's).
 /// </summary>
-public sealed class @this : global::app.snapshot.ISnapshot
+public sealed class @this
 {
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, global::app.data.@this> _kept =
         new(System.StringComparer.OrdinalIgnoreCase);
@@ -34,20 +34,11 @@ public sealed class @this : global::app.snapshot.ISnapshot
         return copy;
     }
 
-    /// <summary>Its section in a snapshot.</summary>
-    public string Section => "Kept";
-
-    /// <summary>Writes the kept members, by name, each as the Data it is, in their order.</summary>
-    public void Capture(global::app.snapshot.@this s)
-        => s.Write("kept", new System.Collections.Generic.Dictionary<string, global::app.data.@this>(Members, System.StringComparer.OrdinalIgnoreCase));
-
-    /// <summary>Puts back the kept members the section holds — a section without them leaves what is kept as it is.</summary>
-    public async System.Threading.Tasks.Task Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
+    /// <summary>Keeps exactly the members <paramref name="members"/> holds, each the Data it is — what was kept before
+    /// goes. Its owner's snapshot start puts back what the owner stored.</summary>
+    internal void Replace(global::app.type.item.dict.@this members, global::app.actor.context.@this context)
     {
-        var entry = s.Entries.Get("kept", context);
-        if (entry == null) return;
-        var dict = await entry.Value<global::app.type.item.dict.@this>();
         _kept.Clear();
-        foreach (var member in dict.Entries(context)) _kept[member.Name] = member;
+        foreach (var member in members.Entries(context)) _kept[member.Name] = member;
     }
 }

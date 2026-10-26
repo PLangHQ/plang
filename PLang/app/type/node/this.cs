@@ -1,8 +1,10 @@
 namespace app.type.node;
 
-/// <summary>What every node is — the type <c>node</c>, plang's own: no step names it as a type.</summary>
+/// <summary>What every node is — the type <c>node</c>, plang's own: no step names it as a type. A node takes part in a
+/// snapshot as what holds its concept's parts (<c>app.actor</c>'s list), with nothing of its own; a node whose list is
+/// no part leaves nothing.</summary>
 [global::app.Attributes.PlangType("node")]
-public abstract class @this : global::app.type.item.@this
+public abstract class @this : global::app.type.item.@this, global::app.snapshot.ISnapshot
 {
     public static bool Internal => true;
 

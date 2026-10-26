@@ -52,7 +52,7 @@ public class TemplateKindTests
             """;
 
         var goal = await RealGoalLoad.Read(app, pr);
-        await ctx.Variable.Set("snap", new global::app.data.@this("snap", app.Snapshot(ctx), context: ctx));
+        await ctx.Variable.Set("snap", new global::app.data.@this("snap", app.Snapshot(ctx).Saved(), context: ctx));
         var snapshot = await goal.Step[0].Code[0].Property["Snapshot"]!.Data(ctx).Value();
 
         await Assert.That(snapshot is global::app.snapshot.@this).IsTrue();

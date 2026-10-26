@@ -83,14 +83,14 @@ public class CollectionEventsTests : System.IAsyncDisposable
     {
         await using var source = new global::app.@this("/tmp/CollectionEventsTests-src-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
         await source.actor.list.User.Context.Variable.Set("x", 1L);
-        var snap = source.Snapshot(source.actor.list.User.Context);
+        var snap = source.Snapshot(source.actor.list.User.Context).Saved();
 
         var gate = new TaskCompletionSource();
         app.actor.list.User.on.Bind(app.variable.type, "set", When.before, async (_, _, ctx) => { await gate.Task; return ctx.Ok(); }, Scope.app);
         var vars = new Variables(app.actor.list.User.Context);
 
-        // the app hands each owner its own section of the snapshot (app/this.Snapshot.cs), as the test does
-        var restoring = vars.Restore(snap.Section(vars.Section), app.actor.list.User.Context);
+        // the walk starts each part from the node at its place, as the test does
+        var restoring = ((ISnapshot)vars).Start(snap.Node(SnapshotPathExtensions.UserVariable), app.actor.list.User.Context);
 
         await Assert.That(restoring.IsCompleted).IsFalse();
         gate.SetResult();

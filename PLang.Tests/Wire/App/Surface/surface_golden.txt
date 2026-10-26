@@ -621,7 +621,7 @@ interface app.module.IContext
   abstract Context : app.actor.context.this { get; set; }
 
 static class app.module.IContextSnapshotExtensions
-  static Snapshot(app.module.IContext handler) : app.snapshot.this
+  static Snapshot(app.module.IContext handler) : app.data.this<app.snapshot.this>
 
 interface app.module.IKeep
 
@@ -970,12 +970,11 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnap
   Mode : app.type.item.choice.this<app.Mode> { get; }
   Name(app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.item.text.this> [LlmBuilder]
   RequestShutdown() : System.Void
-  Restore(app.snapshot.this s, app.actor.context.this context) : System.Threading.Tasks.Task
   Save() : System.Threading.Tasks.Task<app.data.this>
   Services : app.service.list.this { get; }
   ShutdownToken : System.Threading.CancellationToken { get; }
-  Snapshot(app.actor.context.this context) : app.snapshot.this
-  Snapshot(app.error.this error, app.actor.context.this context) : app.snapshot.this
+  Snapshot(app.actor.context.this context) : app.data.this<app.snapshot.this>
+  Snapshot(app.error.this error, app.actor.context.this context) : app.data.this<app.snapshot.this>
   Start() : System.Threading.Tasks.Task<app.data.this>
   Start(app.goal.this goal, app.actor.context.this context, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   StartedAt : app.type.item.datetime.this { get; } [LlmBuilder]
@@ -1738,11 +1737,8 @@ abstract class app.type.item.input.this : app.type.item.this, app.type.item.ICre
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.type.item.input.this
   static Shape : System.String { get; }
 
-class app.type.item.kept.list.this : app.snapshot.ISnapshot
-  Capture(app.snapshot.this s) : System.Void
+class app.type.item.kept.list.this
   Item[System.String] : app.data.this { get; }
-  Restore(app.snapshot.this s, app.actor.context.this context) : System.Threading.Tasks.Task
-  Section : System.String { get; }
   ctor()
 
 class app.type.item.kind.dict.this : app.type.kind.this<app.type.item.this>
@@ -2958,7 +2954,6 @@ class app.type.item.variable.code.this : app.type.item.list.bare.this<app.type.i
   Start(app.actor.context.this context, app.data.this from = …) : System.Threading.Tasks.ValueTask<app.data.this>
 
 class app.type.item.variable.list.this : app.snapshot.ISnapshot
-  Capture(app.snapshot.this s) : System.Void
   Clear() : System.Void
   Clone() : app.type.item.variable.list.this
   Contains(System.String name) : System.Boolean
@@ -2973,9 +2968,7 @@ class app.type.item.variable.list.this : app.snapshot.ISnapshot
   Remove(System.String name) : System.Threading.Tasks.ValueTask<app.data.this>
   Replace(System.String name, app.data.this expected, app.type.item.this value) : System.Threading.Tasks.ValueTask<app.data.this>
   Restore(System.Collections.Generic.HashSet<System.String> snapshot) : System.Void
-  Restore(app.snapshot.this s, app.actor.context.this context) : System.Threading.Tasks.Task
   Save() : System.Collections.Generic.HashSet<System.String>
-  Section : System.String { get; }
   Set(System.String name, System.Object value) : System.Threading.Tasks.ValueTask<app.data.this>
   Set(app.data.this value) : System.Threading.Tasks.ValueTask<app.data.this>
   Snapshot() : app.type.item.dict.this
@@ -3208,7 +3201,7 @@ class app.type.node.root.this : app.type.node.this<app.type.this, app.type.list.
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
 
-abstract class app.type.node.this : app.type.item.this [PlangType]
+abstract class app.type.node.this : app.type.item.this, app.snapshot.ISnapshot [PlangType]
   static Internal : System.Boolean { get; }
 
 class app.type.node.this<T, L> : app.type.node.this

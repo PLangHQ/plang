@@ -1,10 +1,10 @@
 namespace app.snapshot;
 
 /// <summary>
-/// A plain container of plang values: its <see cref="Entries"/> are a dict of Data, and a section is
-/// an entry whose value is itself a snapshot. Each <see cref="ISnapshot"/> owner writes its own
-/// section (<see cref="Write{T}"/>, or an entry set directly) and reads it back through the entries'
-/// typed asks on restore. The wire shape is the App tree.
+/// A plain container of plang values: its <see cref="Entries"/> are a dict of Data, and a part's node
+/// is an entry whose value is itself a snapshot — one structure, so a reader walks it without asking
+/// what kind of member it is looking at. Each <see cref="ISnapshot"/> part writes its own node and
+/// reads it back through the entries' typed asks when it starts. The shape is the app's member tree.
 /// </summary>
 [global::app.Attributes.PlangType("snapshot")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
@@ -32,34 +32,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         Context = context;
         Entries = new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)]);
     }
-
-    /// <summary>
-    /// Returns the named subsection, creating it if missing. Subsystems hand the
-    /// returned subtree to their nested ISnapshot children — each owns its scope.
-    /// <para>A section is an ENTRY whose value is a snapshot. It is not a second kind of thing
-    /// stored in a second place: the snapshot has one structure, a dict of Data, and a subtree is a
-    /// value in it like any other. That is what lets a reader walk the wire without asking what
-    /// kind of member it is looking at.</para>
-    /// </summary>
-    public @this Section(string name)
-    {
-        if (Entries.Get(name, Context)?.Peek() is @this existing) return existing;
-        var created = new @this(Context);
-        Entries.Set(new global::app.data.@this(name, created, context: Context));
-        return created;
-    }
-
-    /// <summary>True if a section with this name was captured.</summary>
-    public bool HasSection(string name) => Entries.Get(name, Context)?.Peek() is @this;
-
-    /// <summary>Names of all captured subsections, for App.Restore dispatch.</summary>
-    public IReadOnlyCollection<string> SectionNames
-        => Entries.Entries(Context).Where(e => e.Peek() is @this).Select(e => e.Name).ToList();
-
-    /// <summary>The nested sub-sections on this node, by name — the entries that hold one.</summary>
-    public IReadOnlyDictionary<string, @this> Sections
-        => Entries.Entries(Context).Where(e => e.Peek() is @this)
-                  .ToDictionary(e => e.Name, e => (@this)e.Peek(), StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Writes an entry, born as a plang value in this snapshot's context — the same entity
     /// door every other value birth goes through. Scalars lift (string→text, int→number,

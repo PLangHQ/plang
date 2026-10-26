@@ -3,7 +3,7 @@ using app.Attributes;
 namespace app.module.code.defaultoverride;
 
 /// <summary>
-/// One captured default-selection override — the interface type whose default the user changed, and
+/// One captured default-selection override — the kind of provider whose default the user changed, and
 /// the provider now chosen. Captured only when the current default differs from the built-in one,
 /// so its presence IS the fact that a choice was made. A plang value, read back through its own
 /// reader.
@@ -16,13 +16,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>A structure, not a single-token leaf.</summary>
     public override bool IsLeaf => false;
 
+    /// <summary>The kind of provider, by its plang name (<c>signing</c>, <c>key</c>, <see cref="kind.@this"/>).</summary>
     [Store, Out]
-    public string TypeName { get; init; } = "";
+    public string Kind { get; init; } = "";
 
     [Store, Out]
     public string ProviderName { get; init; } = "";
 
-    public override string ToString() => $"{TypeName} → {ProviderName}";
+    public override string ToString() => $"{Kind} → {ProviderName}";
 
     /// <summary>The pure core — an override passes through; nothing else converts into one.</summary>
     public static @this? Create(object? raw) => raw as @this;

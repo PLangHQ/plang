@@ -11,9 +11,10 @@ namespace app.actor.context;
 
 /// <summary>
 /// Request-level context for a single PLang execution.
-/// Created per request/goal execution and contains execution-specific state.
+/// Created per request/goal execution and contains execution-specific state. Takes part in a snapshot as what holds its
+/// variables and its call stack, with nothing of its own.
 /// </summary>
-public sealed class @this : IDisposable
+public sealed class @this : IDisposable, global::app.snapshot.ISnapshot
 {
     private readonly ConcurrentDictionary<string, object> _data = new(StringComparer.OrdinalIgnoreCase);
     private bool _disposed;

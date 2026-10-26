@@ -4,7 +4,7 @@ namespace app.snapshot;
 
 /// <summary>
 /// Resume — the only path the channel/host uses to reconstitute a suspended
-/// goal. Calls App.Restore to populate Variables/Errors/CallStack/etc., then
+/// goal. Starts the app and every part under it from this snapshot (the walk), then
 /// walks the restored CallStack chain recursively so each nested goal in the
 /// chain re-enters at its captured (StepIndex, ActionIndex).
 ///
@@ -17,7 +17,8 @@ public sealed partial class @this
 {
     public async Task<data.@this> Resume(actor.context.@this context)
     {
-        await context.App.Restore(this, context);
+        var started = await Start(context.App, context);
+        if (!started.Success) return started;
         var chain = context.call.RestoredChain;
         if (chain == null || chain.Count == 0)
             return context.Error(new global::app.error.ServiceError(

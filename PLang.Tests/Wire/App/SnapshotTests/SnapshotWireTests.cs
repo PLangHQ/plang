@@ -19,7 +19,7 @@ public class SnapshotWireTests
         await src.actor.list.User.Context.Variable.Set("count", 42L);
         await src.actor.list.User.Context.Variable.Set("name", "plang");
 
-        var wired = await RoundTrip(src, src.Snapshot(src.actor.list.User.Context));
+        var wired = await RoundTrip(src, src.Snapshot(src.actor.list.User.Context).Saved());
 
         var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
         await dst.Restore(wired, dst.actor.list.User.Context);
@@ -36,7 +36,7 @@ public class SnapshotWireTests
         var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
         src.Build = new global::app.module.build.@this(src.actor.list.System.Context);
 
-        var wired = await RoundTrip(src, src.Snapshot(src.actor.list.User.Context));
+        var wired = await RoundTrip(src, src.Snapshot(src.actor.list.User.Context).Saved());
 
         var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
         await dst.Restore(wired, dst.actor.list.User.Context);
@@ -59,7 +59,7 @@ public class SnapshotWireTests
         var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
         var snap = new global::app.snapshot.@this(src.actor.list.User.Context);
         // Emulate one captured frame's scalar shape.
-        var cs = snap.Section("CallStack");
+        var cs = snap.Node(SnapshotPathExtensions.UserCall);
         var frames = new List<global::app.snapshot.@this>();
         var f = new global::app.snapshot.@this(src.actor.list.User.Context);
         f.Write("goalPrPath", "/.build/Start/00. Goal.pr");
@@ -74,7 +74,7 @@ public class SnapshotWireTests
 
         var wired = await RoundTrip(src, snap);
 
-        var rf = await wired.Section("CallStack").Frames("frames")!;
+        var rf = await wired.Node(SnapshotPathExtensions.UserCall).Frames("frames")!;
         await Assert.That(rf.Count).IsEqualTo(1);
         await Assert.That(await rf[0].Int("stepIndex")).IsEqualTo(3);
         await Assert.That(await rf[0].Int("actionIndex")).IsEqualTo(1);
@@ -116,7 +116,7 @@ public class SnapshotWireTests
         string json;
         await using (var call = context.call.Push(step1.Code[0], await context.call.Setting(), context.Variable))
         {
-            json = await app.Snapshot(app.actor.list.User.Context).Text(app.actor.list.User.Context);   // <-- to disk (string)
+            json = await app.Snapshot(app.actor.list.User.Context).Saved().Text(app.actor.list.User.Context);   // <-- to disk (string)
             await call.DisposeAsync();
         }
 
@@ -148,7 +148,7 @@ public class SnapshotWireTests
         string json;
         await using (var call = context.call.Push(step1.Code[0], await context.call.Setting(), context.Variable))
         {
-            json = await app.Snapshot(app.actor.list.User.Context).Text(app.actor.list.User.Context);
+            json = await app.Snapshot(app.actor.list.User.Context).Saved().Text(app.actor.list.User.Context);
             await call.DisposeAsync();
         }
 
@@ -209,13 +209,13 @@ public class SnapshotWireTests
         await using (var startFrame = context.call.Push(start.Step[1].Code[0], await context.call.Setting(), context.Variable))
         await using (var subFrame = context.call.Push(sub.Step[1].Code[0], await context.call.Setting(), context.Variable))
         {
-            json = await app.Snapshot(app.actor.list.User.Context).Text(app.actor.list.User.Context);
+            json = await app.Snapshot(app.actor.list.User.Context).Saved().Text(app.actor.list.User.Context);
         }
 
         // Round-trip through the disk string, then patch %i% 1 → 2 (the fix the
         // operator/builder makes — the C# stand-in for `set %snap.variable.i% = 2`).
         var snap = (await new global::app.data.@this("", json, context: context).Value<global::app.snapshot.@this>())!;
-        var iVar = snap.Section("Variables").Entries.Get("i", app.actor.list.User.Context)!;   // each captured variable is its own entry
+        var iVar = snap.Node(SnapshotPathExtensions.UserVariable).Entries.Get("i", app.actor.list.User.Context)!;   // each captured variable is its own entry
         iVar.SetValue(2L);
 
         var result = await snap.Resume(context);
@@ -250,7 +250,7 @@ public class SnapshotWireTests
         string json;
         await using (var call = context.call.Push(goal.Step[1].Code[0], await context.call.Setting(), context.Variable))
         {
-            json = await app.Snapshot(app.actor.list.User.Context).Text(app.actor.list.User.Context);
+            json = await app.Snapshot(app.actor.list.User.Context).Saved().Text(app.actor.list.User.Context);
         }
 
         // `as snapshot` path: typeEntity.Create(envelopeString, context). A wire-raw string
@@ -261,8 +261,8 @@ public class SnapshotWireTests
             .IsTrue(); // ← if false, the as-snapshot conversion is the bug
 
         await context.Variable.Set("snap", conv);
-        await new global::app.type.item.variable.@this("snap.variables.x", context.App.type.list).Set(2L, context);
-        await Assert.That(System.Convert.ToInt64((await (await new global::app.type.item.variable.@this("snap.variables.x", context.App.type.list).Start(context)).Value()))).IsEqualTo(2L);
+        await new global::app.type.item.variable.@this("snap.actor.list.user.context.variable.x", context.App.type.list).Set(2L, context);
+        await Assert.That(System.Convert.ToInt64((await (await new global::app.type.item.variable.@this("snap.actor.list.user.context.variable.x", context.App.type.list).Start(context)).Value()))).IsEqualTo(2L);
 
         var snap = (await (await context.Variable.Get("snap")).Value()) as global::app.snapshot.@this;
         await Assert.That(snap).IsNotNull();
@@ -284,7 +284,7 @@ public class SnapshotWireTests
         var context = app.actor.list.User.Context;
         await context.Variable.Set("x", 1L);
 
-        var snap = app.Snapshot(app.actor.list.User.Context);
+        var snap = app.Snapshot(app.actor.list.User.Context).Saved();
         var d = new global::app.data.@this<global::app.snapshot.@this>("", snap,
             new global::app.type.@this("snapshot"), context: context);
 
@@ -301,15 +301,15 @@ public class SnapshotWireTests
         await Assert.That(result.Success).IsTrue();
         // json content: the snapshot's own object, its sections present — the value wrote itself.
         await Assert.That(content.StartsWith("{")).IsTrue();
-        await Assert.That(content).Contains("\"Variables\"");
+        await Assert.That(content).Contains("\"Variable\"");
     }
 
     [Test]
     public async Task ThrowTimeSnapshot_EditSurvivesResume()
     {
         // The ONE difference from the passing edit-resume tests: the snapshot comes
-        // from app.Snapshot(error) (throw-time: SnapshotAt + error.CallFrames), the
-        // path Error.Callback uses in the .test.goal — not app.Snapshot(app.actor.list.User.Context) (live).
+        // from app.Snapshot(error).Saved() (throw-time: SnapshotAt + error.CallFrames), the
+        // path Error.Callback uses in the .test.goal — not app.Snapshot(app.actor.list.User.Context).Saved() (live).
         var app = new global::app.@this(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-tt-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
@@ -325,7 +325,7 @@ public class SnapshotWireTests
         {
             var err = new ServiceError("boom", goal.Step[1],
                 context.call.Current!.Chain);
-            json = await app.Snapshot(err, app.actor.list.User.Context).Text(app.actor.list.User.Context);   // throw-time overload
+            json = await app.Snapshot(err, app.actor.list.User.Context).Saved().Text(app.actor.list.User.Context);   // throw-time overload
         }
 
         var te = new global::app.type.@this("snapshot");
@@ -335,8 +335,8 @@ public class SnapshotWireTests
         await Assert.That(snap).IsNotNull();
 
         await context.Variable.Set("snap", snap);
-        await new global::app.type.item.variable.@this("snap.variables.x", context.App.type.list).Set(2L, context);
-        await Assert.That(System.Convert.ToInt64((await (await new global::app.type.item.variable.@this("snap.variables.x", context.App.type.list).Start(context)).Value()))).IsEqualTo(2L);
+        await new global::app.type.item.variable.@this("snap.actor.list.user.context.variable.x", context.App.type.list).Set(2L, context);
+        await Assert.That(System.Convert.ToInt64((await (await new global::app.type.item.variable.@this("snap.actor.list.user.context.variable.x", context.App.type.list).Start(context)).Value()))).IsEqualTo(2L);
 
         var result = await snap!.Resume(context);
         await result.IsSuccess();
@@ -363,13 +363,13 @@ public class SnapshotWireTests
         await context.Variable.Set("x", 1L);
         string json;
         await using (var call = context.call.Push(goal.Step[1].Code[0], await context.call.Setting(), context.Variable))
-            json = await app.Snapshot(app.actor.list.User.Context).Text(app.actor.list.User.Context);
+            json = await app.Snapshot(app.actor.list.User.Context).Saved().Text(app.actor.list.User.Context);
 
         // %snap% = string value, but TYPED as snapshot (what an honored `as snapshot` yields).
         await context.Variable.Set(new global::app.data.@this(
             "snap", json, new global::app.type.@this("snapshot"), context: context));
 
-        await new global::app.type.item.variable.@this("snap.variables.x", context.App.type.list).Set(2L, context);
+        await new global::app.type.item.variable.@this("snap.actor.list.user.context.variable.x", context.App.type.list).Set(2L, context);
 
         var snap = await (await context.Variable.Get("snap")).Value<global::app.snapshot.@this>();
         var result = await snap!.Resume(context);
@@ -398,7 +398,7 @@ public class SnapshotWireTests
         string json;
         await using (var call = context.call.Push(goal.Step[1].Code[0], await context.call.Setting(), context.Variable))
         {
-            json = await app.Snapshot(app.actor.list.User.Context).Text(app.actor.list.User.Context);
+            json = await app.Snapshot(app.actor.list.User.Context).Saved().Text(app.actor.list.User.Context);
         }
 
         // Read the snapshot back as a value, bind it under %snap%.
@@ -406,11 +406,11 @@ public class SnapshotWireTests
         await context.Variable.Set("snap", snap);
 
         // Navigate + read: %snap.variables.x% is 1.
-        await Assert.That(System.Convert.ToInt64((await (await new global::app.type.item.variable.@this("snap.variables.x", context.App.type.list).Start(context)).Value()))).IsEqualTo(1L);
+        await Assert.That(System.Convert.ToInt64((await (await new global::app.type.item.variable.@this("snap.actor.list.user.context.variable.x", context.App.type.list).Start(context)).Value()))).IsEqualTo(1L);
 
         // Edit: set %snap.variables.x% = 2 — the snapshot's own entry navigation edits that entry.
-        await new global::app.type.item.variable.@this("snap.variables.x", context.App.type.list).Set(2L, context);
-        await Assert.That(System.Convert.ToInt64((await (await new global::app.type.item.variable.@this("snap.variables.x", context.App.type.list).Start(context)).Value()))).IsEqualTo(2L);
+        await new global::app.type.item.variable.@this("snap.actor.list.user.context.variable.x", context.App.type.list).Set(2L, context);
+        await Assert.That(System.Convert.ToInt64((await (await new global::app.type.item.variable.@this("snap.actor.list.user.context.variable.x", context.App.type.list).Start(context)).Value()))).IsEqualTo(2L);
 
         // Resume the edited snapshot — step1 reads the patched %x%.
         var result = await snap.Resume(context);
@@ -426,10 +426,10 @@ public class SnapshotWireTests
         var context = app.actor.list.User.Context;
         await context.Variable.Set("password", new global::app.type.item.sensitive.@this("hunter2", app.type.list[typeof(global::app.type.item.sensitive.@this)]));
 
-        var text = await app.Snapshot(context).Text(context);
+        var text = await app.Snapshot(context).Saved().Text(context);
 
         await Assert.That(text).DoesNotContain("hunter2");
-        await Assert.That((await context.Snapshot(text)).Section("Variables").Entries.Get("password", context)).IsNull();
+        await Assert.That((await context.Snapshot(text)).Node(SnapshotPathExtensions.UserVariable).Entries.Get("password", context)).IsNull();
     }
 
     // a [Sensitive] member of a value a variable holds is not in the snapshot's text (an identity's private key); red
@@ -443,7 +443,7 @@ public class SnapshotWireTests
             { PrivateKey = "the-private-key" };
         await context.Variable.Set("id", identity);
 
-        var text = await app.Snapshot(context).Text(context);
+        var text = await app.Snapshot(context).Saved().Text(context);
 
         await Assert.That(text).DoesNotContain("the-private-key");
     }
@@ -452,7 +452,7 @@ public class SnapshotWireTests
     public async Task EmptyApp_WireIsValidJson_AndRestoresClean()
     {
         var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
-        var json = await src.Snapshot(src.actor.list.User.Context).Text(src.actor.list.User.Context);
+        var json = await src.Snapshot(src.actor.list.User.Context).Saved().Text(src.actor.list.User.Context);
 
         await Assert.That(json.StartsWith("{")).IsTrue();
 

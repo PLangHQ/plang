@@ -28,14 +28,17 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         src.Code.Register(typeof(global::app.data.code.IGrep), custom);
         src.Code.SetDefault(typeof(global::app.data.code.IGrep), "custom");
 
-        var snap = src.Snapshot(src.actor.list.User.Context);
-        var registrations = await snap.Section("Providers")
+        var snap = src.Snapshot(src.actor.list.User.Context).Saved();
+        var registrations = await snap.Node("Code")
             .Records<global::app.module.code.registration.@this>("registrations");
-        var overrides = await snap.Section("Providers")
+        var overrides = await snap.Node("Code")
             .Records<global::app.module.code.defaultoverride.@this>("defaultOverrides");
 
         await Assert.That(registrations).IsNotNull();
         await Assert.That(registrations!.Any(r => r.ProviderName == "custom")).IsTrue();
+        // a provider's kind is written by its plang name, never a C# type name
+        await Assert.That(registrations!.First(r => r.ProviderName == "custom").Kind).IsEqualTo("grep");
+        await Assert.That(overrides!.First(o => o.ProviderName == "custom").Kind).IsEqualTo("grep");
         await Assert.That(overrides).IsNotNull();
         await Assert.That(overrides!.Any(o => o.ProviderName == "custom")).IsTrue();
     }
@@ -52,7 +55,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         src.Code.Register(typeof(global::app.data.code.IGrep), custom);
         src.Code.SetDefault(typeof(global::app.data.code.IGrep), "custom");
 
-        var snap = src.Snapshot(src.actor.list.User.Context);
+        var snap = src.Snapshot(src.actor.list.User.Context).Saved();
         var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
         // Pre-grant Execute on the snapshotted DLL source for the System actor —
         // restore reloads the DLL via path.LoadAssemblyAsync, which gates on
@@ -85,23 +88,43 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         // Captured runtime registration's DLL/source can't be loaded → referent-integrity
         // hard error. No silent fallback to system default.
         var snap = new Snapshot(app.actor.list.User.Context);
-        snap.Section("Providers").Write("registrations", new List<global::app.module.code.registration.@this>
+        snap.Node("Code").Write("registrations", new List<global::app.module.code.registration.@this>
         {
             new(app.actor.list.User.Context.App.type.list[typeof(global::app.module.code.registration.@this)])
             {
-                TypeName = typeof(global::app.data.code.IGrep).AssemblyQualifiedName!,
+                Kind = "grep",
                 ProviderName = "ghost",
                 Source = "/nonexistent/ghost-provider.dll",
             }
         });
-        snap.Section("Providers").Write("defaultOverrides", new List<global::app.module.code.defaultoverride.@this>());
+        snap.Node("Code").Write("defaultOverrides", new List<global::app.module.code.defaultoverride.@this>());
 
         var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
-        await Assert.ThrowsAsync<ProviderRestoreException>(async () =>
+        var started = await snap.Start(dst, dst.actor.list.User.Context);
+
+        await Assert.That(started.Success).IsFalse();
+        await Assert.That(started.Error!.Key).IsEqualTo("ProviderRestore");
+    }
+
+    [Test]
+    public async Task Providers_Restore_AnswersTheChoicesError_ForAKindTheRuntimeDoesntDeclare()
+    {
+        var snap = new Snapshot(app.actor.list.User.Context);
+        snap.Node("Code").Write("registrations", new List<global::app.module.code.registration.@this>
         {
-            await dst.Restore(snap, dst.actor.list.User.Context);
-            await Task.CompletedTask;
+            new(app.actor.list.User.Context.App.type.list[typeof(global::app.module.code.registration.@this)])
+            {
+                Kind = "nosuchkind",
+                ProviderName = "ghost",
+                Source = "/nonexistent/ghost-provider.dll",
+            }
         });
+
+        var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
+        var started = await snap.Start(dst, dst.actor.list.User.Context);
+
+        await Assert.That(started.Success).IsFalse();
+        await Assert.That(started.Error!.Key).IsEqualTo("ChoiceInvalid");
     }
 
     [Test]
@@ -110,22 +133,20 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         // Registrations succeed but default-selection name doesn't match any registered
         // provider → referent-integrity hard error.
         var snap = new Snapshot(app.actor.list.User.Context);
-        snap.Section("Providers").Write("registrations", new List<global::app.module.code.registration.@this>());
-        snap.Section("Providers").Write("defaultOverrides", new List<global::app.module.code.defaultoverride.@this>
+        snap.Node("Code").Write("registrations", new List<global::app.module.code.registration.@this>());
+        snap.Node("Code").Write("defaultOverrides", new List<global::app.module.code.defaultoverride.@this>
         {
             new(app.actor.list.User.Context.App.type.list[typeof(global::app.module.code.defaultoverride.@this)])
             {
-                TypeName = typeof(global::app.data.code.IGrep).AssemblyQualifiedName!,
+                Kind = "grep",
                 ProviderName = "phantom",
             }
         });
 
         var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
-        await Assert.ThrowsAsync<ProviderRestoreException>(async () =>
-        {
-            await dst.Restore(snap, dst.actor.list.User.Context);
-            await Task.CompletedTask;
-        });
+        var started = await snap.Start(dst, dst.actor.list.User.Context);
+
+        await Assert.That(started.Success).IsFalse();
     }
 
     [Test]
@@ -134,8 +155,8 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         // RegisterDefaults output is reconstructed on App boot — only post-defaults
         // registrations end up in the captured payload.
         var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
-        var snap = app.Snapshot(app.actor.list.User.Context);
-        var registrations = await snap.Section("Providers")
+        var snap = app.Snapshot(app.actor.list.User.Context).Saved();
+        var registrations = await snap.Node("Code")
             .Records<global::app.module.code.registration.@this>("registrations");
 
         await Assert.That(registrations).IsNotNull();
@@ -153,8 +174,8 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         var custom = new CustomGrep { Source = typeof(CustomGrep).Assembly.Location };
         src.Code.Register(typeof(global::app.data.code.IGrep), custom);
 
-        var snap = src.Snapshot(src.actor.list.User.Context);
-        var registrations = await snap.Section("Providers")
+        var snap = src.Snapshot(src.actor.list.User.Context).Saved();
+        var registrations = await snap.Node("Code")
             .Records<global::app.module.code.registration.@this>("registrations");
 
         await Assert.That(registrations).IsNotNull();
