@@ -29,9 +29,7 @@ public sealed class @this : global::app.type.item.setting.module.@this
         if (Goal?.ToString() is not { Length: > 0 } pattern || pattern == "*") return true;
         if (goal == null) return false;
         if (Address is { } address)
-            return goal.Path?.Raw is { } raw
-                && string.Equals(raw.EndsWith(".goal", System.StringComparison.OrdinalIgnoreCase) ? raw[..^5] : raw, address,
-                    System.StringComparison.OrdinalIgnoreCase);
+            return string.Equals(goal.Address, address, System.StringComparison.OrdinalIgnoreCase);
         return pattern.EndsWith('*')
             ? goal.Name.StartsWith(pattern[..^1], System.StringComparison.OrdinalIgnoreCase)
             : string.Equals(goal.Name, pattern, System.StringComparison.OrdinalIgnoreCase);
