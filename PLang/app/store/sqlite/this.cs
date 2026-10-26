@@ -110,7 +110,7 @@ public sealed class @this : global::app.store.@this
         // folder, so it holds from the first byte and covers the -wal and -shm files beside it; an older folder is set on
         // its next open. Windows sets nothing (its folders take ACLs), and a mode doesn't survive git or a zip.
         if (_file.Parent is global::app.type.item.path.file.@this folder
-            && await folder.Mode((System.IO.UnixFileMode)0, Context) is { Success: false } closed)   // nothing for group or others
+            && await folder.Mode((System.IO.UnixFileMode)0b111_000_000, Context) is { Success: false } closed)   // 0700
             throw new global::app.error.AppException(closed.Error!);
 
         var connectionString = new SqliteConnectionStringBuilder
