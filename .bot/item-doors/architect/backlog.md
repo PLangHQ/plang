@@ -5,10 +5,10 @@ What came up on item-doors and goes on after it, so nothing waits on us (Ingi, 2
 ## What runtime2 needs before it replaces v0.1 (Ingi, 2026-10-25: "yes that is what I mean. I agree on the order")
 
 In this order, one branch at a time, after packages and `bugs` (cut 2026-10-25 from runtime2 3a29633f8; it takes N1, N3–N5, N8, N10, N11, N14–N17 below, the goal channel's race, the LLM tests' answers in a file, the Windows window, and the three yeses as its stage 7; plan `.bot/bugs/architect/plan/start.md`):
-0. JSON Lines (Ingi, 2026-10-25, bugs 45: "2.yes"), a small branch: a json-lines kind (`.jsonl`, `application/x-ndjson`, always compact) for the three line writers. With it comes the json writer's setting (`%!type.json.setting.format%`, `formatted | compact`, default formatted), and the six `.llm.json` files are rewritten from themselves.
-0b. Windows (Ingi, 2026-10-25, bugs 52: "2. yes"): a path plang writes uses `/` on every OS, with the OS form only at the System.IO call, and the whole C# suite passes on Windows. The list is under "From bugs" below.
-1. Stores per actor and an app per request (items 4 and 10; 317a). A webserver can't run without it.
-2. Snapshot and resume (`test/plan/snapshot/start.md`): an ask over a stateless channel.
+0. ~~JSON Lines~~ merged 2026-10-25 (runtime2 493b157df). ~~decider-key~~ merged 2026-10-26 (b4a549d1c).
+0b. Windows (Ingi, 2026-10-25, bugs 52: "2. yes"), **in progress**, cut 2026-10-26 from b4a549d1c (`.bot/windows/architect/plan/start.md`): a path plang writes uses `/` on every OS, with the OS form only at the System.IO call, and the whole C# suite passes on Windows. With it, a user's "each goal" event sees only the app's goals.
+1. **Snapshot and resume** (`test/plan/snapshot/start.md`): an ask over a stateless channel. **Moved ahead of stores (Ingi, 2026-10-26: "can we do snapshot next, not ready for actor")**: it needs neither stores per actor nor an app per request. The plan dates from 2026-10-02, and fast-apps built its frozen parent and child apps, so it gets re-read against the code and cut to what's left before the branch. It takes N7 (the answer on resume) and Wire's six snapshot reds.
+2. Stores per actor and an app per request (items 4 and 10; 317a). A webserver can't run without it. Ingi isn't ready for it yet (2026-10-26).
 3. The LLM provider and writer (parked branches): the builder's quality.
 4. Returns (801).
 
