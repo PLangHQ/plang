@@ -14,6 +14,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>, global::app.type.item.ILoad<@this>,
     global::app.type.item.IList<@this, global::app.actor.list.@this>, global::app.origin.@this, global::app.snapshot.ISnapshot
 {
+    /// <summary>An actor is live — its context, its channels, its tasks: a copy of it is it.</summary>
+    protected internal override global::app.type.item.@this Clone() => this;
+
     private readonly CancellationTokenSource _cts;
 
     // what a program adds to the actor — kept as long as the actor lives

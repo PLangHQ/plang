@@ -24,6 +24,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>A structure, never a single-token leaf.</summary>
     public override bool IsLeaf => false;
 
+    /// <summary>A step is part of a program, which is shared, never copied: a copy of it is it.</summary>
+    protected internal override global::app.type.item.@this Clone() => this;
+
     /// <summary>The step takes its own children. A write to <c>code</c> is the step taking the actions it is
     /// handed — actions, each the step's own; any other value is refused with why, the step's code as it was (the
     /// builder writes code in formal, read into actions). Every other key is one of the step's own members.</summary>

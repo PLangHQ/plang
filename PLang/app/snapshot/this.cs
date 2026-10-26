@@ -49,6 +49,15 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     internal global::app.data.@this? In(string key, global::app.actor.context.@this context)
         => Entries.Get(key, context)?.Clone().Copy(context);
 
+    /// <summary>A copy holds a copy of each entry, born in the same context: the context is where the snapshot lives, not
+    /// part of what it holds, so it is never copied (a deep copy of it would copy the app).</summary>
+    protected internal override global::app.type.item.@this Clone()
+    {
+        var copy = new @this(Context);
+        foreach (var entry in Entries.Entries(Context)) copy.Entries.Set(entry.Clone());
+        return copy;
+    }
+
     /// <summary>A snapshot that holds nothing is empty, as a collection is: the walk and <see cref="Write"/> leave it out.</summary>
     public override bool IsTruthy() => Entries.IsTruthy();
 

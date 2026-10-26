@@ -98,6 +98,7 @@ class app.call.list.this : app.type.item.this, app.snapshot.ISnapshot
   Variables : app.type.item.variable.list.this { get; }
   ctor(app.type.list.this types, System.Func<app.actor.setting.this> settings)
   override IsLeaf : System.Boolean { get; }
+  protected override Clone() : app.type.item.this
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
 
 class app.call.setting.diff.this : app.type.item.setting.this
@@ -148,6 +149,7 @@ class app.call.this : app.type.item.this, System.IAsyncDisposable, app.type.item
   TryGet(System.String name, app.data.this& value) : System.Boolean
   override IsLeaf : System.Boolean { get; }
   override ToString() : System.String
+  protected override Clone() : app.type.item.this
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   static Create(System.Object raw) : app.call.this
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.this
@@ -1474,6 +1476,7 @@ class app.type.item.dict.this : app.type.item.this, app.type.item.ICreate<app.ty
   override Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
   override Variable : System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> { get; }
   override Where(app.type.item.text.this field, app.data.Operator op, app.data.this value, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
+  protected override Clone() : app.type.item.this
   protected override Fields : System.Collections.Generic.IEnumerable<System.String> { get; }
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
@@ -1968,6 +1971,7 @@ class app.type.item.list.this : app.type.item.this, app.type.item.ICreate<app.ty
   override Variable : System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> { get; }
   override Where(app.type.item.text.this field, app.data.Operator op, app.data.this value, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
   protected Slots() : System.Collections.Generic.IEnumerable<System.Object>
+  protected override Clone() : app.type.item.this
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   protected override Write(app.type.item.kind.jsonl.Writer writer) : System.Threading.Tasks.ValueTask

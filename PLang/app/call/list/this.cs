@@ -23,6 +23,9 @@ public sealed partial class @this : global::app.type.item.@this
     /// <summary>A structure — navigated by its members.</summary>
     public override bool IsLeaf => false;
 
+    /// <summary>A context's calls are live, as its channels are: a copy of them is them.</summary>
+    protected internal override global::app.type.item.@this Clone() => this;
+
     /// <summary>
     /// The call stack writes one flat form in every view: the frame in play, the goal run's frame and every error
     /// this run observed. Where it is, the error and event in play, the depth limit and the whole run's tree

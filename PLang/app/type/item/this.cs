@@ -324,6 +324,17 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         }
     }
 
+    // One slot of a container being cloned: each value through its own Clone, a Data through Data.Clone (born in its own
+    // context, never a copy of it), a raw container slot by slot; any other raw value is immutable and shared.
+    private protected object? Cloned(object? slot) => slot switch
+    {
+        global::app.data.@this data => data.Clone(),
+        @this item => item.Clone(),
+        IDictionary<string, object?> raw => raw.ToDictionary(entry => entry.Key, entry => Cloned(entry.Value), StringComparer.OrdinalIgnoreCase),
+        IList<object?> raw => raw.Select(Cloned).ToList(),
+        _ => slot,
+    };
+
     /// <summary>What this value becomes, written to a variable where <paramref name="previous"/> was — itself: a write
     /// replaces. A value that keeps what it replaces (a task keeps the tasks written before it) answers otherwise.
     /// The previous value is read only by a value that asks for it.</summary>

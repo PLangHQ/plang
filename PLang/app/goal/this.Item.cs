@@ -120,4 +120,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>A structure, never a single-token leaf.</summary>
     public override bool IsLeaf => false;
+
+    /// <summary>A goal is part of a program, which is shared, never copied: a copy of it is it.</summary>
+    protected internal override global::app.type.item.@this Clone() => this;
 }

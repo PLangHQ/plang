@@ -99,6 +99,15 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return new @this(entries, Type);
     }
 
+    /// <summary>A clone of each entry, each through its own Clone: a Data stays in its own context, never a copy of it
+    /// (the base's structural copy would copy the context, and with it the app).</summary>
+    protected internal override global::app.type.item.@this Clone()
+    {
+        var entries = new Dictionary<string, object?>(_value.Comparer);
+        foreach (var (key, slot) in _value) entries[key] = Cloned(slot);
+        return new @this(entries, Type);
+    }
+
     // Type-on-read: hand back the entry under `key` as a FRESH Data born with the asker's
     // context, wrapping the raw slot into its natural type on each read — never cached back, so
     // the backing stays pristine (an aliased source keeps the same instance for the CLR exit

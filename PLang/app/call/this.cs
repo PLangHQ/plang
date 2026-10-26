@@ -16,6 +16,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>A structure — navigated by its members.</summary>
     public override bool IsLeaf => false;
 
+    /// <summary>A frame is a live place in a run, as a channel is: a copy of it is it.</summary>
+    protected internal override global::app.type.item.@this Clone() => this;
+
     // what a program adds to the call (%!call.retries%) — kept as long as the call lives
     private readonly global::app.type.item.kept.list.@this _kept = new();
     internal override global::app.type.item.kept.list.@this Kept => _kept;

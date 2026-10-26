@@ -26,6 +26,10 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// throws, a handler builds it), so it holds a type built from the class.</summary>
     protected internal override global::app.type.@this Type => new(typeof(Error));
 
+    /// <summary>An error is the record of where a run failed — its context, its frames, its callback: a copy of it is it
+    /// (a structural copy would copy the context, and with it the app).</summary>
+    protected internal override global::app.type.item.@this Clone() => this;
+
     /// <summary>The error in play for the asker (<c>%!app.error.current%</c>) — its call stack's, not yet handled.</summary>
     public static Error? Current(global::app.actor.context.@this context) => context.call.Error;
 
