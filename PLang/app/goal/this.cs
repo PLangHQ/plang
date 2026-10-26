@@ -147,20 +147,25 @@ public sealed partial class @this
 
     /// <summary>A setup goal — named Setup, or in the app's <c>/setup/</c>: it runs only through setup.</summary>
     [Debug]
-    public bool IsSetup => Name.Equals("Setup", StringComparison.OrdinalIgnoreCase)
-                           || Where.StartsWith("setup/", StringComparison.OrdinalIgnoreCase);
+    public bool IsSetup => Name.Equals("Setup", StringComparison.OrdinalIgnoreCase) || Under("setup");
 
     /// <summary>A system goal — under <c>/system/</c>: the app's own copy or the os's, wherever it was loaded from
     /// (an os goal's plang path is <c>/system/…</c>).</summary>
     [Debug]
-    public bool IsSystem => Where.StartsWith("system/", StringComparison.OrdinalIgnoreCase);
+    public bool IsSystem => Under("system");
 
     /// <summary>A test goal — its file is a <c>.test.goal</c>.</summary>
     [Debug]
     public bool IsTest => Where.EndsWith(".test.goal", StringComparison.OrdinalIgnoreCase);
 
-    // Where the goal lives, in its plang form without the leading slash — what the three facts above read.
-    private string Where => (Path?.Raw ?? "").Replace('\\', '/').TrimStart('/');
+    // Where the goal lives, in its plang form without the leading slash — what the three facts above read, with nothing
+    // made (a step's events ask IsSystem each time it starts).
+    private ReadOnlySpan<char> Where => (Path?.Raw ?? "").AsSpan().TrimStart("/\\");
+
+    // Whether it lives in the app's top folder named so, either separator after it.
+    private bool Under(string folder)
+        => Where.StartsWith(folder, StringComparison.OrdinalIgnoreCase) && Where.Length > folder.Length
+           && Where[folder.Length] is '/' or '\\';
 
     /// <summary>The goal's tags — a build-birth fact stamped by <c>test.tag</c>'s Build hook (skip,
     /// user tags). A <c>list&lt;tag&gt;</c> program node; each tag owns its case-insensitive equality.</summary>

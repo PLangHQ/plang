@@ -153,9 +153,11 @@ public partial class @this
     public global::app.type.property.@this? this[string name] => Property[name];
 
     /// <summary>An action starts through four levels, the general wrapping the specific: the action type's
-    /// events, its module's, its catalog action's (when it is another object than this one), its own.</summary>
+    /// events, its module's, its catalog action's (when it is another object than this one), its own. An action in one
+    /// of plang's own goals is none of the app's, so it starts through its own events alone.</summary>
     protected internal override global::app.type.item.@this? Level(int depth, actor.context.@this context)
     {
+        if (Step is { IsSystem: true }) return depth == 0 ? this : null;
         var catalog = Module[Name] is { } action && !ReferenceEquals(action, this) ? action : null;
         return depth switch
         {
