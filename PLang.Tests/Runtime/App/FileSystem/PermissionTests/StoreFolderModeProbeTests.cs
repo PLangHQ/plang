@@ -1,8 +1,7 @@
 namespace PLang.Tests.App.FileSystem.PermissionTests;
 
-/// <summary>Security probe (doc2 trust slice): a saved key is plain text in the setting store, and sqlite makes its files
-/// with the umask (rw-r--r--). The store's folder is 0700 from its first byte, so another OS user cannot read the key. RED
-/// until the store's Open sets the folder's mode. Not on Windows (no modes there).</summary>
+/// <summary>A saved key is plain text in the setting store, and sqlite makes its files with the umask (rw-r--r--), so the
+/// store's folder is 0700 from its first byte: another OS user cannot read the key. Not on Windows (no modes there).</summary>
 public class StoreFolderModeProbeTests
 {
     [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows)]
