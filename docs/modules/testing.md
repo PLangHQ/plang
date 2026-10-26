@@ -355,6 +355,5 @@ Meta-tests use `*.fixture.goal` as the discovery pattern to keep fixtures from b
 ## See also
 
 - [assert](assert.md) — assertion actions used inside tests
-- [mock](mock.md) — mocking actions in tests
 - [error](error.md) — `on error` handlers in test goals
 - [Building PLang tests](../../Documentation/v0.2/building_plang_tests.md) — authoring reference (syntax, error variables, builder behavior)
