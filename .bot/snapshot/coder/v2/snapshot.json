@@ -107,7 +107,7 @@
                             "type": {
                               "name": "text"
                             },
-                            "value": "7ea93b99"
+                            "value": "776c2592"
                           },
                           "type": {
                             "name": "type",
@@ -121,30 +121,24 @@
                           "goal": {
                             "name": "goal",
                             "type": {
-                              "name": "text"
-                            },
-                            "value": "/Start"
-                          },
-                          "goalHash": {
-                            "name": "goalHash",
-                            "type": {
-                              "name": "text"
-                            },
-                            "value": "937637f47963dd6e17af862379259f4cac4f7153474c4923384b02528bceffd4"
-                          },
-                          "variables": {
-                            "name": "variables",
-                            "type": {
                               "name": "snapshot"
                             },
-                            "value": {}
-                          },
-                          "arguments": {
-                            "name": "arguments",
-                            "type": {
-                              "name": "list"
-                            },
-                            "value": []
+                            "value": {
+                              "address": {
+                                "name": "address",
+                                "type": {
+                                  "name": "text"
+                                },
+                                "value": "/Start"
+                              },
+                              "hash": {
+                                "name": "hash",
+                                "type": {
+                                  "name": "text"
+                                },
+                                "value": "937637f47963dd6e17af862379259f4cac4f7153474c4923384b02528bceffd4"
+                              }
+                            }
                           },
                           "handled": {
                             "name": "handled",
@@ -152,20 +146,6 @@
                               "name": "bool"
                             },
                             "value": false
-                          },
-                          "tags": {
-                            "name": "tags",
-                            "type": {
-                              "name": "dict"
-                            },
-                            "value": {}
-                          },
-                          "kept": {
-                            "name": "kept",
-                            "type": {
-                              "name": "dict"
-                            },
-                            "value": {}
                           },
                           "children": {
                             "name": "children",
@@ -184,7 +164,7 @@
                                     "type": {
                                       "name": "text"
                                     },
-                                    "value": "29249a60"
+                                    "value": "a2b75e04"
                                   },
                                   "type": {
                                     "name": "type",
@@ -198,38 +178,32 @@
                                   "goal": {
                                     "name": "goal",
                                     "type": {
-                                      "name": "text"
+                                      "name": "snapshot"
                                     },
-                                    "value": "/Start"
+                                    "value": {
+                                      "address": {
+                                        "name": "address",
+                                        "type": {
+                                          "name": "text"
+                                        },
+                                        "value": "/Start"
+                                      },
+                                      "hash": {
+                                        "name": "hash",
+                                        "type": {
+                                          "name": "text"
+                                        },
+                                        "value": "937637f47963dd6e17af862379259f4cac4f7153474c4923384b02528bceffd4"
+                                      }
+                                    }
                                   },
-                                  "goalHash": {
-                                    "name": "goalHash",
-                                    "type": {
-                                      "name": "text"
-                                    },
-                                    "value": "937637f47963dd6e17af862379259f4cac4f7153474c4923384b02528bceffd4"
-                                  },
-                                  "stepIndex": {
-                                    "name": "stepIndex",
+                                  "step": {
+                                    "name": "step",
                                     "type": {
                                       "name": "number",
                                       "kind": "int"
                                     },
                                     "value": 1
-                                  },
-                                  "variables": {
-                                    "name": "variables",
-                                    "type": {
-                                      "name": "snapshot"
-                                    },
-                                    "value": {}
-                                  },
-                                  "arguments": {
-                                    "name": "arguments",
-                                    "type": {
-                                      "name": "list"
-                                    },
-                                    "value": []
                                   },
                                   "handled": {
                                     "name": "handled",
@@ -237,20 +211,6 @@
                                       "name": "bool"
                                     },
                                     "value": false
-                                  },
-                                  "tags": {
-                                    "name": "tags",
-                                    "type": {
-                                      "name": "dict"
-                                    },
-                                    "value": {}
-                                  },
-                                  "kept": {
-                                    "name": "kept",
-                                    "type": {
-                                      "name": "dict"
-                                    },
-                                    "value": {}
                                   },
                                   "children": {
                                     "name": "children",
@@ -269,7 +229,7 @@
                                             "type": {
                                               "name": "text"
                                             },
-                                            "value": "d13670b3"
+                                            "value": "6e71a8af"
                                           },
                                           "type": {
                                             "name": "type",
@@ -283,60 +243,62 @@
                                           "goal": {
                                             "name": "goal",
                                             "type": {
-                                              "name": "text"
+                                              "name": "snapshot"
                                             },
-                                            "value": "/Start"
+                                            "value": {
+                                              "address": {
+                                                "name": "address",
+                                                "type": {
+                                                  "name": "text"
+                                                },
+                                                "value": "/Start"
+                                              },
+                                              "hash": {
+                                                "name": "hash",
+                                                "type": {
+                                                  "name": "text"
+                                                },
+                                                "value": "937637f47963dd6e17af862379259f4cac4f7153474c4923384b02528bceffd4"
+                                              }
+                                            }
                                           },
-                                          "goalHash": {
-                                            "name": "goalHash",
-                                            "type": {
-                                              "name": "text"
-                                            },
-                                            "value": "937637f47963dd6e17af862379259f4cac4f7153474c4923384b02528bceffd4"
-                                          },
-                                          "stepIndex": {
-                                            "name": "stepIndex",
+                                          "step": {
+                                            "name": "step",
                                             "type": {
                                               "name": "number",
                                               "kind": "int"
                                             },
                                             "value": 1
                                           },
-                                          "actionIndex": {
-                                            "name": "actionIndex",
-                                            "type": {
-                                              "name": "number",
-                                              "kind": "int"
-                                            },
-                                            "value": 0
-                                          },
-                                          "actionModule": {
-                                            "name": "actionModule",
-                                            "type": {
-                                              "name": "text"
-                                            },
-                                            "value": "variable"
-                                          },
-                                          "actionName": {
-                                            "name": "actionName",
-                                            "type": {
-                                              "name": "text"
-                                            },
-                                            "value": "set"
-                                          },
-                                          "variables": {
-                                            "name": "variables",
+                                          "action": {
+                                            "name": "action",
                                             "type": {
                                               "name": "snapshot"
                                             },
-                                            "value": {}
-                                          },
-                                          "arguments": {
-                                            "name": "arguments",
-                                            "type": {
-                                              "name": "list"
-                                            },
-                                            "value": []
+                                            "value": {
+                                              "index": {
+                                                "name": "index",
+                                                "type": {
+                                                  "name": "number",
+                                                  "kind": "int"
+                                                },
+                                                "value": 0
+                                              },
+                                              "module": {
+                                                "name": "module",
+                                                "type": {
+                                                  "name": "text"
+                                                },
+                                                "value": "variable"
+                                              },
+                                              "name": {
+                                                "name": "name",
+                                                "type": {
+                                                  "name": "text"
+                                                },
+                                                "value": "set"
+                                              }
+                                            }
                                           },
                                           "handled": {
                                             "name": "handled",
@@ -344,20 +306,6 @@
                                               "name": "bool"
                                             },
                                             "value": false
-                                          },
-                                          "tags": {
-                                            "name": "tags",
-                                            "type": {
-                                              "name": "dict"
-                                            },
-                                            "value": {}
-                                          },
-                                          "kept": {
-                                            "name": "kept",
-                                            "type": {
-                                              "name": "dict"
-                                            },
-                                            "value": {}
                                           },
                                           "children": {
                                             "name": "children",
@@ -376,7 +324,7 @@
                                                     "type": {
                                                       "name": "text"
                                                     },
-                                                    "value": "e16ecdfe"
+                                                    "value": "4d77a16a"
                                                   },
                                                   "type": {
                                                     "name": "type",
@@ -390,30 +338,24 @@
                                                   "goal": {
                                                     "name": "goal",
                                                     "type": {
-                                                      "name": "text"
-                                                    },
-                                                    "value": "/Sub"
-                                                  },
-                                                  "goalHash": {
-                                                    "name": "goalHash",
-                                                    "type": {
-                                                      "name": "text"
-                                                    },
-                                                    "value": "3a46c5d76495ec08c5cfcbb22cf5c5542f29305be405a68742fb6baf91eed3c5"
-                                                  },
-                                                  "variables": {
-                                                    "name": "variables",
-                                                    "type": {
                                                       "name": "snapshot"
                                                     },
-                                                    "value": {}
-                                                  },
-                                                  "arguments": {
-                                                    "name": "arguments",
-                                                    "type": {
-                                                      "name": "list"
-                                                    },
-                                                    "value": []
+                                                    "value": {
+                                                      "address": {
+                                                        "name": "address",
+                                                        "type": {
+                                                          "name": "text"
+                                                        },
+                                                        "value": "/Sub"
+                                                      },
+                                                      "hash": {
+                                                        "name": "hash",
+                                                        "type": {
+                                                          "name": "text"
+                                                        },
+                                                        "value": "3a46c5d76495ec08c5cfcbb22cf5c5542f29305be405a68742fb6baf91eed3c5"
+                                                      }
+                                                    }
                                                   },
                                                   "handled": {
                                                     "name": "handled",
@@ -421,20 +363,6 @@
                                                       "name": "bool"
                                                     },
                                                     "value": false
-                                                  },
-                                                  "tags": {
-                                                    "name": "tags",
-                                                    "type": {
-                                                      "name": "dict"
-                                                    },
-                                                    "value": {}
-                                                  },
-                                                  "kept": {
-                                                    "name": "kept",
-                                                    "type": {
-                                                      "name": "dict"
-                                                    },
-                                                    "value": {}
                                                   },
                                                   "children": {
                                                     "name": "children",
@@ -453,7 +381,7 @@
                                                             "type": {
                                                               "name": "text"
                                                             },
-                                                            "value": "089aabff"
+                                                            "value": "2fd295b1"
                                                           },
                                                           "type": {
                                                             "name": "type",
@@ -467,38 +395,32 @@
                                                           "goal": {
                                                             "name": "goal",
                                                             "type": {
-                                                              "name": "text"
+                                                              "name": "snapshot"
                                                             },
-                                                            "value": "/Sub"
+                                                            "value": {
+                                                              "address": {
+                                                                "name": "address",
+                                                                "type": {
+                                                                  "name": "text"
+                                                                },
+                                                                "value": "/Sub"
+                                                              },
+                                                              "hash": {
+                                                                "name": "hash",
+                                                                "type": {
+                                                                  "name": "text"
+                                                                },
+                                                                "value": "3a46c5d76495ec08c5cfcbb22cf5c5542f29305be405a68742fb6baf91eed3c5"
+                                                              }
+                                                            }
                                                           },
-                                                          "goalHash": {
-                                                            "name": "goalHash",
-                                                            "type": {
-                                                              "name": "text"
-                                                            },
-                                                            "value": "3a46c5d76495ec08c5cfcbb22cf5c5542f29305be405a68742fb6baf91eed3c5"
-                                                          },
-                                                          "stepIndex": {
-                                                            "name": "stepIndex",
+                                                          "step": {
+                                                            "name": "step",
                                                             "type": {
                                                               "name": "number",
                                                               "kind": "int"
                                                             },
                                                             "value": 1
-                                                          },
-                                                          "variables": {
-                                                            "name": "variables",
-                                                            "type": {
-                                                              "name": "snapshot"
-                                                            },
-                                                            "value": {}
-                                                          },
-                                                          "arguments": {
-                                                            "name": "arguments",
-                                                            "type": {
-                                                              "name": "list"
-                                                            },
-                                                            "value": []
                                                           },
                                                           "handled": {
                                                             "name": "handled",
@@ -506,20 +428,6 @@
                                                               "name": "bool"
                                                             },
                                                             "value": false
-                                                          },
-                                                          "tags": {
-                                                            "name": "tags",
-                                                            "type": {
-                                                              "name": "dict"
-                                                            },
-                                                            "value": {}
-                                                          },
-                                                          "kept": {
-                                                            "name": "kept",
-                                                            "type": {
-                                                              "name": "dict"
-                                                            },
-                                                            "value": {}
                                                           },
                                                           "children": {
                                                             "name": "children",
@@ -538,7 +446,7 @@
                                                                     "type": {
                                                                       "name": "text"
                                                                     },
-                                                                    "value": "b36b912f"
+                                                                    "value": "5157bfcd"
                                                                   },
                                                                   "type": {
                                                                     "name": "type",
@@ -552,60 +460,62 @@
                                                                   "goal": {
                                                                     "name": "goal",
                                                                     "type": {
-                                                                      "name": "text"
+                                                                      "name": "snapshot"
                                                                     },
-                                                                    "value": "/Sub"
+                                                                    "value": {
+                                                                      "address": {
+                                                                        "name": "address",
+                                                                        "type": {
+                                                                          "name": "text"
+                                                                        },
+                                                                        "value": "/Sub"
+                                                                      },
+                                                                      "hash": {
+                                                                        "name": "hash",
+                                                                        "type": {
+                                                                          "name": "text"
+                                                                        },
+                                                                        "value": "3a46c5d76495ec08c5cfcbb22cf5c5542f29305be405a68742fb6baf91eed3c5"
+                                                                      }
+                                                                    }
                                                                   },
-                                                                  "goalHash": {
-                                                                    "name": "goalHash",
-                                                                    "type": {
-                                                                      "name": "text"
-                                                                    },
-                                                                    "value": "3a46c5d76495ec08c5cfcbb22cf5c5542f29305be405a68742fb6baf91eed3c5"
-                                                                  },
-                                                                  "stepIndex": {
-                                                                    "name": "stepIndex",
+                                                                  "step": {
+                                                                    "name": "step",
                                                                     "type": {
                                                                       "name": "number",
                                                                       "kind": "int"
                                                                     },
                                                                     "value": 1
                                                                   },
-                                                                  "actionIndex": {
-                                                                    "name": "actionIndex",
-                                                                    "type": {
-                                                                      "name": "number",
-                                                                      "kind": "int"
-                                                                    },
-                                                                    "value": 0
-                                                                  },
-                                                                  "actionModule": {
-                                                                    "name": "actionModule",
-                                                                    "type": {
-                                                                      "name": "text"
-                                                                    },
-                                                                    "value": "variable"
-                                                                  },
-                                                                  "actionName": {
-                                                                    "name": "actionName",
-                                                                    "type": {
-                                                                      "name": "text"
-                                                                    },
-                                                                    "value": "set"
-                                                                  },
-                                                                  "variables": {
-                                                                    "name": "variables",
+                                                                  "action": {
+                                                                    "name": "action",
                                                                     "type": {
                                                                       "name": "snapshot"
                                                                     },
-                                                                    "value": {}
-                                                                  },
-                                                                  "arguments": {
-                                                                    "name": "arguments",
-                                                                    "type": {
-                                                                      "name": "list"
-                                                                    },
-                                                                    "value": []
+                                                                    "value": {
+                                                                      "index": {
+                                                                        "name": "index",
+                                                                        "type": {
+                                                                          "name": "number",
+                                                                          "kind": "int"
+                                                                        },
+                                                                        "value": 0
+                                                                      },
+                                                                      "module": {
+                                                                        "name": "module",
+                                                                        "type": {
+                                                                          "name": "text"
+                                                                        },
+                                                                        "value": "variable"
+                                                                      },
+                                                                      "name": {
+                                                                        "name": "name",
+                                                                        "type": {
+                                                                          "name": "text"
+                                                                        },
+                                                                        "value": "set"
+                                                                      }
+                                                                    }
                                                                   },
                                                                   "handled": {
                                                                     "name": "handled",
@@ -613,27 +523,6 @@
                                                                       "name": "bool"
                                                                     },
                                                                     "value": false
-                                                                  },
-                                                                  "tags": {
-                                                                    "name": "tags",
-                                                                    "type": {
-                                                                      "name": "dict"
-                                                                    },
-                                                                    "value": {}
-                                                                  },
-                                                                  "kept": {
-                                                                    "name": "kept",
-                                                                    "type": {
-                                                                      "name": "dict"
-                                                                    },
-                                                                    "value": {}
-                                                                  },
-                                                                  "children": {
-                                                                    "name": "children",
-                                                                    "type": {
-                                                                      "name": "list"
-                                                                    },
-                                                                    "value": []
                                                                   }
                                                                 }
                                                               }
@@ -662,7 +551,7 @@
                         "type": {
                           "name": "text"
                         },
-                        "value": "b36b912f"
+                        "value": "5157bfcd"
                       }
                     }
                   }
