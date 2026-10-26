@@ -26,6 +26,9 @@ Checks to make before the release, not branches:
 
 ## From windows
 
+- **Finding H, a [Sensitive] setting read by a goal is plain text** (doc2, 2026-10-26; with plang-security): `- write out %!llm.setting.key%` prints the key whole. `[Sensitive]` masks a member when its owner is written, but navigating to the member gives a text that carries no sensitivity. Security assesses reach (a sub app, another source's goal, a vague step) and severity. The known fix is bugs N1's sensitive text kind (masks itself except one named reveal door), a core addition for Ingi with 307. doc2 printed 60 characters of each key into its transcript, so Ingi rotates the TypeSafe and OpenAI keys.
+- **A variable inside quoted text fails to build** (doc2): `write out "decider key: %!llm.decider.setting.key%"` failed ("is in the step but not in your answer: copy it exactly", "Response is not valid JSON"); without the quoted prefix it built. The builder bot's.
+
 - **Debugging a system goal shows only that goal** (windows 13, Ingi: "agree"): `--debug.setting.goal=/system/builder/BuildGoal/Decide` binds Decide's own start, steps and actions, but the system goals it calls aren't shown (since windows' stage 1 they don't fire through the type). When the builder bot needs them, debug follows the calls down from the named goal.
 
 ## From decider-key
