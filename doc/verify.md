@@ -209,3 +209,36 @@ Six questions answered from the pages and three checks run (1 build): a read out
 | 152 | first-goal | a build prints only the lines listed | the agent saw `{"action":"file.read","key":"PermissionDenied",…}` at build time | **fail** (page now describes the diagnostic lines; cause untraced) |
 | 153 | identity-and-signing | the page said identities live in `.data/data.sqlite` | the agent noted the keys page says `.data/setting/data.sqlite`; two files exist and which holds the identity was not checked | **fail** (page now says so) |
 | 154 | code-from-elsewhere | what a reviewer should look for | the agent found no list | page now has a list of what these runs touched; the list is not complete |
+
+## Programmer pages, set 2 (testing, settings, modules)
+
+Scratch apps `ts1` (tests) and `st1` (settings), built with the key from stdin. Branch `docs/doc-programmer-2`, cut off runtime2 14ef2a06a; the CLI rebuilt on it.
+
+| # | Page | Claim | Check | Result |
+|---|---|---|---|---|
+| 155 | testing-your-goals | a `*.test.goal` with `assert … equals` passes under `plang --test` | ts1 `MathIsSane`: `[Pass]` | pass |
+| 156 | testing-your-goals | a failing assert prints expected, actual, variables | ts1 `sub/Fails`: output as quoted | pass |
+| 157 | testing-your-goals | `--test` exit 1 on a failure or a stale test, 0 on all pass | ran each, `$?` | pass |
+| 158 | testing-your-goals | `plang --test sub` runs a folder; `plang --test X.test.goal` runs one file; `--test Ask` (a name, no folder) gives `NotFound (404): Directory not found: /Ask` | ran each | pass |
+| 159 | testing-your-goals | a changed `.goal` without a rebuild is `[Stale]`, exit 1 | ran after editing | pass |
+| 160 | testing-your-goals | `.test/results.json` is written; junit with `--test.setting={"format":"junit"}` | ran: `.test/junit.xml` and `.test/results.json` exist; junit shape as quoted | pass |
+| 161 | testing-your-goals | `docs/modules/testing.md` shows results.json as `{summary, builderVersion, runs}` | the file here is an array of `{duration, hash, name, path, status, stdout, timings}` | **fail** (the page claims only that a results.json is written; the old doc differs: sent to plang-docs) |
+| 162 | testing-your-goals | an unknown test setting is refused `UnknownSetting` | ran `--test.setting.bogus=1` | pass |
+| 163 | testing-your-goals | `X.test.llm.json` is written on the first run: list of `{request, response}`, request keys `max_completion_tokens, messages, model, temperature`, no key text in it | ran `Ask.test.goal`; read the keys with `jq`; searched the file with the key file as the pattern: 0 matches | pass |
+| 164 | testing-your-goals | a later run answers from the file with no key and a dead endpoint | `env -u OPENAI_API_KEY OPENAI_API_ENDPOINT=http://127.0.0.1:1 plang --test Ask.test.goal`: pass | pass |
+| 165 | testing-your-goals | `--test.setting.llm=live` asks every time | same with the dead endpoint: `Connection refused (127.0.0.1:1)`, file unchanged | pass |
+| 166 | testing-your-goals | a changed prompt is a new question | `Documentation/v0.2/building_plang_tests.md` "A Test's LLM Answers" | unverified (read, not run) |
+| 167 | testing-your-goals | `ask the model "…"` always builds to a correct `llm.query` | the first build of `Ask.test.goal` gave `Message=%!data%` and the prompt as `Model`, and the test failed with `NullReferenceException`; a rebuild with a different prompt text built correctly | **fail** as an always (same cause as finding E; reported) |
+| 168 | settings | `%!llm.setting.cache%` reads `use`; `set` to `skip` lasts for the run only | st1 `Start`, run twice | pass |
+| 169 | settings | `save %!build.setting%` keeps it for the next run; `remove` restores the default | st1 `Keep`, `Show`, `Drop`, `Show` | pass |
+| 170 | settings | the saved row is in `.data/setting/data.sqlite` | the file exists in st1; the row's table not read | pass for the location of the store; unverified for the row |
+| 171 | settings | `--llm.setting.cache=skip` sets it for that run | `plang Start --llm.setting.cache=skip` printed `cache: skip` | pass |
+| 172 | settings | a `--build.setting…` flag switches the build mode on | `plang Show --build.setting.cache=use` printed `Building path:` and ran a build | pass |
+| 173 | settings | the refusals: `ArgumentRefused` (`--debug=Start`, second goal, setting path as the goal), `UnknownSetting`, `ChoiceInvalid` | ran each, output as quoted | pass |
+| 174 | settings | `Documentation/v0.2/cli-changes.md` uses `--build.setting.cache=none` | `none` is `ChoiceInvalid`; valid `use`, `skip` | **fail** in that doc (sent to plang-docs); not on the page |
+| 175 | settings | precedence of a flag over a saved row | the run that tried it ran a build instead | unverified |
+| 176 | modules | `PLang/app/module/` holds the 33 folders listed | `ls PLang/app/module` | pass |
+| 177 | modules | each listed module but `cache` has `os/system/modules/<m>/module.description.md` | looped over them | pass |
+| 178 | modules | only condition, file, loop, screen have `start.md` | `ls os/system/modules/*/start.md` | pass |
+| 179 | modules | `ai`, `db`, `install`, `plang` hold prompt files and templates only | `ls` of each | pass |
+| 180 | modules | the one-line purposes | the first sentence of each `module.description.md` | pass |
