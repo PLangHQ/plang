@@ -58,10 +58,30 @@ public sealed class Writer : IWriter
         else _writer.WriteBase64StringValue(value);
     }
 
-    public void BeginArray(int count) => _writer.WriteStartArray();
+    public void BeginArray(int count)
+    {
+        Deeper();
+        _writer.WriteStartArray();
+    }
     public void EndArray() => _writer.WriteEndArray();
 
-    public void BeginObject() => _writer.WriteStartObject();
+    public void BeginObject()
+    {
+        Deeper();
+        _writer.WriteStartObject();
+    }
+
+    // As deep as plang's readers read (System.Text.Json's reader default): a reader recurses per level, so a value
+    // deeper than that is refused here, where it is written, never sent for a reader to fail on.
+    private const int Depth = 64;
+
+    // One level further in, or why not.
+    private void Deeper()
+    {
+        if (_writer.CurrentDepth >= Depth)
+            throw new global::app.error.AppException(new global::app.error.@this(
+                $"a value nested deeper than {Depth} levels can't be written: plang's readers read {Depth} levels", "ValueTooDeep", 400));
+    }
     public void Name(string name) => _writer.WritePropertyName(name);
     public void EndObject() => _writer.WriteEndObject();
 
