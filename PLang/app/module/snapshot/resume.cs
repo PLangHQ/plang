@@ -20,13 +20,13 @@ public partial class resume : IContext
     public partial data.@this<global::app.snapshot.@this> Snapshot { get; init; }
 
     /// <summary>Resumes the snapshot. A value that isn't one is the answer: the typed ask's own reason when it gave one,
-    /// else what the slot holds and the step that reads a snapshot (a file read as a .json is a dict, not a snapshot).</summary>
+    /// else that it holds none (a text its reader reads as nothing) and the step that reads a snapshot from text.</summary>
     public async Task<data.@this> Start()
     {
         if (await Snapshot.Value() is { } snap) return await snap.Resume(Context);
         if (Snapshot.Error is { } error) return Context.Error(error);
         return Context.Error(new global::app.error.@this(
-            $"%{Snapshot.Name}% holds a {Snapshot.Peek().Type.Name}, not a snapshot: read it as one (`read file 'run.json', write to %{Snapshot.Name}% as snapshot`)",
+            $"%{Snapshot.Name}% holds no snapshot: read one where it is kept, in text (`read file 'run.txt', write to %{Snapshot.Name}% as snapshot`)",
             "NoSnapshot", 400));
     }
 }
