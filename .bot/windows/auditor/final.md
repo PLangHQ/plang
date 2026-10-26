@@ -40,3 +40,8 @@ grant's own `Comparison`; `Comparison` fails closed (`ParseScheme` needs `://`).
 ## Next-branch list
 X1 W1 and W3. X2 the older structural smells in W5 (stored-twice in goal, the action's string forks, process). X3 the full Windows
 sweep at the final tip (the host), and `text-culture` (Ingi). X4 `BareLiteralJudgedByForm` has no owner (architect 41).
+
+## Update — W1, W3, W5 closed at 1506c9c75 (PASS)
+W1 (`a48405461`): `Mode` and `Mkdir` answer `IOError` 500 for an IO or access refusal (`this.Operations.cs:281-289, 364-372`); the store carries it (`sqlite/this.cs:107,113`); `AFolderAnotherUserOwns_AnswersItsModeRefusal` (skips as root). W3 (`ac3723faa`): debug compares `goal.Address`. W5 (`1506c9c75`): `goal.Parse` names; I read the diff: the step's indent `(raw.Length - trimmed.Length)/4` equals the old leading-space count (`trimmed` is `raw.TrimStart()`), the comment is captured before it is cleared, and steps add through `goal.Step`; no logic moved.
+Sweep: Wire's 6 baseline reds only (Modules 1,434, Types 1,008, Data 880, Generator 191, Runtime 1,410 green). `plang --test`, llm saved: 309 total, 304 pass, the baseline's 1 fail, 3 stale, 1 skipped; tree clean.
+New finding **W6 (nit, next branch):** `screen/type/screen/display/this.cs:47` calls `folder.Mkdir(context)` and drops the answer; before W1 a refusal threw, now it passes silently and the socket steps after it fail with their own error. Return the answer as line 52 does.
