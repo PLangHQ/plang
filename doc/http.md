@@ -19,14 +19,16 @@ Output: `city: Reykjavik`. The server returned `{"city":"Reykjavik","temp":4}`; 
 - write out "body: %reply.body%"
 ```
 
-Output against a server that echoes what it got:
+Output against a small test server that answers a JSON object with the fields `method`, `auth` (the `Authorization` header it received) and `body` (the text it received):
 
 ```
 method: POST, auth: Bearer abc
 body: {"x":1}
 ```
 
-GET is the default verb. A JSON body is the request's body.
+Those fields belong to that test server, not to PLang. `%reply%` holds whatever the server answers. To see its shape, print it: `write out %reply%`. Then read the fields that exist, with a dot.
+
+GET is the default verb. A JSON body is the request's body. A header of another name (`X-Token: "abc"`) was sent in a cold-reader run, but the test server only reported `Authorization`, so that run could not show the header arriving.
 
 ## Download a file
 

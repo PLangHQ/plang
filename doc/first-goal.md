@@ -36,6 +36,8 @@ Found 1 goals
 Building goal: Start
 ```
 
+A build prints more as the goal grows. A goal with sub-goals adds `Building sub-goal: <name>` and `Sub-goal <name> done (…ms)` lines. `Properties rejected — retrying: …` lines are the builder correcting itself. With the key piped in, `Building needs a TypeSafe key for the decider. Paste it:` still prints.
+
 A build that works ends with one line per goal:
 
 ```

@@ -142,3 +142,19 @@ Scratch apps `s1` and `s2`, built with the key from stdin, run with `plang`. Loc
 | 106 | databases | no `db` module exists | `ls PLang/app/module`: no `db`; `os/system/modules/db/` holds only `Builder/llm` | pass |
 | 107 | databases | settings live in `.data/setting/data.sqlite` | `ls -R .data` in a scratch app | pass |
 | 108 | databases | a goal can or cannot query that file | not tried | unverified |
+
+## Cold reader, run 2 (a fresh agent given only doc/, slices 2 and 3)
+
+Five tasks, 6 builds, key piped from a file and never printed. Local servers on 127.0.0.1.
+
+| # | Page | Claim | Check | Result |
+|---|---|---|---|---|
+| 109 | goals-in-other-folders | `call /utils/Greet` runs a goal in a subfolder | agent task 1: `hello from utils` | pass |
+| 110 | reading-a-file-line-by-line | the `list.split(…, Empty="drop")` form leaves no blank last line | agent task 2: three lines, no blank | pass |
+| 111 | http | GET a JSON answer, read `%weather.city%` | agent task 3 | pass |
+| 112 | http | POST sends the JSON body | agent task 3: body `{"hello":"world"}` arrived | pass |
+| 113 | http | a header other than `Authorization` arrives | the test server reports only `Authorization`; the agent sent `X-Token` | unverified |
+| 114 | timeouts | `timeout after 200ms, on error write out …` | agent task 4: `gave up waiting` | pass |
+| 115 | caching | cached read returns the old value after the file changed | agent task 5: `first-value` twice, file held `second-value` | pass |
+| 116 | first-goal | a build prints only the folder, the count, and `Saved` lines | agent saw also sub-goal lines, the key prompt and `Properties rejected` lines | **fail** as an implied limit; page now lists the extra lines |
+| 117 | http | the page showed the echo server's fields as if PLang's | agent guessed `%reply.headers%` and got `VariableNotFound (404)` | **fail** (unclear); page now says the fields belong to the test server |
