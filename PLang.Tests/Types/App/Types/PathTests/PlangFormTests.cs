@@ -14,6 +14,16 @@ public class PlangFormTests
     [Test] public async Task Combine_UnderTheGoalFolder_IsTheChild()
         => await Assert.That(File(".").Combine("a.txt").ToString()).IsEqualTo("a.txt");
 
+    // a rooted child is under the path in both forms: they name the same place
+    [Test] public async Task Combine_ARootedChild_IsUnderThePath_InBothForms()
+    {
+        var data = File("/data");
+        var child = data.Combine("/x.txt");
+
+        await Assert.That(child.ToString()).IsEqualTo("/data/x.txt");
+        await Assert.That(child.Absolute).IsEqualTo(System.IO.Path.Combine(data.Absolute, "x.txt"));
+    }
+
     [Test] public async Task Parent_IsTheFolderBeforeTheLastSlash()
     {
         await Assert.That(File("/data/sub/a.txt").Parent.ToString()).IsEqualTo("/data/sub");

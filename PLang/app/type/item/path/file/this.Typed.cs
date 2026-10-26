@@ -9,7 +9,7 @@ public sealed partial class @this
     /// separator in it reads as "/"). The OS form (<c>Absolute</c>) keeps the OS's own path functions; this form never
     /// uses them, so on Windows it never gains a "\".
     /// </summary>
-    private readonly struct typed(string text)
+    private readonly struct Typed(string text)
     {
         private readonly string _text = text.Replace(PathHelper.DirectorySeparatorChar, '/');
 
@@ -28,17 +28,16 @@ public sealed partial class @this
         /// <summary><paramref name="child"/> under it; under "." (the goal folder) the child is itself.</summary>
         internal string Combine(string child)
         {
-            var under = new typed(child)._text;
+            var under = new Typed(child)._text;
             return _text is "" or "." ? under : _text.TrimEnd('/') + "/" + under.TrimStart('/');
         }
 
-        /// <summary>Its last part's extension changed to <paramref name="extension"/> (with or without its dot), or
-        /// taken off when null.</summary>
-        internal string Extension(string? extension)
+        /// <summary>Its last part's extension changed to <paramref name="extension"/> (with or without its dot).</summary>
+        internal string Extension(string extension)
         {
             var dot = _text.LastIndexOf('.');
             var stem = dot > _text.LastIndexOf('/') ? _text[..dot] : _text;
-            return extension == null ? stem : stem + (extension.StartsWith('.') ? extension : "." + extension);
+            return stem + (extension.StartsWith('.') ? extension : "." + extension);
         }
     }
 }
