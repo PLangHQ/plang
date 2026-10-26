@@ -9,7 +9,7 @@ A program reads and writes freely inside its own folder, the app's root. In a go
 Two folders inside the root are not free:
 
 - `.data/` holds the app's stores: its settings, saved grants and identities. A goal that reads from it is refused, and nobody is asked. In a run, `read .data/setting/data.sqlite` answered `PermissionDenied`, and no question was printed.
-- The folder that ships with PLang (`os/`) is read by every actor and written only by the system. This is the design stated in `Documentation/v0.2/filesystem-permission.md`. `OsFolderGrantTests` (5 tests) pass; whether a user goal's write there is refused was not run.
+- The folder that ships with PLang (`os/`) is read by every actor. "Written only by the system" is the design doc's wording for the standing grant (`Documentation/v0.2/filesystem-permission.md`). A user's write or delete under it is a question with a warning, not a flat refusal: `PLang/app/type/item/path/file/this.cs:71-78` words it "(files under /system/ ship with plang; a goal there runs programs without asking) (y/n/a)". That asked case was read at that line, not run. It is refused when no one can answer, which is what `OsFolderGrantTests.AUserWritingOrDeletingInTheOsFolder_IsRefused` covers (`OsFolderGrantTests`, 5 tests, pass).
 
 ## Outside the app's folder
 
