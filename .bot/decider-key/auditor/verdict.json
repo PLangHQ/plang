@@ -1,0 +1,1 @@
+{"status":"pass","summary":"decider-key at 512445b0e: tests at the baseline, no locked surface, cause pinned, key a Data to the header","next_bot":"docs","next_scope":"D1: docs/modules/llm.md:224 and the decider key (TYPESAFE_API_KEY, %!llm.decider.setting.key%, TYPESAFE_ENDPOINT)"}
