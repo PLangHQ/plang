@@ -27,10 +27,10 @@ public partial class @this
     [JsonPropertyName("action")]
     public string Name { get; set; } = "";
 
-    /// <summary>Where this action stands in its step's code — what finds it there, beside its module and name; -1 for one
-    /// no step's code holds (composed in C#).</summary>
+    /// <summary>Where this action stands in its step's code — what finds it there, beside its module and name. An action
+    /// of no step (a catalog element) has none, and is written without it.</summary>
     [Snapshot]
-    public int Index => Step?.Code.IndexOf(this) ?? -1;
+    public virtual int? Index => Step?.Code.IndexOf(this);
 
     /// <summary>The action's own name — "read". It never borrows the module's identity; a site that
     /// wants the qualified form composes the two objects (<c>$"{a.Module}.{a.Name}"</c>).</summary>

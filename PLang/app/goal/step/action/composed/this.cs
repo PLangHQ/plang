@@ -13,6 +13,9 @@ public sealed class @this : action.@this
     /// <summary>The action <paramref name="seed"/> is, composed by <paramref name="context"/>'s run.</summary>
     public @this(module.ICodeGenerated seed, actor.context.@this context) : base(seed, context) { }
 
+    /// <summary>No step's code holds it, so it has no place there: nothing is written for it.</summary>
+    public override int? Index => null;
+
     internal override global::app.call.@this Frame(global::app.call.list.@this stack, global::app.call.setting.@this setting, Variables? variables)
         => stack.Compose(this, setting, variables);
 }
