@@ -1,6 +1,6 @@
 # codeanalyzer summary (windows)
 
-**Version:** v1
+**Version:** v2 (PASS at 728280d24: F1 comment fixed; IsLookup keeps a method hop to one run; grants compare by their place; Typed.Combine trims once. Tester next.) v1 text below.
 
 **What this is:** the windows branch: plang's own goals/steps/actions start through their own events alone, the `[IsNotNull]` guard refuses a variable holding nothing, llm.query renders a template message row, paths use `/` math in the typed form, grants compare per OS, LF line ends, the sqlite store folder is 0700.
 
