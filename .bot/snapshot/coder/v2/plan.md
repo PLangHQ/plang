@@ -58,11 +58,17 @@ calling `foreach` goes on after itself, as today.
 
 ## State
 
-Written, uncommitted, green: Store (the chain root first, `current` by id, each frame writing itself), Start (each frame
-born again through an internal constructor taking its saved id and its caller), the outward loop (each frame's own
-`Rest`: a binding has none), `goal.Resume`/`step.Resume` running in the frames that came back, `Position`,
-`RestoredChain`, `BottomFrame` and the old `Capture`/`Restore`/`Section` gone. A stored binding or isolated frame answers
-`FrameKindUnread` until 1c. Not yet stored: a frame's errors, its event, the action a binding was pushed for.
+Written, uncommitted, green (after the architect's 1b review):
+- Store: the tree nested as it lives — `root`, each frame's `children` under it (no `caller`: a frame's caller is the
+  frame it sits under), `current` the one reference, by id. A frame's goal by its address and hash. Its errors and the
+  event running in it are stored. A running task's frame among the children refuses the save (`SnapshotWhileTaskRuns`).
+  The error's thrown chain is nested the same way, each frame's one child the frame it called.
+- Start: walking down from the root, each frame born again under the frame it sits under through an internal
+  constructor taking its saved id; the goal through `app.goal.Get(address)`.
+- Resume: outward from current, each frame's own `Rest` (a binding has none); `goal.Resume`/`step.Resume` run in the
+  frames that came back.
+- Gone: `Position`, `RestoredChain`, `BottomFrame`, the old `Capture`/`Restore`/`Section`.
+- A stored binding or isolated frame answers `FrameKindUnread` until 1c; `_for` comes with 1c.
 
 ## Blocked
 
