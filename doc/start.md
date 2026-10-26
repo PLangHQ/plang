@@ -27,6 +27,7 @@ A run never builds. A goal that has not been built answers `GoalNotBuilt (404)` 
 4. To write programs: [goals and steps](goals-and-steps.md), [variables](variables.md), [conditions](conditions.md), [loops](loops.md), [calling goals](calling-goals.md), [errors](errors.md), [events](events.md), and [how a step becomes an action](how-a-step-becomes-an-action.md).
 5. Testing and configuring: [testing your goals](testing-your-goals.md), [settings](settings.md), and the map of [modules](modules.md).
 6. To decide whether to trust PLang: [trust](trust.md).
-7. More things a program does: [goals in other folders](goals-in-other-folders.md), [reading a file line by line](reading-a-file-line-by-line.md), [HTTP](http.md), [timeouts](timeouts.md), [caching](caching.md), and [databases](databases.md) (there is no database module).
+7. To change the runtime: the [contributor guide](contributor/start.md), and the [decisions](decisions/start.md) behind its rules.
+8. More things a program does: [goals in other folders](goals-in-other-folders.md), [reading a file line by line](reading-a-file-line-by-line.md), [HTTP](http.md), [timeouts](timeouts.md), [caching](caching.md), and [databases](databases.md) (there is no database module).
 
 [verify.md](verify.md) lists how each claim in these pages was checked, and which ones could not be.

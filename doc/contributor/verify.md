@@ -75,3 +75,8 @@ The agent was asked to plan a `greeter.hello` action from the guide alone, writi
 | K5 | how-a-step-runs | where the generated dispatcher is | agent found `PLang.Generators/Emission/Action/this.cs:414` | page now cites it |
 | K6 | the-locked-core | who the architect is for a person | agent stuck | page now says |
 | K7 | add-an-action | a first-time reader can write `hello.description.md` | agent invented the wording | page now gives the line used |
+
+| # | Page | Claim | Check | Result |
+|---|---|---|---|---|
+| K8 | build-and-test, add-an-action | links to `../testing-your-goals.md` and `../install.md#the-key-a-build-needs` resolve | after rebasing on runtime2 `6893ded95`, both files exist | pass |
+| K9 | start (doc) | `doc/start.md` lists the contributor guide and the decisions | read | pass |
