@@ -101,3 +101,15 @@ Rebuilt the CLI on b4a549d1c, then ran in a fresh scratch folder with no saved k
 | 80 | install | in a non-app folder, `plang build` with no flag and no stdin gives `NoAppFound` | ran it | pass |
 | 81 | when-a-step-fails | the trace holds `buildError` with key `MissingDeciderKey` | read `.build/traces/*/Start.json` | pass |
 | 10b | install | the 403 of rows 10 and 26 no longer occurs with no key | the runs above | pass (replaced) |
+
+## Cold reader, run 1 (a fresh agent given only doc/)
+
+The agent installed (`dotnet build`), proved the install (`plang`, `plang --version`), wrote a goal that reads a JSON file and prints a field (`Ada`), and built and ran it. It used all 4 allowed builds. It did not reproduce the failed build of rows 29-29c.
+
+| # | Page | Claim | Check | Result |
+|---|---|---|---|---|
+| 82 | when-a-step-fails | `- make the data feel nicer` as a third step always fails the build with `StepsBroken` | the agent built it: exit 0, `Saved Start`, the step's own text printed | **fail**: not always; the page now says one build failed and later ones did not |
+| 83 | when-a-step-fails | `- make it better` | built exit 0; `plang` printed `Ada`, then `[ServiceError] NullReferenceException` | pass (observed once; page says so) |
+| 84 | when-a-step-fails | a build that says `Saved` may still hold a wrong step | rows 82, 83 | pass |
+| 85 | install | the key prompt prints when the key is piped on standard input | the agent's build 1 and my run (row 77) | pass |
+| 86 | first-goal | `.build/start.pr` and `.build/traces/` exist after a build | the agent listed with `ls -a` and saw `.build` and `.data` only, not inside | pass (rows 19, 20) |

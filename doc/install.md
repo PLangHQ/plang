@@ -55,6 +55,8 @@ A build with no key asks for it once, then saves it in the app and does not ask 
 Building needs a TypeSafe key for the decider. Paste it:
 ```
 
+To give the key without typing it, feed it on standard input: `plang build < keyfile`. The question still prints, and the build goes on with the key it read.
+
 With no one to answer (input is redirected and empty), it stops, and nothing is sent to the service:
 
 ```

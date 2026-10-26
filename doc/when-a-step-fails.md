@@ -1,6 +1,6 @@
 # When a step fails
 
-This page says how a build tells you something is wrong, and what to change. Every output below was copied from a run, some trimmed.
+This page says how a build tells you something is wrong, and what to change. Every output below was copied from a run, some trimmed. A build can also succeed with a step that means the wrong thing; see [a vague step does not always fail the build](#a-vague-step-does-not-always-fail-the-build).
 
 ## The build did not start
 
@@ -28,7 +28,7 @@ Every build writes a trace to `.build/traces/<id>/<Goal>.json`. For a failed goa
 
 ## A step could not be built
 
-Add a vague third step to the goal in [your first goal](first-goal.md), `- make the data feel nicer`, and build (output trimmed):
+A step the builder cannot make into an action fails the build. This is what one such build printed, for a vague third step `- make the data feel nicer` added to the goal in [your first goal](first-goal.md) (output trimmed):
 
 ```
 Building goal: Start
@@ -41,7 +41,7 @@ StepsBroken (400): the build left goals with steps it could not fix
   Fix: fix the words and build again
 ```
 
-The build exits 1. Read it in three parts:
+The build exited 1. Read it in three parts:
 
 - `Properties rejected — retrying:` is a retry. The builder tries again before it gives up.
 - `StepsBroken (400)` lists each step it could not fix, by its number (counted from 0) and its text. The `at` line names the builder's own step, not yours.
@@ -49,7 +49,7 @@ The build exits 1. Read it in three parts:
 
 The step count starts at 0, so `step 2` is the third step. The message gives the reason in the builder's terms. Here it is that the model used variables the sentence does not mention.
 
-Running the goal after that build does not run a half-built program. It answers `GoalBroken (400)` and names the step:
+Running the goal after that build did not run a half-built program. It answered `GoalBroken (400)` and named the step:
 
 ```
 GoalBroken (400): goal '/Start.goal' has 1 broken step(s): 2
@@ -58,6 +58,14 @@ GoalBroken (400): goal '/Start.goal' has 1 broken step(s): 2
   Fix: fix the words and build again
 ```
 
-What to change is the step's sentence. Name the action and the values, and use the variables you mean. Replace the step with `- write out %person.age%`, build, and it builds and runs (`Ada`, then `36`).
+## A vague step does not always fail the build
+
+The same step did not fail every time. A later build of `- make the data feel nicer`, and a build of `- make it better`, both ended `Saved Start` with exit 0. The goal then ran: the first printed the step's own text as output, the second stopped with `[ServiceError] NullReferenceException: Object reference not set to an instance of an object.`
+
+So a build that says `Saved` does not prove the step does what you meant. Run the goal and check its output. When a run does something other than your words say, or stops with an error you did not expect, treat the step as the cause and change its sentence.
+
+## What to change
+
+The sentence of the step. Name the action and the values, and use the variables you mean. Replacing the vague step with `- write out %person.age%` and building again built and ran (`Ada`, then `36`) every time it was tried.
 
 Not seen: which earlier steps a rebuild keeps. The builder defines `[≡]` lines for them, but none was printed.
