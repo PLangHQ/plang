@@ -4,7 +4,8 @@ namespace app.snapshot;
 /// The walk: a part stored at this node and each part it holds at a node of its own under this one, and started back the
 /// same way. A part's parts are its public members whose declared type is an <see cref="ISnapshot"/>, depth first, in the
 /// order they are declared; no other member is read, so no other getter runs. A node is named for the member that holds
-/// it, so a part's place is its member path from where the walk began.
+/// it, so a part's place is its member path from where the walk began. A part's parts are walked in the context its own
+/// answer carries — a part answers in the context it was handed, an actor's context in itself — both ways.
 /// </summary>
 public sealed partial class @this
 {
@@ -29,7 +30,7 @@ public sealed partial class @this
         {
             if (stored.Contains(child)) continue;
             var node = new @this(Context);
-            var result = node.Store(child, thrown, stored, context);
+            var result = node.Store(child, thrown, stored, own.Context);
             if (!result.Success) return result;
             if (node.Entries.IsTruthy()) Entries.Set(new global::app.data.@this(name, node, context: Context));
         }
@@ -51,7 +52,7 @@ public sealed partial class @this
         foreach (var (name, child) in Parts(part))
         {
             if (started.Contains(child) || Entries.Get(name, Context)?.Peek() is not @this node) continue;
-            var result = await node.Start(child, started, context);
+            var result = await node.Start(child, started, own.Context);
             if (!result.Success) return result;
         }
         return context.Ok();

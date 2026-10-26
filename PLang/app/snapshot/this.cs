@@ -33,6 +33,20 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         Entries = new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)]);
     }
 
+    /// <summary>The stored Data as <paramref name="context"/> holds it — the one door a part takes stored Data into live
+    /// memory by: each entry cloned, so the run never shares a value with the snapshot, and born again in the context the
+    /// part was handed, so it answers as the actor whose memory it goes into, never as whoever read the text. What is
+    /// still unread (a value through text) opens in that context too.</summary>
+    internal IEnumerable<global::app.data.@this> Held(global::app.actor.context.@this context)
+    {
+        foreach (var entry in Entries.Entries(context)) yield return entry.Clone().Copy(context);
+    }
+
+    /// <summary>The entry at <paramref name="key"/> as <paramref name="context"/> holds it (<see cref="Held(actor.context.@this)"/>);
+    /// null when none is stored.</summary>
+    internal global::app.data.@this? Held(string key, global::app.actor.context.@this context)
+        => Entries.Get(key, context)?.Clone().Copy(context);
+
     /// <summary>A collection entry, written only when it holds something — the mirror of <see cref="Read{T}"/>, which
     /// reads an absent entry as empty. Empty is the one test the walk leaves an empty part out by.</summary>
     internal void Write(string key, global::app.type.item.@this collection)

@@ -47,17 +47,11 @@ class app.call.Diff : System.IEquatable<app.call.Diff>
   Name : System.String { get; init; }
   ctor(System.String Name, System.Object Before, System.DateTimeOffset At)
 
-class app.call.Position : System.IEquatable<app.call.Position>
-  Action : app.goal.step.action.this { get; init; }
-  ActionIndex : System.Int32 { get; init; }
-  Goal : app.goal.this { get; init; }
-  Id : System.String { get; init; }
-  StepIndex : System.Int32 { get; init; }
-  ctor(app.goal.step.action.this Action, app.goal.this Goal, System.Int32 StepIndex, System.Int32 ActionIndex, System.String Id)
-
-class app.call.binding.this : app.call.this
+class app.call.binding.this : app.call.this, app.type.item.ICreate<app.call.binding.this>
   override Goal : app.goal.this { get; }
   override Step : app.goal.step.this { get; }
+  static Create(System.Object raw) : app.call.binding.this
+  static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.binding.this
 
 class app.call.child.list.this : System.Collections.Generic.IEnumerable<app.call.this>, System.Collections.Generic.IReadOnlyCollection<app.call.this>, System.Collections.Generic.IReadOnlyList<app.call.this>, System.Collections.IEnumerable
   Add(app.call.this child) : System.Void
@@ -73,13 +67,13 @@ class app.call.diff.this : System.Collections.Generic.IEnumerable<app.call.Diff>
   Item[System.Int32] : app.call.Diff { get; }
   ctor()
 
-class app.call.isolated.this : app.call.binding.this
+class app.call.isolated.this : app.call.binding.this, app.type.item.ICreate<app.call.isolated.this>
+  static Create(System.Object raw) : app.call.isolated.this
+  static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.isolated.this
 
 class app.call.list.this : app.type.item.this, app.snapshot.ISnapshot
-  At(System.Collections.Generic.IReadOnlyList<app.call.this> chainBottomFirst) : app.snapshot.ISnapshot
+  At(System.Collections.Generic.IReadOnlyList<app.call.this> chain) : app.snapshot.ISnapshot
   Audit : app.error.list.this { get; } [LlmBuilder]
-  BottomFrame : app.call.Position { get; }
-  Capture(app.snapshot.this s) : System.Void
   Current : app.call.this { get; } [LlmBuilder]
   Diff() : System.Threading.Tasks.ValueTask<app.type.item.bool.this>
   DiffScope(app.type.item.variable.list.this variables) : System.IDisposable
@@ -95,11 +89,8 @@ class app.call.list.this : app.type.item.this, app.snapshot.ISnapshot
   Push(app.goal.step.action.this action, app.call.setting.this setting, app.type.item.variable.list.this variables = …) : app.call.this
   Push(app.goal.step.this step, app.call.setting.this setting) : app.call.this
   Push(app.goal.this goal, app.call.setting.this setting, System.Collections.Generic.IEnumerable<app.data.this> names = …) : app.call.this
-  Restore(app.snapshot.this s, app.actor.context.this context) : System.Threading.Tasks.Task
-  RestoredChain : System.Collections.Generic.IReadOnlyList<app.call.Position> { get; }
   Root : app.call.this { get; }
   Scope : app.call.this { get; } [LlmBuilder]
-  Section : System.String { get; }
   Setting() : System.Threading.Tasks.ValueTask<app.call.setting.this> [LlmBuilder]
   Step : app.goal.step.this { get; }
   Tags() : System.Threading.Tasks.ValueTask<app.type.item.bool.this>
@@ -128,7 +119,7 @@ class app.call.setting.this : app.type.item.setting.this
   ctor(app.type.this type)
   static Internal : System.Boolean { get; }
 
-class app.call.this : app.type.item.this, System.IAsyncDisposable
+class app.call.this : app.type.item.this, System.IAsyncDisposable, app.type.item.ICreate<app.call.this>
   Action : app.goal.step.action.this { get; } [LlmBuilder]
   Caller : app.call.this { get; } [LlmBuilder]
   Chain : System.Collections.Generic.IReadOnlyList<app.call.this> { get; }
@@ -147,7 +138,6 @@ class app.call.this : app.type.item.this, System.IAsyncDisposable
   Id : app.type.item.text.this { get; }
   Index : app.type.item.number.this { get; }
   IsResumable : app.type.item.bool.this { get; }
-  Position : app.call.Position { get; }
   Record(app.error.this error, app.actor.context.this context) : System.Void
   Set(System.String name, app.data.this value) : System.Void
   SetItem<T>(T value) : System.Void
@@ -159,6 +149,8 @@ class app.call.this : app.type.item.this, System.IAsyncDisposable
   override IsLeaf : System.Boolean { get; }
   override ToString() : System.String
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
+  static Create(System.Object raw) : app.call.this
+  static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.this
   virtual Goal : app.goal.this { get; } [LlmBuilder]
   virtual Step : app.goal.step.this { get; } [LlmBuilder]
 

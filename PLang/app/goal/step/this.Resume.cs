@@ -3,9 +3,9 @@ using app.data;
 namespace app.goal.step;
 
 /// <summary>
-/// Continuation entry for resume — runs actions starting at <paramref name="fromActionIdx"/>.
-/// No before/after step events fire (the step was already in flight when the
-/// suspend happened). Mirrors RunAsync's action-loop semantics.
+/// The rest of a step's run, for a resumed call stack — its actions from <c>fromActionIdx</c> on, in the step's own
+/// frame, which came back with the stack it was saved in. No before/after step events fire (the step was already in
+/// flight when the run stopped). Mirrors RunAsync's action-loop semantics.
 /// </summary>
 public partial class @this
 {
@@ -13,16 +13,6 @@ public partial class @this
     {
         data.@this result = context.Ok();
         if (fromActionIdx < 0 || fromActionIdx >= Code.Count) return result;
-
-        // The step runs again — its frame is the step in play for its remaining actions
-        global::app.call.@this frame;
-        var setting = await context.call.Setting();
-        try { frame = context.call.Push(this, setting); }
-        catch (global::app.error.CallStackOverflowException ex)
-        {
-            return context.Error(context.call.Overflow(ex, Goal, this));
-        }
-        await using var _frame = frame;
 
         try
         {

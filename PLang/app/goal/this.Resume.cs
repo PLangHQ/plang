@@ -1,38 +1,22 @@
-using app.data;
-
 namespace app.goal;
 
 /// <summary>
-/// Continuation entry for Snapshot resume. Picks up at (stepIdx, actionIdx),
-/// finishes that step's remaining actions, then continues through the rest
-/// of the goal's steps. Does NOT push a goal frame — Snapshot.Resume already
-/// restored the CallStack chain before dispatching here.
+/// The rest of a goal's run, for a resumed call stack: its steps from <c>stepIdx</c> on, each starting as any step
+/// does. Pushes no goal frame — the goal's own frame came back with the stack it was saved in.
 /// </summary>
 public partial class @this
 {
-    public async Task<data.@this> Resume(actor.context.@this context, int stepIdx, int actionIdx)
+    public async Task<data.@this> Resume(actor.context.@this context, int stepIdx)
     {
-        if (stepIdx < 0 || stepIdx >= Step.Count)
-            return context.Error(new error.ServiceError(
-                $"Resume: stepIdx {stepIdx} out of range [0, {Step.Count})",
-                "InvalidPosition", 400));
-
-        var step = Step[stepIdx];
-
-        var result = await step.Resume(context, actionIdx);
-        if (result.ShouldExit()) return result;
-
-        for (int i = stepIdx + 1; i < Step.Count; i++)
+        data.@this result = context.Ok();
+        for (int i = stepIdx; i < Step.Count; i++)
         {
-            var s = Step[i];
-
             if (context.CancellationToken.IsCancellationRequested)
                 return context.Error(new error.@this("Operation was cancelled", "Cancelled", 499));
 
-            result = await s.Start(context);
+            result = await Step[i].Start(context);
             if (result.ShouldExit()) return result;
         }
-
         return result;
     }
 }

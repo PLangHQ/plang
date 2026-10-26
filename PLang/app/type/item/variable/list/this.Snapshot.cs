@@ -27,13 +27,14 @@ public partial class @this : ISnapshot
 
     /// <summary>
     /// Puts the stored variables back into this list, on top of the system variables it was born with (Now, NowUtc,
-    /// GUID): the snapshot only holds user-visible state. Each is cloned so the snapshot can start again. A set can
-    /// wait (its before and after events, a value that binds others), so this answers when the last one has finished.
+    /// GUID): the snapshot only holds user-visible state. Each comes as this list's context holds it (the snapshot's
+    /// <c>Held</c>), so it answers as this actor, whoever started the restore. A set can wait (its before and after events,
+    /// a value that binds others), so this answers when the last one has finished.
     /// </summary>
     async System.Threading.Tasks.Task<data.@this> ISnapshot.Start(global::app.snapshot.@this snapshot, actor.context.@this context)
     {
-        foreach (var entry in snapshot.Entries.Entries(context))
-            await Set(entry.Name, entry.Clone());
+        foreach (var entry in snapshot.Held(context))
+            await Set(entry.Name, entry);
         return context.Ok();
     }
 }

@@ -26,52 +26,218 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task CallStack_Capture_WalksActiveFrameChain_OuterToBottom()
+    public async Task CallStack_Store_WritesTheTreeNested_FromTheRoot_AndCurrentById()
     {
         var (g1, _, a1) = MakeFrame("Outer");
         var (g2, _, a2) = MakeFrame("Inner");
         var app = BuildAppWithGoals(g1, g2);
 
-        var stack = app.actor.list.User.Context.call;
+        var context = app.actor.list.User.Context;
+        var stack = context.call;
         await using var outer = stack.Push(a1, await stack.Setting());
         await using var inner = stack.Push(a2, await stack.Setting());
 
-        var section = new Snapshot(app.actor.list.User.Context);
-        stack.Capture(section);
+        var node = new Snapshot(context);
+        ((ISnapshot)stack).Store(node, context);
 
-        var frames = await section.Frames("frames")!;
-        await Assert.That(frames.Count).IsEqualTo(2);
-        // Outer first → bottom (inner) last.
-        await Assert.That(await frames[0].Text("goalPrPath")).IsEqualTo(g1.PrPath?.ToString());
-        await Assert.That(await frames[1].Text("goalPrPath")).IsEqualTo(g2.PrPath?.ToString());
+        var root = node.Node("root");
+        await Assert.That(await root.Text("id")).IsEqualTo(outer.Id.ToString());
+        await Assert.That(await root.Text("goal")).IsEqualTo(g1.Address);
+        var children = await root.Frames("children")!;
+        await Assert.That(children.Count).IsEqualTo(1);
+        await Assert.That(await children[0].Text("id")).IsEqualTo(inner.Id.ToString());
+        await Assert.That(await children[0].Text("goal")).IsEqualTo(g2.Address);
+        await Assert.That((await children[0].Frames("children")!).Count).IsEqualTo(0);
+        await Assert.That(root.Has("caller")).IsFalse();                 // a frame's caller is the frame it sits under
+        await Assert.That(await node.Text("current")).IsEqualTo(inner.Id.ToString());
     }
 
     [Test]
-    public async Task CallStack_Capture_DropsCompletedChildren_AsHistoryNotState()
+    public async Task CallStack_Store_WhileATaskRuns_IsRefused()
     {
-        var (g1, _, a1) = MakeFrame("Parent");
-        var (g2, _, a2) = MakeFrame("CompletedChild");
-        var app = BuildAppWithGoals(g1, g2);
-        var stack = app.actor.list.User.Context.call;
-        // Turn History on so completed children stay in the tree — we'll assert the snapshot
-        // still excludes them because they're not on the *active* chain.
-        app.actor.list.User.Context.Setting.Set("app.call.setting.history", true);
+        // a running task's first frame sits among its caller's children, but goes on in the task's own stack
+        var (g1, _, a1) = MakeFrame("TaskOuter");
+        var app = BuildAppWithGoals(g1);
+        var user = app.actor.list.User;
+        var stack = user.Context.call;
+        await using var outer = stack.Push(a1, await stack.Setting());
+        using var task = user.Context.Child(user, CancellationToken.None);
+        await using var taskFrame = task.call.Isolate(null, await task.call.Setting(), caller: outer);
 
-        await using (var parent = stack.Push(a1, await stack.Setting()))
+        var saved = app.Snapshot(user.Context);
+
+        await Assert.That(saved.Success).IsFalse();
+        await Assert.That(saved.Error!.Key).IsEqualTo("SnapshotWhileTaskRuns");
+    }
+
+    [Test]
+    public async Task CallStack_RoundTrip_AFramesErrors_ComeBackWithIt()
+    {
+        var (g1, _, a1) = MakeFrame("ErrGoal");
+        var src = BuildAppWithGoals(g1);
+        var context = src.actor.list.User.Context;
+        var stack = context.call;
+
+        await using (var frame = stack.Push(a1, await stack.Setting()))
         {
-            await using (var child = stack.Push(a2, await stack.Setting())) { /* completes here */ }
-            var section = new Snapshot(app.actor.list.User.Context);
-            stack.Capture(section);
-            var frames = await section.Frames("frames")!;
-            await Assert.That(frames.Count).IsEqualTo(1);
-            await Assert.That(await frames[0].Text("goalPrPath")).IsEqualTo(g1.PrPath?.ToString());
+            frame.Record(new global::app.error.@this("it broke", "Broke", 500), context);
+            var snap = src.Snapshot(context).Saved();
+
+            var (dg1, _, _) = MakeFrame("ErrGoal");
+            var dst = BuildAppWithGoals(dg1);
+            await dst.Restore(snap, dst.actor.list.User.Context);
+
+            var root = dst.actor.list.User.Context.call.Root!;
+            await Assert.That(root.Error).IsNotNull();
+            await Assert.That(root.Error!.Key).IsEqualTo("Broke");
         }
     }
 
     [Test]
-    public async Task CallStack_Restore_RebuildsChain_BottomFrameIsResumePoint()
+    public async Task CallStack_RoundTrip_TheEventRunningInAFrame_ComesBackWithIt()
     {
-        // Build src with 2 frames; capture; replay onto dst that has matching goals.
+        var (g1, _, a1) = MakeFrame("EventGoal");
+        var src = BuildAppWithGoals(g1);
+        var context = src.actor.list.User.Context;
+
+        await using (var frame = context.call.Push(a1, await context.call.Setting()))
+        {
+            frame.Event = new global::app.data.@this("!event", "fired", context: context);
+            var snap = src.Snapshot(context).Saved();
+
+            var (dg1, _, _) = MakeFrame("EventGoal");
+            var dst = BuildAppWithGoals(dg1);
+            await dst.Restore(snap, dst.actor.list.User.Context);
+
+            var root = dst.actor.list.User.Context.call.Root!;
+            await Assert.That(root.Event).IsNotNull();
+            await Assert.That((await root.Event!.Value())?.ToString()).IsEqualTo("fired");
+        }
+    }
+
+    [Test]
+    public async Task CallStack_ThroughText_AFramesErrors_ComeBackWithIt()
+    {
+        var (g1, _, a1) = MakeFrame("ErrTextGoal");
+        var src = BuildAppWithGoals(g1);
+        var context = src.actor.list.User.Context;
+
+        await using (var frame = context.call.Push(a1, await context.call.Setting()))
+        {
+            frame.Record(new global::app.error.@this("it broke", "Broke", 500), context);
+            var text = await src.Snapshot(context).Saved().Text(context);
+
+            var (dg1, _, _) = MakeFrame("ErrTextGoal");
+            var dst = BuildAppWithGoals(dg1);
+            var into = dst.actor.list.User.Context;
+            await dst.Restore(await into.Snapshot(text), into);
+
+            var root = into.call.Root!;
+            await Assert.That(root.Error).IsNotNull();
+            await Assert.That(root.Error!.Key).IsEqualTo("Broke");
+            await Assert.That(root.Error.Message).IsEqualTo("it broke");
+        }
+    }
+
+    [Test]
+    public async Task CallStack_ThroughText_ABinding_ComesBackAsABinding_WithItsNames()
+    {
+        // a loop's %item%: a binding under the action's frame, through its own type's Create
+        var (g1, _, a1) = MakeFrame("BindTextGoal");
+        var src = BuildAppWithGoals(g1);
+        var context = src.actor.list.User.Context;
+
+        await using (var frame = context.call.Push(a1, await context.call.Setting()))
+        await using (context.call.Push([new global::app.data.@this("item", "apple", context: context)], await context.call.Setting()))
+        {
+            var text = await src.Snapshot(context).Saved().Text(context);
+
+            var (dg1, _, _) = MakeFrame("BindTextGoal");
+            var dst = BuildAppWithGoals(dg1);
+            var into = dst.actor.list.User.Context;
+            await dst.Restore(await into.Snapshot(text), into);
+
+            var binding = into.call.Root!.Children.Single();
+            await Assert.That(binding is global::app.call.binding.@this and not global::app.call.isolated.@this).IsTrue();
+            await Assert.That(binding.Goal).IsSameReferenceAs(into.call.Root!.Goal);    // it stands where its caller stands
+            await Assert.That(binding.TryGet("item", out var item)).IsTrue();
+            await Assert.That((await item.Value())?.ToString()).IsEqualTo("apple");
+        }
+    }
+
+    [Test]
+    public async Task CallStack_ThroughText_AnIsolatedFrame_ComesBackIsolated_KeepingItsWrites()
+    {
+        // a tool's goal runs in an isolated frame: what was written under it stays in it, and still does once it is back
+        var (g1, _, a1) = MakeFrame("IsolateTextGoal");
+        var src = BuildAppWithGoals(g1);
+        var context = src.actor.list.User.Context;
+
+        await using (var frame = context.call.Push(a1, await context.call.Setting()))
+        await using (context.call.Isolate([new global::app.data.@this("city", "Reykjavik", context: context)], await context.call.Setting()))
+        {
+            var text = await src.Snapshot(context).Saved().Text(context);
+
+            var (dg1, _, _) = MakeFrame("IsolateTextGoal");
+            var dst = BuildAppWithGoals(dg1);
+            var into = dst.actor.list.User.Context;
+            await dst.Restore(await into.Snapshot(text), into);
+
+            var isolated = into.call.Root!.Children.Single();
+            await Assert.That(isolated is global::app.call.isolated.@this).IsTrue();
+            await Assert.That(isolated.TryGet("city", out var city)).IsTrue();
+            await Assert.That((await city.Value())?.ToString()).IsEqualTo("Reykjavik");
+            await Assert.That(isolated.Keeper("anything")).IsSameReferenceAs(isolated);    // every write still lands in it
+        }
+    }
+
+    [Test]
+    public async Task CallStack_Start_FindsTheGoalByItsAddress_NotItsName()
+    {
+        // two files each hold a goal named Show: the frame's goal is the one at its address
+        var (g1, _, a1) = MakeFrame("Show");
+        var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
+        var other = new Goal(app.type.list) { Name = "Show", Path = global::app.type.item.path.@this.Resolve("/other/Show.goal", app.actor.list.User.Context) };
+        var otherStep = new Step(app.type.list) { Index = 0, Text = "step", Goal = other };
+        otherStep.Code.Add(new ActionEntity(app.type.list) { Module = app.Module("test"), Name = "test", Step = otherStep });
+        other.Step.Add(otherStep);
+        app.goal.list.Add(g1);
+        app.goal.list.Add(other);
+        var context = app.actor.list.User.Context;
+
+        global::app.snapshot.@this snap;
+        await using (context.call.Push(a1, await context.call.Setting()))
+            snap = app.Snapshot(context).Saved();
+        await app.Restore(snap, context);
+
+        await Assert.That(context.call.Root!.Goal).IsSameReferenceAs(g1);
+    }
+
+    [Test]
+    public async Task CallStack_Store_DropsCompletedChildren_AsHistoryNotState()
+    {
+        var (g1, _, a1) = MakeFrame("Parent");
+        var (g2, _, a2) = MakeFrame("CompletedChild");
+        var app = BuildAppWithGoals(g1, g2);
+        var context = app.actor.list.User.Context;
+        var stack = context.call;
+        // History on keeps completed children in the tree — the snapshot still stores only the live chain.
+        context.Setting.Set("app.call.setting.history", true);
+
+        await using (var parent = stack.Push(a1, await stack.Setting()))
+        {
+            await using (var child = stack.Push(a2, await stack.Setting())) { /* completes here */ }
+            var node = new Snapshot(context);
+            ((ISnapshot)stack).Store(node, context);
+            var root = node.Node("root");
+            await Assert.That(await root.Text("goal")).IsEqualTo(g1.Address);
+            await Assert.That((await root.Frames("children")!).Count).IsEqualTo(0);
+        }
+    }
+
+    [Test]
+    public async Task CallStack_Start_PutsTheTreeBack_RootChildrenAndIds()
+    {
         var (g1, _, a1) = MakeFrame("Outer2");
         var (g2, _, a2) = MakeFrame("Inner2");
         var src = BuildAppWithGoals(g1, g2);
@@ -81,28 +247,28 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         {
             var snap = src.Snapshot(src.actor.list.User.Context).Saved();
 
-            // Build dst with matching goals (same Path + Hash via identical step text).
-            var (dg1, _, _) = MakeFrame("Outer2");
-            var (dg2, _, _) = MakeFrame("Inner2");
+            // matching goals: the same path and hash (identical step text)
+            var (dg1, _, da1) = MakeFrame("Outer2");
+            var (dg2, _, da2) = MakeFrame("Inner2");
             var dst = BuildAppWithGoals(dg1, dg2);
 
             await dst.Restore(snap, dst.actor.list.User.Context);
 
-            var chain = dst.actor.list.User.Context.call.RestoredChain!;
-            await Assert.That(chain.Count).IsEqualTo(2);
-            await Assert.That(chain[0].Goal.PrPath?.ToString()).IsEqualTo(g1.PrPath?.ToString());
-            await Assert.That(chain[^1].Goal.PrPath?.ToString()).IsEqualTo(g2.PrPath?.ToString());
-
-            await Assert.That(dst.actor.list.User.Context.call.BottomFrame).IsNotNull();
-            await Assert.That(dst.actor.list.User.Context.call.BottomFrame!.Goal.PrPath?.ToString()).IsEqualTo(g2.PrPath?.ToString());
+            var root = dst.actor.list.User.Context.call.Root!;
+            await Assert.That(root.Id.ToString()).IsEqualTo(outer.Id.ToString());
+            await Assert.That(root.Action).IsSameReferenceAs(da1);
+            await Assert.That(root.Children.Count).IsEqualTo(1);
+            var child = root.Children.First();
+            await Assert.That(child.Id.ToString()).IsEqualTo(inner.Id.ToString());
+            await Assert.That(child.Caller).IsSameReferenceAs(root);
+            await Assert.That(child.Action).IsSameReferenceAs(da2);
         }
     }
 
     [Test]
-    public async Task CallStack_RoundTrip_InsideGoalAndStepFrames_KeepsTheActionPositions()
+    public async Task CallStack_RoundTrip_GoalStepAndActionFrames_EachComeBackWhereTheyStood()
     {
-        // A real run's chain: goal → step → action (a call) → goal → step → action. Only the actions are
-        // resume points; the goal and step frames between them add nothing to the snapshot.
+        // A real run's chain: goal → step → action (a call) → goal → step → action — every frame stored, every one back.
         var (g1, s1, a1) = MakeFrame("FrOuter");
         var (g2, s2, a2) = MakeFrame("FrInner");
         var src = BuildAppWithGoals(g1, g2);
@@ -122,46 +288,40 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
             var dst = BuildAppWithGoals(dg1, dg2);
             await dst.Restore(snap, dst.actor.list.User.Context);
 
-            var chain = dst.actor.list.User.Context.call.RestoredChain!;
-            await Assert.That(chain.Count).IsEqualTo(2);
-            await Assert.That(chain[0].Goal.Name).IsEqualTo("FrOuter");
-            await Assert.That(chain[^1].Goal.Name).IsEqualTo("FrInner");
-            await Assert.That(chain[^1].StepIndex).IsEqualTo(s2.Index);
-            await Assert.That(chain[^1].ActionIndex).IsEqualTo(0);
+            var frames = new List<global::app.call.@this>();
+            for (var frame = dst.actor.list.User.Context.call.Root; frame != null; frame = frame.Children.FirstOrDefault())
+                frames.Add(frame);
+            await Assert.That(frames.Count).IsEqualTo(6);
+            await Assert.That(frames[0].Goal!.Name).IsEqualTo("FrOuter");
+            await Assert.That(frames[0].Step).IsNull();                    // the goal's own frame
+            await Assert.That(frames[1].Step).IsSameReferenceAs(dg1.Step[0]);
+            await Assert.That(frames[1].Action).IsNull();                  // the step's frame
+            await Assert.That(frames[5].Goal!.Name).IsEqualTo("FrInner");
+            await Assert.That((int)frames[5].Index.ToInt32()).IsEqualTo(0);
+            await Assert.That((int)frames[5].Depth.ToInt32()).IsEqualTo(6);
         }
     }
 
     [Test]
-    public async Task CallStack_BottomFrame_FromAStepFrame_IsTheNearestActionOutward()
+    public async Task CallStack_RoundTrip_AFramesOwnVariables_ComeBackWithIt()
     {
-        // Inside a callee's step, before its first action: the resume point is the call that led here.
-        var (g1, s1, a1) = MakeFrame("BfOuter");
-        var (g2, s2, _) = MakeFrame("BfInner");
-        var app = BuildAppWithGoals(g1, g2);
-        var stack = app.actor.list.User.Context.call;
+        var (g1, _, _) = MakeFrame("VarGoal");
+        var src = BuildAppWithGoals(g1);
+        var context = src.actor.list.User.Context;
+        var stack = context.call;
 
-        await using var goal = stack.Push(g1, await stack.Setting());
-        await using var step = stack.Push(s1, await stack.Setting());
-        await using var call = stack.Push(a1, await stack.Setting());
-        await using var callee = stack.Push(g2, await stack.Setting());
-        await using var calleeStep = stack.Push(s2, await stack.Setting());
+        await using (stack.Push(g1, await stack.Setting(), [new global::app.data.@this("who", "ingi", context: context)]))
+        {
+            var snap = src.Snapshot(context).Saved();
 
-        await Assert.That(stack.BottomFrame!.Action).IsSameReferenceAs(a1);
-    }
+            var (dg1, _, _) = MakeFrame("VarGoal");
+            var dst = BuildAppWithGoals(dg1);
+            await dst.Restore(snap, dst.actor.list.User.Context);
 
-    [Test]
-    public async Task CallStack_BottomFrame_IdentifiesThrowingCall()
-    {
-        // On a *live* CallStack, BottomFrame is the deepest active frame.
-        var (g1, _, a1) = MakeFrame("LBOuter");
-        var (g2, _, a2) = MakeFrame("LBInner");
-        var app = BuildAppWithGoals(g1, g2);
-        var stack = app.actor.list.User.Context.call;
-        await using var outer = stack.Push(a1, await stack.Setting());
-        await using var inner = stack.Push(a2, await stack.Setting());
-
-        var bottom = stack.BottomFrame;
-        await Assert.That(bottom).IsNotNull();
-        await Assert.That(bottom!.Action).IsSameReferenceAs(a2);
+            var root = dst.actor.list.User.Context.call.Root!;
+            await Assert.That(root.TryGet("who", out var who)).IsTrue();
+            await Assert.That((await who.Value())?.ToString()).IsEqualTo("ingi");
+            await Assert.That(root.Arguments.Contains("who")).IsTrue();
+        }
     }
 }

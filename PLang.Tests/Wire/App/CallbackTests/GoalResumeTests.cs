@@ -77,7 +77,7 @@ public class GoalResumeTests
         await SetStep(context, goal, 1, "s1", "from-here");
         await SetStep(context, goal, 2, "s2", "and-after");
 
-        var result = await goal.Resume(context, stepIdx: 1, actionIdx: 0);
+        var result = await goal.Resume(context, stepIdx: 1);
         await result.IsSuccess();
         await Assert.That((await context.Variable.Get("s0")).IsInitialized).IsFalse();
         await Assert.That((await context.Variable.GetValue("s1"))).IsEqualTo("from-here");
@@ -112,8 +112,37 @@ public class GoalResumeTests
         await SetStep(context, goal, 0, "first", "should-not-run");
         await SetStep(context, goal, 1, "second", "runs");
 
-        await goal.Resume(context, stepIdx: 1, actionIdx: 0);
+        await goal.Resume(context, stepIdx: 1);
         await Assert.That((await context.Variable.Get("first")).IsInitialized).IsFalse();
         await Assert.That((await context.Variable.GetValue("second"))).IsEqualTo("runs");
+    }
+
+    [Test]
+    public async Task Resume_GoesOutward_TheStoppedActionAgain_ThenTheRestOfItsStepAndGoal()
+    {
+        // Saved inside goal G's frame → step 1's frame → its first action's frame. The run goes on from that action:
+        // it runs again, then the rest of step 1, then the steps after it — each in the frames that came back.
+        var app = NewApp();
+        var context = app.actor.list.User.Context;
+        var goal = Build(context, "G");
+        await SetStep(context, goal, 0, "s0", "skip");
+        var step = await SetStep(context, goal, 1, "s1", "again");
+        await SetStep(context, goal, 2, "s2", "after");
+        app.goal.list.Add(goal);
+
+        global::app.snapshot.@this snap;
+        var stack = context.call;
+        await using (stack.Push(goal, await stack.Setting()))
+        await using (stack.Push(step, await stack.Setting()))
+        await using (stack.Push(step.Code[0], await stack.Setting()))
+            snap = app.Snapshot(context).Saved();
+
+        var result = await snap.Resume(context);
+
+        await result.IsSuccess();
+        await Assert.That((await context.Variable.Get("s0")).IsInitialized).IsFalse();
+        await Assert.That((await context.Variable.GetValue("s1"))).IsEqualTo("again");
+        await Assert.That((await context.Variable.GetValue("s2"))).IsEqualTo("after");
+        await Assert.That(stack.Current).IsNull();   // every frame that came back has ended
     }
 }

@@ -1,17 +1,9 @@
-using app.data;
-
 namespace app.snapshot;
 
 /// <summary>
-/// Resume — the only path the channel/host uses to reconstitute a suspended
-/// goal. Starts the app and every part under it from this snapshot (the walk), then
-/// walks the restored CallStack chain recursively so each nested goal in the
-/// chain re-enters at its captured (StepIndex, ActionIndex).
-///
-/// The recursion is acknowledged-clunky and tracked in todos.md for revisit;
-/// it works as designed: bottom frame re-runs the suspended action via
-/// Goal.RunFrom; parent frames push their call frame, recurse into the child,
-/// then continue from ActionIndex+1 (the action after the `call SubGoal`).
+/// Resume — the path the channel and host take to go on with a run a snapshot saved: the app and every part under it
+/// start from this snapshot (the walk), the asker's call stack among them, put back as it lived; then the run goes on
+/// from the frame it stopped in, outward (<see cref="global::app.call.list.@this"/>'s resume).
 /// </summary>
 public sealed partial class @this
 {
@@ -19,30 +11,6 @@ public sealed partial class @this
     {
         var started = await Start(context.App, context);
         if (!started.Success) return started;
-        var chain = context.call.RestoredChain;
-        if (chain == null || chain.Count == 0)
-            return context.Error(new global::app.error.ServiceError(
-                "Resume has no frames after Restore", "NoPosition", 400));
-        return await ResumeChain(chain, 0, context);
-    }
-
-    private static async Task<data.@this> ResumeChain(
-        IReadOnlyList<global::app.call.Position> chain, int idx, actor.context.@this context)
-    {
-        var frame = chain[idx];
-
-        // Bottom: re-enter the goal at the suspended (StepIndex, ActionIndex).
-        if (idx == chain.Count - 1)
-            return await frame.Goal.Resume(context, frame.StepIndex, frame.ActionIndex);
-
-        // Parent: its action is a "call SubGoal" mid-flight. Push so children
-        // see it as caller, recurse into the sub-goal, then continue from
-        // ActionIndex+1 (the action after the call).
-        await using var callFrame = context.call.Push(frame.Action, await context.call.Setting(), context.Variable);
-
-        var subResult = await ResumeChain(chain, idx + 1, context);
-        if (subResult.ShouldExit()) return subResult;
-
-        return await frame.Goal.Resume(context, frame.StepIndex, frame.ActionIndex + 1);
+        return await context.call.Resume(context);
     }
 }

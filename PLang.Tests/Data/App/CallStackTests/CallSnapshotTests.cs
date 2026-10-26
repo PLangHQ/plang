@@ -23,19 +23,18 @@ public class CallSnapshotTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task Call_Capture_EmitsGoalStub_PrPathPlusHash_NotFullGoal()
+    public async Task Call_Store_WritesItsGoal_AsAddressPlusHash_NotTheWholeGoal()
     {
         var (app, action) = BuildLiveAction("StubGoal");
         var stack = app.actor.list.User.Context.call;
         await using var call = stack.Push(action, await stack.Setting());
 
         var snap = new Snapshot(app.actor.list.User.Context);
-        call.Capture(snap);
+        call.Store(snap, app.actor.list.User.Context);
 
-        await Assert.That(await snap.Text("goalPrPath")).IsEqualTo(action.Step!.Goal!.PrPath?.ToString());
+        // the goal is the name a call reaches it by, and its hash — never the goal written out
+        await Assert.That(await snap.Text("goal")).IsEqualTo(action.Step!.Goal!.Address);
         await Assert.That(await snap.Text("goalHash")).IsEqualTo(action.Step.Goal.Hash);
-        // Wire shape is the stub triple — no full goal serialised.
-        await Assert.That(snap.Has("goal")).IsFalse();
         await Assert.That(snap.Has("steps")).IsFalse();
     }
 
@@ -49,15 +48,16 @@ public class CallSnapshotTests : System.IAsyncDisposable
         var user = app.actor.list.User.Context;
         await using var call = app.actor.list.User.Context.call.Push(action, await app.actor.list.User.Context.call.Setting());
         var snap = new Snapshot(user);
-        call.Capture(snap);
+        call.Store(snap, app.actor.list.User.Context);
 
         using var ms = new MemoryStream();
         await user.Format("application/json").Encode(ms, user.Ok(snap), user);
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray()).Replace(call.Id.ToString()!, "ID");
 
         await Assert.That(json).IsEqualTo(
-            "{\"goalName\":\"G\",\"goalPrPath\":\"/.build/g.pr\",\"goalHash\":\"" + action.Step!.Goal!.Hash
-            + "\",\"stepIndex\":0,\"actionIndex\":0,\"actionModule\":\"test\",\"actionName\":\"test\",\"id\":\"ID\"}");
+            "{\"id\":\"ID\",\"type\":{\"name\":\"app.call\"},\"goal\":\"/G\",\"goalHash\":\"" + action.Step!.Goal!.Hash
+            + "\",\"stepIndex\":0,\"actionIndex\":0,\"actionModule\":\"test\",\"actionName\":\"test\","
+            + "\"variables\":{},\"arguments\":[],\"handled\":false,\"tags\":{},\"kept\":{}}");
     }
 
     [Test]
@@ -68,7 +68,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
         await using var call = stack.Push(action, await stack.Setting());
 
         var snap = new Snapshot(app.actor.list.User.Context);
-        call.Capture(snap);
+        call.Store(snap, app.actor.list.User.Context);
 
         await Assert.That(await snap.Int("stepIndex")).IsEqualTo(0);
         await Assert.That(await snap.Int("actionIndex")).IsEqualTo(0);
@@ -97,10 +97,10 @@ public class CallSnapshotTests : System.IAsyncDisposable
 
             await dst.Restore(snap, dst.actor.list.User.Context);
 
-            var bottom = dst.actor.list.User.Context.call.BottomFrame;
-            await Assert.That(bottom).IsNotNull();
-            await Assert.That(bottom!.Goal.PrPath).IsEqualTo(dstGoal.PrPath);
-            await Assert.That(bottom.Action).IsSameReferenceAs(dstAction);
+            var frame = dst.actor.list.User.Context.call.Root;
+            await Assert.That(frame).IsNotNull();
+            await Assert.That(frame!.Goal).IsSameReferenceAs(dstGoal);
+            await Assert.That(frame.Action).IsSameReferenceAs(dstAction);
         }
     }
 
@@ -199,18 +199,6 @@ public class CallSnapshotTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task Call_Restore_HashErrorIsTypedNotBoolean()
-    {
-        // The restore path raises a typed exception — there is no boolean Success / Failure
-        // bubbling up. Restore returns a bare Task: it carries no result, so a failure has
-        // nowhere to hide except a throw. The call stack restores ITSELF (an instance member).
-        var restoreMethod = typeof(global::app.call.list.@this).GetMethod("Restore",
-            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-        await Assert.That(restoreMethod).IsNotNull();
-        await Assert.That(restoreMethod!.ReturnType).IsEqualTo(typeof(Task));
-    }
-
-    [Test]
     public async Task Call_Capture_OmitsTimingTier_AndInFlightNetworkState()
     {
         var (app, action) = BuildLiveAction("DropGoal");
@@ -218,7 +206,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
         await using var call = app.actor.list.User.Context.call.Push(action, await app.actor.list.User.Context.call.Setting());
 
         var snap = new Snapshot(app.actor.list.User.Context);
-        call.Capture(snap);
+        call.Store(snap, app.actor.list.User.Context);
 
         // Drop bucket: timing tier and any in-flight network state never reach the snapshot.
         await Assert.That(snap.Has("startedAt")).IsFalse();

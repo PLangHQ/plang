@@ -204,10 +204,16 @@ public class SnapshotWireTests
 
         app.goal.list.Add(start); app.goal.list.Add(sub);
 
-        // Suspend mid-stack: Start at its call step (1,0), Sub at its throw step (1,0).
+        // Suspend mid-stack, each goal in its own frames as a run holds them: Start at its call step (1,0), Sub at its
+        // throw step (1,0).
         string json;
-        await using (var startFrame = context.call.Push(start.Step[1].Code[0], await context.call.Setting(), context.Variable))
-        await using (var subFrame = context.call.Push(sub.Step[1].Code[0], await context.call.Setting(), context.Variable))
+        var setting = await context.call.Setting();
+        await using (context.call.Push(start, setting))
+        await using (context.call.Push(start.Step[1], setting))
+        await using (context.call.Push(start.Step[1].Code[0], setting, context.Variable))
+        await using (context.call.Push(sub, setting))
+        await using (context.call.Push(sub.Step[1], setting))
+        await using (context.call.Push(sub.Step[1].Code[0], setting, context.Variable))
         {
             json = await app.Snapshot(app.actor.list.User.Context).Saved().Text(app.actor.list.User.Context);
         }

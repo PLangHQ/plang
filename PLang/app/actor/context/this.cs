@@ -158,6 +158,12 @@ public sealed class @this : IDisposable, global::app.snapshot.ISnapshot
         // reading its asker's place through the app.
     }
 
+    // A context holds its parts (its calls, its variables): it answers in itself, so the walk stores and starts them in it.
+    data.@this global::app.snapshot.ISnapshot.Store(global::app.snapshot.@this snapshot, @this context) => Ok();
+
+    System.Threading.Tasks.Task<data.@this> global::app.snapshot.ISnapshot.Start(global::app.snapshot.@this snapshot, @this context)
+        => System.Threading.Tasks.Task.FromResult(Ok());
+
     // --- Value births ---
     // A Data is born FROM this context — never constructed context-less and stamped
     // later. The context is the one handle that's always in scope at a real birth

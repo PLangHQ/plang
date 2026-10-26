@@ -4,7 +4,9 @@ namespace app.call.list;
 
 public sealed partial class @this : global::app.snapshot.ISnapshot
 {
-    private List<call.Position>? _restoredChain;
+    // The frame the run stopped in, put back by a snapshot's start — held until the run goes on from it (Resume), which
+    // makes it current in its own flow: a current set inside the awaited start would be undone when it returns.
+    private call.@this? _resumed;
 
     // CallStack-level diff stream — every change of the store it was opened on, while a diff scope
     // (EnableDiffStream) is open. Independent of per-Call Diffs (which require Flags.Diff at Push
@@ -89,81 +91,92 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     internal void DisableDiffStream() => _streamVariables = null;
 
     /// <summary>
-    /// The captured-and-restored chain of frames, populated by <see cref="Restore"/>.
-    /// Null on a fresh App that hasn't been restored. Not maintained automatically by
-    /// live Push/Pop — restored chains are read-only positional context for callbacks.
+    /// This stack as it stood at a throw point — the chain an error carried (<c>CallFrames</c>, the failing frame
+    /// first). By handler time the live stack has unwound past the failing action, so an error callback stores the
+    /// chain from the throw; starting it starts this stack.
     /// </summary>
-    public IReadOnlyList<call.Position>? RestoredChain => _restoredChain;
+    public global::app.snapshot.ISnapshot At(IReadOnlyList<call.@this> chain) => new Thrown(this, chain);
 
-    /// <summary>
-    /// The deepest frame on the resume path. On a *restored* CallStack this is the
-    /// last entry of <see cref="RestoredChain"/> (the originally throwing/awaiting Call).
-    /// On a *live* CallStack it's a <see cref="call.Position"/> view of <see cref="Current"/>
-    /// — the API is uniform whether live or restored. Null when neither side has a frame.
-    /// </summary>
-    public call.Position? BottomFrame
+    private sealed class Thrown(@this stack, IReadOnlyList<call.@this> chain) : global::app.snapshot.ISnapshot
     {
-        get
-        {
-            if (_restoredChain != null && _restoredChain.Count > 0)
-                return _restoredChain[^1];
-            var live = _current.Value;
-            return live != null ? FrameFromLive(live) : null;
-        }
-    }
-
-    /// <summary>The call stack's section.</summary>
-    public string Section => "CallStack";
-
-    /// <summary>
-    /// Captures the active Caller chain — outer frames first, throwing/bottom frame last.
-    /// Empty when no Push has happened. Completed children are dropped (history not state).
-    /// </summary>
-    public void Capture(global::app.snapshot.@this s)
-    {
-        var bottom = _current.Value;
-        var ordered = new List<call.@this>();
-        // Chain is [self, Caller, Caller.Caller, ...]; reverse so outer first.
-        if (bottom != null)
-            for (var node = bottom; node != null; node = node.Caller)
-                ordered.Insert(0, node);
-        CaptureFrames(s, ordered);
-    }
-
-    /// <summary>
-    /// This stack as it stood at a throw point — the chain an error carried (<c>CallFrames</c>,
-    /// bottom-first). By handler time the live stack has unwound past the failing action, so an
-    /// error callback snapshots the chain from the throw; restoring it restores into this stack.
-    /// </summary>
-    public global::app.snapshot.ISnapshot At(IReadOnlyList<call.@this> chainBottomFirst) => new Thrown(this, chainBottomFirst);
-
-    private sealed class Thrown(@this stack, IReadOnlyList<call.@this> chainBottomFirst) : global::app.snapshot.ISnapshot
-    {
+        // the chain nested as it stood: each frame's one child the frame it had called
         public global::app.data.@this Store(global::app.snapshot.@this snapshot, global::app.actor.context.@this context)
         {
-            var ordered = new List<call.@this>(chainBottomFirst.Count);
-            for (int i = chainBottomFirst.Count - 1; i >= 0; i--) // bottom-first → outer-first
-                ordered.Add(chainBottomFirst[i]);
-            CaptureFrames(snapshot, ordered);
-            return context.Ok();
+            if (chain.Count == 0) return context.Ok();
+            var called = new Dictionary<call.@this, call.@this>(ReferenceEqualityComparer.Instance);
+            for (int i = 1; i < chain.Count; i++) called[chain[i]] = chain[i - 1];
+            return stack.Store(snapshot, chain[^1], chain[0],
+                frame => called.TryGetValue(frame, out var child) ? [child] : [], context);
         }
 
         public System.Threading.Tasks.Task<global::app.data.@this> Start(global::app.snapshot.@this snapshot, global::app.actor.context.@this context)
             => ((global::app.snapshot.ISnapshot)stack).Start(snapshot, context);
     }
 
-    // The stack as a part: what it captures, and its chain restored — a frame that can't come back is answered.
+    // The stack as a part: its tree as it lives now, from the root — each frame's children those still running.
     global::app.data.@this global::app.snapshot.ISnapshot.Store(global::app.snapshot.@this snapshot, global::app.actor.context.@this context)
+        => _current.Value is { } current
+            ? Store(snapshot, current.Chain[^1], current, frame => frame.Children.Where(child => !child.Ended), context)
+            : context.Ok();
+
+    /// <summary>
+    /// Writes the tree from <paramref name="root"/> as the stack lives: <c>root</c>, each frame writing itself and the
+    /// frames it called (<paramref name="children"/>) nested under it in <c>children</c> — a frame's caller is the frame
+    /// it sits under — and <c>current</c>, the id of the frame the run is in. A running task's first frame sits among
+    /// its caller's children but goes on in its own stack, which no resume would run again, so the save is refused.
+    /// </summary>
+    private global::app.data.@this Store(global::app.snapshot.@this snapshot, call.@this root, call.@this current,
+        Func<call.@this, IEnumerable<call.@this>> children, global::app.actor.context.@this context)
     {
-        Capture(snapshot);
+        var node = new global::app.snapshot.@this(context);
+        var stored = Store(node, root, children, context);
+        if (!stored.Success) return stored;
+        snapshot.Entries.Set(new global::app.data.@this("root", node, context: context));
+        snapshot.Entries.Set(new global::app.data.@this("current", current.Id, context: context));
         return context.Ok();
     }
 
+    private global::app.data.@this Store(global::app.snapshot.@this node, call.@this frame,
+        Func<call.@this, IEnumerable<call.@this>> children, global::app.actor.context.@this context)
+    {
+        var stored = frame.Store(node, context);
+        if (!stored.Success) return stored;
+        var nodes = new List<global::app.type.item.@this>();
+        foreach (var child in children(frame))
+        {
+            if (!child.Of(this))
+                return context.Error(new global::app.error.@this(
+                    "a snapshot is not saved while a task runs: its frames go on in the task's own stack, which nothing would run again",
+                    "SnapshotWhileTaskRuns", 409));
+            var childNode = new global::app.snapshot.@this(context);
+            stored = Store(childNode, child, children, context);
+            if (!stored.Success) return stored;
+            nodes.Add(childNode);
+        }
+        node.Entries.Set(new global::app.data.@this("children",
+            new global::app.type.item.list.@this(nodes, _types[typeof(global::app.type.item.list.@this)]), context: context));
+        return context.Ok();
+    }
+
+    /// <summary>
+    /// Puts the stored tree back as this stack's: walking down from <c>root</c>, each frame born again under the frame it
+    /// sits under, with the id it was saved with, where it stood, its own variables and the rest of its state; the stored
+    /// current is held for <see cref="Resume"/>. Each frame's goal is found by its address through <c>app.goal</c>, its
+    /// hash checked against the live goal, its step and action found by index. A frame that can't come back is the answer
+    /// (<see cref="CallbackGoalNotFound"/>, <see cref="CallbackGoalHashMismatch"/>, <see cref="CallbackActionMismatch"/>).
+    /// </summary>
     async System.Threading.Tasks.Task<global::app.data.@this> global::app.snapshot.ISnapshot.Start(global::app.snapshot.@this snapshot, global::app.actor.context.@this context)
     {
         try
         {
-            await Restore(snapshot, context);
+            if (snapshot.Entries.Get("root", context) is not { } rootEntry) return context.Ok();
+            if (await rootEntry.Value<global::app.snapshot.@this>() is not { } root) return rootEntry;
+            var back = new Dictionary<string, call.@this>(StringComparer.Ordinal);
+            var started = await Start(root, back, context);
+            if (!started.Success) return started;
+            _resumed = snapshot.Entries.Get("current", context) is { } current
+                ? back.GetValueOrDefault((await current.Value<global::app.type.item.text.@this>())!.ToString())
+                : null;
             return context.Ok();
         }
         catch (AppException ex)
@@ -172,94 +185,58 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
         }
     }
 
-    private static void CaptureFrames(global::app.snapshot.@this s, List<call.@this> orderedOuterFirst)
+    // One stored frame born again under the current frame (none: the root): its async half (call.Find) while its caller
+    // is current, then its kind's own Create, the type it was stored as; then it is current while the frames under it
+    // come back, each by id into back. The current set here is undone when this returns.
+    private async System.Threading.Tasks.Task<global::app.data.@this> Start(global::app.snapshot.@this node,
+        Dictionary<string, call.@this> back, global::app.actor.context.@this context)
     {
-        var frames = new List<global::app.snapshot.@this>();
-        foreach (var call in orderedOuterFirst)
+        await call.@this.Find(node, this, context);
+        if (node.Entries.Get("type", context) is not { } stored) throw new CallbackFrameIncomplete("type");
+        if (await stored.Value<global::app.type.@this>() is not { } kind) return stored;
+        var born = new global::app.data.@this("frame", context: context);
+        if (kind.Make(node, born) is not call.@this frame)
+            return born.Success ? context.Error(new CallbackFrameIncomplete("type").Error) : born;
+
+        // in as a push enters: among its caller's children (the root when there is none), and current
+        Enter(frame);
+        back[frame.Id.ToString()] = frame;
+
+        if (node.Entries.Get("children", context) is not { } children) throw new CallbackFrameIncomplete("children");
+        if (await children.Value<global::app.type.item.list.@this>() is not { } nodes) return children;
+        foreach (var child in nodes.Items(context))
         {
-            var frame = new global::app.snapshot.@this(s.Context);
-            // The Call captures itself and reports whether it's a resumable position;
-            // a goal's or a step's frame says no (no action to re-enter from).
-            if (call.Capture(frame))
-                frames.Add(frame);
+            if (await child.Value<global::app.snapshot.@this>() is not { } childNode) return child;
+            var started = await Start(childNode, back, context);
+            if (!started.Success) return started;
         }
-        s.Write("frames", frames);
+        return context.Ok();
     }
+
 
     /// <summary>
-    /// Reconstructs the captured chain into <see cref="RestoredChain"/> on the live App's
-    /// CallStack. For each captured frame, looks up the goal by name, else PrPath, among <c>app.goal.list</c>,
-    /// hash-matches against the live goal, then resolves the Step + Action by index.
-    /// Hard-errors on goal-not-found (<see cref="CallbackGoalNotFound"/>) or hash mismatch
-    /// (<see cref="CallbackGoalHashMismatch"/>). Does not mutate the live AsyncLocal Current —
-    /// the resumed action is dispatched separately via App.Run from <see cref="BottomFrame"/>.
+    /// Goes on from the frame a snapshot's start put back as current, in this flow (which makes it current), outward:
+    /// each frame ends — current goes back to its caller — and what is left of its run runs there (<c>Rest</c>): the
+    /// stopped action again and the rest of its step, the rest of each goal, the action after each call. A result that
+    /// exits the goal (an ask) is the answer.
     /// </summary>
-    public async System.Threading.Tasks.Task Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
+    internal async System.Threading.Tasks.Task<global::app.data.@this> Resume(global::app.actor.context.@this context)
     {
-        var framesEntry = s.Entries.Get("frames", context);
-        var restored = new List<call.Position>();
-        if (framesEntry == null) { _restoredChain = restored; return; }
+        if (_resumed is not { } current)
+            return context.Error(new ServiceError("there is no frame to go on from: the snapshot held no call", "NoPosition", 400));
+        _resumed = null;
+        _current.Value = current;
 
-        // Values all the way down: the rows of the frames list ARE snapshots, and each frame's
-        // entries answer the typed ask. The conversion to a CLR int/string happens at the USE,
-        // through the value's own member — nothing lowers on the way out of the snapshot.
-        foreach (var row in (await framesEntry.Value<global::app.type.item.list.@this>())!.Items(context))
+        var result = context.Ok();
+        for (var frame = current; frame != null; frame = frame.Caller)
         {
-            var frame = await row.Value<global::app.snapshot.@this>();
-
-            // Each captured key through its typed ask; a missing or unreadable one names itself.
-            async System.Threading.Tasks.Task<T> Entry<T>(string key)
-                where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-                => await (frame!.Entries.Get(key, context) ?? throw new CallbackFrameIncomplete(key)).Value<T>()
-                   ?? throw new CallbackFrameIncomplete(key);
-
-            var goalName     = (await Entry<global::app.type.item.text.@this>("goalName")).ToString();
-            var goalPrPath   = (await Entry<global::app.type.item.text.@this>("goalPrPath")).ToString();
-            var goalHash     = (await Entry<global::app.type.item.text.@this>("goalHash")).ToString();
-            var stepIndex    = (await Entry<global::app.type.item.number.@this>("stepIndex")).ToInt32();
-            var actionIndex  = (await Entry<global::app.type.item.number.@this>("actionIndex")).ToInt32();
-            var actionModule = (await Entry<global::app.type.item.text.@this>("actionModule")).ToString();
-            var actionName   = (await Entry<global::app.type.item.text.@this>("actionName")).ToString();
-            var id           = (await Entry<global::app.type.item.text.@this>("id")).ToString();
-
-            // Resolve by name — the goal's identity. A v0.2 .pr holds many goals on
-            // one PrPath (the file), so a PrPath lookup picks the wrong goal; the
-            // hash check below then catches any residual mismatch. PrPath is the
-            // fallback for snapshots captured before names were carried.
-            var goals = context.App.goal.list.Items().Where(g => !g.IsSetup).ToList();
-            var liveGoal = (!string.IsNullOrEmpty(goalName)
-                               ? goals.LastOrDefault(g => string.Equals(g.Name, goalName, StringComparison.OrdinalIgnoreCase))
-                               : null)
-                           ?? goals.FirstOrDefault(g => string.Equals(g.PrPath?.ToString()?.Replace('\\', '/').TrimStart('/'),
-                                  goalPrPath.Replace('\\', '/').TrimStart('/'), StringComparison.OrdinalIgnoreCase));
-            if (liveGoal == null)
-                throw new CallbackGoalNotFound(string.IsNullOrEmpty(goalName) ? goalPrPath : goalName);
-
-            var liveHash = liveGoal.Hash ?? "";
-            if (!string.Equals(liveHash, goalHash, StringComparison.OrdinalIgnoreCase))
-                throw new CallbackGoalHashMismatch(goalPrPath, goalHash, liveHash);
-
-            if (stepIndex < 0 || stepIndex >= liveGoal.Step.Count)
-                throw new CallbackGoalNotFound($"{goalPrPath} (stepIndex {stepIndex} out of range)");
-            var liveStep = liveGoal.Step[stepIndex];
-
-            if (actionIndex < 0 || actionIndex >= liveStep.Code.Count)
-                throw new CallbackGoalNotFound($"{goalPrPath} (actionIndex {actionIndex} out of range at step {stepIndex})");
-            var liveAction = liveStep.Code[actionIndex];
-
-            // The hash covers the source text, not the compiled actions — the captured action is the
-            // check it can't make.
-            if (!string.Equals(liveAction.Module.Name, actionModule, StringComparison.OrdinalIgnoreCase)
-                || !string.Equals(liveAction.Name, actionName, StringComparison.OrdinalIgnoreCase))
-                throw new CallbackActionMismatch(liveGoal.Name, stepIndex, actionIndex,
-                    $"{actionModule}.{actionName}", $"{liveAction.Module.Name}.{liveAction.Name}");
-
-            restored.Add(new call.Position(liveAction, liveGoal, stepIndex, actionIndex, id));
+            // ending a frame is synchronous, so the current it puts back stays in this flow
+            await frame.DisposeAsync();
+            result = await frame.Rest(context, ReferenceEquals(frame, current));
+            if (result.ShouldExit()) return result;
         }
-
-        _restoredChain = restored;
+        return result;
     }
-
 
     /// <summary>
     /// Variable mutation events whose timestamp is strictly later than <paramref name="t"/>.
@@ -303,13 +280,5 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
         if (call.Diffs == null) yield break;
         foreach (var d in call.Diffs)
             if (d.At > t) yield return d;
-    }
-
-    // The nearest frame outward that runs an action answers its position — a goal's or a step's frame has none.
-    private static call.Position? FrameFromLive(call.@this call)
-    {
-        for (var node = call; node != null; node = node.Caller)
-            if (node.Position is { } position) return position;
-        return null;
     }
 }

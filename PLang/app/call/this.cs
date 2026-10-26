@@ -11,7 +11,7 @@ namespace app.call;
 /// Tree shape: navigate up via <see cref="Caller"/>, down via <see cref="Children"/>. Reads walk the frames outward,
 /// each frame's own variables first. A plang value: it writes itself as <see cref="Output"/> says.
 /// </summary>
-public partial class @this : global::app.type.item.@this, IAsyncDisposable
+public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IAsyncDisposable
 {
     /// <summary>A structure — navigated by its members.</summary>
     public override bool IsLeaf => false;
@@ -77,6 +77,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     private readonly string _id;
     internal readonly int _depth;
     private bool _handled;
+    private bool _ended;
     private readonly DateTimeOffset? _startedAt;
     private DateTimeOffset? _completedAt;
 
@@ -195,37 +196,70 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     /// <summary>A goal's frame: the goal starting, born with its call's <paramref name="names"/>.</summary>
     internal @this(global::app.type.@this type, global::app.call.list.@this stack, global::app.goal.@this goal,
         global::app.call.setting.@this setting, IEnumerable<global::app.data.@this>? names)
-        : this(type, goal, null, null, stack.Current, stack, stack.Variables, setting, names) { }
+        : this(null, type, goal, null, null, stack.Current, stack.Current, stack, stack.Variables, setting, names) { }
 
     /// <summary>A step's frame: its goal and itself.</summary>
     internal @this(global::app.type.@this type, global::app.call.list.@this stack, global::app.goal.step.@this step,
         global::app.call.setting.@this setting)
-        : this(type, step.Goal, step, null, stack.Current, stack, stack.Variables, setting) { }
+        : this(null, type, step.Goal, step, null, stack.Current, stack.Current, stack, stack.Variables, setting) { }
 
     /// <summary>An action's frame: its step's goal, its step and itself; <paramref name="variables"/> the store a diff
     /// captures, else the stack's.</summary>
     internal @this(global::app.type.@this type, global::app.call.list.@this stack, global::app.goal.step.action.@this action,
         global::app.call.setting.@this setting, Variables? variables)
-        : this(type, action.Step?.Goal, action.Step, action, stack.Current, stack, variables ?? stack.Variables, setting) { }
+        : this(null, type, action.Step?.Goal, action.Step, action, stack.Current, stack.Current, stack, variables ?? stack.Variables, setting) { }
+
+    /// <summary>A frame come back from a snapshot: its stored <paramref name="node"/> (the read copy its async half
+    /// filled, <see cref="Find"/>) read whole — the id it was saved with, its goal, step and action where they stood, the
+    /// setting it is born with, its own variables and the names it was born with among them, its errors and whether
+    /// they were handled, the event running in it, its tags and what it keeps — under <paramref name="stack"/>'s current
+    /// frame, its caller, which is back already. Ending it goes back to its caller.</summary>
+    private protected @this(global::app.snapshot.@this node, global::app.type.@this type, global::app.call.list.@this stack,
+        global::app.actor.context.@this context, global::app.goal.step.action.@this? callee = null)
+        : this(node, Placed(node, context), type, stack, context, callee) { }
+
+    private @this(global::app.snapshot.@this node,
+        (global::app.goal.@this? Goal, global::app.goal.step.@this? Step, global::app.goal.step.action.@this? Action) place,
+        global::app.type.@this type, global::app.call.list.@this stack, global::app.actor.context.@this context,
+        global::app.goal.step.action.@this? callee)
+        : this(Stored<global::app.type.item.text.@this>(node, "id", context).ToString(), type, place.Goal, place.Step,
+            place.Action, stack.Current, stack.Current, stack, stack.Variables,
+            Stored<global::app.call.setting.@this>(node, "setting", context), callee: callee)
+    {
+        foreach (var variable in Stored<global::app.snapshot.@this>(node, "variables", context).Held(context))
+            _variables[variable.Name] = variable;
+        foreach (var name in Stored<global::app.type.item.list.@this>(node, "arguments", context).Items(context))
+            _arguments.Add(name.Peek().ToString()!);
+        if (node.Entries.Get<global::app.type.item.list.@this>("errors", context) is { } errors)
+            foreach (var row in errors.Items(context))
+                if (row.Peek() is global::app.error.@this error) Errors.Add(error);
+        _handled = Stored<global::app.type.item.@bool.@this>(node, "handled", context).Value;
+        Event = node.Entries.Get("event", context);
+        foreach (var tag in Stored<global::app.type.item.dict.@this>(node, "tags", context).Entries(context)) Tags.Set(tag);
+        _kept.Replace(Stored<global::app.type.item.dict.@this>(node, "kept", context), context);
+    }
 
     /// <summary>
-    /// Every frame's making: it holds back-references to the owning stack and the frame current when it was pushed, so
-    /// DisposeAsync can restore them and remove self from Children when history is off. <paramref name="names"/> are
-    /// the variables it is born with.
+    /// Every frame's making: it holds back-references to the owning stack and the frame it goes back to when it ends
+    /// (<paramref name="previous"/>, the frame current when it was pushed), so DisposeAsync can restore them and remove
+    /// self from Children when history is off. <paramref name="names"/> are the variables it is born with; its
+    /// <paramref name="id"/> is the one it was saved with, or a new one (8 hex chars, short enough for log lines).
     /// </summary>
     private protected @this(
+        string? id,
         global::app.type.@this type,
         global::app.goal.@this? goal,
         global::app.goal.step.@this? step,
         global::app.goal.step.action.@this? action,
         @this? caller,
+        @this? previous,
         global::app.call.list.@this stack,
         Variables? diffSource,
         global::app.call.setting.@this setting,
         IEnumerable<global::app.data.@this>? names = null,
         global::app.goal.step.action.@this? callee = null) : base(type)
     {
-        _id = Guid.NewGuid().ToString("N")[..8];
+        _id = id ?? Guid.NewGuid().ToString("N")[..8];
         Setting = setting;
         Goal = goal;
         Step = step;
@@ -233,7 +267,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
         Caller = caller;
         _depth = (caller?._depth ?? 0) + (Deepens ? 1 : 0);
         _stack = stack;
-        _previousCurrent = stack.Current;
+        _previousCurrent = previous;
         _diffSource = diffSource;
         _for = callee;
         _datetime = stack.Datetime;
@@ -413,12 +447,6 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     /// composed in C#, which no step holds — the resumed run makes those again.</summary>
     public global::app.type.item.@bool.@this IsResumable => Place >= 0;
 
-    /// <summary>This frame's action where it stands, with this frame's Id — the snapshot surrogate; null in a
-    /// goal's or a step's frame.</summary>
-    public Position? Position => Action is { } action
-        ? new Position(action, Goal!, Step?.Index ?? -1, Place, _id)
-        : null;
-
     /// <summary>Its line in a stack trace: <c>Start.set (step 3) in /Start.goal</c>.</summary>
     public override string ToString()
     {
@@ -435,6 +463,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     /// </summary>
     public ValueTask DisposeAsync()
     {
+        _ended = true;
         if (_stopwatch != null)
         {
             _stopwatch.Stop();
