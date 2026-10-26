@@ -4,7 +4,7 @@
   "step": [
     {
       "index": 0,
-      "text": "read file 'run.json', write to %snapshot%",
+      "text": "read file 'run.json', write to %snapshot% as snapshot",
       "line": {
         "number": 6,
         "indent": 0
@@ -20,6 +20,13 @@
                 "name": "path"
               },
               "value": "run.json"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "snapshot"
             }
           ]
         },
@@ -68,8 +75,7 @@
                 "name": "type"
               },
               "value": {
-                "name": "file",
-                "kind": "json"
+                "name": "snapshot"
               }
             }
           ],
@@ -82,6 +88,12 @@
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 0 uses variable.set, which the decider was not sure of (0.88)"
         }
       ]
     },
@@ -467,5 +479,5 @@
   ],
   "visibility": "Public",
   "file": "FreshAppGoesOn.test.goal",
-  "hash": "e90abcb646538e1a969c19dd0965c9e0de155507e89dc6b2bf53680c817e54ee"
+  "hash": "099776098fb39de687faf5c9d76ca1dbce1be604ec73709afe79efb4ba7d6565"
 }
