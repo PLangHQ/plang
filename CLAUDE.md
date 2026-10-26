@@ -33,6 +33,8 @@
 
 ## OBP Shape Smells (audit before writing or reviewing C#)
 
+**Patterns before smells.** Before writing or proposing a shape, name the OBP pattern it follows (`Documentation/v0.2/obp-patterns.md`: saved data maps by a view and its tags; a type per kind, decided at birth; a choice belongs on the element; whoever numbers it finds it; a birth fact, not a search; a compound name is a dot path; one door; the value answers; a reader never answers another type; one concept, one birth method). Every proposal and review opens with it; a review's findings are numbered by pattern.
+
 When reading or writing C#, check the diff against the named smells. A hit means the shape is wrong and the fix is structural, not a line edit. Names are canonical — cite findings by name; worked examples and grep tells live in `Documentation/v0.2/obp-smells.md`.
 
 **Shape:**

@@ -5,6 +5,7 @@ The **operational** OBP doc: every violation has a name, and the name is the fin
 - **Quick list** — project `CLAUDE.md` `## OBP Shape Smells`: the names with one line each, loaded into every bot's context.
 - **This doc** — owns the names and the worked examples: what each smell looks like, the tells, the fix.
 - **The pattern** — [`object_pattern_formal.md`](object_pattern_formal.md): the 3 laws + the rules + why.
+- **The patterns, before the smell** — [`obp-patterns.md`](obp-patterns.md): when a situation looks like this, the OBP shape is that, and the tell that you are drifting from it.
 
 Smells are named, never numbered. Names carry the diagnosis and can't desync across docs; refer to them in italics by name.
 
