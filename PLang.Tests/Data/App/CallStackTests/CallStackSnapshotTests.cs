@@ -42,11 +42,11 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
 
         var root = node.Node("root");
         await Assert.That(await root.Text("id")).IsEqualTo(outer.Id.ToString());
-        await Assert.That(await root.Text("goal")).IsEqualTo(g1.Address);
+        await Assert.That(await root.Node("goal").Text("address")).IsEqualTo(g1.Address);
         var children = await root.Frames("children")!;
         await Assert.That(children.Count).IsEqualTo(1);
         await Assert.That(await children[0].Text("id")).IsEqualTo(inner.Id.ToString());
-        await Assert.That(await children[0].Text("goal")).IsEqualTo(g2.Address);
+        await Assert.That(await children[0].Node("goal").Text("address")).IsEqualTo(g2.Address);
         await Assert.That((await children[0].Frames("children")!).Count).IsEqualTo(0);
         await Assert.That(root.Has("caller")).IsFalse();                 // a frame's caller is the frame it sits under
         await Assert.That(await node.Text("current")).IsEqualTo(inner.Id.ToString());
@@ -230,7 +230,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
             var node = new Snapshot(context);
             ((ISnapshot)stack).Store(node, context);
             var root = node.Node("root");
-            await Assert.That(await root.Text("goal")).IsEqualTo(g1.Address);
+            await Assert.That(await root.Node("goal").Text("address")).IsEqualTo(g1.Address);
             await Assert.That((await root.Frames("children")!).Count).IsEqualTo(0);
         }
     }

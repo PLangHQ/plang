@@ -83,11 +83,11 @@ public sealed partial class @this : ISnapshot
     async System.Threading.Tasks.Task<data.@this> ISnapshot.Start(global::app.snapshot.@this snapshot, actor.context.@this context)
     {
         // a record that doesn't read is the answer
-        var dll = await snapshot.Read<dll.@this>("dll");
+        var dll = await snapshot.Read<dll.@this>("dll", context);
         if (await dll.Value() is not { } dlls) return dll;
-        var registration = await snapshot.Read<Registration>("registration");
+        var registration = await snapshot.Read<Registration>("registration", context);
         if (await registration.Value() is not { } registrations) return registration;
-        var @default = await snapshot.Read<Default>("default");
+        var @default = await snapshot.Read<Default>("default", context);
         if (await @default.Value() is not { } defaults) return @default;
 
         // Step 1 — the DLLs the run took in

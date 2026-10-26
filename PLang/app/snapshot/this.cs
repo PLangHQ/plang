@@ -37,15 +37,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// memory by: each entry cloned, so the run never shares a value with the snapshot, and born again in the context the
     /// part was handed, so it answers as the actor whose memory it goes into, never as whoever read the text. What is
     /// still unread (a value through text) opens in that context too.</summary>
-    internal IEnumerable<global::app.data.@this> Held(global::app.actor.context.@this context)
+    internal IEnumerable<global::app.data.@this> In(global::app.actor.context.@this context)
     {
         foreach (var entry in Entries.Entries(context)) yield return entry.Clone().Copy(context);
     }
 
-    /// <summary>The entry at <paramref name="key"/> as <paramref name="context"/> holds it (<see cref="Held(actor.context.@this)"/>);
-    /// null when none is stored.</summary>
-    internal global::app.data.@this? Held(string key, global::app.actor.context.@this context)
-        => Entries.Get(key, context)?.Clone().Copy(context);
+    /// <summary>A snapshot that holds nothing is empty, as a collection is: the walk and <see cref="Write"/> leave it out.</summary>
+    public override bool IsTruthy() => Entries.IsTruthy();
 
     /// <summary>A collection entry, written only when it holds something — the mirror of <see cref="Read{T}"/>, which
     /// reads an absent entry as empty. Empty is the one test the walk leaves an empty part out by.</summary>
@@ -54,29 +52,30 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (collection.IsTruthy()) Entries.Set(new global::app.data.@this(key, collection, context: Context));
     }
 
-    /// <summary>The rows a list entry holds, each read through its own typed ask — the same door every value goes
-    /// through, so nothing lowers to CLR. An absent entry is empty, the same answer a written empty list gives. A row
-    /// that doesn't read is the answer, its own error whole; one that reads as nothing without saying why is answered as
-    /// <c>SnapshotRowUnread</c>, naming the key.</summary>
-    internal async System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.list.@this<T>>> Read<T>(string key)
+    /// <summary>The rows a list entry holds, as <paramref name="context"/> holds them — the entry taken in through the
+    /// same door as <see cref="In"/>, each row then read through its own typed ask, so nothing lowers to CLR. An absent
+    /// entry is empty, the same answer a written empty list gives. A row that doesn't read is the answer, its own error
+    /// whole; one that reads as nothing without saying why is answered as <c>SnapshotRowUnread</c>, naming the key.</summary>
+    internal async System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.list.@this<T>>> Read<T>(string key,
+        global::app.actor.context.@this context)
         where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
-        var rows = new global::app.type.item.list.@this<T>(Context.App.type.list[typeof(global::app.type.item.list.@this<T>)]);
-        if (Entries.Get(key, Context) is { } entry)
+        var rows = new global::app.type.item.list.@this<T>(context.App.type.list[typeof(global::app.type.item.list.@this<T>)]);
+        if (Entries.Get(key, context)?.Clone().Copy(context) is { } entry)
         {
             if (await entry.Value<global::app.type.item.list.@this>() is not { } stored) return Unread(entry);
-            foreach (var row in stored.Items(Context))
+            foreach (var row in stored.Items(context))
             {
                 if (await row.Value<T>() is not { } value) return Unread(row);
                 rows.Add(value);
             }
         }
-        return Context.Ok(rows);
+        return context.Ok(rows);
 
         global::app.data.@this<global::app.type.item.list.@this<T>> Unread(global::app.data.@this read)
             => global::app.data.@this<global::app.type.item.list.@this<T>>.FromError(read.Error ?? new global::app.error.@this(
                 $"the snapshot's '{key}' holds a row that reads as no {(global::app.type.item.@this.NameOf(typeof(T)))}",
-                "SnapshotRowUnread", 400), Context);
+                "SnapshotRowUnread", 400), context);
     }
 
     /// <summary>The snapshot writes ITSELF: an object of its entries. One loop, because there is

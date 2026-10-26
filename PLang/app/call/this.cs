@@ -226,17 +226,18 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             place.Action, stack.Current, stack.Current, stack, stack.Variables,
             Stored<global::app.call.setting.@this>(node, "setting", context), callee: callee)
     {
-        foreach (var variable in Stored<global::app.snapshot.@this>(node, "variables", context).Held(context))
-            _variables[variable.Name] = variable;
-        foreach (var name in Stored<global::app.type.item.list.@this>(node, "arguments", context).Items(context))
-            _arguments.Add(name.Peek().ToString()!);
-        if (node.Entries.Get<global::app.type.item.list.@this>("errors", context) is { } errors)
-            foreach (var row in errors.Items(context))
-                if (row.Peek() is global::app.error.@this error) Errors.Add(error);
+        // a collection left out was empty
+        if (node.Entries.Get<global::app.snapshot.@this>("variables", context) is { } variables)
+            foreach (var variable in variables.In(context)) _variables[variable.Name] = variable;
+        foreach (var name in Stored<global::app.type.item.list.@this<global::app.type.item.text.@this>>(node, "arguments", context).Items())
+            _arguments.Add(name.ToString());
+        foreach (var error in Stored<global::app.type.item.list.@this<global::app.error.@this>>(node, "errors", context).Items())
+            Errors.Add(error);
         _handled = Stored<global::app.type.item.@bool.@this>(node, "handled", context).Value;
         Event = node.Entries.Get("event", context);
-        foreach (var tag in Stored<global::app.type.item.dict.@this>(node, "tags", context).Entries(context)) Tags.Set(tag);
-        _kept.Replace(Stored<global::app.type.item.dict.@this>(node, "kept", context), context);
+        if (node.Entries.Get<global::app.type.item.dict.@this>("tags", context) is { } tags)
+            foreach (var tag in tags.Entries(context)) Tags.Set(tag);
+        if (node.Entries.Get<global::app.type.item.dict.@this>("kept", context) is { } kept) _kept.Replace(kept, context);
     }
 
     /// <summary>

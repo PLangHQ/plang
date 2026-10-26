@@ -153,8 +153,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
             if (!stored.Success) return stored;
             nodes.Add(childNode);
         }
-        node.Entries.Set(new global::app.data.@this("children",
-            new global::app.type.item.list.@this(nodes, _types[typeof(global::app.type.item.list.@this)]), context: context));
+        node.Write("children", new global::app.type.item.list.@this(nodes, _types[typeof(global::app.type.item.list.@this)]));
         return context.Ok();
     }
 
@@ -163,7 +162,8 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     /// sits under, with the id it was saved with, where it stood, its own variables and the rest of its state; the stored
     /// current is held for <see cref="Resume"/>. Each frame's goal is found by its address through <c>app.goal</c>, its
     /// hash checked against the live goal, its step and action found by index. A frame that can't come back is the answer
-    /// (<see cref="CallbackGoalNotFound"/>, <see cref="CallbackGoalHashMismatch"/>, <see cref="CallbackActionMismatch"/>).
+    /// (<c>CallbackGoalHashMismatch</c>, <see cref="CallbackGoalNotFound"/>, <see cref="CallbackActionMismatch"/>,
+    /// <c>CallbackFrameIncomplete</c>).
     /// </summary>
     async System.Threading.Tasks.Task<global::app.data.@this> global::app.snapshot.ISnapshot.Start(global::app.snapshot.@this snapshot, global::app.actor.context.@this context)
     {
@@ -174,13 +174,16 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
             var back = new Dictionary<string, call.@this>(StringComparer.Ordinal);
             var started = await Start(root, back, context);
             if (!started.Success) return started;
-            _resumed = snapshot.Entries.Get("current", context) is { } current
-                ? back.GetValueOrDefault((await current.Value<global::app.type.item.text.@this>())!.ToString())
-                : null;
+            if (snapshot.Entries.Get("current", context) is { } current)
+            {
+                if (await current.Value<global::app.type.item.text.@this>() is not { } id) return current;
+                _resumed = back.GetValueOrDefault(id.ToString());
+            }
             return context.Ok();
         }
         catch (AppException ex)
         {
+            // a frame's constructor has no answer to give, so what it can't place it throws
             return context.Error(ex.Error);
         }
     }
@@ -191,23 +194,23 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     private async System.Threading.Tasks.Task<global::app.data.@this> Start(global::app.snapshot.@this node,
         Dictionary<string, call.@this> back, global::app.actor.context.@this context)
     {
-        await call.@this.Find(node, this, context);
-        if (node.Entries.Get("type", context) is not { } stored) throw new CallbackFrameIncomplete("type");
+        var found = await call.@this.Find(node, this, context);
+        if (!found.Success) return found;
+        if (node.Entries.Get("type", context) is not { } stored) return context.Error(call.@this.Incomplete("type"));
         if (await stored.Value<global::app.type.@this>() is not { } kind) return stored;
         var born = new global::app.data.@this("frame", context: context);
         if (kind.Make(node, born) is not call.@this frame)
-            return born.Success ? context.Error(new CallbackFrameIncomplete("type").Error) : born;
+            return born.Success ? context.Error(call.@this.Incomplete("type")) : born;
 
         // in as a push enters: among its caller's children (the root when there is none), and current
         Enter(frame);
         back[frame.Id.ToString()] = frame;
 
-        if (node.Entries.Get("children", context) is not { } children) throw new CallbackFrameIncomplete("children");
-        if (await children.Value<global::app.type.item.list.@this>() is not { } nodes) return children;
-        foreach (var child in nodes.Items(context))
+        var children = await node.Read<global::app.snapshot.@this>("children", context);
+        if (await children.Value() is not { } nodes) return children;
+        foreach (var child in nodes.Items())
         {
-            if (await child.Value<global::app.snapshot.@this>() is not { } childNode) return child;
-            var started = await Start(childNode, back, context);
+            var started = await Start(child, back, context);
             if (!started.Success) return started;
         }
         return context.Ok();
@@ -223,7 +226,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     internal async System.Threading.Tasks.Task<global::app.data.@this> Resume(global::app.actor.context.@this context)
     {
         if (_resumed is not { } current)
-            return context.Error(new ServiceError("there is no frame to go on from: the snapshot held no call", "NoPosition", 400));
+            return context.Error(new ServiceError("there is no frame to go on from: the snapshot held no call", "NoFrameToResume", 400));
         _resumed = null;
         _current.Value = current;
 

@@ -1,33 +1,8 @@
 namespace app.error;
 
 /// <summary>
-/// Hard referent-integrity error raised by <c>App.CallStack.@this.Restore</c> when
-/// a captured frame's <c>Goal.Hash</c> differs from the goal currently registered
-/// at the same <c>PrPath</c>. Means the goal file was redeployed (prose changed)
-/// between callback issue and resume — the bind point is no longer the same code.
-/// No silent fallback.
-/// </summary>
-public sealed class CallbackGoalHashMismatch : AppException
-{
-    public string GoalPrPath { get; }
-    public string CapturedHash { get; }
-    public string LiveHash { get; }
-
-    public CallbackGoalHashMismatch(string goalPrPath, string capturedHash, string liveHash)
-        : base($"Callback frame's goal hash mismatch at '{goalPrPath}': captured={capturedHash}, live={liveHash}.",
-            "CallbackGoalHashMismatch", 409)
-    {
-        GoalPrPath = goalPrPath;
-        CapturedHash = capturedHash;
-        LiveHash = liveHash;
-    }
-}
-
-/// <summary>
-/// Hard referent-integrity error raised when a captured frame's <c>GoalPrPath</c>
-/// resolves to no goal in the live <c>app.goal</c> registry (file moved/deleted
-/// between callback issue and resume). Sibling of <see cref="CallbackGoalHashMismatch"/>;
-/// the difference is "goal not found" vs "found but different content."
+/// Hard referent-integrity error raised when a stored frame's step or action index lands outside the goal it was
+/// found by — the goal changed between the save and the start.
 /// </summary>
 public sealed class CallbackGoalNotFound : AppException
 {
@@ -51,16 +26,5 @@ public sealed class CallbackActionMismatch : AppException
     public CallbackActionMismatch(string goal, int stepIndex, int actionIndex, string captured, string live)
         : base($"Callback frame at '{goal}' step {stepIndex} action {actionIndex}: captured action '{captured}', live action '{live}'.",
             "CallbackActionMismatch", 409)
-    { }
-}
-
-/// <summary>
-/// Hard referent-integrity error raised when a captured frame lacks an entry its restore needs — the
-/// snapshot is not one this runtime wrote, or it was cut.
-/// </summary>
-public sealed class CallbackFrameIncomplete : AppException
-{
-    public CallbackFrameIncomplete(string key)
-        : base($"Callback frame is missing '{key}' — the snapshot cannot place it.", "CallbackFrameIncomplete", 400)
     { }
 }

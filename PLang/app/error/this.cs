@@ -148,9 +148,10 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// unwound past the failing action by handler time) and variables via <c>SnapshotAt(this)</c>.
     /// Wrapped directly as <c>Data&lt;Snapshot&gt;</c>; resume goes through
     /// <see cref="app.snapshot.@this.Resume"/>, same path as ask-resume. Cached per Error instance —
-    /// reading twice returns the same Data. An error with no context was not raised inside a run:
-    /// there is nothing to resume, so it has no callback — a <c>NoCallback</c> error, not a throw. One raised inside a
-    /// task answers the snapshot's refusal (<c>SnapshotInTask</c>).
+    /// reading twice returns the same Data. An error with no context holds no run — it wasn't raised inside one, or it
+    /// came back from a stored state (which keeps its key, message, status and causes, not its run): there is nothing to
+    /// resume, so it has no callback — a <c>NoCallback</c> error, not a throw. One raised inside a task answers the
+    /// snapshot's refusal (<c>SnapshotInTask</c>).
     /// </summary>
     [System.Text.Json.Serialization.JsonIgnore, global::app.LlmBuilder]
     public global::app.data.@this<global::app.snapshot.@this> Callback
@@ -158,10 +159,11 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         get
         {
             if (_callback != null) return _callback;
-            // an error not raised inside a run has no context for its answer to be born with
+            // an error that holds no run has no context for its answer to be born with
             if (Context == null)
                 throw new global::app.error.AppException(new Error(
-                    $"error '{Key}' was not raised inside a run, so it has no callback to resume.", "NoCallback", 400));
+                    $"error '{Key}' holds no run (it wasn't raised inside one, or it came back from a stored state), so it has no callback to resume.",
+                    "NoCallback", 400));
             _callback = Context.App.Snapshot(this, Context);
             if (_callback.Success) _callback.Snapshot = _callback.Peek() as global::app.snapshot.@this;
             return _callback;

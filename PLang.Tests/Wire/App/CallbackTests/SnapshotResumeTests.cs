@@ -46,18 +46,18 @@ public class SnapshotResumeTests
         data.Snapshot = new global::app.snapshot.@this(app.actor.list.User.Context); // empty snapshot
         var handler = new start(app.actor.list.User.Context) { Callback = data };
         var result = await handler.Start();
-        // Empty snapshot → no CallStack section → RestoredChain null → NoPosition.
+        // Empty snapshot → no CallStack section → no current frame → NoFrameToResume.
         // Confirms delegation reached Resume (we don't get NoSnapshot).
-        await Assert.That(result.Error!.Key).IsEqualTo("NoPosition");
+        await Assert.That(result.Error!.Key).IsEqualTo("NoFrameToResume");
     }
 
-    [Test] public async Task SnapshotResume_EmptyChainAfterRestore_ReturnsNoPositionError()
+    [Test] public async Task SnapshotResume_EmptyChainAfterRestore_ReturnsNoFrameToResumeError()
     {
         var app = NewApp();
         var snap = new global::app.snapshot.@this(app.actor.list.User.Context);
         var result = await snap.Resume(app.actor.list.User.Context);
         await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("NoPosition");
+        await Assert.That(result.Error!.Key).IsEqualTo("NoFrameToResume");
     }
 
     [Test] public async Task SnapshotResume_SingleGoal_ReentersAtSuspendedPosition()
@@ -95,8 +95,8 @@ public class SnapshotResumeTests
         var app = NewApp();
         var snap = new global::app.snapshot.@this(app.actor.list.User.Context);
         var result = await snap.Resume(app.actor.list.User.Context);
-        // Empty chain → NoPosition; demonstrates recursion entry doesn't NRE.
-        await Assert.That(result.Error!.Key).IsEqualTo("NoPosition");
+        // Empty chain → NoFrameToResume; demonstrates recursion entry doesn't NRE.
+        await Assert.That(result.Error!.Key).IsEqualTo("NoFrameToResume");
     }
 
     [Test] public async Task ResumeChain_MultiActionStep_ContinuesAtActionIndexPlusOne()

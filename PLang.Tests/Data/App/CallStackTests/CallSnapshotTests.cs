@@ -33,8 +33,8 @@ public class CallSnapshotTests : System.IAsyncDisposable
         call.Store(snap, app.actor.list.User.Context);
 
         // the goal is the name a call reaches it by, and its hash — never the goal written out
-        await Assert.That(await snap.Text("goal")).IsEqualTo(action.Step!.Goal!.Address);
-        await Assert.That(await snap.Text("goalHash")).IsEqualTo(action.Step.Goal.Hash);
+        await Assert.That(await snap.Node("goal").Text("address")).IsEqualTo(action.Step!.Goal!.Address);
+        await Assert.That(await snap.Node("goal").Text("hash")).IsEqualTo(action.Step.Goal.Hash);
         await Assert.That(snap.Has("steps")).IsFalse();
     }
 
@@ -55,13 +55,12 @@ public class CallSnapshotTests : System.IAsyncDisposable
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray()).Replace(call.Id.ToString()!, "ID");
 
         await Assert.That(json).IsEqualTo(
-            "{\"id\":\"ID\",\"type\":{\"name\":\"app.call\"},\"goal\":\"/G\",\"goalHash\":\"" + action.Step!.Goal!.Hash
-            + "\",\"stepIndex\":0,\"actionIndex\":0,\"actionModule\":\"test\",\"actionName\":\"test\","
-            + "\"variables\":{},\"arguments\":[],\"handled\":false,\"tags\":{},\"kept\":{}}");
+            "{\"id\":\"ID\",\"type\":{\"name\":\"app.call\"},\"goal\":{\"address\":\"/G\",\"hash\":\"" + action.Step!.Goal!.Hash
+            + "\"},\"step\":0,\"action\":{\"index\":0,\"module\":\"test\",\"name\":\"test\"},\"handled\":false}");
     }
 
     [Test]
-    public async Task Call_Capture_IncludesStepIndexAndActionIndex()
+    public async Task Call_Capture_IncludesItsStepAndActionIndex()
     {
         var (app, action) = BuildLiveAction("PosGoal");
         var stack = app.actor.list.User.Context.call;
@@ -70,8 +69,8 @@ public class CallSnapshotTests : System.IAsyncDisposable
         var snap = new Snapshot(app.actor.list.User.Context);
         call.Store(snap, app.actor.list.User.Context);
 
-        await Assert.That(await snap.Int("stepIndex")).IsEqualTo(0);
-        await Assert.That(await snap.Int("actionIndex")).IsEqualTo(0);
+        await Assert.That(await snap.Int("step")).IsEqualTo(0);
+        await Assert.That(await snap.Node("action").Int("index")).IsEqualTo(0);
     }
 
     [Test]
@@ -116,7 +115,8 @@ public class CallSnapshotTests : System.IAsyncDisposable
 
             var started = await snap.Start(dst, dst.actor.list.User.Context);
             await Assert.That(started.Success).IsFalse();
-            await Assert.That(started.Error!.Key).IsEqualTo("CallbackGoalNotFound");
+            // the goal list's own answer, whole
+            await Assert.That(started.Error!.Key).IsEqualTo("NotFound");
         }
     }
 

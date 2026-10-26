@@ -24,7 +24,7 @@ public sealed class @this : binding.@this, global::app.type.item.ICreate<@this>
     public static new @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data) => raw switch
     {
         @this isolated => isolated,
-        global::app.snapshot.@this node => new @this(node, type ?? data.Context!.App.type.list[typeof(@this)], data.Context!.call, data.Context),
+        global::app.snapshot.@this node => new @this(node, type ?? data.Context.App.type.list[typeof(@this)], data.Context.call, data.Context),
         _ => null,
     };
 
