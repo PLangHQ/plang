@@ -37,6 +37,15 @@ public class PlangFormTests
         await Assert.That(File("/data.v1/a").WithExtension("json").ToString()).IsEqualTo("/data.v1/a.json");
     }
 
+    // an OS location handed in written with "/" (C:\…\os/system/x on Windows) is still that location: shown in its plang
+    // form, never as typed
+    [Test, RunOn(TUnit.Core.Enums.OS.Windows)] public async Task AnOsLocationWrittenWithSlashes_ShowsItsPlangForm()
+    {
+        var file = global::app.type.item.path.file.@this.Resolve(_app.filesystem.os.Absolute + "/system/builder/Build.goal", Ctx);
+
+        await Assert.That(file.ToString()).IsEqualTo("/system/builder/Build.goal");
+    }
+
     [Test] public async Task AGoalsPr_IsBesideItInDotBuild()
         => await Assert.That(((global::app.type.item.path.file.@this)File("/sub/Inner.goal")).Pr.ToString()).IsEqualTo("/sub/.build/inner.pr");
 }
