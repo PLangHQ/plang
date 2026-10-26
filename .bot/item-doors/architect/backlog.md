@@ -20,6 +20,10 @@ Checks to make before the release, not branches:
 - **Brotli** (Ingi: "let's not remove it yet, but keep eye on it before we release plang 2.0b"). The archive module's `brotli` kind (`archive/type/archive/kind/brotli/this.cs`) uses .NET's `BrotliStream`, Google's C library bundled in the runtime (10.0.13 today). A crafted `.br` can make Google's decoder read past its buffer (fixed upstream Feb 2026, released Oct 2026; bugsink.com/blog/bye-bye-brotli). Unpacking is capped by `archive.setting.Max` (`compression/this.cs:47`), and plang's HTTP client doesn't decompress responses. Before 2.0b: check whether the .NET runtime it ships on carries the fixed brotli. If not, drop the kind (gzip and zip cover packing).
 - **The release goals** (Ingi, 2026-10-25, bugs 2: "2.yes"). `Publish/Publish.goal:20` publishes the deleted PlangWindowForms for win-x64, and `Publish/Nuget.goal` packs and pushes the deleted PlangTests as `PlangLibrary.Tests`. Drop those steps, then run the release pipeline end to end once before publishing.
 
+## Future (Ingi said "future"; not offered as next work)
+
+- **A database module** (Ingi, 2026-10-26: "3 future"): runtime2 has no user-facing db module (v0.1 had one); plang keeps its own state in `/.data/*.sqlite` through `app.store`. doc2's `doc/databases.md` says there's none today.
+
 ## From decider-key
 
 - **Two concurrent asks for a missing key each prompt** (auditor N1): `IKey.Asked` (`module/llm/setting/IKey.cs`) has no gate, so two steps asking the llm or the decider at once with no key both ask the user. That's as llm's key did before. Untested.
