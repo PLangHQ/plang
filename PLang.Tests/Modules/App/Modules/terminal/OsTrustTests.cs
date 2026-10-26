@@ -8,7 +8,9 @@ namespace PLang.Tests.App.actions.terminal;
 /// %ref% — starts it without asking, as the user's own actor, and nothing is stored. Anything else asks: a user goal; an
 /// os goal handed its program by its caller (the confused deputy); a user goal an os goal calls back. Each ask here is
 /// answered "n", so a step that asked fails PermissionDenied and one that didn't runs.
+/// Unix's: each test starts a Unix program by its OS-rooted form (//bin/true, //bin/echo, //bin/sh).
 /// </summary>
+[ExcludeOn(TUnit.Core.Enums.OS.Windows)]
 public class OsTrustTests : IDisposable
 {
     // outside the app's root and the os folder: starting it is asked unless trusted

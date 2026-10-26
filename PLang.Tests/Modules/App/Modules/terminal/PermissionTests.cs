@@ -6,8 +6,9 @@ namespace PLang.Tests.App.actions.terminal;
 /// <c>terminal.start(..., Permission=[{path, verbs}])</c>: the kernel (Landlock) holds the program to its permissions —
 /// it touches only the folders they name, with their verbs, while plang itself, and every program started without
 /// permissions, stay free. Each permission is first the caller's to grant. A step that gives a program permissions
-/// never runs it free. Linux only; elsewhere refused (PermissionNotEnforced).
+/// never runs it free. Linux only; elsewhere refused (PermissionNotEnforced). Unix's: each test starts //bin/sh.
 /// </summary>
+[ExcludeOn(TUnit.Core.Enums.OS.Windows)]
 public class PermissionTests : IDisposable
 {
     private readonly string _root;
