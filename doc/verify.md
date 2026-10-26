@@ -88,3 +88,16 @@ Scratch apps `p1`, `p2`, `p3` were built with the decider key saved and run with
 | 74 | how-a-step-becomes-an-action | action form `module.action(Param=value)` with `;` | tests such as `PlainCallWaits.test.goal` pass | pass (by test) |
 | 75 | how-a-step-becomes-an-action | four modules have a generated `start.md` | `ls os/system/modules/*/start.md`: condition, file, loop, screen | pass |
 | 76 | how-a-step-becomes-an-action | a rebuild with nothing changed builds nothing | claim 18c | pass |
+
+## After decider-key (runtime2 b4a549d1c)
+
+Rebuilt the CLI on b4a549d1c, then ran in a fresh scratch folder with no saved key and no `TYPESAFE_API_KEY`. Rows 10 and 26 describe the 403 the CLI gave before this merge; install.md and when-a-step-fails.md now describe what follows.
+
+| # | Page | Claim | Check | Result |
+|---|---|---|---|---|
+| 77 | install | a first build with no key asks `Building needs a TypeSafe key for the decider. Paste it:` | ran `plang build --app.setting.create=true` with the key on stdin; the prompt printed, build saved, `plang` printed `Ada` | pass |
+| 78 | install | the key is saved and not asked again | ran `plang build` again with empty stdin: no prompt, `Found 1 goals` | pass |
+| 79 | install | with no one to answer, `MissingDeciderKey (401)` naming both ways; nothing is sent | ran with empty stdin: output as quoted; no request is evidenced by the failure coming before any HTTP error | pass for the output; "nothing sent" is the architect's statement and was not traced |
+| 80 | install | in a non-app folder, `plang build` with no flag and no stdin gives `NoAppFound` | ran it | pass |
+| 81 | when-a-step-fails | the trace holds `buildError` with key `MissingDeciderKey` | read `.build/traces/*/Start.json` | pass |
+| 10b | install | the 403 of rows 10 and 26 no longer occurs with no key | the runs above | pass (replaced) |

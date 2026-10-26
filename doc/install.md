@@ -47,15 +47,23 @@ GoalNotBuilt (404): Goal /Start.goal isn't built; run plang build
 
 Running needs no key. Building does.
 
-The builder asks a language model service to choose the action for each step. That service is reached with a key kept in `TYPESAFE_API_KEY` (or saved as the setting `llm.decider.setting.key`). With no key, the build stops with:
+The builder asks a language model service to choose the action for each step. That service is reached with a key kept in the environment variable `TYPESAFE_API_KEY` or saved as the setting `%!llm.decider.setting.key%`.
+
+A build with no key asks for it once, then saves it in the app and does not ask again:
 
 ```
-HttpError (403): 403 Forbidden: {"detail":{"error_type":"authentication_error","message":"Must supply an API key! Check your request and try again."}}
+Building needs a TypeSafe key for the decider. Paste it:
 ```
+
+With no one to answer (input is redirected and empty), it stops, and nothing is sent to the service:
+
+```
+MissingDeciderKey (401): Building needs a TypeSafe key for the decider, and no one gave one: set %!llm.decider.setting.key% or the TYPESAFE_API_KEY environment variable.
+```
+
+In a folder that is not an app yet, `plang build` asks to create the app first. `--app.setting.create=true` skips that question. See [your first goal](first-goal.md#2-build).
 
 An `OPENAI_API_KEY` is a different key. It is read by steps that ask a model at run time. It does not unlock the build.
-
-With the key saved, the build in [your first goal](first-goal.md) works.
 
 Unverified: how to get a `TYPESAFE_API_KEY`, what a build costs, and what a first build asks about payment. A key was supplied to the run, so none of these was seen.
 
