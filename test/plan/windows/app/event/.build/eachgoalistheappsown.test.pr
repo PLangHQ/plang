@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "comment": "A program's \"before each goal\" hears its app's own goals, never plang's system goals: reading %!goal% runs plang's\n/system/shortcut/goal.goal, and the call bound before each goal heard only the app's goal before it.",
+  "comment": "A program's \"before each goal\" hears its app's own goals, never plang's system goals: while it is bound, the app's goal\nMine runs and then plang's /system/shortcut/Goal is called, and the call bound before each goal heard Mine last.",
   "step": [
     {
       "index": 0,
@@ -110,62 +110,22 @@
     },
     {
       "index": 2,
-      "text": "set %name% = %!goal.name%",
+      "text": "call goal /system/shortcut/Goal",
       "line": {
         "number": 6,
         "indent": 0
       },
       "code": [
         {
-          "module": "variable",
-          "name": "set",
+          "module": "goal",
+          "name": "call",
           "property": [
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "goal"
               },
-              "value": "%name%",
-              "variable": [
-                {
-                  "text": "%name%",
-                  "code": [
-                    {
-                      "variable": "name"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "item",
-                "template": "plang"
-              },
-              "value": "%!goal.name%",
-              "variable": [
-                {
-                  "text": "%!goal.name%",
-                  "code": [
-                    {
-                      "variable": "!goal"
-                    },
-                    {
-                      "property": "name"
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "default": [
-            {
-              "name": "default",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
+              "value": "/system/shortcut/Goal"
             }
           ]
         }
@@ -346,5 +306,5 @@
   ],
   "visibility": "Public",
   "file": "EachGoalIsTheAppsOwn.test.goal",
-  "hash": "2754d5762a6db673eb7a9d38bbac6ba4e1f6ca4651fbd80a835cd79154ce8c9c"
+  "hash": "8699fe14caebc022c9e83f0dd9e96af20195c32eaaac54e89f9339be462acf22"
 }
