@@ -113,3 +113,32 @@ The agent installed (`dotnet build`), proved the install (`plang`, `plang --vers
 | 84 | when-a-step-fails | a build that says `Saved` may still hold a wrong step | rows 82, 83 | pass |
 | 85 | install | the key prompt prints when the key is piped on standard input | the agent's build 1 and my run (row 77) | pass |
 | 86 | first-goal | `.build/start.pr` and `.build/traces/` exist after a build | the agent listed with `ls -a` and saw `.build` and `.data` only, not inside | pass (rows 19, 20) |
+
+## Slice 3
+
+Scratch apps `s1` and `s2`, built with the key from stdin, run with `plang`. Local servers on 127.0.0.1 (a static file server and a small echo server) served the http checks.
+
+| # | Page | Claim | Check | Result |
+|---|---|---|---|---|
+| 87 | goals-in-other-folders | `call /tools/Shout` runs `tools/Shout.goal`, prints `from tools`; `Found 2 goals`; saved `Name="/tools/Shout"` | s1 | pass |
+| 88 | goals-in-other-folders | `call tools/Shout` saved `Name="Shout"` and the run gave `GoalNotFound (404): Goal 'Shout' not found.` | s1 first build and run | pass (one build; cause untraced) |
+| 89 | goals-in-other-folders | `os/system/modules/goal/call.notes.md` allows `Folder/Goal` | read at that file | pass (the text); contradicted by 88 |
+| 90 | goals-in-other-folders | the repo's `sub/SubGoal` test is switched off | `test/module/goal/relative/GoalCallRelative.test.goal2` | pass |
+| 91 | goals-in-other-folders | `call %which%` picks the goal; `test/module/goal` 8/8 | s1 printed `picked`; test run | pass |
+| 92 | reading-a-file-line-by-line | read, `split … into lines`, foreach prints each line plus an empty one for the final newline | s1 output `name: ` | pass |
+| 93 | reading-a-file-line-by-line | `drop the empty ones` in the sentence wrote no `Empty` | s2 `.pr`: `list.split` with Value and Separator only; output kept the empty line | pass (as seen) |
+| 94 | reading-a-file-line-by-line | `list.split(…, Empty="drop")` drops it | s2 rebuild output | pass |
+| 95 | http | `get` a local JSON file, `%weather.city%` | s1 `city: Reykjavik` | pass |
+| 96 | http | `post` with headers and a JSON body arrives as POST, `Authorization: Bearer abc`, body `{"x":1}` | s2 against echo server | pass |
+| 97 | http | `http.download` is for `download` steps | `os/system/modules/http/request.notes.md` | pass (text); not run |
+| 98 | http | a public address works | not tried | unverified |
+| 99 | timeouts | `timeout after 100ms, on error …` prints `timed out` | s1 | pass |
+| 100 | timeouts | retry gets a fresh deadline; 3 attempts | `test/module/on/timeout` 2/2 | pass (by test) |
+| 101 | timeouts | other duration forms (`10 seconds`, `2 minutes`) | `os/system/modules/on/timeout.description.md` | pass (text); not run |
+| 102 | caching | `cache for 5 minutes` returns `first` twice after the file changed | s1 | pass |
+| 103 | caching | `test/module/on/cache` 2/2 pass; recovery is never cached | test run | pass (by test) |
+| 104 | caching | key and sliding forms | `os/system/modules/on/cache.examples.md`; `test/module/on/cache/basic/ReadWithKey.goal` exists | pass (text); sliding not run |
+| 105 | caching | expiry; cache across runs | not tried | unverified |
+| 106 | databases | no `db` module exists | `ls PLang/app/module`: no `db`; `os/system/modules/db/` holds only `Builder/llm` | pass |
+| 107 | databases | settings live in `.data/setting/data.sqlite` | `ls -R .data` in a scratch app | pass |
+| 108 | databases | a goal can or cannot query that file | not tried | unverified |
