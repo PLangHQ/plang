@@ -1,0 +1,13 @@
+# doc2 v1 summary
+
+**What this is:** the first slice of `doc/`, a documentation folder for a stranger: what PLang is, install, a first goal (read a JSON file, print a field), and what a failed build looks like.
+
+**What was done:** `doc/start.md`, `install.md`, `first-goal.md`, `when-a-step-fails.md`, `verify.md`. The run half and, with the decider key saved from stdin, the build half (success, StepsBroken, GoalBroken) are verified. Unverified: getting a key, cost, payment prompt, the `[✓]`/`[≡]` lines.
+
+**Findings that differ from the old docs:** `plang exec` is no command; `--version` is refused; run never builds; the latest release is v0.1.17.3 (Feb 2025); `.pr` files are `.build/<goal>.pr`; a first build asks to create the app (`--app.setting.create=true` skips it); the build's key is `TYPESAFE_API_KEY` (setting `llm.decider.setting.key`), not `OPENAI_API_KEY`.
+
+**Next:** a cold read of `doc/`; get a decider key to verify the unverified rows.
+
+## Slice 2 (programmer)
+
+Pages: goals-and-steps, variables, conditions, loops, calling-goals, errors, events, how-a-step-becomes-an-action. Verify rows 40-76. Cold reader on slice 1 still waits for the decider-key merge.

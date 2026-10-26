@@ -17,7 +17,8 @@ Start
 Build and run:
 
 ```bash
-plang exec
+plang build
+plang
 ```
 
 That's it. PLang reads the JSON file, extracts the fields, and prints them.
@@ -43,7 +44,7 @@ That's it. PLang reads the JSON file, extracts the fields, and prints them.
 1. You write `.goal` files in natural language
 2. `plang build` sends each step to an LLM, which maps it to a module and action
 3. The builder writes `.pr` files (compiled instructions) to `.build/`
-4. `plang exec` runs the `.pr` files — no LLM needed at runtime
+4. `plang` runs the `.pr` files — no LLM needed at runtime, and a run never builds
 
 Building costs a small fee per step (typically $0.002–$0.009 via LLM). Running is free and fast.
 

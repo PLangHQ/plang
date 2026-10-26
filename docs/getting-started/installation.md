@@ -1,6 +1,6 @@
 # Installation
 
-PLang runs on Windows, Linux, and macOS. Download the latest release and add it to your PATH.
+PLang runs on Windows, Linux, and macOS. The pages here describe the current source. The latest published release is `v0.1.17.3`, from February 2025, and it was not run against them, so do not assume it matches. [Build from source](../../doc/install.md) to get the program these pages describe. The release steps below get that older release onto your PATH.
 
 ## Windows
 
@@ -42,11 +42,7 @@ export PATH=$PATH:$HOME/plang/
 
 ## Verify
 
-```bash
-plang --version
-```
-
-You should see the PLang version number.
+There is no `plang --version`: it is refused with `UnknownSetting`. To prove the install, run `plang` in an empty folder. It answers `GoalNotBuilt (404): Goal /Start.goal isn't built; run plang build`, which shows the runtime started and read the folder.
 
 ## LLM Setup
 
