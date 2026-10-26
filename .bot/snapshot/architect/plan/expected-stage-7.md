@@ -81,7 +81,7 @@ Tests:
 ```
 
 - The stack's `Store`: its frames from the root to where the run is (not ended; a running task refused), each written as itself. The whole snapshot is written once at the save (65), so it is the state at that moment.
-- The stack's `Start`: each frame's record (never decoded as `call`, 62), in order. The record names its kind, and the kind's own door (NEW, no switch) reads its goal (async, by `Select`), its step and action, and pushes through `Push`; the frame reads the rest of its record at birth (63).
+- The stack's `Start` (corrected after Ingi's 84): read, map, set. Each frame's record is read by the general reader and mapped onto the frame its kind pushes, each tagged member set by its own type (a goal through its `Select`, a step and an action through their owner). No door of the frame's own and no hand-read fields: the serializer maps it.
 - The last frame pushed is where the run stopped (`_resumed`).
 - `Thrown` (an error's callback chain, `call/list/this.Snapshot.cs:101–115`) saves its chain the same way.
 - 42: a snapshot node writes itself as a plain object of its entries; a variable stays a whole Data in a list.
