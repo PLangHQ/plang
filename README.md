@@ -1,4 +1,4 @@
 # plang
 The code repository from plang programming language. 
 
-Go to the [Documentation section](./Documentation/README.md) for more information
+Start with the [documentation](./doc/start.md): what PLang is, how to install it, and how to write and run a first goal.

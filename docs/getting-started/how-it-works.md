@@ -4,14 +4,14 @@ PLang has two phases: **build** and **run**. The build phase uses an LLM to unde
 
 ## The Build Phase
 
-When you run `plang build` (or `plang exec` for the first time):
+When you run `plang build`:
 
 ```
-Start.goal  →  LLM  →  .build/Start/00. Start.pr
+Start.goal  →  LLM  →  .build/start.pr
 ```
 
 1. PLang reads your `.goal` file
-2. Each step is sent to an LLM (GPT-4, Claude, etc.)
+2. Each step is sent to a language model service, the decider, which needs a [build key](installation.md#llm-setup)
 3. The LLM maps your natural language to a **module** and **action** with typed parameters
 4. The result is written as a `.pr` file (JSON)
 
@@ -37,10 +37,10 @@ Each step costs $0.002–$0.009 to build. A typical goal with 5-10 steps costs a
 
 ## The Run Phase
 
-When you run `plang exec`:
+When you run `plang` (a run never builds):
 
 ```
-.build/Start/00. Start.pr  →  Runtime  →  Output
+.build/start.pr  →  Runtime  →  Output
 ```
 
 1. The runtime loads the `.pr` file
@@ -57,19 +57,18 @@ A `.pr` file is JSON that describes a goal and its steps. Each step contains act
 
 ```json
 {
-  "goalName": "Start",
-  "steps": [
+  "name": "Start",
+  "step": [
     {
-      "text": "read 'config.json' into %config%",
-      "actions": [
+      "index": 0,
+      "text": "set %deep% = {a:{b:{c:{d:{e:\"found\"}}}}}",
+      "code": [
         {
-          "module": "file",
-          "actionName": "read",
-          "parameters": [
-            { "name": "Path", "value": "config.json" }
-          ],
-          "return": [
-            { "name": "%config%", "value": "%stepResult.value%" }
+          "module": "variable",
+          "name": "set",
+          "property": [
+            { "name": "Name", "type": { "name": "variable" }, "value": "%deep%" },
+            { "name": "Value", "type": { "name": "dict" }, "value": {"a":{"b":{"c":{"d":{"e":"found"}}}}} }
           ]
         }
       ]
@@ -77,6 +76,8 @@ A `.pr` file is JSON that describes a goal and its steps. Each step contains act
   ]
 }
 ```
+
+(Trimmed from a built goal: the real file also carries each step's line number, the variables it names and the action's defaults.)
 
 You never edit `.pr` files. If something is wrong, change the `.goal` file and rebuild.
 
@@ -109,7 +110,7 @@ The engine resolves each action to a **handler** — a C# class that does the ac
 | **Action** | A specific operation: module + action name + parameters. |
 | **Handler** | The C# code that executes an action. |
 | **Module** | A group of related handlers (file, variable, list, math, etc.). |
-| **Memory Stack** | Where variables live. Scoped per goal call. |
+| **Variables** | Where values live. A called goal sees its caller's variables; a parameter you pass ends with the call. See [variables](../../doc/variables.md#where-a-variable-lives). |
 | **Data** | The universal return type. Has `Value`, `Error`, `Success`. |
 
 ## Next

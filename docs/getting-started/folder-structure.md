@@ -11,15 +11,11 @@ MyApp/
 ├── helpers/
 │   └── Utilities.goal      ← additional goals
 ├── .build/                 ← compiled output (generated)
-│   ├── Start/
-│   │   └── 00. Start.pr
-│   ├── Setup/
-│   │   └── 00. Setup.pr
-│   └── helpers/
-│       └── Utilities/
-│           └── 00. Utilities.pr
-└── .db/                    ← PLang databases (if used)
-    └── system.sqlite
+│   ├── start.pr
+│   └── traces/             ← a trace of each build
+└── .data/                  ← PLang's own data, e.g. the app's settings
+    └── setting/
+        └── data.sqlite
 ```
 
 ## Source Files (.goal)
@@ -29,7 +25,7 @@ Your code lives in `.goal` files. Each file can contain multiple goals:
 ```plang
 Start
 - set %greeting% = 'Hello'
-- call !SayHello
+- call SayHello
 
 SayHello
 - write out '%greeting% world'
@@ -41,22 +37,21 @@ SayHello
 
 ## Compiled Files (.build/)
 
-The `.build/` folder mirrors your source structure. Each goal compiles to a `.pr` file:
+The `.build/` folder holds what the build wrote. The goals of a file compile to one `.pr` file named after the file, in lowercase:
 
 ```
-Start.goal  →  .build/Start/00. Start.pr
+Start.goal  →  .build/start.pr
 ```
+
+Each build also writes a trace to `.build/traces/<id>/<Goal>.json`.
 
 `.pr` files are JSON. They contain the module, action, parameters, and return mappings for each step. The runtime reads these directly — no parsing of `.goal` files at runtime.
 
 **Do not edit or delete `.build/` files manually.** Change the `.goal` file and rebuild.
 
-## Database (.db/)
+## PLang's data (.data/)
 
-If your app uses the database module, PLang creates a `.db/` folder with SQLite databases:
-
-- **`system.sqlite`** — PLang system data (settings, scheduling, etc.)
-- **`data.sqlite`** — your app's data (created when you run SQL statements)
+PLang keeps an app's settings in a SQLite file, `.data/setting/data.sqlite`, in the app's folder. That file is PLang's own. This runtime has no database module, so a goal keeps its data in files (see [databases](../../doc/databases.md)).
 
 ## Events Folder
 
@@ -76,7 +71,7 @@ MyApp/
 |--------|---------|-----|
 | `*.goal` | Yes | Your source code |
 | `.build/` | Optional | Can be rebuilt, but saves build cost |
-| `.db/` | No | Runtime data, environment-specific |
+| `.data/` | No | Runtime data, environment-specific |
 
 ## Next
 
