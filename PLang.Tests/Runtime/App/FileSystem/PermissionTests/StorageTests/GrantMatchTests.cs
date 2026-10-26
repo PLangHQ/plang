@@ -53,6 +53,71 @@ public class GrantMatchTests
     [Test, RunOn(TUnit.Core.Enums.OS.Windows)] public async Task OnWindows_AGlobGrant_IgnoresCase()
         => await Assert.That(Allows(@"C:\Docs\*.txt", MatchMode.glob, @"c:\docs\A.TXT")).IsTrue();
 
+    // a glob folds case as the exact grant does, and no wider: to OrdinalIgnoreCase the Kelvin sign (U+212A) is not k
+    // and the long s (U+017F) is not s, so a glob on k or s never opens them
+    [Test, RunOn(TUnit.Core.Enums.OS.Windows)] public async Task OnWindows_AGlobGrant_FoldsAsTheExactGrantDoes()
+    {
+        await Assert.That(Allows(@"C:\apps\kdir\*", MatchMode.glob, "C:\\apps\\\u212Adir\\x")).IsFalse();
+        await Assert.That(Allows(@"C:\apps\sdir\*", MatchMode.glob, "C:\\apps\\\u017Fdir\\x")).IsFalse();
+        await Assert.That(Allows(@"C:\apps\kdir\*", MatchMode.glob, @"C:\APPS\KDIR\x")).IsTrue();
+    }
+
+    // a ** crosses parts wherever it stands: at the start, in the middle, at the end
+    [Test] public async Task TwoStars_CrossPartsAtStartMiddleAndEnd()
+    {
+        await Assert.That(Allows("**/x.txt", MatchMode.glob, "/a/b/x.txt")).IsTrue();
+        await Assert.That(Allows("/a/**/x.txt", MatchMode.glob, "/a/b/c/x.txt")).IsTrue();
+        await Assert.That(Allows("/a/**/x.txt", MatchMode.glob, "/a/b/c/y.txt")).IsFalse();
+        await Assert.That(Allows("/a/**", MatchMode.glob, "/a/b/c")).IsTrue();
+        await Assert.That(Allows("/a/**", MatchMode.glob, "/b/a/c")).IsFalse();
+    }
+
+    // a ? is exactly one character, never none, never two, never a separator
+    [Test] public async Task AQuestionMark_IsExactlyOneCharacter()
+    {
+        await Assert.That(Allows("/a?c", MatchMode.glob, "/abc")).IsTrue();
+        await Assert.That(Allows("/a?c", MatchMode.glob, "/ac")).IsFalse();
+        await Assert.That(Allows("/a?c", MatchMode.glob, "/abbc")).IsFalse();
+    }
+
+    [Test] public async Task SeveralStars_InOnePart()
+    {
+        await Assert.That(Allows("/a/*.*", MatchMode.glob, "/a/x.y.z")).IsTrue();
+        await Assert.That(Allows("/a/*.*", MatchMode.glob, "/a/xyz")).IsFalse();
+        await Assert.That(Allows("/a/*x*", MatchMode.glob, "/a/bxc")).IsTrue();
+        await Assert.That(Allows("/a/*x*", MatchMode.glob, "/a/b/xc")).IsFalse();
+    }
+
+    // a * may be empty, so it takes an empty part; the folder itself is not under it, and a part after it is not in it
+    [Test] public async Task AStar_EmptyPartTrailingSeparatorAndTheFolderItself()
+    {
+        await Assert.That(Allows("/a/*/b", MatchMode.glob, "/a//b")).IsTrue();
+        await Assert.That(Allows("/a/*", MatchMode.glob, "/a/b/")).IsFalse();
+        await Assert.That(Allows("/a/*", MatchMode.glob, "/a")).IsFalse();
+        await Assert.That(Allows("/a/**", MatchMode.glob, "/a")).IsFalse();
+        await Assert.That(Allows("/a/**", MatchMode.glob, "/a/")).IsTrue();
+    }
+
+    // the literals beside a * hold on both sides
+    [Test] public async Task TheLiteralsBesideAStar()
+    {
+        await Assert.That(Allows("/a*b", MatchMode.glob, "/ab")).IsTrue();
+        await Assert.That(Allows("/a*b", MatchMode.glob, "/axb")).IsTrue();
+        await Assert.That(Allows("/a*b", MatchMode.glob, "/ax/b")).IsFalse();
+        await Assert.That(Allows("/a*b", MatchMode.glob, "/abx")).IsFalse();
+        await Assert.That(Allows("/a*b", MatchMode.glob, "/xab")).IsFalse();
+    }
+
+    // many stars against a long candidate that almost matches answer at once: the matcher never backtracks
+    [Test] public async Task ManyStars_OnALongCandidate_AnswerAtOnce()
+    {
+        var grant = "/" + string.Concat(Enumerable.Repeat("*a", 40)) + "*b";
+        var place = "/" + new string('a', 20_000);
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        await Assert.That(Allows(grant, MatchMode.glob, place)).IsFalse();
+        await Assert.That(clock.Elapsed).IsLessThan(System.TimeSpan.FromSeconds(2));
+    }
+
     [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows | TUnit.Core.Enums.OS.MacOs)] public async Task OnLinux_AnExactGrant_KeepsCase()
         => await Assert.That(Allows("/docs/a.txt", MatchMode.exact, "/Docs/a.txt")).IsFalse();
 }

@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using IWriter = global::app.type.format.IWriter;
 using Text = global::app.type.item.text.@this;
 
@@ -98,7 +97,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private bool PathMatches(string requestPath) => Match switch
     {
         Match.exact => string.Equals(Path, requestPath, Comparison),
-        Match.glob  => GlobMatches(Path, requestPath, Comparison == StringComparison.OrdinalIgnoreCase),
+        Match.glob  => Glob(requestPath),
         _ => false,
     };
 
@@ -108,46 +107,56 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             : StringComparison.Ordinal;
 
     /// <summary>
-    /// Glob match over the canonical-form string. Works uniformly for file
-    /// paths (<c>/apps/*/file.txt</c>) and URLs (<c>https://api.example.com/*</c>)
-    /// — the FileSystemGlobbing matcher chokes on the <c>://</c> in URLs, so the
-    /// pattern is compiled to a regex instead. <c>*</c> matches within a single
-    /// segment; <c>**</c> matches across segments; <c>?</c> is a single character of a segment. A segment ends at
-    /// each of the OS's separators (<c>/</c> on Linux; <c>\</c> and <c>/</c> on Windows).
+    /// Whether the grant's glob <see cref="Path"/> covers <paramref name="candidate"/>, for file paths
+    /// (<c>/apps/*/file.txt</c>) and URLs (<c>https://api.example.com/*</c>) alike. <c>*</c> is any run within one
+    /// part; <c>**</c> any run across parts; <c>?</c> one character of a part. A part ends at each of the OS's
+    /// separators (<c>/</c> on Linux; <c>\</c> and <c>/</c> on Windows). The literal runs between wildcards compare
+    /// with the grant's <see cref="Comparison"/>, the exact grant's own, so a glob never folds case wider than it.
+    /// One pass per piece of the glob over the places the candidate has reached: no backtracking.
     /// </summary>
-    private static bool GlobMatches(string pattern, string candidate, bool ignoreCase)
+    private bool Glob(string candidate)
     {
-        // one character of a segment: anything but the OS's separators
-        var inAPart = "[^" + Regex.Escape(global::app.Utils.PathHelper.DirectorySeparatorChar.ToString())
-            + Regex.Escape(global::app.Utils.PathHelper.AltDirectorySeparatorChar.ToString()) + "]";
-        var rx = new System.Text.StringBuilder("^");
-        for (int i = 0; i < pattern.Length; i++)
+        var comparison = Comparison;
+        var reach = new bool[candidate.Length + 1];
+        reach[0] = true;
+        for (int at = 0; at < Path.Length;)
         {
-            char c = pattern[i];
-            if (c == '*')
+            var next = new bool[candidate.Length + 1];
+            if (Path[at] == '*' && at + 1 < Path.Length && Path[at + 1] == '*')
             {
-                if (i + 1 < pattern.Length && pattern[i + 1] == '*')
-                {
-                    rx.Append(".*");
-                    i++;
-                }
-                else
-                {
-                    rx.Append(inAPart).Append('*');
-                }
+                // across parts: every place from the first one reached
+                var from = System.Array.IndexOf(reach, true);
+                if (from < 0) return false;
+                for (int p = from; p <= candidate.Length; p++) next[p] = true;
+                at += 2;
             }
-            else if (c == '?')
+            else if (Path[at] == '*')
             {
-                rx.Append(inAPart);
+                // within a part: a reached place, or one more character that isn't a separator
+                for (int p = 0; p <= candidate.Length; p++)
+                    next[p] = reach[p] || (p > 0 && next[p - 1] && !IsSeparator(candidate[p - 1]));
+                at++;
+            }
+            else if (Path[at] == '?')
+            {
+                for (int p = 0; p < candidate.Length; p++)
+                    if (reach[p] && !IsSeparator(candidate[p])) next[p + 1] = true;
+                at++;
             }
             else
             {
-                rx.Append(Regex.Escape(c.ToString()));
+                var end = Path.IndexOfAny(['*', '?'], at);
+                var literal = Path.AsSpan(at, (end < 0 ? Path.Length : end) - at);
+                for (int p = 0; p + literal.Length <= candidate.Length; p++)
+                    if (reach[p] && candidate.AsSpan(p, literal.Length).Equals(literal, comparison)) next[p + literal.Length] = true;
+                at += literal.Length;
             }
+            reach = next;
         }
-        rx.Append('$');
-        // every character but the wildcards is escaped, so the glob's regex is always sound
-        return Regex.IsMatch(candidate, rx.ToString(), ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None);
+        return reach[candidate.Length];
+
+        static bool IsSeparator(char c)
+            => c == global::app.Utils.PathHelper.DirectorySeparatorChar || c == global::app.Utils.PathHelper.AltDirectorySeparatorChar;
     }
 
     /// <summary>A grant writes its own form in every view.</summary>
