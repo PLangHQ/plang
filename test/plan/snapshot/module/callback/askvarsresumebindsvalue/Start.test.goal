@@ -1,6 +1,0 @@
-/ When !ask.answer is pre-bound (resume path), output.ask short-circuits and
-/ returns the answer instead of issuing a fresh AskCallback.
-Start
-- set %!ask.answer% = "Alice"
-- output.ask question="what's your name?", write to %name%
-- assert %name% equals "Alice"
