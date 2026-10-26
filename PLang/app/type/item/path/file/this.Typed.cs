@@ -25,11 +25,12 @@ public sealed partial class @this
             }
         }
 
-        /// <summary><paramref name="child"/> under it; under "." (the goal folder) the child is itself.</summary>
+        /// <summary><paramref name="child"/> (never rooted: its path's Combine reads a rooted one as under it) under it;
+        /// under "." (the goal folder) the child is itself.</summary>
         internal string Combine(string child)
         {
             var under = new Typed(child)._text;
-            return _text is "" or "." ? under : _text.TrimEnd('/') + "/" + under.TrimStart('/');
+            return _text is "" or "." ? under : _text.TrimEnd('/') + "/" + under;
         }
 
         /// <summary>Its last part's extension changed to <paramref name="extension"/> (with or without its dot).</summary>
