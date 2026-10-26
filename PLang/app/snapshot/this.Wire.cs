@@ -1,44 +1,39 @@
 namespace app.snapshot;
 
 /// <summary>
-/// Snapshot — its own wire serialization. The snapshot owns how it crosses the
-/// disk boundary; nothing above it needs to know its layout. "Sections
-/// self-serialize": each <see cref="ISnapshot"/> subsystem serializes the slice
-/// it captured (it alone knows the concrete CLR type behind each <c>object?</c>
-/// entry). The per-section dispatch order mirrors <see cref="global::app.@this.Restore"/>.
-///
-/// <para>Non-signing Store view: a snapshot is internal in-process state replayed into the same actor,
-/// not an actor-boundary crossing.</para>
+/// Snapshot — its text, both ways: it writes its own form into text, and is made from that text by its own reader.
+/// Nothing above it needs to know its layout.
 /// </summary>
 public sealed partial class @this
 {
     /// <summary>
-    /// Serializes this snapshot to its wire string. The snapshot rides as the
-    /// Value of a <c>snapshot</c>-typed Data through the channel serializer, so
-    /// its own leaf-serializer (<see cref="serializer.Default"/>) renders it
-    /// format-agnostically — the snapshot never names a format. Non-signing Store
-    /// view (a snapshot is internal in-process state, not an actor-boundary
-    /// crossing). A context is required so the renderer + type registry are in
-    /// scope.
+    /// In text a snapshot is its own written form, so what a file or a db row holds reads back as it
+    /// (<see cref="serializer.Reader"/>): its object of entries, each entry the Data it is with its type, in the program
+    /// form a <c>.pr</c> is (goal's format). Content alone would lose what each entry is (a section reads back as a dict).
+    /// The root rides bare: no Data around it, unsigned, as plang's own store keeps it.
     /// </summary>
-    public async System.Threading.Tasks.Task<string> Serialize(global::app.actor.context.@this context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.item.text.Writer writer)
     {
-        // The snapshot writes ITSELF via Output — one object of entries, each writing its own value — in
-        // the program form a .pr is (goal's format). The root rides bare (no Data envelope, unsigned:
-        // internal in-process state); a nested section rides as the entry that holds it, so it carries
-        // its own type on the wire.
+        var context = writer.Context;
         using var ms = new System.IO.MemoryStream();
         await context.App.type.list["goal"].kind.Encode(ms, context.Ok(this), context, global::app.View.Store);
-        return System.Text.Encoding.UTF8.GetString(ms.ToArray());
+        writer.String(System.Text.Encoding.UTF8.GetString(ms.ToArray()));
     }
 
     /// <summary>
-    /// The born-with-context creation door (<c>Data.Value&lt;snapshot&gt;</c> dispatches here).
-    ///
-    /// <para>An ordinary courier: a snapshot passes through, anything else declines. The wire READ
-    /// is not here — it lives at the serializer boundary in <see cref="serializer.Reader"/>, where a
-    /// snapshot is read as the value it is rather than converted from some other value.</para>
+    /// The born-with-context creation door (<c>Data.Value&lt;snapshot&gt;</c> dispatches here): a snapshot passes
+    /// through; its text (a file read, a db row) is read by the snapshot's own reader (<see cref="serializer.Reader"/>),
+    /// the one door from text to a snapshot; anything else declines.
     /// </summary>
-    public static @this? Create(global::app.type.item.@this value, global::app.data.@this data)
-        => value as @this;
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
+    {
+        if (raw is @this snapshot) return snapshot;
+        var context = data.Context;
+        if (raw is global::app.type.item.text.@this text)
+            return text.Read(context.App.type.list.Reader.Reader("snapshot", null, context), null, context) as @this;
+        data.Fail(new global::app.error.@this(
+            $"%{data.Name}% holds a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name} — a snapshot is made from a snapshot or its text",
+            "CreateItemDeclined", 400));
+        return null;
+    }
 }

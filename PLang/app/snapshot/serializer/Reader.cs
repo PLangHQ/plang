@@ -21,7 +21,8 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     /// not a slice waiting to be asked.</summary>
     public bool IsEager => true;
 
-    /// <summary>A snapshot is an object of its entries (or null); a string there names a variable holding one.</summary>
+    /// <summary>A snapshot is an object of its entries (or null); a string in a slot names a variable holding one. Its own
+    /// text (a file read, a db row) is read when it is asked as a snapshot (<see cref="Read{TReader}"/>).</summary>
     public bool Reads(global::app.type.format.TokenKind token)
         => token is global::app.type.format.TokenKind.Object or global::app.type.format.TokenKind.Null;
 
@@ -30,6 +31,14 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         where TReader : global::app.type.format.IReader, allows ref struct
     {
         if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("snapshot", kind), ctx.Context]);
+
+        // its text is its written form, plang's own: read back through here as the object it holds
+        if (reader.Peek() == global::app.type.format.TokenKind.String)
+        {
+            var types = ctx.Context.App.type.list;
+            var plang = (global::app.type.item.wire.kind.plang.@this)types["wire"].kind["plang"]!;
+            return plang.Read(new global::app.type.item.wire.@this(reader.String(), types[typeof(global::app.snapshot.@this)], plang), ctx);
+        }
 
         reader.BeginObject();
         var parser = new global::app.type.item.serializer.json(ctx.Context);

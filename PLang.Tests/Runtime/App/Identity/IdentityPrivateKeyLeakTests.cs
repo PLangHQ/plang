@@ -153,7 +153,7 @@ public class IdentityPrivateKeyLeakTests : System.IAsyncDisposable
     {
         var got = await Export();
         await User.Variable.Set("id", await got.Value());
-        var wire = await app.SnapshotToWire(app.Snapshot(User));
+        var wire = await app.Snapshot(User).Text(User);
         await Assert.That(wire.Contains(Key)).IsFalse();
     }
 
@@ -162,7 +162,7 @@ public class IdentityPrivateKeyLeakTests : System.IAsyncDisposable
     {
         var got = await Run("identity.get()");
         await User.Variable.Set("id", await got.Value());
-        var wire = await app.SnapshotToWire(app.Snapshot(User));
+        var wire = await app.Snapshot(User).Text(User);
         await Assert.That(wire.Contains(Key)).IsFalse();
     }
 }

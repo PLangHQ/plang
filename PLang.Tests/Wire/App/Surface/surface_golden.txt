@@ -971,14 +971,11 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnap
   Name(app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.item.text.this> [LlmBuilder]
   RequestShutdown() : System.Void
   Restore(app.snapshot.this s, app.actor.context.this context) : System.Threading.Tasks.Task
-  ResumeFromWire(System.String json, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
   Save() : System.Threading.Tasks.Task<app.data.this>
   Services : app.service.list.this { get; }
   ShutdownToken : System.Threading.CancellationToken { get; }
   Snapshot(app.actor.context.this context) : app.snapshot.this
   Snapshot(app.error.this error, app.actor.context.this context) : app.snapshot.this
-  SnapshotFromWire(System.String json, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.snapshot.this>>
-  SnapshotToWire(app.snapshot.this s) : System.Threading.Tasks.Task<System.String>
   Start() : System.Threading.Tasks.Task<app.data.this>
   Start(app.goal.this goal, app.actor.context.this context, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   StartedAt : app.type.item.datetime.this { get; } [LlmBuilder]

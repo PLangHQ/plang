@@ -3,16 +3,14 @@ using app.error;
 namespace PLang.Tests.App.SnapshotTests;
 
 /// <summary>
-/// The disk round-trip: Snapshot → SnapshotToWire (JSON string) → SnapshotFromWire
+/// The disk round-trip: Snapshot → its text (what a file save writes) → the snapshot that text is asked as
 /// → Restore. Proves a captured failure can be persisted and replayed with no live
 /// state — the deterministic-replay loop the builder needs.
-/// <para>A test marked <c>carried</c> waits on the snapshot redesign planned at <c>test/plan/snapshot/</c>: it is red
-/// until that plan is built, and known to be (select them with <c>[carried=test/plan/snapshot]</c>).</para>
 /// </summary>
 public class SnapshotWireTests
 {
     private static async Task<global::app.snapshot.@this> RoundTrip(global::app.@this app, global::app.snapshot.@this snap)
-        => (await (await app.SnapshotFromWire(await app.SnapshotToWire(snap), snap.Context)).Value())!;
+        => await snap.Context.Snapshot(await snap.Text(snap.Context));
 
     [Test]
     public async Task Variables_SurviveWireRoundTrip_WithValueAndType()
@@ -118,12 +116,12 @@ public class SnapshotWireTests
         string json;
         await using (var call = context.call.Push(step1.Code[0], await context.call.Setting(), context.Variable))
         {
-            json = await app.SnapshotToWire(app.Snapshot(app.actor.list.User.Context));   // <-- to disk (string)
+            json = await app.Snapshot(app.actor.list.User.Context).Text(app.actor.list.User.Context);   // <-- to disk (string)
             await call.DisposeAsync();
         }
 
         // Resume purely from the serialized string — no in-memory snapshot object.
-        var result = await app.ResumeFromWire(json, context);
+        var result = await (await context.Snapshot(json)).Resume(context);
 
         await result.IsSuccess();
         // Step 1 ran on resume; step 0 did NOT (we resumed mid-goal).
@@ -131,7 +129,7 @@ public class SnapshotWireTests
         await Assert.That((await context.Variable.Get("s0")).IsInitialized).IsFalse();
     }
 
-    [Test, TUnit.Core.Property("carried", "test/plan/snapshot")]
+    [Test]
     public async Task SerializedString_ConvertsToSnapshotViaTypeSystem_AndResumesToSuccess()
     {
         // Proves the consumer-typed deserialize: the wire string converts to a
@@ -150,14 +148,14 @@ public class SnapshotWireTests
         string json;
         await using (var call = context.call.Push(step1.Code[0], await context.call.Setting(), context.Variable))
         {
-            json = await app.SnapshotToWire(app.Snapshot(app.actor.list.User.Context));
+            json = await app.Snapshot(app.actor.list.User.Context).Text(app.actor.list.User.Context);
             await call.DisposeAsync();
         }
 
         // The string → snapshot conversion the runtime performs for a Data<snapshot> slot:
         // the snapshot builds ITSELF from its wire string through its own Create door.
         var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(new global::app.type.@this("snapshot")), context: context);
-        var converted = global::app.snapshot.@this.Create(context.Text(json), carrier);
+        var converted = global::app.snapshot.@this.Create(context.Text(json), null, carrier);
         await Assert.That(converted).IsNotNull();
 
         var result = await converted!.Resume(context);
@@ -175,7 +173,7 @@ public class SnapshotWireTests
         return step;
     }
 
-    [Test, TUnit.Core.Property("carried", "test/plan/snapshot")]
+    [Test]
     public async Task MidStackChain_SurvivesDisk_ResumesDeep_AndUnwindsToEntryGoal()
     {
         // The realistic shape: Start sets vars and calls Sub; Sub sets a var and
@@ -211,7 +209,7 @@ public class SnapshotWireTests
         await using (var startFrame = context.call.Push(start.Step[1].Code[0], await context.call.Setting(), context.Variable))
         await using (var subFrame = context.call.Push(sub.Step[1].Code[0], await context.call.Setting(), context.Variable))
         {
-            json = await app.SnapshotToWire(app.Snapshot(app.actor.list.User.Context));
+            json = await app.Snapshot(app.actor.list.User.Context).Text(app.actor.list.User.Context);
         }
 
         // Round-trip through the disk string, then patch %i% 1 → 2 (the fix the
@@ -232,7 +230,7 @@ public class SnapshotWireTests
         await Assert.That((await context.Variable.GetValue("keep"))).IsEqualTo("alive");
     }
 
-    [Test, TUnit.Core.Property("carried", "test/plan/snapshot")]
+    [Test]
     public async Task PlangPath_AsSnapshotConvert_EditSurvivesResume()
     {
         // Mirrors the .test.goal EXACTLY: the read result (an envelope STRING) goes
@@ -252,7 +250,7 @@ public class SnapshotWireTests
         string json;
         await using (var call = context.call.Push(goal.Step[1].Code[0], await context.call.Setting(), context.Variable))
         {
-            json = await app.SnapshotToWire(app.Snapshot(app.actor.list.User.Context));
+            json = await app.Snapshot(app.actor.list.User.Context).Text(app.actor.list.User.Context);
         }
 
         // `as snapshot` path: typeEntity.Create(envelopeString, context). A wire-raw string
@@ -306,7 +304,7 @@ public class SnapshotWireTests
         await Assert.That(content).Contains("\"Variables\"");
     }
 
-    [Test, TUnit.Core.Property("carried", "test/plan/snapshot")]
+    [Test]
     public async Task ThrowTimeSnapshot_EditSurvivesResume()
     {
         // The ONE difference from the passing edit-resume tests: the snapshot comes
@@ -327,7 +325,7 @@ public class SnapshotWireTests
         {
             var err = new ServiceError("boom", goal.Step[1],
                 context.call.Current!.Chain);
-            json = await app.SnapshotToWire(app.Snapshot(err, app.actor.list.User.Context));   // throw-time overload
+            json = await app.Snapshot(err, app.actor.list.User.Context).Text(app.actor.list.User.Context);   // throw-time overload
         }
 
         var te = new global::app.type.@this("snapshot");
@@ -345,7 +343,7 @@ public class SnapshotWireTests
         await Assert.That(System.Convert.ToInt64((await context.Variable.GetValue("seen")))).IsEqualTo(2L);
     }
 
-    [Test, TUnit.Core.Property("carried", "test/plan/snapshot")]
+    [Test]
     public async Task TypedSnapshotString_NavigateEditResume_PersistsEdit()
     {
         // The `as snapshot` contract: %snap% is a Data with a string Value (wire bytes
@@ -365,7 +363,7 @@ public class SnapshotWireTests
         await context.Variable.Set("x", 1L);
         string json;
         await using (var call = context.call.Push(goal.Step[1].Code[0], await context.call.Setting(), context.Variable))
-            json = await app.SnapshotToWire(app.Snapshot(app.actor.list.User.Context));
+            json = await app.Snapshot(app.actor.list.User.Context).Text(app.actor.list.User.Context);
 
         // %snap% = string value, but TYPED as snapshot (what an honored `as snapshot` yields).
         await context.Variable.Set(new global::app.data.@this(
@@ -380,7 +378,7 @@ public class SnapshotWireTests
         await Assert.That(seen).IsEqualTo(2L);  // edit persists IFF navigation materializes+caches
     }
 
-    [Test, TUnit.Core.Property("carried", "test/plan/snapshot")]
+    [Test]
     public async Task NavigateAndEditCapturedVariable_ThenResumeToSuccess()
     {
         // The PLang fix-and-replay loop, in C#: read a snapshot back, navigate
@@ -400,7 +398,7 @@ public class SnapshotWireTests
         string json;
         await using (var call = context.call.Push(goal.Step[1].Code[0], await context.call.Setting(), context.Variable))
         {
-            json = await app.SnapshotToWire(app.Snapshot(app.actor.list.User.Context));
+            json = await app.Snapshot(app.actor.list.User.Context).Text(app.actor.list.User.Context);
         }
 
         // Read the snapshot back as a value, bind it under %snap%.
@@ -424,12 +422,12 @@ public class SnapshotWireTests
     public async Task EmptyApp_WireIsValidJson_AndRestoresClean()
     {
         var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
-        var json = await src.SnapshotToWire(src.Snapshot(src.actor.list.User.Context));
+        var json = await src.Snapshot(src.actor.list.User.Context).Text(src.actor.list.User.Context);
 
         await Assert.That(json.StartsWith("{")).IsTrue();
 
         var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
-        await dst.Restore((await (await src.SnapshotFromWire(json, dst.actor.list.User.Context)).Value())!, dst.actor.list.User.Context);
+        await dst.Restore(await dst.actor.list.User.Context.Snapshot(json), dst.actor.list.User.Context);
 
         await Assert.That(dst.Build != null).IsFalse();
     }
