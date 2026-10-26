@@ -1,6 +1,22 @@
 # snapshot — coder summary
 
-**Version:** v3 (every stage of the plan done; what's left waits on Ingi)
+**Version:** v4 (second round: stages 8 and 9 done; stage 7 waits on Ingi's answer on the frame's shape; 10, 11 after)
+
+## Second round (v4, decisions 42–76)
+
+- **Stage 8, `property`** (2a019554a, 955b852dc): what a program adds to a thing is its `property`
+  (`app.type.item.property.list`, an item: `["name"]`, `.list`, writes and reads itself, a snapshot part). The six
+  keepers (app, actor, call, goal, step, module) declare a `[Store, LlmBuilder]` `property` node through
+  `property.IOwner`; item's Get/Set fall through to it. Data's `Kept` → `Property`; the wire member is `property`.
+- **Stage 9, signed in its own view** (d60c08ceb, 327ea4ba3, 751cf5de5, 627ad7f56): `View.Snapshot` (store, no
+  `[Sensitive]` member, a sensitive leaf null, no Data name); a signature records its `view` inside the signed bytes,
+  and only a recorded `snapshot` reads at rest; `snapshot.save` is walk → `wire.Of` → sign; `resume` refuses
+  `SnapshotUnsigned`, `SnapshotSignatureInvalid`, `SnapshotNotTheApps`; a snapshot file is `.plang`; a file's content
+  opening carries the read's signature and properties onto the binding (`Data.Carry`); writers refuse a value deeper
+  than the readers' 64 levels (`ValueTooDeep`), a pasted slice counting its own depth.
+- **Known red:** `FreshAppGoesOn` (plang) is refused at the save (`ValueTooDeep`) under `--test` until stage 7 saves the
+  stack as a chain.
+- **Next:** stage 7 (the chain and the frame's record), 10 (the run's other state), 11 (`sign snapshot`, re-sign).
 
 ## What this is
 
