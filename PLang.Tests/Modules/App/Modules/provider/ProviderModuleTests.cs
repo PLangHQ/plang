@@ -52,6 +52,10 @@ public class ProviderModuleTests
     private static string FixtureDll(string project) =>
         System.IO.Path.Combine(FixtureBase, $"{project}.dll");
 
+    // An OS location handed in as one, on every OS: its file URL (a "/" glued on is the Unix OS-rooted form only).
+    private global::app.type.item.path.@this OsPath(string location)
+        => global::app.type.item.path.@this.Resolve(new System.Uri(location).AbsoluteUri, Ctx);
+
     /// <summary>
     /// Pre-grant Execute (+ Read) on a fixture DLL path. The fixture DLLs
     /// live outside the per-test App root, so AuthGate would prompt
@@ -61,7 +65,7 @@ public class ProviderModuleTests
     {
         // Use the exact resolved path so the grant's Path key matches the
         // canonical-form path that AuthGate compares against.
-        var resolved = global::app.type.item.path.@this.Resolve("/" + dllPath, Ctx);
+        var resolved = OsPath(dllPath);
         var verbs = new HashSet<global::app.type.item.permission.Verb>
         {
             global::app.type.item.permission.Verb.read,
@@ -134,7 +138,7 @@ public class ProviderModuleTests
             return;
         }
 
-        var action = new global::app.module.code.load(Ctx) { Path = Ctx.Ok<global::app.type.item.path.@this>(global::app.type.item.path.@this.Resolve("/" + dllPath, Ctx)),
+        var action = new global::app.module.code.load(Ctx) { Path = Ctx.Ok<global::app.type.item.path.@this>(OsPath(dllPath)),
         };
         var result = await action.Start();
 
@@ -155,7 +159,7 @@ public class ProviderModuleTests
             return;
         }
 
-        var action = new global::app.module.code.load(Ctx) { Path = Ctx.Ok<global::app.type.item.path.@this>(global::app.type.item.path.@this.Resolve("/" + dllPath, Ctx)),
+        var action = new global::app.module.code.load(Ctx) { Path = Ctx.Ok<global::app.type.item.path.@this>(OsPath(dllPath)),
         };
         var result = await action.Start();
 
@@ -174,7 +178,7 @@ public class ProviderModuleTests
             return;
         }
 
-        var action = new global::app.module.code.load(Ctx) { Path = Ctx.Ok<global::app.type.item.path.@this>(global::app.type.item.path.@this.Resolve("/" + dllPath, Ctx)),
+        var action = new global::app.module.code.load(Ctx) { Path = Ctx.Ok<global::app.type.item.path.@this>(OsPath(dllPath)),
         };
         var result = await action.Start();
 
