@@ -1,7 +1,7 @@
 namespace app.module.code.registration.serializer;
 
 /// <summary>
-/// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for <c>registration</c> — the
+/// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for <c>code.registration</c> — the
 /// read-side mirror of the tagged write. Lazy like any content value: Restore reaches a row through
 /// the typed ask, and the slice materializes here.
 /// </summary>
@@ -15,7 +15,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     {
         if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this(typeof(global::app.module.code.registration.@this), kind), ctx.Context]);
 
-        string providerKind = "", providerName = "";
+        string providerKind = "", provider = "";
 
         reader.BeginObject();
         while (reader.NextName(out var name))
@@ -23,7 +23,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             switch (name)
             {
                 case "kind": providerKind = reader.String(); break;
-                case "providerName": providerName = reader.String(); break;
+                case "provider": provider = reader.String(); break;
                 default: reader.Skip(); break;
             }
         }
@@ -32,7 +32,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         return new global::app.module.code.registration.@this(ctx.Context.App.type.list[typeof(global::app.module.code.registration.@this)])
         {
             Kind = providerKind,
-            ProviderName = providerName,
+            Provider = provider,
         };
     }
 }

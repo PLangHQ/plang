@@ -27,7 +27,7 @@ public static class SnapshotReadExtensions
             : Array.Empty<global::app.data.@this>();
 
     /// <summary>The rows of a list entry lowered to a CLR record — the same boundary Providers'
-    /// own Restore crosses for Registration/DefaultOverride, which ride as clr carriers in-process.</summary>
+    /// own Restore crosses for registration and default, which ride as clr carriers in-process.</summary>
     public static async Task<List<T>> Records<T>(this Snapshot s, string key)
     {
         var records = new List<T>();

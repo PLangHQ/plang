@@ -103,8 +103,8 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
 
         // one record of the DLL: its provider is no registration of its own, and the override names its kind by plang name
         await Assert.That((await snap.Node("Code").Records<global::app.module.code.registration.@this>("registrations"))!.Count).IsEqualTo(0);
-        var overrides = await snap.Node("Code").Records<global::app.module.code.defaultoverride.@this>("defaultOverrides");
-        await Assert.That(overrides!.Single(o => o.ProviderName == "test-signing").Kind).IsEqualTo("signing");
+        var overrides = await snap.Node("Code").Records<global::app.module.code.@default.@this>("default");
+        await Assert.That(overrides!.Single(o => o.Provider == "test-signing").Kind).IsEqualTo("signing");
 
         var text = await snap.Text(context);
         await using var dst = new global::app.@this(root + "-dst");
@@ -150,7 +150,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         // stored by its kind's plang name and its own, never a C# type name
         var registration = (await snap.Node("Code").Records<global::app.module.code.registration.@this>("registrations"))!.Single();
         await Assert.That(registration.Kind).IsEqualTo("grep");
-        await Assert.That(registration.ProviderName).IsEqualTo("custom");
+        await Assert.That(registration.Provider).IsEqualTo("custom");
 
         var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
         var started = await snap.Start(dst, dst.actor.list.User.Context);
@@ -163,12 +163,12 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
     public async Task Providers_Restore_AnswersTheChoicesError_ForAKindTheRuntimeDoesntDeclare()
     {
         var snap = new Snapshot(app.actor.list.User.Context);
-        snap.Node("Code").Write("defaultOverrides", new List<global::app.module.code.defaultoverride.@this>
+        snap.Node("Code").Write("default", new List<global::app.module.code.@default.@this>
         {
-            new(app.actor.list.User.Context.App.type.list[typeof(global::app.module.code.defaultoverride.@this)])
+            new(app.actor.list.User.Context.App.type.list[typeof(global::app.module.code.@default.@this)])
             {
                 Kind = "nosuchkind",
-                ProviderName = "ghost",
+                Provider = "ghost",
             }
         });
 
@@ -184,12 +184,12 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
     {
         // the default-selection name doesn't match any registered provider → a hard error
         var snap = new Snapshot(app.actor.list.User.Context);
-        snap.Node("Code").Write("defaultOverrides", new List<global::app.module.code.defaultoverride.@this>
+        snap.Node("Code").Write("default", new List<global::app.module.code.@default.@this>
         {
-            new(app.actor.list.User.Context.App.type.list[typeof(global::app.module.code.defaultoverride.@this)])
+            new(app.actor.list.User.Context.App.type.list[typeof(global::app.module.code.@default.@this)])
             {
                 Kind = "grep",
-                ProviderName = "phantom",
+                Provider = "phantom",
             }
         });
 

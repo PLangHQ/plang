@@ -8,6 +8,7 @@ namespace app.module.code.dll;
 /// modules, <c>add module</c>). A plang value written by its tagged members and read back by its own reader, so a
 /// snapshot carries what came in, and starting it takes the DLL in again the same way.
 /// </summary>
+[PlangType("code.dll")]
 public abstract class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>A DLL's record, born holding <paramref name="type"/> — the app's.</summary>
@@ -25,8 +26,6 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
 
     /// <summary>Takes the DLL in again into <paramref name="code"/> through the door it first came through.</summary>
     internal abstract System.Threading.Tasks.Task<global::app.data.@this> Start(code.@this code, global::app.actor.context.@this context);
-
-    public override string ToString() => Source.ToString() ?? "";
 
     /// <summary>The pure core — a record passes through; nothing else converts into one.</summary>
     public static @this? Create(object? raw) => raw as @this;

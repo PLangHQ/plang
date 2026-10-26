@@ -8,6 +8,7 @@ namespace app.module.code.registration;
 /// again from, so a snapshot keeps its registration only to answer that it can't come back. A plang VALUE, written as a
 /// typed value and read back through its own reader.
 /// </summary>
+[PlangType("code.registration")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>A captured registration, born holding <paramref name="type"/> — the app's.</summary>
@@ -21,10 +22,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     [Store, Out]
     public string Kind { get; init; } = "";
 
+    /// <summary>The provider, by the name it was registered under.</summary>
     [Store, Out]
-    public string ProviderName { get; init; } = "";
-
-    public override string ToString() => $"{ProviderName} ({Kind})";
+    public string Provider { get; init; } = "";
 
     /// <summary>The pure core — a registration passes through; nothing else converts into one.</summary>
     public static @this? Create(object? raw) => raw as @this;

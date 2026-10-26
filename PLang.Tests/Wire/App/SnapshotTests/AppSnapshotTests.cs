@@ -11,7 +11,7 @@ public class AppSnapshotTests
         var snap = app.Snapshot(app.actor.list.User.Context).Saved();
 
         await Assert.That(snap.Entries.Get("mode", snap.Context)).IsNotNull();
-        await Assert.That(snap.Entries.Get("kept", snap.Context)).IsNotNull();
+        await Assert.That(snap.Entries.Get("kept", snap.Context)).IsNull();             // nothing kept: an empty node is left out
         await Assert.That(snap.Holds("Code")).IsTrue();
         await Assert.That(snap.Holds(SnapshotPathExtensions.UserVariable)).IsTrue();
         await Assert.That(snap.Holds(SnapshotPathExtensions.UserCall)).IsTrue();

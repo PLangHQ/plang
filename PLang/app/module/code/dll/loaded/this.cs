@@ -4,6 +4,7 @@ namespace app.module.code.dll.loaded;
 /// A DLL loaded for its providers and plang types (<c>load code 'my-crypto.dll'</c>): taken in again, its types join the
 /// app's and its providers are registered, each remembering the DLL.
 /// </summary>
+[global::app.Attributes.PlangType("code.dll.loaded")]
 public sealed class @this : dll.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>A loaded DLL's record, born holding <paramref name="type"/> — the app's.</summary>

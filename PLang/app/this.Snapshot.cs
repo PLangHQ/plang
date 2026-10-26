@@ -41,7 +41,8 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
         snapshot.Entries.Set(new data.@this("mode",
             new global::app.type.item.choice.@this<global::app.Mode>(Mode, types[typeof(global::app.type.item.choice.@this<global::app.Mode>)]),
             context: context));
-        snapshot.Entries.Set(new data.@this("kept", Kept.Dict(types), context: context));
+        // an empty node is left out, as the walk leaves out an empty part
+        if (Kept.Dict(types) is { CountRaw: > 0 } kept) snapshot.Entries.Set(new data.@this("kept", kept, context: context));
         return context.Ok();
     }
 

@@ -6,6 +6,7 @@ namespace app.module.code.dll.added;
 /// A DLL added for its modules (<c>add module 'tools.dll'</c>): taken in again, its actions join the modules, found
 /// under the same <see cref="Namespace"/>.
 /// </summary>
+[PlangType("code.dll.added")]
 public sealed class @this : dll.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>An added DLL's record, born holding <paramref name="type"/> — the app's.</summary>

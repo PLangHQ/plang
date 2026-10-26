@@ -1,8 +1,8 @@
-namespace app.module.code.defaultoverride.serializer;
+namespace app.module.code.@default.serializer;
 
 /// <summary>
-/// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for <c>defaultoverride</c> — the
-/// read-side mirror of the tagged write.
+/// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for <c>code.default</c> — the read-side mirror of the
+/// tagged write.
 /// </summary>
 public sealed class Reader : global::app.type.reader.ITypeReader
 {
@@ -12,9 +12,9 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this(typeof(global::app.module.code.defaultoverride.@this), kind), ctx.Context]);
+        if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this(typeof(@default.@this), kind), ctx.Context]);
 
-        string providerKind = "", providerName = "";
+        string providerKind = "", provider = "";
 
         reader.BeginObject();
         while (reader.NextName(out var name))
@@ -22,16 +22,16 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             switch (name)
             {
                 case "kind": providerKind = reader.String(); break;
-                case "providerName": providerName = reader.String(); break;
+                case "provider": provider = reader.String(); break;
                 default: reader.Skip(); break;
             }
         }
         reader.EndObject();
 
-        return new global::app.module.code.defaultoverride.@this(ctx.Context.App.type.list[typeof(global::app.module.code.defaultoverride.@this)])
+        return new @default.@this(ctx.Context.App.type.list[typeof(@default.@this)])
         {
             Kind = providerKind,
-            ProviderName = providerName,
+            Provider = provider,
         };
     }
 }
