@@ -7,7 +7,8 @@ namespace app.module.llm.setting;
 /// </summary>
 public interface IKey
 {
-    /// <summary>The key — saved, else its environment variable's. Never shown.</summary>
+    /// <summary>The key — saved, else its environment variable's. Hidden where its setting is written or dumped; a goal
+    /// that reads it and writes it out prints it.</summary>
     global::app.type.item.text.@this Key { get; set; }
 
     /// <summary>What the user is asked when no key is held.</summary>

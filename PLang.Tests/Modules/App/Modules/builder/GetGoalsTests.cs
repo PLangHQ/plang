@@ -37,7 +37,8 @@ public class GetGoalsTests
         catch { /* best effort */ }
     }
 
-    [Test]
+    // a file made unreadable by chmod: a mode Windows has no such meaning for
+    [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows)]
     public async Task GetGoals_UnreadableSources_FailTheBuildOnce_NamingEveryFile_EachErrorWhole()
     {
         // Two .goal files outside the app root. The actor holds an EXACT read grant on their folder, so

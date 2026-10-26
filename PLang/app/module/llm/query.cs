@@ -57,6 +57,28 @@ public partial class query : IContext
     [GoalCallback("chunk")]
     public partial data.@this<global::app.goal.step.action.@this>? OnStream { get; init; }
 
+    /// <summary>The messages as they are sent: a step's own messages hold their variables in the row it wrote
+    /// (<c>[{Role: user, Content: "Say hello to %name%"}]</c>), so the row is read as the plain list it is, whose leaves
+    /// render with the asker as any list's do, and the messages are made from what it rendered — a message's members
+    /// are its characters then. A variable that isn't there fails the read, whole.</summary>
+    internal async Task<global::app.data.@this> Messages(global::app.actor.context.@this context)
+    {
+        if (Message.Peek() is not global::app.type.item.source { HasVariable: true } row)
+            return context.Ok(await Message.Value());
+        var plain = context.App.type.list[new global::app.type.@this("list", template: row.Type.Template), context];
+        var read = new global::app.data.@this("message", row.Declared(plain), context: context);
+        if (await read.Value() is not global::app.type.item.list.@this rendered || !read.Success) return read;
+        // each rendered element asked as a message, its type's own birth: a text is the user's message, a dict its record
+        var messages = new List<LlmMessage>();
+        foreach (var element in rendered.Items(context))
+        {
+            if (await element.Value<LlmMessage>() is { } message) messages.Add(message);
+            else if (!element.Success) return element;
+        }
+        return context.Ok(new global::app.type.item.list.@this<LlmMessage>(messages,
+            context.App.type.list[typeof(global::app.type.item.list.@this<LlmMessage>)]));
+    }
+
     /// <summary>Whether this ask streams: it names a call for each chunk.</summary>
     internal async Task<bool> IsStreamed() => OnStream != null && await OnStream.Value() != null;
 

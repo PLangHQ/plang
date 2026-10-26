@@ -17,7 +17,8 @@ public sealed class @this : global::app.type.item.setting.module.@this, IKey
         = global::app.module.cache.type.cache.use;
 
     /// <summary>The key a query is sent with — <c>%!llm.setting.key%</c>; when none is saved, the
-    /// <c>OPENAI_API_KEY</c> environment variable's. Never shown.</summary>
+    /// <c>OPENAI_API_KEY</c> environment variable's. Hidden where its setting is written or dumped; a goal that reads it
+    /// and writes it out prints it.</summary>
     [Out, Store, Sensitive] public global::app.type.item.text.@this Key { get; set; }
         = System.Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? "";
 

@@ -74,16 +74,14 @@ public class UnpackedLinkTests : IDisposable
         await Assert.That(leaked).IsFalse();
     }
 
-    [Test] public async Task AnAbsoluteLinkOutOfTheFolder_ReadsNothingOutside()
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)] public async Task AnAbsoluteLinkOutOfTheFolder_ReadsNothingOutside()
     {
-        if (!OperatingSystem.IsLinux()) return;
         await NothingOutsideIsReadThrough(_outside);
     }
 
     // a link that climbs with .. but stays inside (npm's node_modules/.bin/x → ../pkg/bin/x) unpacks as it is written
-    [Test] public async Task AnInsideLinkWithDotDot_UnpacksAsWritten_AndReads()
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)] public async Task AnInsideLinkWithDotDot_UnpacksAsWritten_AndReads()
     {
-        if (!OperatingSystem.IsLinux()) return;
         var file = new PaxTarEntry(TarEntryType.RegularFile, "node_modules/pkg/bin/x.txt") { DataStream = new MemoryStream("run"u8.ToArray()) };
         await (await Into(Tar(file, Link("node_modules/.bin/x.txt", "../pkg/bin/x.txt")), "up")).IsSuccess();
         await Assert.That(new FileInfo(Path.Combine(_root, "up/node_modules/.bin/x.txt")).LinkTarget).IsEqualTo("../pkg/bin/x.txt");
@@ -96,9 +94,8 @@ public class UnpackedLinkTests : IDisposable
     // and y → d/secret.txt is written while d doesn't exist, then d → <outside> lands. Each link is written as a relative
     // target from its own real folder to a spot inside, and every link the unpack writes is one, so a later one on the
     // way leads inside too: the folder's final state reads inside.
-    [Test] public async Task ALaterEntry_ChangingWhereAnEarlierLinkLeads_StillReadsInside()
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)] public async Task ALaterEntry_ChangingWhereAnEarlierLinkLeads_StillReadsInside()
     {
-        if (!OperatingSystem.IsLinux()) return;
         var archive = Tar(Link("x", "a/.."), Link("a", "."), Link("y", "d/secret.txt"), Link("d", _outside));
         await (await Into(archive, "up")).IsSuccess();
         await Assert.That(new FileInfo(Path.Combine(_root, "up/x")).LinkTarget).IsEqualTo(".");
@@ -109,9 +106,8 @@ public class UnpackedLinkTests : IDisposable
         await Assert.That(_channel.Count).IsEqualTo(0);
     }
 
-    [Test] public async Task ARelativeLinkClimbingOut_ReadsNothingOutside()
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)] public async Task ARelativeLinkClimbingOut_ReadsNothingOutside()
     {
-        if (!OperatingSystem.IsLinux()) return;
         await NothingOutsideIsReadThrough(string.Join('/', Enumerable.Repeat("..", 20)) + _outside);
     }
 }

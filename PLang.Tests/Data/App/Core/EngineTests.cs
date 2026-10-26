@@ -149,7 +149,8 @@ public class EngineTests : System.IAsyncDisposable
     {
         await using var engine = new global::app.@this("/app").Testing();
 
-        await Assert.That(engine.filesystem.root.Absolute).IsEqualTo("/app");
+        // the root as the OS names it ("/app" on Linux, "C:\app" on Windows)
+        await Assert.That(engine.filesystem.root.Absolute).IsEqualTo(System.IO.Path.GetFullPath("/app"));
         await Assert.That(engine.Module).IsNotNull();
         await Assert.That(engine.actor.list.User.Channel).IsNotNull();
         await Assert.That(engine.goal).IsNotNull();

@@ -6,8 +6,9 @@ namespace PLang.Tests.App.actions.terminal;
 /// <c>terminal.start(..., Permission=[{path, verbs}])</c>: the kernel (Landlock) holds the program to its permissions —
 /// it touches only the folders they name, with their verbs, while plang itself, and every program started without
 /// permissions, stay free. Each permission is first the caller's to grant. A step that gives a program permissions
-/// never runs it free. Linux only; elsewhere refused (PermissionNotEnforced).
+/// never runs it free. Linux only; elsewhere refused (PermissionNotEnforced). Unix's: each test starts //bin/sh.
 /// </summary>
+[ExcludeOn(TUnit.Core.Enums.OS.Windows)]
 public class PermissionTests : IDisposable
 {
     private readonly string _root;
@@ -108,10 +109,9 @@ public class PermissionTests : IDisposable
         await Assert.That((await result.Value())?.ToString() ?? "").Contains("refused-write");
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task WithoutPermission_TheProgramIsFree()
     {
-        if (!OperatingSystem.IsLinux()) return;
         var result = await Sh($"echo free > {_outside}/free.txt", null);
         await result.IsSuccess();
         await Assert.That(File.Exists(Path.Combine(_outside, "free.txt"))).IsTrue();
@@ -140,10 +140,9 @@ public class PermissionTests : IDisposable
         File.WriteAllText(Path.Combine(_outside, "after.txt"), "x");
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task APermissionTheAppMayNotGrant_IsRefused_AndTheProgramNeverStarts()
     {
-        if (!OperatingSystem.IsLinux()) return;
         // the program lives in the app (no execute question), so the one question is the permission's — answered no
         var sh = Path.Combine(_root, "sh");
         File.Copy("/bin/sh", sh);
@@ -205,10 +204,9 @@ public class PermissionTests : IDisposable
         await Assert.That(File.Exists(Path.Combine(_root, "granted", "kept.txt"))).IsFalse();
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task APermissionThroughALink_IsRefused()
     {
-        if (!OperatingSystem.IsLinux()) return;
         // /door in the app is a link to a folder outside it: a permission for /door would hold the program to the outside
         File.CreateSymbolicLink(Path.Combine(_root, "door"), _outside);
         var result = await Sh($"echo x > {_outside}/through.txt", Permissions(May("/door", "write")));

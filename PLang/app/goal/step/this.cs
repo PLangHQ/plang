@@ -113,11 +113,13 @@ public sealed partial class @this
     /// <c>init</c> is the enforcement: there is no stamping it in afterwards, and no repair getter.</summary>
     [JsonIgnore, LlmBuilder]
     public global::app.goal.@this Goal { get; init; } = null!;
-    /// <summary>A step starts through the step type's events, then its own.</summary>
+    /// <summary>A step starts through the step type's events, then its own. A step of one of plang's own goals
+    /// (<see cref="global::app.goal.@this.IsSystem"/>) is none of the app's, so it starts through its own events alone;
+    /// a step composed with no goal is the app's.</summary>
     protected internal override global::app.type.item.@this? Level(int depth, actor.context.@this context) => depth switch
     {
-        0 => context.App.step,
-        1 => this,
+        0 => Goal is { IsSystem: true } ? this : context.App.step,
+        1 when Goal is not { IsSystem: true } => this,
         _ => null,
     };
 

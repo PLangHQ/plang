@@ -22,11 +22,18 @@ public class ActorPermissionStorageTests
         return app;
     }
 
+    // A grant is on a place as the OS names it — where the gate finds the path (on Linux "/p" is "/p", on Windows "C:\p").
+    private static string Place(global::app.@this app, string path)
+    {
+        var context = app.actor.list.User.Context;
+        return context.File(path).Location(context.Filesystem)!.Absolute;
+    }
+
     private static global::app.data.@this<PermissionRecord> Grant(
         global::app.@this app, string actor, string path, Verb? verb = null, MatchMode match = MatchMode.exact)
     {
         var verbs = verb is { } v ? new System.Collections.Generic.HashSet<Verb> { v } : PermissionRecord.AllVerbs;
-        var p = new PermissionRecord(actor, path, verbs, match, app.type.list[typeof(PermissionRecord)]);
+        var p = new PermissionRecord(actor, Place(app, path), verbs, match, app.type.list[typeof(PermissionRecord)]);
         return new global::app.data.@this<PermissionRecord>("", p, context: app.actor.list.User.Context);
     }
 
@@ -38,7 +45,7 @@ public class ActorPermissionStorageTests
 
         var found = await app.actor.list.User.Permission.Find(app.actor.list.User.Context.File("/p"), global::app.type.item.permission.Verb.read);
         await Assert.That(found).IsNotNull();
-        await Assert.That((await found!.Value<PermissionRecord>())!.Path).IsEqualTo("/p");
+        await Assert.That((await found!.Value<PermissionRecord>())!.Path).IsEqualTo(Place(app, "/p"));
     }
 
     [Test] public async Task PerActorIsolation_UserGrant_NotSurfacedTo_SystemFind()
@@ -69,8 +76,8 @@ public class ActorPermissionStorageTests
         // Routing: only the persisted grant lands in the actor's saved permission setting; the session
         // one must NOT appear there.
         var paths = await Saved(app, app.actor.list.User);
-        await Assert.That(paths).Contains("/disk");
-        await Assert.That(paths).DoesNotContain("/mem");
+        await Assert.That(paths).Contains(Place(app, "/disk"));
+        await Assert.That(paths).DoesNotContain(Place(app, "/mem"));
     }
 
     // The paths of the grants the actor's own permission setting holds.
@@ -107,7 +114,7 @@ public class ActorPermissionStorageTests
         await app.actor.list.System.Permission.Add(Grant(app, app.actor.list.System.Name, "/s"), persist: true);
 
         await Assert.That(await app.actor.list.User.Permission.Find(app.actor.list.User.Context.File("/s"), Verb.read)).IsNull();
-        await Assert.That(await Saved(app, app.actor.list.User)).DoesNotContain("/s");
+        await Assert.That(await Saved(app, app.actor.list.User)).DoesNotContain(Place(app, "/s"));
     }
 
     // A saved grant is the actor's row: the next App on the same root reads it back.
@@ -118,7 +125,7 @@ public class ActorPermissionStorageTests
             await first.actor.list.User.Permission.Add(Grant(first, first.actor.list.User.Name, "/kept"), persist: true);
 
         await using var next = NewApp(root);
-        await Assert.That(await Saved(next, next.actor.list.User)).Contains("/kept");
+        await Assert.That(await Saved(next, next.actor.list.User)).Contains(Place(next, "/kept"));
         await Assert.That(await next.actor.list.User.Permission.Find(next.actor.list.User.Context.File("/kept"), Verb.read)).IsNotNull();
     }
 

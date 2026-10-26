@@ -47,9 +47,8 @@ public class RealPathGateTests : System.IAsyncDisposable
         }
     }
 
-    [Test] public async Task ALinkInTheRootLeadingOut_IsAsked_NeverInRoot()
+    [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows)] public async Task ALinkInTheRootLeadingOut_IsAsked_NeverInRoot()
     {
-        if (System.OperatingSystem.IsWindows()) return;
         System.IO.Directory.CreateSymbolicLink(System.IO.Path.Combine(root, "out"), outside);
         var read = await user.File(System.IO.Path.Combine(root, "out", "secret.txt")).Read(user);
         await read.IsFailure();
@@ -57,9 +56,8 @@ public class RealPathGateTests : System.IAsyncDisposable
         await Assert.That(channel.Count).IsEqualTo(1);
     }
 
-    [Test] public async Task ALinkOutsideLeadingIntoTheRoot_IsInRoot_Unasked()
+    [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows)] public async Task ALinkOutsideLeadingIntoTheRoot_IsInRoot_Unasked()
     {
-        if (System.OperatingSystem.IsWindows()) return;
         var into = System.IO.Path.Combine(outside, "in");
         System.IO.Directory.CreateSymbolicLink(into, root);
         var read = await user.File(System.IO.Path.Combine(into, "a.txt")).Read(user);
@@ -68,9 +66,8 @@ public class RealPathGateTests : System.IAsyncDisposable
     }
 
     // the app opened at a link to its folder: its root is read where the OS lands, so its own files are in it
-    [Test] public async Task AnAppRootedAtALink_ReadsItsOwnFiles_Unasked()
+    [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows)] public async Task AnAppRootedAtALink_ReadsItsOwnFiles_Unasked()
     {
-        if (System.OperatingSystem.IsWindows()) return;
         var alias = System.IO.Path.Combine(outside, "alias");
         System.IO.Directory.CreateSymbolicLink(alias, root);
         await using var aliased = new global::app.@this(alias, global::PLang.Tests.Parent.Actor).TestSigning();
@@ -84,9 +81,8 @@ public class RealPathGateTests : System.IAsyncDisposable
     }
 
     // a grant is on the place: read through a link in the root to a granted file outside, it is that grant's
-    [Test] public async Task AGrantOnThePlace_CoversAReadThroughALinkToIt()
+    [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows)] public async Task AGrantOnThePlace_CoversAReadThroughALinkToIt()
     {
-        if (System.OperatingSystem.IsWindows()) return;
         var secret = System.IO.Path.Combine(outside, "secret.txt");
         System.IO.File.CreateSymbolicLink(System.IO.Path.Combine(root, "x.txt"), secret);
         var grant = global::app.type.item.permission.@this.Request(app.actor.list.User, secret, global::app.type.item.permission.Verb.read);
@@ -115,7 +111,9 @@ public class RealPathGateTests : System.IAsyncDisposable
 
         counting.Links = 0;
         await (await file.Authorize(global::app.type.item.permission.Verb.read, ctx)).IsSuccess();
-        var parts = file.Absolute.Split(System.IO.Path.DirectorySeparatorChar, System.StringSplitOptions.RemoveEmptyEntries).Length;
+        // one link read per part below the OS's root (a drive, on Windows, has none)
+        var parts = file.Absolute[System.IO.Path.GetPathRoot(file.Absolute)!.Length..]
+            .Split(System.IO.Path.DirectorySeparatorChar, System.StringSplitOptions.RemoveEmptyEntries).Length;
         await Assert.That(counting.Links).IsEqualTo(parts);
     }
 

@@ -69,10 +69,9 @@ public class ProgramTests : IDisposable
         return rows;
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task Start_GivesItsStdout_WithItsExitCodeAndStderrBeside()
     {
-        if (!OperatingSystem.IsLinux()) return;
         var ran = await Run(Make.Step("run it", Sh("start", "echo out; echo err >&2; exit 4")));
         await ran.IsSuccess();
         await Assert.That((await ran.Value())?.ToString()).IsEqualTo("out");
@@ -81,27 +80,24 @@ public class ProgramTests : IDisposable
         await Assert.That((await ran.Properties.Get<object>("TimedOut"))?.ToString()).IsEqualTo("False");
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task Start_WritesInput_OnItsStdin()
     {
-        if (!OperatingSystem.IsLinux()) return;
         var ran = await Run(Make.Step("run it", Sh("start", "cat", ("Input", "hello there"))));
         await Assert.That((await ran.Value())?.ToString()).IsEqualTo("hello there");
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task Start_KeepsItsLastLine_WrittenWithNoNewline()
     {
-        if (!OperatingSystem.IsLinux()) return;
         var ran = await Run(Make.Step("run it", Sh("start", "echo first; printf last")));
         await Assert.That((await ran.Value())?.ToString()).IsEqualTo("first\nlast");
     }
 
     // more than a pipe holds (64 KB): written while its output is read, or both would wait on each other forever
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task Start_TakesAnInputLargerThanAPipe_WhileItsOutputIsRead()
     {
-        if (!OperatingSystem.IsLinux()) return;
         var big = string.Concat(Enumerable.Repeat("0123456789abcdef\n", 20_000)).TrimEnd('\n');
         var ran = await Run(
             Make.Step("set timeout", Make.Action(Context, "variable", "set", Make.Param(Context, "Name", "%!terminal.setting.timeoutinsec%", "variable"), ("Value", 30))),
@@ -110,10 +106,9 @@ public class ProgramTests : IDisposable
         await Assert.That((await ran.Value())?.ToString()?.Length).IsEqualTo(big.Length);
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task Start_GivesEachLine_ToOnOutputAndOnError_InOrder()
     {
-        if (!OperatingSystem.IsLinux()) return;
         await Collects("Collect");
         var ran = await Run(Make.Step("run it", Sh("start", "echo a; echo b; echo c >&2",
             ("OnOutput", Make.Call(Context, "Collect")), ("OnError", Make.Call(Context, "Collect")))));
@@ -121,10 +116,9 @@ public class ProgramTests : IDisposable
         await Assert.That(await Lines()).IsEquivalentTo(new[] { "a", "b", "c" });
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task Start_IsStoppedAtTheTimeout()
     {
-        if (!OperatingSystem.IsLinux()) return;
         var ran = await Run(
             Make.Step("set timeout", Make.Action(Context, "variable", "set", Make.Param(Context, "Name", "%!terminal.setting.timeoutinsec%", "variable"), ("Value", 1))),
             Make.Step("run it", Sh("start", "sleep 20")));
@@ -132,10 +126,9 @@ public class ProgramTests : IDisposable
         await Assert.That((await ran.Properties.Get<object>("ExitCode"))?.ToString()).IsEqualTo("-1");
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task Open_TakesWhatIsSent_AndWaitGivesItsExitCode_AfterItsLastLines()
     {
-        if (!OperatingSystem.IsLinux()) return;
         await Collects("Heard");
         var ran = await Run(
             Make.Step("open it", Sh("open", "read l; echo \"got $l\"; echo bye; exit 5", ("OnOutput", Make.Call(Context, "Heard"))), Kept("program")),
@@ -146,10 +139,9 @@ public class ProgramTests : IDisposable
         await Assert.That(await Lines()).IsEquivalentTo(new[] { "got hi", "bye" });
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task Open_IsEndedByStop()
     {
-        if (!OperatingSystem.IsLinux()) return;
         var ran = await Run(
             Make.Step("open it", Sh("open", "sleep 30"), Kept("program")),
             Make.Step("stop it", Process("stop")),
@@ -160,10 +152,9 @@ public class ProgramTests : IDisposable
         await Assert.That(program!.Running).IsFalse();
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task Open_Binary_GivesEachMessage_AsItsBytes()
     {
-        if (!OperatingSystem.IsLinux()) return;
         await Collects("Got");
         var ran = await Run(
             Make.Step("open it", Sh("open", "printf '\\003\\000\\000\\000abc\\002\\000\\000\\000de'",
@@ -179,10 +170,9 @@ public class ProgramTests : IDisposable
 
     // binary is its stdout; its stderr stays text, each line to OnError — at once, while the opening step still keeps
     // its result: the callback's %!data% is its own, never the step's (issue 64)
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task Open_Binary_GivesItsStderrLines_ToOnError()
     {
-        if (!OperatingSystem.IsLinux()) return;
         await Collects("Err");
         var ran = await Run(
             Make.Step("open it", Sh("open", "printf '\\001\\000\\000\\000x'; echo oops >&2; echo again >&2",
@@ -193,10 +183,9 @@ public class ProgramTests : IDisposable
     }
 
     // the same in text mode: lines at once, OnOutput's %!data% its own
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task Open_GivesItsLinesAtOnce_EachCallbackItsOwnData()
     {
-        if (!OperatingSystem.IsLinux()) return;
         await Collects("Now");
         var ran = await Run(
             Make.Step("open it", Sh("open", "echo now; echo then", ("OnOutput", Make.Call(Context, "Now"))), Kept("program")),
@@ -206,10 +195,9 @@ public class ProgramTests : IDisposable
     }
 
     // a callback's own %!data% is a name of its frame; what else it writes still reaches the actor's variables
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task ACallback_StillWritesTheActorsVariables()
     {
-        if (!OperatingSystem.IsLinux()) return;
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(Context, "Remember", "/Remember.goal",
             Make.Step("keep it", Make.Action(Context, "variable", "set", Make.Param(Context, "Name", "%last%", "variable"), ("Value", "%!data%")))));
         _app.goal.list.Add(goal);

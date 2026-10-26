@@ -1,0 +1,3 @@
+# Every text file checks out with LF on every OS, so goldens, pins and .pr files compare like with like (a Windows
+# checkout with CR LF made each one differ from what the tests read). Binary files are told apart by git itself.
+* text=auto eol=lf

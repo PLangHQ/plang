@@ -12,20 +12,28 @@ public sealed class @this : global::app.type.item.setting.module.@this
     /// <summary>A settings class is a type but never LLM vocabulary — kept out of the catalog.</summary>
     public static bool Internal => true;
 
-    /// <summary>The goal debug attaches at — it and every goal it calls, until it returns (<c>prefix*</c> for the goals a
-    /// prefix starts). Null or <c>*</c> = every goal.</summary>
+    /// <summary>The goal debug attaches at — it and the app's goals it calls, until it returns: by its name, the app's
+    /// goals a <c>prefix*</c> starts, or by its address (<c>/system/builder/BuildGoal/Decide</c>), which is how one of
+    /// plang's own goals is named (they are none of the app's goals); a system goal named so shows its own steps only,
+    /// not the system goals it calls. Null or <c>*</c> = every goal of the app.</summary>
     [Out, Store] public global::app.type.item.text.@this? Goal { get; set; }
 
-    /// <summary>Whether the goal named <paramref name="name"/> is one <see cref="Goal"/> names: every goal when it names
-    /// none (or <c>*</c>), the goals a <c>prefix*</c> starts, or the one named (case aside). No goal (a step composed in
-    /// C#) is only one when every goal is.</summary>
-    internal bool Matches(string? name)
+    /// <summary>The goal <see cref="Goal"/> names by its address — where it lives, without <c>.goal</c>; null when it
+    /// names goals by name.</summary>
+    internal string? Address => Goal?.ToString() is ['/', ..] address && !address.EndsWith('*') ? address : null;
+
+    /// <summary>Whether <paramref name="goal"/> is one <see cref="Goal"/> names: every goal when it names none (or
+    /// <c>*</c>), the goals a <c>prefix*</c> starts, the one named (case aside), or the one at the address named. No goal
+    /// (a step composed in C#) is only one when every goal is.</summary>
+    internal bool Matches(global::app.goal.@this? goal)
     {
         if (Goal?.ToString() is not { Length: > 0 } pattern || pattern == "*") return true;
-        if (name == null) return false;
+        if (goal == null) return false;
+        if (Address is { } address)
+            return string.Equals(goal.Address, address, System.StringComparison.OrdinalIgnoreCase);
         return pattern.EndsWith('*')
-            ? name.StartsWith(pattern[..^1], System.StringComparison.OrdinalIgnoreCase)
-            : string.Equals(name, pattern, System.StringComparison.OrdinalIgnoreCase);
+            ? goal.Name.StartsWith(pattern[..^1], System.StringComparison.OrdinalIgnoreCase)
+            : string.Equals(goal.Name, pattern, System.StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>The step debug attaches at instead, in each goal named: that step and what it calls. Null = the goal's

@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "No new red names; all fixes red without their change except the plan plang test EachGoalIsTheAppsOwn, which stays green with the event levels reverted (C# OnEventTests do go red); llm gate clean." }

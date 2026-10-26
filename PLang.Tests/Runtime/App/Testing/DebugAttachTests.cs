@@ -65,6 +65,23 @@ public class DebugAttachTests
         await Assert.That(shown).Contains("Step [0] of Inner");
     }
 
+    // plang's own goals start through their own events alone, so debug names one by its address and binds it there
+    [Test]
+    public async Task ASystemGoal_NamedByItsAddress_IsDebugged()
+    {
+        var ctx = _app.actor.list.User.Context;
+        var step = new global::app.goal.step.@this(_app.type.list) { Text = "variable.set(Name=%s%, Value=1)" };
+        var read = await new global::app.goal.step.action.formal.Reader(step, _app.module.list).Read(step.Text, ctx);
+        var sys = await RealGoalLoad.ViaChannel(_app, Make.Goal(ctx, "Sys", "/system/Sys.goal",
+            Make.Step(step.Text, ((global::app.goal.step.action.list.@this)read.Peek()!).Items().ToArray())));
+        _app.goal.list.Add(sys);
+        await Debugging(new() { ["goal"] = "/system/Sys" });
+
+        await _app.Start(sys, ctx);
+
+        await Assert.That(Shown()).Contains("Step [0] of Sys");
+    }
+
     [Test]
     public async Task WithAStep_OnlyThatStepOfTheNamedGoal_AndWhatItCalls()
     {

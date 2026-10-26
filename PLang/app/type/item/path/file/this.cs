@@ -116,8 +116,10 @@ public sealed partial class @this : global::app.type.item.path.@this
         var absolute = ValidatePath(resolved, context.App);
         // An OS location handed in (C# infra, a listing root) is shown in its plang form;
         // a location the developer typed is shown as typed.
+        // both sides canonical: an out-of-root location comes back as given, so an OS path written with "/" on Windows
+        // (C:\app/x) is still the location it names
         var isOsLocation = PathHelper.IsPathRooted(rawPath)
-            && string.Equals(Canonicalize(rawPath), absolute, RootComparison);
+            && string.Equals(Canonicalize(rawPath), Canonicalize(absolute), RootComparison);
         return isOsLocation ? new @this(absolute, context) : new @this(absolute, type) { Raw = rawPath };
     }
 

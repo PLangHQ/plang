@@ -221,7 +221,8 @@ public class SubAppContainmentProbeTests : System.IAsyncDisposable
         await using var rooted = new global::app.@this("/", global::PLang.Tests.Parent.Actor);
         await using var any = new global::app.@this(System.IO.Path.Combine(baseDir, "anything"), rooted.actor.list.User);
         await Assert.That(any.filesystem.root.Absolute).IsEqualTo(System.IO.Path.Combine(baseDir, "anything"));
-        await Assert.That(rooted.filesystem.root.Absolute).IsEqualTo("/");
+        // the OS's own root ("/" on Linux, the drive's on Windows)
+        await Assert.That(rooted.filesystem.root.Absolute).IsEqualTo(System.IO.Path.GetFullPath("/"));
         // the "//x" OS-rooted form under a non-root maker is not the maker's folder
         await AssertSafe("/" + maker + "/sub");
     }

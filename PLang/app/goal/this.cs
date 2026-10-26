@@ -75,7 +75,8 @@ public sealed partial class @this
         var sb = new StringBuilder(Name);
         foreach (var step in Step.Items())
         {
-            sb.AppendLine();
+            // a line ends at LF on every OS, as a .goal's and a stream's do
+            sb.Append('\n');
             sb.Append(new string(' ', step.Line.Indent * 4));
             sb.Append("- ");
             sb.Append(step.Text);
@@ -147,20 +148,25 @@ public sealed partial class @this
 
     /// <summary>A setup goal — named Setup, or in the app's <c>/setup/</c>: it runs only through setup.</summary>
     [Debug]
-    public bool IsSetup => Name.Equals("Setup", StringComparison.OrdinalIgnoreCase)
-                           || Where.StartsWith("setup/", StringComparison.OrdinalIgnoreCase);
+    public bool IsSetup => Name.Equals("Setup", StringComparison.OrdinalIgnoreCase) || Under("setup");
 
     /// <summary>A system goal — under <c>/system/</c>: the app's own copy or the os's, wherever it was loaded from
     /// (an os goal's plang path is <c>/system/…</c>).</summary>
     [Debug]
-    public bool IsSystem => Where.StartsWith("system/", StringComparison.OrdinalIgnoreCase);
+    public bool IsSystem => Under("system");
 
     /// <summary>A test goal — its file is a <c>.test.goal</c>.</summary>
     [Debug]
     public bool IsTest => Where.EndsWith(".test.goal", StringComparison.OrdinalIgnoreCase);
 
-    // Where the goal lives, in its plang form without the leading slash — what the three facts above read.
-    private string Where => (Path?.Raw ?? "").Replace('\\', '/').TrimStart('/');
+    // Where the goal lives, in its plang form without the leading slash — what the three facts above read, with nothing
+    // made (a step's events ask IsSystem each time it starts).
+    private ReadOnlySpan<char> Where => (Path?.Raw ?? "").AsSpan().TrimStart("/\\");
+
+    // Whether it lives in the app's top folder named so, either separator after it.
+    private bool Under(string folder)
+        => Where.StartsWith(folder, StringComparison.OrdinalIgnoreCase) && Where.Length > folder.Length
+           && Where[folder.Length] is '/' or '\\';
 
     /// <summary>The goal's tags — a build-birth fact stamped by <c>test.tag</c>'s Build hook (skip,
     /// user tags). A <c>list&lt;tag&gt;</c> program node; each tag owns its case-insensitive equality.</summary>
@@ -380,11 +386,13 @@ public sealed partial class @this
     /// <summary>Whether the .pr this goal was read from is as it was then.</summary>
     internal Task<bool> IsFresh(actor.context.@this context) => Stamp.IsFresh(context);
 
-    /// <summary>A goal starts through the goal type's events, then its own.</summary>
+    /// <summary>A goal starts through the goal type's events, then its own. A goal of plang's own (<see cref="IsSystem"/>)
+    /// is none of the app's goals, so it starts through its own events alone: "each goal" never hears it, a binding on
+    /// it by name does.</summary>
     protected internal override global::app.type.item.@this? Level(int depth, actor.context.@this context) => depth switch
     {
-        0 => context.App.goal.type,
-        1 => this,
+        0 => IsSystem ? this : context.App.goal.type,
+        1 when !IsSystem => this,
         _ => null,
     };
 
@@ -485,12 +493,12 @@ public sealed partial class @this
 
         var lines = text.Split('\n');
         var goals = new List<@this>();
-        var currentGoal = (@this?)null;
-        // The current goal's step node — steps Add straight into it. currentStep accumulates
-        // (continuation lines rebuild it) and is Added at each boundary (next step / blank / goal / EOF).
-        global::app.goal.step.list.@this? stepNode = null;
-        var currentStep = (Step?)null;
-        var pendingComment = new StringBuilder();
+        var goal = (@this?)null;
+        // The step being read: continuation lines rebuild it, and it is added to its goal's steps at each boundary
+        // (next step / blank / goal / EOF).
+        var step = (Step?)null;
+        // the comment lines read since the last step or goal, the comment of whichever comes next
+        var comment = new StringBuilder();
         var inBlockComment = false;
         var stepIndex = 0;
 
@@ -508,15 +516,15 @@ public sealed partial class @this
                     var closePart = raw[..endIdx].Trim();
                     if (closePart.Length > 0)
                     {
-                        if (pendingComment.Length > 0) pendingComment.Append('\n');
-                        pendingComment.Append(closePart);
+                        if (comment.Length > 0) comment.Append('\n');
+                        comment.Append(closePart);
                     }
                     inBlockComment = false;
                 }
                 else
                 {
-                    if (pendingComment.Length > 0) pendingComment.Append('\n');
-                    pendingComment.Append(raw.Trim());
+                    if (comment.Length > 0) comment.Append('\n');
+                    comment.Append(raw.Trim());
                 }
                 continue;
             }
@@ -530,14 +538,14 @@ public sealed partial class @this
                 var closeIdx = afterOpen.IndexOf("*/");
                 if (closeIdx >= 0)
                 {
-                    if (pendingComment.Length > 0) pendingComment.Append('\n');
-                    pendingComment.Append(afterOpen[..closeIdx].Trim());
+                    if (comment.Length > 0) comment.Append('\n');
+                    comment.Append(afterOpen[..closeIdx].Trim());
                 }
                 else
                 {
                     inBlockComment = true;
-                    if (pendingComment.Length > 0) pendingComment.Append('\n');
-                    pendingComment.Append(afterOpen.Trim());
+                    if (comment.Length > 0) comment.Append('\n');
+                    comment.Append(afterOpen.Trim());
                 }
                 continue;
             }
@@ -545,111 +553,99 @@ public sealed partial class @this
             // Blank line — comment boundary
             if (string.IsNullOrWhiteSpace(raw))
             {
-                pendingComment.Clear();
-                if (currentStep != null) { stepNode!.Add(currentStep); currentStep = null; }
+                comment.Clear();
+                if (step != null) { goal!.Step.Add(step); step = null; }
                 continue;
             }
 
             // Line comment — any line starting with /
             if (trimmed.StartsWith("/"))
             {
-                var commentText = trimmed[1..].TrimStart();
-                if (pendingComment.Length > 0) pendingComment.Append('\n');
-                pendingComment.Append(commentText);
+                if (comment.Length > 0) comment.Append('\n');
+                comment.Append(trimmed[1..].TrimStart());
                 continue;
             }
 
             // Step line
             if (trimmed.StartsWith("- ") || trimmed == "-")
             {
-                if (currentGoal == null)
+                if (goal == null)
                 {
-                    currentGoal = new @this(context.App.type.list)
+                    goal = new @this(context.App.type.list)
                     {
                         Name = "Start",
                         Path = path
                     };
-                    goals.Add(currentGoal);
-                    stepNode = currentGoal.Step;
+                    goals.Add(goal);
                     stepIndex = 0;
                 }
 
                 // Finalize the previous step before starting this one (continuations are done).
-                if (currentStep != null) stepNode!.Add(currentStep);
+                if (step != null) goal.Step.Add(step);
 
-                var leadingSpaces = raw.Length - raw.TrimStart().Length;
-                var indent = leadingSpaces / 4;
                 // The step's text is canonical at birth: every line trimmed at both ends (its \r gone),
                 // continuation lines joined by \n — nothing inside a line changes. Readers compare and
                 // print it as is (goal.Merge's `==`, the prompts), never trimming it again.
-                var stepText = trimmed.Length > 2 ? trimmed[2..].Trim() : "";
-                var comment = pendingComment.Length > 0 ? pendingComment.ToString() : null;
-                pendingComment.Clear();
-
-                currentStep = new Step(context.App.type.list)
+                step = new Step(context.App.type.list)
                 {
-                    Goal = currentGoal,   // birth fact — the parser holds the goal, so it hands it over
+                    Goal = goal,   // birth fact — the parser holds the goal, so it hands it over
                     Index = stepIndex,
-                    Text = stepText,
-                    Line = new global::app.goal.step.line.@this { Number = lineNumber, Indent = indent },
-                    Comment = comment
+                    Text = trimmed.Length > 2 ? trimmed[2..].Trim() : "",
+                    Line = new global::app.goal.step.line.@this { Number = lineNumber, Indent = (raw.Length - trimmed.Length) / 4 },
+                    Comment = comment.Length > 0 ? comment.ToString() : null
                 };
+                comment.Clear();
 
                 stepIndex++;
                 continue;
             }
 
             // Continuation line
-            if (currentStep != null && raw.Length > 0 && raw[0] == ' ')
+            if (step != null && raw.Length > 0 && raw[0] == ' ')
             {
-                currentStep = new Step(context.App.type.list)
+                step = new Step(context.App.type.list)
                 {
-                    Goal = currentStep.Goal,
-                    Index = currentStep.Index,
-                    Text = currentStep.Text + "\n" + trimmed.TrimEnd(),
-                    Line = currentStep.Line,
-                    Comment = currentStep.Comment
-                };                continue;
+                    Goal = step.Goal,
+                    Index = step.Index,
+                    Text = step.Text + "\n" + trimmed.TrimEnd(),
+                    Line = step.Line,
+                    Comment = step.Comment
+                };
+                continue;
             }
 
-            // Escape character — \ at start of line continues previous step text
-            if (currentStep != null && trimmed.StartsWith("\\"))
+            // Escape character — \ at start of line continues previous step text, the backslash dropped
+            if (step != null && trimmed.StartsWith("\\"))
             {
-                var escapedText = trimmed[1..].TrimEnd(); // strip the leading backslash
-                currentStep = new Step(context.App.type.list)
+                step = new Step(context.App.type.list)
                 {
-                    Goal = currentStep.Goal,
-                    Index = currentStep.Index,
-                    Text = currentStep.Text + "\n" + escapedText,
-                    Line = currentStep.Line,
-                    Comment = currentStep.Comment
-                };                continue;
+                    Goal = step.Goal,
+                    Index = step.Index,
+                    Text = step.Text + "\n" + trimmed[1..].TrimEnd(),
+                    Line = step.Line,
+                    Comment = step.Comment
+                };
+                continue;
             }
 
-            // Goal header
-            var goalName = trimmed;
-            var goalComment = pendingComment.Length > 0 ? pendingComment.ToString() : null;
-            pendingComment.Clear();
-
-            // Finalize the previous goal's last step before starting the new goal.
-            if (currentStep != null) { stepNode?.Add(currentStep); currentStep = null; }
+            // Goal header. Finalize the previous goal's last step before starting the new goal.
+            if (step != null) { goal?.Step.Add(step); step = null; }
 
             // what the goal is — setup, system, a test — it answers itself from where it lives; a sub-goal lives in
             // its parent's file, so only the file's first goal holds the path
-            currentGoal = new @this(context.App.type.list)
+            goal = new @this(context.App.type.list)
             {
-                Name = goalName,
-                Comment = goalComment,
+                Name = trimmed,
+                Comment = comment.Length > 0 ? comment.ToString() : null,
                 Path = goals.Count == 0 ? path : null,
             };
-            goals.Add(currentGoal);
-            stepNode = currentGoal.Step;
+            comment.Clear();
+            goals.Add(goal);
             stepIndex = 0;
-            currentStep = null;
         }
 
         // Finalize the last step at EOF.
-        if (currentStep != null) stepNode?.Add(currentStep);
+        if (step != null) goal?.Step.Add(step);
 
         // Sub-goals nest under the root (public) goal
         if (goals.Count > 1)

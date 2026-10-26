@@ -11,7 +11,8 @@ public class SharedProgramTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::app.@this("/tmp/sharedprogram-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
+    // under the OS's temp folder, beside what a test writes there (a file outside the root, reached by "../")
+    public void Setup() => _app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "sharedprogram-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
 
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();

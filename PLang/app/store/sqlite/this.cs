@@ -106,6 +106,12 @@ public sealed class @this : global::app.store.@this
         // a folder that can't be made is the open's answer, as a refused file is — never a database that then can't open
         if (_file.Parent is { } parent && await parent.Mkdir(Context) is { Success: false } made)
             throw new global::app.error.AppException(made.Error!);
+        // The store's folder is its owner's alone (0700): a key saved in it is no other OS user's to read. Set on the
+        // folder, so it holds from the first byte and covers the -wal and -shm files beside it; an older folder is set on
+        // its next open. Windows sets nothing (its folders take ACLs), and a mode doesn't survive git or a zip.
+        if (_file.Parent is global::app.type.item.path.file.@this folder
+            && await folder.Mode((System.IO.UnixFileMode)0b111_000_000, Context) is { Success: false } closed)   // 0700
+            throw new global::app.error.AppException(closed.Error!);
 
         var connectionString = new SqliteConnectionStringBuilder
         {

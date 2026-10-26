@@ -278,8 +278,15 @@ public sealed partial class @this
         if (OperatingSystem.IsWindows()) return context.Ok<global::app.type.item.path.@this>(this);
         var permissions = mode | System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserWrite
                    | (context.Filesystem.IsFolder(this) ? System.IO.UnixFileMode.UserExecute : 0);
-        context.Filesystem.Mode(this, permissions & ~(System.IO.UnixFileMode.SetUser | System.IO.UnixFileMode.SetGroup));
-        return context.Ok<global::app.type.item.path.@this>(this);
+        try
+        {
+            context.Filesystem.Mode(this, permissions & ~(System.IO.UnixFileMode.SetUser | System.IO.UnixFileMode.SetGroup));
+            return context.Ok<global::app.type.item.path.@this>(this);
+        }
+        catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
+        {
+            return context.Error<global::app.type.item.path.@this>(new global::app.error.ServiceError(ex.Message, "IOError", 500));
+        }
     }
 
     /// <summary>
@@ -354,8 +361,15 @@ public sealed partial class @this
     public override async Task<data.@this<global::app.type.item.path.@this>> Mkdir(actor.context.@this context)
     {
         if (await AuthGate(Verb.write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
-        context.Filesystem.Create(this);
-        return context.Ok<global::app.type.item.path.@this>(this);
+        try
+        {
+            context.Filesystem.Create(this);
+            return context.Ok<global::app.type.item.path.@this>(this);
+        }
+        catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
+        {
+            return context.Error<global::app.type.item.path.@this>(new global::app.error.ServiceError(ex.Message, "IOError", 500));
+        }
     }
 
     // --- Destructive ---------------------------------------------------------

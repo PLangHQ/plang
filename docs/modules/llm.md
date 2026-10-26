@@ -38,6 +38,8 @@ Send a query to an LLM.
 | Limit | limit | no | `{token: 16000, tool: 10, retry: 0}` | How far the query may go: tokens in the answer, tool calls, retries of an answer that fails validation. A member left out keeps its default |
 | Cache | bool | no | true | Cache the response. Skipped when Tools is non-null |
 
+A variable in a message is replaced by its value when the query is sent: `user: Say hello to %name%` sends `Say hello to Ingi` when `%name%` holds `Ingi`. A variable that does not exist fails the query, whole, instead of being sent as written. A `Messages` parameter that is a variable holding nothing is refused with `ValueRequired` (400), naming the variable.
+
 **Returns:** The LLM's response — parsed JSON object when format is json, extracted text for other formats, or raw text when no format is set.
 
 ## Schema and Format

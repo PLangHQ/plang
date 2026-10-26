@@ -34,18 +34,17 @@ public class ValidatePathTests
         await Assert.That(resolved.EndsWith("data/file.txt") || resolved.EndsWith("data\\file.txt")).IsTrue();
     }
 
-    [Test] public async Task OsRootedPath_PreservedAsIs_UnixDoubleSlash()
+    // the Unix form only: on Windows // is a network path
+    [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows)] public async Task OsRootedPath_PreservedAsIs_UnixDoubleSlash()
     {
-        if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS()) return; // Unix form only
         var app = NewApp(out _);
         var resolved = global::app.type.item.path.file.@this.ValidatePath("//tmp/foo.txt", app);
         // // form must NOT be stripped — preserved so re-validation stays idempotent.
         await Assert.That(resolved).IsEqualTo("//tmp/foo.txt");
     }
 
-    [Test] public async Task OsRootedPath_DoubleValidate_StillOsRooted()
+    [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows)] public async Task OsRootedPath_DoubleValidate_StillOsRooted()
     {
-        if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS()) return;
         var app = NewApp(out _);
         var first = global::app.type.item.path.file.@this.ValidatePath("//tmp/foo.txt", app);
         var second = global::app.type.item.path.file.@this.ValidatePath(first, app);
@@ -83,9 +82,8 @@ public class ValidatePathTests
     /// case-insensitive (which would let `/TMP/X/f` slip through unprefixed
     /// and then the `StartsWith(RootDirectory)` check at line 227 would treat
     /// it as in-root).
-    [Test] public async Task UpperCasedRootPrefix_TreatedAsNewPath_AndRePrefixed_OnUnix()
+    [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows)] public async Task UpperCasedRootPrefix_TreatedAsNewPath_AndRePrefixed_OnUnix()
     {
-        if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS()) return;
         var app = NewApp(out var root);
         var uppered = root.ToUpperInvariant() + "/file.txt";
         var resolved = global::app.type.item.path.file.@this.ValidatePath(uppered, app);
@@ -141,10 +139,10 @@ public class ValidatePathTests
     }
 
     // a folder beside the root whose name starts with the root's (<root>2) is no place in the root: written plang-rooted,
-    // it is anchored under the root like any other, never taken as a location already in it
-    [Test] public async Task ASiblingWithTheRootsPrefix_IsNotUnderIt()
+    // it is anchored under the root like any other, never taken as a location already in it (a single-slash absolute is
+    // plang-rooted on Unix; Windows writes the root with its drive)
+    [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows)] public async Task ASiblingWithTheRootsPrefix_IsNotUnderIt()
     {
-        if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS()) return; // a single-slash absolute is plang-rooted on Unix
         var app = NewApp(out var root);
         var sibling = root + "2/file.txt";
         var resolved = global::app.type.item.path.file.@this.ValidatePath(sibling, app);

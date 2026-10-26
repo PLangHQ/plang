@@ -1,0 +1,310 @@
+{
+  "name": "Start",
+  "comment": "A program's \"before each goal\" hears its app's own goals, never plang's system goals: while it is bound, the app's goal\nMine runs and then plang's /system/shortcut/Goal is called, and the call bound before each goal heard Mine last.",
+  "step": [
+    {
+      "index": 0,
+      "text": "before each goal, call Log",
+      "line": {
+        "number": 4,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "on",
+          "name": "event",
+          "property": [
+            {
+              "name": "Event",
+              "type": {
+                "name": "event",
+                "template": "plang"
+              },
+              "value": "%!app.type.goal.on.start%",
+              "variable": [
+                {
+                  "text": "%!app.type.goal.on.start%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "type"
+                    },
+                    {
+                      "property": "goal"
+                    },
+                    {
+                      "property": "on"
+                    },
+                    {
+                      "property": "start"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "When",
+              "type": {
+                "name": "choice",
+                "kind": "when"
+              },
+              "value": "before"
+            },
+            {
+              "name": "Action",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "goal"
+                    },
+                    "value": "Log"
+                  }
+                ]
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "scope",
+              "type": {
+                "name": "choice",
+                "kind": "scope"
+              },
+              "value": "actor"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "call goal Mine",
+      "line": {
+        "number": 5,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Mine"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "call goal /system/shortcut/Goal",
+      "line": {
+        "number": 6,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "/system/shortcut/Goal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %last% equals \"Mine\"",
+      "line": {
+        "number": 7,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "Mine"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%last%",
+              "variable": [
+                {
+                  "text": "%last%",
+                  "code": [
+                    {
+                      "variable": "last"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "Mine",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %x% = 1",
+          "line": {
+            "number": 10,
+            "indent": 0
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%x%",
+                  "variable": [
+                    {
+                      "text": "%x%",
+                      "code": [
+                        {
+                          "variable": "x"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 1
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "visibility": "Private",
+      "hash": "b32d80ac85c210e11e1ee77db793faf4c12f0dd62bc8e1ae2735c55804990ec1"
+    },
+    {
+      "name": "Log",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %last% = %!event!item.name%",
+          "line": {
+            "number": 13,
+            "indent": 0
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%last%",
+                  "variable": [
+                    {
+                      "text": "%last%",
+                      "code": [
+                        {
+                          "variable": "last"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!event!item.name%",
+                  "variable": [
+                    {
+                      "text": "%!event!item.name%",
+                      "code": [
+                        {
+                          "variable": "!event"
+                        },
+                        {
+                          "property": "!item"
+                        },
+                        {
+                          "property": "name"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "visibility": "Private",
+      "hash": "b350f44632d863dca9a7f3f6baf933e86f051cb66dd388550f1420b486046173"
+    }
+  ],
+  "visibility": "Public",
+  "file": "EachGoalIsTheAppsOwn.test.goal",
+  "hash": "8699fe14caebc022c9e83f0dd9e96af20195c32eaaac54e89f9339be462acf22"
+}

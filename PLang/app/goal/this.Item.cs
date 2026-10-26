@@ -30,6 +30,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         await using (var utf8 = new System.Text.Json.Utf8JsonWriter(stream, new System.Text.Json.JsonWriterOptions
                      {
                          Indented = true,
+                         // a .pr's line ends at LF on every OS, so one built on Windows is the same file
+                         NewLine = "\n",
                          Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
                      }))
         {

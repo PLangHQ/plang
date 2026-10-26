@@ -24,7 +24,7 @@ app.filesystem.permission/
 │   ├── Read.cs                 -- record Read(bool Recursive, bool Metadata)
 │   ├── Write.cs                -- record Write(bool Create, bool Overwrite, bool Append, bool Mkdir)
 │   └── Delete.cs               -- record Delete(bool Recursive, bool Permanent)
-└── (Match: Exact | Glob | Regex)
+└── (Match: exact | glob)
 
 app.actor.permission/
 └── this.cs                     -- per-actor Find/Add/Revoke
@@ -34,7 +34,7 @@ app.type.item.path/this.Authorize.cs -- the gate (Authorize, Standing, Request, 
 
 **PermissionRecord** — `(Actor, Path, Verb, Match)`. Identity is the
 three-tuple `(Actor + Path + Verb)`. `Match` decides how `Path` is
-interpreted (`Exact` today; `Glob`/`Regex` reserved for grant policies).
+interpreted: `exact` (the path as written) or `glob` (see "Grant patterns").
 
 **Verb** — always-present sub-options for Read/Write/Delete. A grant's
 `Verb.Covers(request.Verb)` answers "does this grant cover this request?"
@@ -100,6 +100,24 @@ error (through `Error.FromException`), never as `PermissionDenied`.
 plang makes `.data/` on an app's first run. An app folder that arrives with one is used as it is, its identity and its settings included.
 
 The stores' folder is recognised case-blind, as a case-blind disk opens it (`.DATA` is `.data` there).
+
+The folder is its owner's alone: opening a store sets it to 0700 (`store/sqlite/this.cs:109-114`), so a key saved in it is no other OS user's to read. The mode is on the folder, so it holds from the first byte and covers the `-wal` and `-shm` files beside the database; a folder made earlier is set on its next open. On Windows nothing is set (a folder takes ACLs there). A mode does not survive git or a zip, so a copied app folder is set again when it is opened.
+
+## Grant patterns
+
+A grant is `exact` or `glob` (`permission/this.cs:97-160`). A grant with no wildcard is compared as a whole; a glob reads three wildcards:
+
+| Wildcard | Matches |
+|---|---|
+| `*` | any run within one part: it stops at a separator |
+| `**` | any run across parts |
+| `?` | one character of a part |
+
+A part ends at each of the OS's separators: `/` on Linux, `\` and `/` on Windows. So `/apps/*/file.txt` covers `/apps/a/file.txt` and not `/apps/a/b/file.txt`, and `https://api.example.com/*` covers `https://api.example.com/users` and not `https://api.example.com/users/1`.
+
+The literal text between wildcards is compared the way the exact grant is: a file grant ignores case where the disk does (Windows) and is exact elsewhere; a URL grant never ignores case, on any OS. A glob never folds case wider than the exact grant. The match is one forward pass over the pattern's pieces, so a pattern full of `*` does not slow down on a long path.
+
+A path a goal writes is the same on every OS: `/` between its parts. A Windows `\` in it reads as `/`, and a path the runtime hands back (`Parent`, `Combine`, a changed extension) never gains a `\`. The OS form, with the OS's own separator, is what the gate judges and what reaches the disk.
 
 ## Where a verb is judged
 

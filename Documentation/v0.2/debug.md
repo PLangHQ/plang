@@ -9,14 +9,17 @@ Code: `PLang/app/module/debug/this.cs`
 ## Usage
 
 ```bash
-# Debug all steps in all goals
+# Debug all steps in all of the app's goals (plang's own, under /system/, aren't shown)
 plang --debug
 
-# Debug a specific goal
-plang '--debug.setting={"goal":"BuildGoal"}'
+# Debug one of the app's goals, by its name
+plang '--debug.setting={"goal":"Start"}'
+
+# Debug one of plang's own goals: by its address
+plang '--debug.setting={"goal":"/system/builder/BuildGoal"}'
 
 # Debug a specific step index within a goal
-plang '--debug.setting={"goal":"BuildGoal","step":3}'
+plang '--debug.setting={"goal":"/system/builder/BuildGoal","step":3}'
 
 # Watch variables: each prints at every step and logs its create, change and delete
 plang '--debug.setting={"variables":["response","goal"]}'
@@ -28,14 +31,14 @@ plang '--debug.setting={"length":{"max":2000}}'
 plang '--debug.setting={"grep":"actions"}'
 
 # Combine options
-plang '--debug.setting={"goal":"BuildGoal","step":3,"variables":["actions"],"length":{"max":2000},"grep":"Module"}'
+plang '--debug.setting={"goal":"/system/builder/BuildGoal","step":3,"variables":["actions"],"length":{"max":2000},"grep":"Module"}'
 ```
 
 ## Properties
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `goal` | string | null | Filter to a specific goal name. Null = all goals. |
+| `goal` | string | null | The goal debug attaches at, and the app's goals it calls: one of the app's goals by its name, the app's goals a `prefix*` starts, or any goal by its address (`/system/builder/BuildGoal`), which is how one of plang's own goals is named. A system goal named by address shows its own steps only: the system goals it calls are not shown. Null = all of the app's goals. |
 | `step` | int | null | Filter to a specific step index. Null = all steps. |
 | `variables` | list&lt;text&gt; | [] | Names of the variables to watch (`["trace","goal"]`; a `%` around a name is fine). A watched variable prints at every step and logs each create, change and delete. |
 | `length.max` | int | 500 | Max characters per line before truncation (`"length":{"max":2000}`). |
@@ -107,7 +110,7 @@ All debug output goes to **stderr** (not stdout), so it doesn't interfere with p
 
 ```bash
 # Build one file, debug the BuildGoal steps, watch a variable
-plang build '--build.setting={"files":"myfile.goal","cache":"skip"}' '--debug.setting={"goal":"BuildGoal","variables":["actionSummary"]}'
+plang build '--build.setting={"files":"myfile.goal","cache":"skip"}' '--debug.setting={"goal":"/system/builder/BuildGoal","variables":["actionSummary"]}'
 ```
 
 The `cache:skip` option bypasses the LLM cache, forcing a fresh LLM call.

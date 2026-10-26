@@ -19,18 +19,16 @@ public class RootComparisonKeyingTests
         return new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
     }
 
-    [Test] public async Task PathEquals_SameAbsolutePath_DifferentCase_OnLinux_AreNotEqual()
+    [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows)] public async Task PathEquals_SameAbsolutePath_DifferentCase_OnLinux_AreNotEqual()
     {
-        if (System.OperatingSystem.IsWindows()) return; // skip on Windows
         var app = NewApp(out _);
         var a = app.actor.list.User.Context.File("/tmp/foo/bar.txt");
         var b = app.actor.list.User.Context.File("/tmp/FOO/bar.txt");
         await Assert.That(a.Equals(b)).IsFalse();
     }
 
-    [Test] public async Task PathEquals_SameAbsolutePath_DifferentCase_OnWindows_AreEqual()
+    [Test, RunOn(TUnit.Core.Enums.OS.Windows)] public async Task PathEquals_SameAbsolutePath_DifferentCase_OnWindows_AreEqual()
     {
-        if (!System.OperatingSystem.IsWindows()) return; // skip on Linux
         var app = NewApp(out _);
         var a = app.actor.list.User.Context.File(@"C:\Foo\bar.txt");
         var b = app.actor.list.User.Context.File(@"C:\foo\BAR.txt");

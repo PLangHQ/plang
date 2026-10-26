@@ -398,6 +398,25 @@ public static class @this
                 """);
         }
 
+        // A required slot that is a variable is asked what the variable holds, through the variable's own read (the slot
+        // is left as it is): one that is there and holds nothing is refused, naming it, before the action runs. One that
+        // isn't there, or a read that fails, is the action's to answer as it reads; a literal is judged as written
+        // (Resolve); a name slot names, it is not read. Only a variable whose read only looks up is asked: one that
+        // calls a method is left to the action, so what the method does happens once.
+        foreach (var prop in info.Properties.OfType<DataProperty>()
+                     .Where(p => !p.IsName && info.IsNotNullProperties.Contains(p.Name)))
+        {
+            var lower = prop.Name.ToLowerInvariant();
+            sb.Append($$"""
+                        if ({{prop.Name}}.IsVariable && {{prop.Name}}.Peek().Variable[0] is { Code.IsLookup: true } __variable{{prop.Name}}
+                            && await __variable{{prop.Name}}.Start(context) is { Success: true, IsInitialized: true } __held{{prop.Name}}
+                            && await __held{{prop.Name}}.Value() is null or { IsNull: true })
+                            return new global::app.error.ServiceError(
+                                $"'{{lower}}' must have a value: {__variable{{prop.Name}}.Text} holds nothing", __step, __callFrames, "ValueRequired", 400);
+
+                """);
+        }
+
         sb.Append("""
                     await System.Threading.Tasks.Task.CompletedTask;
                     return null;

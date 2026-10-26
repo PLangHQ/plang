@@ -48,26 +48,23 @@ public class LinkLoopTests : System.IAsyncDisposable
         await Assert.That(channel.Count).IsEqualTo(0);
     }
 
-    [Test] public async Task AReadThroughALinkLoop_IsRefused_NeverAsked()
+    [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows)] public async Task AReadThroughALinkLoop_IsRefused_NeverAsked()
     {
-        if (System.OperatingSystem.IsWindows()) return;
         System.IO.Directory.CreateSymbolicLink(At("a"), "b");
         System.IO.Directory.CreateSymbolicLink(At("b"), "a");
         await Refused(await user.File(At("a", "x.txt")).Read(user));
     }
 
-    [Test] public async Task AWriteThroughAChainPastFortyLinks_IsRefused_NeverAsked()
+    [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows)] public async Task AWriteThroughAChainPastFortyLinks_IsRefused_NeverAsked()
     {
-        if (System.OperatingSystem.IsWindows()) return;
         System.IO.Directory.CreateDirectory(At("end"));
         System.IO.Directory.CreateSymbolicLink(At("l41"), "end");
         for (var i = 40; i >= 0; i--) System.IO.Directory.CreateSymbolicLink(At($"l{i}"), $"l{i + 1}");
         await Refused(await user.File(At("l0", "x.txt")).WriteText("x", user));
     }
 
-    [Test] public async Task ACopyOfAFolderHoldingALinkLoop_IsRefused_NothingCopied()
+    [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows)] public async Task ACopyOfAFolderHoldingALinkLoop_IsRefused_NothingCopied()
     {
-        if (System.OperatingSystem.IsWindows()) return;
         System.IO.Directory.CreateDirectory(At("dst"));
         System.IO.Directory.CreateSymbolicLink(At("dst", "a"), "b");
         System.IO.Directory.CreateSymbolicLink(At("dst", "b"), "a");

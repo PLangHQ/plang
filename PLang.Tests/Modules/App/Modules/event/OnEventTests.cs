@@ -55,6 +55,66 @@ public class OnEventTests
         await Assert.That(binding.Actor).IsSameReferenceAs(_app.actor.list.User);
     }
 
+    // A program's "each goal" sees its app's own goals, never plang's system goals: a goal of the app calls one under
+    // /system/, and the call bound before each goal heard only the app's.
+    [Test]
+    public async Task BeforeEachGoal_FiresForTheAppsGoals_NotPlangsSystemGoals()
+    {
+        Goal("Log", Keep("last", "%!event!item.name%"));
+        _app.goal.list.Add(Make.Goal(Ctx, "Sys", "/system/Sys.goal", Keep("ran", "true")));
+        var run = Goal("Run", Make.Step("call Sys", Make.Call(Ctx, "/system/Sys")));
+        await Bind("%!app.type.goal.on.start%", "before", "Log");
+
+        await (await run.Start(Ctx)).IsSuccess();
+
+        await Assert.That((await Value("ran"))?.ToString()).IsEqualTo("true");
+        await Assert.That((await Value("last"))?.ToString()).IsEqualTo("Run");
+    }
+
+    // So do "each step" and "each action": a system goal's steps and actions are none of the app's.
+    [Test]
+    public async Task BeforeEachStep_FiresForTheAppsSteps_NotASystemGoals()
+    {
+        Goal("Log", Keep("last", "%!event!item.text%"));
+        _app.goal.list.Add(Make.Goal(Ctx, "Sys", "/system/Sys.goal", Keep("ran", "true")));
+        var run = Goal("Run", Make.Step("call Sys", Make.Call(Ctx, "/system/Sys")));
+        await Bind("%!app.type.step.on.start%", "before", "Log");
+
+        await (await run.Start(Ctx)).IsSuccess();
+
+        await Assert.That((await Value("ran"))?.ToString()).IsEqualTo("true");
+        await Assert.That((await Value("last"))?.ToString()).IsEqualTo("call Sys");
+    }
+
+    [Test]
+    public async Task BeforeEachAction_FiresForTheAppsActions_NotASystemGoals()
+    {
+        Goal("Log", Keep("last", "%!event!item.name%"));
+        // read as a .pr is, so each action knows the step it is in
+        _app.goal.list.Add(await RealGoalLoad.ViaChannel(_app, Make.Goal(Ctx, "Sys", "/system/Sys.goal", Keep("ran", "true"))));
+        var run = Goal("Run", Make.Step("call Sys", Make.Call(Ctx, "/system/Sys")));
+        await Bind("%!app.type.action.on.start%", "before", "Log");
+
+        await (await run.Start(Ctx)).IsSuccess();
+
+        await Assert.That((await Value("ran"))?.ToString()).IsEqualTo("true");
+        await Assert.That((await Value("last"))?.ToString()).IsEqualTo("call");
+    }
+
+    // A system goal is bound by naming it: a binding on that goal's own start fires for it.
+    [Test]
+    public async Task BeforeASystemGoal_NamedItself_Fires()
+    {
+        Goal("Log", Keep("last", "%!event!item.name%"));
+        var sys = Make.Goal(Ctx, "Sys", "/system/Sys.goal", Keep("ran", "true"));
+        _app.goal.list.Add(sys);
+        await Bind("%!app.goal[\"/system/Sys\"].on.start%", "before", "Log");
+
+        await (await sys.Start(Ctx)).IsSuccess();
+
+        await Assert.That((await Value("last"))?.ToString()).IsEqualTo("Sys");
+    }
+
     [Test]
     public async Task BindingOneItemsEvent_LeavesEveryOtherItemUnbound()
     {

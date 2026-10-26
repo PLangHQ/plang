@@ -53,10 +53,9 @@ public class UnpackTests : IDisposable
         return await bundle.Unpack(archive, null, Context.File(Path.Combine(_root, folder)), global::app.type.item.size.@this.Create(max, Context), Context);
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task Files_Folders_AndLinks_AreUnpacked()
     {
-        if (!OperatingSystem.IsLinux()) return;
         var archive = Tar(new PaxTarEntry(TarEntryType.Directory, "etc/"), File_("etc/os", "alpine"), Link("bin/sh", "/bin/busybox"),
             File_("bin/busybox", "#!"));
         await (await Into(archive, "root")).IsSuccess();
@@ -66,19 +65,17 @@ public class UnpackTests : IDisposable
         await Assert.That(new FileInfo(Path.Combine(_root, "root/bin/sh")).LinkTarget).IsEqualTo("busybox");
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task DotDot_StaysInside()
     {
-        if (!OperatingSystem.IsLinux()) return;
         var escape = Path.GetRelativePath(Path.Combine(_root, "root"), Path.Combine(_outside, "dotdot.txt"));
         await (await Into(Tar(File_(escape, "x")), "root")).IsSuccess();
         await Assert.That(System.IO.File.Exists(Path.Combine(_outside, "dotdot.txt"))).IsFalse();
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task AnAbsoluteSymlink_IsTheFoldersOwn_NeverTheHosts()
     {
-        if (!OperatingSystem.IsLinux()) return;
         // lib -> <outside> (absolute), then lib/evil.txt: written under the folder's own <outside>, never the host's
         var archive = Tar(Link("lib", _outside), File_("lib/evil.txt", "x"));
         await (await Into(archive, "root")).IsSuccess();
@@ -86,20 +83,18 @@ public class UnpackTests : IDisposable
         await Assert.That(System.IO.File.Exists(Path.Combine(_root, "root" + _outside, "evil.txt"))).IsTrue();
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task ARelativeSymlinkClimbingOut_StaysInside()
     {
-        if (!OperatingSystem.IsLinux()) return;
         var up = string.Join('/', Enumerable.Repeat("..", 20));
         var archive = Tar(Link("up", up + _outside), File_("up/evil.txt", "x"));
         await (await Into(archive, "root")).IsSuccess();
         await Assert.That(System.IO.File.Exists(Path.Combine(_outside, "evil.txt"))).IsFalse();
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task AFileOverASymlink_ReplacesTheLink_NotItsTarget()
     {
-        if (!OperatingSystem.IsLinux()) return;
         System.IO.File.WriteAllText(Path.Combine(_outside, "kept.txt"), "kept");
         var archive = Tar(Link("x", Path.Combine(_outside, "kept.txt")), File_("x", "replaced"));
         await (await Into(archive, "root")).IsSuccess();
@@ -107,29 +102,26 @@ public class UnpackTests : IDisposable
         await Assert.That(System.IO.File.ReadAllText(Path.Combine(_root, "root/x"))).IsEqualTo("replaced");
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task AHardLinkToAFileOutside_CopiesNothingFromOutside()
     {
-        if (!OperatingSystem.IsLinux()) return;
         System.IO.File.WriteAllText(Path.Combine(_outside, "secret.txt"), "secret");
         var archive = Tar(new PaxTarEntry(TarEntryType.HardLink, "stolen") { LinkName = _outside.TrimStart('/') + "/../" + Path.GetFileName(_outside) + "/secret.txt" });
         await (await Into(archive, "root")).IsSuccess();
         await Assert.That(System.IO.File.Exists(Path.Combine(_root, "root/stolen"))).IsFalse();
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task AHardLinkToAFileInside_IsACopyOfIt()
     {
-        if (!OperatingSystem.IsLinux()) return;
         var archive = Tar(File_("a.txt", "same"), new PaxTarEntry(TarEntryType.HardLink, "b.txt") { LinkName = "a.txt" });
         await (await Into(archive, "root")).IsSuccess();
         await Assert.That(System.IO.File.ReadAllText(Path.Combine(_root, "root/b.txt"))).IsEqualTo("same");
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task AsALayer_WhiteoutsRemove_AndAnOpaqueFolderEmpties()
     {
-        if (!OperatingSystem.IsLinux()) return;
         await (await Into(Tar(File_("a.txt", "a"), File_("d/old.txt", "o"), File_("keep.txt", "k")), "root", layer: true)).IsSuccess();
         await (await Into(Tar(File_(".wh.a.txt", ""), File_("d/.wh..wh..opq", ""), File_("d/new.txt", "n")), "root", layer: true)).IsSuccess();
         await Assert.That(System.IO.File.Exists(Path.Combine(_root, "root/a.txt"))).IsFalse();
@@ -139,10 +131,9 @@ public class UnpackTests : IDisposable
         await Assert.That(System.IO.File.Exists(Path.Combine(_root, "root/.wh.a.txt"))).IsFalse();
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task AGzippedLayer_IsRead_AsItsTar()
     {
-        if (!OperatingSystem.IsLinux()) return;
         var gz = new MemoryStream();
         using (var zip = new System.IO.Compression.GZipStream(gz, System.IO.Compression.CompressionMode.Compress, leaveOpen: true))
             Tar(File_("in/layer.txt", "zipped")).CopyTo(zip);
@@ -151,19 +142,17 @@ public class UnpackTests : IDisposable
         await Assert.That(System.IO.File.ReadAllText(Path.Combine(_root, "root/in/layer.txt"))).IsEqualTo("zipped");
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task OnlyLeadingDotSlash_IsStripped_NotAHiddenNamesDot()
     {
-        if (!OperatingSystem.IsLinux()) return;
         await (await Into(Tar(File_("./.bashrc", "rc"), File_("/etc/x", "x")), "root")).IsSuccess();
         await Assert.That(System.IO.File.ReadAllText(Path.Combine(_root, "root/.bashrc"))).IsEqualTo("rc");
         await Assert.That(System.IO.File.ReadAllText(Path.Combine(_root, "root/etc/x"))).IsEqualTo("x");
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task ADevice_IsNeverMade_AndSetuidIsDropped()
     {
-        if (!OperatingSystem.IsLinux()) return;
         var setuid = File_("bin/su", "#!");
         setuid.Mode = UnixFileMode.SetUser | UnixFileMode.UserExecute;
         var archive = Tar(new PaxTarEntry(TarEntryType.CharacterDevice, "dev/null"), setuid);
@@ -176,10 +165,9 @@ public class UnpackTests : IDisposable
 
     // An entry named the folder itself — `..` or `a/..` — never lands: nothing is written over the folder, and nothing
     // over the folder above it.
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task AnEntryNamedTheFolderItself_NeverLands()
     {
-        if (!OperatingSystem.IsLinux()) return;
         System.IO.File.WriteAllText(Path.Combine(_root, "beside.txt"), "kept");
         var archive = Tar(File_("a/x.txt", "x"), File_("..", "over the parent"), File_("a/..", "over the folder"));
         await (await Into(archive, "root")).IsSuccess();

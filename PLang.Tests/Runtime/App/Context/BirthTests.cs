@@ -79,7 +79,8 @@ public class BirthTests
         await Assert.That(born).IsLessThan(156_000L).Because("a node finds its type, its list and its setting class when first used");
     }
 
-    [Test]
+    // bytes measured on Linux: another OS makes a different number of them
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task ASubAppsCodeProviders_AreMadeAtTheirFirstUse()
     {
         var born = Bytes(() =>
@@ -92,7 +93,8 @@ public class BirthTests
         await Assert.That(born).IsLessThan(130_000L).Because("an app's code providers are made at its registry's first use");
     }
 
-    [Test]
+    // bytes measured on Linux: another OS makes a different number of them
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task ASubAppsSystemPermissionView_IsMadeAtItsFirstAsk()
     {
         var born = Bytes(() =>
@@ -142,7 +144,8 @@ public class BirthTests
     }
 
     // alone: the bytes are the process's, and a test beside it would add its own
-    [Test, NotInParallel]
+    // bytes measured on Linux: another OS makes a different number of them
+    [Test, NotInParallel, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task ARequestReadsItsSettingClassesFacts_OncePerCode()
     {
         var root = System.IO.Path.Combine(Fixture.Root(), "test");
