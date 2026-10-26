@@ -1,0 +1,677 @@
+{
+  "mode": {
+    "name": "mode",
+    "type": {
+      "name": "choice",
+      "kind": "mode"
+    },
+    "value": "Test"
+  },
+  "Code": {
+    "name": "Code",
+    "type": {
+      "name": "snapshot"
+    },
+    "value": {
+      "default": {
+        "name": "default",
+        "type": {
+          "name": "list"
+        },
+        "value": [
+          {
+            "name": "",
+            "type": {
+              "name": "code.default"
+            },
+            "value": {
+              "kind": "signing",
+              "provider": "test-signing"
+            }
+          },
+          {
+            "name": "",
+            "type": {
+              "name": "code.default"
+            },
+            "value": {
+              "kind": "key",
+              "provider": "test-signing"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "actor": {
+    "name": "actor",
+    "type": {
+      "name": "snapshot"
+    },
+    "value": {
+      "list": {
+        "name": "list",
+        "type": {
+          "name": "snapshot"
+        },
+        "value": {
+          "User": {
+            "name": "User",
+            "type": {
+              "name": "snapshot"
+            },
+            "value": {
+              "Context": {
+                "name": "Context",
+                "type": {
+                  "name": "snapshot"
+                },
+                "value": {
+                  "Variable": {
+                    "name": "Variable",
+                    "type": {
+                      "name": "snapshot"
+                    },
+                    "value": {
+                      "keep": {
+                        "name": "keep",
+                        "type": {
+                          "name": "text"
+                        },
+                        "value": "alive"
+                      },
+                      "i": {
+                        "name": "i",
+                        "type": {
+                          "name": "number",
+                          "kind": "long"
+                        },
+                        "value": 1
+                      }
+                    }
+                  },
+                  "call": {
+                    "name": "call",
+                    "type": {
+                      "name": "snapshot"
+                    },
+                    "value": {
+                      "root": {
+                        "name": "root",
+                        "type": {
+                          "name": "snapshot"
+                        },
+                        "value": {
+                          "id": {
+                            "name": "id",
+                            "type": {
+                              "name": "text"
+                            },
+                            "value": "7ea93b99"
+                          },
+                          "type": {
+                            "name": "type",
+                            "type": {
+                              "name": "type"
+                            },
+                            "value": {
+                              "name": "app.call"
+                            }
+                          },
+                          "goal": {
+                            "name": "goal",
+                            "type": {
+                              "name": "text"
+                            },
+                            "value": "/Start"
+                          },
+                          "goalHash": {
+                            "name": "goalHash",
+                            "type": {
+                              "name": "text"
+                            },
+                            "value": "937637f47963dd6e17af862379259f4cac4f7153474c4923384b02528bceffd4"
+                          },
+                          "variables": {
+                            "name": "variables",
+                            "type": {
+                              "name": "snapshot"
+                            },
+                            "value": {}
+                          },
+                          "arguments": {
+                            "name": "arguments",
+                            "type": {
+                              "name": "list"
+                            },
+                            "value": []
+                          },
+                          "handled": {
+                            "name": "handled",
+                            "type": {
+                              "name": "bool"
+                            },
+                            "value": false
+                          },
+                          "tags": {
+                            "name": "tags",
+                            "type": {
+                              "name": "dict"
+                            },
+                            "value": {}
+                          },
+                          "kept": {
+                            "name": "kept",
+                            "type": {
+                              "name": "dict"
+                            },
+                            "value": {}
+                          },
+                          "children": {
+                            "name": "children",
+                            "type": {
+                              "name": "list"
+                            },
+                            "value": [
+                              {
+                                "name": "",
+                                "type": {
+                                  "name": "snapshot"
+                                },
+                                "value": {
+                                  "id": {
+                                    "name": "id",
+                                    "type": {
+                                      "name": "text"
+                                    },
+                                    "value": "29249a60"
+                                  },
+                                  "type": {
+                                    "name": "type",
+                                    "type": {
+                                      "name": "type"
+                                    },
+                                    "value": {
+                                      "name": "app.call"
+                                    }
+                                  },
+                                  "goal": {
+                                    "name": "goal",
+                                    "type": {
+                                      "name": "text"
+                                    },
+                                    "value": "/Start"
+                                  },
+                                  "goalHash": {
+                                    "name": "goalHash",
+                                    "type": {
+                                      "name": "text"
+                                    },
+                                    "value": "937637f47963dd6e17af862379259f4cac4f7153474c4923384b02528bceffd4"
+                                  },
+                                  "stepIndex": {
+                                    "name": "stepIndex",
+                                    "type": {
+                                      "name": "number",
+                                      "kind": "int"
+                                    },
+                                    "value": 1
+                                  },
+                                  "variables": {
+                                    "name": "variables",
+                                    "type": {
+                                      "name": "snapshot"
+                                    },
+                                    "value": {}
+                                  },
+                                  "arguments": {
+                                    "name": "arguments",
+                                    "type": {
+                                      "name": "list"
+                                    },
+                                    "value": []
+                                  },
+                                  "handled": {
+                                    "name": "handled",
+                                    "type": {
+                                      "name": "bool"
+                                    },
+                                    "value": false
+                                  },
+                                  "tags": {
+                                    "name": "tags",
+                                    "type": {
+                                      "name": "dict"
+                                    },
+                                    "value": {}
+                                  },
+                                  "kept": {
+                                    "name": "kept",
+                                    "type": {
+                                      "name": "dict"
+                                    },
+                                    "value": {}
+                                  },
+                                  "children": {
+                                    "name": "children",
+                                    "type": {
+                                      "name": "list"
+                                    },
+                                    "value": [
+                                      {
+                                        "name": "",
+                                        "type": {
+                                          "name": "snapshot"
+                                        },
+                                        "value": {
+                                          "id": {
+                                            "name": "id",
+                                            "type": {
+                                              "name": "text"
+                                            },
+                                            "value": "d13670b3"
+                                          },
+                                          "type": {
+                                            "name": "type",
+                                            "type": {
+                                              "name": "type"
+                                            },
+                                            "value": {
+                                              "name": "app.call"
+                                            }
+                                          },
+                                          "goal": {
+                                            "name": "goal",
+                                            "type": {
+                                              "name": "text"
+                                            },
+                                            "value": "/Start"
+                                          },
+                                          "goalHash": {
+                                            "name": "goalHash",
+                                            "type": {
+                                              "name": "text"
+                                            },
+                                            "value": "937637f47963dd6e17af862379259f4cac4f7153474c4923384b02528bceffd4"
+                                          },
+                                          "stepIndex": {
+                                            "name": "stepIndex",
+                                            "type": {
+                                              "name": "number",
+                                              "kind": "int"
+                                            },
+                                            "value": 1
+                                          },
+                                          "actionIndex": {
+                                            "name": "actionIndex",
+                                            "type": {
+                                              "name": "number",
+                                              "kind": "int"
+                                            },
+                                            "value": 0
+                                          },
+                                          "actionModule": {
+                                            "name": "actionModule",
+                                            "type": {
+                                              "name": "text"
+                                            },
+                                            "value": "variable"
+                                          },
+                                          "actionName": {
+                                            "name": "actionName",
+                                            "type": {
+                                              "name": "text"
+                                            },
+                                            "value": "set"
+                                          },
+                                          "variables": {
+                                            "name": "variables",
+                                            "type": {
+                                              "name": "snapshot"
+                                            },
+                                            "value": {}
+                                          },
+                                          "arguments": {
+                                            "name": "arguments",
+                                            "type": {
+                                              "name": "list"
+                                            },
+                                            "value": []
+                                          },
+                                          "handled": {
+                                            "name": "handled",
+                                            "type": {
+                                              "name": "bool"
+                                            },
+                                            "value": false
+                                          },
+                                          "tags": {
+                                            "name": "tags",
+                                            "type": {
+                                              "name": "dict"
+                                            },
+                                            "value": {}
+                                          },
+                                          "kept": {
+                                            "name": "kept",
+                                            "type": {
+                                              "name": "dict"
+                                            },
+                                            "value": {}
+                                          },
+                                          "children": {
+                                            "name": "children",
+                                            "type": {
+                                              "name": "list"
+                                            },
+                                            "value": [
+                                              {
+                                                "name": "",
+                                                "type": {
+                                                  "name": "snapshot"
+                                                },
+                                                "value": {
+                                                  "id": {
+                                                    "name": "id",
+                                                    "type": {
+                                                      "name": "text"
+                                                    },
+                                                    "value": "e16ecdfe"
+                                                  },
+                                                  "type": {
+                                                    "name": "type",
+                                                    "type": {
+                                                      "name": "type"
+                                                    },
+                                                    "value": {
+                                                      "name": "app.call"
+                                                    }
+                                                  },
+                                                  "goal": {
+                                                    "name": "goal",
+                                                    "type": {
+                                                      "name": "text"
+                                                    },
+                                                    "value": "/Sub"
+                                                  },
+                                                  "goalHash": {
+                                                    "name": "goalHash",
+                                                    "type": {
+                                                      "name": "text"
+                                                    },
+                                                    "value": "3a46c5d76495ec08c5cfcbb22cf5c5542f29305be405a68742fb6baf91eed3c5"
+                                                  },
+                                                  "variables": {
+                                                    "name": "variables",
+                                                    "type": {
+                                                      "name": "snapshot"
+                                                    },
+                                                    "value": {}
+                                                  },
+                                                  "arguments": {
+                                                    "name": "arguments",
+                                                    "type": {
+                                                      "name": "list"
+                                                    },
+                                                    "value": []
+                                                  },
+                                                  "handled": {
+                                                    "name": "handled",
+                                                    "type": {
+                                                      "name": "bool"
+                                                    },
+                                                    "value": false
+                                                  },
+                                                  "tags": {
+                                                    "name": "tags",
+                                                    "type": {
+                                                      "name": "dict"
+                                                    },
+                                                    "value": {}
+                                                  },
+                                                  "kept": {
+                                                    "name": "kept",
+                                                    "type": {
+                                                      "name": "dict"
+                                                    },
+                                                    "value": {}
+                                                  },
+                                                  "children": {
+                                                    "name": "children",
+                                                    "type": {
+                                                      "name": "list"
+                                                    },
+                                                    "value": [
+                                                      {
+                                                        "name": "",
+                                                        "type": {
+                                                          "name": "snapshot"
+                                                        },
+                                                        "value": {
+                                                          "id": {
+                                                            "name": "id",
+                                                            "type": {
+                                                              "name": "text"
+                                                            },
+                                                            "value": "089aabff"
+                                                          },
+                                                          "type": {
+                                                            "name": "type",
+                                                            "type": {
+                                                              "name": "type"
+                                                            },
+                                                            "value": {
+                                                              "name": "app.call"
+                                                            }
+                                                          },
+                                                          "goal": {
+                                                            "name": "goal",
+                                                            "type": {
+                                                              "name": "text"
+                                                            },
+                                                            "value": "/Sub"
+                                                          },
+                                                          "goalHash": {
+                                                            "name": "goalHash",
+                                                            "type": {
+                                                              "name": "text"
+                                                            },
+                                                            "value": "3a46c5d76495ec08c5cfcbb22cf5c5542f29305be405a68742fb6baf91eed3c5"
+                                                          },
+                                                          "stepIndex": {
+                                                            "name": "stepIndex",
+                                                            "type": {
+                                                              "name": "number",
+                                                              "kind": "int"
+                                                            },
+                                                            "value": 1
+                                                          },
+                                                          "variables": {
+                                                            "name": "variables",
+                                                            "type": {
+                                                              "name": "snapshot"
+                                                            },
+                                                            "value": {}
+                                                          },
+                                                          "arguments": {
+                                                            "name": "arguments",
+                                                            "type": {
+                                                              "name": "list"
+                                                            },
+                                                            "value": []
+                                                          },
+                                                          "handled": {
+                                                            "name": "handled",
+                                                            "type": {
+                                                              "name": "bool"
+                                                            },
+                                                            "value": false
+                                                          },
+                                                          "tags": {
+                                                            "name": "tags",
+                                                            "type": {
+                                                              "name": "dict"
+                                                            },
+                                                            "value": {}
+                                                          },
+                                                          "kept": {
+                                                            "name": "kept",
+                                                            "type": {
+                                                              "name": "dict"
+                                                            },
+                                                            "value": {}
+                                                          },
+                                                          "children": {
+                                                            "name": "children",
+                                                            "type": {
+                                                              "name": "list"
+                                                            },
+                                                            "value": [
+                                                              {
+                                                                "name": "",
+                                                                "type": {
+                                                                  "name": "snapshot"
+                                                                },
+                                                                "value": {
+                                                                  "id": {
+                                                                    "name": "id",
+                                                                    "type": {
+                                                                      "name": "text"
+                                                                    },
+                                                                    "value": "b36b912f"
+                                                                  },
+                                                                  "type": {
+                                                                    "name": "type",
+                                                                    "type": {
+                                                                      "name": "type"
+                                                                    },
+                                                                    "value": {
+                                                                      "name": "app.call"
+                                                                    }
+                                                                  },
+                                                                  "goal": {
+                                                                    "name": "goal",
+                                                                    "type": {
+                                                                      "name": "text"
+                                                                    },
+                                                                    "value": "/Sub"
+                                                                  },
+                                                                  "goalHash": {
+                                                                    "name": "goalHash",
+                                                                    "type": {
+                                                                      "name": "text"
+                                                                    },
+                                                                    "value": "3a46c5d76495ec08c5cfcbb22cf5c5542f29305be405a68742fb6baf91eed3c5"
+                                                                  },
+                                                                  "stepIndex": {
+                                                                    "name": "stepIndex",
+                                                                    "type": {
+                                                                      "name": "number",
+                                                                      "kind": "int"
+                                                                    },
+                                                                    "value": 1
+                                                                  },
+                                                                  "actionIndex": {
+                                                                    "name": "actionIndex",
+                                                                    "type": {
+                                                                      "name": "number",
+                                                                      "kind": "int"
+                                                                    },
+                                                                    "value": 0
+                                                                  },
+                                                                  "actionModule": {
+                                                                    "name": "actionModule",
+                                                                    "type": {
+                                                                      "name": "text"
+                                                                    },
+                                                                    "value": "variable"
+                                                                  },
+                                                                  "actionName": {
+                                                                    "name": "actionName",
+                                                                    "type": {
+                                                                      "name": "text"
+                                                                    },
+                                                                    "value": "set"
+                                                                  },
+                                                                  "variables": {
+                                                                    "name": "variables",
+                                                                    "type": {
+                                                                      "name": "snapshot"
+                                                                    },
+                                                                    "value": {}
+                                                                  },
+                                                                  "arguments": {
+                                                                    "name": "arguments",
+                                                                    "type": {
+                                                                      "name": "list"
+                                                                    },
+                                                                    "value": []
+                                                                  },
+                                                                  "handled": {
+                                                                    "name": "handled",
+                                                                    "type": {
+                                                                      "name": "bool"
+                                                                    },
+                                                                    "value": false
+                                                                  },
+                                                                  "tags": {
+                                                                    "name": "tags",
+                                                                    "type": {
+                                                                      "name": "dict"
+                                                                    },
+                                                                    "value": {}
+                                                                  },
+                                                                  "kept": {
+                                                                    "name": "kept",
+                                                                    "type": {
+                                                                      "name": "dict"
+                                                                    },
+                                                                    "value": {}
+                                                                  },
+                                                                  "children": {
+                                                                    "name": "children",
+                                                                    "type": {
+                                                                      "name": "list"
+                                                                    },
+                                                                    "value": []
+                                                                  }
+                                                                }
+                                                              }
+                                                            ]
+                                                          }
+                                                        }
+                                                      }
+                                                    ]
+                                                  }
+                                                }
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "current": {
+                        "name": "current",
+                        "type": {
+                          "name": "text"
+                        },
+                        "value": "b36b912f"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
