@@ -125,7 +125,7 @@ public partial class @this
         if (node.Entries.Get<global::app.type.item.number.@this>("step", context) is not { } stepIndex) return (goal, null, null);
         // a step's index is goal-wide, a body's steps numbered on from the step that holds them
         var at = stepIndex.ToInt32();
-        var step = goal.Step.At(at) ?? throw new global::app.error.CallbackGoalNotFound($"{goal.Address} (no step {at})");
+        var step = goal[at] ?? throw new global::app.error.CallbackGoalNotFound($"{goal.Address} (no step {at})");
         if (node.Entries.Get<global::app.snapshot.@this>("action", context) is not { } stored) return (goal, step, null);
         var place = Stored<global::app.type.item.number.@this>(stored, "index", context).ToInt32();
         if (place < 0 || place >= step.Code.Count)

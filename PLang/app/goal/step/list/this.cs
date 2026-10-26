@@ -6,7 +6,9 @@ namespace app.goal.step.list;
 
 /// <summary>
 /// The step NODE — a goal's steps (<c>goal.Step</c>) or a control-flow action's branch body
-/// (<c>action.Child</c>), a plang list value (<c>list&lt;step&gt;</c>) so a reader returns it directly.
+/// (<c>action.Child</c>), a plang list value (<c>list&lt;step&gt;</c>) so a reader returns it directly. Its indexer is
+/// positional, a step's place in this list; a step's own <c>Index</c> is its goal's numbering, which the goal answers
+/// (<c>goal[index]</c>).
 /// PROGRAM STRUCTURE: born context-free (the graph is shared across concurrent runs), it stores no
 /// context — <see cref="Start"/> takes the ASK's. Owns its sequence-run (Rule 5 — the collection owns its
 /// iteration). Twin of <see cref="app.goal.step.action.list.@this"/>.
@@ -37,34 +39,16 @@ public sealed class @this : global::app.type.item.list.bare.@this<Step>
         return result;
     }
 
-    /// <summary>The step whose goal-wide index is <paramref name="index"/> — one of these, or one in a body under them (a
-    /// body's steps are numbered on from the step that holds them); null when none is.</summary>
-    internal Step? At(int index)
-    {
-        foreach (var step in Items())
-        {
-            if (step.Index == index) return step;
-            foreach (var action in step.Code.Items())
-                if (action.Child.At(index) is { } held) return held;
-        }
-        return null;
-    }
-
-    /// <summary>What follows <paramref name="step"/> in the list that holds it — these steps, or a body's under them —
-    /// run in sequence from the one after it, as <see cref="Start"/> runs them; null when no list here holds it.</summary>
-    internal async System.Threading.Tasks.Task<data.@this?> Rest(Step step, actor.context.@this context)
+    /// <summary>What follows <paramref name="step"/>, one of these, run in sequence from the one after it, as
+    /// <see cref="Start"/> runs them (a step knows the list that holds it: <see cref="global::app.goal.step.@this.List"/>).
+    /// Nothing follows a step this list doesn't hold.</summary>
+    internal async System.Threading.Tasks.Task<data.@this> Rest(Step step, actor.context.@this context)
     {
         var position = -1;
         for (int i = 0; i < Count && position < 0; i++)
             if (ReferenceEquals(this[i], step)) position = i;
-        if (position < 0)
-        {
-            foreach (var each in Items())
-                foreach (var action in each.Code.Items())
-                    if (await action.Child.Rest(step, context) is { } rest) return rest;
-            return null;
-        }
         data.@this result = context.Ok();
+        if (position < 0) return result;
         for (int i = position + 1; i < Count; i++)
         {
             if (context.CancellationToken.IsCancellationRequested)

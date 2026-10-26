@@ -173,7 +173,8 @@ public class Default : IBuilder
             // A step the build could not fix has no code, so no gate to fold a block into — and it is already broken,
             // so that is not a second mistake. It is kept as it is, with the steps under it, which stay in the goal
             // with their code; the goal is saved broken and will not start.
-            if (step.Error != null) { top.Add(step); i++; continue; }
+            // each step the fold places is held by the list it places it in, and says so
+            if (step.Error != null) { top.Add(step); step.List = top; i++; continue; }
             var block = flat.Body(i);   // the steps indented under it — the list answers
             int j = i + 1 + block.CountRaw;
 
@@ -190,6 +191,7 @@ public class Default : IBuilder
                     gate.Child = Fold(block, errors);
             }
             top.Add(step);   // the real step keeps its identity at this level
+            step.List = top;
             i = j;
         }
         return top;

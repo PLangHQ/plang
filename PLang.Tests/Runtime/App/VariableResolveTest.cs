@@ -67,13 +67,13 @@ public class VariableResolveTest : System.IAsyncDisposable
         await using var app = new global::app.@this("/tmp/var-set-bang-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
 
-        await new global::app.goal.step.action.@this(new global::app.module.variable.Set(app.actor.list.User.Context)
+        await new global::app.goal.step.action.composed.@this(new global::app.module.variable.Set(app.actor.list.User.Context)
         {
             Name = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("response", context.App.type.list), context: context),
             Value = app.actor.list.User.Context.Ok("hello"),
         }, context).Start(context);
 
-        await new global::app.goal.step.action.@this(new global::app.module.variable.Set(app.actor.list.User.Context)
+        await new global::app.goal.step.action.composed.@this(new global::app.module.variable.Set(app.actor.list.User.Context)
         {
             Name = new global::app.data.@this<global::app.type.item.variable.@this>("",
                 global::app.type.item.variable.@this.Resolve("%response!cost%", context), context: context),
@@ -92,7 +92,7 @@ public class VariableResolveTest : System.IAsyncDisposable
         await using var app = new global::app.@this("/tmp/var-set-unset-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
 
-        var result = await new global::app.goal.step.action.@this(new global::app.module.variable.Set(app.actor.list.User.Context)
+        var result = await new global::app.goal.step.action.composed.@this(new global::app.module.variable.Set(app.actor.list.User.Context)
         {
             Name = new global::app.data.@this<global::app.type.item.variable.@this>("",
                 global::app.type.item.variable.@this.Resolve("%response!cost%", context), context: context),

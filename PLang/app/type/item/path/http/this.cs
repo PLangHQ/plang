@@ -465,7 +465,7 @@ public sealed partial class @this : global::app.type.item.path.@this
         {
             Data = new data.@this("", canonical, context: context),
         };
-        var signResult = await new global::app.goal.step.action.@this(sign, context).Start(context);
+        var signResult = await new global::app.goal.step.action.composed.@this(sign, context).Start(context);
         if (!signResult.Success) return signResult.Error!;
         // The header carries the signed Data as plang writes it on the wire.
         using var wire = new System.IO.MemoryStream();

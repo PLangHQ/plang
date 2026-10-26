@@ -5,16 +5,23 @@ namespace app.goal.step.serializer;
 /// mirror of <see cref="app.goal.step.@this.Output"/>. Walks the handed
 /// <see cref="app.type.format.IReader"/> in place: the step's bare <c>[Store]</c> shape, each
 /// action via the sibling <see cref="app.goal.step.action.serializer.Reader"/>.
-/// <para>The reader is BORN with the goal whose steps it reads, so every step it makes is born
-/// holding that goal. Having no parameterless constructor is what keeps it out of the type-reader
+/// <para>The reader is BORN with the goal whose steps it reads and the list they go into, so every step it makes is
+/// born holding both. Having no parameterless constructor is what keeps it out of the type-reader
 /// registry: the registry mints only readers that need no parent, so there is no parentless way to
 /// make a step.</para>
 /// </summary>
 public sealed class Reader : global::app.type.reader.ITypeReader
 {
     private readonly global::app.goal.@this _goal;
+    private readonly global::app.goal.step.list.@this _list;
 
-    public Reader(global::app.goal.@this goal) => _goal = goal;
+    /// <summary>A reader of <paramref name="goal"/>'s steps that go into <paramref name="list"/> — its own, or an
+    /// action's body.</summary>
+    public Reader(global::app.goal.@this goal, global::app.goal.step.list.@this list)
+    {
+        _goal = goal;
+        _list = list;
+    }
 
     public string Kind => global::app.type.reader.@this.AnyKind;
 
@@ -28,7 +35,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     {
         if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("step", kind), ctx.Context]);
 
-        var step = new global::app.goal.step.@this(ctx.Context.App.type.list) { Goal = _goal };   // shell first — children hold it
+        var step = new global::app.goal.step.@this(ctx.Context.App.type.list) { Goal = _goal, List = _list };   // shell first — children hold it
         var action = new global::app.goal.step.action.serializer.Reader(step);
 
         reader.BeginObject();

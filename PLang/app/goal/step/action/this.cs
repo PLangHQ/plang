@@ -95,9 +95,9 @@ public partial class @this
     /// catalog's — the element registration made for the seed's class; the seed's set parameters pass through,
     /// the unset resolve from setting and <c>[Default]</c>. Born knowing the step that invoked it: composed and
     /// started together, the calling frame is this invocation's provenance (null at the boot edge, before any
-    /// goal runs).
+    /// goal runs). Made as its own kind, <see cref="composed.@this"/>.
     /// </summary>
-    public @this(module.ICodeGenerated seed, actor.context.@this context) : this(context.App.type.list)
+    private protected @this(module.ICodeGenerated seed, actor.context.@this context) : this(context.App.type.list)
     {
         var catalog = context.App.module[seed.GetType()]
             ?? throw new System.InvalidOperationException($"no module holds the action {seed.GetType().Name}");
@@ -106,6 +106,11 @@ public partial class @this
         Seed = seed;
         Step = context.call.Step;
     }
+
+    /// <summary>The frame this action runs in, pushed on <paramref name="stack"/>: an action a step holds runs in an
+    /// action's frame, whose rest is the rest of its step's code.</summary>
+    internal virtual global::app.call.@this Frame(global::app.call.list.@this stack, global::app.call.setting.@this setting, Variables? variables)
+        => stack.Push(this, setting, variables);
 
     /// <summary>Whether this action holds its step's answer — what the actions before it produce (a <c>write to %x%</c>):
     /// a keep of <c>%!data%</c> does; no other action.</summary>
@@ -186,7 +191,7 @@ public partial class @this
         // the frame died between the failure and the recovery that had to see it.
         global::app.call.@this call;
         var setting = await context.call.Setting();
-        try { call = context.call.Push(this, setting, context.Variable); }
+        try { call = Frame(context.call, setting, context.Variable); }
         catch (global::app.error.CallStackOverflowException ex)
         {
             // The depth limit — trips at Push, before the frame is on the

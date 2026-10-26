@@ -85,7 +85,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "child":
                     // chain self-feeds: a child step's goal is this action's step's goal
                     var childSteps = new global::app.goal.step.list.@this(ctx.Context.App.type.list[typeof(global::app.goal.step.list.@this)]);
-                    var stepReader = new global::app.goal.step.serializer.Reader(_step.Goal);
+                    var stepReader = new global::app.goal.step.serializer.Reader(_step.Goal, childSteps);
                     reader.BeginArray();
                     while (reader.NextElement())
                         if (stepReader.Read(ref reader, null, ctx) is global::app.goal.step.@this child)

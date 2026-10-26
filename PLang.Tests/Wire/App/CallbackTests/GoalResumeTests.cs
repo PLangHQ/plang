@@ -20,7 +20,7 @@ public class GoalResumeTests
     private static async Task<Step> SetStep(global::app.actor.context.@this context, Goal goal, int index, string varName, object value)
     {
         var action = await context.Action($"variable.set(Name=%{varName}%, Value={System.Text.Json.JsonSerializer.Serialize(value)})");
-        var step = new Step(context.App.type.list) { Goal = goal, Index = index, Text = $"set %{varName}% = {value}" };
+        var step = new Step(context.App.type.list) { Goal = goal, List = goal.Step, Index = index, Text = $"set %{varName}% = {value}" };
         action = action.In(step);
         step.Code.Add(action);
         goal.Step.Add(step);
@@ -109,7 +109,7 @@ public class GoalResumeTests
         await Body(context, goal, holder, 3, "b3", "after");
         await SetStep(context, goal, 4, "s4", "not-in-the-body");
 
-        var result = await goal.Step.Rest(inBody, context);
+        var result = await inBody.List!.Rest(inBody, context);
         await result!.IsSuccess();
         await Assert.That((await context.Variable.Get("b2")).IsInitialized).IsFalse();
         await Assert.That((await context.Variable.GetValue("b3"))).IsEqualTo("after");
@@ -119,7 +119,7 @@ public class GoalResumeTests
     // A step in the body of holder's action, numbered goal-wide as the build numbers it.
     private static async Task<Step> Body(global::app.actor.context.@this context, Goal goal, Step holder, int index, string varName, object value)
     {
-        var step = new Step(context.App.type.list) { Goal = goal, Index = index, Text = $"set %{varName}% = {value}" };
+        var step = new Step(context.App.type.list) { Goal = goal, List = holder.Code[0].Child, Index = index, Text = $"set %{varName}% = {value}" };
         step.Code.Add((await context.Action($"variable.set(Name=%{varName}%, Value={System.Text.Json.JsonSerializer.Serialize(value)})")).In(step));
         holder.Code[0].Child.Add(step);
         return step;

@@ -205,10 +205,15 @@ public sealed partial class @this : global::app.type.item.@this
     public call.@this Push(global::app.goal.step.@this step, setting.@this setting)
         => Push((step, setting), static (stack, s) => new call.step.@this(stack._types[typeof(call.step.@this)], stack, s.step, s.setting));
 
-    /// <summary>Pushes the frame of an action starting: its step's goal, its step and itself — an action composed
-    /// in C# holds no step. <paramref name="variables"/> is the store for diff capture (when Diff is on).</summary>
+    /// <summary>Pushes the frame of an action a step holds starting: its step's goal, its step and itself.
+    /// <paramref name="variables"/> is the store for diff capture (when Diff is on).</summary>
     public call.@this Push(global::app.goal.step.action.@this action, setting.@this setting, Variables? variables = null)
         => Push((action, setting, variables), static (stack, s) => new call.action.@this(stack._types[typeof(call.action.@this)], stack, s.action, s.setting, s.variables));
+
+    /// <summary>Pushes the frame of an action composed in C# (it sits in no step's code: nothing of it is left once it has
+    /// run). <paramref name="variables"/> is the store for diff capture (when Diff is on).</summary>
+    public call.@this Compose(global::app.goal.step.action.@this action, setting.@this setting, Variables? variables = null)
+        => Push((action, setting, variables), static (stack, s) => new call.composed.@this(stack._types[typeof(call.composed.@this)], stack, s.action, s.setting, s.variables));
 
     // A call frame (a goal's, a step's, an action's) pushed: past MaxDepth (its caller's depth), or with the thread's
     // stack run short, it is the overflow, refused before anything of it is made — a stack that overflows can't be

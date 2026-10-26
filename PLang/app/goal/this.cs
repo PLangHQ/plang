@@ -57,6 +57,23 @@ public sealed partial class @this
         set => _step = value;
     }
 
+    /// <summary>The step this goal numbered <paramref name="index"/> — its own, or one in a body under them (the goal
+    /// numbers its steps in written order, a body's numbered on from the step that holds it); null when none is. Its
+    /// <see cref="Step"/> list's indexer is positional, the place in that list.</summary>
+    public global::app.goal.step.@this? this[int index] => Numbered(_step, index);
+
+    // The step numbered index in steps, or in a body under one of them.
+    private global::app.goal.step.@this? Numbered(global::app.goal.step.list.@this steps, int index)
+    {
+        foreach (var step in steps.Items())
+        {
+            if (step.Index == index) return step;
+            foreach (var action in step.Code.Items())
+                if (Numbered(action.Child, index) is { } held) return held;
+        }
+        return null;
+    }
+
     /// <summary>The goals written after this one in its file; each knows this goal as its parent.</summary>
     [Store, Out, LlmBuilder, Debug, Default]
     public child.@this Child { get; }
@@ -590,6 +607,7 @@ public sealed partial class @this
                 step = new Step(context.App.type.list)
                 {
                     Goal = goal,   // birth fact — the parser holds the goal, so it hands it over
+                    List = goal.Step,
                     Index = stepIndex,
                     Text = trimmed.Length > 2 ? trimmed[2..].Trim() : "",
                     Line = new global::app.goal.step.line.@this { Number = lineNumber, Indent = (raw.Length - trimmed.Length) / 4 },
@@ -607,6 +625,7 @@ public sealed partial class @this
                 step = new Step(context.App.type.list)
                 {
                     Goal = step.Goal,
+                    List = step.List,
                     Index = step.Index,
                     Text = step.Text + "\n" + trimmed.TrimEnd(),
                     Line = step.Line,
@@ -621,6 +640,7 @@ public sealed partial class @this
                 step = new Step(context.App.type.list)
                 {
                     Goal = step.Goal,
+                    List = step.List,
                     Index = step.Index,
                     Text = step.Text + "\n" + trimmed[1..].TrimEnd(),
                     Line = step.Line,

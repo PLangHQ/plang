@@ -94,7 +94,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             if (parent.Parent is not { } bearer)
                 return parent.Context.Error(new global::app.error.@this(
                     "a signature's identity is read off the Data it signs (%x!signature.identity%)", "SignatureInvalid", 400));
-            var verified = await new global::app.goal.step.action.@this(
+            var verified = await new global::app.goal.step.action.composed.@this(
                 new global::app.module.signing.verify(parent.Context) { Data = bearer }, parent.Context).Start(parent.Context);
             if (!verified.Success) return verified;
         }

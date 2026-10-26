@@ -45,7 +45,7 @@ public partial class resume : IContext
                 $"%{Snapshot.Name}% is not signed: a run goes on only from a snapshot this app saved (`save snapshot`), kept in a .plang file or a db row",
                 "SnapshotUnsigned", 403));
 
-        var verified = await new global::app.goal.step.action.@this(
+        var verified = await new global::app.goal.step.action.composed.@this(
             new global::app.module.signing.verify(Context) { Data = Snapshot }, Context).Start(Context);
         if (!verified.Success)
             return Context.Error(new global::app.error.@this(

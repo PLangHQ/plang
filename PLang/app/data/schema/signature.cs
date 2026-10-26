@@ -122,7 +122,7 @@ public sealed class signature : ISchemaReader
         if (ctx.DeferVerify) return peeled;
 
         var verifyAction = new global::app.module.signing.verify(context) { Data = peeled };
-        var verifyResult = new global::app.goal.step.action.@this(verifyAction, context)
+        var verifyResult = new global::app.goal.step.action.composed.@this(verifyAction, context)
             .Start(context)
             .GetAwaiter().GetResult();
         if (!verifyResult.Success)

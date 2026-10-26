@@ -90,7 +90,7 @@ public class SnapshotWireTests
     private static async Task<Step> SetStep(global::app.actor.context.@this context, Goal goal, int index, string varName, object value)
     {
         var action = await context.Action($"variable.set(Name=%{varName}%, Value={Formal(value)})");
-        var step = new Step(context.App.type.list) { Goal = goal, Index = index, Text = $"set %{varName}% = {value}" };
+        var step = new Step(context.App.type.list) { Goal = goal, List = goal.Step, Index = index, Text = $"set %{varName}% = {value}" };
         action = action.In(step);
         step.Code.Add(action);
         goal.Step.Add(step);
@@ -141,7 +141,7 @@ public class SnapshotWireTests
         await SetStep(context, goal, 0, "s0", "zero");
         // index 1 holds a body: its one step is index 2, numbered on, as the build numbers it
         var holder = await SetStep(context, goal, 1, "s1", "one");
-        var body = new Step(app.type.list) { Goal = goal, Index = 2, Text = "set %s2% = two" };
+        var body = new Step(app.type.list) { Goal = goal, List = holder.Code[0].Child, Index = 2, Text = "set %s2% = two" };
         body.Code.Add((await context.Action("variable.set(Name=%s2%, Value=\"two\")")).In(body));
         holder.Code[0].Child.Add(body);
         // index 3 sits at position 2 in the goal's own list, index 4 at position 3
@@ -179,7 +179,7 @@ public class SnapshotWireTests
         var holder = await SetStep(context, goal, 1, "s1", "one");
         Step InBody(int index, string name, string value, global::app.goal.step.action.@this action)
         {
-            var step = new Step(app.type.list) { Goal = goal, Index = index, Text = $"set %{name}% = {value}" };
+            var step = new Step(app.type.list) { Goal = goal, List = holder.Code[0].Child, Index = index, Text = $"set %{name}% = {value}" };
             step.Code.Add(action.In(step));
             holder.Code[0].Child.Add(step);
             return step;
@@ -247,7 +247,7 @@ public class SnapshotWireTests
     private static async Task<Step> SetStepRef(global::app.actor.context.@this context, Goal goal, int index, string varName, string expr)
     {
         var action = await context.Action($"variable.set(Name=%{varName}%, Value={Formal(expr)})");
-        var step = new Step(context.App.type.list) { Goal = goal, Index = index, Text = $"set %{varName}% = {expr}" };
+        var step = new Step(context.App.type.list) { Goal = goal, List = goal.Step, Index = index, Text = $"set %{varName}% = {expr}" };
         action = action.In(step);
         step.Code.Add(action);
         goal.Step.Add(step);

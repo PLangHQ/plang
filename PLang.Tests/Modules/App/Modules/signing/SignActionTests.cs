@@ -49,7 +49,7 @@ public class SignActionTests
             Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.item.list.@this>("", global::PLang.Tests.Shared.Make.List(contracts, Ctx), context: Ctx),
             Expires = expires.HasValue ? Ctx.Ok<global::app.type.item.duration.@this>((global::app.type.item.duration.@this)expires.Value) : null,
         };
-        return await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
+        return await new global::app.goal.step.action.composed.@this(action, Ctx).Start(Ctx);
     }
 
     // sign answers the Data it signed, holding its layer (Data.Signature).
@@ -247,7 +247,7 @@ public class SignActionTests
         bare.Code.SetDefault<IKey>("throwing-key");
 
         var ctx = bare.actor.list.System.Context;
-        var result = await new global::app.goal.step.action.@this(new sign(ctx) { Data = new Data("", "test", context: ctx) }, ctx).Start(ctx);
+        var result = await new global::app.goal.step.action.composed.@this(new sign(ctx) { Data = new Data("", "test", context: ctx) }, ctx).Start(ctx);
         await result.IsFailure();
         // Key generation fails, identity creation fails, sign fails
         await Assert.That(result.Error).IsNotNull();

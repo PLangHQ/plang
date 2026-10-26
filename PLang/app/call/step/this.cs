@@ -30,7 +30,8 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
         _ => null,
     };
 
-    /// <summary>The rest of the list that holds its step, from the step after it — its goal answers which list that is.</summary>
-    internal override async System.Threading.Tasks.Task<global::app.data.@this> Rest(global::app.actor.context.@this context, bool again)
-        => await Step!.Goal.Step.Rest(Step, context) ?? context.Ok();
+    /// <summary>The rest of the list that holds its step, from the step after it — the step knows its list. A step no
+    /// list holds has nothing after it.</summary>
+    internal override System.Threading.Tasks.Task<global::app.data.@this> Rest(global::app.actor.context.@this context, bool again)
+        => Step!.List?.Rest(Step, context) ?? System.Threading.Tasks.Task.FromResult(context.Ok());
 }

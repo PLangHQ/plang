@@ -39,7 +39,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         where TReader : global::app.type.format.IReader, allows ref struct
     {
         var goal = new global::app.goal.@this(ctx.Context.App.type.list) { Parent = parent };
-        var step = new global::app.goal.step.serializer.Reader(goal);   // born holding this goal
+        var step = new global::app.goal.step.serializer.Reader(goal, goal.Step);   // born holding this goal and its steps
 
         var named = false;
         string? file = null;

@@ -66,6 +66,11 @@ class app.call.child.list.this : System.Collections.Generic.IEnumerable<app.call
   Item[System.Int32] : app.call.this { get; }
   Remove(app.call.this child) : System.Void
 
+class app.call.composed.this : app.call.this, app.type.item.ICreate<app.call.composed.this>
+  static Create(System.Object raw) : app.call.composed.this
+  static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.composed.this
+  static Internal : System.Boolean { get; }
+
 class app.call.diff.this : System.Collections.Generic.IEnumerable<app.call.Diff>, System.Collections.Generic.IReadOnlyCollection<app.call.Diff>, System.Collections.Generic.IReadOnlyList<app.call.Diff>, System.Collections.IEnumerable
   Add(app.call.Diff diff) : System.Void
   Count : System.Int32 { get; }
@@ -85,6 +90,7 @@ class app.call.isolated.this : app.call.binding.this, app.type.item.ICreate<app.
 class app.call.list.this : app.type.item.this, app.snapshot.ISnapshot
   At(System.Collections.Generic.IReadOnlyList<app.call.this> chain) : app.snapshot.ISnapshot
   Audit : app.error.list.this { get; } [LlmBuilder]
+  Compose(app.goal.step.action.this action, app.call.setting.this setting, app.type.item.variable.list.this variables = …) : app.call.this
   Current : app.call.this { get; } [LlmBuilder]
   Diff() : System.Threading.Tasks.ValueTask<app.type.item.bool.this>
   DiffScope(app.type.item.variable.list.this variables) : System.IDisposable
@@ -3465,6 +3471,17 @@ type app.call.binding
   .tags : dict
   .depth : number
 
+type app.call.composed
+  .property : app.type.item.property.list
+  .goal : goal
+  .step : step
+  .action : action
+  .caller : app.call
+  .errors : list<error>
+  .diffs : list<clr>
+  .tags : dict
+  .depth : number
+
 type app.call.goal
   .property : app.type.item.property.list
   .goal : goal
@@ -3555,6 +3572,17 @@ type app.event.binding.clause
 type app.event.on
 
 type app.goal.list.setting
+
+type app.goal.step.action.composed
+  .module : module
+  .name : text
+  .property : list<clr>
+  .step : step
+  .return : type
+  .description : file
+  .note : app.type.item.note
+  .examples : file
+  .guide : file
 
 type app.module.archive.setting
 

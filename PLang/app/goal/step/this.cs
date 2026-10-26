@@ -114,6 +114,13 @@ public sealed partial class @this
     /// <c>init</c> is the enforcement: there is no stamping it in afterwards, and no repair getter.</summary>
     [JsonIgnore, LlmBuilder]
     public global::app.goal.@this Goal { get; init; } = null!;
+
+    /// <summary>The list that holds this step — its goal's steps, or the body of the action it sits in. A birth fact,
+    /// handed in where the step is made, as its goal is; the build's fold, which moves a step into a body, is the one
+    /// that says where it is then. Null for a step made loose (a fixture), which no list holds.</summary>
+    [JsonIgnore]
+    public global::app.goal.step.list.@this? List { get; internal set; }
+
     /// <summary>A step starts through the step type's events, then its own. A step of one of plang's own goals
     /// (<see cref="global::app.goal.@this.IsSystem"/>) is none of the app's, so it starts through its own events alone;
     /// a step composed with no goal is the app's.</summary>

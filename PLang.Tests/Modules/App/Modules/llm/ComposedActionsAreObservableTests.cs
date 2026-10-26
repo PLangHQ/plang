@@ -31,7 +31,7 @@ public class ComposedActionsAreObservableTests
         {
             Message = new List<LlmMessage> { new LlmMessage { Role = "user", Content = "composed " + Guid.NewGuid() } }.ToListData<LlmMessage>(ctx),
         };
-        _ = await new global::app.goal.step.action.@this(query, ctx).Start(ctx);
+        _ = await new global::app.goal.step.action.composed.@this(query, ctx).Start(ctx);
 
         await Assert.That(seen).Contains("http.request");
     }

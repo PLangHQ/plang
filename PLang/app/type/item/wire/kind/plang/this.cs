@@ -37,7 +37,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
             // signing goes out with the layer it holds and is refused where it arrives, never re-signed here.
             if (context.Actor != null && data.Signature == null)
             {
-                var signed = await new global::app.goal.step.action.@this(
+                var signed = await new global::app.goal.step.action.composed.@this(
                     new global::app.module.signing.sign(context) { Data = data,
                         // Hash in the view being written, so the verifier (re-hashing the wire-reconstructed bag in
                         // the same view) gets matching bytes.
@@ -89,7 +89,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
             // so a Data this answers holds only a signer it verified.
             if (read.Signature != null)
             {
-                var verified = await new global::app.goal.step.action.@this(
+                var verified = await new global::app.goal.step.action.composed.@this(
                     new global::app.module.signing.verify(context) { Data = read }, context).Start(context);
                 if (!verified.Success)
                     return context.Error(verified.Error ?? new global::app.error.ServiceError(
