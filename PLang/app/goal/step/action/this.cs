@@ -157,7 +157,7 @@ public partial class @this
     /// of plang's own goals is none of the app's, so it starts through its own events alone.</summary>
     protected internal override global::app.type.item.@this? Level(int depth, actor.context.@this context)
     {
-        if (Step is { IsSystem: true }) return depth == 0 ? this : null;
+        if (Step?.Goal is { IsSystem: true }) return depth == 0 ? this : null;
         var catalog = Module[Name] is { } action && !ReferenceEquals(action, this) ? action : null;
         return depth switch
         {
