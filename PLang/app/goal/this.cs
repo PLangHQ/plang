@@ -493,12 +493,12 @@ public sealed partial class @this
 
         var lines = text.Split('\n');
         var goals = new List<@this>();
-        var currentGoal = (@this?)null;
-        // The current goal's step node — steps Add straight into it. currentStep accumulates
-        // (continuation lines rebuild it) and is Added at each boundary (next step / blank / goal / EOF).
-        global::app.goal.step.list.@this? stepNode = null;
-        var currentStep = (Step?)null;
-        var pendingComment = new StringBuilder();
+        var goal = (@this?)null;
+        // The step being read: continuation lines rebuild it, and it is added to its goal's steps at each boundary
+        // (next step / blank / goal / EOF).
+        var step = (Step?)null;
+        // the comment lines read since the last step or goal, the comment of whichever comes next
+        var comment = new StringBuilder();
         var inBlockComment = false;
         var stepIndex = 0;
 
@@ -516,15 +516,15 @@ public sealed partial class @this
                     var closePart = raw[..endIdx].Trim();
                     if (closePart.Length > 0)
                     {
-                        if (pendingComment.Length > 0) pendingComment.Append('\n');
-                        pendingComment.Append(closePart);
+                        if (comment.Length > 0) comment.Append('\n');
+                        comment.Append(closePart);
                     }
                     inBlockComment = false;
                 }
                 else
                 {
-                    if (pendingComment.Length > 0) pendingComment.Append('\n');
-                    pendingComment.Append(raw.Trim());
+                    if (comment.Length > 0) comment.Append('\n');
+                    comment.Append(raw.Trim());
                 }
                 continue;
             }
@@ -538,14 +538,14 @@ public sealed partial class @this
                 var closeIdx = afterOpen.IndexOf("*/");
                 if (closeIdx >= 0)
                 {
-                    if (pendingComment.Length > 0) pendingComment.Append('\n');
-                    pendingComment.Append(afterOpen[..closeIdx].Trim());
+                    if (comment.Length > 0) comment.Append('\n');
+                    comment.Append(afterOpen[..closeIdx].Trim());
                 }
                 else
                 {
                     inBlockComment = true;
-                    if (pendingComment.Length > 0) pendingComment.Append('\n');
-                    pendingComment.Append(afterOpen.Trim());
+                    if (comment.Length > 0) comment.Append('\n');
+                    comment.Append(afterOpen.Trim());
                 }
                 continue;
             }
@@ -553,111 +553,99 @@ public sealed partial class @this
             // Blank line — comment boundary
             if (string.IsNullOrWhiteSpace(raw))
             {
-                pendingComment.Clear();
-                if (currentStep != null) { stepNode!.Add(currentStep); currentStep = null; }
+                comment.Clear();
+                if (step != null) { goal!.Step.Add(step); step = null; }
                 continue;
             }
 
             // Line comment — any line starting with /
             if (trimmed.StartsWith("/"))
             {
-                var commentText = trimmed[1..].TrimStart();
-                if (pendingComment.Length > 0) pendingComment.Append('\n');
-                pendingComment.Append(commentText);
+                if (comment.Length > 0) comment.Append('\n');
+                comment.Append(trimmed[1..].TrimStart());
                 continue;
             }
 
             // Step line
             if (trimmed.StartsWith("- ") || trimmed == "-")
             {
-                if (currentGoal == null)
+                if (goal == null)
                 {
-                    currentGoal = new @this(context.App.type.list)
+                    goal = new @this(context.App.type.list)
                     {
                         Name = "Start",
                         Path = path
                     };
-                    goals.Add(currentGoal);
-                    stepNode = currentGoal.Step;
+                    goals.Add(goal);
                     stepIndex = 0;
                 }
 
                 // Finalize the previous step before starting this one (continuations are done).
-                if (currentStep != null) stepNode!.Add(currentStep);
+                if (step != null) goal.Step.Add(step);
 
-                var leadingSpaces = raw.Length - raw.TrimStart().Length;
-                var indent = leadingSpaces / 4;
                 // The step's text is canonical at birth: every line trimmed at both ends (its \r gone),
                 // continuation lines joined by \n — nothing inside a line changes. Readers compare and
                 // print it as is (goal.Merge's `==`, the prompts), never trimming it again.
-                var stepText = trimmed.Length > 2 ? trimmed[2..].Trim() : "";
-                var comment = pendingComment.Length > 0 ? pendingComment.ToString() : null;
-                pendingComment.Clear();
-
-                currentStep = new Step(context.App.type.list)
+                step = new Step(context.App.type.list)
                 {
-                    Goal = currentGoal,   // birth fact — the parser holds the goal, so it hands it over
+                    Goal = goal,   // birth fact — the parser holds the goal, so it hands it over
                     Index = stepIndex,
-                    Text = stepText,
-                    Line = new global::app.goal.step.line.@this { Number = lineNumber, Indent = indent },
-                    Comment = comment
+                    Text = trimmed.Length > 2 ? trimmed[2..].Trim() : "",
+                    Line = new global::app.goal.step.line.@this { Number = lineNumber, Indent = (raw.Length - trimmed.Length) / 4 },
+                    Comment = comment.Length > 0 ? comment.ToString() : null
                 };
+                comment.Clear();
 
                 stepIndex++;
                 continue;
             }
 
             // Continuation line
-            if (currentStep != null && raw.Length > 0 && raw[0] == ' ')
+            if (step != null && raw.Length > 0 && raw[0] == ' ')
             {
-                currentStep = new Step(context.App.type.list)
+                step = new Step(context.App.type.list)
                 {
-                    Goal = currentStep.Goal,
-                    Index = currentStep.Index,
-                    Text = currentStep.Text + "\n" + trimmed.TrimEnd(),
-                    Line = currentStep.Line,
-                    Comment = currentStep.Comment
-                };                continue;
+                    Goal = step.Goal,
+                    Index = step.Index,
+                    Text = step.Text + "\n" + trimmed.TrimEnd(),
+                    Line = step.Line,
+                    Comment = step.Comment
+                };
+                continue;
             }
 
-            // Escape character — \ at start of line continues previous step text
-            if (currentStep != null && trimmed.StartsWith("\\"))
+            // Escape character — \ at start of line continues previous step text, the backslash dropped
+            if (step != null && trimmed.StartsWith("\\"))
             {
-                var escapedText = trimmed[1..].TrimEnd(); // strip the leading backslash
-                currentStep = new Step(context.App.type.list)
+                step = new Step(context.App.type.list)
                 {
-                    Goal = currentStep.Goal,
-                    Index = currentStep.Index,
-                    Text = currentStep.Text + "\n" + escapedText,
-                    Line = currentStep.Line,
-                    Comment = currentStep.Comment
-                };                continue;
+                    Goal = step.Goal,
+                    Index = step.Index,
+                    Text = step.Text + "\n" + trimmed[1..].TrimEnd(),
+                    Line = step.Line,
+                    Comment = step.Comment
+                };
+                continue;
             }
 
-            // Goal header
-            var goalName = trimmed;
-            var goalComment = pendingComment.Length > 0 ? pendingComment.ToString() : null;
-            pendingComment.Clear();
-
-            // Finalize the previous goal's last step before starting the new goal.
-            if (currentStep != null) { stepNode?.Add(currentStep); currentStep = null; }
+            // Goal header. Finalize the previous goal's last step before starting the new goal.
+            if (step != null) { goal?.Step.Add(step); step = null; }
 
             // what the goal is — setup, system, a test — it answers itself from where it lives; a sub-goal lives in
             // its parent's file, so only the file's first goal holds the path
-            currentGoal = new @this(context.App.type.list)
+            goal = new @this(context.App.type.list)
             {
-                Name = goalName,
-                Comment = goalComment,
+                Name = trimmed,
+                Comment = comment.Length > 0 ? comment.ToString() : null,
                 Path = goals.Count == 0 ? path : null,
             };
-            goals.Add(currentGoal);
-            stepNode = currentGoal.Step;
+            comment.Clear();
+            goals.Add(goal);
             stepIndex = 0;
-            currentStep = null;
         }
 
         // Finalize the last step at EOF.
-        if (currentStep != null) stepNode?.Add(currentStep);
+        if (step != null) goal?.Step.Add(step);
 
         // Sub-goals nest under the root (public) goal
         if (goals.Count > 1)
