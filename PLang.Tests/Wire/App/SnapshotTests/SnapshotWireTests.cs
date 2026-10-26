@@ -418,6 +418,36 @@ public class SnapshotWireTests
         await Assert.That(System.Convert.ToInt64((await context.Variable.GetValue("seen")))).IsEqualTo(2L);
     }
 
+    // a snapshot never carries a sensitive value: a variable holding one is not saved, so a resumed run asks again
+    [Test]
+    public async Task ASensitiveVariable_IsNotInTheSnapshotsText()
+    {
+        var app = new global::app.@this("/sensitive", global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        await context.Variable.Set("password", new global::app.type.item.sensitive.@this("hunter2", app.type.list[typeof(global::app.type.item.sensitive.@this)]));
+
+        var text = await app.Snapshot(context).Text(context);
+
+        await Assert.That(text).DoesNotContain("hunter2");
+        await Assert.That((await context.Snapshot(text)).Section("Variables").Entries.Get("password", context)).IsNull();
+    }
+
+    // a [Sensitive] member of a value a variable holds is not in the snapshot's text (an identity's private key); red
+    // until the snapshot's write has a view of its own (plang's own store shows a [Sensitive, Store] member whole)
+    [Test, TUnit.Core.Property("carried", "test/plan/snapshot")]
+    public async Task ASensitiveMember_IsNotInTheSnapshotsText()
+    {
+        var app = new global::app.@this("/sensitive", global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        var identity = new global::app.module.identity.Identity("me", app.type.list[typeof(global::app.module.identity.Identity)])
+            { PrivateKey = "the-private-key" };
+        await context.Variable.Set("id", identity);
+
+        var text = await app.Snapshot(context).Text(context);
+
+        await Assert.That(text).DoesNotContain("the-private-key");
+    }
+
     [Test]
     public async Task EmptyApp_WireIsValidJson_AndRestoresClean()
     {

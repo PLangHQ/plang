@@ -28,6 +28,8 @@ public partial class @this : ISnapshot
             // the Data subtype (a store re-wrap loses the subtype).
             if (kvp.Value is data.DynamicData
                 || kvp.Value.Item is global::app.type.item.computed) continue;
+            // a sensitive value is never saved: a resumed run that needs it asks again
+            if (kvp.Value.Item is global::app.type.item.sensitive.@this) continue;
             // under the store's key, the truth: one Data held under two names is captured under both
             s.Entries.Set(kvp.Key, kvp.Value.Clone());
         }
