@@ -220,7 +220,8 @@ public partial class @this
     [JsonIgnore]
     [LlmIgnore]
     [Out, Store]
-    internal global::app.type.item.property.list.@this Property { get => Attachment.Property; set => Attachment.Property = value; }
+    internal global::app.type.item.property.list.@this Property
+        => Attachment.Property(_context.App.type.list[typeof(global::app.type.item.property.list.@this)]);
 
     /// <summary>Whether a program added any property to this value — asked without making the list.</summary>
     internal bool HasProperty => Carried?.HasProperty ?? false;

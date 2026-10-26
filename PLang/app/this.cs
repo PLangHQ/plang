@@ -47,7 +47,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <summary>What a program adds to the app (<c>%!app.property["home"]%</c>, <c>%!app.home%</c>) — kept for the app's
     /// life, and in its snapshot.</summary>
     [Store, global::app.LlmBuilder]
-    public global::app.type.item.property.list.@this property { get; private set; } = new();
+    public global::app.type.item.property.list.@this property { get; }
 
     /// <summary>The one root: a copy of the app is the app.</summary>
     protected internal override global::app.type.item.@this Clone() => this;
@@ -323,6 +323,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // layer over the types the origin answers.
         type = new(this);
         parent = new(type.list[typeof(global::app.parent.@this)]);
+        property = new(type.list[typeof(global::app.type.item.property.list.@this)]);
 
         StartedAt = new(DateTimeOffset.UtcNow, type.list[typeof(global::app.type.item.datetime.@this)]);
         Created = StartedAt;

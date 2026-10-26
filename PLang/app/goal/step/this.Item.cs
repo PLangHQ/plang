@@ -9,7 +9,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 {
     /// <summary>What a program adds to the step — kept as long as the step is loaded.</summary>
     [Store, global::app.LlmBuilder]
-    public global::app.type.item.property.list.@this property { get; } = new();
+    public global::app.type.item.property.list.@this property { get; }
 
     /// <summary>A step passes through; anything else is declined. A step is built by its goal, never
     /// converted from a value.</summary>

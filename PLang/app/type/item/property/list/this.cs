@@ -16,8 +16,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, global::app.data.@this> _property =
         new(System.StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>A thing's properties, none yet.</summary>
-    public @this() { }
+    /// <summary>A thing's properties, none yet, born holding their type.</summary>
+    public @this(global::app.type.@this type) : base(type) { }
 
     /// <summary>A structure, navigated by name.</summary>
     public override bool IsLeaf => false;
@@ -46,7 +46,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// what its value was given.</summary>
     internal @this Copy()
     {
-        var copy = new @this();
+        var copy = new @this(Type);
         foreach (var (name, property) in _property) copy._property[name] = property;
         return copy;
     }
@@ -91,7 +91,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         if (raw is @this list) return list;
         if (raw is global::app.type.item.dict.@this written)
         {
-            var made = new @this();
+            var made = new @this(type ?? data.Context.App.type.list[typeof(@this)]);
             foreach (var property in written.Entries(data.Context)) made._property[property.Name] = property;
             return made;
         }
@@ -99,6 +99,19 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             $"%{data.Name}% holds a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name} — a thing's properties are made from what they wrote",
             "CreateItemDeclined", 400));
         return null;
+    }
+
+    /// <summary>Reads the list off the reader — its own <c>"property": {…}</c> object, each property the whole Data it
+    /// was written as, born with the read's context.</summary>
+    public static @this Read(ref global::app.type.item.kind.json.Reader reader, global::app.type.reader.ReadContext ctx)
+    {
+        var list = new @this(ctx.Context.App.type.list[typeof(@this)]);
+        if (reader.Null()) return list;
+        var data = new global::app.data.reader.@this();
+        reader.BeginObject();
+        while (reader.NextName(out var name)) list._property[name] = data.Read(ref reader, ctx);
+        reader.EndObject();
+        return list;
     }
 
     /// <summary>The run's state: each property the Data it is, under its name, as variables are stored.</summary>

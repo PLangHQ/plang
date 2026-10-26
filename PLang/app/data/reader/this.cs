@@ -90,11 +90,8 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                     properties = Properties.Read(ref reader, ctx);
                     break;
                 case "property":
-                    // the properties a program added to the value, each the Data it was given
-                    property = new global::app.type.item.property.list.@this();
-                    reader.BeginObject();
-                    while (reader.NextName(out var added)) property.Add(added, Read(ref reader, ctx));
-                    reader.EndObject();
+                    // the properties a program added to the value: the list reads itself
+                    property = global::app.type.item.property.list.@this.Read(ref reader, ctx);
                     break;
                 default:
                     reader.Skip();
@@ -123,8 +120,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
             var d = value is global::app.error.@this received
                 ? new Data(name, context: context) { Error = received }
                 : new Data(name, value, context: context);
-            if (properties != null) d.Properties = properties;
-            if (property != null) d.Property = property;
+            if (properties != null || property != null) d.Attachment = new(properties, property);
             return d;
         }
         // No value slot — a typed absence under its declared type (the absence the type's own
@@ -132,8 +128,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
         var typedNull = typeRef is { IsNull: false }
             ? new Data(name, new global::app.type.item.@null.@this(typeRef), context: context)
             : new Data(name, (object?)null, context: context);
-        if (properties != null) typedNull.Properties = properties;
-        if (property != null) typedNull.Property = property;
+        if (properties != null || property != null) typedNull.Attachment = new(properties, property);
         return typedNull;
     }
 }

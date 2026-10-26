@@ -54,7 +54,7 @@ public partial class @this
         if (!answer.Success)
         {
             if (!answer.Error!.Status.IsNotFound) return _context?.Error(answer.Error) ?? this;
-            // a variable's own binding (keeps) holds a member its value has no place for (`set %name.lang% = "is"`); a
+            // a variable's own binding (keeps) holds a property its value has no place for (`set %name.lang% = "is"`); a
             // plain value inside another has nowhere to keep one
             if (keeps && !isIndex)
             {
@@ -62,7 +62,7 @@ public partial class @this
                 return this;
             }
             return _context?.Error(new global::app.error.@this(
-                $"{answer.Error.Message}: %{Path}% is a {target.Type.Name} inside another value, and has nowhere to keep a member",
+                $"{answer.Error.Message}: %{Path}% is a {target.Type.Name} inside another value, and has nowhere to keep a property",
                 "CannotSetChild", 400)) ?? this;
         }
         if (!ReferenceEquals(answer.Peek(), Peek())) SetValue(answer.Peek());

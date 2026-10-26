@@ -13,7 +13,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 {
     /// <summary>What a program adds to the goal — kept as long as the goal is loaded.</summary>
     [Store, global::app.LlmBuilder]
-    public global::app.type.item.property.list.@this property { get; } = new();
+    public global::app.type.item.property.list.@this property { get; }
 
     /// <summary>
     /// The <c>.pr</c> form: the value written bare in plang's schema writer — a goal (or any program value:

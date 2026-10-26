@@ -1,12 +1,12 @@
 namespace PLang.Tests.App;
 
 /// <summary>
-/// A member a program adds lands on the nearest thing that lives on: a thing with its own life (the app, a call, an
+/// A property a program adds lands on the nearest thing that lives on: a thing with its own life (the app, a call, an
 /// actor, a module, a goal, a step) keeps it in place; a variable's own value keeps it in its binding; a dict takes it
 /// as a key; a plain value inside another is refused. Its own members are read first and never written over; a
 /// setting stays strict.
 /// </summary>
-public class KeptMembersTests
+public class AddedPropertyTests
 {
     private static global::app.type.item.variable.@this Variable(string path, global::app.type.list.@this types)
         => new global::app.type.item.variable.parser.@this(path, types).Variable.Single();
@@ -21,7 +21,7 @@ public class KeptMembersTests
     }
 
     [Test]
-    public async Task TheApp_KeepsAMember_ForEveryAsker()
+    public async Task TheApp_KeepsAProperty_ForEveryAsker()
     {
         await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
 
@@ -32,7 +32,7 @@ public class KeptMembersTests
     }
 
     [Test]
-    public async Task ACall_KeepsAMember_AsLongAsItLives()
+    public async Task ACall_KeepsAProperty_AsLongAsItLives()
     {
         await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
@@ -45,7 +45,7 @@ public class KeptMembersTests
     }
 
     [Test]
-    public async Task AVariablesOwnValue_KeepsAMember_InItsBinding()
+    public async Task AVariablesOwnValue_KeepsAProperty_InItsBinding()
     {
         await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
@@ -57,10 +57,10 @@ public class KeptMembersTests
         await Assert.That(await Read(ctx, "%name%")).IsEqualTo("Ingi");
     }
 
-    // `.` reads the value's members, added ones included; `!` reads the variable's properties and facts. Neither sees
+    // `.` reads the value's members, then its added properties; `!` reads the variable's properties and facts. Neither sees
     // the other's.
     [Test]
-    public async Task AnAddedMember_IsNoProperty()
+    public async Task AnAddedProperty_IsNotReadWithABang()
     {
         await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
@@ -72,7 +72,7 @@ public class KeptMembersTests
     }
 
     [Test]
-    public async Task AProperty_IsNoMember()
+    public async Task ABangProperty_IsNotReadWithADot()
     {
         await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
@@ -85,9 +85,9 @@ public class KeptMembersTests
         await Assert.That(member.Success && member.IsInitialized).IsFalse();
     }
 
-    // An added member rides with its variable's value: across the wire, and through the store.
+    // An added property rides with its variable's value: across the wire, and through the store.
     [Test]
-    public async Task AnAddedMember_RidesTheWire()
+    public async Task AnAddedProperty_RidesTheWire()
     {
         await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
@@ -106,15 +106,15 @@ public class KeptMembersTests
     }
 
     [Test]
-    public async Task AnAddedMember_RidesTheStore()
+    public async Task AnAddedProperty_RidesTheStore()
     {
         await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("name", new global::app.data.@this("name", "Ingi", context: ctx));
         await (await Set(ctx, "%name.lang%", ctx.Text("is"))).IsSuccess();
 
-        await (await app.store.Set("kept", "name", await ctx.Variable.Get("name"))).IsSuccess();
-        var back = await app.store.Get<global::app.type.item.text.@this>("kept", "name");
+        await (await app.store.Set("added", "name", await ctx.Variable.Get("name"))).IsSuccess();
+        var back = await app.store.Get<global::app.type.item.text.@this>("added", "name");
         await back.IsSuccess();
         await ctx.Variable.Set("again", back);
 
@@ -132,7 +132,7 @@ public class KeptMembersTests
 
         await set.IsFailure();
         await Assert.That(set.Error!.Key).IsEqualTo("CannotSetChild");
-        await Assert.That(set.Error!.Message).Contains("nowhere to keep a member");
+        await Assert.That(set.Error!.Message).Contains("nowhere to keep a property");
     }
 
     [Test]
@@ -159,7 +159,7 @@ public class KeptMembersTests
     }
 
     [Test]
-    public async Task TheAppsMembers_RideItsSnapshot()
+    public async Task TheAppsProperties_RideItsSnapshot()
     {
         var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
         await (await Set(src.actor.list.User.Context, "%!app.home%", src.actor.list.User.Context.Text("lights"))).IsSuccess();

@@ -18,17 +18,25 @@ internal sealed class attachment
     /// <summary>Whether the value carries any property — asked without making the bag.</summary>
     public bool HasProperties => _properties is { Count: > 0 };
 
-    /// <summary>The properties a program added — made the first time one is asked for; the first made is the one kept.</summary>
-    public global::app.type.item.property.list.@this Property
-    {
-        get => System.Threading.LazyInitializer.EnsureInitialized(ref _property, static () => new());
-        set => _property = value;
-    }
+    /// <summary>The properties a program added — made, holding <paramref name="type"/>, the first time they are asked
+    /// for; the first made is the one kept.</summary>
+    public global::app.type.item.property.list.@this Property(global::app.type.@this type)
+        => System.Threading.LazyInitializer.EnsureInitialized(ref _property, () => new(type));
     private global::app.type.item.property.list.@this? _property;
 
     /// <summary>Whether a program added any property — asked without making the list.</summary>
     public bool HasProperty => _property is { Count: > 0 };
 
+    /// <summary>Nothing carried yet.</summary>
+    public attachment() { }
+
+    /// <summary>What a value carries as it was read or copied: its properties and what a program added to it.</summary>
+    public attachment(Properties? properties, global::app.type.item.property.list.@this? property)
+    {
+        _properties = properties;
+        _property = property;
+    }
+
     /// <summary>A copy for a new variable over the same value.</summary>
-    public attachment Copy() => new() { _properties = _properties?.Clone(), _property = _property?.Copy() };
+    public attachment Copy() => new(_properties?.Clone(), _property?.Copy());
 }

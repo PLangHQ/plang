@@ -22,7 +22,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>What a program adds to the actor — kept as long as the actor lives, and in a snapshot.</summary>
     [Store, global::app.LlmBuilder]
-    public global::app.type.item.property.list.@this property { get; } = new();
+    public global::app.type.item.property.list.@this property { get; }
 
     /// <summary>A key names this actor by its name — <c>system</c>, <c>user</c>; case is not the program's to get right.</summary>
     public ValueTask<@this?> Match(string key)
@@ -139,6 +139,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         Role = role;
         on = new(this);
         App = app;
+        property = new(app.type.list[typeof(global::app.type.item.property.list.@this)]);
         _system = system;
         _cts = parentToken == default
             ? new CancellationTokenSource()

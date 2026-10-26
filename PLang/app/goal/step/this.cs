@@ -59,12 +59,13 @@ public sealed partial class @this
     [Store, Out, LlmBuilder, Debug, Default]
     public string? Comment { get; internal set; }
 
-    /// <summary>A step, born holding its type and its code list from <paramref name="types"/>, the app's type list
+    /// <summary>A step, born holding its type and its code and property lists from <paramref name="types"/>, the app's type list
     /// (read at birth, never kept).</summary>
     public @this(global::app.type.list.@this types) : base(types[typeof(@this)])
     {
         _code = new(types[typeof(global::app.goal.step.action.list.@this)]);
         Warning = new(types);
+        property = new(types[typeof(global::app.type.item.property.list.@this)]);
     }
 
     private global::app.goal.step.action.list.@this _code;

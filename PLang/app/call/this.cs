@@ -22,7 +22,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>What a program adds to the call (<c>%!call.scope.retries%</c>) — kept as long as the call lives.</summary>
     [Store, global::app.LlmBuilder]
-    public global::app.type.item.property.list.@this property { get; } = new();
+    public global::app.type.item.property.list.@this property { get; }
 
     /// <summary>
     /// The frame writes one flat form in every view — a stack-trace entry: its id and depth, where it is (the
@@ -279,6 +279,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         _datetime = stack.Datetime;
         Tags = new global::app.type.item.dict.@this(stack.Dict);
         Errors = new global::app.error.list.@this(stack.Errors);
+        property = new(stack.Properties);
         Children = new child.list.@this(stack);
         foreach (var name in names ?? [])
         {

@@ -36,7 +36,7 @@ public sealed partial class @this
     [Store, Out, LlmBuilder, Debug, Default]
     public string? Comment { get; internal set; }
 
-    /// <summary>A goal, born holding its type and its step, child and tag lists from <paramref name="types"/>, the
+    /// <summary>A goal, born holding its type and its step, child, tag and property lists from <paramref name="types"/>, the
     /// app's type list (read at birth, never kept).</summary>
     public @this(global::app.type.list.@this types) : base(types[typeof(@this)])
     {
@@ -44,6 +44,7 @@ public sealed partial class @this
         Child = new(this, types[typeof(child.@this)]);
         Tag = new(types[typeof(global::app.goal.tag.list.@this)]);
         Warning = new(types);
+        property = new(types[typeof(global::app.type.item.property.list.@this)]);
     }
 
     private global::app.goal.step.list.@this _step;

@@ -2455,7 +2455,7 @@ interface app.type.item.property.IOwner
 
 class app.type.item.property.list.this : app.type.item.this, app.snapshot.ISnapshot, app.type.item.ICreate<app.type.item.property.list.this>
   Item[System.String] : app.data.this { get; }
-  ctor()
+  ctor(app.type.this type)
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
   override Get(app.data.this parent, System.String key, System.Boolean isIndex) : System.Threading.Tasks.ValueTask<app.data.this>
   override IsLeaf : System.Boolean { get; }
@@ -2466,6 +2466,7 @@ class app.type.item.property.list.this : app.type.item.this, app.snapshot.ISnaps
   static Create(System.Object raw) : app.type.item.property.list.this
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.type.item.property.list.this
   static Internal : System.Boolean { get; }
+  static Read(app.type.item.kind.json.Reader& reader, app.type.reader.ReadContext ctx) : app.type.item.property.list.this
 
 class app.type.item.prose.this : app.type.item.this
   Or(app.type.item.prose.this other) : app.type.item.prose.this

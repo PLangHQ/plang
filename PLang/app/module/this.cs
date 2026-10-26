@@ -15,7 +15,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 {
     /// <summary>What a program adds to the module — kept as long as the module is registered.</summary>
     [Store, global::app.LlmBuilder]
-    public global::app.type.item.property.list.@this property { get; } = new();
+    public global::app.type.item.property.list.@this property { get; }
 
     /// <summary>A module is registered from its actions' classes, never made from a value.</summary>
     public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
@@ -65,6 +65,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         _app = app;
         _modules = new global::app.type.item.list.@this<@this>(app.type.list[typeof(global::app.type.item.list.@this<@this>)]);
         _registering = new object();
+        property = new(app.type.list[typeof(global::app.type.item.property.list.@this)]);
         Discover(typeof(@this).Assembly);
     }
 
@@ -78,12 +79,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         _modules = new global::app.type.item.list.@this<@this>(app.type.list[typeof(global::app.type.item.list.@this<@this>)]);
         _modules.Add(under._modules!);
         _registering = new object();
+        property = new(app.type.list[typeof(global::app.type.item.property.list.@this)]);
     }
 
     internal @this(string name, @this root) : base(root.Type)
     {
         Name = name;
         _root = root;
+        property = new(root.property.Type);
     }
 
     /// <summary>Whether this registry, a layer, holds modules of its own — a module this layer made.</summary>
