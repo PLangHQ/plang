@@ -223,9 +223,8 @@ public class PathAuthorizeTests
     /// real root is `/srv/myapp`, or the auto-grant in IsInRoot becomes a
     /// permission-gate bypass. Linux/macOS only; Windows is intentionally
     /// case-insensitive at the FS layer.
-    [Test] public async Task IsInRoot_UpperCasedRoot_TreatedAsOutOfRoot_OnUnix()
+    [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows)] public async Task IsInRoot_UpperCasedRoot_TreatedAsOutOfRoot_OnUnix()
     {
-        if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS()) return;
         var app = NewApp();
         // "n" answers the prompt that IsInRoot=false forces — so we observe
         // PermissionDenied (out-of-root path → prompt → refused). Under the

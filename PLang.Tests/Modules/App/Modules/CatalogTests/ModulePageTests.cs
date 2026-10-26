@@ -119,10 +119,9 @@ public class ModulePageTests
 
     // A teaching file that is not there is nil to a template; one that is there and can't be read fails the render with
     // its own error — never read as empty (a page or a decider state pinned under load without its examples)
-    [Test]
+    [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows)]
     public async Task ATeachingFileThatCantBeRead_FailsTheRender_AnAbsentOneIsNil()
     {
-        if (System.OperatingSystem.IsWindows()) return;
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-page-" + System.Guid.NewGuid().ToString("N")[..8]);
         var folder = System.IO.Path.Combine(root, "system", "modules", "file");
         System.IO.Directory.CreateDirectory(folder);

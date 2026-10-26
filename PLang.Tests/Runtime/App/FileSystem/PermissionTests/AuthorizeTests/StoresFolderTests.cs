@@ -84,13 +84,13 @@ public class StoresFolderTests : System.IAsyncDisposable
         await Assert.That(Shared(key)).IsEqualTo("the identity's private key");
     }
 
-    // the OS-rooted form of the same file (//<root>/…, a .. in it too) is the same file to the gate
-    [Test]
+    // the OS-rooted form of the same file (//<root>/…, a .. in it too) is the same file to the gate; // is the OS-rooted
+    // form on Unix only (on Windows it is a network path)
+    [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows)]
     [Arguments("")]
     [Arguments("/sub/..")]
     public async Task TheDoubleSlashForm_IsRefused_NeverAsked(string detour)
     {
-        if (System.OperatingSystem.IsWindows()) return;   // // is the OS-rooted form on Unix only
         var user = app.actor.list.User.Context;
         var form = "/" + root + detour + "/.data/setting/data.sqlite";
         await Refused(await user.File(form).Read(user));
@@ -110,9 +110,8 @@ public class StoresFolderTests : System.IAsyncDisposable
     }
 
     // Windows: the stores' folder by its 8.3 short name (DATA~1) is the stores' folder — refused, never asked
-    [Test] public async Task TheStoresFolder_ByItsShortName_IsRefused_NeverAsked()
+    [Test, RunOn(TUnit.Core.Enums.OS.Windows)] public async Task TheStoresFolder_ByItsShortName_IsRefused_NeverAsked()
     {
-        if (!System.OperatingSystem.IsWindows()) return;
         var folder = System.IO.Path.Combine(root, ".data");
         var buffer = new char[32768];
         var length = GetShortPathNameW(folder, buffer, (uint)buffer.Length);

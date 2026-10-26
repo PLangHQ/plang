@@ -130,9 +130,8 @@ public class LinkSpotTests : System.IAsyncDisposable
     }
 
     // A Windows junction to a folder outside, deleted: the junction goes, what it leads to stays. Runs on Windows only.
-    [Test] public async Task AJunction_Deleted_IsUnlinked_NeverRecursedThrough()
+    [Test, RunOn(TUnit.Core.Enums.OS.Windows)] public async Task AJunction_Deleted_IsUnlinked_NeverRecursedThrough()
     {
-        if (!System.OperatingSystem.IsWindows()) return;
         var made = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("cmd.exe", $"/c mklink /J \"{At("j")}\" \"{outside}\"")
             { UseShellExecute = false, CreateNoWindow = true })!;
         await made.WaitForExitAsync();

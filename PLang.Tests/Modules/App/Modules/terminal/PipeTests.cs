@@ -85,10 +85,9 @@ public class PipeTests : IDisposable
         await Assert.That((await (await channel.Read()).Value())?.ToString()).IsEqualTo("næst");
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task ASpawnedProgram_HasItsStdio_AndItsExitCode()
     {
-        if (!OperatingSystem.IsLinux()) return;
         using var child = Spawned.Start(Sh("read line; echo \"got $line\"; echo oops >&2; exit 3"), pipe: false);
         await child.Input.WriteLineAsync("hi");
         child.Input.Close();
@@ -99,10 +98,9 @@ public class PipeTests : IDisposable
         await Assert.That(child.Pipe).IsNull();
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task ThePipePair_IsFd3In_AndFd4Out()
     {
-        if (!OperatingSystem.IsLinux()) return;
         using var child = Spawned.Start(Sh("cat <&3 >&4"), pipe: true);
         var pipe = child.Pipe!;
         await pipe.WriteAsync("ping\0"u8.ToArray());
@@ -113,10 +111,9 @@ public class PipeTests : IDisposable
         child.Kill();
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task Kill_EndsTheWholeGroup()
     {
-        if (!OperatingSystem.IsLinux()) return;
         using var child = Spawned.Start(Sh("sleep 60 & echo $!; wait"), pipe: true);
         var grandchild = int.Parse((await child.Output.ReadLineAsync())!.Trim());
         child.Kill();
@@ -135,10 +132,9 @@ public class PipeTests : IDisposable
     // What ends Chromium when plang dies, however it dies (kill -9 too): the kernel closes plang's ends of the pipe, the
     // program reads EOF on fd 3 and quits. Only if no one else holds plang's ends — not a program .NET starts after it,
     // nor one plang spawns after it (each end is close-on-exec).
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task PlangsEndsClosing_EndTheProgram_WhileItsOtherProgramsRun()
     {
-        if (!OperatingSystem.IsLinux()) return;
         using var child = Spawned.Start(Sh("cat <&3 >/dev/null; exit 7"), pipe: true);
         using var managed = new global::app.module.terminal.code.child.managed.@this(System.Diagnostics.Process.Start(Sh("sleep 30"))!);
         using var spawned = Spawned.Start(Sh("sleep 30"), pipe: false);
@@ -168,10 +164,9 @@ public class PipeTests : IDisposable
         return (await opened.Value() as global::app.module.terminal.type.process.@this)!;
     }
 
-    [Test]
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task OpenWithPipe_GivesTheProgramsPipe_AsAChannel()
     {
-        if (!OperatingSystem.IsLinux()) return;
         var program = await Open("cat <&3 >&4");
         var pipe = program.pipe!;
         pipe.End = "\0";
