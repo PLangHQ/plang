@@ -30,7 +30,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     public string Arguments { get; init; } = "";
 
     /// <summary>What an OnToolCall callback is handed about this call: its name and arguments, where it is
-    /// (<paramref name="status"/>), and — once it ran — what it <paramref name="answered"/>: its value, or its error.</summary>
+    /// (<paramref name="status"/>), and — once it ran — what it <paramref name="answered"/>, whole, as <c>result</c>.</summary>
     public IEnumerable<global::app.data.@this> State(status status, global::app.data.@this? answered, global::app.actor.context.@this context)
     {
         var types = context.App.type.list;
@@ -38,7 +38,6 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         yield return new global::app.data.@this("arguments", Arguments, context: context);
         yield return new global::app.data.@this("status",
             new global::app.type.item.choice.@this<status>(status, types[typeof(global::app.type.item.choice.@this<status>)]), context: context);
-        if (answered != null)
-            yield return new global::app.data.@this("result", answered.Success ? answered.Peek() : answered.Error, context: context);
+        if (answered != null) yield return answered.Copy("result");
     }
 }

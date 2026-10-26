@@ -319,7 +319,7 @@ public sealed class OpenAi : ILlm
                 // the next is called; a Parallel one answers a task at once and runs on. Each result is made when
                 // its call has ended, and they go back in call order.
                 // a Parallel tool's call answers its task: the result is made once the task has ended
-                async Task<string> Ended(type.tool.call.@this tc,data.@this called)
+                async Task<string> Ended(type.tool.call.@this tc, data.@this called)
                     => await Result(action, tc, await called.Use<global::app.task.@this>(task => task.Wait()));
 
                 var ending = new List<Task<string>>();
@@ -490,7 +490,7 @@ public sealed class OpenAi : ILlm
 
     // The tool call made: OnToolCall "starting", then the held goal.call with the model's arguments — its answer (a
     // Parallel call's is its task), or why it couldn't be made (an unknown tool, arguments that don't read).
-    private static async Task<data.@this> Call(query action, type.tool.call.@this toolCall,List<Tool>? tools)
+    private static async Task<data.@this> Call(query action, type.tool.call.@this toolCall, List<Tool>? tools)
     {
         var context = action.Context;
         // one ask for the tool call: its OnToolCall frame and the tool's own are pushed through this door
@@ -499,7 +499,7 @@ public sealed class OpenAi : ILlm
         // OnToolCall — starting. The run-state binds in a frame for the held call (never the caller's own
         // variables: a user's %name% stays theirs); the held call runs as itself.
         if (action.OnToolCall != null && await action.OnToolCall.Value() is { } onToolCall)
-            await using (context.call.Push(toolCall.State(type.tool.call.status.starting,null, context), setting, onToolCall))
+            await using (context.call.Push(toolCall.State(type.tool.call.status.starting, null, context), setting, onToolCall))
                 await onToolCall.Start(context);
 
         if (tools?.Find(t => t.Name == toolCall.Name) is not { } tool)
@@ -517,7 +517,7 @@ public sealed class OpenAi : ILlm
 
     // What goes back to the model for an ended tool call: its result as json ("" for none), or "Error: " and why;
     // then OnToolCall "completed".
-    private static async Task<string> Result(query action, type.tool.call.@this toolCall,data.@this ended)
+    private static async Task<string> Result(query action, type.tool.call.@this toolCall, data.@this ended)
     {
         var context = action.Context;
         string result;
@@ -536,7 +536,7 @@ public sealed class OpenAi : ILlm
 
         // OnToolCall — completed
         if (action.OnToolCall != null && await action.OnToolCall.Value() is { } onToolCall)
-            await using (context.call.Push(toolCall.State(type.tool.call.status.completed,ended, context), await context.call.Setting(), onToolCall))
+            await using (context.call.Push(toolCall.State(type.tool.call.status.completed, ended, context), await context.call.Setting(), onToolCall))
                 await onToolCall.Start(context);
 
         return result;

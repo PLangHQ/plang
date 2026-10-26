@@ -141,6 +141,30 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
     }
 
     [Test]
+    public async Task Code_Start_ADllRecordThatDoesntRead_IsTheAnswer()
+    {
+        // a record with no source would otherwise be dropped, and the run would come back without its DLL
+        var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
+        var context = src.actor.list.User.Context;
+        var snap = new Snapshot(context);
+        snap.Node("Code").Set("dll", new List<global::app.module.code.dll.@this>
+        {
+            new global::app.module.code.dll.loaded.@this(src.type.list[typeof(global::app.module.code.dll.loaded.@this)])
+            {
+                Source = global::app.type.item.path.@this.Resolve("/nonexistent/ghost-provider.dll", context),
+            }
+        });
+        var text = (await snap.Text(context)).Replace("\"source\"", "\"elsewhere\"");
+
+        var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
+        var into = dst.actor.list.User.Context;
+        var started = await (await into.Snapshot(text)).Start(dst, into);
+
+        await Assert.That(started.Success).IsFalse();
+        await Assert.That(started.Error!.Key).IsEqualTo("DllRecordIncomplete");
+    }
+
+    [Test]
     public async Task Code_Start_AProviderRegisteredInProcess_AnswersItCantComeBack()
     {
         var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();

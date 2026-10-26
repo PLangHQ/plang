@@ -82,33 +82,39 @@ public sealed partial class @this : ISnapshot
     /// </summary>
     async System.Threading.Tasks.Task<data.@this> ISnapshot.Start(global::app.snapshot.@this snapshot, actor.context.@this context)
     {
-        // Step 1 — the DLLs the run took in; a record that doesn't read is its row's answer
-        if (snapshot.Entries.Get("dll", context) is { } dlls)
-            foreach (var row in (await dlls.Value<global::app.type.item.list.@this>())!.Items(context))
+        // a record that doesn't read is the answer
+        var dll = await snapshot.Read<dll.@this>("dll");
+        if (await dll.Value() is not { } dlls) return dll;
+        var registration = await snapshot.Read<Registration>("registration");
+        if (await registration.Value() is not { } registrations) return registration;
+        var @default = await snapshot.Read<Default>("default");
+        if (await @default.Value() is not { } defaults) return @default;
+
+        // Step 1 — the DLLs the run took in
+        foreach (var record in dlls.Items())
+        {
+            var made = await record.Start(this, context);
+            if (!made.Success)
             {
-                if (await row.Value<dll.@this>() is not { } dll) return row;
-                var made = await dll.Start(this, context);
-                if (!made.Success)
-                {
-                    var error = new global::app.error.@this($"the DLL '{dll.Source}' the run took in failed to load again.", "DllNotLoaded", 500);
-                    error.list.Add(made.Error!);
-                    return context.Error(error);
-                }
+                var error = new global::app.error.@this($"the DLL '{record.Source}' the run took in failed to load again.", "DllNotLoaded", 500);
+                error.list.Add(made.Error!);
+                return context.Error(error);
             }
+        }
 
         // Step 2 — providers registered in-process
-        if ((await snapshot.Read<Registration>("registration")).FirstOrDefault() is { } registration)
+        if (registrations.Items().FirstOrDefault() is { } inProcess)
             return context.Error(new global::app.error.@this(
-                $"Provider '{registration.Provider}' for {registration.Kind} was registered in-process: no DLL brought it, so it can't come back.",
+                $"Provider '{inProcess.Provider}' for {inProcess.Kind} was registered in-process: no DLL brought it, so it can't come back.",
                 "ProviderInProcess", 500));
 
         // Step 3 — each kind's default
-        foreach (var @default in await snapshot.Read<Default>("default"))
+        foreach (var record in defaults.Items())
         {
-            var named = new data.@this("kind", @default.Kind, context: context);
+            var named = new data.@this("kind", record.Kind, context: context);
             if (await named.Value<global::app.type.item.choice.@this<kind.@this>>() is not { } providerKind) return named;
 
-            var result = SetDefault(providerKind.Value.Interface, @default.Provider);
+            var result = SetDefault(providerKind.Value.Interface, record.Provider);
             if (!result.Success) return result;
         }
         return context.Ok();

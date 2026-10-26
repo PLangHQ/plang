@@ -41,15 +41,24 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     }
 
     /// <summary>The rows a list entry holds, each read through its own typed ask — the same door every value goes
-    /// through, so nothing lowers to CLR. An absent entry is empty, the same answer a written empty list gives.</summary>
-    internal async System.Threading.Tasks.Task<List<T>> Read<T>(string key)
+    /// through, so nothing lowers to CLR. An absent entry is empty, the same answer a written empty list gives. A row
+    /// that doesn't read is the answer, its own error whole.</summary>
+    internal async System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.list.@this<T>>> Read<T>(string key)
         where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
-        var rows = new List<T>();
-        if (Entries.Get(key, Context) is not { } entry) return rows;
-        foreach (var row in (await entry.Value<global::app.type.item.list.@this>())!.Items(Context))
-            if (await row.Value<T>() is { } value) rows.Add(value);
-        return rows;
+        var rows = new global::app.type.item.list.@this<T>(Context.App.type.list[typeof(global::app.type.item.list.@this<T>)]);
+        if (Entries.Get(key, Context) is { } entry)
+        {
+            if (await entry.Value<global::app.type.item.list.@this>() is not { } stored)
+                return global::app.data.@this<global::app.type.item.list.@this<T>>.FromError(entry.Error!, Context);
+            foreach (var row in stored.Items(Context))
+            {
+                if (await row.Value<T>() is not { } value)
+                    return global::app.data.@this<global::app.type.item.list.@this<T>>.FromError(row.Error!, Context);
+                rows.Add(value);
+            }
+        }
+        return Context.Ok(rows);
     }
 
     /// <summary>The snapshot writes ITSELF: an object of its entries. One loop, because there is
