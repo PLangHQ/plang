@@ -12,9 +12,10 @@ public sealed class @this : global::app.type.item.setting.module.@this
     /// <summary>A settings class is a type but never LLM vocabulary — kept out of the catalog.</summary>
     public static bool Internal => true;
 
-    /// <summary>The goal debug attaches at — it and every goal it calls, until it returns: by its name, the app's goals a
-    /// <c>prefix*</c> starts, or by its address (<c>/system/builder/BuildGoal/Decide</c>), which is how one of plang's own
-    /// goals is named (they are none of the app's goals). Null or <c>*</c> = every goal of the app.</summary>
+    /// <summary>The goal debug attaches at — it and the app's goals it calls, until it returns: by its name, the app's
+    /// goals a <c>prefix*</c> starts, or by its address (<c>/system/builder/BuildGoal/Decide</c>), which is how one of
+    /// plang's own goals is named (they are none of the app's goals); a system goal named so shows its own steps only,
+    /// not the system goals it calls. Null or <c>*</c> = every goal of the app.</summary>
     [Out, Store] public global::app.type.item.text.@this? Goal { get; set; }
 
     /// <summary>The goal <see cref="Goal"/> names by its address — where it lives, without <c>.goal</c>; null when it

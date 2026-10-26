@@ -72,6 +72,8 @@ descriptor (`action/this.Schema.cs:44-66`): `path`, `text`, `bool`, `number`,
 missing-parameter guard for these), or an explicit `[IsNotNull]`. **Default** = the
 `[Default(x)]` value, or `—` when required.
 
+A required slot given as a variable is checked before the action runs (`PLang.Generators/Emission/Action/this.cs:401-418`): a variable that is there and holds nothing answers `ValueRequired` (400), naming the variable (`'name' must have a value: %x% holds nothing`). The variable is read through its own door and the slot is left as it was. Only a variable whose read just looks up is asked; one that calls a method is left to the action, so the method runs once. A variable that is not there, or a read that fails, is the action's to answer as it reads; a literal is judged as written; a name slot names a variable and is not read.
+
 ## Enriched `notes.md` — file module (ready to apply with the loader)
 
 **Authoring contract (the generator is pure pass-through):** a line is

@@ -38,7 +38,7 @@ plang '--debug.setting={"goal":"/system/builder/BuildGoal","step":3,"variables":
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `goal` | string | null | The goal debug attaches at, and what it calls: one of the app's goals by its name, the app's goals a `prefix*` starts, or any goal by its address (`/system/builder/BuildGoal`), which is how one of plang's own goals is named. Null = all of the app's goals. |
+| `goal` | string | null | The goal debug attaches at, and the app's goals it calls: one of the app's goals by its name, the app's goals a `prefix*` starts, or any goal by its address (`/system/builder/BuildGoal`), which is how one of plang's own goals is named. A system goal named by address shows its own steps only: the system goals it calls are not shown. Null = all of the app's goals. |
 | `step` | int | null | Filter to a specific step index. Null = all steps. |
 | `variables` | list&lt;text&gt; | [] | Names of the variables to watch (`["trace","goal"]`; a `%` around a name is fine). A watched variable prints at every step and logs each create, change and delete. |
 | `length.max` | int | 500 | Max characters per line before truncation (`"length":{"max":2000}`). |
