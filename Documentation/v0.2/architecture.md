@@ -571,13 +571,12 @@ app/
     ICodeGenerated.cs         handler interface
     IContext.cs               context injection
     IChannel.cs               channel injection
-    environment/run.cs        unified run action
     goal/call.cs              goal call action
     variable/                 variable operations
     file/                     file operations
     condition/                condition operations
     http/                     HTTP operations
-    builder/                  build-time goal parsing & persistence
+    build/                    build-time goal parsing & persistence
     cache/                    step result cache
     callback/                 callback resume
     code/                     pluggable code registry

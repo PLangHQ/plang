@@ -37,9 +37,11 @@ The forms the `on` module teaches (`os/system/modules/on/event.description.md`):
 
 Of these only `before action output.write` and `after each goal` were run for this page. `test/module/on/event` has 3 tests that pass (subfolders for before/after step, before/after action, priority, override, remove and wildcard exist); which forms they cover was not checked.
 
-## Be careful with each goal
+## Each goal, each step, each action
 
-`before each goal call LogBefore` printed `before a goal` many times before the first goal of the program had printed its own line: the event fires for every goal the runtime starts, not only yours. Why it fired that often was not traced. If you bind to each goal, count on more calls than your own goals.
+`before each goal call X` is heard for the goals of your app, not for plang's own. The goals under `/system/` (the builder and the shortcuts) run when your program runs, and a binding of yours does not hear them. The same holds for `each step` and `each action`: a step or action of a plang goal does not trigger a binding of yours, so `before action file.read call X` does not run for the file reads plang's own goals make.
+
+Run: a program that binds `before each goal, call Log`, calls its own goal `Mine`, and then calls the system goal `/system/shortcut/Goal`; `Log` records the name of the goal it heard. After both calls it had recorded `Mine`, the last goal it was called for (the test `EachGoalIsTheAppsOwn`, 1 of 1 pass). Read: `PLang/app/goal/this.cs:392-397`, `goal/step/this.cs:118-123`, `goal/step/action/this.cs:156-158`.
 
 ## Remove a binding
 

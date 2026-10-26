@@ -80,7 +80,7 @@ Scratch apps `p1`, `p2`, `p3` were built with the decider key saved and run with
 | 66 | errors | both clauses on one line fail to build (`StepsBroken`, Order not given) | p2 first build | pass |
 | 67 | errors | `module/on/error` has 14 passing tests (chains, GoalFirst, nested) | test run 14/14 | pass |
 | 68 | events | `before action output.write call Mark` runs Mark before writes (`marks: 2`) | p3 output | pass; why 2 and not 3 not traced |
-| 69 | events | `before each goal call X` fires for runtime goals too | p2 first run printed `before a goal` 3 times before `Greet ran` | pass as observed; cause unverified |
+| 69 | events | `before each goal call X` hears the app's goals, not plang's own `/system/` goals | the built test `EachGoalIsTheAppsOwn` run in a scratch copy: 1 of 1 pass; `goal/this.cs:392-397`, `step/this.cs:118-123`, `action/this.cs:156-158` | pass (page rewritten; the earlier observation was of a build before this rule) |
 | 70 | events | the other bind forms | `os/system/modules/on/event.description.md`; `module/on/event` 3/3 | pass for the text and the tests; which forms the tests bind not checked |
 | 71 | events | `on.unbind` removes a binding | `os/system/modules/on/unbind.description.md` only | unverified |
 | 72 | how-a-step-becomes-an-action | step to action table | `jq` over `.build/start.pr` of p1, p2, p3 | pass |
@@ -179,14 +179,14 @@ Scratch apps `tr1`–`tr4` built with the key from stdin. Local loggers on 127.0
 | 129 | files-and-permissions | the prompt guards the User actor, not the app's code | `Documentation/v0.2/filesystem-permission.md:13` | pass (read in the design doc); not run |
 | 130 | files-and-permissions | the tests named pass: `test/app/permission` 2, `StoreStandingProbeTests` 3, `OsFolderGrantTests` 5, `StandingTests` 2, `RoleStandingProbeTests` 18, `PermissionAllowsTests` 8 | ran them | pass |
 | 131 | keys | the saved decider key is in `.data/setting/data.sqlite` in plain text | searched the file with the key file as the pattern (`grep -c -F -f`), 1 matching line in each of two apps; neither value displayed | pass |
-| 132 | keys | the store file is `-rw-r--r--` | `ls -l .data/setting` | pass |
+| 132 | keys | the store file is `-rw-r--r--`, in a folder that opens as `rwx------` | `ls -l .data/setting` (file 644); then a scratch app with `.data` 755, `.data/setting` 755, `data.sqlite` 644 opened with the current build: `stat -c %a` gave `.data` 755, `.data/setting` 700, `data.sqlite` 644; `store/sqlite/this.cs:109-114` | pass (Linux only; Windows sets nothing, not run) |
 | 133 | keys | the identity's private key is stored plain | not checked | unverified |
 | 134 | keys | a run with no model key stops with `MissingLlmKey (401)` naming both ways | ran the finding-i app with `OPENAI_API_KEY` unset | pass |
 | 135 | what-leaves-the-machine | a run of built goals made 0 requests to the decider or model endpoint | ran `ReadOutside` with both endpoints pointed at loggers | pass |
 | 136 | what-leaves-the-machine | a build POSTs `model`, `questions`, `state` with `Authorization`, `Content-Type`, `Content-Length`, `Host` | logger entry for one build | pass |
 | 137 | what-leaves-the-machine | the build body carried a step's literal text, the module catalog (37,499 bytes), not a file's contents, not the app path | grep of the logged body: `hunter2-literal` found, `SECRETCONTENT123` 0, folder path 0 | pass for the one request |
 | 138 | what-leaves-the-machine | a model step POSTs `model`, `messages`, `temperature`, `max_completion_tokens` | logger entry | pass |
-| 139 | what-leaves-the-machine | a variable in the message is sent unreplaced (`%name%`, `%prompt%`) | logger entries; repro at `/shared/doc2/finding-i/` | pass as seen; a defect against the module |
+| 139 | what-leaves-the-machine | a variable in the message is sent as its value; a missing one fails the step; a value holding `%x%` is not read again | `llm/query.cs:62-83`, `code/OpenAi.cs:70-74`; `RequiredVariableTests` 4/4 and `MessageRenderProbeTests` 2/2 pass | pass as C# tests; not re-run as a live request (the earlier logger entries showed the old behaviour, now fixed) |
 | 140 | what-leaves-the-machine | a rebuild with nothing changed builds no goal | row 18c | pass; request count not taken |
 | 141 | what-leaves-the-machine | no other request than those named | not measured | unverified (no packet capture) |
 | 142 | identity-and-signing | `get identity` makes a `default` identity in an app with none | ran `tr4`: `has identity: default` | pass |

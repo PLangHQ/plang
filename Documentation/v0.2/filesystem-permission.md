@@ -101,7 +101,7 @@ plang makes `.data/` on an app's first run. An app folder that arrives with one 
 
 The stores' folder is recognised case-blind, as a case-blind disk opens it (`.DATA` is `.data` there).
 
-The folder is its owner's alone: opening a store sets it to 0700 (`store/sqlite/this.cs:109-114`), so a key saved in it is no other OS user's to read. The mode is on the folder, so it holds from the first byte and covers the `-wal` and `-shm` files beside the database; a folder made earlier is set on its next open. On Windows nothing is set (a folder takes ACLs there). A mode does not survive git or a zip, so a copied app folder is set again when it is opened.
+The folder a store's database is in (the settings' is `.data/setting/`) is its owner's alone: opening the store sets that folder to 0700 (`store/sqlite/this.cs:109-114`), so a key saved in it is no other OS user's to read. The mode is on the folder, not the file, so it holds from the first byte and covers the `-wal` and `-shm` files beside the database; a folder made earlier is set on its next open. `.data/` itself and the database file keep the mode they were made with. On Windows nothing is set (a folder takes ACLs there). A mode does not survive git or a zip, so a copied app folder is set again when it is opened.
 
 ## Grant patterns
 
