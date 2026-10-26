@@ -25,6 +25,9 @@ public sealed class Method : Hop
     internal override bool IsProgram => Parameter.Slots().Cast<global::app.type.item.@this>()
         .SelectMany(value => value.Variable).All(v => v.IsProgram);
 
+    /// <summary>A method's call may do something each time it is read.</summary>
+    internal override bool IsLookup => false;
+
     /// <summary>Its name, then its values as rows: <c>"replace", "parameter": [{"type": {"name": "text"},
     /// "value": "-"}, …]</c>; a variable's row names it, as every stored row does.</summary>
     protected override async System.Threading.Tasks.ValueTask Piece(global::app.type.format.IWriter writer)

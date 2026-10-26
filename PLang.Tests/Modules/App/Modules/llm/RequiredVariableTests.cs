@@ -56,6 +56,30 @@ public class RequiredVariableTests
         await Assert.That(service.CallCount).IsEqualTo(0);
     }
 
+    // a value whose method does something each time it is called (here, counts)
+    private sealed class Counter(global::app.type.@this type) : global::app.type.item.@this(type)
+    {
+        internal int Calls;
+        [global::app.LlmBuilder] public global::app.type.item.text.@this Next() { Calls++; return "name"; }
+    }
+
+    // the guard asks only a variable whose read only looks up: one that calls a method is left to the action, so the
+    // method runs once
+    [Test]
+    public async Task ARequiredVariableThatCallsAMethod_RunsItOnce()
+    {
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
+        var ctx = app.actor.list.User.Context;
+        var counter = new Counter(app.type.list["item"]);
+        await ctx.Variable.Set("counter", counter);
+        await ctx.Variable.Set("rows", global::app.type.item.@this.Create(new List<object?> { new Dictionary<string, object?> { ["name"] = "x" } }, ctx));
+
+        await Make.Action(ctx, "list", "any", Make.Param(ctx, "ListName", "rows", "variable"), ("Key", "%counter.Next()%"),
+            ("Operator", "=="), ("Value", "x")).Start(ctx);
+
+        await Assert.That(counter.Calls).IsEqualTo(1);
+    }
+
     [Test]
     public async Task ARequiredVariableHoldingNothing_IsRefused_NamingIt_AndNothingIsSent()
     {

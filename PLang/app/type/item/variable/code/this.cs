@@ -17,6 +17,9 @@ public sealed class @this : global::app.type.item.list.bare.@this<Hop>
     /// <summary>Whether every hop stays among the program's own variables.</summary>
     internal bool IsProgram => Items().All(hop => hop.IsProgram);
 
+    /// <summary>Whether reading it only looks up what is there: no step of it is a method's call.</summary>
+    internal bool IsLookup => Items().All(hop => hop.IsLookup);
+
     /// <summary>Runs every hop: what the variable holds — or, for a path read from a value
     /// (<see cref="parser.@this.Path"/>, no root), what <paramref name="from"/> holds there.</summary>
     public System.Threading.Tasks.ValueTask<global::app.data.@this> Start(global::app.actor.context.@this context,

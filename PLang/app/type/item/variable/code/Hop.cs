@@ -33,6 +33,10 @@ public abstract class Hop : global::app.type.item.@this, global::app.type.item.I
     /// from outside holds only variables whose every step is.</summary>
     internal abstract bool IsProgram { get; }
 
+    /// <summary>Whether reading this step only looks up what is there (a variable, a property, an index) — never a
+    /// method's call, which may do something each time it is read.</summary>
+    internal virtual bool IsLookup => true;
+
     /// <summary>Its one step on <paramref name="previous"/> — the root has none.</summary>
     public abstract System.Threading.Tasks.ValueTask<global::app.data.@this> Start(
         global::app.data.@this? previous, global::app.actor.context.@this context);
