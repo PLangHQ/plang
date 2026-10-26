@@ -37,6 +37,44 @@ public sealed class @this : global::app.type.item.list.bare.@this<Step>
         return result;
     }
 
+    /// <summary>The step whose goal-wide index is <paramref name="index"/> — one of these, or one in a body under them (a
+    /// body's steps are numbered on from the step that holds them); null when none is.</summary>
+    internal Step? At(int index)
+    {
+        foreach (var step in Items())
+        {
+            if (step.Index == index) return step;
+            foreach (var action in step.Code.Items())
+                if (action.Child.At(index) is { } held) return held;
+        }
+        return null;
+    }
+
+    /// <summary>What follows <paramref name="step"/> in the list that holds it — these steps, or a body's under them —
+    /// run in sequence from the one after it, as <see cref="Start"/> runs them; null when no list here holds it.</summary>
+    internal async System.Threading.Tasks.Task<data.@this?> Rest(Step step, actor.context.@this context)
+    {
+        var position = -1;
+        for (int i = 0; i < Count && position < 0; i++)
+            if (ReferenceEquals(this[i], step)) position = i;
+        if (position < 0)
+        {
+            foreach (var each in Items())
+                foreach (var action in each.Code.Items())
+                    if (await action.Child.Rest(step, context) is { } rest) return rest;
+            return null;
+        }
+        data.@this result = context.Ok();
+        for (int i = position + 1; i < Count; i++)
+        {
+            if (context.CancellationToken.IsCancellationRequested)
+                return context.Error(new global::app.error.@this("Operation was cancelled", "Cancelled", 499));
+            result = await this[i].Start(context);
+            if (result.ShouldExit()) break;
+        }
+        return result;
+    }
+
     /// <summary>Every step is cached — built before, word for word, its code standing (none reopened).
     /// A step list that is cached has nothing to ask.</summary>
     public bool IsCached => Items().All(s => s.IsCached);

@@ -2,11 +2,12 @@ using System.Diagnostics;
 namespace app.call;
 
 /// <summary>
-/// One frame of a context's calls — a goal's, a step's or an action's — holding its own variables: the names it was
-/// born with (a goal call's parameters) and what is written to them while it runs. Pushed by its
-/// <see cref="global::app.call.list.@this"/>, disposed via <c>await using</c>, which restores the current frame and,
-/// with history off, removes it from its caller's <see cref="Children"/>. A frame that only binds names (a loop's
-/// item, a handler's error) is <see cref="binding.@this"/>; one that keeps every write is <see cref="isolated.@this"/>.
+/// One frame of a context's calls, holding its own variables: the names it was born with (a goal call's parameters)
+/// and what is written to them while it runs. Pushed by its <see cref="global::app.call.list.@this"/>, disposed via
+/// <c>await using</c>, which restores the current frame and, with history off, removes it from its caller's
+/// <see cref="Children"/>. Each kind is its own type: a goal's (<see cref="goal.@this"/>), a step's
+/// (<see cref="step.@this"/>), an action's (<see cref="action.@this"/>), one that only binds names (a loop's item, a
+/// handler's error, <see cref="binding.@this"/>) and one that keeps every write (<see cref="isolated.@this"/>).
 ///
 /// Tree shape: navigate up via <see cref="Caller"/>, down via <see cref="Children"/>. Reads walk the frames outward,
 /// each frame's own variables first. A plang value: it writes itself as <see cref="Output"/> says.
@@ -194,24 +195,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// or an action's is; a frame that only binds names is not.</summary>
     internal virtual bool Measured => true;
 
-    /// <summary>Whether this is a goal's own frame — its run's scope (<c>%!call.scope%</c>): a goal, no step.</summary>
-    internal virtual bool IsGoal => Goal != null && Step == null;
-
-    /// <summary>A goal's frame: the goal starting, born with its call's <paramref name="names"/>.</summary>
-    internal @this(global::app.type.@this type, global::app.call.list.@this stack, global::app.goal.@this goal,
-        global::app.call.setting.@this setting, IEnumerable<global::app.data.@this>? names)
-        : this(null, type, goal, null, null, stack.Current, stack.Current, stack, stack.Variables, setting, names) { }
-
-    /// <summary>A step's frame: its goal and itself.</summary>
-    internal @this(global::app.type.@this type, global::app.call.list.@this stack, global::app.goal.step.@this step,
-        global::app.call.setting.@this setting)
-        : this(null, type, step.Goal, step, null, stack.Current, stack.Current, stack, stack.Variables, setting) { }
-
-    /// <summary>An action's frame: its step's goal, its step and itself; <paramref name="variables"/> the store a diff
-    /// captures, else the stack's.</summary>
-    internal @this(global::app.type.@this type, global::app.call.list.@this stack, global::app.goal.step.action.@this action,
-        global::app.call.setting.@this setting, Variables? variables)
-        : this(null, type, action.Step?.Goal, action.Step, action, stack.Current, stack.Current, stack, variables ?? stack.Variables, setting) { }
+    /// <summary>Whether this is a goal's own frame — its run's scope (<c>%!call.scope%</c>): only a goal's frame
+    /// (<see cref="goal.@this"/>) answers yes.</summary>
+    internal virtual bool IsGoal => false;
 
     /// <summary>A frame come back from a snapshot: its stored <paramref name="node"/> (the read copy its async half
     /// filled, <see cref="Find"/>) read whole — the id it was saved with, its goal, step and action where they stood, the
@@ -445,7 +431,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     }
 
     // Where the action stands in its step; -1 when the frame runs no action, or its step doesn't hold it.
-    private int Place => Action != null && Step != null ? Step.Code.IndexOf(Action) : -1;
+    private protected int Place => Action != null && Step != null ? Step.Code.IndexOf(Action) : -1;
 
     /// <summary>The action's index in its step; -1 when the frame runs no action, or its step doesn't hold it.</summary>
     public global::app.type.item.number.@this Index => Place;

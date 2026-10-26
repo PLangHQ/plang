@@ -123,10 +123,9 @@ public partial class @this
     {
         if (node.Entries.Get<global::app.goal.@this>("goal", context) is not { } goal) return (null, null, null);
         if (node.Entries.Get<global::app.type.item.number.@this>("step", context) is not { } stepIndex) return (goal, null, null);
+        // a step's index is goal-wide, a body's steps numbered on from the step that holds them
         var at = stepIndex.ToInt32();
-        if (at < 0 || at >= goal.Step.Count)
-            throw new global::app.error.CallbackGoalNotFound($"{goal.Address} (step {at} out of range)");
-        var step = goal.Step[at];
+        var step = goal.Step.At(at) ?? throw new global::app.error.CallbackGoalNotFound($"{goal.Address} (no step {at})");
         if (node.Entries.Get<global::app.snapshot.@this>("action", context) is not { } stored) return (goal, step, null);
         var place = Stored<global::app.type.item.number.@this>(stored, "index", context).ToInt32();
         if (place < 0 || place >= step.Code.Count)
@@ -144,15 +143,9 @@ public partial class @this
     /// <summary>The pure core — a frame passes through; nothing else converts into one.</summary>
     public static @this? Create(object? raw) => raw as @this;
 
-    /// <summary>A frame passes through; a stored frame's node (its async half done, <see cref="Find"/>) comes back as a
-    /// goal's, a step's or an action's frame, under the current frame of the stack <paramref name="data"/>'s context
-    /// calls.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data) => raw switch
-    {
-        @this frame => frame,
-        global::app.snapshot.@this node => new @this(node, type ?? data.Context.App.type.list[typeof(@this)], data.Context.call, data.Context),
-        _ => null,
-    };
+    /// <summary>A frame passes through; a stored frame comes back through its own kind's Create (a goal's, a step's, an
+    /// action's, a binding's, an isolated one), the type it was stored as.</summary>
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data) => raw as @this;
 
     /// <summary>Whether it has ended — a frame kept among its caller's children after that is history, not state.</summary>
     internal bool Ended => _ended;
@@ -163,16 +156,10 @@ public partial class @this
 
     /// <summary>
     /// What is left of this frame's run once it has ended and what it called has returned, run in its caller — the
-    /// call stack's resume goes outward from the frame the run stopped in, each frame in turn:
-    ///  - an action's frame: the rest of its step's actions — its own again when it is where the run stopped
-    ///    (<paramref name="again"/>: the ask takes its answer), else from the one after it (the call it made returned);
-    ///  - a step's frame: the rest of its goal's steps;
-    ///  - a goal's frame, or an action composed in C#: nothing — its caller goes on.
+    /// call stack's resume goes outward from the frame the run stopped in, each frame in turn doing its own rest
+    /// (<paramref name="again"/>: this is the frame the run stopped in). A frame of its own kind says what its rest is
+    /// (an action's, a step's); any other leaves nothing — its caller goes on.
     /// </summary>
     internal virtual System.Threading.Tasks.Task<data.@this> Rest(actor.context.@this context, bool again)
-    {
-        if (Place >= 0) return Step!.Resume(context, again ? Place : Place + 1);
-        if (Step != null && Action == null) return Goal!.Resume(context, Step.Index + 1);
-        return System.Threading.Tasks.Task.FromResult(context.Ok());
-    }
+        => System.Threading.Tasks.Task.FromResult(context.Ok());
 }

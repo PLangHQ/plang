@@ -129,10 +129,8 @@ public class SnapshotWireTests
         await Assert.That((await context.Variable.Get("s0")).IsInitialized).IsFalse();
     }
 
-    // KNOWN RED until stage 7 replaces call.Placed: a step's Index is goal-wide (a body's steps are numbered on from
-    // the step that holds them), but the restore places a frame at goal.Step[index], the list position, and the rest of
-    // a goal runs from the list position Index + 1. So in a goal whose earlier step has a body, a resume goes on at the
-    // wrong step.
+    // A step's Index is goal-wide (a body's steps are numbered on from the step that holds them), never its position in
+    // the goal's list: in a goal whose earlier step has a body, a resume goes on at the step it stopped in.
     [Test]
     public async Task AResume_AfterAStepWithABody_GoesOnAtTheStepItStoppedIn()
     {
@@ -151,11 +149,14 @@ public class SnapshotWireTests
         await SetStep(context, goal, 4, "s4", "four");
         app.goal.list.Add(goal);
 
+        // as a run stands in it: the step's frame, then its action's
         string json;
+        await using (var step = context.call.Push(third, await context.call.Setting()))
         await using (var call = context.call.Push(third.Code[0], await context.call.Setting(), context.Variable))
         {
             json = await app.Snapshot(context).Saved().Text(context);
             await call.DisposeAsync();
+            await step.DisposeAsync();
         }
 
         var result = await (await context.Snapshot(json)).Resume(context);
@@ -163,6 +164,50 @@ public class SnapshotWireTests
         await result.IsSuccess();
         await Assert.That(await context.Variable.GetValue("s3")).IsEqualTo("three");
         await Assert.That(await context.Variable.GetValue("s4")).IsEqualTo("four");
+    }
+
+    // Saved inside a step of an `if` body: the run goes on with that step's action again, the rest of the body, then the
+    // rest of the goal after the step that holds the body — each frame doing its own rest.
+    [Test]
+    public async Task AResume_InsideABody_GoesOnThroughTheBody_ThenTheGoal()
+    {
+        var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-inbody-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        var goal = new Goal(app.type.list) { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", context) };
+        await SetStep(context, goal, 0, "s0", "zero");
+        var holder = await SetStep(context, goal, 1, "s1", "one");
+        Step InBody(int index, string name, string value, global::app.goal.step.action.@this action)
+        {
+            var step = new Step(app.type.list) { Goal = goal, Index = index, Text = $"set %{name}% = {value}" };
+            step.Code.Add(action.In(step));
+            holder.Code[0].Child.Add(step);
+            return step;
+        }
+        var stopped = InBody(2, "b2", "two", await context.Action("variable.set(Name=%b2%, Value=\"two\")"));
+        InBody(3, "b3", "three", await context.Action("variable.set(Name=%b3%, Value=\"three\")"));
+        await SetStep(context, goal, 4, "s4", "four");
+        app.goal.list.Add(goal);
+
+        // a body runs under the step that holds it: that step's frame, then the body step's, then its action's
+        string json;
+        await using (var outer = context.call.Push(holder, await context.call.Setting()))
+        await using (var inner = context.call.Push(stopped, await context.call.Setting()))
+        await using (var call = context.call.Push(stopped.Code[0], await context.call.Setting(), context.Variable))
+        {
+            json = await app.Snapshot(context).Saved().Text(context);
+            await call.DisposeAsync();
+            await inner.DisposeAsync();
+            await outer.DisposeAsync();
+        }
+
+        var result = await (await context.Snapshot(json)).Resume(context);
+
+        await result.IsSuccess();
+        await Assert.That(await context.Variable.GetValue("b2")).IsEqualTo("two");
+        await Assert.That(await context.Variable.GetValue("b3")).IsEqualTo("three");
+        await Assert.That(await context.Variable.GetValue("s4")).IsEqualTo("four");
+        await Assert.That((await context.Variable.Get("s0")).IsInitialized).IsFalse();
     }
 
     [Test]

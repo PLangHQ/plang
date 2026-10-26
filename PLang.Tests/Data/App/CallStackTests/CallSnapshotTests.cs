@@ -55,7 +55,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray()).Replace(call.Id.ToString()!, "ID");
 
         await Assert.That(json).IsEqualTo(
-            "{\"id\":\"ID\",\"type\":{\"name\":\"app.call\"},\"goal\":{\"address\":\"/G\",\"hash\":\"" + action.Step!.Goal!.Hash
+            "{\"id\":\"ID\",\"type\":{\"name\":\"app.call.action\"},\"goal\":{\"address\":\"/G\",\"hash\":\"" + action.Step!.Goal!.Hash
             + "\"},\"step\":0,\"action\":{\"index\":0,\"module\":\"test\",\"name\":\"test\"},\"handled\":false}");
     }
 

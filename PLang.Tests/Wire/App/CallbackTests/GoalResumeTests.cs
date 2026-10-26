@@ -7,11 +7,8 @@ using ActionEntity = global::app.goal.step.action.@this;
 
 namespace PLang.Tests.App.CallbackTests;
 
-/// Stage 2a — Batch 4: `Step.Resume(context, actionIdx)` and
-/// `Goal.Resume(context, stepIdx, actionIdx)` — continuation helpers used by
-/// `Snapshot.ResumeChain`. The architect resolved against a
-/// `Steps.Start(fromIndex)` overload — the remaining-steps loop lives
-/// inside Goal.Resume.
+/// What is left of a run, for a resumed call stack: a step's actions from one on (`Step.Resume`), and what follows a
+/// step in the list that holds it, a goal's steps or a body's (`step.list.Rest`).
 public class GoalResumeTests
 {
     private static global::app.@this NewApp() =>
@@ -68,19 +65,19 @@ public class GoalResumeTests
     }
 
     [Test]
-    public async Task GoalRunFrom_ResumesActionThenRemainingStepsInGoal()
+    public async Task TheRestOfAGoalsSteps_RunsWhatFollowsTheStep()
     {
         var app = NewApp();
         var context = app.actor.list.User.Context;
         var goal = Build(context, "G");
-        await SetStep(context, goal, 0, "s0", "skip");
-        await SetStep(context, goal, 1, "s1", "from-here");
+        var first = await SetStep(context, goal, 0, "s0", "skip");
+        await SetStep(context, goal, 1, "s1", "after");
         await SetStep(context, goal, 2, "s2", "and-after");
 
-        var result = await goal.Resume(context, stepIdx: 1);
-        await result.IsSuccess();
+        var result = await goal.Step.Rest(first, context);
+        await result!.IsSuccess();
         await Assert.That((await context.Variable.Get("s0")).IsInitialized).IsFalse();
-        await Assert.That((await context.Variable.GetValue("s1"))).IsEqualTo("from-here");
+        await Assert.That((await context.Variable.GetValue("s1"))).IsEqualTo("after");
         await Assert.That((await context.Variable.GetValue("s2"))).IsEqualTo("and-after");
     }
 
@@ -100,21 +97,32 @@ public class GoalResumeTests
     }
 
     [Test]
-    public async Task StepsRunAsync_FromIndexOverload_SkipsEarlierSteps()
+    public async Task TheRestOfABodysSteps_RunsOnlyWhatFollowsInThatBody()
     {
-        // Architect resolved against adding a Steps.Start(fromIndex) overload.
-        // The from-index loop lives inside Goal.Resume — exercised by
-        // GoalRunFrom_ResumesActionThenRemainingStepsInGoal above. This test
-        // pins the contract that earlier steps are not re-run.
+        // step 1 holds a body of two steps (index 2 and 3, numbered on); the rest after the body's first step is the
+        // body's second, never the goal's steps after the step that holds the body
         var app = NewApp();
         var context = app.actor.list.User.Context;
         var goal = Build(context, "G");
-        await SetStep(context, goal, 0, "first", "should-not-run");
-        await SetStep(context, goal, 1, "second", "runs");
+        var holder = await SetStep(context, goal, 1, "s1", "holder");
+        var inBody = await Body(context, goal, holder, 2, "b2", "skip");
+        await Body(context, goal, holder, 3, "b3", "after");
+        await SetStep(context, goal, 4, "s4", "not-in-the-body");
 
-        await goal.Resume(context, stepIdx: 1);
-        await Assert.That((await context.Variable.Get("first")).IsInitialized).IsFalse();
-        await Assert.That((await context.Variable.GetValue("second"))).IsEqualTo("runs");
+        var result = await goal.Step.Rest(inBody, context);
+        await result!.IsSuccess();
+        await Assert.That((await context.Variable.Get("b2")).IsInitialized).IsFalse();
+        await Assert.That((await context.Variable.GetValue("b3"))).IsEqualTo("after");
+        await Assert.That((await context.Variable.Get("s4")).IsInitialized).IsFalse();
+    }
+
+    // A step in the body of holder's action, numbered goal-wide as the build numbers it.
+    private static async Task<Step> Body(global::app.actor.context.@this context, Goal goal, Step holder, int index, string varName, object value)
+    {
+        var step = new Step(context.App.type.list) { Goal = goal, Index = index, Text = $"set %{varName}% = {value}" };
+        step.Code.Add((await context.Action($"variable.set(Name=%{varName}%, Value={System.Text.Json.JsonSerializer.Serialize(value)})")).In(step));
+        holder.Code[0].Child.Add(step);
+        return step;
     }
 
     [Test]

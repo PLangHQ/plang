@@ -54,8 +54,7 @@ public sealed partial class @this : global::app.type.item.@this
     // start and end (datetime), and its tags (dict) — each found at the first push that needs it (a context that calls
     // nothing finds none).
     private readonly global::app.type.list.@this _types;
-    private global::app.type.@this? _callType, _bindingType, _isolatedType, _datetimeType, _dictType, _errorsType, _propertiesType;
-    private global::app.type.@this Call => _callType ??= _types[typeof(call.@this)];
+    private global::app.type.@this? _bindingType, _isolatedType, _datetimeType, _dictType, _errorsType, _propertiesType;
     private global::app.type.@this Binding => _bindingType ??= _types[typeof(call.binding.@this)];
     private global::app.type.@this Isolated => _isolatedType ??= _types[typeof(call.isolated.@this)];
 
@@ -188,7 +187,7 @@ public sealed partial class @this : global::app.type.item.@this
     /// <param name="setting">What the stack captures, as its async caller read it (<see cref="Setting"/>).</param>
     /// <param name="names">The variables its frame is born with — a goal call's parameters.</param>
     public call.@this Push(global::app.goal.@this goal, setting.@this setting, IEnumerable<global::app.data.@this>? names = null)
-        => Push((goal, setting, names), static (stack, s) => new call.@this(stack.Call, stack, s.goal, s.setting, s.names));
+        => Push((goal, setting, names), static (stack, s) => new call.goal.@this(stack._types[typeof(call.goal.@this)], stack, s.goal, s.setting, s.names));
 
     /// <summary>Pushes a frame that only binds <paramref name="names"/> (a loop's item, a handler's error) — for
     /// <paramref name="held"/> when its runner supplies them to that one call (a tool call's state).</summary>
@@ -204,12 +203,12 @@ public sealed partial class @this : global::app.type.item.@this
 
     /// <summary>Pushes the frame of a step starting: its goal and itself.</summary>
     public call.@this Push(global::app.goal.step.@this step, setting.@this setting)
-        => Push((step, setting), static (stack, s) => new call.@this(stack.Call, stack, s.step, s.setting));
+        => Push((step, setting), static (stack, s) => new call.step.@this(stack._types[typeof(call.step.@this)], stack, s.step, s.setting));
 
     /// <summary>Pushes the frame of an action starting: its step's goal, its step and itself — an action composed
     /// in C# holds no step. <paramref name="variables"/> is the store for diff capture (when Diff is on).</summary>
     public call.@this Push(global::app.goal.step.action.@this action, setting.@this setting, Variables? variables = null)
-        => Push((action, setting, variables), static (stack, s) => new call.@this(stack.Call, stack, s.action, s.setting, s.variables));
+        => Push((action, setting, variables), static (stack, s) => new call.action.@this(stack._types[typeof(call.action.@this)], stack, s.action, s.setting, s.variables));
 
     // A call frame (a goal's, a step's, an action's) pushed: past MaxDepth (its caller's depth), or with the thread's
     // stack run short, it is the overflow, refused before anything of it is made — a stack that overflows can't be

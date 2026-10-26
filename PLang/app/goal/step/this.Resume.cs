@@ -23,16 +23,10 @@ public partial class @this
                 if (result.ShouldExit() || result.Handled) break;
             }
         }
+        // an exception is answered through the one door from any exception to an error: a carried one whole
         catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException or OperationCanceledException))
         {
-            var typeName = ex.GetType().Name;
-            var key = typeName == nameof(Exception)
-                ? "StepError"
-                : (typeName.EndsWith("Exception", StringComparison.Ordinal)
-                    ? typeName[..^"Exception".Length]
-                    : typeName);
-            result = context.Error(new error.ServiceError(
-                ex.Message, key, 400) { Exception = ex });
+            result = context.Error(error.@this.FromException(ex));
         }
 
         return result;
