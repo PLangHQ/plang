@@ -3500,6 +3500,12 @@ type app.module.build.setting
 
 type app.module.code.defaultoverride
 
+type app.module.code.dll
+
+type app.module.code.dll.added
+
+type app.module.code.dll.loaded
+
 type app.module.code.registration
 
 type app.module.debug.setting

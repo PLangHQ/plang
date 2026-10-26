@@ -5,14 +5,17 @@ namespace app.module.code;
 
 public sealed partial class @this : ISnapshot
 {
-    // The two stored shapes are plang VALUES, each with its own reader:
-    //   app/module/code/registration      — one runtime registration
-    //   app/module/code/defaultoverride    — one default-selection override
+    // The stored shapes are plang VALUES, each with its own reader:
+    //   app/module/code/dll               — a DLL the run took in, by the door it came through (loaded, added)
+    //   app/module/code/registration      — a provider registered in-process
+    //   app/module/code/defaultoverride   — one default-selection override
     // A provider's kind is written by its plang name (kind.@this), never its C# type: the name survives a version bump.
 
     /// <summary>
     /// Writes the registry layer (NOT the provider instances themselves):
-    ///  - non-built-in registrations, as (kind, providerName, source);
+    ///  - every DLL the run took in, in order, each by the door it came through (what came in with it: its providers,
+    ///    its types, its modules);
+    ///  - the providers registered in-process (no DLL brought them), by kind and name;
     ///  - default-selection overrides, where the current default differs from the built-in default for its kind.
     /// Built-in registrations stay out: a fresh app's registry holds them.
     /// </summary>
@@ -32,14 +35,14 @@ public sealed partial class @this : ISnapshot
                 var providerKind = new kind.@this(type).Value;
                 table.Defaults.TryGetValue(type, out var @default);
 
+                // a provider a DLL brought remembers the DLL (its Source), which is stored as the DLL
                 foreach (var (name, provider) in dict)
                 {
-                    if (!provider.IsBuiltIn)
+                    if (!provider.IsBuiltIn && provider.Source == null)
                         registrations.Add(new Registration(types[typeof(Registration)])
                         {
                             Kind = providerKind,
                             ProviderName = name,
-                            Source = provider.Source,
                         });
                 }
 
@@ -62,19 +65,8 @@ public sealed partial class @this : ISnapshot
             }
         }
 
-        // every DLL the run took in, by its source (the path value) and the door it came through
-        var loaded = new List<global::app.type.item.@this>();
-        foreach (var (source, modules, @namespace) in _loaded)
-        {
-            var load = new global::app.type.item.dict.@this(types[typeof(global::app.type.item.dict.@this)]);
-            load.Set(new data.@this("source", source, context: context));
-            load.Set(new data.@this("modules", modules, context: context));
-            if (@namespace != null) load.Set(new data.@this("namespace", @namespace, context: context));
-            loaded.Add(load);
-        }
-
         var list = types[typeof(global::app.type.item.list.@this)];
-        snapshot.Entries.Set(new data.@this("loaded", new global::app.type.item.list.@this(loaded, list), context: context));
+        snapshot.Entries.Set(new data.@this("loaded", new global::app.type.item.list.@this(_loaded, list), context: context));
         snapshot.Entries.Set(new data.@this("registrations", new global::app.type.item.list.@this(registrations, list), context: context));
         snapshot.Entries.Set(new data.@this("defaultOverrides", new global::app.type.item.list.@this(overrides, list), context: context));
         return context.Ok();
@@ -82,75 +74,36 @@ public sealed partial class @this : ISnapshot
 
     /// <summary>
     /// Three steps, each failure answered (no fallback to the system defaults):
-    ///   1) Load each DLL the run took in again, in order, through <see cref="Load"/> (the Execute gate, its plang types
-    ///      joined to the app's) and the door it first came through: its providers (<see cref="Register(System.Reflection.Assembly,
-    ///      data.@this, global::app.type.item.path.@this, actor.context.@this)"/>) or its modules (<see cref="Add"/>).
-    ///   2) Each stored registration must then be there, under its kind; one not yet there (registered in-process with a
-    ///      source) is made again from its source DLL the same way, each source once.
+    ///   1) Each DLL the run took in is taken in again, in order, through <see cref="Load"/> (the Execute gate, its plang
+    ///      types joined to the app's) and the door it first came through (<see cref="dll.@this"/>).
+    ///   2) A provider registered in-process has nothing to be made again from: it answers that it can't come back.
     ///   3) Apply default-selection overrides — the named provider must be registered.
     /// A fresh app's registry holds the built-ins, so they are present.
     /// </summary>
     async System.Threading.Tasks.Task<data.@this> ISnapshot.Start(global::app.snapshot.@this snapshot, actor.context.@this context)
     {
-        var registrations = await snapshot.Read<Registration>("registrations");
-        var overrides = await snapshot.Read<DefaultOverride>("defaultOverrides");
-
-        // Step 1 — the DLLs the run took in
-        foreach (var load in await snapshot.Read<global::app.type.item.dict.@this>("loaded"))
-        {
-            var source = await load.Get("source", context)!.Value<global::app.type.item.path.@this>();
-            var modules = (await load.Get("modules", context)!.Value<global::app.type.item.@bool.@this>())!.Value;
-            var @namespace = load.Get("namespace", context) is { } named
-                ? (await named.Value<global::app.type.item.text.@this>())?.ToString()
-                : null;
-            var made = await Load(source!, context, (assembly, types) => modules
-                ? System.Threading.Tasks.Task.FromResult(context.Ok(Add(assembly, @namespace, source!)))
-                : Register(assembly, types, source!, context));
-            if (!made.Success)
+        // Step 1 — the DLLs the run took in; a record that doesn't read is its row's answer
+        if (snapshot.Entries.Get("loaded", context) is { } loaded)
+            foreach (var row in (await loaded.Value<global::app.type.item.list.@this>())!.Items(context))
             {
-                var error = new global::app.error.@this($"the DLL '{source}' the run loaded failed to load again.", "ProviderRestore", 500);
-                error.list.Add(made.Error!);
-                return context.Error(error);
-            }
-        }
-
-        // Step 2 — registrations
-        var sources = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var registration in registrations)
-        {
-            var named = new data.@this("kind", registration.Kind, context: context);
-            if (await named.Value<global::app.type.item.choice.@this<kind.@this>>() is not { } providerKind) return named;
-            if (List(providerKind.Value.Interface).Any(provider => provider.Name == registration.ProviderName)) continue;
-
-            // A registration made in-process (no source) can't be made again from nothing.
-            if (registration.Source == null)
-                return context.Error(new global::app.error.@this(
-                    $"Provider '{registration.ProviderName}' for {registration.Kind} has no Source — in-process registrations cannot be restored without a loadable origin.",
-                    "ProviderRestore", 500));
-
-            if (sources.Add(registration.Source))
-            {
-                // The source is an OS-absolute path; prefixed with "/" so path.Resolve treats it as OS-rooted (the //
-                // convention on Linux) instead of anchoring it against the new app's root.
-                var source = global::app.type.item.path.@this.Resolve(
-                    registration.Source.StartsWith("/") ? "/" + registration.Source : registration.Source, context);
-                var made = await Load(source, context, (assembly, types) => Register(assembly, types, source, context));
+                if (await row.Value<dll.@this>() is not { } dll) return row;
+                var made = await dll.Start(this, context);
                 if (!made.Success)
                 {
-                    var error = new global::app.error.@this(
-                        $"Provider '{registration.ProviderName}' source '{registration.Source}' failed to load.", "ProviderRestore", 500);
+                    var error = new global::app.error.@this($"the DLL '{dll}' the run took in failed to load again.", "DllNotLoaded", 500);
                     error.list.Add(made.Error!);
                     return context.Error(error);
                 }
             }
 
-            if (!List(providerKind.Value.Interface).Any(provider => provider.Name == registration.ProviderName))
-                return context.Error(new global::app.error.@this(
-                    $"Provider '{registration.ProviderName}' of kind {registration.Kind} not found in '{registration.Source}'.", "ProviderRestore", 500));
-        }
+        // Step 2 — providers registered in-process
+        if ((await snapshot.Read<Registration>("registrations")).FirstOrDefault() is { } registration)
+            return context.Error(new global::app.error.@this(
+                $"Provider '{registration.ProviderName}' for {registration.Kind} was registered in-process: no DLL brought it, so it can't come back.",
+                "ProviderInProcess", 500));
 
         // Step 3 — default-selection overrides
-        foreach (var @override in overrides)
+        foreach (var @override in await snapshot.Read<DefaultOverride>("defaultOverrides"))
         {
             var named = new data.@this("kind", @override.Kind, context: context);
             if (await named.Value<global::app.type.item.choice.@this<kind.@this>>() is not { } providerKind) return named;

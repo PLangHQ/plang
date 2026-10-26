@@ -3,12 +3,10 @@ using app.Attributes;
 namespace app.module.code.registration;
 
 /// <summary>
-/// One captured provider registration — the interface it was registered against, the provider
-/// instance's name, and the DLL it came from. A plang VALUE, not a CLR record: the snapshot writes
-/// it as a typed value and reads it back through its own reader, so it crosses the wire the way
-/// every other value does rather than being reflected into and out of existence.
-/// <para><c>Source</c> is null for an in-process registration on the same App — a registration the
-/// fresh side cannot reproduce, which Restore rejects rather than guesses at.</para>
+/// One provider registered in-process — by the kind it was registered as and its name. A provider a DLL brought is the
+/// DLL's (<see cref="dll.loaded.@this"/>), taken in again with it; one registered in-process has nothing to be made
+/// again from, so a snapshot keeps its registration only to answer that it can't come back. A plang VALUE, written as a
+/// typed value and read back through its own reader.
 /// </summary>
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
@@ -25,9 +23,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     [Store, Out]
     public string ProviderName { get; init; } = "";
-
-    [Store, Out]
-    public string? Source { get; init; }
 
     public override string ToString() => $"{ProviderName} ({Kind})";
 

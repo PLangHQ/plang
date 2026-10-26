@@ -7,7 +7,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
     private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
-    // Public + parameterless ctor so Restore can re-instantiate it from the test DLL.
+    // A provider registered in-process: no DLL brought it.
     public sealed class CustomGrep : global::app.data.code.IGrep
     {
         public string Name => "custom";
@@ -17,9 +17,12 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         public Data GrepCount(Data data, string pattern) => data.Context.Ok(0L);
     }
 
-    // TypeProvider.dll brings one plang type (money) and no providers.
-    private static readonly string TypeProviderDll = System.IO.Path.GetFullPath(System.IO.Path.Combine(
-        AppContext.BaseDirectory, "..", "..", "..", "..", "Shared", "Fixtures", "dlls", "TypeProvider.dll"));
+    private static string Fixture(string name) => System.IO.Path.GetFullPath(System.IO.Path.Combine(
+        AppContext.BaseDirectory, "..", "..", "..", "..", "Shared", "Fixtures", "dlls", name + ".dll"));
+
+    // TypeProvider.dll brings one plang type (money) and no providers; TestProvider.dll brings the test-signing provider.
+    private static readonly string TypeProviderDll = Fixture("TypeProvider");
+    private static readonly string TestProviderDll = Fixture("TestProvider");
 
     // The DLL at its OS location, with a one-time Execute (and Read) grant for the user on it: a DLL outside the app's
     // root is asked for otherwise.
@@ -36,14 +39,20 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         return path;
     }
 
+    // `load code '<dll>'`, as a step runs it.
+    private static async Task Load(global::app.@this app, string dll)
+    {
+        var context = app.actor.list.User.Context;
+        await (await new global::app.module.code.load(context)
+        { Path = context.Ok<global::app.type.item.path.@this>(await Granted(app, dll)) }.Start()).IsSuccess();
+    }
+
     [Test]
     public async Task Code_ThroughText_ADllThatBroughtOnlyTypes_IsLoadedAgain()
     {
         var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
         var context = src.actor.list.User.Context;
-        var loaded = await new global::app.module.code.load(context)
-        { Path = context.Ok<global::app.type.item.path.@this>(await Granted(src, TypeProviderDll)) }.Start();
-        await loaded.IsSuccess();
+        await Load(src, TypeProviderDll);
         var text = await src.Snapshot(context).Saved().Text(context);
 
         var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
@@ -72,113 +81,94 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         var into = dst.actor.list.User.Context;
         await Granted(dst, TypeProviderDll);
         var snap = await into.Snapshot(text);
-        var load = (await snap.Node("Code").Rows("loaded")).Single();
-        await Assert.That((await load.Value<global::app.type.item.dict.@this>())!.Get("modules", into)!.ToBoolean()).IsTrue();
+        var record = await (await snap.Node("Code").Rows("loaded")).Single().Value<global::app.module.code.dll.@this>();
+        await Assert.That(record is global::app.module.code.dll.added.@this { Namespace: "TypeProvider" }).IsTrue();
         await dst.Restore(snap, into);
 
         await Assert.That(dst.type.list.Contains("money")).IsTrue();
     }
 
     [Test]
-    public async Task Providers_RoundTrip_PreservesDefaultSelectionsAndRuntimeRegistrations()
+    public async Task Code_ThroughText_ALoadedProvider_ComesBack_WithTheDefaultChosenAfterIt()
     {
-        // Default selections per type + runtime (type, name, source) tuples both survive.
-        var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
-        var custom = new CustomGrep();
-        // Stamp Source so the snapshot has a loadable origin (use this assembly's path).
-        custom.Source = typeof(CustomGrep).Assembly.Location;
-        src.Code.Register(typeof(global::app.data.code.IGrep), custom);
-        src.Code.SetDefault(typeof(global::app.data.code.IGrep), "custom");
+        // the DLL's provider is taken in again before the defaults are applied — a default naming it then finds it. Plain
+        // apps: a test app's own signing mock answers to the fixture provider's name.
+        var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-dll-" + System.Guid.NewGuid().ToString("N")[..8]);
+        await using var src = new global::app.@this(root + "-src");
+        src.TestIdentity();
+        var context = src.actor.list.User.Context;
+        await Load(src, TestProviderDll);
+        await src.Code.SetDefault(typeof(global::app.module.signing.code.ISigning), "test-signing").IsSuccess();
+        var snap = src.Snapshot(context).Saved();
 
-        var snap = src.Snapshot(src.actor.list.User.Context).Saved();
-        var registrations = await snap.Node("Code")
-            .Records<global::app.module.code.registration.@this>("registrations");
-        var overrides = await snap.Node("Code")
-            .Records<global::app.module.code.defaultoverride.@this>("defaultOverrides");
+        // one record of the DLL: its provider is no registration of its own, and the override names its kind by plang name
+        await Assert.That((await snap.Node("Code").Records<global::app.module.code.registration.@this>("registrations"))!.Count).IsEqualTo(0);
+        var overrides = await snap.Node("Code").Records<global::app.module.code.defaultoverride.@this>("defaultOverrides");
+        await Assert.That(overrides!.Single(o => o.ProviderName == "test-signing").Kind).IsEqualTo("signing");
 
-        await Assert.That(registrations).IsNotNull();
-        await Assert.That(registrations!.Any(r => r.ProviderName == "custom")).IsTrue();
-        // a provider's kind is written by its plang name, never a C# type name
-        await Assert.That(registrations!.First(r => r.ProviderName == "custom").Kind).IsEqualTo("grep");
-        await Assert.That(overrides!.First(o => o.ProviderName == "custom").Kind).IsEqualTo("grep");
-        await Assert.That(overrides).IsNotNull();
-        await Assert.That(overrides!.Any(o => o.ProviderName == "custom")).IsTrue();
+        var text = await snap.Text(context);
+        await using var dst = new global::app.@this(root + "-dst");
+        dst.TestIdentity();
+        var into = dst.actor.list.User.Context;
+        await Granted(dst, TestProviderDll);
+        await dst.Restore(await into.Snapshot(text), into);
+
+        var signing = dst.Code.Get<global::app.module.signing.code.ISigning>();
+        await Assert.That(signing.Error).IsNull();
+        await Assert.That(((ICode)signing.Provider!).Name).IsEqualTo("test-signing");
     }
 
     [Test]
-    public async Task Providers_Restore_ReplaysRegistrationsBeforeApplyingDefaults()
+    public async Task Code_Start_ADllThatWontLoad_IsTheAnswer()
     {
-        // Order matters: registrations first, then defaults — otherwise defaults reference
-        // names that don't exist yet. We assert the contract by capturing an override that
-        // names a registration that only exists post-step-1; if the order were inverted,
-        // SetDefault would fire before Register and the restore would hard-error.
+        // no silent fallback to the system defaults
         var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
-        var custom = new CustomGrep { Source = typeof(CustomGrep).Assembly.Location };
-        src.Code.Register(typeof(global::app.data.code.IGrep), custom);
-        src.Code.SetDefault(typeof(global::app.data.code.IGrep), "custom");
-
-        var snap = src.Snapshot(src.actor.list.User.Context).Saved();
-        var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
-        // Pre-grant Execute on the snapshotted DLL source for the System actor —
-        // restore reloads the DLL via path.LoadAssemblyAsync, which gates on
-        // Execute. The original App's actor had already passed that gate; the
-        // snapshot doesn't (yet) carry actor permissions, so replay it here.
-        var dllSrc = typeof(CustomGrep).Assembly.Location;
-        var grantPath = dllSrc.StartsWith("/") ? "/" + dllSrc : dllSrc;
-        var resolved = global::app.type.item.path.@this.Resolve(grantPath, dst.actor.list.User.Context!);
-        var verbs = new HashSet<global::app.type.item.permission.Verb>
+        var context = src.actor.list.User.Context;
+        var snap = new Snapshot(context);
+        snap.Node("Code").Write("loaded", new List<global::app.module.code.dll.@this>
         {
-            global::app.type.item.permission.Verb.read,
-            global::app.type.item.permission.Verb.execute,
-        };
-        var permission = new global::app.type.item.permission.@this(
-            Actor: dst.actor.list.User.Name, Path: resolved.Location(dst.actor.list.User.Context.Filesystem).Absolute, Verbs: verbs,
-            Match: global::app.type.item.permission.Match.exact,
-            dst.type.list[typeof(global::app.type.item.permission.@this)]);
-        await dst.actor.list.User.Permission.Add(
-            new global::app.data.@this<global::app.type.item.permission.@this>("", permission, context: dst.actor.list.User.Context), persist: false);
-        await dst.Restore(snap, dst.actor.list.User.Context);
-
-        var defaultGrep = dst.Code.Get<global::app.data.code.IGrep>();
-        await Assert.That(defaultGrep.Error).IsNull();
-        await Assert.That(((global::app.module.code.ICode)defaultGrep.Provider!).Name).IsEqualTo("custom");
-    }
-
-    [Test]
-    public async Task Providers_Restore_HardErrors_OnUnresolvableRuntimeRegistrationSource()
-    {
-        // Captured runtime registration's DLL/source can't be loaded → referent-integrity
-        // hard error. No silent fallback to system default.
-        var snap = new Snapshot(app.actor.list.User.Context);
-        snap.Node("Code").Write("registrations", new List<global::app.module.code.registration.@this>
-        {
-            new(app.actor.list.User.Context.App.type.list[typeof(global::app.module.code.registration.@this)])
+            new global::app.module.code.dll.loaded.@this(src.type.list[typeof(global::app.module.code.dll.loaded.@this)])
             {
-                Kind = "grep",
-                ProviderName = "ghost",
-                Source = "/nonexistent/ghost-provider.dll",
+                Source = global::app.type.item.path.@this.Resolve("/nonexistent/ghost-provider.dll", context),
             }
         });
-        snap.Node("Code").Write("defaultOverrides", new List<global::app.module.code.defaultoverride.@this>());
 
         var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
         var started = await snap.Start(dst, dst.actor.list.User.Context);
 
         await Assert.That(started.Success).IsFalse();
-        await Assert.That(started.Error!.Key).IsEqualTo("ProviderRestore");
+        await Assert.That(started.Error!.Key).IsEqualTo("DllNotLoaded");
+    }
+
+    [Test]
+    public async Task Code_Start_AProviderRegisteredInProcess_AnswersItCantComeBack()
+    {
+        var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
+        src.Code.Register(typeof(global::app.data.code.IGrep), new CustomGrep());
+        var snap = src.Snapshot(src.actor.list.User.Context).Saved();
+
+        // stored by its kind's plang name and its own, never a C# type name
+        var registration = (await snap.Node("Code").Records<global::app.module.code.registration.@this>("registrations"))!.Single();
+        await Assert.That(registration.Kind).IsEqualTo("grep");
+        await Assert.That(registration.ProviderName).IsEqualTo("custom");
+
+        var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
+        var started = await snap.Start(dst, dst.actor.list.User.Context);
+
+        await Assert.That(started.Success).IsFalse();
+        await Assert.That(started.Error!.Key).IsEqualTo("ProviderInProcess");
     }
 
     [Test]
     public async Task Providers_Restore_AnswersTheChoicesError_ForAKindTheRuntimeDoesntDeclare()
     {
         var snap = new Snapshot(app.actor.list.User.Context);
-        snap.Node("Code").Write("registrations", new List<global::app.module.code.registration.@this>
+        snap.Node("Code").Write("defaultOverrides", new List<global::app.module.code.defaultoverride.@this>
         {
-            new(app.actor.list.User.Context.App.type.list[typeof(global::app.module.code.registration.@this)])
+            new(app.actor.list.User.Context.App.type.list[typeof(global::app.module.code.defaultoverride.@this)])
             {
                 Kind = "nosuchkind",
                 ProviderName = "ghost",
-                Source = "/nonexistent/ghost-provider.dll",
             }
         });
 
@@ -192,10 +182,8 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
     [Test]
     public async Task Providers_Restore_HardErrors_OnUnresolvableDefaultSelectionName()
     {
-        // Registrations succeed but default-selection name doesn't match any registered
-        // provider → referent-integrity hard error.
+        // the default-selection name doesn't match any registered provider → a hard error
         var snap = new Snapshot(app.actor.list.User.Context);
-        snap.Node("Code").Write("registrations", new List<global::app.module.code.registration.@this>());
         snap.Node("Code").Write("defaultOverrides", new List<global::app.module.code.defaultoverride.@this>
         {
             new(app.actor.list.User.Context.App.type.list[typeof(global::app.module.code.defaultoverride.@this)])
@@ -214,36 +202,11 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
     [Test]
     public async Task Providers_BuiltInRegistrations_NotInSnapshot()
     {
-        // RegisterDefaults output is reconstructed on App boot — only post-defaults
-        // registrations end up in the captured payload.
+        // what a fresh app's registry holds is made again by it — nothing of it is stored
         var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var snap = app.Snapshot(app.actor.list.User.Context).Saved();
-        var registrations = await snap.Node("Code")
-            .Records<global::app.module.code.registration.@this>("registrations");
 
-        await Assert.That(registrations).IsNotNull();
-        await Assert.That(registrations!.Count).IsEqualTo(0);
-    }
-
-    [Test]
-    public async Task Providers_OnlyRegistryLayer_Captured_ProviderInstancesAreReconstructed()
-    {
-        // The provider instances themselves are reconstruct-on-build — only the registry
-        // layer (selections + registrations) is in the snapshot. We confirm by inspecting
-        // the wire shape: only Registration tuples + DefaultOverride records, no provider
-        // object graphs.
-        var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
-        var custom = new CustomGrep { Source = typeof(CustomGrep).Assembly.Location };
-        src.Code.Register(typeof(global::app.data.code.IGrep), custom);
-
-        var snap = src.Snapshot(src.actor.list.User.Context).Saved();
-        var registrations = await snap.Node("Code")
-            .Records<global::app.module.code.registration.@this>("registrations");
-
-        await Assert.That(registrations).IsNotNull();
-        await Assert.That(registrations!.Count).IsEqualTo(1);
-        // The wire entry is the metadata triple, not the ICode instance graph.
-        await Assert.That(registrations[0].ProviderName).IsEqualTo("custom");
-        await Assert.That(registrations[0].Source).IsNotNull();
+        await Assert.That((await snap.Node("Code").Records<global::app.module.code.registration.@this>("registrations"))!.Count).IsEqualTo(0);
+        await Assert.That((await snap.Node("Code").Rows("loaded")).Count).IsEqualTo(0);
     }
 }
