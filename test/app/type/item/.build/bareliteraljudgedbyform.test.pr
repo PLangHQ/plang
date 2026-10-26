@@ -6,7 +6,8 @@
       "index": 0,
       "text": "set %birthday% = \"2026-01-01\"",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -54,7 +55,8 @@
       "index": 1,
       "text": "assert %birthday!type.name% equals \"date\"",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -100,7 +102,8 @@
       "index": 2,
       "text": "set %written% = \"1st jan 2026\"",
       "line": {
-        "number": 7
+        "number": 7,
+        "indent": 0
       },
       "code": [
         {
@@ -148,7 +151,8 @@
       "index": 3,
       "text": "assert %written!type.name% equals \"date\"",
       "line": {
-        "number": 8
+        "number": 8,
+        "indent": 0
       },
       "code": [
         {
@@ -194,7 +198,8 @@
       "index": 4,
       "text": "assert %written.Year% equals 2026",
       "line": {
-        "number": 9
+        "number": 9,
+        "indent": 0
       },
       "code": [
         {
@@ -237,7 +242,8 @@
       "index": 5,
       "text": "set %timeout% = \"PT30S\"",
       "line": {
-        "number": 10
+        "number": 10,
+        "indent": 0
       },
       "code": [
         {
@@ -285,7 +291,8 @@
       "index": 6,
       "text": "assert %timeout!type.name% equals \"duration\"",
       "line": {
-        "number": 11
+        "number": 11,
+        "indent": 0
       },
       "code": [
         {
@@ -331,7 +338,8 @@
       "index": 7,
       "text": "set %count% = \"42\"",
       "line": {
-        "number": 12
+        "number": 12,
+        "indent": 0
       },
       "code": [
         {
@@ -379,7 +387,8 @@
       "index": 8,
       "text": "assert %count!type.name% equals \"number\"",
       "line": {
-        "number": 13
+        "number": 13,
+        "indent": 0
       },
       "code": [
         {
@@ -425,7 +434,8 @@
       "index": 9,
       "text": "set %version% = \"2.0\"",
       "line": {
-        "number": 14
+        "number": 14,
+        "indent": 0
       },
       "code": [
         {
@@ -473,7 +483,8 @@
       "index": 10,
       "text": "assert %version!type.name% equals \"text\"",
       "line": {
-        "number": 15
+        "number": 15,
+        "indent": 0
       },
       "code": [
         {
@@ -516,9 +527,7 @@
       ]
     }
   ],
-  "child": [],
   "visibility": "Public",
-  "path": "/app/type/item/BareLiteralJudgedByForm.test.goal",
-  "prPath": "/app/type/item/.build/bareliteraljudgedbyform.test.pr",
+  "file": "BareLiteralJudgedByForm.test.goal",
   "hash": "3e4d5dc8d40afbe3c26640233d7178bf48a426b3baf6ee966006f5d4a6542bc2"
 }
