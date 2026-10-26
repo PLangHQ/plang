@@ -35,7 +35,7 @@ public partial class Add : IContext
 ```
 
 - **Parameters are `partial` properties** of type `data.@this`, `data.@this<T>` or marked `[Code]` (`add.cs:8-20`). The source generator (`PLang.Generators`) writes the other half of the class. A property of any other kind fails the build with `PLNG001`, an error: "Property '{0}' on action '{1}' must be Data<T> or [Code] T. Raw scalars are not permitted." (`PLang.Generators/Discovery/this.cs:43-49`).
-- **`Start()` is the handler's own entry** (`add.cs:22`). The generator also writes the dispatcher, `ICodeGenerated.Start()` (`PLang/app/module/ICodeGenerated.cs`), as an explicit interface member, so it shares the name in one class. Start an action through the action's `Start(context)`, never the handler directly.
+- **`Start()` is the handler's own entry** (`add.cs:22`). The generator also writes the dispatcher, `ICodeGenerated.Start()` (declared in `PLang/app/module/ICodeGenerated.cs`, emitted at `PLang.Generators/Emission/Action/this.cs:414`, where it calls the handler's own `Start()` at `:418`), as an explicit interface member, so it shares the name in one class. Start an action through the action's `Start(context)`, never the handler directly.
 - **`ICodeGenerated`** has `Resolve` (build a populated handler from the `.pr`), `Attach` (set the context and markers) and `Start`. Handlers never implement it themselves: the generator adds it (`ICodeGenerated.cs`: "Generated handlers implement it explicitly, beside their own Start()").
 
 ## What `Start()` returns

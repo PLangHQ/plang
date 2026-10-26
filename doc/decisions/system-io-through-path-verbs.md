@@ -9,4 +9,4 @@
 - The bootstrap-time discovery of shipped teaching markdown (`app.module.MarkdownTeaching`) is exempt: "converting its sync utility shape to async-everywhere buys no security and lots of churn" (`bans.md`, exempt files).
 - Other alternatives: reason not recorded.
 
-**Held by.** PLNG002 (a build error where analyzers run: `./dev.sh full`, not `./dev.sh build`; `dev.sh:31`, `:312-314`) and `Plng002SystemIoBanTests` (11 tests).
+**Held by.** PLNG002, a build error in `./dev.sh build` and in `./dev.sh full` (a throwaway `System.IO.File.ReadAllText` in an action failed `./dev.sh build`), and `Plng002SystemIoBanTests` (11 tests).

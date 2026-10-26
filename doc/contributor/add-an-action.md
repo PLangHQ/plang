@@ -33,7 +33,7 @@ public partial class Hello : IContext
 The builder learns the action from markdown in `os/system/modules/greeter/`:
 
 - `module.description.md`: `Greet someone by name`
-- `hello.description.md`: one line saying what the action answers (here, the greeting text `Hello, <name>!`)
+- `hello.description.md`: one line saying what the action answers. The one used: `Answer a greeting text for a name: Hello, <name>!`
 - `hello.examples.md`: step texts and the properties they build to:
 
 ```
@@ -46,7 +46,9 @@ Properties: `{"Who": "Ada"}` — the trailing `write to %greeting%` is its own a
 
 ## 3. Build and use
 
-`./dev.sh build` built it with no error (the first build 112 s, the next 52 s). In a scratch app with the new binary:
+`./dev.sh build` built it with no error (the first build 112 s, the next 52 s). Nothing is registered by hand: the generator and the folder name make the action appear (`os/system/modules/catalog.md:38-39`: "Add a C# action and it appears automatically"). A property that is not `Data<T>` or `[Code]`, or a `System.IO` reach, fails this same build (`PLNG001`, `PLNG002`; [the rules](rules.md)).
+
+Make a scratch folder outside the repository with the goal below, and run the new binary there. `plang build` in a folder that is not yet an app asks to create it; pass `--app.setting.create=true`. A build needs the decider key ([install](../install.md#the-key-a-build-needs)).
 
 ```plang
 Start

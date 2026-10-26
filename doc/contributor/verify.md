@@ -25,7 +25,7 @@ Each claim in `doc/contributor/` and `doc/decisions/`, how it was checked, and t
 | T5 | type-system | `IsTruthy` virtual `item/this.cs:653`; `Data.ToBoolean` asks it `data/this.cs:696`; `path` answers `AsBooleanAsync` | read | pass |
 | T6 | type-system | `duration` has `short` and `iso` kinds; `size` has `iec` | `ls type/item/duration type/item/size` | pass |
 | R1 | rules | `AuthGate` at `type/item/path/this.Operations.cs:48`; PLNG002 error at `Plng002.cs:48`; `Plng002SystemIoBanTests` 11 pass | read; `./dev.sh test Plng002SystemIoBanTests` | pass |
-| R2 | rules | analyzers are off in `./dev.sh build` (`dev.sh:31`) and on in `./dev.sh full` in its own Gate configuration (`dev.sh:312-314`) | read | pass |
+| R2 | rules | PLNG002 (and PLNG001) fire only under `./dev.sh full`, because analyzers are off in `./dev.sh build` | first written from `dev.sh:31`, `:312-314`; ran a throwaway action with `System.IO.File.ReadAllText` and a `string` property under `./dev.sh build`: `error PLNG002` and `error PLNG001` | **fail** (the cold reader doubted it; the pages now say both fail `./dev.sh build`) |
 | R3 | rules | no `Console.Write`/`Console.Error` call in `PLang/app` | `grep -rn` returns one string literal in `type/code/this.Parse.cs:22` | pass |
 | R4 | rules | `AppException` at `error/Exceptions.cs:8`; `Error.FromException` at `error/this.cs:274` | read | pass |
 | R5 | rules | no `[Default(true)]` in `PLang/app/module/` | `grep -rn` returns nothing | pass |
@@ -36,7 +36,7 @@ Each claim in `doc/contributor/` and `doc/decisions/`, how it was checked, and t
 | R10 | rules | a changed `.goal` with no rebuild is `Stale` | ran in a scratch app: edited a test's `.goal` without a rebuild, `plang --test` printed `[Stale]` and exited 1 | pass |
 | R11 | rules | the Data<T> implicit-operator double-wrap | `Documentation/v0.2/data-internals.md:290-300` | unverified (read, not run) |
 | L1 | locked-core | the surface test pins namespaces `app`, `app.module`, `app.module.list` exactly and `app.type`, `app.data`, `app.channel`, `app.call`, `app.event` and below | `SurfaceTests.cs:12-18` | pass |
-| L2 | locked-core | it also pins every type's members and every module's actions with properties | `SurfaceTests.cs:44-61`; `surface_golden.txt` 4,569 lines, 142 `action` entries | pass |
+| L2 | locked-core | it also pins every type's members and every module's actions with properties | `SurfaceTests.cs:39-56` (first written as 44-61; the cold reader corrected it); `surface_golden.txt` 4,569 lines, 142 `action` entries | pass |
 | L3 | locked-core | the failure message and the Explicit `AcceptTheSurface` | `SurfaceTests.cs:136`, `:190-191` | pass |
 | L4 | locked-core | adding an action fails `TheCoresSurface_IsThePinnedOne` (1 of 3) | ran with the throwaway module `greeter` | pass |
 | L5 | locked-core | `./dev.sh test SurfaceTests` is 3 of 3 with the throwaway removed | ran | pass |
@@ -61,3 +61,17 @@ Each claim in `doc/contributor/` and `doc/decisions/`, how it was checked, and t
 | D2 | decisions | `scripts/verify-decisions.sh` run: 7 PASS, `variable-ref-binds-instance` FAIL (stale path and token) | ran | pass (the FAIL is the finding) |
 | D3 | decisions | `core.hooksPath` is unset here, so `.githooks/pre-commit` is not wired | `git config core.hooksPath` is empty | pass |
 | D4 | decisions | where the repository records no reason, the record says so | records 3, 4, 6, 8, 9 | by construction |
+
+## Cold reader, run 5 (a fresh agent given doc/, the contributor guide)
+
+The agent was asked to plan a `greeter.hello` action from the guide alone, writing the files into a scratch folder and touching nothing in the repository. It produced the files, the commands, the expected failures and the question of who to ask, and checked about 50 line citations against the source.
+
+| # | Page | Claim | Check | Result |
+|---|---|---|---|---|
+| K1 | add-an-action | the files, commands and the two expected test failures can be planned from the guide | agent answers 1-3 matched the real run | pass |
+| K2 | the-locked-core | the "what a plang program sees" code is at `SurfaceTests.cs:44-61` | agent found it at `:38-56`; read: `:39-56` | **fail** (line drift; corrected) |
+| K3 | rules, build-and-test, decisions | `System.IO` compiles under `./dev.sh build` | see R2 | **fail** (corrected) |
+| K4 | add-an-action | the guide says nothing about registration, the key or where to run | agent stuck | page now says: nothing is registered by hand (`catalog.md:38-39`), a build needs the key, run in a scratch folder |
+| K5 | how-a-step-runs | where the generated dispatcher is | agent found `PLang.Generators/Emission/Action/this.cs:414` | page now cites it |
+| K6 | the-locked-core | who the architect is for a person | agent stuck | page now says |
+| K7 | add-an-action | a first-time reader can write `hello.description.md` | agent invented the wording | page now gives the line used |

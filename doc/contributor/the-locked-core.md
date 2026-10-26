@@ -9,7 +9,7 @@ The core's surface is the load-bearing shape the rest of the system is built on.
 - exactly: `app` (the app's own types), `app.module`, `app.module.list` (the module registry);
 - and everything below: `app.type` (the type system, the serializer and format, the core value types, variable memory), `app.data`, `app.channel`, `app.call`, `app.event`.
 
-It also pins what a plang program sees: every type's members, and every module's actions with their properties (`SurfaceTests.cs:44-61`). The pin is `PLang.Tests/Wire/App/Surface/surface_golden.txt`, 4,569 lines, 142 of them `action …` entries.
+It also pins what a plang program sees: every type's members, and every module's actions with their properties (`SurfaceTests.cs:39-56`). The pin is `PLang.Tests/Wire/App/Surface/surface_golden.txt`, 4,569 lines, 142 of them `action …` entries.
 
 ## What you may do
 
@@ -22,7 +22,7 @@ A member others call, a virtual, an attribute, an interface member, an `app` pro
 
 ## How you ask
 
-An addition is a short proposal to the architect, who brings it to the project owner. Nothing is built before the yes. The proposal says what is added and why the edge cannot hold it.
+An addition is a short proposal to the architect, who brings it to the project owner. The architect is a role (`characters/architect/`); the owner is the project's creator, named in the surface test's own message (`SurfaceTests.cs:136`). A person with no architect sends the proposal to the owner. Nothing is built before the yes. The proposal says what is added and why the edge cannot hold it.
 
 ## What fails if you do not
 

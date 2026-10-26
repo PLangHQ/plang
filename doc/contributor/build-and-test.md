@@ -4,9 +4,9 @@ For someone changing the runtime. The question this page answers: which commands
 
 ## Build
 
-- `./dev.sh build` builds the test projects and `PlangConsole` incrementally, with analyzers off (`dev.sh:5`, `:31`). The program is `PlangConsole/bin/Debug/net10.0/plang`.
+- `./dev.sh build` builds the test projects and `PlangConsole` incrementally, with the general analyzers off (`dev.sh:5`, `:31`). The plang diagnostics `PLNG001` and `PLNG002` still fail it ([the rules](rules.md)). The program is `PlangConsole/bin/Debug/net10.0/plang`.
 - `dotnet build PlangConsole/PLangConsole.csproj -c Debug` builds just the program.
-- `./dev.sh full` is the pre-commit gate: analyzers on, in its own `Gate` configuration, every C# suite, and the plang tests (`dev.sh:11`, `:308-316`). It is slow.
+- `./dev.sh full` is the pre-commit gate: all analyzers on, in its own `Gate` configuration, every C# suite, and the plang tests (`dev.sh:11`, `:308-316`). It is slow.
 
 Every `dev.sh` subcommand builds first. Never run `./dev.sh build && ./dev.sh test` (`dev.sh:13`).
 
@@ -41,4 +41,4 @@ A change under `os/system/modules/**/*.md` or `os/system/type/**/*.md` can move 
 
 ## Before you push
 
-Run the class you changed, then `./dev.sh full` before you hand off. A change to a locked part needs its yes first ([the locked core](the-locked-core.md)).
+Work on a branch cut off `runtime2` ([how a bot works](how-a-bot-works.md)). Run the class you changed, then `./dev.sh full` before you hand off. A change to a locked part needs its yes first ([the locked core](the-locked-core.md)).
