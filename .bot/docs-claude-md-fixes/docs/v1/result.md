@@ -6,3 +6,6 @@ Each checked against the code first.
 - `this.Schema.cs`: the `Return` property is at `:65–71` (its doc comment `:65–69`, the property `:71`), not `:61`.
 
 Not changed: the "Seven engine concepts" sentence and the two action renames, which I did not check.
+
+## Old doc, same branch
+- `Documentation/v0.2/bans.md:140`: the Console rule's channel call was `app.CurrentActor.Channels.WriteTextAsync(...)`; neither `CurrentActor` nor `WriteTextAsync` exists in `PLang/app`. It is `context.Actor.Channel[global::app.channel.list.@this.Output].WriteText(...)` (`module/build/code/Default.cs:218`, `module/llm/code/OpenAi.cs:399`; `channel/this.cs:147`), as CLAUDE.md says.
