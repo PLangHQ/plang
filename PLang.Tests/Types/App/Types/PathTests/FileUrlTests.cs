@@ -14,7 +14,8 @@ public class FileUrlTests : System.IAsyncDisposable
 
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
-    [Test]
+    // out of the root, a location's plang form is Unix's OS-rooted //x
+    [Test, ExcludeOn(TUnit.Core.Enums.OS.Windows)]
     public async Task FileUrl_OutOfRoot_IsItsLocalPath_ShownInPlangForm()
     {
         var p = global::app.type.item.path.@this.Resolve("file:///var/plang-elsewhere/x.txt", _app.actor.list.User.Context);
@@ -22,6 +23,15 @@ public class FileUrlTests : System.IAsyncDisposable
         await Assert.That(p).IsTypeOf<global::app.type.item.path.file.@this>();
         await Assert.That(p.Absolute).IsEqualTo(System.IO.Path.GetFullPath("/var/plang-elsewhere/x.txt"));
         await Assert.That(p.Raw).IsEqualTo("//var/plang-elsewhere/x.txt");
+    }
+
+    // on Windows the same location's plang form is its drive's, written with "/" (c:/x)
+    [Test, RunOn(TUnit.Core.Enums.OS.Windows)]
+    public async Task FileUrl_OutOfRoot_OnWindows_IsItsDrivesPlangForm()
+    {
+        var p = global::app.type.item.path.@this.Resolve("file:///var/plang-elsewhere/x.txt", _app.actor.list.User.Context);
+
+        await Assert.That(p.Raw).IsEqualTo(System.IO.Path.GetFullPath("/var/plang-elsewhere/x.txt").Replace('\\', '/'));
     }
 
     [Test]

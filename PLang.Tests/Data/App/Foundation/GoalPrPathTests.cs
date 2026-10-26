@@ -18,14 +18,14 @@ public class GoalPrPathTests : System.IAsyncDisposable
     public async Task PrPath_DerivedFromPath_Correctly()
     {
         var goal = new Goal(app.type.list) { Name = "Test", Path = global::app.type.item.path.@this.Resolve("\\Test.goal".AdjustPathToOs(), app.actor.list.User.Context) };
-        await Assert.That(goal.PrPath?.ToString()).IsEqualTo("\\.build\\test.pr".AdjustPathToOs());
+        await Assert.That(goal.PrPath?.ToString()).IsEqualTo("/.build/test.pr");
     }
 
     [Test]
     public async Task PrPath_SubDirectory_DerivedCorrectly()
     {
         var goal = new Goal(app.type.list) { Name = "Inner", Path = global::app.type.item.path.@this.Resolve("\\SubDir\\Inner.goal".AdjustPathToOs(), app.actor.list.User.Context) };
-        await Assert.That(goal.PrPath?.ToString()).IsEqualTo("\\SubDir\\.build\\inner.pr".AdjustPathToOs());
+        await Assert.That(goal.PrPath?.ToString()).IsEqualTo("/SubDir/.build/inner.pr");
     }
 
     [Test]
@@ -46,9 +46,9 @@ public class GoalPrPathTests : System.IAsyncDisposable
     public async Task PrPath_UpdatesWhenPathChanges()
     {
         var goal = new Goal(app.type.list) { Name = "Test", Path = global::app.type.item.path.@this.Resolve("\\Test.goal".AdjustPathToOs(), app.actor.list.User.Context) };
-        await Assert.That(goal.PrPath?.ToString()).IsEqualTo("\\.build\\test.pr".AdjustPathToOs());
+        await Assert.That(goal.PrPath?.ToString()).IsEqualTo("/.build/test.pr");
 
         goal.Path = global::app.type.item.path.@this.Resolve("\\Other\\Test.goal".AdjustPathToOs(), app.actor.list.User.Context);
-        await Assert.That(goal.PrPath?.ToString()).IsEqualTo("\\Other\\.build\\test.pr".AdjustPathToOs());
+        await Assert.That(goal.PrPath?.ToString()).IsEqualTo("/Other/.build/test.pr");
     }
 }

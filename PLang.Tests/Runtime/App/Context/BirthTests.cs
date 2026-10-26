@@ -93,7 +93,8 @@ public class BirthTests
         await Assert.That(born).IsLessThan(130_000L).Because("an app's code providers are made at its registry's first use");
     }
 
-    [Test]
+    // bytes measured on Linux: another OS makes a different number of them
+    [Test, RunOn(TUnit.Core.Enums.OS.Linux)]
     public async Task ASubAppsSystemPermissionView_IsMadeAtItsFirstAsk()
     {
         var born = Bytes(() =>
