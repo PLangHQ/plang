@@ -75,7 +75,8 @@ public sealed partial class @this
         var sb = new StringBuilder(Name);
         foreach (var step in Step.Items())
         {
-            sb.AppendLine();
+            // a line ends at LF on every OS, as a .goal's and a stream's do
+            sb.Append('\n');
             sb.Append(new string(' ', step.Line.Indent * 4));
             sb.Append("- ");
             sb.Append(step.Text);

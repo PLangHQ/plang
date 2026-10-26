@@ -223,6 +223,17 @@ public class GoalTests : System.IAsyncDisposable
     }
 
     [Test]
+    public async Task AGoalFile_WithCrLfLineEnds_ReadsAsItsLines()
+    {
+        var goals = global::app.goal.@this.Parse("Start\r\n- write out \"hello\"\r\n- write out \"bye\"\r\n", null, _app.actor.list.User.Context)!;
+
+        await Assert.That(goals.Name).IsEqualTo("Start");
+        await Assert.That(goals.Step.Count).IsEqualTo(2);
+        await Assert.That(goals.Step[0].Text).IsEqualTo("write out \"hello\"");
+        await Assert.That(goals.Step[1].Text).IsEqualTo("write out \"bye\"");
+    }
+
+    [Test]
     public async Task ToString_ReturnsGoalText()
     {
         var goal = new Goal(_app.type.list)
