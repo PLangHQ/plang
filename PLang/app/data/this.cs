@@ -81,7 +81,17 @@ public partial class @this
     /// </summary>
     [JsonIgnore]
     [LlmIgnore]
-    public global::app.type.item.signature.@this? Signature { get; private protected init; }
+    public global::app.type.item.signature.@this? Signature { get => _signature; private protected init => _signature = value; }
+    private global::app.type.item.signature.@this? _signature;
+
+    /// <summary>This binding takes what its content's read came with, as its value is taken: the layer the read was
+    /// verified in, its properties and what a program added to it. Asked only by content opening (the read and its
+    /// layer arrive together); a read that came with nothing leaves the binding as it is.</summary>
+    internal void Carry(@this read)
+    {
+        if (read.Signature is { } signature) _signature = signature;
+        if (read.Carried is { } carried) Attachment = carried;
+    }
 
     /// <summary>Where this Data sits under its parents (<c>config.items[0]</c>) — its navigation's own bookkeeping,
     /// never a plang fact: <c>!path</c> is a reference's location.</summary>

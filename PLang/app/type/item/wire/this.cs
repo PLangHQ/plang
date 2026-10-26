@@ -34,6 +34,19 @@ public class @this : global::app.type.item.source
         : base(slice, type, variable ?? [], built: built)
         => _reader = reader ?? throw new System.ArgumentNullException(nameof(reader));
 
+    /// <summary>A wire born from <paramref name="value"/> written in <paramref name="view"/>, through plang's own format:
+    /// the value as it stood, held as those bytes under its own type, so whatever carries it later carries exactly
+    /// them. Its asker is <paramref name="context"/>.</summary>
+    public static async System.Threading.Tasks.Task<@this> Of(global::app.type.item.@this value, global::app.View view,
+        global::app.actor.context.@this context)
+    {
+        using var bytes = new System.IO.MemoryStream();
+        await using (var utf8 = new System.Text.Json.Utf8JsonWriter(bytes))
+            await value.Output(new kind.plang.Writer(utf8, view, context));
+        var plang = (kind.plang.@this)context.App.type.list[typeof(@this)].kind["plang"]!;
+        return new(System.Text.Encoding.UTF8.GetString(bytes.ToArray()), value.Type, plang);
+    }
+
     /// <summary>The text as written: a string slice is the text it holds (unquoted, as a source's is); any other
     /// slice is its raw form.</summary>
     public override string? RawText => Raw is string slice && slice.StartsWith('"')

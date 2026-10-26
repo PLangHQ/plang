@@ -84,6 +84,44 @@ public class SignedSnapshotTests
         await Assert.That(await context.Variable.GetValue("note")).IsEqualTo("original");
     }
 
+    // The road a program takes: `save %run% to file 'run.plang'`, then `read file 'run.plang', write to %snap%`. The
+    // read holds the file; when it opens, the variable takes what was read whole, its signature with it.
+    [Test]
+    public async Task APlangReadThroughAFile_GoesOn()
+    {
+        await using var app = App();
+        var context = app.actor.list.User.Context;
+        await context.Variable.Set("run", await Saved(app));
+        await (await (await context.Action("file.save(Path=\"run.plang\", Value=%run%)")).Start(context)).IsSuccess();
+        await context.Variable.Set("s1", "not yet");
+
+        var read = await (await context.Action("file.read(Path=\"run.plang\")")).Start(context);
+        await read.IsSuccess();
+
+        await (await Resume(read, context)).IsSuccess();
+        await Assert.That(await context.Variable.GetValue("s1")).IsEqualTo("second");
+    }
+
+    // What a .plang holds beside the value comes back through a file read too: its properties (`!`) and what a program
+    // added to the value (`.`).
+    [Test]
+    public async Task APlangReadThroughAFile_KeepsItsPropertiesAndAddedProperties()
+    {
+        await using var app = App();
+        var context = app.actor.list.User.Context;
+        var value = new global::app.data.@this("x", "box", context: context);
+        value.Properties["colour"] = "red";
+        value.Property.Add("lang", new global::app.data.@this("lang", "is", context: context));
+        await context.Variable.Set("x", value);
+        await (await (await context.Action("file.save(Path=\"x.plang\", Value=%x%)")).Start(context)).IsSuccess();
+
+        await context.Variable.Set("y", await (await context.Action("file.read(Path=\"x.plang\")")).Start(context));
+        await Assert.That(await context.Variable.GetValue("y")).IsEqualTo("box");
+
+        await Assert.That(await context.Variable.GetValue("y!colour")).IsEqualTo("red");
+        await Assert.That(await context.Variable.GetValue("y.lang")).IsEqualTo("is");
+    }
+
     // A file kept at rest is read as often as wanted: its nonce is no replay, and no window ends it.
     [Test]
     public async Task OnePlang_GoesOnTwice_PastTheWindow()
@@ -241,14 +279,14 @@ public class SignedSnapshotTests
         await Task.CompletedTask;
     }
 
-    // An identity provider holding one keypair of its own: listed as the app's, or, archived, not.
+    // An identity provider holding one keypair of its own, its default and only listed identity. Archived, the keypair
+    // is held no more as the app's: the app signs as a new default, and the provider lists only that one (archived
+    // identities are never listed, nor ever the default).
     private sealed class Keys : global::app.module.identity.code.IIdentity
     {
         private readonly (string PublicKey, string PrivateKey) _keys;
-        private readonly bool _archived;
-        public Keys(string name) : this(name, Make(), archived: false) { }
-        private Keys(string name, (string, string) keys, bool archived) { Name = name; _keys = keys; _archived = archived; }
-        public Keys Archived() => new(Name + "-archived", _keys, archived: true);
+        public Keys(string name) { Name = name; _keys = Make(); }
+        public Keys Archived() => new(Name + "-archived");
 
         private static (string, string) Make()
         {
@@ -261,7 +299,7 @@ public class SignedSnapshotTests
         public string? Source { get; set; }
 
         private Identity Mine(global::app.module.IContext a) => new("default", a.Context.App.type.list[typeof(Identity)])
-            { PublicKey = _keys.PublicKey, PrivateKey = _keys.PrivateKey, IsDefault = true, IsArchived = _archived };
+            { PublicKey = _keys.PublicKey, PrivateKey = _keys.PrivateKey, IsDefault = true };
         private global::app.data.@this<Identity> Ok(global::app.module.IContext a) => a.Context.Ok<Identity>(Mine(a));
 
         public Task<global::app.data.@this<Identity>> GetAsync(global::app.module.identity.Get action) => Task.FromResult(Ok(action));
@@ -274,7 +312,7 @@ public class SignedSnapshotTests
         public Task<global::app.data.@this<Identity>> ExportAsync(global::app.module.identity.Export action) => Task.FromResult(Ok(action));
         public Task<global::app.data.@this<global::app.type.item.list.@this<Identity>>> ListAsync(global::app.module.identity.list action)
             => Task.FromResult(action.Context.Ok<global::app.type.item.list.@this<Identity>>(new global::app.type.item.list.@this<Identity>(
-                _archived ? [] : new global::app.data.@this[] { action.Context.Ok<Identity>(Mine(action)) },
+                new global::app.data.@this[] { action.Context.Ok<Identity>(Mine(action)) },
                 action.Context.App.type.list[typeof(global::app.type.item.list.@this<Identity>)])));
     }
 }

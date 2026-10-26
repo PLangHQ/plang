@@ -76,7 +76,8 @@ public sealed partial class @this : ISnapshot
     /// Three steps, each failure answered (no fallback to the system defaults):
     ///   1) Each DLL the run took in is taken in again, in order, through <see cref="Load"/> (the Execute gate, its plang
     ///      types joined to the app's) and the door it first came through (<see cref="dll.@this"/>).
-    ///   2) A provider registered in-process has nothing to be made again from: it answers that it can't come back.
+    ///   2) A provider registered in-process has nothing to be made again from: where this app holds it already (the
+    ///      host registered it again) it is there; anywhere else it answers that it can't come back.
     ///   3) Set each kind's default again — the named provider must be registered.
     /// A fresh app's registry holds the built-ins, so they are present.
     /// </summary>
@@ -102,11 +103,17 @@ public sealed partial class @this : ISnapshot
             }
         }
 
-        // Step 2 — providers registered in-process
-        if (registrations.Items().FirstOrDefault() is { } inProcess)
+        // Step 2 — providers registered in-process: no DLL brings one back, so the run goes on only where it is already
+        // registered (the same host, which registered it again)
+        foreach (var inProcess in registrations.Items())
+        {
+            var named = new data.@this("kind", inProcess.Kind, context: context);
+            if (await named.Value<global::app.type.item.choice.@this<kind.@this>>() is not { } providerKind) return named;
+            if (List(providerKind.Value.Interface).Any(provider => provider.Name == inProcess.Provider)) continue;
             return context.Error(new global::app.error.@this(
                 $"Provider '{inProcess.Provider}' for {inProcess.Kind} was registered in-process: no DLL brought it, so it can't come back.",
                 "ProviderInProcess", 500));
+        }
 
         // Step 3 — each kind's default
         foreach (var record in defaults.Items())

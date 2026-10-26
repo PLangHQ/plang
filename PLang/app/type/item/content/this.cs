@@ -93,6 +93,8 @@ public abstract class @this : global::app.type.item.@this
         // what the decode answers — a template's render at this use, which its Data never keeps
         var answer = await read.Value();
         if (!read.Success) { data.Fail(read.Error!); return data.Empty; }
+        // the binding takes what came with the read (a whole Data's format brings its signature and properties)
+        data.Carry(read);
         if (answer == null || ReferenceEquals(answer, this)) return this;
         answer.history.Add(this);
         return answer;

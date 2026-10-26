@@ -54,10 +54,14 @@ public partial class resume : IContext
 
         var (identities, missing) = Context.App.Code.Get<global::app.module.identity.code.IIdentity>();
         if (identities == null) return Context.Error(missing!);
+        // the app's identities: the one it signs as now (a sub app's is who made it, stored nowhere of its own) and every
+        // other it holds that isn't archived (a rotated default still opens what it signed)
+        var signing = await identities.GetOrCreateDefaultAsync(new global::app.module.identity.Get(Context));
+        if (await signing.Value() is not { } current) return signing;
+        if (current.Made(signature)) return null;
         var listed = await identities.ListAsync(new global::app.module.identity.list(Context));
         if (await listed.Value() is not { } own) return listed;
-        if (own.Items().Any(identity => string.Equals(identity.PublicKey, signature.Identity.ToString(), System.StringComparison.Ordinal)))
-            return null;
+        if (own.Items().Any(identity => identity.Made(signature))) return null;
         return Context.Error(new global::app.error.@this(
             $"%{Snapshot.Name}% was signed by '{signature.Identity}', which is none of this app's identities: a snapshot goes on only in the app that saved it",
             "SnapshotNotTheApps", 403));

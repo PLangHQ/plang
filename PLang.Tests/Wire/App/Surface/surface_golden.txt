@@ -3088,6 +3088,7 @@ class app.type.item.wire.this : app.type.item.source [PlangType]
   protected override Write(app.type.item.kind.json.Writer writer) : System.Threading.Tasks.ValueTask
   protected override Write(app.type.item.wire.kind.plang.Writer writer) : System.Threading.Tasks.ValueTask
   static Internal : System.Boolean { get; }
+  static Of(app.type.item.this value, app.View view, app.actor.context.this context) : System.Threading.Tasks.Task<app.type.item.wire.this>
 
 class app.type.kind.empty.this : app.type.kind.this
   ctor(app.type.this owner, app.type.kind.this format = …)

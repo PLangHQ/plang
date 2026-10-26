@@ -14,25 +14,20 @@ public partial class save : IContext
 {
     public async System.Threading.Tasks.Task<data.@this<global::app.snapshot.@this>> Start()
     {
-        var saved = Context.App.Snapshot(Context);
-        if (await saved.Value() is not { } snapshot) return saved;
-
-        using var bytes = new System.IO.MemoryStream();
-        await using (var utf8 = new System.Text.Json.Utf8JsonWriter(bytes))
-            await snapshot.Output(new global::app.type.item.wire.kind.plang.Writer(utf8, global::app.View.Snapshot, Context));
-        var types = Context.App.type.list;
-        var plang = (global::app.type.item.wire.kind.plang.@this)types["wire"].kind["plang"]!;
-        var taken = Context.Ok(new global::app.type.item.wire.@this(
-            System.Text.Encoding.UTF8.GetString(bytes.ToArray()), types[typeof(global::app.snapshot.@this)], plang));
+        var walked = Context.App.Snapshot(Context);
+        if (await walked.Value() is not { } snapshot) return walked;
+        var taken = Context.Ok(await global::app.type.item.wire.@this.Of(snapshot, global::app.View.Snapshot, Context));
 
         // signed through the signer itself, so the view it names (the snapshot's, which no step gives) is the one it hashes in
         var (signer, missing) = Context.App.Code.Get<global::app.module.signing.code.ISigning>();
         if (signer == null) return global::app.data.@this<global::app.snapshot.@this>.FromError(missing!, Context);
         var signed = await signer.SignAsync(new global::app.module.signing.sign(Context) { Data = taken, View = global::app.View.Snapshot });
-        // a snapshot that should be signed and couldn't be is the save's failure, never one kept unsigned
-        return signed.Signature == null
-            ? global::app.data.@this<global::app.snapshot.@this>.FromError(signed.Error ?? new global::app.error.@this(
-                "the snapshot could not be signed", "SnapshotUnsigned", 500), Context)
-            : global::app.data.@this<global::app.snapshot.@this>.From(signed);
+        // a snapshot is never kept unsigned: a sign that failed says why, whole; one that answered with no signature is
+        // the signer's fault, named so
+        if (!signed.Success) return global::app.data.@this<global::app.snapshot.@this>.From(signed);
+        if (signed.Signature == null)
+            return global::app.data.@this<global::app.snapshot.@this>.FromError(new global::app.error.@this(
+                "the signer answered the snapshot with no signature", "SignerGaveNoSignature", 500), Context);
+        return global::app.data.@this<global::app.snapshot.@this>.From(signed);
     }
 }
