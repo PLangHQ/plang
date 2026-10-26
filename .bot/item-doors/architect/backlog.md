@@ -24,6 +24,11 @@ Checks to make before the release, not branches:
 
 - **A database module** (Ingi, 2026-10-26: "3 future"): runtime2 has no user-facing db module (v0.1 had one); plang keeps its own state in `/.data/*.sqlite` through `app.store`. doc2's `doc/databases.md` says there's none today.
 
+## From snapshot
+
+- **No module DLL outside PLang compiles** (the coder, 2026-10-26, building a fixture for snapshot's run-time DLLs): the generator's dispatcher and lazy parameters call `data.As<T>()` (`PLang.Generators/Emission/Action/this.cs:464,469`, `Emission/Property/Data/this.cs:53,125`), which is `internal` on Data (`data/this.cs:629,656`); only PLang's InternalsVisibleTo friends compile, so `module.add` of a real third-party module DLL can't work today. Not fixed with an InternalsVisibleTo for a fixture (it hides the gap). Its own branch: find every internal a generated action reaches, then the one public door the generator emits through (making `As` public is a locked `data` addition, Ingi's). Snapshot's proof that a resumed frame calls a run-time module's action waits for it.
+- **Unused at run time** (the coder's run-state inventory): `app.KeepAlive` (`this.cs:291`, nothing calls `Add`) and `app.Services` (`this.cs:275`, nothing calls `New`). For a removal pass (both are `app`'s members, so the removal is Ingi's).
+
 ## From windows
 
 - **Older structural smells in files windows touched** (the auditor's W5 and X2, `.bot/windows/auditor/final.md`): `goal/this.cs:184–205` (`FolderPath`/`Folder` and `FullPath`/`Address` stored twice); `goal/step/action/this.cs:116–132` (module/action string compares beside the `clause` subclass) and `:23,73` (a late stamp); `module/terminal/type/process/this.cs` (`_said`/`Heard`, `Lines` twice, `Write(string)`); `path/file/this.cs:137–154` (`Replace('\\','/')` at three sites beside `Typed`; the `Canonicalize`/`Trimmed` statics); `permission/this.cs:55,74` (a string `Path`). For a branch that touches each again.
