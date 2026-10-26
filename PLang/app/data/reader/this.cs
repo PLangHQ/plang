@@ -40,7 +40,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
         string name = "";
         global::app.type.@this? typeRef = null;
         Properties? properties = null;
-        global::app.type.item.kept.list.@this? members = null;
+        global::app.type.item.property.list.@this? property = null;
         // The value slot — a lazy source (content or wire) or an eagerly-read item (goal.call);
         // a source IS an item, so one local carries every arm. Its bytes are held until the row
         // closes: the "variable" list written after it is what the value is born with.
@@ -89,11 +89,11 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                 case "properties":
                     properties = Properties.Read(ref reader, ctx);
                     break;
-                case "kept":
-                    // the members a program added to the value, each the Data it was given
-                    members = new global::app.type.item.kept.list.@this();
+                case "property":
+                    // the properties a program added to the value, each the Data it was given
+                    property = new global::app.type.item.property.list.@this();
                     reader.BeginObject();
-                    while (reader.NextName(out var member)) members.Add(member, Read(ref reader, ctx));
+                    while (reader.NextName(out var added)) property.Add(added, Read(ref reader, ctx));
                     reader.EndObject();
                     break;
                 default:
@@ -124,7 +124,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                 ? new Data(name, context: context) { Error = received }
                 : new Data(name, value, context: context);
             if (properties != null) d.Properties = properties;
-            if (members != null) d.Kept = members;
+            if (property != null) d.Property = property;
             return d;
         }
         // No value slot — a typed absence under its declared type (the absence the type's own
@@ -133,7 +133,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
             ? new Data(name, new global::app.type.item.@null.@this(typeRef), context: context)
             : new Data(name, (object?)null, context: context);
         if (properties != null) typedNull.Properties = properties;
-        if (members != null) typedNull.Kept = members;
+        if (property != null) typedNull.Property = property;
         return typedNull;
     }
 }

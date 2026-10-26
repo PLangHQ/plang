@@ -7,21 +7,22 @@ namespace app.actor;
 
 /// <summary>
 /// Represents an actor in the system with its own context and IO channels. Takes part in a snapshot as what holds its
-/// context, with nothing of its own.
+/// context and its property, with nothing of its own.
 /// </summary>
 [global::app.Attributes.PlangType("actor")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IAsyncDisposable,
     global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>, global::app.type.item.ILoad<@this>,
-    global::app.type.item.IList<@this, global::app.actor.list.@this>, global::app.origin.@this, global::app.snapshot.ISnapshot
+    global::app.type.item.IList<@this, global::app.actor.list.@this>, global::app.origin.@this, global::app.snapshot.ISnapshot,
+    global::app.type.item.property.IOwner
 {
     /// <summary>An actor is live — its context, its channels, its tasks: a copy of it is it.</summary>
     protected internal override global::app.type.item.@this Clone() => this;
 
     private readonly CancellationTokenSource _cts;
 
-    // what a program adds to the actor — kept as long as the actor lives
-    private readonly global::app.type.item.kept.list.@this _kept = new();
-    internal override global::app.type.item.kept.list.@this Kept => _kept;
+    /// <summary>What a program adds to the actor — kept as long as the actor lives, and in a snapshot.</summary>
+    [Store, global::app.LlmBuilder]
+    public global::app.type.item.property.list.@this property { get; } = new();
 
     /// <summary>A key names this actor by its name — <c>system</c>, <c>user</c>; case is not the program's to get right.</summary>
     public ValueTask<@this?> Match(string key)

@@ -54,7 +54,7 @@ public partial class @this
         Set("handled", _handled);
         if (Event != null) snapshot.Entries.Set("event", Event.Clone());
         snapshot.Write("tags", Tags);
-        snapshot.Write("kept", _kept.Dict(types));
+        snapshot.Write("property", property.Copy());
         return context.Ok();
     }
 

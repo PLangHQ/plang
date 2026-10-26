@@ -214,16 +214,16 @@ public partial class @this
     [Out, Store]
     public virtual Properties Properties { get => Attachment.Properties; set => Attachment.Properties = value; }
 
-    /// <summary>The members a program added to this variable's value that the value can't hold itself
+    /// <summary>The properties a program added to this variable's value that the value can't hold itself
     /// (<c>set %name.lang% = "is"</c> on a text) — read with a dot after the value's own members, never with
     /// <c>!</c>, which reads <see cref="Properties"/>. They ride with the value: across the wire and in the store.</summary>
     [JsonIgnore]
     [LlmIgnore]
     [Out, Store]
-    internal global::app.type.item.kept.list.@this Kept { get => Attachment.Kept; set => Attachment.Kept = value; }
+    internal global::app.type.item.property.list.@this Property { get => Attachment.Property; set => Attachment.Property = value; }
 
-    /// <summary>Whether a program added any member to this value — asked without making the list.</summary>
-    internal bool HasKept => Carried?.HasKept ?? false;
+    /// <summary>Whether a program added any property to this value — asked without making the list.</summary>
+    internal bool HasProperty => Carried?.HasProperty ?? false;
 
     /// <summary>Whether this value carries any property — asked without making the bag.</summary>
     internal bool HasProperties => Carried?.HasProperties ?? false;

@@ -24,7 +24,8 @@ A part is a class that implements `ISnapshot` (`PLang/app/snapshot/ISnapshot.cs`
 Both answer Data: a part that can't store or start answers why, never a throw. Both default to doing nothing, so a part
 that only holds parts (the actors, an actor, a context) writes nothing of its own.
 
-The parts today: the app (what it keeps), Code (`module/code/this.Snapshot.cs`: the DLLs a run took in, the providers
+The parts today: what a program added to the app and to each actor (their `property`,
+`type/item/property/list/this.cs`), Code (`module/code/this.Snapshot.cs`: the DLLs a run took in, the providers
 registered in-process, each kind's default), the actors, each actor, each actor's context, a context's variables
 (`type/item/variable/list/this.Snapshot.cs`) and its calls (`call/list/this.Snapshot.cs`).
 
@@ -67,8 +68,8 @@ A context's calls (`context.call`) are stored as they live: `root`, each frame w
 - `id`, and `type`, its kind as its plang type (`call`, `binding`, `isolated`);
 - where it stands: `goal` (`address` and `hash`), `step` (its index) and `action` (`index`, `module`, `name`);
 - its own variables, as a node of their own, so they come back through `In`;
-- the names it was born with (`arguments`), its `errors`, `handled`, the `event` running in it, its `tags` and what it
-  keeps.
+- the names it was born with (`arguments`), its `errors`, `handled`, the `event` running in it, its `tags` and what a
+  program added to it (`property`).
 
 A collection is written only when it holds something.
 

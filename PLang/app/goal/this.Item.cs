@@ -9,11 +9,11 @@ namespace app.goal;
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>, global::app.type.item.ILoad<@this>,
     global::app.type.item.IList<@this, global::app.goal.list.@this>, global::app.type.item.IEncode<@this>,
-    global::app.type.item.IDecode<@this>
+    global::app.type.item.IDecode<@this>, global::app.type.item.property.IOwner
 {
-    // what a program adds to the goal — kept as long as the goal is loaded
-    private readonly global::app.type.item.kept.list.@this _kept = new();
-    internal override global::app.type.item.kept.list.@this Kept => _kept;
+    /// <summary>What a program adds to the goal — kept as long as the goal is loaded.</summary>
+    [Store, global::app.LlmBuilder]
+    public global::app.type.item.property.list.@this property { get; } = new();
 
     /// <summary>
     /// The <c>.pr</c> form: the value written bare in plang's schema writer — a goal (or any program value:

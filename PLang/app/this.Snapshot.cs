@@ -34,22 +34,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
         return stored.Success ? context.Ok(snapshot) : global::app.data.@this<snapshot.@this>.FromError(stored.Error!, context);
     }
 
-    // The app as the root part: the members it keeps. Its mode is not stored: how an app was started (test, build, run)
-    // is the host's choice, not the program's state, so a restore leaves the app as it was started.
-    data.@this global::app.snapshot.ISnapshot.Store(snapshot.@this snapshot, actor.context.@this context)
-    {
-        snapshot.Write("kept", Kept.Dict(context.App.type.list));
-        return context.Ok();
-    }
-
-    async System.Threading.Tasks.Task<data.@this> global::app.snapshot.ISnapshot.Start(snapshot.@this snapshot, actor.context.@this context)
-    {
-        // taken in this app's context, as every restored Data is; a value that doesn't read is its entry's answer
-        if (snapshot.In("kept", context) is { } kept)
-        {
-            if (await kept.Value<global::app.type.item.dict.@this>() is not { } members) return kept;
-            Kept.Replace(members, context);
-        }
-        return context.Ok();
-    }
+    // The app is the root part and holds nothing of its own: what a program added to it is its property, a part at
+    // `property`. Its mode is not stored: how an app was started (test, build, run) is the host's choice, not the
+    // program's state, so a restore leaves the app as it was started.
 }

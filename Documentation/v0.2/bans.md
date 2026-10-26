@@ -21,7 +21,7 @@ Several subsystems have resource limits to prevent abuse:
 | **Ed25519 verification** | Header comparison | Constant-time via `CryptographicOperations.FixedTimeEquals` |
 | **File errors** | Error messages | No absolute paths exposed |
 | **Regex** | `NonBacktracking`, else a timeout | A timeout throw is answered at the action's and step's `FromException` (500, fails closed) |
-| **Kept list** | Members in a canonical order (by name, ignoring case) | The digest never depends on insertion order |
+| **Added properties** (`property.list`) | Properties in a canonical order (by name, ignoring case) | The digest never depends on insertion order |
 | **Archive unpack** | A link whose target leaves its folder | Refused |
 
 ---

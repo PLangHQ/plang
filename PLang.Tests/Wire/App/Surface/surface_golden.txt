@@ -120,7 +120,7 @@ class app.call.setting.this : app.type.item.setting.this
   ctor(app.type.this type)
   static Internal : System.Boolean { get; }
 
-class app.call.this : app.type.item.this, System.IAsyncDisposable, app.type.item.ICreate<app.call.this>
+class app.call.this : app.type.item.this, System.IAsyncDisposable, app.type.item.ICreate<app.call.this>, app.type.item.property.IOwner
   Action : app.goal.step.action.this { get; } [LlmBuilder]
   Caller : app.call.this { get; } [LlmBuilder]
   Chain : System.Collections.Generic.IReadOnlyList<app.call.this> { get; }
@@ -149,6 +149,7 @@ class app.call.this : app.type.item.this, System.IAsyncDisposable, app.type.item
   TryGet(System.String name, app.data.this& value) : System.Boolean
   override IsLeaf : System.Boolean { get; }
   override ToString() : System.String
+  property : app.type.item.property.list.this { get; } [LlmBuilder, Store]
   protected override Clone() : app.type.item.this
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   static Create(System.Object raw) : app.call.this
@@ -927,7 +928,7 @@ class app.module.list.query : app.module.IClass, app.module.ICodeGenerated, app.
   protected Data(System.Object value, app.type.this type) : app.data.this
   protected Error(app.error.this error) : app.data.this
 
-class app.module.this : app.type.item.this, app.type.item.ICreate<app.module.this>, app.type.item.ILoad<app.module.this>, app.type.item.IMatch<app.module.this> [PlangType]
+class app.module.this : app.type.item.this, app.type.item.ICreate<app.module.this>, app.type.item.ILoad<app.module.this>, app.type.item.IMatch<app.module.this>, app.type.item.property.IOwner [PlangType]
   Action : app.type.item.list.this { get; } [LlmBuilder]
   Description : app.type.item.file.this { get; } [LlmBuilder]
   Discover(System.Reflection.Assembly assembly, System.String baseNamespace = …) : System.Int32
@@ -944,10 +945,11 @@ class app.module.this : app.type.item.this, app.type.item.ICreate<app.module.thi
   override Get(app.data.this parent, System.String key, System.Boolean isIndex) : System.Threading.Tasks.ValueTask<app.data.this>
   override IsLeaf : System.Boolean { get; }
   override ToString() : System.String
+  property : app.type.item.property.list.this { get; } [LlmBuilder, Store]
   protected override Setting(app.data.this parent) : System.Threading.Tasks.ValueTask<app.data.this>
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.module.this
 
-class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnapshot, app.type.item.setting.ISetting<app.setting.this>
+class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnapshot, app.type.item.property.IOwner, app.type.item.setting.ISetting<app.setting.this>
   Build : app.module.build.this { get; set; } [LlmBuilder]
   Cache : app.module.cache.ICache { get; }
   Code : app.module.code.this { get; }
@@ -983,6 +985,7 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnap
   module : app.module.this { get; } [LlmBuilder, Out]
   override IsLeaf : System.Boolean { get; }
   parent : app.parent.this { get; } [LlmBuilder, Out]
+  property : app.type.item.property.list.this { get; } [LlmBuilder, Store]
   protected override Clone() : app.type.item.this
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   shortcut : app.type.node.this<app.shortcut.this, app.shortcut.list.this> { get; } [Out]
@@ -1729,10 +1732,6 @@ abstract class app.type.item.input.this : app.type.item.this, app.type.item.ICre
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.type.item.input.this
   static Shape : System.String { get; }
 
-class app.type.item.kept.list.this
-  Item[System.String] : app.data.this { get; }
-  ctor()
-
 class app.type.item.kind.dict.this : app.type.kind.this<app.type.item.this>
   ctor(app.type.this owner)
   override ClrForm : System.Type { get; }
@@ -2450,6 +2449,23 @@ class app.type.item.permission.this : app.type.item.this, app.type.item.ICreate<
   static Offer : System.Collections.Generic.IReadOnlyList<app.type.item.this> { get; }
   static Request(app.actor.this actor, System.String path, app.type.item.permission.Verb verb, app.type.item.permission.Match match = …) : app.type.item.permission.this
   static Shape : System.String { get; }
+
+interface app.type.item.property.IOwner
+  abstract property : app.type.item.property.list.this { get; }
+
+class app.type.item.property.list.this : app.type.item.this, app.snapshot.ISnapshot, app.type.item.ICreate<app.type.item.property.list.this>
+  Item[System.String] : app.data.this { get; }
+  ctor()
+  override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
+  override Get(app.data.this parent, System.String key, System.Boolean isIndex) : System.Threading.Tasks.ValueTask<app.data.this>
+  override IsLeaf : System.Boolean { get; }
+  override IsSequence : System.Boolean { get; }
+  override IsTruthy() : System.Boolean
+  protected override Clone() : app.type.item.this
+  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
+  static Create(System.Object raw) : app.type.item.property.list.this
+  static Create(System.Object raw, app.type.this type, app.data.this data) : app.type.item.property.list.this
+  static Internal : System.Boolean { get; }
 
 class app.type.item.prose.this : app.type.item.this
   Or(app.type.item.prose.this other) : app.type.item.prose.this
@@ -3362,12 +3378,14 @@ type action
   .guide : file
 
 type actor
+  .property : app.type.item.property.list
   .name : text
   .context : clr
   .channel : app.channel.list
   .task : app.task.list
 
 type app
+  .property : app.type.item.property.list
   .name : text
   .created : datetime
   .updated : datetime
@@ -3396,6 +3414,7 @@ type app.actor.context.trace
 type app.actor.permission.setting
 
 type app.call
+  .property : app.type.item.property.list
   .goal : goal
   .step : step
   .action : action
@@ -3408,6 +3427,7 @@ type app.call
 type app.call.binding
   .goal : goal
   .step : step
+  .property : app.type.item.property.list
   .action : action
   .caller : app.call
   .errors : list<error>
@@ -3418,6 +3438,7 @@ type app.call.binding
 type app.call.isolated
   .goal : goal
   .step : step
+  .property : app.type.item.property.list
   .action : action
   .caller : app.call
   .errors : list<error>
@@ -3545,6 +3566,8 @@ type app.type.item.note.line
   .prose : text
   .say : text
   .builder : text
+
+type app.type.item.property.list
 
 type app.type.item.prose
 
@@ -3688,6 +3711,7 @@ type goal
   .warning : list<warning>
   .cache : goal
   .isCached : bool
+  .property : app.type.item.property.list
 
 type guid
 
@@ -3755,6 +3779,7 @@ type message
 type modifier
 
 type module
+  .property : app.type.item.property.list
   .name : text
   .list : list<module>
   .action : list
@@ -3836,6 +3861,7 @@ type step
   .pick : clr
   .intent : text
   .goal : goal
+  .property : app.type.item.property.list
   .typed : list<clr>
   .setting : list<setting>
   .hasKey : bool

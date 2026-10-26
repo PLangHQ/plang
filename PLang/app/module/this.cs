@@ -11,11 +11,11 @@ namespace app.module;
 /// </summary>
 [global::app.Attributes.PlangType("module")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
-    global::app.type.item.IMatch<@this>, global::app.type.item.ILoad<@this>
+    global::app.type.item.IMatch<@this>, global::app.type.item.ILoad<@this>, global::app.type.item.property.IOwner
 {
-    // what a program adds to the module — kept as long as the module is registered
-    private readonly global::app.type.item.kept.list.@this _kept = new();
-    internal override global::app.type.item.kept.list.@this Kept => _kept;
+    /// <summary>What a program adds to the module — kept as long as the module is registered.</summary>
+    [Store, global::app.LlmBuilder]
+    public global::app.type.item.property.list.@this property { get; } = new();
 
     /// <summary>A module is registered from its actions' classes, never made from a value.</summary>
     public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)

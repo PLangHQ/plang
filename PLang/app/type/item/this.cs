@@ -192,34 +192,36 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// a <c>clr</c> host routes to its kind. Returns the (possibly REPLACED) value — a kind may
     /// materialize an immutable host into a new one; the caller rebinds when the instance differs.
     /// <para>The DEFAULT writes one of the value's own members — the ones its type lists — and the member
-    /// writes itself (read as its type, then set): Ok, or why it couldn't. A thing that lives on keeps a member
-    /// a program adds beside its own. Containers (<c>dict</c>/<c>list</c>) override with key/index writes.</para>
+    /// writes itself (read as its type, then set): Ok, or why it couldn't. A thing that lives on keeps a name it
+    /// doesn't list as its property (<see cref="property.IOwner"/>). Containers (<c>dict</c>/<c>list</c>) override
+    /// with key/index writes.</para>
     /// (Distinct from <see cref="Output"/>, which serializes.)
     /// </summary>
     public virtual async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(string key, bool isIndex, object? value,
         global::app.actor.context.@this context)
     {
         if (!isIndex && Listed(key, context) is { } member) return await member.Write(this, value, context);
-        if (!isIndex && Kept is { } list)
+        if (!isIndex && this is property.IOwner owner)
         {
-            list.Add(key, value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context));
+            owner.property.Add(key, value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context));
             return context.Ok(this);
         }
-        // A plain value holds no member a program adds, and says so: a variable's own binding keeps it beside the value
-        // (its Kept), read with a dot and never with `!`.
+        // A plain value holds no property a program adds, and says so: a variable's own binding keeps it beside the value
+        // (its property), read with a dot and never with `!`.
         return context.Error(new global::app.error.@this(
             $"a {Type.Name} can't hold an added member yet ('{key}'); a dict can", "NoAddedMember", 404));
     }
 
     /// <summary>
     /// The item navigates itself to a child by <paramref name="key"/>: its own members first, then its events
-    /// (<c>on</c>), its settings, then a member a program added to it; <c>NotFound</c> when none answers. Types that
+    /// (<c>on</c>), its settings, then a property a program added to it; <c>NotFound</c> when none answers. Types that
     /// navigate differently override: <c>dict</c>/<c>list</c> by key or index, a reference opens its own door first
     /// and navigates what it holds.
     /// </summary>
     public virtual async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key)
-        => await Member(parent, key) ?? On(parent, key) ?? await Setting(parent, key) ?? Kept?[key] ?? parent.Context.NotFound(key);
+        => await Member(parent, key) ?? On(parent, key) ?? await Setting(parent, key)
+           ?? (this as property.IOwner)?.property[key] ?? parent.Context.NotFound(key);
 
     // This value's events when the key is `on` — the event door, read by name though no member lists it.
     private global::app.data.@this? On(global::app.data.@this parent, string key)
@@ -227,9 +229,6 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
             ? parent.Context.App.type.list.Kind(on.GetType()).Data(parent.Name, on, parent, parent.Context)
             : null;
 
-    /// <summary>The members this thing keeps beyond its own (<c>%!app.home%</c>), read after its own — a thing that
-    /// lives on (the app, a call, an actor, a module, a goal, a step) keeps a list; a plain value keeps none.</summary>
-    internal virtual global::app.type.item.kept.list.@this? Kept => null;
 
     /// <summary>The member of this value's own plang surface named <paramref name="key"/> — one its type lists (a list's
     /// <c>count</c>, <c>first</c>), read off the value: a property's value, or what a method answers when it asks for

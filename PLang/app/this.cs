@@ -16,7 +16,8 @@ namespace app;
 /// Executes goals and manages the execution lifecycle.
 /// Self-contained: owns all app-level state (environment, culture, shutdown, key-value store).
 /// </summary>
-public sealed partial class @this : global::app.type.item.@this, IAsyncDisposable, global::app.type.item.setting.ISetting<global::app.setting.@this>
+public sealed partial class @this : global::app.type.item.@this, IAsyncDisposable, global::app.type.item.setting.ISetting<global::app.setting.@this>,
+    global::app.type.item.property.IOwner
 {
     /// <summary>A structure — it writes what it holds (<see cref="Output"/>).</summary>
     public override bool IsLeaf => false;
@@ -43,9 +44,10 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         finally { _writing.Value = false; }
     }
 
-    // what a program adds to the app (%!app.home%) — kept for the app's life, and in its snapshot
-    private readonly global::app.type.item.kept.list.@this _kept = new();
-    internal override global::app.type.item.kept.list.@this Kept => _kept;
+    /// <summary>What a program adds to the app (<c>%!app.property["home"]%</c>, <c>%!app.home%</c>) — kept for the app's
+    /// life, and in its snapshot.</summary>
+    [Store, global::app.LlmBuilder]
+    public global::app.type.item.property.list.@this property { get; private set; } = new();
 
     /// <summary>The one root: a copy of the app is the app.</summary>
     protected internal override global::app.type.item.@this Clone() => this;

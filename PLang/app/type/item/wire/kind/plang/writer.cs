@@ -71,17 +71,11 @@ public sealed class Writer : global::app.type.format.IWriter
             }
             _json.EndObject();
         }
-        // the members a program added to the value, beside it; nothing kept, nothing said
-        if (record.HasKept)
+        // the properties a program added to the value, beside it, the list writing itself; none added, nothing said
+        if (record.HasProperty)
         {
-            _json.Name("kept");
-            _json.BeginObject();
-            foreach (var (name, member) in record.Kept.Members)
-            {
-                _json.Name(name);
-                await member.Output(this);
-            }
-            _json.EndObject();
+            _json.Name("property");
+            await record.Property.Output(this);
         }
         _json.EndObject();
     }

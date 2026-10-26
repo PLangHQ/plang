@@ -11,7 +11,8 @@ namespace app.call;
 /// Tree shape: navigate up via <see cref="Caller"/>, down via <see cref="Children"/>. Reads walk the frames outward,
 /// each frame's own variables first. A plang value: it writes itself as <see cref="Output"/> says.
 /// </summary>
-public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IAsyncDisposable
+public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IAsyncDisposable,
+    global::app.type.item.property.IOwner
 {
     /// <summary>A structure — navigated by its members.</summary>
     public override bool IsLeaf => false;
@@ -19,9 +20,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>A frame is a live place in a run, as a channel is: a copy of it is it.</summary>
     protected internal override global::app.type.item.@this Clone() => this;
 
-    // what a program adds to the call (%!call.retries%) — kept as long as the call lives
-    private readonly global::app.type.item.kept.list.@this _kept = new();
-    internal override global::app.type.item.kept.list.@this Kept => _kept;
+    /// <summary>What a program adds to the call (<c>%!call.scope.retries%</c>) — kept as long as the call lives.</summary>
+    [Store, global::app.LlmBuilder]
+    public global::app.type.item.property.list.@this property { get; } = new();
 
     /// <summary>
     /// The frame writes one flat form in every view — a stack-trace entry: its id and depth, where it is (the
@@ -240,7 +241,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         Event = node.Entries.Get("event", context);
         if (node.Entries.Get<global::app.type.item.dict.@this>("tags", context) is { } tags)
             foreach (var tag in tags.Entries(context)) Tags.Set(tag);
-        if (node.Entries.Get<global::app.type.item.dict.@this>("kept", context) is { } kept) _kept.Replace(kept, context);
+        if (node.Entries.Get<global::app.type.item.property.list.@this>("property", context) is { } added)
+            foreach (var (name, each) in added.Members) property.Add(name, each);
     }
 
     /// <summary>

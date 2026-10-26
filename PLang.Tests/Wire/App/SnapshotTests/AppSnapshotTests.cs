@@ -5,7 +5,7 @@ public class AppSnapshotTests
     [Test]
     public async Task App_Snapshot_StoresEachPart_AtItsMemberPath()
     {
-        // The app is the root part (its kept; its mode is how it was started, not stored); each part under it is at
+        // The app is the root part (its property; its mode is how it was started, not stored); each part under it is at
         // its member path from the app.
         var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         await app.actor.list.User.Context.Variable.Set("x", 1);
@@ -13,7 +13,7 @@ public class AppSnapshotTests
         var snap = app.Snapshot(app.actor.list.User.Context).Saved();
 
         await Assert.That(snap.Entries.Get("mode", snap.Context)).IsNull();
-        await Assert.That(snap.Entries.Get("kept", snap.Context)).IsNull();             // nothing kept: an empty node is left out
+        await Assert.That(snap.Holds("property")).IsFalse();                  // nothing added: an empty node is left out
         await Assert.That(snap.Holds("Code")).IsTrue();
         await Assert.That(snap.Holds(SnapshotPathExtensions.UserVariable)).IsTrue();
         await Assert.That(snap.Holds("actor.list.System.Context.Variable")).IsTrue();   // both actors' contexts are saved

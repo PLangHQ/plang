@@ -4,11 +4,12 @@ namespace app.goal.step;
 // typed internals (Index, Text, Actions, …) directly; the item faces are the boundary only. The step
 // is written by its tags, in declaration order; its serializer/Reader.cs reads itself back.
 [global::app.Attributes.PlangType("step")]
-public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
+public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
+    global::app.type.item.property.IOwner
 {
-    // what a program adds to the step — kept as long as the step is loaded
-    private readonly global::app.type.item.kept.list.@this _kept = new();
-    internal override global::app.type.item.kept.list.@this Kept => _kept;
+    /// <summary>What a program adds to the step — kept as long as the step is loaded.</summary>
+    [Store, global::app.LlmBuilder]
+    public global::app.type.item.property.list.@this property { get; } = new();
 
     /// <summary>A step passes through; anything else is declined. A step is built by its goal, never
     /// converted from a value.</summary>
