@@ -612,9 +612,6 @@ interface app.module.ICodeGenerated
 interface app.module.IContext
   abstract Context : app.actor.context.this { get; set; }
 
-static class app.module.IContextSnapshotExtensions
-  static Snapshot(app.module.IContext handler) : app.data.this<app.snapshot.this>
-
 interface app.module.IKeep
 
 interface app.module.ILoop
@@ -4435,6 +4432,8 @@ action signing.verify
 
 action snapshot.resume
   Snapshot : snapshot required
+
+action snapshot.save
 
 action task.cancel
   Task : task required

@@ -41,28 +41,6 @@ public class DataSnapshotTests : System.IAsyncDisposable
         await Assert.That(d.Snapshot).IsNotNull();
     }
 
-    [Test] public async Task ActionSnapshotHelper_ReturnsNonNull()
-    {
-        var app = NewApp();
-        var handler = new ask(app.actor.list.User.Context);
-        var snap = handler.Snapshot();
-        await Assert.That(snap).IsNotNull();
-    }
-
-    [Test] public async Task ActionSnapshotHelper_MatchesContextAppSnapshot()
-    {
-        var app = NewApp();
-        var handler = new ask(app.actor.list.User.Context);
-        var viaHandler = handler.Snapshot();
-        var viaApp = app.Snapshot(app.actor.list.User.Context).Saved();
-        // Both factories build a fresh full snapshot — same shape (App tree),
-        // distinct instances. The contract is "Snapshot() on a handler is the
-        // same call as Context.App.Snapshot()" — proved by walking the same
-        // CallStack frames (here, zero frames for both).
-        await Assert.That(viaHandler).IsNotNull();
-        await Assert.That(viaApp).IsNotNull();
-    }
-
     [Test] public async Task ExitTypedData_MustCarry_NonNullSnapshot_Invariant()
     {
         // Contract: any action returning Data whose Type.ClrType.Exit() == true

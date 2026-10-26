@@ -1,0 +1,10 @@
+/ Writes run.snapshot beside this goal: a run stopped at its save inside Sub, for FreshAppGoesOn.test.goal to resume
+/ in an app of its own. Not a test. Run it again when this goal or Sub changes (the resume then answers 409, the goal's
+/ hash changed), from test/: plang plan/snapshot/module/snapshot/resume/FreshAppGoesOn/Record.goal
+Record
+- set %where% = 'run.snapshot'
+- set %name% = "Alice"
+- set %count% = 0
+- call Sub city="Reykjavik"
+- set %unwound% = "yes"
+- save %snapshot% to %where%

@@ -1,0 +1,14 @@
+/ A run saved inside Sub (run.snapshot, written by Record.goal) resumed in this test's own app goes on from its save:
+/ the save answers again, Sub's next step reads the context's %name% and its frame's %city%, and Record goes on after
+/ the call. The step before the save doesn't run again (%count% stays 1). The resumed Record writes its snapshot to
+/ %where%, which this test points into its own workspace, so the committed run.snapshot stays as it is.
+Start
+- read file 'run.snapshot', write to %snapshot%
+- set %snapshot.actor.list.user.context.variable.where% = 'workspace/rerun.snapshot'
+- resume %snapshot%
+- assert %seen% equals "Alice in Reykjavik"
+- assert %unwound% equals "yes"
+- assert %count% equals 1
+- read file 'workspace/rerun.snapshot', write to %rerun%
+- assert %rerun% is not empty
+- delete file 'workspace/rerun.snapshot'

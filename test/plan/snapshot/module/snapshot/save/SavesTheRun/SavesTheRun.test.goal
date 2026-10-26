@@ -1,0 +1,9 @@
+/ save snapshot answers the run's state as a value: kept in a file outside the tracked tree and read back in this
+/ app, it holds the run's variables.
+Start
+- set %name% = "Bob"
+- save snapshot, write to %snapshot%
+- save %snapshot% to 'workspace/saved.snapshot'
+- read file 'workspace/saved.snapshot', write to %back% as snapshot
+- assert %back.actor.list.user.context.variable.name% equals "Bob"
+- delete file 'workspace/saved.snapshot'

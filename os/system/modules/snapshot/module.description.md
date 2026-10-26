@@ -1,1 +1,1 @@
-Resume a captured snapshot — restore its Variables and CallStack and re-enter the step where execution was suspended (typically read back from a `.snapshot` file).
+A run's exact state as a value: save it (`save snapshot`), keep it where you like (a file, a db row), and resume it later, in this process or a fresh one (`resume %snapshot%`).
