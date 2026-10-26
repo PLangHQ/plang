@@ -1,106 +1,46 @@
 # snapshot
 
+Cut from runtime2 after `windows`. Replaces `test/plan/snapshot/start.md` (2026-10-02), which this cuts down to what Ingi decided on 2026-10-26 and what's left in the code.
+
 ## Why
 
-Two needs meet in the snapshot. **Durable execution:** when an error happens, the run can be saved and resumed later at goal X, step Y, in a fresh process. **Fast apps:** a web request, a test, or PlangOS starting an app needs a new app quickly, and today every `new app.@this(...)` builds the whole world again (a full reflection scan for the type registry and for the module catalog, every `.pr` read again; `app/this.cs:281–361`). Children should start from a frozen parent, change what they need, and be reset when they're dirty.
+A run's exact state, saved to disk or a db, and run later (Ingi: "everything. this is not for web requests, we save this to disk or db and run later").
 
-Today's snapshot serves only the first need, and its shape is wrong: the app keeps a fixed list of who takes part (`app/this.Snapshot.cs:7–9`), each owner has a second serialization door beside the wire it already has, and the restore path is split across the call stack, the snapshot and the app (the OBP audit below, 25 findings). This plan makes every item serialize itself through its own wire, lets each item say whether it takes part, and adds the second kind of snapshot: the app's.
+```
+- save snapshot, write to %snapshot%
+- save %snapshot% to 'run.snapshot'
+… later, in a fresh process …
+- read file 'run.snapshot', write to %snapshot%
+- resume %snapshot%
+```
 
-## Decisions (Ingi, 2026-10-02)
+**Today:** the last two steps fail. Nothing turns a file's text back into a snapshot (`snapshot.Create` is `value as @this`, `snapshot/this.Wire.cs:42–43`); only the C# helper `SnapshotFromWire` can. The six `SnapshotWireTests` reds are this. The parts that take part are a fixed list on the app (`app/this.Snapshot.cs:7–9`), each writes a section it names by hand, the call stack keeps only the live caller chain and loses each frame's own variables (parameters, `%item%`, a handler's `%error%`), and resume walks a second chain (`_restoredChain`, `ResumeChain`'s recursion).
 
-- **One door:** an item serializes itself through the wire it already has (`Output(writer, View)`, read back by its type's reader). A snapshot is one more view, as `[Store]` and `[Out]` are; an item marks the members that belong in it. `ISnapshot`'s `Capture`/`Restore` go.
-- **Each item decides:** the snapshot walks the app tree, and every item answers with its own snapshot view. No list on the app.
-- **Child apps share the parent's frozen parts in memory**, and copy a part only when they change it. "Dirty" is a child holding a copy; a reset drops its copies. Serialization is for disk: durable execution, a restart, another process.
-- **Two kinds of snapshot, one type:** a **resume** snapshot (R) knows where to resume and can generate a callback; an **app** snapshot (A) is the app's world, with no callback.
-- **What takes part** (the R/A table, Ingi: "both R and A look logical"):
+**After:** a part that takes part says so itself; `snapshot.save` walks the app tree and stores each; the tree is saved as it lives; resume starts each part where it was.
 
-| part | R | A |
-|---|---|---|
-| the context's memory (variables) | ✓ | — |
-| the call chain's position (goal, step, action per frame) | ✓ | — |
-| the error being handled | ✓ | — |
-| settings, this run's layer | ✓ | ✓ |
-| code providers added at run (`module.add` DLLs, default overrides) | ✓ | ✓ |
-| types and modules added at run | — | ✓ |
-| loaded goals, shortcuts | — | ✓ in memory (on disk they are already files) |
-| event bindings at app scope | — | ✓ in memory |
-| mode | ✓ | ✓ |
-| statics (until typed) | ✓ | ✓ |
-| store, cache, FileSystem, Debug, Build, test, channels, Services, KeepAlive | — | — |
+## Ingi's decisions (2026-10-26)
 
-- **What a resume snapshot carries depends on who keeps it** (Ingi): one mechanism, two sizes.
-  - **Durable execution** (an error, kept by the app): every user variable, so the run resumes exactly where it stood.
-  - **Stateless** (an `ask user` over a stateless channel: the snapshot rides with the client): only the variables the ask gave, plus the signature on where to continue (the goal's hash, step, action, expiry; `Documentation/Runtime2/todos.md:196–216`). "A 1000-row list can't ride a hidden form" holds only here.
-- **A snapshot never carries a `[Sensitive]` value** (item-doors 311, 2026-10-22; Ingi: "mention it there rather"). The snapshot view writes a `[Sensitive]` member masked, as the Out view does. A resumed goal that needs it asks again: a private key comes back only through `identity.export`, which asks every time. A snapshot's audience is whoever holds it, not the actor who said yes: a client over a channel, another actor, a store. A signed wire proves where it came from, not that it is secret. It's the snapshot view's own `[Sensitive]` filter (the rest of its members as the view marks them), never a serializer of its own. Found by item-doors' security review (plang-security): today the snapshot wire writes the Store view, so a consented export's key would ride it. That's latent, since nothing in production sends a snapshot yet. Its probe: `IdentityPrivateKeyLeakTests.ExportedIdentity_InASnapshotsWire_DoesNotCarryThePrivateKey` (green on item-doors only because export is refused without a yes).
-
-## The shape (the coder owns the code; this is the intent)
-
-- **The view.** A member that takes part is marked for the kind it takes part in (R, A, or both); writing a snapshot is writing the item through its own `Output` with that view, and reading it back is its type's reader. An item with no marked member doesn't take part, so the walk passes it. The walk goes down the app tree as navigation does (`%!app…%`), so a section's name is the item's own path, never a hand-written string.
-- **The value answers whether it is captured.** An always-fresh value (`computed`, `Now`, `GUID`) and a `!` name answer no, in one place (today the rule is written twice, `variable/list/this.Snapshot.cs:25–30` and `this.SnapshotAt.cs:39`).
-- **A frame captures and restores itself, with its own variables.** After the task plan's stage 2b, a call's parameters and a binding frame's names (an iteration's `%item%`, a handler's `%error%`) are the frame's own variables; they ride its capture, so a resumed run gets its call's parameters back (today they are lost). Its position (goal by name, step, action, checked against the goal's hash) is the frame's own, read back as a position that resumes itself. No second chain on the live stack (`_restoredChain`, `BottomFrame`'s fork), no static recursion (`snapshot/this.Resume.cs`).
-- **The error owns its throw-time state:** the chain it carried and the variables as they stood at the throw. The diff history that projects variables back (`callstack/this.Snapshot.cs:9–89`, `:251–287`; `variable/list/this.SnapshotAt.cs`) becomes its own type, not part of the call stack's snapshot file.
-- **The resume point belongs to the value that exits** (an ask, a failure), not to a settable slot on every Data (`data/this.Snapshot.cs:19`).
-- **The mode restores as a value;** what a mode starts (build, the test session) is the mode's own change, not the restore's branch (`app/this.Snapshot.cs:53–61`).
-- **Code providers** are named by the code kind's plang name, not `AssemblyQualifiedName`; a provider's name comes from its class, not by building one (`InstanceName`); their DLLs load through the async path verb, never `.GetAwaiter().GetResult()`.
-- **Frozen parts and children.** The parts the A column marks are frozen in the parent and shared by reference; a child's first change to one copies it into the child (copy on write), so the parent and its siblings never see it. `new app.@this(parent)` (`app/this.cs:274–279`) is the door, and the test runner's per-test app (`test/list/this.cs:151`) its first user.
+- A class that takes part implements `ISnapshot` with two members: `Store` (it writes itself into the snapshot) and `Start` (it comes back from what it stored). The snapshot knows nothing of who takes part.
+- `snapshot.save` walks the live app tree from `app` and stores each node that is an `ISnapshot`: no list on the app, no hand-written section names.
+- The tree is saved as is: each part at its own place, and starting walks the saved tree.
+- The call stack is the run's (`context.call`): `root`, each frame's `children` beneath it, `current` as a reference into that tree. Starting restores the exact same state.
+- Everything, one size. A web request's resume is a callback, later (not here). The app's world to a file (the "app snapshot") waits for a user.
+- `start %callback%` stays as it is (callbacks later).
+- Standing (item-doors 311): a snapshot never carries a `[Sensitive]` value; a resumed run that needs one asks again.
 
 ## Stages
 
-0. **Measure** (coder): a C# benchmark timing each part of `new app.@this(...)`, the first type lookup, the first goal load, and a child app. The baseline for stage 3.
-1. **One door** (coder): the snapshot view and its marks; the walk down the app tree; the snapshot's own wire (`Output` + its reader, no `Serialize` through goal's kind); each of today's five owners moves to marked members; `ISnapshot` and the app's list go. The existing resume tests still pass.
-2. **The resume snapshot** (coder): the frame's own position and resume; the error's throw-time state; the diff history as its own type; the value's captured answer; the resume point on the exiting value; the mode as a value; code providers by kind name and async load. A run saved at an error, written to disk, and resumed in a fresh app re-enters the failing step.
-3. **The app snapshot and children** (coder): frozen parts shared by reference, copy on write, dirty and reset; the test runner's child apps use it; measured against stage 0.
-4. **The callback** (coder): the resume snapshot generating a callback; the stateless size (the ask's variables plus the signed position) and the durable size (every user variable) from one mechanism; a stateless callback resumed with a tampered position or an expired one is refused.
+1. **`ISnapshot` is `Store` and `Start`; `snapshot.save` walks the tree.** Today's five participants move: Code's providers (`module/code/this.Snapshot.cs`), Variables (`variable/list/this.Snapshot.cs`), Kept (`kept/list/this.cs`), the app's mode (`app/this.Snapshot.cs:47–61`), the call stack. The list (`:7–9`), `Section`, the private `Capture` loop and the app's own sections go. Each part's place in the saved tree is its path from `app`. Code's restore loads its DLL through the async path verb, never `.GetAwaiter().GetResult()` (`:116`).
+2. **The call stack stored as it lives, and started exactly.** Root, each frame's children, current as a reference; each frame with its position (goal by name and hash, step, action) and its own variables (`call/this.cs:179–180`). Starting pushes the frames as they were and goes on from current: `Position`, `_restoredChain`, `RestoredChain`, `BottomFrame` and `ResumeChain`'s recursion go. A goal gone or changed fails hard (`CallbackGoalNotFound`, `CallbackGoalHashMismatch`, `CallbackActionMismatch` stay); the PrPath fallback for old snapshots goes.
+3. **One door from text to a snapshot.** A snapshot read from its own text (a file, a db row) is born through the snapshot type's reader, so `resume %snapshot%` takes what a file read gave. `SnapshotToWire`, `SnapshotFromWire`, `ResumeFromWire` go (middlemen). The six `SnapshotWireTests` reds go green.
+4. **Never a `[Sensitive]` value.** The snapshot is written in the Store view today (`snapshot/this.Wire.cs:31`), which writes a `[Sensitive]` member and a `sensitive` value whole (`View.cs:125–152`). The snapshot's write masks them; a resumed run that needs one asks again. `IdentityPrivateKeyLeakTests` pins it, plus a probe for a `sensitive` variable.
+5. **`snapshot.save` and the proof in plang.** The verb answers the snapshot (a value); saving it is the developer's step. Plang tests: save, write to disk, read in a fresh app, resume at the step, with the same variables and frames (a call's parameters and a loop's `%item%` among them). The three unbuilt ask tests in `test/plan/snapshot/module/callback/` move out to the callback plan's list, unbuilt.
+6. **Docs.** `Documentation/v0.2/snapshots.md` and `callbacks.md` describe types that are gone (`ISnapshotted`, `ICallback`, `AskCallback`, `ErrorCallback`, `RestoredFrame`); rewritten to what is, callbacks marked "later".
 
-## Demolition
+## Out
 
-- `PLang/app/this.SnapshotWire.cs` (whole file): `SnapshotToWire` (a middleman over `snapshot.Serialize`), `SnapshotFromWire` (the snapshot's birth from text, on the app), `ResumeFromWire`.
-- `app/this.Snapshot.cs`: the list `Snapshotted` (`:7–9`), the private `Capture` (`:28–33`), the app's own `ISnapshot` (`:47–61`); `Snapshot(context)` and `Snapshot(error, context)` move to where their owners are (the snapshot's birth; the error).
-- `snapshot/ISnapshot.cs` (whole file) and its five implementations: `module/code/this.Snapshot.cs`, `type/item/variable/list/this.Snapshot.cs`, `Statics/this.Snapshot.cs`, `callstack/this.Snapshot.cs`'s `Capture`/`Restore`/`Thrown`/`CaptureFrames`, the app's.
-- `snapshot/this.cs`: `Context`'s `internal set` (`:22`); two of `HasSection`/`SectionNames`/`Sections` (`:55–64`), one stays; `Write<T>` taking any CLR value (`:71–73`).
-- `snapshot/this.Wire.cs`: `Serialize` through goal's format kind (`:24–33`).
-- `snapshot/this.Resume.cs`: `ResumeChain`'s static recursion; `callstack`'s `_restoredChain`, `RestoredChain`, `BottomFrame`.
-- `callstack/this.Snapshot.cs:178–242`'s Restore with the PrPath fallback "for snapshots captured before names were carried" (no compatibility shims) and the path string trimming.
-- `variable/list/this.SnapshotAt.cs`'s second skip rule.
-- `module/code/this.Snapshot.cs`: `InstanceName` (`:175–182`), `.GetAwaiter().GetResult()` (`:109`), `Rows<T>` if the reader makes it unneeded.
-- `module/IContext.Snapshot.cs` (whole file): the static extension class.
-- `data/this.Snapshot.cs`: `Data.Snapshot { get; set; }`.
-- The coder traces every caller of each (Error.cs:155, the callback module, the ask path, tests) and gives each one's disposition before building.
+Callbacks (`start %callback%`, the `Data.Snapshot` slot, an ask over a connection that isn't kept); the app snapshot to a file; the error's diff history as its own type (`error.Callback` keeps its throw-time projection through the new door).
 
-## Stays
+## Open for Ingi (not blocking)
 
-- `snapshot/this.cs` as the container: a dict of plang values that writes itself, its reader (`snapshot/serializer/Reader.cs`), and its navigation (`snapshot/this.Variables.cs`: `%snap.variables.x%`, `set %snap.variables.x% = 2`).
-- The referent-integrity errors (`CallbackGoalNotFound`, `CallbackGoalHashMismatch`, `CallbackActionMismatch`): a resume that can't find its goal, or finds it changed, fails hard.
-- The diff history's behaviour (the throw-time projection), in its own type.
-- Code providers' rule: built-ins rebuild, runtime registrations and default overrides are captured.
-
-## How it's proven
-
-- [start.goal](start.goal) runs the plan's tests; each lives under this folder at the path of what it tests.
-- At each stage's end its tests are built and run. A stage is accepted when its tests are green, the checks hold, and the architect's OBP review is clean.
-- **Every test must fail without its change.**
-- The plan's plang says what is wanted; the coder rewrites each test in real plang that compiles, keeping what it proves.
-
-### Tests waiting for the resume design
-
-Three resume/ask tests moved here from `test/module/callback/` (they pre-bind `%!ask.answer%`, output.ask's resume sentinel — not a plang path the builder resolves; `output/ask.cs:73–82`). They are unbuilt and wait for this plan's resume design (stage 2's resume snapshot and stage 4's stateless ask/callback) to say how a resume is expressed in plang:
-- `module/callback/askvarsresumebindsvalue/` — a pre-bound answer short-circuits output.ask.
-- `module/callback/statefulaskmidgoalbindsvalue/` — a mid-goal ask binds its value on resume.
-- `module/callback/statelesscrossgoalresumes/` — a stateless cross-goal resume.
-
-## What tests can't show (checks the coder runs and reports)
-
-- **Stage 1:** no `ISnapshot`, no hand-written section name, no snapshot list on the app (grep); the existing resume and snapshot tests pass.
-- **Stage 3:** the benchmark against stage 0, for `new app.@this(parent)` and the test runner's run of every plang test.
-- **Every stage:** the gate by name; PLNG001/002 at 0.
-
-## OBP validation
-
-| surface | plang path | C# path | file path | checks |
-|---|---|---|---|---|
-| a snapshot | `%snap%`, `%snap.variables.x%` | `snapshot.@this` | `PLang/app/snapshot/this.cs` | writes itself (`Output`), read by its reader; one door to sections |
-| what takes part | (the item's own members) | a member mark, read by the item's `Output` with the snapshot view | the item's own file | no central list; the item decides |
-| a frame's position | `%snap.callstack…%` | `callstack.call.Position` | `PLang/app/callstack/call/…` | captures and restores itself; resumes itself |
-| the diff history | — | its own type | coder places it | not in the call stack's snapshot file |
-| a child app | — | `new app.@this(parent)` | `PLang/app/this.cs` | frozen parts by reference, copy on write; dirty is "holds a copy" |
-| the resume point | (the exiting value's member) | the exiting value | its type's file | not a slot on every Data |
+- The verbs: `snapshot.save` (new) and today's `resume %snapshot%`. Does the resume verb stay `resume`, or become `start` like the member?

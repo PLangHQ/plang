@@ -7,13 +7,78 @@
       "timestamp_start": "2026-10-26T04:30:00Z",
       "timestamp_end": "2026-10-26T04:40:00Z",
       "intent": "Cut snapshot from runtime2 after windows and plan it from Ingi's decisions and a survey of the code.",
-      "before": {"assumptions": "ISnapshot has five participants on a fixed list; text never becomes a snapshot through the type; the Store view writes Sensitive values whole.", "risk": "Restoring the exact call stack touches the locked call memory; the plan's 2026-10-02 version is stale."},
+      "before": {
+        "assumptions": "ISnapshot has five participants on a fixed list; text never becomes a snapshot through the type; the Store view writes Sensitive values whole.",
+        "risk": "Restoring the exact call stack touches the locked call memory; the plan's 2026-10-02 version is stale."
+      },
       "plan": ".bot/snapshot/architect/plan/start.md",
       "actions": [
-        {"paths": ["PLang/app/snapshot/", "PLang/app/this.Snapshot.cs", "PLang/app/call/list/this.Snapshot.cs", "PLang/app/type/item/variable/list/this.Snapshot.cs"], "type": "review", "category": "code", "confidence": "high", "context": "A survey (Explore agent) mapped every participant, the resume path and the six failing wire tests."},
-        {"paths": [".bot/snapshot/architect/plan/start.md", ".bot/snapshot/architect/summary.md"], "type": "create", "category": "doc", "confidence": "medium", "context": "Six stages; callbacks and the app snapshot out."}
+        {
+          "paths": [
+            "PLang/app/snapshot/",
+            "PLang/app/this.Snapshot.cs",
+            "PLang/app/call/list/this.Snapshot.cs",
+            "PLang/app/type/item/variable/list/this.Snapshot.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "A survey (Explore agent) mapped every participant, the resume path and the six failing wire tests."
+        },
+        {
+          "paths": [
+            ".bot/snapshot/architect/plan/start.md",
+            ".bot/snapshot/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "medium",
+          "context": "Six stages; callbacks and the app snapshot out."
+        }
       ],
-      "after": {"status": "plan sent to the coder", "health": "runtime2 at d72538402", "notes": "The merge waits for Ingi."}
+      "after": {
+        "status": "plan sent to the coder",
+        "health": "runtime2 at d72538402",
+        "notes": "The merge waits for Ingi."
+      }
+    },
+    {
+      "id": "3817d674-e8fe-42dd-b4e2-0ef7885c8235",
+      "bot": "coder",
+      "timestamp_start": "2026-10-26T03:00:00Z",
+      "timestamp_end": "2026-10-26T03:15:00Z",
+      "intent": "Push back on the snapshot plan, place it at test/plan/snapshot/, and bring stage 1's shape before code",
+      "before": {
+        "assumptions": "the plan's walk of the app tree can be the plang member tree",
+        "risk": "locked call memory and type.node touched"
+      },
+      "plan": ".bot/snapshot/coder/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "test/plan/snapshot/start.md",
+            "test/plan/snapshot/start"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "the architect's plan placed as the plan's index, replacing the 2026-10-02 plan; the index needs the builder"
+        },
+        {
+          "paths": [
+            ".bot/snapshot/coder/v1/plan.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "medium",
+          "context": "plang's tree reaches only call; the walk is the C# member tree by declared ISnapshot type; holders on the path take part; four rulings open"
+        }
+      ],
+      "after": {
+        "status": "design reported, waiting on the architect",
+        "health": "no code changed",
+        "notes": "the three ask tests stay until the callback list's place is named"
+      }
     }
   ]
 }

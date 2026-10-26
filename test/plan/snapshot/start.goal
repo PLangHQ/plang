@@ -1,45 +1,43 @@
+/ snapshot: a run's exact state, saved to disk or a db and run later (start.md beside this goal). This goal is the
+/ plan's index and its validation: each stage is a sub-goal, each comment a behaviour we want, and the step under it
+/ runs the test that proves it. Tests live under this plan's folder at the path of what they test.
 Start
-/ snapshot: every item serializes itself through its own wire; a resume snapshot and an app snapshot. Each stage
-/ is a goal; each behaviour a comment with the test that proves it. The coder rewrites each test in plang that compiles.
-- call goal Stage1
-- call goal Stage2
-- call goal Stage3
-- call goal Stage4
+- call Stage1
+- call Stage2
+- call Stage3
+- call Stage4
+- call Stage5
 
 Stage1
-/ One door.
-/ A snapshot holds a section for each item that marks members for it, under the item's own path, and none for an item that marks none
-- call goal /snapshot/SectionsAreTheItemsOwn
-/ A snapshot written to text and read back holds the same entries (its own wire, no other serializer)
-- call goal /snapshot/WriteReadRoundTrip
-/ An always-fresh value (Now) and a ! name are not captured
-- call goal /snapshot/AlwaysFreshNotCaptured
+/ a part says it takes part (ISnapshot), and saving walks the app: each part stored at its own place
+/ a saved snapshot holds each part under its path from the app, and nothing the app never marked
+- call /module/snapshot/save/EachPartAtItsPlace
+/ a part's state saved and started in a fresh app comes back as it was: the app's mode, what a program kept on the app,
+/ the app's providers
+- call /module/snapshot/save/EachPartStartsAsSaved
+/ an always-fresh value (Now) and a ! name are not saved
+- call /module/snapshot/save/AlwaysFreshNotSaved
 
 Stage2
-/ The resume snapshot.
-/ A run that fails at step 3 is saved, written to disk, read back in a fresh app and resumed: it re-enters step 3 with the variables it had
-- call goal /snapshot/resume/ResumeAtFailedStep
-/ A resume whose goal was rebuilt since (another hash) fails as CallbackGoalHashMismatch
-- call goal /snapshot/resume/RebuiltGoalRefuses
-/ The variables restored are the ones at the throw, not ones written by the error handler after it
-- call goal /snapshot/resume/VariablesAtTheThrow
-/ A nested call chain resumes inside the sub-goal, then continues after the call in the parent
-- call goal /snapshot/resume/NestedChainResumes
+/ the call stack is saved as it lives and started exactly
+/ a run saved inside a sub-goal starts there: the same frames, the same current, and it goes on from the action it was at
+- call /module/snapshot/resume/StartsInTheSubGoal
+/ a frame's own variables come back: a call's parameters, a loop's %item%, a handler's %error%
+- call /module/snapshot/resume/FramesKeepTheirVariables
+/ a goal rebuilt since the save (another hash) refuses to start
+- call /module/snapshot/resume/RebuiltGoalRefuses
 
 Stage3
-/ The app snapshot and children.
-/ A child app sees the parent's goals and types without loading them again
-- call goal /snapshot/app/ChildSharesParent
-/ A module added in a child is not in the parent or a sibling
-- call goal /snapshot/app/ChildChangeStaysInChild
-/ A dirty child reset matches the parent again
-- call goal /snapshot/app/ResetDropsChildChanges
+/ one door from text to a snapshot
+/ a snapshot written to a file and read back is a snapshot: resume takes what the file read gave
+- call /module/snapshot/resume/ReadFromAFile
 
 Stage4
-/ The callback.
-/ A stateless ask's callback carries only the variables the ask gave and its signed position; resumed, the goal continues after the ask
-- call goal /snapshot/callback/StatelessAskResumes
-/ A stateless callback with its position changed, or past its expiry, is refused
-- call goal /snapshot/callback/TamperedOrExpiredRefused
-/ A durable resume after an error carries every user variable
-- call goal /snapshot/callback/DurableCarriesAll
+/ a snapshot never carries a [Sensitive] value
+/ a sensitive variable is not in the saved text; a resumed run that needs it asks again
+- call /module/snapshot/save/SensitiveNotSaved
+
+Stage5
+/ the proof in plang: save, write to disk, read in a fresh app, resume at the step
+/ a run saved at step 3 and resumed in a fresh app goes on from step 3 with the same variables and frames
+- call /module/snapshot/resume/FreshAppGoesOn
