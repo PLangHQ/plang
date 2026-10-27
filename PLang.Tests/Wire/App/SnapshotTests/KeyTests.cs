@@ -46,4 +46,58 @@ public class KeyTests
         await Assert.That(json["step"]!["index"]!.GetValue<int>()).IsEqualTo(0);
         await Assert.That(json["step"]!["goal"]!["name"]!.GetValue<string>()).IsEqualTo("G");
     }
+
+    // What its key was written as, read back in the snapshot view as <typeparamref name="T"/>, the type a member holding
+    // it declares (a frame's Action).
+    private static async Task<global::app.data.@this> Read<T>(T value, global::app.actor.context.@this context) where T : global::app.type.item.@this
+    {
+        var written = await global::app.type.item.wire.@this.Of(value, global::app.View.Snapshot, context);
+        var wire = new global::app.type.item.wire.@this((string)written.Raw, context.App.type.list[typeof(T)],
+            (global::app.type.item.wire.kind.plang.@this)context.App.type.list["wire"].kind["plang"]!, global::app.View.Snapshot);
+        var read = new global::app.data.@this("", wire, context: context);
+        await read.Value();
+        return read;
+    }
+
+    [Test]
+    public async Task AStep_IsReadBackAsTheLiveStep_ThroughItsGoal()
+    {
+        await using var app = new global::app.@this(System.IO.Path.GetTempPath(), global::PLang.Tests.Parent.Actor).Testing();
+        var (goal, step, _, context) = await Holds(app);
+        app.goal.list.Add(goal);
+
+        var read = await Read(step, context);
+
+        await Assert.That(await read.Value()).IsSameReferenceAs(step);
+    }
+
+    [Test]
+    public async Task AnAction_IsReadBackAsTheLiveAction_ThroughItsStep()
+    {
+        await using var app = new global::app.@this(System.IO.Path.GetTempPath(), global::PLang.Tests.Parent.Actor).Testing();
+        var (goal, _, action, context) = await Holds(app);
+        app.goal.list.Add(goal);
+
+        var read = await Read(action, context);
+
+        await Assert.That(await read.Value()).IsSameReferenceAs(action);
+    }
+
+    [Test]
+    public async Task AnActionChangedAtItsPlace_IsRefused()
+    {
+        await using var app = new global::app.@this(System.IO.Path.GetTempPath(), global::PLang.Tests.Parent.Actor).Testing();
+        var (goal, _, action, context) = await Holds(app);
+        app.goal.list.Add(goal);
+        var written = await global::app.type.item.wire.@this.Of(action, global::app.View.Snapshot, context);
+        // the same step text, built into another action since the save
+        action.Name = "get";
+        var wire = new global::app.type.item.wire.@this((string)written.Raw, context.App.type.list[typeof(global::app.goal.step.action.@this)],
+            (global::app.type.item.wire.kind.plang.@this)context.App.type.list["wire"].kind["plang"]!, global::app.View.Snapshot);
+        var other = new global::app.data.@this("", wire, context: context);
+
+        await other.Value();
+
+        await Assert.That(other.Error?.Key).IsEqualTo("CallbackActionMismatch");
+    }
 }
