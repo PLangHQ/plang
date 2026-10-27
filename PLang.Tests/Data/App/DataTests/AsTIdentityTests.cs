@@ -113,6 +113,31 @@ public class AsTIdentityTests
         await source.IsFailure();
     }
 
+    // What travels with a result travels with every view and copy of it: a handled error seen through a typed face is
+    // still handled, and a copy of an exit still holds its snapshot.
+    [Test]
+    public async Task AHandledError_SeenThroughATypedFace_StaysHandled()
+    {
+        var context = _app.actor.list.User.Context;
+        var source = new global::app.data.@this("answer", "x", context: context) { Handled = true };
+        source.Fail(new global::app.error.@this("refused", "Refused"));
+
+        await Assert.That(source.As<global::app.type.item.text.@this>().Handled).IsTrue();
+        await Assert.That(source.As<global::app.type.item.text.@this>(null).Handled).IsTrue();
+    }
+
+    [Test]
+    public async Task ACopyOfAResult_HoldsItsSnapshot()
+    {
+        var context = _app.actor.list.User.Context;
+        var snapshot = new global::app.snapshot.@this(context);
+        var source = new global::app.data.@this("asked", "x", context: context) { Snapshot = snapshot };
+
+        await Assert.That(source.Copy().Snapshot).IsSameReferenceAs(snapshot);
+        await Assert.That(source.Clone().Snapshot).IsSameReferenceAs(snapshot);
+        await Assert.That(source.As<global::app.type.item.text.@this>().Snapshot).IsSameReferenceAs(snapshot);
+    }
+
     // A literal (no %) is its own Data: following it answers itself.
     [Test]
     public async Task AsT_PlainDataTarget_LiteralParameter_ReturnsParameterDataAsIs()

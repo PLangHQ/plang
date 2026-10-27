@@ -150,9 +150,7 @@ public partial class @this
         if (!IsVariable) answer = await Rendered();
         else if (await Follow(Context) is { IsInitialized: true } named) answer = named.Copy(Name, named._context);
         else answer = await Missed();
-        answer.Handled = Handled;
-        answer.Returned = Returned;
-        answer.ReturnDepth = ReturnDepth;
+        answer.Take(this);
         return answer;
     }
 
@@ -639,22 +637,13 @@ public partial class @this
     /// </summary>
     internal @this<T> As<T>(T? answer) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
-        var clone = new @this<T>(Name, default, null, Parent, _context)
-        {
-            Returned = Returned,
-            ReturnDepth = ReturnDepth,
-            Attachment = Attachment,
-            // the same binding: the signature it arrived in is the typed view's too (verify re-hashes what it holds)
-            Signature = Signature,
-        };
+        // the same binding: what it carries is shared, and its result (the signature it arrived in too: verify
+        // re-hashes what it holds) is the typed view's
+        var clone = new @this<T>(Name, default, null, Parent, _context) { Attachment = Attachment };
+        clone.Take(this);
         clone._item = answer ?? Empty;
-        // A declined ask lands its reason on this binding (asking.Fail) and
-        // answers null — carry that failure onto the typed view the caller holds.
-        if (answer == null && _error != null)
-        {
-            clone.Fail(_error);
-            clone.IsInitialized = false;
-        }
+        // A declined ask lands its reason on this binding (asking.Fail) and answers null: the typed view holds no value
+        if (answer == null && _error != null) clone.IsInitialized = false;
         return clone;
     }
 
@@ -672,17 +661,10 @@ public partial class @this
     // The typed face over this binding's value, born under the given context.
     private @this<T> Face<T>(actor.context.@this? context) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
-        var view = new @this<T>(Name, default, null, Parent, context)
-        {
-            Returned = Returned,
-            ReturnDepth = ReturnDepth,
-            Attachment = Attachment,
-            IsInitialized = IsInitialized,
-            // the same binding: the signature it arrived in is the face's too
-            Signature = Signature,
-        };
+        // the same binding: what it carries is shared, and its result (the signature it arrived in too) is the face's
+        var view = new @this<T>(Name, default, null, Parent, context) { Attachment = Attachment, IsInitialized = IsInitialized };
+        view.Take(this);
         view._item = _item;
-        if (_error != null) view.Fail(_error);
         return view;
     }
 
@@ -759,15 +741,9 @@ public partial class @this
     private protected virtual @this Copy(string name, actor.context.@this? context,
         global::app.type.item.signature.@this? signature = null)
     {
-        return new @this(name, _item, context: context)
-        {
-            Error = Error,
-            Handled = Handled,
-            Returned = Returned,
-            ReturnDepth = ReturnDepth,
-            Attachment = Carried?.Copy(),
-            Signature = signature ?? Signature,
-        };
+        var copy = new @this(name, _item, context: context) { Attachment = Carried?.Copy(), Signature = signature };
+        copy.Take(this);
+        return copy;
     }
 
     /// <summary>
@@ -776,14 +752,9 @@ public partial class @this
     /// </summary>
     public virtual @this Clone()
     {
-        return new @this(Name, _item.Clone(), context: _context)
-        {
-            Error = Error,
-            Handled = Handled,
-            Returned = Returned,
-            ReturnDepth = ReturnDepth,
-            Attachment = Carried?.Copy(),
-        };
+        var clone = new @this(Name, _item.Clone(), context: _context) { Attachment = Carried?.Copy() };
+        clone.Take(this);
+        return clone;
     }
 
     public override string ToString() =>
@@ -944,11 +915,8 @@ public class @this<T> : @this
         // source was born with, never null (a null here would make the held value
         // context-less). Constructed value-less so the ctor runs no Build/Create;
         // the instance is then held AS-IS below.
-        var copy = new @this<T>(source.Name, context: source.Context)
-        {
-            Error = source.Error,
-            Signature = source.Signature,
-        };
+        var copy = new @this<T>(source.Name, context: source.Context) { Attachment = source.Attachment };
+        copy.Take(source);
         // Hold the source's instance whole — no re-Build. A re-Build would re-resolve
         // a %ref%/variable value (breaking variable.set's store-as-is) and would
         // re-run type work on an already-built value. This also carries the
@@ -958,11 +926,6 @@ public class @this<T> : @this
             copy.SetValueDirect(source.Item);
         // a miss retyped is still a miss, never a present null
         copy.IsInitialized = source.IsInitialized;
-        copy.Handled = source.Handled;
-        copy.Returned = source.Returned;
-        copy.ReturnDepth = source.ReturnDepth;
-        copy.Attachment = source.Attachment;
-        copy.Snapshot = source.Snapshot;
         return copy;
     }
 

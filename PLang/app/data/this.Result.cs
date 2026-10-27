@@ -45,6 +45,19 @@ public partial class @this
         set { _error = value; _errorObserved = false; }
     }
 
+    // What travels with a result, taken whole from the Data this one is made over: its error, whether it was handled,
+    // how far a return goes, the snapshot an exit holds and the signature it arrived in — each unless this Data already
+    // holds its own. What a value carries (its attachment) is the maker's: a face shares it, a copy takes a copy.
+    private protected void Take(@this result)
+    {
+        if (_error == null && result._error != null) { _error = result._error; _errorObserved = false; }
+        Handled = result.Handled;
+        Returned = result.Returned;
+        ReturnDepth = result.ReturnDepth;
+        Snapshot ??= result.Snapshot;
+        _signature ??= result._signature;
+    }
+
     /// <summary>The door-failure seam — the failing TYPE authors its own error
     /// and reports it here (the blessed binding surface for door/Create
     /// implementations, beside As&lt;T&gt;(answer)/CloneError).</summary>
