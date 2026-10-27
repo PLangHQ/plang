@@ -217,7 +217,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         Errors = new global::app.error.list.@this(stack.Errors);
         property = new(stack.Properties);
         Children = new child.list.@this(stack);
-        Variable = names ?? [];
+        foreach (var name in names ?? [])
+            if (name != null && !string.IsNullOrEmpty(name.Name)) Born(name.Name, name);
     }
 
     /// <summary>
@@ -269,21 +270,29 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>The names this frame was born with — a goal call's own arguments, not its callers'.</summary>
     internal IEnumerable<string> Arguments => _arguments;
 
-    /// <summary>This frame's own variables, each the Data whole. Kept, they come back as names it is born with, as a
-    /// goal call's parameters are: a write to one lands here again.</summary>
+    /// <summary>This frame's own variables, each the Data whole under its name (<c>%!call.scope.parameter.order%</c>).
+    /// Kept, they come back as names it is born with, as a goal call's parameters are: a write to one lands here
+    /// again.</summary>
     [Store]
-    public IEnumerable<global::app.data.@this> Variable
+    public global::app.type.item.property.list.@this Parameter
     {
-        get => _variables.Values;
+        get
+        {
+            var parameter = new global::app.type.item.property.list.@this(_stack.Properties);
+            foreach (var (name, variable) in _variables) parameter.Add(name, variable);
+            return parameter;
+        }
         private set
         {
-            foreach (var name in value)
-            {
-                if (name == null || string.IsNullOrEmpty(name.Name)) continue;
-                _variables[name.Name] = name;   // last wins on duplicate names
-                _arguments.Add(name.Name);
-            }
+            foreach (var (name, variable) in value.Members) Born(name, variable);
         }
+    }
+
+    // A name this frame is born with: bound here, and one of the names it was born with (last wins on a duplicate).
+    private void Born(string name, global::app.data.@this variable)
+    {
+        _variables[name] = variable;
+        _arguments.Add(name);
     }
 
     /// <summary>The names this frame and its callers hold, the inner frame's first.</summary>
