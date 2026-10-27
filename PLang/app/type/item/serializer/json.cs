@@ -14,7 +14,7 @@ public partial class json
 
     public json(actor.context.@this context) => _context = context;
 
-    private const int MaxDepth = 128;
+    private const int Deepest = 128;
 
     /// <summary>
     /// Reads ONE value off an <see cref="app.type.format.IReader"/> — the open
@@ -31,8 +31,8 @@ public partial class json
             global::app.type.format.TokenKind.Null => null,
             global::app.type.format.TokenKind.Bool => reader.Bool(),
             global::app.type.format.TokenKind.Number => reader.Number(),
-            global::app.type.format.TokenKind.String => StringSlot(reader.String(), ctx),
-            _ => ParseRaw(reader.RawValue(), ctx),
+            global::app.type.format.TokenKind.String => Slot(reader.String(), ctx),
+            _ => Parse(reader.RawValue(), ctx),
         };
 
     /// <summary>
@@ -50,21 +50,21 @@ public partial class json
             global::app.type.format.TokenKind.Null => null,
             global::app.type.format.TokenKind.Bool => reader.Bool(),
             global::app.type.format.TokenKind.Number => reader.Number(),
-            global::app.type.format.TokenKind.String => StringSlot(reader.String(), ctx),
-            _ => RawEntry(reader.RawValue(), ctx),
+            global::app.type.format.TokenKind.String => Slot(reader.String(), ctx),
+            _ => Entry(reader.RawValue(), ctx),
         };
 
-    private object? RawEntry(byte[] utf8, global::app.type.reader.ReadContext? ctx)
+    private object? Entry(byte[] utf8, global::app.type.reader.ReadContext? ctx)
     {
         using var doc = System.Text.Json.JsonDocument.Parse(utf8);
-        return RawSlot(doc.RootElement, ctx, 0);
+        return Slot(doc.RootElement, ctx, 0);
     }
 
     // A %ref% string slot in an authored container rides as a stamped text item (so the
     // template survives the container's fresh-per-read); a literal slot stays a raw scalar
     // (flagging it would change its canonicalization/signing). A runtime-ingest slot is
     // never a template (injection-safe). The text takes the row's variables it holds.
-    private object? StringSlot(string s, global::app.type.reader.ReadContext? ctx)
+    private object? Slot(string s, global::app.type.reader.ReadContext? ctx)
         => ctx?.Template is { } template
            && new text.@this(s, _context.App.type.list[new global::app.type.@this("text", template: template), _context], ctx.Variable) is { HasVariable: true } value
             ? value
@@ -75,7 +75,7 @@ public partial class json
     // values, so this rides as a Data (the data reader reads type+value), no @schema needed.
     // Distinguished from a plain object by a structured `type` + a `value` sibling — a user object
     // literally shaped {type:{name:…}, value:…} is the accepted rare collision (entries carry type,
-    // not @schema, by design). Both the eager (Parse) and lazy (RawSlot) paths honour it — a nested
+    // not @schema, by design). Both the eager (Parse) and lazy (Slot) paths honour it — a nested
     // typed value materialises as a Data either way.
     private static bool IsTypedEntry(System.Text.Json.JsonElement element)
         => element.TryGetProperty("type", out var t)
@@ -110,7 +110,7 @@ public partial class json
                 { View = ctx?.View ?? global::app.View.Out })
             : null;
 
-    private object? ParseRaw(byte[] utf8, global::app.type.reader.ReadContext? ctx)
+    private object? Parse(byte[] utf8, global::app.type.reader.ReadContext? ctx)
     {
         using var doc = System.Text.Json.JsonDocument.Parse(utf8);
         return Parse(doc.RootElement, ctx);
@@ -126,8 +126,8 @@ public partial class json
     /// </summary>
     internal object? Parse(object? value, global::app.type.reader.ReadContext? ctx = null, int depth = 0)
     {
-        if (depth > MaxDepth)
-            throw new System.InvalidOperationException($"JSON nesting exceeds maximum depth ({MaxDepth})");
+        if (depth > Deepest)
+            throw new System.InvalidOperationException($"JSON nesting exceeds maximum depth ({Deepest})");
 
         if (value is System.Text.Json.JsonElement element)
         {
@@ -140,7 +140,7 @@ public partial class json
                 System.Text.Json.JsonValueKind.Null => _context.App.type.list["null"].Empty(_context),
                 System.Text.Json.JsonValueKind.Undefined => _context.App.type.list["null"].Empty(_context),
                 // A value object is a dict, whatever its shape — a Data rides only as a
-                // container's entry (RawSlot, reached through the leaves for the children).
+                // container's entry (Slot, reached through the leaves for the children).
                 System.Text.Json.JsonValueKind.Object => ObjectLeaf(element, ctx, depth),
                 System.Text.Json.JsonValueKind.Array => ArrayLeaf(element, ctx, depth),
                 _ => element,
@@ -171,7 +171,7 @@ public partial class json
         // on read (dict.@this.Value → Resolve); a runtime-ingest read (ctx null) stays literal.
         var d = new dict.@this(_context.App.type.list[new global::app.type.@this("dict", template: ctx?.Template), _context]);
         foreach (var prop in element.EnumerateObject())
-            d.Set(prop.Name, RawSlot(prop.Value, ctx, depth + 1));
+            d.Set(prop.Name, Slot(prop.Value, ctx, depth + 1));
         return d;
     }
 
@@ -179,19 +179,19 @@ public partial class json
     {
         var l = new list.@this(_context.App.type.list[new global::app.type.@this("list", null, false, ctx?.Template), _context]);
         foreach (var item in element.EnumerateArray())
-            l.AddRaw(RawSlot(item, ctx, depth + 1));
+            l.AddRaw(Slot(item, ctx, depth + 1));
         return l;
     }
 
     // One container slot from a json token — raw scalar, native sub-container
     // (itself lazy), or a reconstructed Data for a marked element.
-    private object? RawSlot(System.Text.Json.JsonElement element, global::app.type.reader.ReadContext? ctx, int depth)
+    private object? Slot(System.Text.Json.JsonElement element, global::app.type.reader.ReadContext? ctx, int depth)
     {
-        if (depth > MaxDepth)
-            throw new System.InvalidOperationException($"JSON nesting exceeds maximum depth ({MaxDepth})");
+        if (depth > Deepest)
+            throw new System.InvalidOperationException($"JSON nesting exceeds maximum depth ({Deepest})");
         return element.ValueKind switch
         {
-            System.Text.Json.JsonValueKind.String => StringSlot(element.GetString() ?? "", ctx),
+            System.Text.Json.JsonValueKind.String => Slot(element.GetString() ?? "", ctx),
             // a number: its raw text, read by number's one rule
             System.Text.Json.JsonValueKind.Number => number.@this.Parse(element.GetRawText()),
             System.Text.Json.JsonValueKind.True => true,
@@ -215,7 +215,7 @@ public partial class json
         if (ctx?.Template != null)
         {
             // a template's text is the one a template slot makes
-            if (StringSlot(s, ctx) is text.@this value) return value;
+            if (Slot(s, ctx) is text.@this value) return value;
         }
         else if (s.Contains('%') && new global::app.type.item.variable.parser.@this(s, _context.App.type.list).Variable.Count > 0)
             return s;
