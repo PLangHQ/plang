@@ -132,8 +132,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public async System.Threading.Tasks.Task<global::app.data.@this> Change<TAs>(actor.context.@this context,
         System.Func<TAs, System.Threading.Tasks.Task<global::app.data.@this>> then) where TAs : global::app.type.item.@this
     {
-        // changed in place, so what the root holds must be this context's own (a task's copy of its caller's)
-        if (!Code.Root.Name.StartsWith('!')) await context.Variable.Own(Code.Root.Name);
+        // changed in place, so what the root holds must be this context's own (a task's copy of its caller's), and the
+        // stack is handed what it holds before the change, which a history keeps as it was
+        var root = Code.Root.Name;
+        if (!root.StartsWith('!') && await context.Variable.Own(root) is { Success: true, IsInitialized: true } own)
+            context.call.Record(context.Variable, root, await own.Value());
         var data = await Held(context);
         return await data.Use<TAs>(async value =>
         {
