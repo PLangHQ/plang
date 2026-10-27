@@ -58,7 +58,39 @@ The tags:
 ```
 
 Read back, each by its own type:
-- A goal, through its own `Select` taking its key record: `goal.list.Read(prpath)`, then `Find(name, top)`, then the hash (49). It's async, as `Select` is.
+- A goal, through its own `Select` taking its key record: `goal.list.Read(pr.path)`, then `Find(name, top)`, then the hash (49). It's async, as `Select` is.
+
+**The goal's key, after Ingi's 91 (written before the coder reports; not sent):**
+
+```csharp
+// goal/this.Item.cs:92 — Select takes either key a goal is named by: an address a step wrote, or a snapshot's record
+public static async ValueTask<data.@this<@this>?> Select(item.@this key, actor.context.@this asker)
+    => key switch
+    {
+        text.@this name => await asker.App.goal.list.Find(name.Clr<string>() ?? "", asker.call.Goal),
+        goal.key.@this record => await record.Goal(asker),                       // NEW (91)
+        _ => null
+    };
+
+// goal/key/this.cs — NEW (91): what finds a goal, as a snapshot reads it; it lives until the first typed ask
+public sealed class @this : item.@this
+{
+    [Snapshot] public text Name { get; }     // each member set by its own type (pattern 1): never record["name"]
+    [Snapshot] public file Pr { get; }       // made unread from {path}, as 80
+    [Snapshot] public text Hash { get; }
+
+    // the goal it names, the live one: its .pr read (the held goal if unchanged), the goal by name in it, the hash checked
+    internal async ValueTask<data.@this<goal>> Goal(actor.context.@this asker) { … }   // a changed hash refuses (409), as a frame's does
+}
+```
+
+What I'll check when it reports:
+1. **Pattern 1:** the record is read, mapped and set by the type list's own read for (goal, key), each member by its own type. No hand unpacking by key string anywhere, and the goal's `.pr` reader is untouched (no branch on shape, not (i)).
+2. **Pattern 2:** the kind `key` is written once, by whoever knows it writes a found value's key (the snapshot view through goal's type), never a check in the wire on `type == goal`.
+3. **Pattern 8:** the finding (Read, Find, hash) lives on the key, not in `Select`. `Select`'s two arms are the lift, where an untyped value meets the typed ask, as `Create`'s `raw is @this` is.
+4. **Not (iii):** `data.Value<T>()`'s `T.IsSelected` door (`data/this.cs:620`) unchanged.
+5. The found goal is the app's live goal (the same instance `goal.list` holds), and a changed goal without a re-sign is refused, as at the frame (57).
+6. The surface pin re-pins citing "snapshot 91"; FoundElsewhereTests' goal-in-a-variable goes green; the `.pr` goldens unmoved.
 - A step, by its goal and its goal-wide index: one lookup the goal owns, across its bodies (NEW, the coder names it).
 - An action, by its place in its step's code, with the module/name check.
 - `file`, `url` and `directory`, each made unread from `{path}` by its own `Create` (80).
