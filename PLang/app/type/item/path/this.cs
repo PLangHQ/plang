@@ -95,7 +95,8 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
         }
         catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
         {
-            data.Fail(new global::app.error.@this(ex.Message, "PathConstructionFailed", 400));
+            data.Fail(new global::app.error.@this($"'{raw}' can't be made a path", "PathConstructionFailed", 400)
+                { list = [global::app.error.@this.FromException(ex)] });
             return null;
         }
     }
