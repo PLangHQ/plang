@@ -24,8 +24,7 @@ public sealed class @this
             .Select(v => new global::app.type.item.variable.parser.@this(v.Peek()?.ToString() ?? "", _context.App.type.list).Whole?.Name)
             .OfType<string>().ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-    [System.Text.Json.Serialization.JsonIgnore]
-    private Regex? _grepRegex;
+    private Regex? _grep;
 
     public @this(actor.context.@this context) => _context = context;
 
@@ -60,7 +59,7 @@ public sealed class @this
         var setting = await Setting();
         if (setting.Grep?.ToString() is { Length: > 0 } grep)
         {
-            try { _grepRegex = new Regex(grep, RegexOptions.IgnoreCase); }
+            try { _grep = new Regex(grep, RegexOptions.IgnoreCase); }
             catch (ArgumentException ex)
             {
                 return new global::app.error.@this($"--debug grep '{grep}' is not a valid regex: {ex.Message}", "InvalidPattern", 400)
@@ -70,18 +69,17 @@ public sealed class @this
 
         // Debug watches user execution, so its bindings are the User actor's (where user goals run) — Debug itself is
         // born with System's context. They are held by the User, as long as the app lives.
-        var hold = _context.App.actor.list.User.on;
+        var on = _context.App.actor.list.User.on;
 
         // The watch binds after every set and remove of a variable the User actor makes, for the watched names.
         if (setting.Variables.CountRaw > 0)
         {
             var watched = await Watched();
-            var variables = _context.App.variable.type;
             bool Watches(global::app.type.item.@this item, actor.context.@this _)
                 => item is global::app.type.item.variable.@this variable && watched.Contains(variable.Name);
-            hold.Bind(variables, "set", When.after, (item, result, context) => Set((global::app.type.item.variable.@this)item, result, context),
+            on.Bind(_context.App.variable.type, "set", When.after, (item, result, context) => Set((global::app.type.item.variable.@this)item, result, context),
                 global::app.@event.binding.Scope.actor, Watches);
-            hold.Bind(variables, "remove", When.after, (item, _, context) => Remove((global::app.type.item.variable.@this)item, context),
+            on.Bind(_context.App.variable.type, "remove", When.after, (item, _, context) => Remove((global::app.type.item.variable.@this)item, context),
                 global::app.@event.binding.Scope.actor, Watches);
         }
 
@@ -122,64 +120,61 @@ public sealed class @this
 
         // the step, goal (and action) types' on.start
         var types = _context.App.type.list;
-        var step = setting.Step?.ToInt32();
+        var index = setting.Step?.ToInt32();
         // debug attaches where the goal named starts (no goal named is every goal), or at its step named, and follows
         // what it calls
-        var steps = types["step"];
-        var goals = types["goal"];
 
         // the marks, bound before the watchers so a frame is marked before it is shown
-        hold.Bind(goals, "start", When.before, (item, _, context) => Attach((global::app.goal.@this)item, context, step),
+        on.Bind(types["goal"], "start", When.before, (item, _, context) => Attach((global::app.goal.@this)item, context, index),
             global::app.@event.binding.Scope.actor, (item, _) => item is global::app.goal.@this);
-        if (step != null)
-            hold.Bind(steps, "start", When.before, (item, _, context) => Attach((global::app.goal.step.@this)item, context, step.Value),
+        if (index != null)
+            on.Bind(types["step"], "start", When.before, (item, _, context) => Attach((global::app.goal.step.@this)item, context, index.Value),
                 global::app.@event.binding.Scope.actor, (item, _) => item is global::app.goal.step.@this);
 
-        hold.Bind(steps, "start", When.before, (item, _, context) => Before((global::app.goal.step.@this)item, context),
+        on.Bind(types["step"], "start", When.before, (item, _, context) => Before((global::app.goal.step.@this)item, context),
             global::app.@event.binding.Scope.actor, (item, context) => item is global::app.goal.step.@this && Debugged(context));
-        hold.Bind(steps, "start", When.after, (item, _, context) => After((global::app.goal.step.@this)item, context),
+        on.Bind(types["step"], "start", When.after, (item, _, context) => After((global::app.goal.step.@this)item, context),
             global::app.@event.binding.Scope.actor, (item, context) => item is global::app.goal.step.@this && Debugged(context));
 
-        hold.Bind(goals, "start", When.after, (item, _, context) => After((global::app.goal.@this)item, context),
+        on.Bind(types["goal"], "start", When.after, (item, _, context) => After((global::app.goal.@this)item, context),
             global::app.@event.binding.Scope.actor, (item, context) => item is global::app.goal.@this && Debugged(context));
 
         if (setting.Level.Value == global::app.module.debug.Level.Action)
         {
-            var actions = types["action"];
-            hold.Bind(actions, "start", When.before, (item, _, context) => Before((global::app.goal.step.action.@this)item, context),
+            on.Bind(types["action"], "start", When.before, (item, _, context) => Before((global::app.goal.step.action.@this)item, context),
                 global::app.@event.binding.Scope.actor, (item, context) => item is global::app.goal.step.action.@this && Debugged(context));
-            hold.Bind(actions, "start", When.after, (item, _, context) => After((global::app.goal.step.action.@this)item, context),
+            on.Bind(types["action"], "start", When.after, (item, _, context) => After((global::app.goal.step.action.@this)item, context),
                 global::app.@event.binding.Scope.actor, (item, context) => item is global::app.goal.step.action.@this && Debugged(context));
         }
 
         // A goal named by its address may be one of plang's own, which starts through its own events alone, as its
         // steps and actions do: it is looked up now and bound there, by name. (A goal is read when it is first called.)
         if (setting.Address is { } address && await (await _context.App.goal.list.Find(address)).Value() is { } named)
-            Bind(named, hold, step, setting.Level.Value == global::app.module.debug.Level.Action);
+            Bind(named, on, index, setting.Level.Value == global::app.module.debug.Level.Action);
         return null;
     }
 
     // Debug's bindings on one goal itself, its steps and (at the action level) their actions, as on their types.
-    private void Bind(global::app.goal.@this goal, global::app.@event.on.list.@this hold, int? index, bool actions)
+    private void Bind(global::app.goal.@this goal, global::app.@event.on.list.@this on, int? index, bool actions)
     {
         var scope = global::app.@event.binding.Scope.actor;
-        hold.Bind(goal, "start", When.before, (item, _, context) => Attach((global::app.goal.@this)item, context, index), scope);
-        hold.Bind(goal, "start", When.after, (item, _, context) => After((global::app.goal.@this)item, context), scope,
+        on.Bind(goal, "start", When.before, (item, _, context) => Attach((global::app.goal.@this)item, context, index), scope);
+        on.Bind(goal, "start", When.after, (item, _, context) => After((global::app.goal.@this)item, context), scope,
             (_, context) => Debugged(context));
         foreach (var each in goal.Step.Items())
         {
             if (index != null)
-                hold.Bind(each, "start", When.before, (item, _, context) => Attach((global::app.goal.step.@this)item, context, index.Value), scope);
-            hold.Bind(each, "start", When.before, (item, _, context) => Before((global::app.goal.step.@this)item, context), scope,
+                on.Bind(each, "start", When.before, (item, _, context) => Attach((global::app.goal.step.@this)item, context, index.Value), scope);
+            on.Bind(each, "start", When.before, (item, _, context) => Before((global::app.goal.step.@this)item, context), scope,
                 (_, context) => Debugged(context));
-            hold.Bind(each, "start", When.after, (item, _, context) => After((global::app.goal.step.@this)item, context), scope,
+            on.Bind(each, "start", When.after, (item, _, context) => After((global::app.goal.step.@this)item, context), scope,
                 (_, context) => Debugged(context));
             if (!actions) continue;
             foreach (var action in each.Code.Items())
             {
-                hold.Bind(action, "start", When.before, (item, _, context) => Before((global::app.goal.step.action.@this)item, context), scope,
+                on.Bind(action, "start", When.before, (item, _, context) => Before((global::app.goal.step.action.@this)item, context), scope,
                     (_, context) => Debugged(context));
-                hold.Bind(action, "start", When.after, (item, _, context) => After((global::app.goal.step.action.@this)item, context), scope,
+                on.Bind(action, "start", When.after, (item, _, context) => After((global::app.goal.step.action.@this)item, context), scope,
                     (_, context) => Debugged(context));
             }
         }
@@ -191,10 +186,10 @@ public sealed class @this
 
     // A goal starting, in its own frame: marked when it is the goal named (and no step is), or when its caller's run
     // is marked — it is called from inside what debug follows.
-    private async Task<data.@this> Attach(global::app.goal.@this goal, actor.context.@this context, int? step)
+    private async Task<data.@this> Attach(global::app.goal.@this goal, actor.context.@this context, int? index)
     {
         if (context.call.Current is { } frame
-            && (step == null && await Watches(goal) || frame.Caller?.Within.Any(caller => _marked.TryGetValue(caller, out _)) == true))
+            && (index == null && await Watches(goal) || frame.Caller?.Within.Any(caller => _marked.TryGetValue(caller, out _)) == true))
             _marked.AddOrUpdate(frame, this);
         return context.Ok();
     }
@@ -312,7 +307,7 @@ public sealed class @this
     private async Task Show(StringBuilder sb)
     {
         var maxLen = (await Setting()).Length.Max.ToInt32();
-        var grep = _grepRegex;
+        var grep = _grep;
         var output = sb.ToString();
 
         // Grep first on full content

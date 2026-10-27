@@ -180,16 +180,16 @@ public sealed partial class @this : global::app.type.item.@this
         => Push((goal, names), setting, static (stack, s) => new call.goal.@this(stack._types[typeof(call.goal.@this)], stack, s.goal, s.names));
 
     /// <summary>Pushes a frame that only binds <paramref name="names"/> (a loop's item, a handler's error) — for
-    /// <paramref name="held"/> when its runner supplies them to that one call (a tool call's state).</summary>
-    public call.@this Push(IEnumerable<global::app.data.@this>? names, setting.@this setting, global::app.goal.step.action.@this? held = null)
-        => Enter(new call.binding.@this(Binding, _current.Value, this, names, held), setting);
+    /// <paramref name="call"/> when its runner supplies them to that one call (a tool call's state).</summary>
+    public call.@this Push(IEnumerable<global::app.data.@this>? names, setting.@this setting, global::app.goal.step.action.@this? call = null)
+        => Enter(new global::app.call.binding.@this(Binding, _current.Value, this, names, call), setting);
 
     /// <summary>Pushes a frame with memory of its own, born with <paramref name="names"/>: every write under it stays
     /// in it (a tool's goal, a shortcut's). A task's run starts its chain with one whose <paramref name="caller"/> is
     /// the frame its caller was in — reads fall through to the caller's frames and memory.</summary>
     public call.@this Isolate(IEnumerable<global::app.data.@this>? names, setting.@this setting,
-        global::app.goal.step.action.@this? held = null, call.@this? caller = null)
-        => Enter(new call.isolated.@this(Isolated, caller ?? _current.Value, this, names, held), setting);
+        global::app.goal.step.action.@this? call = null, global::app.call.@this? caller = null)
+        => Enter(new global::app.call.isolated.@this(Isolated, caller ?? _current.Value, this, names, call), setting);
 
     /// <summary>Pushes the frame of a step starting: its goal and itself.</summary>
     public call.@this Push(global::app.goal.step.@this step, setting.@this setting)
@@ -255,7 +255,7 @@ public sealed partial class @this : global::app.type.item.@this
     /// Restores AsyncLocal Current to <paramref name="previous"/> if <paramref name="leaving"/>
     /// is still the active value. Called by <see cref="call.@this.DisposeAsync"/>.
     /// </summary>
-    internal void RestoreCurrent(call.@this leaving, call.@this? previous)
+    internal void Leave(call.@this leaving, call.@this? previous)
     {
         if (ReferenceEquals(_current.Value, leaving))
             _current.Value = previous;
