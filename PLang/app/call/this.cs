@@ -22,52 +22,12 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     protected internal override global::app.type.item.@this Clone() => this;
 
     /// <summary>What a program adds to the call (<c>%!call.scope.retries%</c>) — kept as long as the call lives.</summary>
+    // The frame is written by its tags: in a trace (Out, Debug) its id, depth, when, whether its error was handled,
+    // its errors and the changes it saw; kept (Store) its element (the goal, step or action it runs, which a snapshot
+    // writes as what finds it), its variables, what a program added, its tags, the event running in it and the error
+    // in play. Its caller and children are where it sits, never written.
     [Store, global::app.LlmBuilder]
-    public global::app.type.item.property.list.@this property { get; }
-
-    /// <summary>
-    /// The frame writes one flat form in every view — a stack-trace entry: its id and depth, where it is (the
-    /// goal's address, the step's text, the action as <c>module.name</c>), when, whether its error was handled,
-    /// its tags and errors, its caller and children by id (a back-edge is written by name), and the variable
-    /// changes it saw by name and time. Never a value: not its variables, not the event it runs. Everything else
-    /// is one navigation away.
-    /// </summary>
-    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
-    {
-        writer.BeginObject();
-        writer.Name("id"); writer.String(_id);
-        writer.Name("depth"); writer.Long(_depth);
-        if (Goal?.Address is { } address) { writer.Name("goal"); writer.String(address); }
-        if (Step != null) { writer.Name("step"); writer.String(Step.Text); }
-        if (Action != null) { writer.Name("action"); writer.String($"{Action.Module.Name}.{Action.Name}"); }
-        if (_startedAt is { } started) { writer.Name("startedAt"); writer.DateTimeOffset(started); }
-        if (_stopwatch is { } watch) { writer.Name("duration"); writer.TimeSpan(watch.Elapsed); }
-        writer.Name("handled"); writer.Bool(_handled);
-        if (Tags.CountRaw > 0) { writer.Name("tags"); await Tags.Output(writer); }
-        if (Errors.Newest != null) { writer.Name("errors"); await Errors.Output(writer); }
-        if (Caller != null) { writer.Name("caller"); writer.String(Caller._id); }
-        if (Children.Count > 0)
-        {
-            writer.Name("children");
-            writer.BeginArray(Children.Count);
-            foreach (var child in Children) writer.String(child._id);
-            writer.EndArray();
-        }
-        if (Diffs is { Count: > 0 } diffs)
-        {
-            writer.Name("diffs");
-            writer.BeginArray(diffs.Count);
-            foreach (var diff in diffs)
-            {
-                writer.BeginObject();
-                writer.Name("name"); writer.String(diff.Name);
-                writer.Name("at"); writer.DateTimeOffset(diff.At);
-                writer.EndObject();
-            }
-            writer.EndArray();
-        }
-        writer.EndObject();
-    }
+    public global::app.type.item.property.list.@this property { get; private set; }
 
     private readonly Stopwatch? _stopwatch;
     private readonly global::app.call.list.@this _stack;
@@ -89,6 +49,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>
     /// Unique identifier for this Call. 8 hex chars — short enough for log lines.
     /// </summary>
+    [Out, Debug]
     public global::app.type.item.text.@this Id => _id;
 
     /// <summary>The goal in play at this frame — the goal a goal's frame runs, or the one its step is in. Null for an
@@ -107,6 +68,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>The event whose bound call is running in this frame, as <c>%!event%</c> reads it — its value the
     /// running event, its properties <c>item</c> and <c>result</c>. Set only while that call runs.</summary>
+    [Store, Debug]
     public global::app.data.@this? Event { get; internal set; }
 
     /// <summary>
@@ -122,20 +84,27 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// the error stays in the list either way (audit trail). See <see cref="error.@this"/>
     /// for thread-safety semantics.
     /// </summary>
-    [global::app.LlmBuilder]
+    [Out, Debug, global::app.LlmBuilder]
     public global::app.error.list.@this Errors { get; }
 
     /// <summary>
     /// Flipped <c>true</c> by on.error's Wrap on recovery success. Renderers use this to
     /// show "errored — recovered" vs "errored — uncaught."
     /// </summary>
+    [Out, Debug]
     public global::app.type.item.@bool.@this Handled { get => _handled; set => _handled = value.Value; }
 
     /// <summary>The error in play AT THIS FRAME — its newest observation, unless recovery has
     /// already succeeded here. <see cref="Handled"/> is what stops it: "recovered, stop being
     /// <c>%!error%</c>". Null when this frame never failed, or failed and was recovered.
-    /// <see cref="global::app.call.list.@this.Error"/> walks <see cref="Caller"/> asking each frame this.</summary>
-    public global::app.error.@this? Error => _handled ? null : Errors.Newest;
+    /// <see cref="global::app.call.list.@this.Error"/> walks <see cref="Caller"/> asking each frame this. Kept, it comes
+    /// back as the error this frame observed.</summary>
+    [Store]
+    public global::app.error.@this? Error
+    {
+        get => _handled ? null : Errors.Newest;
+        private set { if (value != null) Errors.Add(value); }
+    }
 
     /// <summary>
     /// Live siblings under this Call. Owns its own lock + FIFO eviction policy — see
@@ -150,6 +119,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     private readonly global::app.type.@this _datetime;
 
     /// <summary>When it was pushed. Null when the Timing flag was off at Push.</summary>
+    [Out, Debug]
     public global::app.type.item.datetime.@this? StartedAt => _startedAt is { } started ? new(started, _datetime) : null;
 
     /// <summary>When it was popped. Null while in flight, and when the Timing flag was off.</summary>
@@ -166,7 +136,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// Variable mutations observed during this Call's lifetime. Null unless Flags.Diff was
     /// on at Push. See <see cref="diff.@this"/> for thread-safety + snapshot iteration.
     /// </summary>
-    [global::app.LlmBuilder]
+    [Out, Debug, global::app.LlmBuilder]
     public diff.@this? Diffs { get; }
 
     // --- Tag tier ---
@@ -174,8 +144,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// Free-form tags written through <see cref="Tag"/> — a plang dict, read as any dict
     /// (<c>%!callStack.Current.Caller.Tags.foo%</c>). Always allocated, so no lazy-init race.
     /// </summary>
-    [global::app.LlmBuilder]
-    public global::app.type.item.dict.@this Tags { get; }
+    [Store, Out, Debug, global::app.LlmBuilder]
+    public global::app.type.item.dict.@this Tags { get; private set; }
 
     // Parallel branches tag one caller's frame; the frame serializes the merge into its dict.
     private readonly object _tagging = new();
@@ -255,12 +225,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         Errors = new global::app.error.list.@this(stack.Errors);
         property = new(stack.Properties);
         Children = new child.list.@this(stack);
-        foreach (var name in names ?? [])
-        {
-            if (name == null || string.IsNullOrEmpty(name.Name)) continue;
-            _variables[name.Name] = name;   // last wins on duplicate names
-            _arguments.Add(name.Name);
-        }
+        Variable = names ?? [];
 
         if (!Measured) return;
         if (setting.Timing.Value)
@@ -302,6 +267,23 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>The names this frame was born with — a goal call's own arguments, not its callers'.</summary>
     internal IEnumerable<string> Arguments => _arguments;
+
+    /// <summary>This frame's own variables, each the Data whole. Kept, they come back as names it is born with, as a
+    /// goal call's parameters are: a write to one lands here again.</summary>
+    [Store]
+    public IEnumerable<global::app.data.@this> Variable
+    {
+        get => _variables.Values;
+        private set
+        {
+            foreach (var name in value)
+            {
+                if (name == null || string.IsNullOrEmpty(name.Name)) continue;
+                _variables[name.Name] = name;   // last wins on duplicate names
+                _arguments.Add(name.Name);
+            }
+        }
+    }
 
     /// <summary>The names this frame and its callers hold, the inner frame's first.</summary>
     internal IEnumerable<string> Names
@@ -397,7 +379,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// (only itself), <c>Root.Children[0].Depth == 2</c>, etc. A birth fact: one more than its
     /// caller's. PLang tests can <c>assert %!callStack.Current.Depth% equals 2</c>.
     /// </summary>
-    [global::app.LlmBuilder]
+    [Out, Debug, global::app.LlmBuilder]
     public global::app.type.item.number.@this Depth => _depth;
 
     /// <summary>The frame records an error against itself — the one door. Stamps what the error does

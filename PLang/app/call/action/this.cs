@@ -21,6 +21,7 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
         : base(node, type, stack, context) => Action = Placed(node, context).Action;
 
     /// <summary>The action it runs; its step and goal are the action's.</summary>
+    [Store, Out, Debug]
     public override global::app.goal.step.action.@this? Action { get; }
 
     /// <summary>The pure core — an action's frame passes through; nothing else converts into one.</summary>
