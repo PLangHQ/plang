@@ -32,12 +32,16 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     {
         if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("snapshot", kind), ctx.Context]);
 
+        // a snapshot's entries were written in the snapshot's view, so they are read in it: a value found elsewhere
+        // comes back as what its key finds
+        ctx = ctx with { View = global::app.View.Snapshot };
+
         // its text is its written form, plang's own: read back through here as the object it holds
         if (reader.Peek() == global::app.type.format.TokenKind.String)
         {
             var types = ctx.Context.App.type.list;
             var plang = (global::app.type.item.wire.kind.plang.@this)types["wire"].kind["plang"]!;
-            return plang.Read(new global::app.type.item.wire.@this(reader.String(), types[typeof(global::app.snapshot.@this)], plang), ctx);
+            return plang.Read(new global::app.type.item.wire.@this(reader.String(), types[typeof(global::app.snapshot.@this)], plang, ctx.View), ctx);
         }
 
         reader.BeginObject();

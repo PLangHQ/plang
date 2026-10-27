@@ -27,12 +27,18 @@ public class @this : global::app.type.item.source
     // read reaches it directly.
     private readonly kind.plang.@this _reader;
 
+    // What the bytes were written for: the view the slice is read in when it is first touched.
+    private readonly global::app.View _view;
+
     // An encoded slice is never parsed for its variables: the build's own holds what its row lists, any other
     // holds none (the source decides).
-    public @this(string slice, global::app.type.@this type, kind.plang.@this reader,
+    public @this(string slice, global::app.type.@this type, kind.plang.@this reader, global::app.View view,
         IReadOnlyList<global::app.type.item.variable.@this>? variable = null, bool built = false)
         : base(slice, type, variable ?? [], built: built)
-        => _reader = reader ?? throw new System.ArgumentNullException(nameof(reader));
+    {
+        _reader = reader ?? throw new System.ArgumentNullException(nameof(reader));
+        _view = view;
+    }
 
     /// <summary>A wire born from <paramref name="value"/> written in <paramref name="view"/>, through plang's own format:
     /// the value as it stood, held as those bytes under its own type, so whatever carries it later carries exactly
@@ -44,7 +50,7 @@ public class @this : global::app.type.item.source
         await using (var utf8 = new System.Text.Json.Utf8JsonWriter(bytes))
             await value.Output(new kind.plang.Writer(utf8, view, context));
         var plang = (kind.plang.@this)context.App.type.list[typeof(@this)].kind["plang"]!;
-        return new(System.Text.Encoding.UTF8.GetString(bytes.ToArray()), value.Type, plang);
+        return new(System.Text.Encoding.UTF8.GetString(bytes.ToArray()), value.Type, plang, view);
     }
 
     /// <summary>The text as written: a string slice is the text it holds (unquoted, as a source's is); any other
@@ -56,10 +62,10 @@ public class @this : global::app.type.item.source
     // A slice is no text: decoded, its parts render themselves (a %ref% leaf is the value it names).
     private protected override global::app.type.item.text.@this? Text(global::app.actor.context.@this context) => null;
 
-    // The slice's own read keeps whose bytes they are: a row nested in the build's slice (a goal call's
-    // parameters) is the build's too.
+    // The slice's own read keeps whose bytes they are, and what they were written for: a row nested in the build's
+    // slice (a goal call's parameters) is the build's too, and one in a snapshot is read as a snapshot's.
     private protected override global::app.type.item.@this Read(actor.context.@this context)
-        => _reader.Read(this, new global::app.type.reader.ReadContext(context, Type.Template, Variable: Variable, IsBuilt: IsBuilt));
+        => _reader.Read(this, new global::app.type.reader.ReadContext(context, Type.Template, Variable: Variable, IsBuilt: IsBuilt) { View = _view });
 
     // The decoded value, with the caller's context: the kind owns the decode (one Parse, the same
     // value Value() materializes to); a kind that declines (csv, png) falls to the type reader.
@@ -101,5 +107,5 @@ public class @this : global::app.type.item.source
 
     // Re-declared, the slice is what its new declaration makes of it — a template only when marked one.
     internal override global::app.type.item.source Declared(global::app.type.@this type)
-        => type.Make((string)Raw, _reader, Variable, IsBuilt);
+        => type.Make((string)Raw, _reader, _view, Variable, IsBuilt);
 }

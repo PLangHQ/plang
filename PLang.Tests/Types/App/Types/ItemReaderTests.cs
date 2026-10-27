@@ -64,7 +64,7 @@ public class ItemReaderTests : System.IAsyncDisposable
     {
         var owner = Box();
         var slice = Ctx.App.type.list[new global::app.type.@this("dict"), Ctx].Make("{\"inner\": 1}",
-            (global::app.type.item.wire.kind.plang.@this)Ctx.App.type.list["wire"].kind["plang"]!);
+            (global::app.type.item.wire.kind.plang.@this)Ctx.App.type.list["wire"].kind["plang"]!, global::app.View.Out);
         var nested = global::app.type.item.@this.Create(new Dictionary<string, object?> { ["token"] = 500L, ["extra"] = slice }, Ctx);
 
         var answer = await owner.Set("limit", false, nested, Ctx);

@@ -9,7 +9,7 @@ namespace app.type.item.wire;
 /// </summary>
 public sealed class template : @this
 {
-    public template(string slice, global::app.type.@this type, kind.plang.@this reader,
+    public template(string slice, global::app.type.@this type, kind.plang.@this reader, global::app.View view,
         IReadOnlyList<global::app.type.item.variable.@this> variable, bool built = false)
-        : base(slice, type, reader, variable, built) { }
+        : base(slice, type, reader, view, variable, built) { }
 }

@@ -49,7 +49,7 @@ public class DepthTests : System.IAsyncDisposable
     {
         var slice = new string('[', levels) + "1" + new string(']', levels);
         var plang = (global::app.type.item.wire.kind.plang.@this)app.type.list[typeof(global::app.type.item.wire.@this)].kind["plang"]!;
-        var wire = new global::app.type.item.wire.@this(slice, app.type.list[typeof(global::app.type.item.list.@this)], plang);
+        var wire = new global::app.type.item.wire.@this(slice, app.type.list[typeof(global::app.type.item.list.@this)], plang, global::app.View.Out);
         return new List<object?> { new List<object?> { wire } };
     }
 

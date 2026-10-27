@@ -301,10 +301,9 @@ public class source : @this
     private protected virtual global::app.type.item.@this Read(actor.context.@this context)
     {
         var kind = Type.kind.IsEmpty ? null : Type.kind.Name;
-        var typeReader = context.App.type.list.Reader.Reader(Type.Name, kind, context);
+        var ctx = new global::app.type.reader.ReadContext(context, Type.Template, Variable: _variable, Origin: _origin, IsBuilt: IsBuilt);
         var reader = new global::app.type.format.value.Reader(_value);
-        return typeReader.Read(ref reader, kind,
-            new global::app.type.reader.ReadContext(context, Type.Template, Variable: _variable, Origin: _origin, IsBuilt: IsBuilt));
+        return ctx.View.Reader(Type, kind, context).Read(ref reader, kind, ctx);
     }
 
     /// <summary>Re-birth under a new declaration — the source owns its own re-typing (kills the
