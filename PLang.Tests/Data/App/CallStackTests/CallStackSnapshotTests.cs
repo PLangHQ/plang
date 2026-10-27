@@ -4,7 +4,8 @@ namespace PLang.Tests.App.CallStackTests;
 
 public class CallStackSnapshotTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
+    // rooted where the apps its goals are put in are, so a goal's .pr is the one its own app's list holds
+    private readonly global::app.@this app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private (Goal goal, Step step, ActionEntity action) MakeFrame(
