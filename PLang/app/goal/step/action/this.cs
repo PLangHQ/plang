@@ -66,17 +66,6 @@ public partial class @this
     internal System.Type? Class { get; init; }
 
     /// <summary>
-    /// True when this action was constructed inline in C# (default for
-    /// <c>new SomeAction { ... }</c>). False when materialized from a .pr
-    /// file. CallStack.Push stamps the Call frame; wire-serialize filters
-    /// synthetic frames out of the Snapshot (they can't be restored from PR
-    /// and are recreated naturally by the resumed execution). PR-load sites
-    /// override this to <c>false</c> when materializing the action from JSON.
-    /// </summary>
-    [JsonIgnore]
-    public bool Synthetic { get; set; } = true;
-
-    /// <summary>
     /// A C#-composed action carrying provided params (via <c>app.Run</c>). Dispatch runs the
     /// normal path; the generated Resolve passes through the seed's *set* params (no round-trip)
     /// while filling the UNSET ones from setting → [Default]. Null on the .pr path.
@@ -250,7 +239,7 @@ public partial class @this
     /// <summary>A program action of this catalog element's kind, in <paramref name="step"/> — a clause when this
     /// one is (the role was decided when its module registered it).</summary>
     internal virtual @this Program(global::app.goal.step.@this? step)
-        => new(Module.App.type.list) { Module = Module, Name = Name, Step = step, Synthetic = false };
+        => new(Module.App.type.list) { Module = Module, Name = Name, Step = step };
 
     // A step's code is a walk of its actions, each answering its own part. A step action runs and anchors
     // what follows it; a clause (clause.@this) overrides each part.

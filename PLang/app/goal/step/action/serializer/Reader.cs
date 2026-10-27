@@ -46,7 +46,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 // Provenance at birth: an action READ is authored, not injected — so it is non-synthetic. A name
                 // the module doesn't carry still reads (validation names it), as a plain action.
                 : module[actionName]?.Program(_step)
-                  ?? new global::app.goal.step.action.@this(ctx.Context.App.type.list) { Module = module, Name = actionName, Step = _step, Synthetic = false };
+                  ?? new global::app.goal.step.action.@this(ctx.Context.App.type.list) { Module = module, Name = actionName, Step = _step };
 
         reader.BeginObject();
         while (reader.NextName(out var name))

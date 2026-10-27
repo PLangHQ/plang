@@ -13,7 +13,7 @@ public class @this : global::app.goal.step.action.@this
 
     /// <summary>A program action of this loop's kind, in <paramref name="step"/>.</summary>
     internal override global::app.goal.step.action.@this Program(global::app.goal.step.@this? step)
-        => new @this(Module.App.type.list) { Module = Module, Name = Name, Step = step, Synthetic = false };
+        => new @this(Module.App.type.list) { Module = Module, Name = Name, Step = step };
 
     /// <summary>A loop leads the pre-filled line: what follows it is what it runs.</summary>
     internal override void Prefill(global::app.goal.step.pick.line.@this line, string call) => line.Lead(call);
