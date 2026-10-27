@@ -13,7 +13,7 @@ public sealed class Snapshot : global::app.type.reader.ITypeReader
 
     public global::app.View View => global::app.View.Snapshot;
 
-    /// <summary>A key is an object; a string where a goal stands names a variable holding one.</summary>
+    /// <summary>A goal's key is an object.</summary>
     public bool Reads(global::app.type.format.TokenKind token) => token == global::app.type.format.TokenKind.Object;
 
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind, global::app.type.reader.ReadContext ctx)
@@ -33,20 +33,21 @@ public sealed class Snapshot : global::app.type.reader.ITypeReader
                     var type = context.App.type.list[typeof(global::app.type.item.path.@this)];
                     path = ctx.View.Reader(type, null, context).Read(ref reader, null, ctx) as global::app.type.item.path.@this;
                     break;
-                default: throw Refused($"key '{member}' isn't in this snapshot's format for a goal", "SnapshotFormatOutdated", 400);
+                default: throw new global::app.error.DeclinedException(new global::app.error.@this(
+                    $"key '{member}' isn't in this snapshot's format for a goal", "SnapshotFormatOutdated", 400));
             }
         reader.EndObject();
 
         // the goal the .goal's .pr holds, and the goal of that name in it: that one or one of its children
         if (path is not global::app.type.item.path.file.@this file)
-            throw Refused($"the saved goal '{name}' names no .goal to find it in", "GoalKeyIncomplete", 400);
+            throw new global::app.error.DeclinedException(new global::app.error.@this(
+                $"the saved goal '{name}' names no .goal to find it in", "GoalKeyIncomplete", 400));
         if (context.App.goal.list[file.Pr]?.Named(name) is not { } goal)
-            throw Refused($"the saved goal '{name}' is not in {file}", "GoalNotFound", 404);
+            throw new global::app.error.DeclinedException(new global::app.error.@this(
+                $"the saved goal '{name}' is not in {file}", "GoalNotFound", 404));
         if (!string.Equals(goal.Hash ?? "", hash, StringComparison.OrdinalIgnoreCase))
-            throw Refused($"the saved goal '{name}' is not the one there now: saved hash {hash}, live {goal.Hash}.", "GoalHashMismatch", 409);
+            throw new global::app.error.DeclinedException(new global::app.error.@this(
+                $"the saved goal '{name}' is not the one there now: saved hash {hash}, live {goal.Hash}.", "GoalHashMismatch", 409));
         return goal;
     }
-
-    private global::app.error.DeclinedException Refused(string message, string key, int status)
-        => new(new global::app.error.@this(message, key, status));
 }

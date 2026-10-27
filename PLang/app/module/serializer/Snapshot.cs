@@ -11,7 +11,7 @@ public sealed class Snapshot : global::app.type.reader.ITypeReader
 
     public global::app.View View => global::app.View.Snapshot;
 
-    /// <summary>A key is an object; a string where a module stands names a variable holding one.</summary>
+    /// <summary>A module's key is an object.</summary>
     public bool Reads(global::app.type.format.TokenKind token) => token == global::app.type.format.TokenKind.Object;
 
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind, global::app.type.reader.ReadContext ctx)
@@ -23,14 +23,14 @@ public sealed class Snapshot : global::app.type.reader.ITypeReader
             switch (member)
             {
                 case "name": name = reader.String(); break;
-                default: throw Refused($"key '{member}' isn't in this snapshot's format for a module", "SnapshotFormatOutdated", 400);
+                default: throw new global::app.error.DeclinedException(new global::app.error.@this(
+                    $"key '{member}' isn't in this snapshot's format for a module", "SnapshotFormatOutdated", 400));
             }
         reader.EndObject();
 
-        if (name == null) throw Refused("a saved module's key names no module", "ModuleKeyIncomplete", 400);
-        return ctx.Context.App.module.Named(name) ?? throw Refused($"the saved module '{name}' is not one of the app's", "ModuleNotFound", 404);
+        if (name == null) throw new global::app.error.DeclinedException(new global::app.error.@this(
+            "a saved module's key names no module", "ModuleKeyIncomplete", 400));
+        return ctx.Context.App.module.Named(name) ?? throw new global::app.error.DeclinedException(new global::app.error.@this(
+            $"the saved module '{name}' is not one of the app's", "ModuleNotFound", 404));
     }
-
-    private global::app.error.DeclinedException Refused(string message, string key, int status)
-        => new(new global::app.error.@this(message, key, status));
 }

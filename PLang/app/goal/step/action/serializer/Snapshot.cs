@@ -13,7 +13,7 @@ public sealed class Snapshot : global::app.type.reader.ITypeReader
 
     public global::app.View View => global::app.View.Snapshot;
 
-    /// <summary>A key is an object; a string where an action stands names a variable holding one.</summary>
+    /// <summary>An action's key is an object.</summary>
     public bool Reads(global::app.type.format.TokenKind token) => token == global::app.type.format.TokenKind.Object;
 
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind, global::app.type.reader.ReadContext ctx)
@@ -39,21 +39,22 @@ public sealed class Snapshot : global::app.type.reader.ITypeReader
                     break;
                 case "index": index = reader.Int(); break;
                 case "name": name = reader.String(); break;
-                default: throw Refused($"key '{member}' isn't in this snapshot's format for an action", "SnapshotFormatOutdated", 400);
+                default: throw new global::app.error.DeclinedException(new global::app.error.@this(
+                    $"key '{member}' isn't in this snapshot's format for an action", "SnapshotFormatOutdated", 400));
             }
         reader.EndObject();
 
         if (step == null || module == null || index is not { } at)
-            throw Refused($"a saved action's key names no {(step == null ? "step" : module == null ? "module" : "index")}", "ActionKeyIncomplete", 400);
+            throw new global::app.error.DeclinedException(new global::app.error.@this(
+                $"a saved action's key names no {(step == null ? "step" : module == null ? "module" : "index")}", "ActionKeyIncomplete", 400));
         if (at < 0 || at >= step.Code.Count)
-            throw Refused($"the saved action {at} is not in step {step.Index} of goal '{step.Goal.Name}'", "ActionNotFound", 404);
+            throw new global::app.error.DeclinedException(new global::app.error.@this(
+                $"the saved action {at} is not in step {step.Index} of goal '{step.Goal.Name}'", "ActionNotFound", 404));
         var action = step.Code[at];
         if (!ReferenceEquals(action.Module, module) || !string.Equals(action.Name, name, StringComparison.OrdinalIgnoreCase))
-            throw Refused($"the saved action at '{step.Goal.Name}' step {step.Index} action {at}: saved '{module.Name}.{name}', "
-                + $"live '{action.Module.Name}.{action.Name}'.", "CallbackActionMismatch", 409);
+            throw new global::app.error.DeclinedException(new global::app.error.@this(
+                $"the saved action at '{step.Goal.Name}' step {step.Index} action {at}: saved '{module.Name}.{name}', "
+                + $"live '{action.Module.Name}.{action.Name}'.", "CallbackActionMismatch", 409));
         return action;
     }
-
-    private global::app.error.DeclinedException Refused(string message, string key, int status)
-        => new(new global::app.error.@this(message, key, status));
 }
