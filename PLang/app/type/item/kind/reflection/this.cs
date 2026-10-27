@@ -222,23 +222,13 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
                 ? global::System.Enum.ToObject(t, reader.Long())
                 : global::System.Enum.Parse(t, reader.String(), ignoreCase: true);
 
-        // A path rides as its string form — the perimeter crossing (path.Resolve once).
-        if (t == typeof(global::app.type.item.path.@this))
-            return global::app.type.item.path.@this.Resolve(reader.String(), ctx.Context);
-
-        // A choice<T> builds itself through the type system's OWN door — the choice entity (registered
-        // under its closed-set name, choice/list.cs) resolves the concrete choice<T> and parses the
-        // symbol. Never reflect-construct it as an object host below (no parameterless ctor).
-        if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(global::app.type.item.choice.@this<>))
+        // A plang member (a path, a choice, any value) is read by its type's reader in the read's view, as View.Make
+        // reads one from a record — never reflect-constructed as a host below.
+        if (typeof(global::app.type.item.@this).IsAssignableFrom(t))
         {
             var entity = ctx.Context.App.type.list[t];
-            // The symbol rides as a string; a numeric ordinal (an enum member written by value) becomes
-            // its member first. choice.Create takes either the member or the symbol.
-            object member = reader.Peek() == global::app.type.format.TokenKind.Number
-                ? global::System.Enum.ToObject(t.GetGenericArguments()[0], reader.Long())
-                : reader.String();
-            return entity.Make(member,
-                new global::app.data.@this("", new global::app.type.item.@null.@this(entity), context: ctx.Context));
+            var kind = entity.kind.IsEmpty ? null : entity.kind.Name;
+            return ctx.View.Reader(entity, kind, ctx.Context).Read(ref reader, kind, ctx);
         }
 
         // List<Data> (Parameters / Defaults) — each element a {name,type,value} through the
