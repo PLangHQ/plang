@@ -124,59 +124,41 @@ public sealed class @this
         // debug attaches where the goal named starts (no goal named is every goal), or at its step named, and follows
         // what it calls
 
-        // the marks, bound before the watchers so a frame is marked before it is shown
-        on.Bind(types["goal"], "start", When.before, (item, _, context) => Attach((global::app.goal.@this)item, context, index),
-            global::app.@event.binding.Scope.actor, (item, _) => item is global::app.goal.@this);
-        if (index != null)
-            on.Bind(types["step"], "start", When.before, (item, _, context) => Attach((global::app.goal.step.@this)item, context, index.Value),
-                global::app.@event.binding.Scope.actor, (item, _) => item is global::app.goal.step.@this);
-
-        on.Bind(types["step"], "start", When.before, (item, _, context) => Before((global::app.goal.step.@this)item, context),
-            global::app.@event.binding.Scope.actor, (item, context) => item is global::app.goal.step.@this && Debugged(context));
-        on.Bind(types["step"], "start", When.after, (item, _, context) => After((global::app.goal.step.@this)item, context),
-            global::app.@event.binding.Scope.actor, (item, context) => item is global::app.goal.step.@this && Debugged(context));
-
-        on.Bind(types["goal"], "start", When.after, (item, _, context) => After((global::app.goal.@this)item, context),
-            global::app.@event.binding.Scope.actor, (item, context) => item is global::app.goal.@this && Debugged(context));
-
-        if (setting.Level.Value == global::app.module.debug.Level.Action)
-        {
-            on.Bind(types["action"], "start", When.before, (item, _, context) => Before((global::app.goal.step.action.@this)item, context),
-                global::app.@event.binding.Scope.actor, (item, context) => item is global::app.goal.step.action.@this && Debugged(context));
-            on.Bind(types["action"], "start", When.after, (item, _, context) => After((global::app.goal.step.action.@this)item, context),
-                global::app.@event.binding.Scope.actor, (item, context) => item is global::app.goal.step.action.@this && Debugged(context));
-        }
+        var actions = setting.Level.Value == global::app.module.debug.Level.Action;
+        Bind(on, types["goal"], [types["step"]], actions ? [types["action"]] : [], index);
 
         // A goal named by its address may be one of plang's own, which starts through its own events alone, as its
         // steps and actions do: it is looked up now and bound there, by name. (A goal is read when it is first called.)
-        if (setting.Address is { } address && await (await _context.App.goal.list.Find(address)).Value() is { } named)
-            Bind(named, on, index, setting.Level.Value == global::app.module.debug.Level.Action);
+        if (setting.Address is { } address && await (await _context.App.goal.list.Find(address)).Value() is global::app.goal.@this named)
+            Bind(on, named, named.Step.Items(), actions ? named.Step.Items().SelectMany(step => step.Code.Items()) : [], index);
         return null;
     }
 
-    // Debug's bindings on one goal itself, its steps and (at the action level) their actions, as on their types.
-    private void Bind(global::app.goal.@this goal, global::app.@event.on.list.@this on, int? index, bool actions)
+    // Debug's bindings on what starts, each on its owner: a goal's, a step's, an action's start — on their types (every
+    // goal, step and action) or on one goal's own (itself, its steps, their actions). The marks are bound before the
+    // watchers, so a frame is marked before it is shown.
+    private void Bind(global::app.@event.on.list.@this on, global::app.type.item.@this goal,
+        IEnumerable<global::app.type.item.@this> steps, IEnumerable<global::app.type.item.@this> actions, int? index)
     {
-        var scope = global::app.@event.binding.Scope.actor;
-        on.Bind(goal, "start", When.before, (item, _, context) => Attach((global::app.goal.@this)item, context, index), scope);
-        on.Bind(goal, "start", When.after, (item, _, context) => After((global::app.goal.@this)item, context), scope,
-            (_, context) => Debugged(context));
-        foreach (var each in goal.Step.Items())
+        // a start of an item of T on `owner`, handed to `handler` — when debugged, only where debug follows
+        void On<T>(global::app.type.item.@this owner, When when, Func<T, actor.context.@this, Task<data.@this>> handler, bool debugged)
+            where T : global::app.type.item.@this
+            => on.Bind(owner, "start", when, (item, _, context) => handler((T)item, context), global::app.@event.binding.Scope.actor,
+                (item, context) => item is T && (!debugged || Debugged(context)));
+
+        On<global::app.goal.@this>(goal, When.before, (each, context) => Attach(each, context, index), debugged: false);
+        foreach (var step in steps)
         {
             if (index != null)
-                on.Bind(each, "start", When.before, (item, _, context) => Attach((global::app.goal.step.@this)item, context, index.Value), scope);
-            on.Bind(each, "start", When.before, (item, _, context) => Before((global::app.goal.step.@this)item, context), scope,
-                (_, context) => Debugged(context));
-            on.Bind(each, "start", When.after, (item, _, context) => After((global::app.goal.step.@this)item, context), scope,
-                (_, context) => Debugged(context));
-            if (!actions) continue;
-            foreach (var action in each.Code.Items())
-            {
-                on.Bind(action, "start", When.before, (item, _, context) => Before((global::app.goal.step.action.@this)item, context), scope,
-                    (_, context) => Debugged(context));
-                on.Bind(action, "start", When.after, (item, _, context) => After((global::app.goal.step.action.@this)item, context), scope,
-                    (_, context) => Debugged(context));
-            }
+                On<global::app.goal.step.@this>(step, When.before, (each, context) => Attach(each, context, index.Value), debugged: false);
+            On<global::app.goal.step.@this>(step, When.before, Before, debugged: true);
+            On<global::app.goal.step.@this>(step, When.after, After, debugged: true);
+        }
+        On<global::app.goal.@this>(goal, When.after, After, debugged: true);
+        foreach (var action in actions)
+        {
+            On<global::app.goal.step.action.@this>(action, When.before, Before, debugged: true);
+            On<global::app.goal.step.action.@this>(action, When.after, After, debugged: true);
         }
     }
 
