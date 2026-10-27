@@ -200,40 +200,63 @@ public abstract class View
         // a value found elsewhere is read from its key, which may name a location (a goal's): each location a key
         // names is loaded by its owner's type first, so the key's own read finds what it names without waiting. A
         // record that is not one (a frame) holds its found members the same way.
-        internal override System.Threading.Tasks.Task<global::app.data.@this> Load(global::app.type.@this type, string raw,
+        internal override async System.Threading.Tasks.Task<global::app.data.@this> Load(global::app.type.@this type, string raw,
             global::app.actor.context.@this context)
-            => type.ClrType is { } clr ? Load(clr, Key(raw, context), context) : base.Load(type, raw, context);
-
-        // a key as the record it is written as, its members as the general read makes them
-        private static global::app.type.item.dict.@this? Key(string raw, global::app.actor.context.@this context)
         {
-            var bytes = System.Text.Encoding.UTF8.GetBytes(raw);
-            var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
-            utf8.Read();
-            var json = new global::app.type.item.kind.json.Reader(utf8, bytes);
-            return json.Peek() == global::app.type.format.TokenKind.Object
-                ? new global::app.type.item.dict.serializer.Reader().Read(ref json, null, new global::app.type.reader.ReadContext(context)) as global::app.type.item.dict.@this
-                : null;
+            if (type.ClrType is not { } clr) return await base.Load(type, raw, context);
+            using var key = System.Text.Json.JsonDocument.Parse(raw);
+            return await Load(clr, key.RootElement, context);
         }
 
-        // the walk: a member found elsewhere in turn (a step's goal), a location loaded by the type that owns it
-        private async System.Threading.Tasks.Task<global::app.data.@this> Load(System.Type clr, global::app.type.item.dict.@this? key,
+        // the walk over a saved record of `clr`, as it is written (nothing is read before it is loaded): a member found
+        // elsewhere in turn (a step's goal) by its declared type, a location loaded by the type that owns it — the goal
+        // list holds what it loaded, so a location named twice is read once — and any other member by what it says it is
+        private async System.Threading.Tasks.Task<global::app.data.@this> Load(System.Type clr, System.Text.Json.JsonElement key,
             global::app.actor.context.@this context)
         {
-            if (key == null) return context.Ok();
+            if (key.ValueKind != System.Text.Json.JsonValueKind.Object) return context.Ok();
             var types = context.App.type.list;
             foreach (var entry in global::app.type.item.kind.reflection.Tagged.PropertiesFor(clr, this))
             {
-                if (key.Get(entry.WireName, context)?.Peek() is not { } member) continue;
+                if (!key.TryGetProperty(entry.WireName, out var member)) continue;
                 var declared = System.Nullable.GetUnderlyingType(entry.Property.PropertyType) ?? entry.Property.PropertyType;
-                var loaded = Found(declared) ? await Load(declared, member as global::app.type.item.dict.@this, context)
+                var loaded = Found(declared) ? await Load(declared, member, context)
                     : Found(clr) && typeof(global::app.type.item.path.@this).IsAssignableFrom(declared)
-                      && types[declared].Make(member, context) is global::app.type.item.path.@this location
-                        ? await types[clr].Load(location, context.App)
-                        : context.Ok();
+                      && member.ValueKind == System.Text.Json.JsonValueKind.String
+                        ? await types[clr].Load(global::app.type.item.path.@this.Resolve(member.GetString()!, context), context.App)
+                        : await Walk(member, context);
                 if (!loaded.Success) return loaded;
             }
             return context.Ok();
+        }
+
+        // a saved value by what it says it is: a Data row (the json serializer's own read, its value left unread) by its
+        // type — a found one loaded as its key, any other walked into — and any other object or array walked into
+        private async System.Threading.Tasks.Task<global::app.data.@this> Walk(System.Text.Json.JsonElement element,
+            global::app.actor.context.@this context)
+        {
+            switch (element.ValueKind)
+            {
+                case System.Text.Json.JsonValueKind.Object:
+                    if (new global::app.type.item.serializer.json(context).Typed(System.Text.Encoding.UTF8.GetBytes(element.GetRawText()),
+                            new global::app.type.reader.ReadContext(context) { View = this }) is { } row)
+                    {
+                        if (row.Peek() is not global::app.type.item.source { Raw: string written }) return context.Ok();
+                        using var value = System.Text.Json.JsonDocument.Parse(written);
+                        return row.Type?.ClrType is { } clr && Found(clr)
+                            ? await Load(clr, value.RootElement, context)
+                            : await Walk(value.RootElement, context);
+                    }
+                    foreach (var member in element.EnumerateObject())
+                        if (await Walk(member.Value, context) is { Success: false } failed) return failed;
+                    return context.Ok();
+                case System.Text.Json.JsonValueKind.Array:
+                    foreach (var item in element.EnumerateArray())
+                        if (await Walk(item, context) is { Success: false } failed) return failed;
+                    return context.Ok();
+                default:
+                    return context.Ok();
+            }
         }
 
         // Whether a type tags what finds it: read once per type.
