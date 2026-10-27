@@ -49,4 +49,21 @@ public class EventsSinceTests
         await Assert.That(events).IsNotNull();
         await Assert.That(events.Any()).IsFalse();
     }
+
+    // A frame on the current chain sits in the tree under the root as well: its changes come once.
+    [Test]
+    public async Task EventsSince_YieldsEachFramesChangesOnce()
+    {
+        var (app, action) = BuildLive("EvtC");
+        var stack = app.actor.list.User.Context.call;
+        var vars = app.actor.list.User.Context.Variable;
+        app.actor.list.User.Context.Setting.Set("app.call.setting.diff.enabled", true);
+        await using var call = stack.Push(action, await stack.Setting(), vars);
+
+        var t = DateTimeOffset.UtcNow;
+        await Task.Delay(5);
+        await vars.Set("x", 1);
+
+        await Assert.That(stack.EventsSince(t).Count(e => e.Name == "x")).IsEqualTo(1);
+    }
 }

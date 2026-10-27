@@ -324,8 +324,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// once (<paramref name="seen"/>).</summary>
     internal IEnumerable<Diff> Since(DateTimeOffset t, HashSet<@this> seen)
     {
-        if (!seen.Add(this)) yield break;
-        if (Diffs is { } diffs)
+        // a frame's own diffs once (one already yielded is in seen); the frames under it still walked
+        if (seen.Add(this) && Diffs is { } diffs)
             foreach (var diff in diffs.Since(t))
                 yield return diff;
         foreach (var child in Children)
