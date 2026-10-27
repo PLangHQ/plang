@@ -40,7 +40,7 @@ public partial class @this
         }
         if (Step != null) Set("step", Step.Index);
         // the module's NAME, not the element: an element is a live graph node whose actions lead back to it
-        if (Place >= 0 && Action is { } action) Set("action", Node(("index", Place), ("module", action.Module.Name), ("name", action.Name)));
+        if (Action is { Index: { } place } action) Set("action", Node(("index", place), ("module", action.Module.Name), ("name", action.Name)));
 
         // a node of their own, as a context's variables are, so they come back through the snapshot's one door (In)
         var variables = new global::app.snapshot.@this(context);

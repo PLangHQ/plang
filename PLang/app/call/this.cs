@@ -409,15 +409,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         _stack.Audit.Add(error);
     }
 
-    // Where the action stands in its step; -1 when the frame runs no action, or its step doesn't hold it.
-    private protected int Place => Action != null && Step != null ? Step.Code.IndexOf(Action) : -1;
-
-    /// <summary>The action's index in its step; -1 when the frame runs no action, or its step doesn't hold it.</summary>
-    public global::app.type.item.number.@this Index => Place;
-
-    /// <summary>A resume point: an action its step holds. A goal's or a step's frame is not one, nor an action
-    /// composed in C#, which no step holds — the resumed run makes those again.</summary>
-    public global::app.type.item.@bool.@this IsResumable => Place >= 0;
 
     /// <summary>Its line in a stack trace: <c>Start.set (step 3) in /Start.goal</c>.</summary>
     public override string ToString()
