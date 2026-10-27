@@ -1,11 +1,11 @@
 / save snapshot answers the run's state as a value. Kept in a .plang file outside the tracked tree (signed, as the save
 / signed it) and read back in this app, it holds the run's variables and its call stack: the frame this goal runs in
-/ comes back, by its goal's address, which only a real snapshot holds.
+/ comes back as the first of its frames, by its goal's path, which only a real snapshot holds.
 Start
 - set %name% = "Bob"
 - save snapshot, write to %snapshot%
 - save %snapshot% to 'workspace/saved.plang'
 - read file 'workspace/saved.plang', write to %back%
 - assert %back.actor.list.user.context.variable.name% equals "Bob"
-- assert %back.actor.list.user.context.call.root.goal.address% contains "SavesTheRun"
+- assert %back.actor.list.user.context.call.frames[0].goal.path% contains "SavesTheRun"
 - delete file 'workspace/saved.plang'
