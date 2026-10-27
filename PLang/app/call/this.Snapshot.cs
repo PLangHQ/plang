@@ -118,7 +118,7 @@ public partial class @this
 
     // Where a stored frame stood: its goal (found by Find), its step and its action by index — the hash covers the step
     // text, not the built actions, so the action is checked against the module and name it was stored with.
-    private static (global::app.goal.@this?, global::app.goal.step.@this?, global::app.goal.step.action.@this?) Placed(
+    private protected static (global::app.goal.@this? Goal, global::app.goal.step.@this? Step, global::app.goal.step.action.@this? Action) Placed(
         global::app.snapshot.@this node, actor.context.@this context)
     {
         if (node.Entries.Get<global::app.goal.@this>("goal", context) is not { } goal) return (null, null, null);

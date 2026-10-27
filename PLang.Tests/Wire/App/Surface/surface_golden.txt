@@ -82,6 +82,7 @@ class app.call.diff.this : System.Collections.Generic.IEnumerable<app.call.Diff>
   ctor()
 
 class app.call.goal.this : app.call.this, app.type.item.ICreate<app.call.goal.this>
+  override Goal : app.goal.this { get; }
   static Create(System.Object raw) : app.call.goal.this
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.goal.this
   static Internal : System.Boolean { get; }
@@ -141,6 +142,7 @@ class app.call.setting.this : app.type.item.setting.this
   static Internal : System.Boolean { get; }
 
 class app.call.step.this : app.call.this, app.type.item.ICreate<app.call.step.this>
+  override Step : app.goal.step.this { get; }
   static Create(System.Object raw) : app.call.step.this
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.step.this
   static Internal : System.Boolean { get; }
@@ -3487,8 +3489,8 @@ type app.call.composed
   .depth : number
 
 type app.call.goal
-  .property : app.type.item.property.list
   .goal : goal
+  .property : app.type.item.property.list
   .step : step
   .action : action
   .caller : app.call
@@ -3521,9 +3523,9 @@ type app.call.setting.diff
 type app.call.setting.frame
 
 type app.call.step
+  .step : step
   .property : app.type.item.property.list
   .goal : goal
-  .step : step
   .action : action
   .caller : app.call
   .errors : list<error>

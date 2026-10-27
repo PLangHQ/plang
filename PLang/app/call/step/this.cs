@@ -11,12 +11,15 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
 
     internal @this(global::app.type.@this type, list.@this stack, global::app.goal.step.@this step,
         global::app.call.setting.@this setting)
-        : base(null, type, step.Goal, step, null, stack.Current, stack.Current, stack, stack.Variables, setting) { }
+        : base(null, type, null, stack.Current, stack.Current, stack, stack.Variables, setting) => Step = step;
 
     /// <summary>A step's frame come back from a snapshot: its stored <paramref name="node"/> read whole, under
     /// <paramref name="stack"/>'s current frame.</summary>
     private @this(global::app.snapshot.@this node, global::app.type.@this type, list.@this stack, global::app.actor.context.@this context)
-        : base(node, type, stack, context) { }
+        : base(node, type, stack, context) => Step = Placed(node, context).Step;
+
+    /// <summary>The step it runs; its goal is the step's.</summary>
+    public override global::app.goal.step.@this? Step { get; }
 
     /// <summary>The pure core — a step's frame passes through; nothing else converts into one.</summary>
     public static new @this? Create(object? raw) => raw as @this;

@@ -91,15 +91,15 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// </summary>
     public global::app.type.item.text.@this Id => _id;
 
-    /// <summary>The goal in play at this frame — the goal a goal's frame runs, or the one its step or action is in.
-    /// Null for an action composed in C#, which holds no step.</summary>
+    /// <summary>The goal in play at this frame — the goal a goal's frame runs, or the one its step is in. Null for an
+    /// action composed in C#, which holds no step.</summary>
     [global::app.LlmBuilder]
-    public virtual global::app.goal.@this? Goal { get; }
+    public virtual global::app.goal.@this? Goal => Step?.Goal;
 
-    /// <summary>The step in play at this frame — the step a step's frame runs, or the action's. Null in a goal's
-    /// own frame and for an action composed in C#.</summary>
+    /// <summary>The step in play at this frame — the step a step's frame runs, or the one its action is in. Null in a
+    /// goal's own frame and for an action composed in C#.</summary>
     [global::app.LlmBuilder]
-    public virtual global::app.goal.step.@this? Step { get; }
+    public virtual global::app.goal.step.@this? Step => Action?.Step;
 
     /// <summary>The action this frame runs. Null in a goal's or a step's frame.</summary>
     [global::app.LlmBuilder]
@@ -206,14 +206,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// frame, its caller, which is back already. Ending it goes back to its caller.</summary>
     private protected @this(global::app.snapshot.@this node, global::app.type.@this type, global::app.call.list.@this stack,
         global::app.actor.context.@this context, global::app.goal.step.action.@this? callee = null)
-        : this(node, Placed(node, context), type, stack, context, callee) { }
-
-    private @this(global::app.snapshot.@this node,
-        (global::app.goal.@this? Goal, global::app.goal.step.@this? Step, global::app.goal.step.action.@this? Action) place,
-        global::app.type.@this type, global::app.call.list.@this stack, global::app.actor.context.@this context,
-        global::app.goal.step.action.@this? callee)
-        : this(Stored<global::app.type.item.text.@this>(node, "id", context).ToString(), type, place.Goal, place.Step,
-            place.Action, stack.Current, stack.Current, stack, stack.Variables,
+        : this(Stored<global::app.type.item.text.@this>(node, "id", context).ToString(), type,
+            Placed(node, context).Action, stack.Current, stack.Current, stack, stack.Variables,
             Stored<global::app.call.setting.@this>(node, "setting", context), callee: callee)
     {
         // a collection left out was empty
@@ -240,8 +234,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     private protected @this(
         string? id,
         global::app.type.@this type,
-        global::app.goal.@this? goal,
-        global::app.goal.step.@this? step,
         global::app.goal.step.action.@this? action,
         @this? caller,
         @this? previous,
@@ -253,8 +245,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     {
         _id = id ?? Guid.NewGuid().ToString("N")[..8];
         Setting = setting;
-        Goal = goal;
-        Step = step;
         Action = action;
         Caller = caller;
         _depth = (caller?._depth ?? 0) + (Deepens ? 1 : 0);
