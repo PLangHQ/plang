@@ -10,7 +10,7 @@ public class AppSnapshotTests
         var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         await app.actor.list.User.Context.Variable.Set("x", 1);
         await app.actor.list.System.Context.Variable.Set("y", 2);
-        var snap = app.Snapshot(app.actor.list.User.Context).Saved();
+        var snap = (await app.Snapshot(app.actor.list.User.Context).Saved());
 
         await Assert.That(snap.Entries.Get("mode", snap.Context)).IsNull();
         await Assert.That(snap.Holds("property")).IsFalse();                  // nothing added: an empty node is left out
@@ -28,7 +28,7 @@ public class AppSnapshotTests
         var user = app.actor.list.User;
         using var task = user.Context.Child(user, CancellationToken.None);
 
-        var saved = app.Snapshot(task);
+        var saved = await app.Snapshot(task);
 
         await Assert.That(saved.Success).IsFalse();
         await Assert.That(saved.Error!.Key).IsEqualTo("SnapshotInTask");
@@ -41,7 +41,7 @@ public class AppSnapshotTests
         await src.actor.list.User.Context.Variable.Set("x", 1);
         src.Build = new global::app.module.build.@this(src.actor.list.System.Context);   // building — Mode is Build
 
-        var snap = src.Snapshot(src.actor.list.User.Context).Saved();
+        var snap = (await src.Snapshot(src.actor.list.User.Context).Saved());
 
         var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();   // testing — and it stays so
         await dst.Restore(snap, dst.actor.list.User.Context);
@@ -55,7 +55,7 @@ public class AppSnapshotTests
     public async Task App_Snapshot_OmitsReconstructOnBuildSubsystems()
     {
         var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
-        var snap = app.Snapshot(app.actor.list.User.Context).Saved();
+        var snap = (await app.Snapshot(app.actor.list.User.Context).Saved());
 
         // a member that is no part, or a concept whose list is no part (goals, tests, errors, …), leaves no node
         foreach (var name in new[] { "goal", "module", "type", "test", "error", "variable", "shortcut", "store", "filesystem", "Cache", "parent", "Build" })
@@ -66,7 +66,7 @@ public class AppSnapshotTests
     public async Task App_Cache_NotInSnapshot_FreshAppHasEmptyCache()
     {
         var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
-        var snap = src.Snapshot(src.actor.list.User.Context).Saved();
+        var snap = (await src.Snapshot(src.actor.list.User.Context).Saved());
 
         var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
         await dst.Restore(snap, dst.actor.list.User.Context);

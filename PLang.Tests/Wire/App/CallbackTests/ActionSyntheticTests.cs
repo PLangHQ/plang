@@ -60,7 +60,7 @@ public class ActionSyntheticTests
             "plang-cs3-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var synthetic = new ActionEntity(app.type.list) { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" };
         await using var call = app.actor.list.User.Context.call.Push(synthetic, await app.actor.list.User.Context.call.Setting());
-        var snap = app.Snapshot(app.actor.list.User.Context).Saved();
+        var snap = (await app.Snapshot(app.actor.list.User.Context).Saved());
         await Assert.That(snap).IsNotNull();
     }
 }

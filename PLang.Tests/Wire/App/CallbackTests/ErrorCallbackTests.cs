@@ -16,7 +16,7 @@ public class ErrorCallbackTests : System.IAsyncDisposable
         var error = new global::app.error.@this("boom", "Boom");
 
         // an error not raised inside a run has no context for an answer to be born with: it refuses
-        var refused = await Assert.That(() => error.Callback).Throws<global::app.error.AppException>();
+        var refused = await Assert.That(() => error.Callback(_app.actor.list.User.Context)).Throws<global::app.error.AppException>();
         await Assert.That(refused!.Error.Key).IsEqualTo("NoCallback");
     }
 
@@ -25,11 +25,11 @@ public class ErrorCallbackTests : System.IAsyncDisposable
     {
         var error = new global::app.error.@this("boom", _app.actor.list.User.Context, "Boom");
 
-        var callback = error.Callback;
+        var callback = await error.Callback(_app.actor.list.User.Context);
 
         await callback.IsSuccess();
         await Assert.That(callback.Snapshot).IsNotNull();
-        await Assert.That(ReferenceEquals(error.Callback, callback)).IsTrue();
+        await Assert.That(ReferenceEquals(await error.Callback(_app.actor.list.User.Context), callback)).IsTrue();
     }
 
     // An error built without a context takes the handler's when it is returned through
@@ -42,8 +42,9 @@ public class ErrorCallbackTests : System.IAsyncDisposable
         var result = _app.actor.list.User.Context.Error(error);
 
         await Assert.That(ReferenceEquals(result.Error!.Context, _app.actor.list.User.Context)).IsTrue();
-        await error.Callback.IsSuccess();
-        await Assert.That(error.Callback.Snapshot).IsNotNull();
+        var callback = await error.Callback(_app.actor.list.User.Context);
+        await callback.IsSuccess();
+        await Assert.That(callback.Snapshot).IsNotNull();
     }
 
     // Passed up through a second context, the error keeps where it happened.

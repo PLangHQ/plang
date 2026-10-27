@@ -118,7 +118,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>The run's state: each property the Data it is, under its name, as variables are stored.</summary>
     global::app.data.@this global::app.snapshot.ISnapshot.Store(global::app.snapshot.@this snapshot, global::app.actor.context.@this context)
     {
-        foreach (var (name, property) in Members) snapshot.Entries.Set(name, property.Clone());
+        foreach (var (name, property) in Members) snapshot.Entries.Set(name, property);
         return context.Ok();
     }
 

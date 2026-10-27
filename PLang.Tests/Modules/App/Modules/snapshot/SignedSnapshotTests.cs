@@ -203,7 +203,7 @@ public class SignedSnapshotTests
         await using var app = App();
         var context = app.actor.list.User.Context;
 
-        var result = await Resume(app.Snapshot(context), context);
+        var result = await Resume(await app.Snapshot(context), context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("SnapshotUnsigned");

@@ -143,34 +143,36 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// common fields and before <c>errorChain</c>. Base errors have none.</summary>
     protected virtual void WriteSpecific(global::app.type.format.IWriter writer) { }
 
-    private global::app.data.@this<global::app.snapshot.@this>? _callback;
+    private System.Threading.Tasks.Task<global::app.data.@this<global::app.snapshot.@this>>? _callback;
 
     /// <summary>
-    /// PLang surface <c>%!error.callback%</c> resolves through here. First read invokes
-    /// <c>app.Snapshot(this)</c> on the App the error's own <see cref="Context"/> belongs to — the
-    /// THROW-TIME snapshot: CallStack from this error's <see cref="CallFrames"/> (the live stack has
-    /// unwound past the failing action by handler time) and variables via <c>SnapshotAt(this)</c>.
-    /// Wrapped directly as <c>Data&lt;Snapshot&gt;</c>; resume goes through
-    /// <see cref="app.snapshot.@this.Resume"/>, same path as ask-resume. Cached per Error instance —
-    /// reading twice returns the same Data. An error with no context holds no run — it wasn't raised inside one, or it
-    /// came back from a stored state (which keeps its key, message, status and causes, not its run): there is nothing to
-    /// resume, so it has no callback — a <c>NoCallback</c> error, not a throw. One raised inside a task answers the
-    /// snapshot's refusal (<c>SnapshotInTask</c>).
+    /// PLang surface <c>%!error.callback%</c> resolves through here (a member that asks only its asker,
+    /// <paramref name="context"/>; the run it takes is this error's own). The first ask takes
+    /// <c>app.Snapshot(this)</c> on the App the error's own <see cref="Context"/> belongs to — the THROW-TIME snapshot:
+    /// CallStack from this error's <see cref="CallFrames"/> (the live stack has unwound past the failing action by handler
+    /// time) and variables via <c>SnapshotAt(this)</c> — as the bytes the app takes it as, its node (which a resume goes on
+    /// from, <see cref="app.snapshot.@this.Resume"/>, as an ask's does) those bytes opened. Taken once per Error — asking
+    /// twice answers the same Data. An error with no context holds no run — it wasn't raised inside one, or it came back
+    /// from a stored state (which keeps its key, message, status and causes, not its run): there is nothing to resume, so
+    /// it has no callback (<c>NoCallback</c>). One raised inside a task answers the snapshot's refusal
+    /// (<c>SnapshotInTask</c>).
     /// </summary>
-    [System.Text.Json.Serialization.JsonIgnore, global::app.LlmBuilder]
-    public global::app.data.@this<global::app.snapshot.@this> Callback
+    [global::app.LlmBuilder]
+    public System.Threading.Tasks.Task<global::app.data.@this<global::app.snapshot.@this>> Callback(actor.context.@this context)
     {
-        get
+        if (_callback != null) return _callback;
+        // an error that holds no run has no context for its answer to be born with
+        if (Context == null)
+            throw new global::app.error.AppException(new Error(
+                $"error '{Key}' holds no run (it wasn't raised inside one, or it came back from a stored state), so it has no callback to resume.",
+                "NoCallback", 400));
+        return _callback = Taken(Context);
+
+        async System.Threading.Tasks.Task<global::app.data.@this<global::app.snapshot.@this>> Taken(actor.context.@this run)
         {
-            if (_callback != null) return _callback;
-            // an error that holds no run has no context for its answer to be born with
-            if (Context == null)
-                throw new global::app.error.AppException(new Error(
-                    $"error '{Key}' holds no run (it wasn't raised inside one, or it came back from a stored state), so it has no callback to resume.",
-                    "NoCallback", 400));
-            _callback = Context.App.Snapshot(this, Context);
-            if (_callback.Success) _callback.Snapshot = _callback.Peek() as global::app.snapshot.@this;
-            return _callback;
+            var taken = await run.App.Snapshot(this, run);
+            if (taken.Success) taken.Snapshot = await taken.Value() as global::app.snapshot.@this;
+            return taken;
         }
     }
     public Action? Action { get; set; }

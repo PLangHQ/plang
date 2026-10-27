@@ -38,7 +38,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         using var task = user.Context.Child(user, CancellationToken.None);
         await using var taskFrame = task.call.Isolate(null, await task.call.Setting(), caller: outer);
 
-        var saved = app.Snapshot(user.Context);
+        var saved = await app.Snapshot(user.Context);
 
         await Assert.That(saved.Success).IsFalse();
         await Assert.That(saved.Error!.Key).IsEqualTo("SnapshotWhileTaskRuns");
@@ -55,7 +55,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         await using (var frame = stack.Push(a1, await stack.Setting()))
         {
             frame.Record(new global::app.error.@this("it broke", "Broke", 500), context);
-            var snap = src.Snapshot(context).Saved();
+            var snap = (await src.Snapshot(context).Saved());
 
             var (dg1, _, _) = MakeFrame("ErrGoal");
             var dst = BuildAppWithGoals(dg1);
@@ -77,7 +77,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         await using (var frame = context.call.Push(a1, await context.call.Setting()))
         {
             frame.Event = new global::app.data.@this("!event", "fired", context: context);
-            var snap = src.Snapshot(context).Saved();
+            var snap = (await src.Snapshot(context).Saved());
 
             var (dg1, _, _) = MakeFrame("EventGoal");
             var dst = BuildAppWithGoals(dg1);
@@ -181,7 +181,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
 
         global::app.snapshot.@this snap;
         await using (context.call.Push(a1, await context.call.Setting()))
-            snap = app.Snapshot(context).Saved();
+            snap = (await app.Snapshot(context).Saved());
         await app.Restore(snap, context);
 
         await Assert.That(context.call.Root!.Goal).IsSameReferenceAs(g1);
@@ -203,7 +203,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         await using (stack.Push(s2, await stack.Setting()))
         await using (stack.Push(a2, await stack.Setting()))
         {
-            var snap = src.Snapshot(src.actor.list.User.Context).Saved();
+            var snap = (await src.Snapshot(src.actor.list.User.Context).Saved());
 
             var (dg1, _, _) = MakeFrame("FrOuter");
             var (dg2, _, _) = MakeFrame("FrInner");
@@ -234,7 +234,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
 
         await using (stack.Push(g1, await stack.Setting(), [new global::app.data.@this("who", "ingi", context: context)]))
         {
-            var snap = src.Snapshot(context).Saved();
+            var snap = (await src.Snapshot(context).Saved());
 
             var (dg1, _, _) = MakeFrame("VarGoal");
             var dst = BuildAppWithGoals(dg1);

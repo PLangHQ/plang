@@ -19,7 +19,7 @@ public class SnapshotWireTests
         await src.actor.list.User.Context.Variable.Set("count", 42L);
         await src.actor.list.User.Context.Variable.Set("name", "plang");
 
-        var wired = await RoundTrip(src, src.Snapshot(src.actor.list.User.Context).Saved());
+        var wired = await RoundTrip(src, (await src.Snapshot(src.actor.list.User.Context).Saved()));
 
         var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
         await dst.Restore(wired, dst.actor.list.User.Context);
@@ -36,7 +36,7 @@ public class SnapshotWireTests
         var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
         src.Build = new global::app.module.build.@this(src.actor.list.System.Context);
 
-        var wired = await RoundTrip(src, src.Snapshot(src.actor.list.User.Context).Saved());
+        var wired = await RoundTrip(src, (await src.Snapshot(src.actor.list.User.Context).Saved()));
 
         var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
         await dst.Restore(wired, dst.actor.list.User.Context);
@@ -370,7 +370,7 @@ public class SnapshotWireTests
         // how an app was started (test, build, run) is the host's choice, not the program's state
         var src = new global::app.@this(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-mode-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
-        var snap = src.Snapshot(src.actor.list.User.Context).Saved();
+        var snap = (await src.Snapshot(src.actor.list.User.Context).Saved());
         await Assert.That(snap.Has("mode")).IsFalse();
 
         var dst = new global::app.@this(System.IO.Path.Combine(
@@ -434,7 +434,7 @@ public class SnapshotWireTests
         var context = app.actor.list.User.Context;
         await context.Variable.Set("x", 1L);
 
-        var snap = app.Snapshot(app.actor.list.User.Context).Saved();
+        var snap = (await app.Snapshot(app.actor.list.User.Context).Saved());
         var d = new global::app.data.@this<global::app.snapshot.@this>("", snap,
             new global::app.type.@this("snapshot"), context: context);
 
@@ -458,8 +458,8 @@ public class SnapshotWireTests
     public async Task ThrowTimeSnapshot_EditSurvivesResume()
     {
         // The ONE difference from the passing edit-resume tests: the snapshot comes
-        // from app.Snapshot(error).Saved() (throw-time: SnapshotAt + error.CallFrames), the
-        // path Error.Callback uses in the .test.goal — not app.Snapshot(app.actor.list.User.Context).Saved() (live).
+        // from (await app.Snapshot(error).Saved()) (throw-time: SnapshotAt + error.CallFrames), the
+        // path Error.Callback uses in the .test.goal — not (await app.Snapshot(app.actor.list.User.Context).Saved()) (live).
         var app = new global::app.@this(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-tt-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;

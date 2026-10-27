@@ -3,8 +3,8 @@ namespace app.type.item.variable.list;
 public partial class @this : ISnapshot
 {
     /// <summary>
-    /// Writes the user-visible variables, each its own entry, the Data whole (name, value, type, properties), cloned so
-    /// the snapshot is detached from later changes. Left out:
+    /// Writes the user-visible variables, each its own entry, the Data whole (name, value, type, properties) — the app
+    /// writes the snapshot to its bytes as soon as it is walked, which is what detaches it from later changes. Left out:
     ///  - !-prefixed infrastructure variables (!app, !filesystem, !error, …);
     ///  - always-fresh cells (Now, NowUtc, GUID, MyIdentity), which are made again where they are read;
     ///  - a sensitive value: a resumed run that needs it asks again.
@@ -20,7 +20,7 @@ public partial class @this : ISnapshot
                 || kvp.Value.Item is global::app.type.item.computed) continue;
             if (kvp.Value.Item is global::app.type.item.sensitive.@this) continue;
             // under the store's key, the truth: one Data held under two names is stored under both
-            snapshot.Entries.Set(kvp.Key, kvp.Value.Clone());
+            snapshot.Entries.Set(kvp.Key, kvp.Value);
         }
         return context.Ok();
     }
