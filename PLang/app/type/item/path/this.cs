@@ -100,7 +100,6 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
         }
     }
 
-    /// <summary>Source generator convention — auto-wraps string parameters.</summary>
     /// <summary>
     /// Source generator convention — auto-wraps string parameters. The raw path's scheme is one
     /// of path's kinds, which builds the right subclass (file → FilePath, http → HttpPath, ...).
@@ -234,12 +233,8 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     // comparisons, not display.
     public override string ToString() => _location;
 
-    /// <summary>
-    /// The type owns its wire shape and reads its own private fields — the typed location.
-    /// The resolved <see cref="Absolute"/> stays off the wire (it leaks the install root and
-    /// is gated behind Authorize).
-    /// </summary>
-    /// <summary>A path writes its own form — its location — in every view.</summary>
+    /// <summary>A path writes its own form — its location — in every view; the resolved <see cref="Absolute"/> stays
+    /// off the wire (it leaks the install root and is gated behind Authorize).</summary>
     protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.String(ToString());

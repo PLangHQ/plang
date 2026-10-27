@@ -371,8 +371,8 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// This value's OWN type entity — the type that MADE it, handed in at birth (the app's list for an
     /// origin birth via <c>Make</c>, or forwarded from the value it came from). The single owner of its
     /// identity; provenance lives on the value's <see cref="list"/> history and is asked via <see cref="Is"/>.
-    /// <para>Only the root type and the type list are born without one. A value whose maker does not hand its type
-    /// yet answers the rebuild; that goes once every maker hands one.</para>
+    /// <para>Only the root type and the type list are born without one; a value born without one answers a type made
+    /// from its class.</para>
     /// </summary>
     private readonly global::app.type.@this? _type;
 

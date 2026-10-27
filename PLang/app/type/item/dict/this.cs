@@ -124,7 +124,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return new Data(key, global::app.type.item.@this.Create(raw, context), context: context);
     }
 
-    /// <summary>Number of entries.</summary>
     /// <summary>Entry count as the PLang <c>number</c> (the public surface
     /// answers in PLang values).</summary>
     [LlmBuilder] public global::app.type.item.number.@this Count => _value.Count;
@@ -148,11 +147,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// context-free faces (a writer's tokens) that read the slot itself.</summary>
     internal object? Stored(string key) => _value[key];
 
-    /// <summary>The entries in insertion order, one pass, each handed out as the caller reaches it —
-    /// a raw slot as a new Data born with <paramref name="context"/>, a stored Data by reference.</summary>
     /// <summary>A dict's named rows are its entries, each under its key.</summary>
     public override IEnumerable<Data> Rows(actor.context.@this context) => Entries(context);
 
+    /// <summary>The entries in insertion order, one pass, each handed out as the caller reaches it —
+    /// a raw slot as a new Data born with <paramref name="context"/>, a stored Data by reference.</summary>
     public IEnumerable<Data> Entries(actor.context.@this context)
     {
         foreach (var k in _value.Keys) yield return Slot(k, context);
@@ -424,12 +423,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             })
             .DistinctBy(v => v.Text).ToList();
 
-    /// <summary>
-    /// THE door — a stamped container renders its entries, each through its
-    /// own door (door recursion; string re-scanning never happens). An entry
-    /// whose ref is unset keeps its literal form — the builder's preservation
-    /// rule for partially-bound structures.
-    /// </summary>
     /// <summary>A container is never final — an entry may be non-final (a template,
     /// a nested container), so a read must go through the entry's OWN door. The dict
     /// itself is already its real shape: <c>Value()</c> returns <c>this</c> (the base),
