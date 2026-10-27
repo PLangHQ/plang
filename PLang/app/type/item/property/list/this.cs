@@ -88,13 +88,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// Data it is; anything else declines.</summary>
     public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
-        if (raw is @this list) return list;
-        if (raw is global::app.type.item.dict.@this written)
+        if (raw is @this) return (@this)raw;
+        if (raw is global::app.type.item.dict.@this dict)
         {
-            var made = new @this(type ?? data.Context.App.type.list[typeof(@this)]);
+            var list = new @this(type ?? data.Context.App.type.list[typeof(@this)]);
             // each property by the key it was written under: a Data kept in a snapshot is named by where it is held
-            foreach (var name in written.KeyNames) made._property[name] = written.Get(name, data.Context)!;
-            return made;
+            foreach (var name in dict.KeyNames) list._property[name] = dict.Get(name, data.Context)!;
+            return list;
         }
         data.Fail(new global::app.error.@this(
             $"%{data.Name}% holds a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name} — a thing's properties are made from what they wrote",
@@ -104,14 +104,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>Reads the list off the reader — its own <c>"property": {…}</c> object, each property the whole Data it
     /// was written as, born with the read's context.</summary>
-    public static @this Read(ref global::app.type.item.kind.json.Reader reader, global::app.type.reader.ReadContext ctx)
+    public static @this Read(ref global::app.type.item.kind.json.Reader json, global::app.type.reader.ReadContext ctx)
     {
         var list = new @this(ctx.Context.App.type.list[typeof(@this)]);
-        if (reader.Null()) return list;
-        var data = new global::app.data.reader.@this();
-        reader.BeginObject();
-        while (reader.NextName(out var name)) list._property[name] = data.Read(ref reader, ctx);
-        reader.EndObject();
+        if (json.Null()) return list;
+        var reader = new global::app.data.reader.@this();
+        json.BeginObject();
+        while (json.NextName(out var name)) list._property[name] = reader.Read(ref json, ctx);
+        json.EndObject();
         return list;
     }
 
