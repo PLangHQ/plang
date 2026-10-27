@@ -116,8 +116,9 @@ public sealed partial class @this
     /// there with the call's arguments, and what comes back is its result. Null for a goal of this app — its steps run.</summary>
     internal global::app.parent.@this? Elsewhere { get; init; }
 
-    /// <summary>The goal's .goal file — where its .pr is found. A sub-goal is in its parent's file.</summary>
-    [Debug, LlmBuilder]
+    /// <summary>The goal's .goal file — where its .pr is found. A sub-goal is in its parent's file. In a snapshot it is
+    /// part of what finds the goal: the goal list loads it from there.</summary>
+    [Debug, LlmBuilder, Snapshot]
     public global::app.type.item.path.@this? Path
     {
         get => Parent?.Path ?? _path;
@@ -138,8 +139,8 @@ public sealed partial class @this
     public global::app.type.item.path.@this? Folder => Path?.Parent;
 
     /// <summary>The .pr this goal is built to, a file reference (its file's <c>Pr</c>), worked out where its Path is set; a
-    /// sub-goal's is its parent's; none without a Path. In a snapshot it is part of what finds the goal.</summary>
-    [Debug, Snapshot]
+    /// sub-goal's is its parent's; none without a Path.</summary>
+    [Debug]
     public global::app.type.item.file.@this? Pr => Parent?.Pr ?? _pr;
 
     [Store, Out, Debug, Snapshot]

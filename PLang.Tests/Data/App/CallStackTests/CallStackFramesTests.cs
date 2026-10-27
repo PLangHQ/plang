@@ -124,6 +124,38 @@ public class CallStackFramesTests
         await Assert.That(root.Arguments.Contains("who")).IsTrue();
     }
 
+    // A goal kept in what a program added to its call, in an app that must load that goal from its .pr: the frame's
+    // own goal is held, so only the kept one needs the load. Red while the snapshot view's load reaches only a frame's
+    // found members (goal, step, action), not a value kept inside another member.
+    [Test]
+    public async Task AGoalKeptInWhatAProgramAdded_IsLoaded_InAnAppThatMustLoadIt()
+    {
+        var folder = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-kept-" + System.Guid.NewGuid().ToString("N")[..8]);
+        await using var src = new global::app.@this(folder, global::PLang.Tests.Parent.Actor).Testing();
+        var (frameGoal, _, _) = MakeFrame(src, "FrameGoal");
+        var (kept, _, _) = MakeFrame(src, "KeptGoal");
+        var context = src.actor.list.User.Context;
+        string text;
+        await using (var frame = context.call.Push(frameGoal, await context.call.Setting()))
+        {
+            frame.property.Add("place", new global::app.data.@this("place", kept, context: context));
+            text = await src.Snapshot(context).Saved().Text(context);
+        }
+        // only the kept goal is on disk, built
+        var pr = System.IO.Path.Combine(folder, kept.Pr!.Path.Raw.TrimStart('/'));
+        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(pr)!);
+        System.IO.File.WriteAllText(pr, await context.Pr(kept));
+
+        await using var dst = new global::app.@this(folder, global::PLang.Tests.Parent.Actor).Testing();
+        MakeFrame(dst, "FrameGoal");
+        var into = dst.actor.list.User.Context;
+        await dst.Restore(await into.Snapshot(text), into);
+
+        var place = into.call.Root!.property["place"];
+        await Assert.That(place).IsNotNull();
+        await Assert.That((await place!.Value<Goal>())?.Name).IsEqualTo("KeptGoal");
+    }
+
     [Test]
     public async Task ARestoreThatFails_LeavesNothingEnteredBehind()
     {
