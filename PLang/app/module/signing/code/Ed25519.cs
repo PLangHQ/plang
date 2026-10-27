@@ -32,8 +32,7 @@ public class Ed25519 : ISigning
         // The data as the view it is signed in takes it, settled once — plang's own store as written, anything that
         // crosses a copy of what it names — and the signature hashes and holds that one Data: the variable changing
         // afterwards changes nothing it holds.
-        var view = action.View
-            ?? (action.StoreView != null && (await action.StoreView.Value())?.Value == true ? global::app.View.Store : global::app.View.Out);
+        var view = action.View;
         global::app.data.@this data;
         try { data = await action.Data!.Settle(view); }
         catch (global::app.error.AppException exception) { return action.Context.Error(exception.Error); }

@@ -264,12 +264,13 @@ public class SignedSnapshotTests
     }
 
     // A Data signed for the store (store: true) or for the wire, by the app's identity.
+    // Signed through the signer itself, as C# that knows its view signs: the view handed whole.
     private static async Task<global::app.data.@this> Signed(global::app.actor.context.@this context, bool store)
-        => await new global::app.goal.step.action.composed.@this(new global::app.module.signing.sign(context)
+        => await context.App.Code.Get<global::app.module.signing.code.ISigning>().Provider!.SignAsync(new global::app.module.signing.sign(context)
         {
             Data = context.Ok("hello"),
-            StoreView = new global::app.data.@this<global::app.type.item.@bool.@this>("", store, context: context),
-        }, context).Start(context);
+            View = store ? global::app.View.Store : global::app.View.Out,
+        });
 
     // The signing setting's window made a millisecond, so a signature read live is past it at once.
     private static async Task Short(global::app.actor.context.@this context)
