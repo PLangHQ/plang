@@ -28,7 +28,7 @@ public partial class resume : IContext
     /// and the step that reads a snapshot from text.</summary>
     public async Task<data.@this> Start()
     {
-        if (await Signed() is { } refused) return refused;
+        if (await Refusal() is { } refused) return refused;
         if (await Snapshot.Value() is { } snap) return await snap.Resume(Context);
         if (Snapshot.Error is { } error) return Context.Error(error);
         return Context.Error(new global::app.error.@this(
@@ -37,7 +37,7 @@ public partial class resume : IContext
     }
 
     // Why the snapshot can't be resumed, or null when this app signed it as it is.
-    private async Task<data.@this?> Signed()
+    private async Task<data.@this?> Refusal()
     {
         // what the step gives, as it is now: a %variable% is the signed Data it holds
         if ((await Snapshot.Follow(Context))?.Signature is not { } signature)
