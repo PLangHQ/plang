@@ -51,6 +51,10 @@ public class StandardRoundTripTests : System.IAsyncDisposable
     // a standard reads only its own form: a text in another is refused, naming the standard and how it is written
     [Test]
     [Arguments("duration", "iso", "30s", "'30s' is not a duration in iso (iso is written PT30S)")]
+    [Arguments("duration", "iso", "PT", "'PT' is not a duration in iso (iso is written PT30S)")]
+    [Arguments("duration", "iso", "P1DT", "'P1DT' is not a duration in iso (iso is written PT30S)")]
+    [Arguments("duration", "iso", "P1D1D", "'P1D1D' is not a duration in iso (iso is written PT30S)")]
+    [Arguments("duration", "iso", "PT1H1H", "'PT1H1H' is not a duration in iso (iso is written PT30S)")]
     [Arguments("size", "si", "100 MiB", "'100 MiB' is not a size in si (si is written 100 MB)")]
     public async Task AText_InAnotherStandard_IsRefused_NamingTheDeclaredOne(string family, string standard, string text, string message)
     {

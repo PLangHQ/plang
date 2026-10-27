@@ -455,6 +455,16 @@ public sealed class Reader
                 System.Text.Json.JsonValueKind.True or System.Text.Json.JsonValueKind.False => "bool",
                 System.Text.Json.JsonValueKind.Number => "number",
                 System.Text.Json.JsonValueKind.Null => "item",
+                // a quoted text in one type's strict standard form is that type; any other text is text
+                System.Text.Json.JsonValueKind.String when v.Json != null
+                    && System.Text.Json.JsonSerializer.Deserialize<string>(v.Json) is { } text => text switch
+                    {
+                        _ when global::app.type.item.datetime.@this.IsStandard(text) => "datetime",
+                        _ when global::app.type.item.date.@this.IsStandard(text) => "date",
+                        _ when global::app.type.item.time.@this.IsStandard(text) => "time",
+                        _ when global::app.type.item.duration.@this.IsStandard(text) => "duration",
+                        _ => "text",
+                    },
                 _ => "text",
             };
         }

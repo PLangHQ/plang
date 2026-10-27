@@ -41,6 +41,15 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         };
     }
 
+    /// <summary>A text written in the datetime's one standard form, ISO 8601 with its <c>T</c>
+    /// (<c>2026-01-01T10:00</c>, <c>2026-01-01T10:00:00</c>), an optional fraction of a second and an optional
+    /// offset or <c>Z</c>.</summary>
+    internal static bool IsStandard(string text)
+        => System.DateTimeOffset.TryParseExact(text,
+            ["yyyy-MM-dd'T'HH:mm", "yyyy-MM-dd'T'HH:mmK", "yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd'T'HH:mm:ssK",
+             "yyyy-MM-dd'T'HH:mm:ss.FFFFFFF", "yyyy-MM-dd'T'HH:mm:ss.FFFFFFFK"],
+            System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out _);
+
     /// <summary>The ICreate courier face — delegates to the pure core; on decline lands the reason
     /// on <paramref name="data"/> (a bad ISO string vs a wrong type).</summary>
     public static @this? Create(object? value, global::app.type.@this? type, global::app.data.@this data)

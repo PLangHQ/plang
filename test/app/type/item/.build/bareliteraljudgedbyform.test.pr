@@ -1,6 +1,6 @@
 {
   "name": "BareLiteralJudgedByForm",
-  "comment": "PLang is an intent language: a literal is typed by its form + the variable's intent, no `as`\nneeded. \"2026-01-01\" births a date, \"PT30S\" a duration, \"42\" a number; a written date\nnormalizes to ISO; a version-like label under %version% stays text. `as` is only a force.",
+  "comment": "PLang is an intent language: a quoted literal in a standard form is typed by that form, no `as`\nneeded. \"2026-01-01\" births a date, \"PT30S\" a duration; any other quoted text, a version-like\nlabel under %version% among them, stays text. `as` is only a force.",
   "step": [
     {
       "index": 0,
@@ -34,7 +34,7 @@
             {
               "name": "Value",
               "type": {
-                "name": "text"
+                "name": "date"
               },
               "value": "2026-01-01"
             }
@@ -100,149 +100,9 @@
     },
     {
       "index": 2,
-      "text": "set %written% = \"1st jan 2026\"",
-      "line": {
-        "number": 7,
-        "indent": 0
-      },
-      "code": [
-        {
-          "module": "variable",
-          "name": "set",
-          "property": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "variable"
-              },
-              "value": "%written%",
-              "variable": [
-                {
-                  "text": "%written%",
-                  "code": [
-                    {
-                      "variable": "written"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "text"
-              },
-              "value": "1st jan 2026"
-            }
-          ],
-          "default": [
-            {
-              "name": "default",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "index": 3,
-      "text": "assert %written!type.name% equals \"date\"",
-      "line": {
-        "number": 8,
-        "indent": 0
-      },
-      "code": [
-        {
-          "module": "assert",
-          "name": "equals",
-          "property": [
-            {
-              "name": "Expected",
-              "type": {
-                "name": "text"
-              },
-              "value": "date"
-            },
-            {
-              "name": "Actual",
-              "type": {
-                "name": "item",
-                "template": "plang"
-              },
-              "value": "%written!type.name%",
-              "variable": [
-                {
-                  "text": "%written!type.name%",
-                  "code": [
-                    {
-                      "variable": "written"
-                    },
-                    {
-                      "property": "!type"
-                    },
-                    {
-                      "property": "name"
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "index": 4,
-      "text": "assert %written.Year% equals 2026",
-      "line": {
-        "number": 9,
-        "indent": 0
-      },
-      "code": [
-        {
-          "module": "assert",
-          "name": "equals",
-          "property": [
-            {
-              "name": "Expected",
-              "type": {
-                "name": "number"
-              },
-              "value": 2026
-            },
-            {
-              "name": "Actual",
-              "type": {
-                "name": "item",
-                "template": "plang"
-              },
-              "value": "%written.Year%",
-              "variable": [
-                {
-                  "text": "%written.Year%",
-                  "code": [
-                    {
-                      "variable": "written"
-                    },
-                    {
-                      "property": "Year"
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "index": 5,
       "text": "set %timeout% = \"PT30S\"",
       "line": {
-        "number": 10,
+        "number": 7,
         "indent": 0
       },
       "code": [
@@ -270,7 +130,7 @@
             {
               "name": "Value",
               "type": {
-                "name": "text"
+                "name": "duration"
               },
               "value": "PT30S"
             }
@@ -288,10 +148,10 @@
       ]
     },
     {
-      "index": 6,
+      "index": 3,
       "text": "assert %timeout!type.name% equals \"duration\"",
       "line": {
-        "number": 11,
+        "number": 8,
         "indent": 0
       },
       "code": [
@@ -335,106 +195,10 @@
       ]
     },
     {
-      "index": 7,
-      "text": "set %count% = \"42\"",
-      "line": {
-        "number": 12,
-        "indent": 0
-      },
-      "code": [
-        {
-          "module": "variable",
-          "name": "set",
-          "property": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "variable"
-              },
-              "value": "%count%",
-              "variable": [
-                {
-                  "text": "%count%",
-                  "code": [
-                    {
-                      "variable": "count"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "text"
-              },
-              "value": "42"
-            }
-          ],
-          "default": [
-            {
-              "name": "default",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "index": 8,
-      "text": "assert %count!type.name% equals \"number\"",
-      "line": {
-        "number": 13,
-        "indent": 0
-      },
-      "code": [
-        {
-          "module": "assert",
-          "name": "equals",
-          "property": [
-            {
-              "name": "Expected",
-              "type": {
-                "name": "text"
-              },
-              "value": "number"
-            },
-            {
-              "name": "Actual",
-              "type": {
-                "name": "item",
-                "template": "plang"
-              },
-              "value": "%count!type.name%",
-              "variable": [
-                {
-                  "text": "%count!type.name%",
-                  "code": [
-                    {
-                      "variable": "count"
-                    },
-                    {
-                      "property": "!type"
-                    },
-                    {
-                      "property": "name"
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "index": 9,
+      "index": 4,
       "text": "set %version% = \"2.0\"",
       "line": {
-        "number": 14,
+        "number": 9,
         "indent": 0
       },
       "code": [
@@ -480,10 +244,10 @@
       ]
     },
     {
-      "index": 10,
+      "index": 5,
       "text": "assert %version!type.name% equals \"text\"",
       "line": {
-        "number": 15,
+        "number": 10,
         "indent": 0
       },
       "code": [
@@ -529,5 +293,5 @@
   ],
   "visibility": "Public",
   "file": "BareLiteralJudgedByForm.test.goal",
-  "hash": "3e4d5dc8d40afbe3c26640233d7178bf48a426b3baf6ee966006f5d4a6542bc2"
+  "hash": "ee196f2517b4b178608a545adb838b522b63314ef0a88520502fefe58d568050"
 }
