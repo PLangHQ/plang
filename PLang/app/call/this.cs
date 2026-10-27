@@ -246,8 +246,10 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     }
 
     /// <summary>What the stack captured when this frame was pushed — its async caller read it and handed it in: the
-    /// frame's timing and diff, whether it stays among its caller's children, how many of them are kept.</summary>
-    internal global::app.call.setting.@this Setting { get; }
+    /// frame's timing and diff, whether it stays among its caller's children, how many of them are kept. It is the
+    /// frame's state: kept, it comes back as it was.</summary>
+    [Store]
+    public global::app.call.setting.@this Setting { get; private set; }
 
     /// <summary>The frame a write to <paramref name="name"/> lands in: this one when it was born with the name, else
     /// the nearest caller that was; null when none was — the write goes to its context's memory.</summary>
