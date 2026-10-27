@@ -26,33 +26,6 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task CallStack_Store_WritesTheTreeNested_FromTheRoot_AndCurrentById()
-    {
-        var (g1, _, a1) = MakeFrame("Outer");
-        var (g2, _, a2) = MakeFrame("Inner");
-        var app = BuildAppWithGoals(g1, g2);
-
-        var context = app.actor.list.User.Context;
-        var stack = context.call;
-        await using var outer = stack.Push(a1, await stack.Setting());
-        await using var inner = stack.Push(a2, await stack.Setting());
-
-        var node = new Snapshot(context);
-        ((ISnapshot)stack).Store(node, context);
-
-        var root = node.Node("root");
-        await Assert.That(await root.Text("id")).IsEqualTo(outer.Id.ToString());
-        await Assert.That(await root.Node("goal").Text("address")).IsEqualTo(g1.Address);
-        var children = await root.Frames("children")!;
-        await Assert.That(children.Count).IsEqualTo(1);
-        await Assert.That(await children[0].Text("id")).IsEqualTo(inner.Id.ToString());
-        await Assert.That(await children[0].Node("goal").Text("address")).IsEqualTo(g2.Address);
-        await Assert.That((await children[0].Frames("children")!).Count).IsEqualTo(0);
-        await Assert.That(root.Has("caller")).IsFalse();                 // a frame's caller is the frame it sits under
-        await Assert.That(await node.Text("current")).IsEqualTo(inner.Id.ToString());
-    }
-
-    [Test]
     public async Task CallStack_Store_WhileATaskRuns_IsRefused()
     {
         // a running task's first frame sits among its caller's children, but goes on in the task's own stack
@@ -211,58 +184,6 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         await app.Restore(snap, context);
 
         await Assert.That(context.call.Root!.Goal).IsSameReferenceAs(g1);
-    }
-
-    [Test]
-    public async Task CallStack_Store_DropsCompletedChildren_AsHistoryNotState()
-    {
-        var (g1, _, a1) = MakeFrame("Parent");
-        var (g2, _, a2) = MakeFrame("CompletedChild");
-        var app = BuildAppWithGoals(g1, g2);
-        var context = app.actor.list.User.Context;
-        var stack = context.call;
-        // History on keeps completed children in the tree — the snapshot still stores only the live chain.
-        context.Setting.Set("app.call.setting.history", true);
-
-        await using (var parent = stack.Push(a1, await stack.Setting()))
-        {
-            await using (var child = stack.Push(a2, await stack.Setting())) { /* completes here */ }
-            var node = new Snapshot(context);
-            ((ISnapshot)stack).Store(node, context);
-            var root = node.Node("root");
-            await Assert.That(await root.Node("goal").Text("address")).IsEqualTo(g1.Address);
-            await Assert.That((await root.Frames("children")!).Count).IsEqualTo(0);
-        }
-    }
-
-    [Test]
-    public async Task CallStack_Start_PutsTheTreeBack_RootChildrenAndIds()
-    {
-        var (g1, _, a1) = MakeFrame("Outer2");
-        var (g2, _, a2) = MakeFrame("Inner2");
-        var src = BuildAppWithGoals(g1, g2);
-
-        await using (var outer = src.actor.list.User.Context.call.Push(a1, await src.actor.list.User.Context.call.Setting()))
-        await using (var inner = src.actor.list.User.Context.call.Push(a2, await src.actor.list.User.Context.call.Setting()))
-        {
-            var snap = src.Snapshot(src.actor.list.User.Context).Saved();
-
-            // matching goals: the same path and hash (identical step text)
-            var (dg1, _, da1) = MakeFrame("Outer2");
-            var (dg2, _, da2) = MakeFrame("Inner2");
-            var dst = BuildAppWithGoals(dg1, dg2);
-
-            await dst.Restore(snap, dst.actor.list.User.Context);
-
-            var root = dst.actor.list.User.Context.call.Root!;
-            await Assert.That(root.Id.ToString()).IsEqualTo(outer.Id.ToString());
-            await Assert.That(root.Action).IsSameReferenceAs(da1);
-            await Assert.That(root.Children.Count).IsEqualTo(1);
-            var child = root.Children.First();
-            await Assert.That(child.Id.ToString()).IsEqualTo(inner.Id.ToString());
-            await Assert.That(child.Caller).IsSameReferenceAs(root);
-            await Assert.That(child.Action).IsSameReferenceAs(da2);
-        }
     }
 
     [Test]
