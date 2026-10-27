@@ -156,19 +156,20 @@ public class CallStackFramesTests
         await Assert.That((await place!.Value<Goal>())?.Name).IsEqualTo("KeptGoal");
     }
 
-    // A frame's parameters are its own variables, not a copy of them: what is written through them, the frame reads.
+    // A frame's parameters are its own variables, not a copy of them: a goal called with order=… that sets %order% reads
+    // the new value through %!call.scope.parameter.order%.
     [Test]
-    public async Task AWriteThroughAFramesParameter_IsReadByTheFrame()
+    public async Task AParameterSetInItsGoal_IsWhatTheFramesParameterReads()
     {
         await using var app = App();
         var (goal, _, _) = MakeFrame(app, "ParamGoal");
         var context = app.actor.list.User.Context;
         await using var frame = context.call.Push(goal, await context.call.Setting(), [new global::app.data.@this("order", "first", context: context)]);
 
-        var parameter = new global::app.type.item.variable.parser.@this("%!call.scope.parameter.order%", app.type.list).Whole!;
-        await (await parameter.Set("second", context)).IsSuccess();
+        await (await context.Variable.Set("order", "second")).IsSuccess();
 
-        await Assert.That(frame.TryGet("order", out var order)).IsTrue();
+        var parameter = new global::app.type.item.variable.parser.@this("%!call.scope.parameter.order%", app.type.list).Whole!;
+        var order = await parameter.Start(context);
         await Assert.That((await order.Value())?.ToString()).IsEqualTo("second");
     }
 
