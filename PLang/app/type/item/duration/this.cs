@@ -53,6 +53,10 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
             data.Fail(new global::app.error.@this($"'{text}' is not a duration in {standard} ({standard} is written {written})", "DurationParseFailed", 400));
     }
 
+    /// <summary>A text written in the duration's one standard form, ISO 8601 (<c>PT30S</c>, <c>P1D</c>) — the text
+    /// its <c>iso</c> standard reads.</summary>
+    internal static bool IsStandard(string text) => iso.@this.Read(text) is not null;
+
     /// <summary>A span with no form of its own (how long a step ran): a <c>{duration, span}</c>, written in the standard
     /// its asker's setting names (<c>short</c> unless set).</summary>
     public static @this Create(System.TimeSpan span, global::app.actor.context.@this context)
