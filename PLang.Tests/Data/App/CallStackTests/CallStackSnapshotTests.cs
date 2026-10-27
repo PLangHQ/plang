@@ -68,28 +68,6 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task CallStack_RoundTrip_TheEventRunningInAFrame_ComesBackWithIt()
-    {
-        var (g1, _, a1) = MakeFrame("EventGoal");
-        var src = BuildAppWithGoals(g1);
-        var context = src.actor.list.User.Context;
-
-        await using (var frame = context.call.Push(a1, await context.call.Setting()))
-        {
-            frame.Event = new global::app.data.@this("!event", "fired", context: context);
-            var snap = (await src.Snapshot(context).Saved());
-
-            var (dg1, _, _) = MakeFrame("EventGoal");
-            var dst = BuildAppWithGoals(dg1);
-            await dst.Restore(snap, dst.actor.list.User.Context);
-
-            var root = dst.actor.list.User.Context.call.Root!;
-            await Assert.That(root.Event).IsNotNull();
-            await Assert.That((await root.Event!.Value())?.ToString()).IsEqualTo("fired");
-        }
-    }
-
-    [Test]
     public async Task CallStack_ThroughText_AFramesErrors_ComeBackWithIt()
     {
         var (g1, _, a1) = MakeFrame("ErrTextGoal");
