@@ -100,61 +100,37 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
 
     private sealed class Thrown(@this stack, IReadOnlyList<call.@this> chain) : global::app.snapshot.ISnapshot
     {
-        // the chain nested as it stood: each frame's one child the frame it had called
+        // the chain as it stood, from the root to the failing frame
         public global::app.data.@this Store(global::app.snapshot.@this snapshot, global::app.actor.context.@this context)
-        {
-            if (chain.Count == 0) return context.Ok();
-            var called = new Dictionary<call.@this, call.@this>(ReferenceEqualityComparer.Instance);
-            for (int i = 1; i < chain.Count; i++) called[chain[i]] = chain[i - 1];
-            return stack.Store(snapshot, chain[^1], chain[0],
-                frame => called.TryGetValue(frame, out var child) ? [child] : [], context);
-        }
+            => chain.Count == 0 ? context.Ok() : stack.Store(snapshot, chain.Reverse(), context);
 
         public System.Threading.Tasks.Task<global::app.data.@this> Start(global::app.snapshot.@this snapshot, global::app.actor.context.@this context)
             => ((global::app.snapshot.ISnapshot)stack).Start(snapshot, context);
     }
 
-    // The stack as a part: its tree as it lives now, from the root — each frame's children those still running.
+    // The stack as a part: its frames as they live now, from the root to the frame the run is in.
     global::app.data.@this global::app.snapshot.ISnapshot.Store(global::app.snapshot.@this snapshot, global::app.actor.context.@this context)
-        => _current.Value is { } current
-            ? Store(snapshot, current.Chain[^1], current, frame => frame.Children.Where(child => !child.Ended), context)
-            : context.Ok();
+        => _current.Value is { } current ? Store(snapshot, current.Chain.Reverse(), context) : context.Ok();
 
     /// <summary>
-    /// Writes the tree from <paramref name="root"/> as the stack lives: <c>root</c>, each frame writing itself and the
-    /// frames it called (<paramref name="children"/>) nested under it in <c>children</c> — a frame's caller is the frame
-    /// it sits under — and <c>current</c>, the id of the frame the run is in. A running task's first frame sits among
-    /// its caller's children but goes on in its own stack, which no resume would run again, so the save is refused.
+    /// Writes <paramref name="frames"/>, from the root to the frame the run is in, as <c>frames</c>: each frame the Data
+    /// it is, its kind its type, written as itself; the last is where the run stopped. A running task's first frame sits
+    /// among its caller's children but goes on in its own stack, which no resume would run again, so the save is
+    /// refused.
     /// </summary>
-    private global::app.data.@this Store(global::app.snapshot.@this snapshot, call.@this root, call.@this current,
-        Func<call.@this, IEnumerable<call.@this>> children, global::app.actor.context.@this context)
+    private global::app.data.@this Store(global::app.snapshot.@this snapshot, IEnumerable<call.@this> frames,
+        global::app.actor.context.@this context)
     {
-        var node = new global::app.snapshot.@this(context);
-        var stored = Store(node, root, children, context);
-        if (!stored.Success) return stored;
-        snapshot.Entries.Set(new global::app.data.@this("root", node, context: context));
-        snapshot.Entries.Set(new global::app.data.@this("current", current.Id, context: context));
-        return context.Ok();
-    }
-
-    private global::app.data.@this Store(global::app.snapshot.@this node, call.@this frame,
-        Func<call.@this, IEnumerable<call.@this>> children, global::app.actor.context.@this context)
-    {
-        var stored = frame.Store(node, context);
-        if (!stored.Success) return stored;
-        var nodes = new List<global::app.type.item.@this>();
-        foreach (var child in children(frame))
+        var written = new List<global::app.data.@this>();
+        foreach (var frame in frames)
         {
-            if (!child.Of(this))
+            if (frame.Children.Any(child => !child.Ended && !child.Of(this)))
                 return context.Error(new global::app.error.@this(
                     "a snapshot is not saved while a task runs: its frames go on in the task's own stack, which nothing would run again",
                     "SnapshotWhileTaskRuns", 409));
-            var childNode = new global::app.snapshot.@this(context);
-            stored = Store(childNode, child, children, context);
-            if (!stored.Success) return stored;
-            nodes.Add(childNode);
+            written.Add(new global::app.data.@this("", frame, context: context));
         }
-        node.Write("children", new global::app.type.item.list.@this(nodes, _types[typeof(global::app.type.item.list.@this)]));
+        snapshot.Write("frames", new global::app.type.item.list.@this(written, _types[typeof(global::app.type.item.list.@this)]));
         return context.Ok();
     }
 
