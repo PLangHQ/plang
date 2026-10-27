@@ -203,6 +203,18 @@ public class Ed25519ProviderTests : System.IAsyncDisposable
         await Assert.That(() => _provider.Verify(signed)).Throws<FormatException>();
     }
 
+    // Padding doesn't change a key's bytes, but a padded key is not the form the identity wrote: verify answers as Made does.
+    [Test]
+    public async Task Verify_ASignatureOverAPaddedKey_IsRefused()
+    {
+        var kp = _provider.GenerateKeyPair().keys!;
+        var padded = kp.PublicKey.PadRight((kp.PublicKey.Length + 3) / 4 * 4, '=');
+        var unsigned = Unsigned(padded);
+        var signed = unsigned.Signed(_provider.Sign(unsigned, app.actor.list.User.Context.Text(kp.PrivateKey)));
+
+        await Assert.That(() => _provider.Verify(signed)).Throws<FormatException>();
+    }
+
     [Test]
     public async Task Verify_InvalidBase64PublicKey_Throws()
     {

@@ -200,9 +200,12 @@ public class Ed25519 : ISigning
     public global::app.type.item.@bool.@this Verify(global::app.type.item.signature.@this signature)
     {
         var algorithm = SignatureAlgorithm.Ed25519;
-        // the signer's key as it signed it: an identity's key is URL-safe from birth, so a key in any other form is no
-        // signer's and fails to decode (refused as SignatureInvalid)
-        var publicKeyBytes = System.Buffers.Text.Base64Url.DecodeFromChars(signature.Identity.ToString());
+        // the signer's key as it signed it: an identity's key is URL-safe and unpadded from birth, so a key in any other
+        // form is no signer's and fails to decode (refused as SignatureInvalid) — padded too, which the decoder would take
+        var identity = signature.Identity.ToString();
+        if (identity.Contains('='))
+            throw new FormatException($"the signer's key '{identity}' is padded: an identity's key is written without padding");
+        var publicKeyBytes = System.Buffers.Text.Base64Url.DecodeFromChars(identity);
         var nsecPublicKey = NSec.Cryptography.PublicKey.Import(algorithm, publicKeyBytes, KeyBlobFormat.RawPublicKey);
         return algorithm.Verify(nsecPublicKey, signature.ToSigningBytes(), signature.Signature.Value);
     }
