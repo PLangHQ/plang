@@ -200,9 +200,9 @@ public class Ed25519 : ISigning
     public global::app.type.item.@bool.@this Verify(global::app.type.item.signature.@this signature)
     {
         var algorithm = SignatureAlgorithm.Ed25519;
-        // the signer's key as it was written — URL-safe, or standard base64 from before keys were
-        var publicKeyBytes = System.Buffers.Text.Base64Url.DecodeFromChars(
-            signature.Identity.ToString().Replace('+', '-').Replace('/', '_').TrimEnd('='));
+        // the signer's key as it signed it: an identity's key is URL-safe from birth, so a key in any other form is no
+        // signer's and fails to decode (refused as SignatureInvalid)
+        var publicKeyBytes = System.Buffers.Text.Base64Url.DecodeFromChars(signature.Identity.ToString());
         var nsecPublicKey = NSec.Cryptography.PublicKey.Import(algorithm, publicKeyBytes, KeyBlobFormat.RawPublicKey);
         return algorithm.Verify(nsecPublicKey, signature.ToSigningBytes(), signature.Signature.Value);
     }
