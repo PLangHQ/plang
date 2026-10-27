@@ -846,17 +846,22 @@ public sealed class OpenAi : ILlm
         var props = new Dictionary<string, object?>();
 
         // The cache entry round-trips as a native dict (in-memory) or a clr(json) (through the
-        // json reader) — both enumerate uniformly as their (key, value) pairs: a clr(json) round-trips
-        // as raw json, so no per-shape reconstruction is needed.
-        if (cachedValue is global::app.type.item.dict.@this or global::app.type.clr.@this)
+        // json reader) — both enumerate uniformly: a clr(json) round-trips as raw json, so no
+        // per-shape reconstruction is needed.
+        System.Collections.Generic.IEnumerable<data.@this>? entries = cachedValue switch
+        {
+            global::app.type.item.dict.@this d => d.Entries(cached.Context),
+            global::app.type.clr.@this c => c.Enumerate(cached.Context),
+            _ => null
+        };
+        if (entries != null)
         {
             resultValue = null;
-            foreach (var (key, entry) in cachedValue.EnumerateItems(cached.Context))
+            foreach (var entry in entries)
             {
-                var name = key.Peek()?.ToString() ?? "";
-                if (name == "Value") { resultValue = entry.Peek(); continue; }
+                if (entry.Name == "Value") { resultValue = entry.Peek(); continue; }
                 // each property read through its Data, so a stored one comes back as what it is, not its wire
-                props[name] = await entry.Value();
+                props[entry.Name] = await entry.Value();
             }
         }
 
