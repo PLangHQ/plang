@@ -45,12 +45,12 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         }
 
         reader.BeginObject();
-        var parser = new global::app.type.item.serializer.json(ctx.Context);
+        var json = new global::app.type.item.serializer.json(ctx.Context);
         // Born with the READING context: a restored snapshot belongs to the actor restoring it,
         // not to whoever captured it.
         var snapshot = new global::app.snapshot.@this(ctx.Context);
         while (reader.NextName(out var name))
-            snapshot.Entries.Set(name, parser.Entry(ref reader, ctx));
+            snapshot.Entries.Set(name, json.Entry(ref reader, ctx));
         reader.EndObject();
         return snapshot;
     }

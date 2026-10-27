@@ -25,7 +25,7 @@ public class @this : global::app.type.item.source
 
     // The format that sliced this raw — an object reference, never a format name. Held since birth; the
     // read reaches it directly.
-    private readonly kind.plang.@this _reader;
+    private readonly kind.plang.@this _kind;
 
     // What the bytes were written for: the view the slice is read in when it is first touched.
     private readonly global::app.View _view;
@@ -36,7 +36,7 @@ public class @this : global::app.type.item.source
         IReadOnlyList<global::app.type.item.variable.@this>? variable = null, bool built = false)
         : base(slice, type, variable ?? [], built: built)
     {
-        _reader = reader ?? throw new System.ArgumentNullException(nameof(reader));
+        _kind = reader ?? throw new System.ArgumentNullException(nameof(reader));
         _view = view;
     }
 
@@ -65,7 +65,7 @@ public class @this : global::app.type.item.source
     // The slice's own read keeps whose bytes they are, and what they were written for: a row nested in the build's
     // slice (a goal call's parameters) is the build's too, and one in a snapshot is read as a snapshot's.
     internal override global::app.type.item.@this Read(actor.context.@this context)
-        => _reader.Read(this, new global::app.type.reader.ReadContext(context, Type.Template, Variable: Variable, IsBuilt: IsBuilt) { View = _view });
+        => _kind.Read(this, new global::app.type.reader.ReadContext(context, Type.Template, Variable: Variable, IsBuilt: IsBuilt) { View = _view });
 
     // What the slice's view needs loaded before it is read (a goal's .pr, in a snapshot).
     private protected override System.Threading.Tasks.Task<global::app.data.@this> Load(actor.context.@this context)
@@ -111,5 +111,5 @@ public class @this : global::app.type.item.source
 
     // Re-declared, the slice is what its new declaration makes of it — a template only when marked one.
     internal override global::app.type.item.source Declared(global::app.type.@this type)
-        => type.Make((string)Raw, _reader, _view, Variable, IsBuilt);
+        => type.Make((string)Raw, _kind, _view, Variable, IsBuilt);
 }

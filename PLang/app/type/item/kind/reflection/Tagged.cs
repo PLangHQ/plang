@@ -15,15 +15,15 @@ public static class Tagged
     // through an STJ read.
     public readonly record struct Entry(PropertyInfo Property, bool Masked, string WireName);
 
-    private static readonly ConcurrentDictionary<(System.Type Type, global::app.View Mode), IReadOnlyList<Entry>> _cache = new();
+    private static readonly ConcurrentDictionary<(System.Type Type, global::app.View View), IReadOnlyList<Entry>> _cache = new();
 
     /// <summary>
     /// Returns the property entries that ship on the wire for <paramref name="type"/>
-    /// in <paramref name="mode"/>. Cached. The returned list is immutable —
+    /// in <paramref name="view"/>. Cached. The returned list is immutable —
     /// the same reference is handed back to every caller for the same key.
     /// </summary>
-    public static IReadOnlyList<Entry> PropertiesFor(System.Type type, global::app.View mode)
-        => _cache.GetOrAdd((type, mode), key => Compute(key.Type, key.Mode));
+    public static IReadOnlyList<Entry> PropertiesFor(System.Type type, global::app.View view)
+        => _cache.GetOrAdd((type, view), key => Compute(key.Type, key.View));
 
     private static IReadOnlyList<Entry> Compute(System.Type type, global::app.View view)
     {

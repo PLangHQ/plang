@@ -40,9 +40,9 @@ public abstract class View
     /// <summary>Characters nobody should see (a key, a password), written as this view shows them: <c>****</c>.</summary>
     internal virtual void Sensitive(string characters, global::app.type.format.IWriter writer) => writer.String("****");
 
-    /// <summary>The name <paramref name="record"/> shows under in this view, or none: a Data's name is plang's own store's
+    /// <summary>The name <paramref name="data"/> shows under in this view, or none: a Data's name is plang's own store's
     /// (a server's binding label is not API surface).</summary>
-    internal virtual string? Name(global::app.data.@this record) => null;
+    internal virtual string? Name(global::app.data.@this data) => null;
 
     /// <summary>Whether <paramref name="type"/> declares what it shows in this view: any wire tag, or (in a dump) a
     /// <c>[Debug]</c> member.</summary>
@@ -164,7 +164,7 @@ public abstract class View
 
         internal override void Sensitive(string characters, global::app.type.format.IWriter writer) => writer.String(characters);
 
-        internal override string? Name(global::app.data.@this record) => record.Name;
+        internal override string? Name(global::app.data.@this data) => data.Name;
 
         private protected override System.Threading.Tasks.ValueTask Template(global::app.type.item.@this value, global::app.type.format.IWriter writer)
             => value.Output(writer);   // the value as written: a template's text, a reference's name, as the step gave them
@@ -246,7 +246,7 @@ public abstract class View
 
         // a Data is named by where it is held (an entry's key): the name a reader gives it after (the variable it is read
         // into) is no part of what was signed
-        internal override string? Name(global::app.data.@this record) => null;
+        internal override string? Name(global::app.data.@this data) => null;
 
         public override string ToString() => "Snapshot";
     }
@@ -263,12 +263,12 @@ public abstract class View
         // How deep a write of values that name each other has gone, on this flow: using one can cycle (a=%b%, b=%a%), and
         // the cycle fails typed, not by stack overflow.
         private readonly System.Threading.AsyncLocal<int> _depth = new();
-        private const int MaxDepth = 50;
+        private const int Deepest = 50;
 
         // used: a reference writes the Data it names, a template its render — each opened, as writing out is a use
         private protected override async System.Threading.Tasks.ValueTask Template(global::app.data.@this data, global::app.type.format.IWriter writer, bool layer)
         {
-            if (_depth.Value++ > MaxDepth)
+            if (_depth.Value++ > Deepest)
             {
                 _depth.Value = 0;
                 throw new global::app.error.AppException($"self-referential variable '{data.Name}' on output", "OutputSelfReference", 500);
@@ -286,11 +286,11 @@ public abstract class View
         private protected override async System.Threading.Tasks.ValueTask Template(global::app.type.item.@this value, global::app.type.format.IWriter writer)
             => await (await Open(await Settle(new global::app.data.@this("", value, context: writer.Context)))).Output(writer);
 
-        // opens what the record holds (a reference's content); a value that fails to open is the write's error
-        private async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Open(global::app.data.@this record)
+        // opens what the Data holds (a reference's content); a value that fails to open is the write's error
+        private async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Open(global::app.data.@this data)
         {
-            var value = await record.Value();
-            if (!record.Success) throw new global::app.error.AppException(record.Error!);
+            var value = await data.Value();
+            if (!data.Success) throw new global::app.error.AppException(data.Error!);
             return value;
         }
 
