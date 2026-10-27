@@ -1,10 +1,10 @@
 {
   "name": "Start",
-  "comment": "Fix, then go on from the same step: Work's first step throws while 'workspace/broken' exists. Its handler fixes the\ncause (deletes the file), then starts the error's callback, which goes on from the step that threw, in an app of its\nown: the step runs again, no longer throws, and that run goes on to its end, through this goal too, answering\n\"completed\". The callback is the run as it stood at the throw, so %resumed% is set only here, in the asker.",
+  "comment": "Fix, then go on from the same step: Work's first step throws while 'workspace/broken.txt' exists. Its handler fixes the\ncause (deletes the file), then starts the error's callback, which goes on from the step that threw, in an app of its\nown: the step runs again, no longer throws, and that run goes on to its end, through this goal too, answering\n\"completed\". The callback is the run as it stood at the throw, so %resumed% is set only here, in the asker.",
   "step": [
     {
       "index": 0,
-      "text": "write \"broken\" to file 'workspace/broken'",
+      "text": "write \"broken\" to file 'workspace/broken.txt'",
       "line": {
         "number": 6,
         "indent": 0
@@ -19,7 +19,7 @@
               "type": {
                 "name": "path"
               },
-              "value": "workspace/broken"
+              "value": "workspace/broken.txt"
             },
             {
               "name": "Value",
@@ -187,7 +187,7 @@
       "step": [
         {
           "index": 0,
-          "text": "if file 'workspace/broken' exists",
+          "text": "if file 'workspace/broken.txt' exists",
           "line": {
             "number": 14,
             "indent": 0
@@ -202,7 +202,7 @@
                   "type": {
                     "name": "path"
                   },
-                  "value": "workspace/broken"
+                  "value": "workspace/broken.txt"
                 }
               ]
             },
@@ -308,11 +308,17 @@
                 }
               ]
             }
+          ],
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 0 uses condition.if, which the decider was not sure of (0.89)"
+            }
           ]
         }
       ],
       "visibility": "Private",
-      "hash": "6f919e1ca50dc1cc368025002e6988c4bbeff45301fdb5d860819f932b032a64"
+      "hash": "4c5bd0255b71bd678dabcb9aff7357b15fced3d6c16bf4c5782eec68397e6267"
     },
     {
       "name": "CaptureCallback",
@@ -320,7 +326,7 @@
       "step": [
         {
           "index": 0,
-          "text": "delete file 'workspace/broken'",
+          "text": "delete file 'workspace/broken.txt'",
           "line": {
             "number": 19,
             "indent": 0
@@ -335,7 +341,7 @@
                   "type": {
                     "name": "path"
                   },
-                  "value": "workspace/broken"
+                  "value": "workspace/broken.txt"
                 }
               ],
               "default": [
@@ -499,10 +505,10 @@
         }
       ],
       "visibility": "Private",
-      "hash": "34f1e7ba8817ad952bfe239fe02a9348baa77345a097f38ffae04feacc23b2c8"
+      "hash": "893a00d4d7a1c58a00e4bdde78e604b6c4e9e54ad404f610c630bf49d0ce1d3b"
     }
   ],
   "visibility": "Public",
   "file": "Start.test.goal",
-  "hash": "b0b2dbb31dcb630e754b18d0355c3a901f40797ef2f67c0a194b8a0d36f2de66"
+  "hash": "a908d04e3163fb44c0fc9fac5dd687c30cae1b46c4077d886aa90c4ec1bf7470"
 }
