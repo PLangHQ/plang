@@ -1,77 +1,32 @@
 {
   "name": "Start",
-  "comment": "Materialize a callback via %!error.callback%, then dispatch it via callback.start.\nThe original failing action re-runs through the live execution path.",
+  "comment": "Fix, then go on from the same step: Work's first step throws while 'workspace/broken' exists. Its handler fixes the\ncause (deletes the file), then starts the error's callback, which goes on from the step that threw, in an app of its\nown: the step runs again, no longer throws, and that run goes on to its end, through this goal too, answering\n\"completed\". The callback is the run as it stood at the throw, so %resumed% is set only here, in the asker.",
   "step": [
     {
       "index": 0,
-      "text": "throw error \"boom\", on error call CaptureCallback",
+      "text": "write \"broken\" to file 'workspace/broken'",
       "line": {
-        "number": 4
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
-          "module": "error",
-          "name": "throw",
+          "module": "file",
+          "name": "save",
           "property": [
             {
-              "name": "Message",
+              "name": "Path",
               "type": {
-                "name": "text"
+                "name": "path"
               },
-              "value": "boom"
-            }
-          ],
-          "default": [
-            {
-              "name": "status",
-              "type": {
-                "name": "status"
-              },
-              "value": 400
+              "value": "workspace/broken"
             },
             {
-              "name": "key",
+              "name": "Value",
               "type": {
                 "name": "text"
               },
-              "value": "error"
-            }
-          ]
-        },
-        {
-          "module": "on",
-          "name": "error",
-          "property": [
-            {
-              "name": "Recovery",
-              "type": {
-                "name": "list",
-                "kind": "action"
-              },
-              "value": [
-                {
-                  "module": "goal",
-                  "name": "call",
-                  "property": [
-                    {
-                      "name": "Name",
-                      "type": {
-                        "name": "goal"
-                      },
-                      "value": "CaptureCallback"
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "default": [
-            {
-              "name": "ignore",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
+              "value": "broken"
             }
           ]
         }
@@ -79,39 +34,146 @@
     },
     {
       "index": 1,
-      "text": "assert %ranCallback% is true, \"callback dispatch should have completed\"",
+      "text": "call Work",
       "line": {
-        "number": 5
+        "number": 7,
+        "indent": 0
       },
       "code": [
         {
-          "module": "assert",
-          "name": "isTrue",
+          "module": "goal",
+          "name": "call",
           "property": [
             {
-              "name": "Value",
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Work"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "if %resumed% is not empty",
+      "line": {
+        "number": 8,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
               "type": {
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%ranCallback%",
+              "value": "%resumed%",
               "variable": [
                 {
-                  "text": "%ranCallback%",
+                  "text": "%resumed%",
                   "code": [
                     {
-                      "variable": "ranCallback"
+                      "variable": "resumed"
                     }
                   ]
                 }
               ]
             },
             {
-              "name": "Message",
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "isnotempty"
+            }
+          ],
+          "child": [
+            {
+              "index": 3,
+              "text": "assert %resumed% equals \"completed\", \"the callback's run should have gone on to its end\"",
+              "line": {
+                "number": 9,
+                "indent": 1
+              },
+              "code": [
+                {
+                  "module": "assert",
+                  "name": "equals",
+                  "property": [
+                    {
+                      "name": "Expected",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "completed"
+                    },
+                    {
+                      "name": "Actual",
+                      "type": {
+                        "name": "item",
+                        "template": "plang"
+                      },
+                      "value": "%resumed%",
+                      "variable": [
+                        {
+                          "text": "%resumed%",
+                          "code": [
+                            {
+                              "variable": "resumed"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Message",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "the callback's run should have gone on to its end"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "return \"completed\"",
+      "line": {
+        "number": 10,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "return",
+          "property": [
+            {
+              "name": "Data",
               "type": {
                 "name": "text"
               },
-              "value": "callback dispatch should have completed"
+              "value": "completed"
+            }
+          ],
+          "default": [
+            {
+              "name": "depth",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
             }
           ]
         }
@@ -120,13 +182,180 @@
   ],
   "child": [
     {
-      "name": "CaptureCallback",
+      "name": "Work",
+      "comment": "The step that throws while the file exists, its handler the fix.",
       "step": [
         {
           "index": 0,
+          "text": "if file 'workspace/broken' exists",
+          "line": {
+            "number": 14,
+            "indent": 0
+          },
+          "code": [
+            {
+              "module": "file",
+              "name": "exists",
+              "property": [
+                {
+                  "name": "Path",
+                  "type": {
+                    "name": "path"
+                  },
+                  "value": "workspace/broken"
+                }
+              ]
+            },
+            {
+              "module": "condition",
+              "name": "if",
+              "property": [
+                {
+                  "name": "Left",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!data%",
+                  "variable": [
+                    {
+                      "text": "%!data%",
+                      "code": [
+                        {
+                          "variable": "!data"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "child": [
+                {
+                  "index": 1,
+                  "text": "throw error \"boom\", on error call CaptureCallback",
+                  "line": {
+                    "number": 15,
+                    "indent": 1
+                  },
+                  "code": [
+                    {
+                      "module": "error",
+                      "name": "throw",
+                      "property": [
+                        {
+                          "name": "Message",
+                          "type": {
+                            "name": "text"
+                          },
+                          "value": "boom"
+                        }
+                      ],
+                      "default": [
+                        {
+                          "name": "status",
+                          "type": {
+                            "name": "status"
+                          },
+                          "value": 400
+                        },
+                        {
+                          "name": "key",
+                          "type": {
+                            "name": "text"
+                          },
+                          "value": "error"
+                        }
+                      ]
+                    },
+                    {
+                      "module": "on",
+                      "name": "error",
+                      "property": [
+                        {
+                          "name": "Recovery",
+                          "type": {
+                            "name": "list",
+                            "kind": "action"
+                          },
+                          "value": [
+                            {
+                              "module": "goal",
+                              "name": "call",
+                              "property": [
+                                {
+                                  "name": "Name",
+                                  "type": {
+                                    "name": "goal"
+                                  },
+                                  "value": "CaptureCallback"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "default": [
+                        {
+                          "name": "ignore",
+                          "type": {
+                            "name": "bool"
+                          },
+                          "value": false
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "visibility": "Private",
+      "hash": "6f919e1ca50dc1cc368025002e6988c4bbeff45301fdb5d860819f932b032a64"
+    },
+    {
+      "name": "CaptureCallback",
+      "comment": "The fix, then the run goes on from the step that threw.",
+      "step": [
+        {
+          "index": 0,
+          "text": "delete file 'workspace/broken'",
+          "line": {
+            "number": 19,
+            "indent": 0
+          },
+          "code": [
+            {
+              "module": "file",
+              "name": "delete",
+              "property": [
+                {
+                  "name": "Path",
+                  "type": {
+                    "name": "path"
+                  },
+                  "value": "workspace/broken"
+                }
+              ],
+              "default": [
+                {
+                  "name": "recursive",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
           "text": "set %cb% = %!error.callback%",
           "line": {
-            "number": 8
+            "number": 20,
+            "indent": 0
           },
           "code": [
             {
@@ -185,10 +414,11 @@
           ]
         },
         {
-          "index": 1,
-          "text": "callback.start callback=%cb%, on error ignore",
+          "index": 2,
+          "text": "callback.start callback=%cb%, write to %resumed%",
           "line": {
-            "number": 9
+            "number": 21,
+            "indent": 0
           },
           "code": [
             {
@@ -216,28 +446,6 @@
               ]
             },
             {
-              "module": "on",
-              "name": "error",
-              "property": [
-                {
-                  "name": "Ignore",
-                  "type": {
-                    "name": "bool"
-                  },
-                  "value": true
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "index": 2,
-          "text": "set %ranCallback% = true",
-          "line": {
-            "number": 10
-          },
-          "code": [
-            {
               "module": "variable",
               "name": "set",
               "property": [
@@ -246,13 +454,13 @@
                   "type": {
                     "name": "variable"
                   },
-                  "value": "%ranCallback%",
+                  "value": "%resumed%",
                   "variable": [
                     {
-                      "text": "%ranCallback%",
+                      "text": "%resumed%",
                       "code": [
                         {
-                          "variable": "ranCallback"
+                          "variable": "resumed"
                         }
                       ]
                     }
@@ -261,16 +469,20 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "bool"
+                    "name": "item",
+                    "template": "plang"
                   },
-                  "value": true
-                },
-                {
-                  "name": "Type",
-                  "type": {
-                    "name": "type"
-                  },
-                  "value": "bool"
+                  "value": "%!data%",
+                  "variable": [
+                    {
+                      "text": "%!data%",
+                      "code": [
+                        {
+                          "variable": "!data"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ],
               "default": [
@@ -286,15 +498,11 @@
           ]
         }
       ],
-      "child": [],
       "visibility": "Private",
-      "path": "/module/callback/runcallbackverb/Start.test.goal",
-      "prPath": "/module/callback/runcallbackverb/.build/start.test.pr",
-      "hash": "9f0c60c8e0071f75dac3149a9886d16aec5a0ff3469eec68bad01d6d458820c4"
+      "hash": "34f1e7ba8817ad952bfe239fe02a9348baa77345a097f38ffae04feacc23b2c8"
     }
   ],
   "visibility": "Public",
-  "path": "/module/callback/runcallbackverb/Start.test.goal",
-  "prPath": "/module/callback/runcallbackverb/.build/start.test.pr",
-  "hash": "e3098481ec9d5c62833e165f8a88e85f495c337f668fd41eb0ecf033f0c9519f"
+  "file": "Start.test.goal",
+  "hash": "b0b2dbb31dcb630e754b18d0355c3a901f40797ef2f67c0a194b8a0d36f2de66"
 }
