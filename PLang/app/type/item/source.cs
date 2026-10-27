@@ -305,7 +305,7 @@ public class source : @this
     /// bytes). A structured value never rides here — it is a <see cref="wire.@this"/>, whose
     /// override reads through its held serializer. (source.Value owns the try/catch + the
     /// binding-named failure story.)</summary>
-    private protected virtual global::app.type.item.@this Read(actor.context.@this context)
+    internal virtual global::app.type.item.@this Read(actor.context.@this context)
     {
         var kind = Type.kind.IsEmpty ? null : Type.kind.Name;
         var ctx = new global::app.type.reader.ReadContext(context, Type.Template, Variable: _variable, Origin: _origin, IsBuilt: IsBuilt);
