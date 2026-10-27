@@ -212,21 +212,29 @@ public sealed partial class @this : global::app.type.item.path.@this
     public override async Task<data.@this<global::app.type.item.@bool.@this>> Exists(actor.context.@this context)
     {
         if (await AuthGate(Verb.read, context) is { } early) return data.@this<global::app.type.item.@bool.@this>.From(early);
+        var (head, error) = await Head(context);
+        if (error != null) return context.Error<global::app.type.item.@bool.@this>(error);
+        using var resp = head!;
+        // Exists answers a question — 2xx → true, 4xx → false, both Success.
+        if ((int)resp.StatusCode >= 200 && (int)resp.StatusCode < 300)
+            return context.Ok<global::app.type.item.@bool.@this>(true);
+        if ((int)resp.StatusCode >= 400 && (int)resp.StatusCode < 500)
+            return context.Ok<global::app.type.item.@bool.@this>(false);
+        return context.Error<global::app.type.item.@bool.@this>(MapStatus(resp.StatusCode));
+    }
+
+    // The resource's head, signed and sent; or why it couldn't be asked (unsigned, or the network failed).
+    private async Task<(HttpResponseMessage? Response, Error? Error)> Head(actor.context.@this context)
+    {
         try
         {
             using var req = new HttpRequestMessage(HttpMethod.Head, _uri);
-            if (await Sign(req, null, "HEAD", context) is { } unsigned) return context.Error<global::app.type.item.@bool.@this>(unsigned);
-            using var resp = await _client.SendAsync(req);
-            // Exists answers a question — 2xx → true, 4xx → false, both Success.
-            if ((int)resp.StatusCode >= 200 && (int)resp.StatusCode < 300)
-                return context.Ok<global::app.type.item.@bool.@this>(true);
-            if ((int)resp.StatusCode >= 400 && (int)resp.StatusCode < 500)
-                return context.Ok<global::app.type.item.@bool.@this>(false);
-            return context.Error<global::app.type.item.@bool.@this>(MapStatus(resp.StatusCode));
+            if (await Sign(req, null, "HEAD", context) is { } unsigned) return (null, unsigned);
+            return (await _client.SendAsync(req), null);
         }
         catch (System.Exception ex) when (IsNetworkError(ex))
         {
-            return context.Error<global::app.type.item.@bool.@this>(NetworkError(ex));
+            return (null, NetworkError(ex));
         }
     }
 
@@ -256,54 +264,41 @@ public sealed partial class @this : global::app.type.item.path.@this
     public override async Task<data.@this<global::app.type.item.path.@this.StatInfo>> Stat(actor.context.@this context)
     {
         if (await AuthGate(Verb.read, context) is { } early) return data.@this<global::app.type.item.path.@this.StatInfo>.From(early);
-        try
+        var (head, error) = await Head(context);
+        if (error != null) return context.Error<global::app.type.item.path.@this.StatInfo>(error);
+        using var resp = head!;
+        if (!resp.IsSuccessStatusCode)
         {
-            using var req = new HttpRequestMessage(HttpMethod.Head, _uri);
-            if (await Sign(req, null, "HEAD", context) is { } unsigned) return context.Error<global::app.type.item.path.@this.StatInfo>(unsigned);
-            using var resp = await _client.SendAsync(req);
-            if (!resp.IsSuccessStatusCode)
-            {
-                if ((int)resp.StatusCode == 404)
-                    return context.Ok<global::app.type.item.path.@this.StatInfo>(new StatInfo(Exists: false));
-                return context.Error<global::app.type.item.path.@this.StatInfo>(MapStatus(resp.StatusCode));
-            }
-            return context.Ok<global::app.type.item.path.@this.StatInfo>(new StatInfo(
-                Exists: true,
-                IsFile: true,
-                Size: resp.Content.Headers.ContentLength is { } length ? global::app.type.item.size.@this.Create(length, context) : null,
-                Modified: resp.Content.Headers.LastModified?.UtcDateTime));
+            if ((int)resp.StatusCode == 404)
+                return context.Ok<global::app.type.item.path.@this.StatInfo>(new StatInfo(Exists: false));
+            return context.Error<global::app.type.item.path.@this.StatInfo>(MapStatus(resp.StatusCode));
         }
-        catch (System.Exception ex) when (IsNetworkError(ex))
-        {
-            return context.Error<global::app.type.item.path.@this.StatInfo>(NetworkError(ex));
-        }
+        return context.Ok<global::app.type.item.path.@this.StatInfo>(new StatInfo(
+            Exists: true,
+            IsFile: true,
+            Size: resp.Content.Headers.ContentLength is { } length ? global::app.type.item.size.@this.Create(length, context) : null,
+            Modified: resp.Content.Headers.LastModified?.UtcDateTime));
     }
 
     // --- Writes --------------------------------------------------------------
 
-    public override async Task<data.@this<global::app.type.item.path.@this>> WriteText(string content, actor.context.@this context)
-    {
-        var verb = Verb.write;
-        if (await AuthGate(verb, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
-        var sent = await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), readBody: false, verb, context);
-        return sent.Success ? context.Ok<global::app.type.item.path.@this>(this) : data.@this<global::app.type.item.path.@this>.From(sent);
-    }
+    public override Task<data.@this<global::app.type.item.path.@this>> WriteText(string content, actor.context.@this context)
+        => Post(new StringContent(content, Encoding.UTF8), context);
 
-    public override async Task<data.@this<global::app.type.item.path.@this>> WriteBytes(byte[] content, actor.context.@this context)
-    {
-        var verb = Verb.write;
-        if (await AuthGate(verb, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
-        var sent = await Send(HttpMethod.Post, new ByteArrayContent(content), readBody: false, verb, context);
-        return sent.Success ? context.Ok<global::app.type.item.path.@this>(this) : data.@this<global::app.type.item.path.@this>.From(sent);
-    }
+    public override Task<data.@this<global::app.type.item.path.@this>> WriteBytes(byte[] content, actor.context.@this context)
+        => Post(new ByteArrayContent(content), context);
 
     /// <summary>HTTP append maps onto a second POST — servers that support
     /// appending interpret it; others overwrite or 405. "Let the server respond."</summary>
-    public override async Task<data.@this<global::app.type.item.path.@this>> Append(string content, actor.context.@this context)
+    public override Task<data.@this<global::app.type.item.path.@this>> Append(string content, actor.context.@this context)
+        => Post(new StringContent(content, Encoding.UTF8), context);
+
+    // A write: the content posted here, through the write gate; this location when the server takes it.
+    private async Task<data.@this<global::app.type.item.path.@this>> Post(HttpContent content, actor.context.@this context)
     {
         var verb = Verb.write;
         if (await AuthGate(verb, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
-        var sent = await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), readBody: false, verb, context);
+        var sent = await Send(HttpMethod.Post, content, readBody: false, verb, context);
         return sent.Success ? context.Ok<global::app.type.item.path.@this>(this) : data.@this<global::app.type.item.path.@this>.From(sent);
     }
 
@@ -497,6 +492,7 @@ public sealed partial class @this : global::app.type.item.path.@this
         ex is HttpRequestException or TaskCanceledException or System.Net.Sockets.SocketException
             or System.IO.IOException;
 
-    private static Error NetworkError(System.Exception ex) =>
-        new($"Network failure reaching the resource: {ex.Message}", "NetworkError", 503);
+    // the network failed on the way to this location: said as such, the failure whole as its cause
+    private Error NetworkError(System.Exception ex) =>
+        new($"Network failure reaching {Raw}", "NetworkError", 503) { list = [Error.FromException(ex)] };
 }
