@@ -33,17 +33,13 @@ public sealed record Diff([property: Out, Debug] string Name, object? Before, [p
         return Summary(value);
     }
 
+    // What a store records as before is a value (a Data's Peek): a scalar is a short text or a leaf. Scalar wrappers are
+    // deeply immutable — holding the instance as Before is safe, no clone needed.
     private bool IsScalar(object value) =>
         value switch
         {
             global::app.type.item.text.@this t => t.Length.ToInt32() <= 256,
-            // Scalar wrappers are deeply immutable (the wrapper-immutability
-            // gate) — holding the instance as Before is safe, no clone needed.
             global::app.type.item.@this i => i.IsLeaf,
-            string s => s.Length <= 256,
-            bool or int or long or short or byte or sbyte or uint or ulong or ushort => true,
-            float or double or decimal => true,
-            DateTime or DateTimeOffset or TimeSpan or Guid => true,
             _ => false
         };
 
