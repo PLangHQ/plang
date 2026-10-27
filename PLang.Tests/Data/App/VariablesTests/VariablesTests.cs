@@ -787,16 +787,16 @@ public class VariablesTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task ChildContext_ClonedData_KeepsItsBirthContext()
+    public async Task ClonedMemory_ItsData_KeepsItsBirthContext()
     {
         await using var engine = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var parentContext = new global::app.actor.context.@this(engine, engine.actor.list.User);
         parentContext.Variable.Set("name", "John");
 
-        var childContext = new global::app.actor.context.@this(engine, engine.actor.list.User, parentContext.Variable.Clone(), parentContext);
+        var clone = parentContext.Variable.Clone();
 
-        // The child sees the variable; the Data keeps the context it was born with — never re-pointed.
-        var seen = (await childContext.Variable.Get("name"))!;
+        // The clone holds the variable; the Data keeps the context it was born with — never re-pointed.
+        var seen = (await clone.Get("name"))!;
         await Assert.That((await seen.Value())!.ToString()).IsEqualTo("John");
         await Assert.That(seen.Context).IsEqualTo(parentContext);
     }
@@ -812,7 +812,7 @@ public class VariablesAccessorTests : System.IAsyncDisposable
     public async Task Clone_PreservesContext()
     {
         var engine = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
-        var context = new global::app.actor.context.@this(engine, engine.actor.list.User, new Variables(_app.actor.list.User.Context));
+        var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
         context.Variable.Set("x", 1);
 
         var clone = context.Variable.Clone();
