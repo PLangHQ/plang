@@ -535,31 +535,12 @@ public sealed partial class @this
                 continue;
             }
 
-            // Continuation line
-            if (step != null && raw.Length > 0 && raw[0] == ' ')
+            // A step goes on over its next line: an indented one as it is, or one escaped by a \ at its start, the
+            // backslash dropped
+            var indented = raw.Length > 0 && raw[0] == ' ';
+            if (step != null && (indented || trimmed.StartsWith("\\")))
             {
-                step = new Step(context.App.type.list)
-                {
-                    Goal = step.Goal,
-                    Index = step.Index,
-                    Text = step.Text + "\n" + trimmed.TrimEnd(),
-                    Line = step.Line,
-                    Comment = step.Comment
-                };
-                continue;
-            }
-
-            // Escape character — \ at start of line continues previous step text, the backslash dropped
-            if (step != null && trimmed.StartsWith("\\"))
-            {
-                step = new Step(context.App.type.list)
-                {
-                    Goal = step.Goal,
-                    Index = step.Index,
-                    Text = step.Text + "\n" + trimmed[1..].TrimEnd(),
-                    Line = step.Line,
-                    Comment = step.Comment
-                };
+                step.Text += "\n" + (indented ? trimmed : trimmed[1..]).TrimEnd();
                 continue;
             }
 
