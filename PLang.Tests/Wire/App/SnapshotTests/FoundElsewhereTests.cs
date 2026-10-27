@@ -7,20 +7,17 @@ public class FoundElsewhereTests
     private static string Folder() => System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-found-" + System.Guid.NewGuid().ToString("N")[..8]);
 
     // A goal G at /G.goal with one step, held by the app's goal list.
-    private static async Task<Goal> Holds(global::app.@this app)
+    private static async Task<Goal> Holds(global::app.@this app, string text = "set %x% = 1")
     {
         var context = app.actor.list.User.Context;
         var goal = new Goal(app.type.list) { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", context) };
-        var step = new Step(app.type.list) { Goal = goal, List = goal.Step, Index = 0, Text = "set %x% = 1" };
+        var step = new Step(app.type.list) { Goal = goal, List = goal.Step, Index = 0, Text = text };
         step.Code.Add((await context.Action("variable.set(Name=%x%, Value=1)")).In(step));
         goal.Step.Add(step);
         app.goal.list.Add(goal);
         return goal;
     }
 
-    // KNOWN RED until the door that reads a found value's key is settled: the record {name, pr, hash} under type goal is
-    // decoded by the goal's .pr reader, which refuses the key `pr`; finding a goal is async (it may read a .pr), so the
-    // key has to come out of the decode as itself for the goal's Select to find it.
     [Test]
     public async Task AGoalInAVariable_IsSavedAsWhatFindsIt_AndComesBackAsTheLiveGoal()
     {
@@ -40,6 +37,25 @@ public class FoundElsewhereTests
 
         var back = await (await into.Variable.Get("g")).Value<Goal>();
         await Assert.That(ReferenceEquals(back, live)).IsTrue();
+    }
+
+    [Test]
+    public async Task AGoalChangedSinceTheSave_IsRefused()
+    {
+        var folder = Folder();
+        await using var src = new global::app.@this(folder, global::PLang.Tests.Parent.Actor).Testing();
+        var context = src.actor.list.User.Context;
+        await context.Variable.Set("g", new global::app.data.@this("g", await Holds(src), context: context));
+        var text = await src.Snapshot(context).Saved().Text(context);
+
+        await using var dst = new global::app.@this(folder, global::PLang.Tests.Parent.Actor).Testing();
+        await Holds(dst, "set %x% = 2");
+        var into = dst.actor.list.User.Context;
+        await dst.Restore(await into.Snapshot(text), into);
+
+        var g = await into.Variable.Get("g");
+        await Assert.That(await g.Value<Goal>()).IsNull();
+        await Assert.That(g.Error!.Key).IsEqualTo("GoalHashMismatch");
     }
 
     [Test]

@@ -87,13 +87,40 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public static bool IsSelected => true;
 
     /// <summary>The goal a text names, as seen from the goal the asker is running — its own chain, its folder, then
-    /// the app (<see cref="global::app.goal.list.@this.Find"/>); a goal not read yet loads. Any other value names
-    /// none.</summary>
+    /// the app (<see cref="global::app.goal.list.@this.Find"/>); a goal not read yet loads. A goal's key (<c>{name, pr,
+    /// hash}</c>, what a snapshot saved) names the goal of that name in its <c>.pr</c>, as long as it is the goal it
+    /// was. Any other value names none.</summary>
     public static async System.Threading.Tasks.ValueTask<global::app.data.@this<@this>?> Select(global::app.type.item.@this key,
         global::app.actor.context.@this asker)
-        => key is global::app.type.item.text.@this name
-            ? await asker.App.goal.list.Find(name.Clr<string>() ?? "", asker.call.Goal)
-            : null;
+        => key switch
+        {
+            global::app.type.item.text.@this name => await asker.App.goal.list.Find(name.Clr<string>() ?? "", asker.call.Goal),
+            global::app.type.item.dict.@this record => await Select(record, asker),
+            _ => null,
+        };
+
+    // The goal a key names: its .pr read (the goal held from it while the file is as it was), the goal by its name as
+    // that file's goal sees it, then its hash: a goal changed since the key was written is refused.
+    private static async System.Threading.Tasks.Task<global::app.data.@this<@this>> Select(global::app.type.item.dict.@this record,
+        global::app.actor.context.@this asker)
+    {
+        var list = asker.App.goal.list;
+        var top = asker.call.Goal;
+        if (record.Get("pr", asker)?.Peek() is global::app.type.item.file.@this pr)
+        {
+            var read = await list.Read(pr.Path, asker);
+            if (!read.Success || await read.Value() is not @this goal) return global::app.data.@this<@this>.From(read);
+            top = goal;
+        }
+        var name = record.Get("name", asker)?.Peek()?.Clr<string>() ?? "";
+        var found = await list.Find(name, top);
+        if (!found.Success || await found.Value() is not { } live) return found;
+        var hash = record.Get("hash", asker)?.Peek()?.Clr<string>() ?? "";
+        if (!string.Equals(live.Hash ?? "", hash, StringComparison.OrdinalIgnoreCase))
+            return asker.Error<@this>(new global::app.error.@this(
+                $"the saved goal '{name}' is not the one there now: saved hash {hash}, live {live.Hash}.", "GoalHashMismatch", 409));
+        return found;
+    }
 
     /// <summary>The goal running for the asker — what <c>%!goal%</c> answers.</summary>
     public static @this? Current(global::app.actor.context.@this context) => context.call.Goal;

@@ -45,7 +45,8 @@ public sealed class Writer : global::app.type.format.IWriter
             _json.Name("name");
             _json.String(name);
         }
-        if ((record.Error?.Type ?? record.Type) is { IsNull: false } type)
+        // the type as the view shows it
+        if (View.Type(record, Context) is { IsNull: false } type)
         {
             _json.Name("type");
             await type.Output(this);

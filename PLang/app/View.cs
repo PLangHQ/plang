@@ -44,6 +44,10 @@ public abstract class View
     /// (a server's binding label is not API surface).</summary>
     internal virtual string? Name(global::app.data.@this record) => null;
 
+    /// <summary>The type <paramref name="record"/> shows under in this view: its value's, or its error's when it failed.</summary>
+    internal virtual global::app.type.@this? Type(global::app.data.@this record, global::app.actor.context.@this context)
+        => record.Error?.Type ?? record.Type;
+
     /// <summary>Whether <paramref name="type"/> declares what it shows in this view: any wire tag, or (in a dump) a
     /// <c>[Debug]</c> member.</summary>
     internal virtual bool Declares(System.Type type) => Tagged(type);
@@ -174,6 +178,13 @@ public abstract class View
         // a value found elsewhere writes what finds it, whatever its own look; any other writes itself
         internal override System.Threading.Tasks.ValueTask Output(global::app.type.item.@this value, global::app.type.format.IWriter writer)
             => Found(value.GetType()) ? value.Members(writer) : writer.Write(value);
+
+        // what a found value writes is its key, so its record shows under its type's key kind: what reads it back
+        // reads a key, and the type finds the value from it
+        internal override global::app.type.@this? Type(global::app.data.@this record, global::app.actor.context.@this context)
+            => record.Error == null && record.Peek() is { } value && Found(value.GetType()) && base.Type(record, context) is { IsNull: false } type
+                ? context.App.type.list[new global::app.type.@this(type.Name, "key"), context]
+                : base.Type(record, context);
 
         // Whether a type tags what finds it: read once per type.
         private readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, bool> _found = new();
