@@ -46,21 +46,18 @@ enum app.Wiring
   static const none : app.Wiring
 
 class app.call.Diff : System.IEquatable<app.call.Diff>
-  At : System.DateTimeOffset { get; init; } [Debug, Out]
-  Before : System.Object { get; init; }
-  Name : System.String { get; init; } [Debug, Out]
-  ctor(System.String Name, System.Object Before, System.DateTimeOffset At)
+  At : System.DateTimeOffset { get; } [Debug, Out]
+  Before : System.Object { get; }
+  Name : System.String { get; } [Debug, Out]
 
 class app.call.action.this : app.call.this, app.type.item.ICreate<app.call.action.this>
   override Action : app.goal.step.action.this { get; } [Debug, Out, Store]
-  static Create(System.Object raw) : app.call.action.this
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.action.this
   static Internal : System.Boolean { get; }
 
 class app.call.binding.this : app.call.this, app.type.item.ICreate<app.call.binding.this>
   override Goal : app.goal.this { get; }
   override Step : app.goal.step.this { get; }
-  static Create(System.Object raw) : app.call.binding.this
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.binding.this
 
 class app.call.child.list.this : System.Collections.Generic.IEnumerable<app.call.this>, System.Collections.Generic.IReadOnlyCollection<app.call.this>, System.Collections.Generic.IReadOnlyList<app.call.this>, System.Collections.IEnumerable
@@ -72,7 +69,6 @@ class app.call.child.list.this : System.Collections.Generic.IEnumerable<app.call
 
 class app.call.composed.this : app.call.this, app.type.item.ICreate<app.call.composed.this>
   override Action : app.goal.step.action.this { get; } [Debug, Out]
-  static Create(System.Object raw) : app.call.composed.this
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.composed.this
   static Internal : System.Boolean { get; }
 
@@ -85,12 +81,10 @@ class app.call.diff.this : System.Collections.Generic.IEnumerable<app.call.Diff>
 
 class app.call.goal.this : app.call.this, app.type.item.ICreate<app.call.goal.this>
   override Goal : app.goal.this { get; } [Debug, Out, Store]
-  static Create(System.Object raw) : app.call.goal.this
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.goal.this
   static Internal : System.Boolean { get; }
 
 class app.call.isolated.this : app.call.binding.this, app.type.item.ICreate<app.call.isolated.this>
-  static Create(System.Object raw) : app.call.isolated.this
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.isolated.this
 
 class app.call.list.this : app.type.item.this, app.snapshot.ISnapshot
@@ -98,17 +92,15 @@ class app.call.list.this : app.type.item.this, app.snapshot.ISnapshot
   Audit : app.error.list.this { get; } [LlmBuilder]
   Compose(app.goal.step.action.this action, app.call.setting.this setting, app.type.item.variable.list.this variables = …) : app.call.this
   Current : app.call.this { get; } [LlmBuilder]
-  Diff() : System.Threading.Tasks.ValueTask<app.type.item.bool.this>
   DiffScope(app.type.item.variable.list.this variables) : System.IDisposable
   Error : app.error.this { get; }
   Event : app.data.this { get; }
   EventsSince(System.DateTimeOffset t) : System.Collections.Generic.IEnumerable<app.call.Diff>
   Goal : app.goal.this { get; }
-  History() : System.Threading.Tasks.ValueTask<app.type.item.bool.this>
-  Isolate(System.Collections.Generic.IEnumerable<app.data.this> names, app.call.setting.this setting, app.goal.step.action.this held = …, app.call.this caller = …) : app.call.this
+  Isolate(System.Collections.Generic.IEnumerable<app.data.this> names, app.call.setting.this setting, app.goal.step.action.this call = …, app.call.this caller = …) : app.call.this
   MaxDepth : System.Int32 { get; init; }
   Overflow(app.error.CallStackOverflowException ex, app.goal.this goal, app.goal.step.this step) : app.error.this
-  Push(System.Collections.Generic.IEnumerable<app.data.this> names, app.call.setting.this setting, app.goal.step.action.this held = …) : app.call.this
+  Push(System.Collections.Generic.IEnumerable<app.data.this> names, app.call.setting.this setting, app.goal.step.action.this call = …) : app.call.this
   Push(app.goal.step.action.this action, app.call.setting.this setting, app.type.item.variable.list.this variables = …) : app.call.this
   Push(app.goal.step.this step, app.call.setting.this setting) : app.call.this
   Push(app.goal.this goal, app.call.setting.this setting, System.Collections.Generic.IEnumerable<app.data.this> names = …) : app.call.this
@@ -116,9 +108,6 @@ class app.call.list.this : app.type.item.this, app.snapshot.ISnapshot
   Scope : app.call.this { get; } [LlmBuilder]
   Setting() : System.Threading.Tasks.ValueTask<app.call.setting.this> [LlmBuilder]
   Step : app.goal.step.this { get; }
-  Tags() : System.Threading.Tasks.ValueTask<app.type.item.bool.this>
-  Timing() : System.Threading.Tasks.ValueTask<app.type.item.bool.this>
-  Variables : app.type.item.variable.list.this { get; }
   ctor(app.type.list.this types, System.Func<app.actor.setting.this> settings)
   override IsLeaf : System.Boolean { get; }
   protected override Clone() : app.type.item.this
@@ -145,7 +134,6 @@ class app.call.setting.this : app.type.item.setting.this
 
 class app.call.step.this : app.call.this, app.type.item.ICreate<app.call.step.this>
   override Step : app.goal.step.this { get; } [Debug, Out, Store]
-  static Create(System.Object raw) : app.call.step.this
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.step.this
   static Internal : System.Boolean { get; }
 
@@ -165,6 +153,7 @@ class app.call.this : app.type.item.this, System.IAsyncDisposable, app.type.item
   Handled : app.type.item.bool.this { get; set; } [Debug, Out]
   Holds(System.String name) : System.Boolean
   Id : app.type.item.text.this { get; } [Debug, Out]
+  Parameter : app.type.item.property.list.this { get; } [LlmBuilder, Store]
   Record(app.error.this error, app.actor.context.this context) : System.Void
   Set(System.String name, app.data.this value) : System.Void
   SetItem<T>(T value) : System.Void
@@ -173,12 +162,10 @@ class app.call.this : app.type.item.this, System.IAsyncDisposable, app.type.item
   Tag(app.type.item.dict.this tags, app.actor.context.this context) : System.Void
   Tags : app.type.item.dict.this { get; } [Debug, LlmBuilder, Out, Store]
   TryGet(System.String name, app.data.this& value) : System.Boolean
-  Variable : System.Collections.Generic.IEnumerable<app.data.this> { get; } [Store]
   override IsLeaf : System.Boolean { get; }
   override ToString() : System.String
   property : app.type.item.property.list.this { get; } [LlmBuilder, Store]
   protected override Clone() : app.type.item.this
-  static Create(System.Object raw) : app.call.this
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.this
   virtual Action : app.goal.step.action.this { get; } [LlmBuilder]
   virtual Goal : app.goal.this { get; } [LlmBuilder]
@@ -993,10 +980,9 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnap
   Save() : System.Threading.Tasks.Task<app.data.this>
   Services : app.service.list.this { get; }
   ShutdownToken : System.Threading.CancellationToken { get; }
-  Snapshot(app.actor.context.this context) : app.data.this<app.snapshot.this>
-  Snapshot(app.error.this error, app.actor.context.this context) : app.data.this<app.snapshot.this>
+  Snapshot(app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.snapshot.this>>
+  Snapshot(app.error.this error, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.snapshot.this>>
   Start() : System.Threading.Tasks.Task<app.data.this>
-  Start(app.goal.this goal, app.actor.context.this context, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   StartedAt : app.type.item.datetime.this { get; } [LlmBuilder]
   Updated : app.type.item.datetime.this { get; } [LlmBuilder, Out, Store]
   Uptime : app.type.item.duration.this { get; } [LlmBuilder]
@@ -1858,7 +1844,7 @@ class app.type.item.kind.json.this : app.type.kind.this<app.type.item.this>, app
   override Mime : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   override Open(System.String characters, app.actor.context.this context) : app.data.this
   override Parse(System.Object raw, app.actor.context.this ctx) : app.type.item.this
-  override Read(System.Object obj, app.type.reader.ITypeReader reader, System.String kind, app.actor.context.this context) : System.Object
+  override Read(System.Object obj, app.type.reader.ITypeReader reader, System.String kind, app.type.reader.ReadContext ctx) : System.Object
   override Report : System.String { get; }
 
 class app.type.item.kind.jsonl.Writer : System.IAsyncDisposable, app.type.format.IWriter
@@ -1911,7 +1897,7 @@ class app.type.item.kind.list.this : app.type.kind.this<app.type.item.this>
   protected override OwnInternal : System.Nullable<System.Boolean> { get; }
 
 static class app.type.item.kind.reflection.Tagged
-  static PropertiesFor(System.Type type, app.View mode) : System.Collections.Generic.IReadOnlyList<app.type.item.kind.reflection.Tagged+Entry>
+  static PropertiesFor(System.Type type, app.View view) : System.Collections.Generic.IReadOnlyList<app.type.item.kind.reflection.Tagged+Entry>
 
 struct app.type.item.kind.reflection.Tagged+Entry : System.IEquatable<app.type.item.kind.reflection.Tagged+Entry>
   Masked : System.Boolean { get; init; }
@@ -2494,7 +2480,7 @@ class app.type.item.property.list.this : app.type.item.this, app.snapshot.ISnaps
   static Create(System.Object raw) : app.type.item.property.list.this
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.type.item.property.list.this
   static Internal : System.Boolean { get; }
-  static Read(app.type.item.kind.json.Reader& reader, app.type.reader.ReadContext ctx) : app.type.item.property.list.this
+  static Read(app.type.item.kind.json.Reader& json, app.type.reader.ReadContext ctx) : app.type.item.property.list.this
 
 class app.type.item.prose.this : app.type.item.this
   Or(app.type.item.prose.this other) : app.type.item.prose.this
@@ -2596,8 +2582,8 @@ class app.type.item.signature.this : app.type.item.this, app.type.item.ICreate<a
   Signature : app.type.item.binary.this { get; }
   Signed(app.type.item.binary.this signature) : app.type.item.signature.this
   Value : app.data.this { get; }
-  View : app.type.item.text.this { get; }
-  ctor(app.type.this type, app.data.this value, app.type.item.text.this algorithm, app.type.item.text.this nonce, app.type.item.datetime.this created, app.type.item.text.this identity, app.module.crypto.type.hash.this hash, app.type.item.binary.this signature, app.type.item.datetime.this expires = …, app.type.item.list.this contracts = …, app.type.item.signature.Origin origin = …, app.type.item.duration.this window = …, app.type.item.text.this view = …)
+  View : app.View { get; }
+  ctor(app.type.this type, app.data.this value, app.type.item.text.this algorithm, app.type.item.text.this nonce, app.type.item.datetime.this created, app.type.item.text.this identity, app.module.crypto.type.hash.this hash, app.type.item.binary.this signature, app.View view, app.type.item.datetime.this expires = …, app.type.item.list.this contracts = …, app.type.item.signature.Origin origin = …, app.type.item.duration.this window = …)
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean
@@ -2994,26 +2980,20 @@ class app.type.item.variable.code.this : app.type.item.list.bare.this<app.type.i
 
 class app.type.item.variable.list.this : app.snapshot.ISnapshot
   Clear() : System.Void
-  Clone() : app.type.item.variable.list.this
   Contains(System.String name) : System.Boolean
   Ensure(System.String name, System.Func<System.Threading.Tasks.ValueTask<app.data.this>> value) : System.Threading.Tasks.ValueTask<app.data.this>
   Get(System.String name) : System.Threading.Tasks.ValueTask<app.data.this>
   Get<T>(System.String name) : System.Threading.Tasks.ValueTask<app.data.this<T>>
   GetAll() : System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<System.String, app.data.this>>
-  GetChangedSince(System.DateTime since) : System.Collections.Generic.Dictionary<System.String, System.String>
-  GetNames() : System.Collections.Generic.IEnumerable<System.String>
   Own(System.String name) : System.Threading.Tasks.ValueTask<app.data.this>
   Peek(System.String name) : app.data.this
   Remove(System.String name) : System.Threading.Tasks.ValueTask<app.data.this>
   Replace(System.String name, app.data.this expected, app.type.item.this value) : System.Threading.Tasks.ValueTask<app.data.this>
-  Restore(System.Collections.Generic.HashSet<System.String> snapshot) : System.Void
-  Save() : System.Collections.Generic.HashSet<System.String>
   Set(System.String name, System.Object value) : System.Threading.Tasks.ValueTask<app.data.this>
   Set(app.data.this value) : System.Threading.Tasks.ValueTask<app.data.this>
   Snapshot() : app.type.item.dict.this
   SnapshotAt(app.error.this error) : app.type.item.variable.list.this
   Supplies(app.goal.step.action.this call, System.String name) : System.Boolean
-  ToDictionary(System.Boolean includeSystem = …) : System.Collections.Generic.Dictionary<System.String, System.Object>
   Value(System.String name) : System.Threading.Tasks.ValueTask<app.type.item.this>
   ctor(app.actor.context.this context)
   list : app.type.item.list.this<app.type.item.variable.this> { get; }
@@ -3187,7 +3167,7 @@ class app.type.kind.this : app.type.this
   virtual Of(System.Type type) : System.Type
   virtual Open(System.String characters, app.actor.context.this context) : app.data.this
   virtual Parse(System.Object raw, app.actor.context.this ctx) : app.type.item.this
-  virtual Read(System.Object obj, app.type.reader.ITypeReader reader, System.String kind, app.actor.context.this context) : System.Object
+  virtual Read(System.Object obj, app.type.reader.ITypeReader reader, System.String kind, app.type.reader.ReadContext ctx) : System.Object
   virtual Report : System.String { get; }
   virtual Set(System.Object host, System.String key, System.Boolean isIndex, System.Object value, app.actor.context.this ctx) : System.Threading.Tasks.ValueTask<app.type.item.this>
   virtual View : app.View { get; }
@@ -3315,7 +3295,6 @@ abstract class app.type.reader.this
   Register(System.String typeName, System.String kind, app.type.reader.ITypeReader reader) : System.Void
   Register(System.String typeName, System.String kind, app.type.reader.this+Read read) : System.Void
   TypeOf(System.String kind) : System.String
-  Typed(System.String typeName, System.String kind) : app.type.reader.ITypeReader
   static const AnyKind : System.String
 
 class app.type.reader.this+Read : System.MulticastDelegate
@@ -3454,6 +3433,7 @@ type app.call
   .errors : list<error>
   .diffs : list<clr>
   .tags : dict
+  .parameter : app.type.item.property.list
   .depth : number
 
 type app.call.action
@@ -3465,6 +3445,7 @@ type app.call.action
   .errors : list<error>
   .diffs : list<clr>
   .tags : dict
+  .parameter : app.type.item.property.list
   .depth : number
 
 type app.call.binding
@@ -3476,6 +3457,7 @@ type app.call.binding
   .errors : list<error>
   .diffs : list<clr>
   .tags : dict
+  .parameter : app.type.item.property.list
   .depth : number
 
 type app.call.composed
@@ -3487,6 +3469,7 @@ type app.call.composed
   .errors : list<error>
   .diffs : list<clr>
   .tags : dict
+  .parameter : app.type.item.property.list
   .depth : number
 
 type app.call.goal
@@ -3498,6 +3481,7 @@ type app.call.goal
   .errors : list<error>
   .diffs : list<clr>
   .tags : dict
+  .parameter : app.type.item.property.list
   .depth : number
 
 type app.call.isolated
@@ -3509,6 +3493,7 @@ type app.call.isolated
   .errors : list<error>
   .diffs : list<clr>
   .tags : dict
+  .parameter : app.type.item.property.list
   .depth : number
 
 type app.call.list
@@ -3532,6 +3517,7 @@ type app.call.step
   .errors : list<error>
   .diffs : list<clr>
   .tags : dict
+  .parameter : app.type.item.property.list
   .depth : number
 
 type app.channel.list
@@ -4541,7 +4527,6 @@ action signing.sign
   Data : item
   Contracts : list
   Expires : duration
-  StoreView : bool
 
 action signing.verify
   Data : item
