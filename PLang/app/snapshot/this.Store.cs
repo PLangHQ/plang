@@ -9,61 +9,67 @@ namespace app.snapshot;
 /// </summary>
 public sealed partial class @this
 {
-    /// <summary>Stores <paramref name="part"/> and every part under it, from this node.</summary>
-    internal data.@this Store(ISnapshot part, actor.context.@this context)
-        => Store(part, new Dictionary<ISnapshot, ISnapshot>(ReferenceEqualityComparer.Instance), context);
-
-    /// <summary>Stores <paramref name="part"/> and every part under it, from this node, each live part in
-    /// <paramref name="thrown"/> written as it stood at an error's throw (its variables and frames). A part
-    /// reached a second time (an actor's app) stays where it was first stored, and a node that holds nothing is left
-    /// out.</summary>
-    internal data.@this Store(ISnapshot part, Dictionary<ISnapshot, ISnapshot> thrown, actor.context.@this context)
-        => Store(part, thrown, new HashSet<ISnapshot>(ReferenceEqualityComparer.Instance), context);
-
-    private data.@this Store(ISnapshot part, Dictionary<ISnapshot, ISnapshot> thrown, HashSet<ISnapshot> stored,
-        actor.context.@this context)
-    {
-        stored.Add(part);
-        var own = (thrown.GetValueOrDefault(part) ?? part).Store(this, context);
-        if (!own.Success) return own;
-        foreach (var (name, child) in Parts(part))
-        {
-            if (stored.Contains(child)) continue;
-            var node = new @this(Context);
-            var result = node.Store(child, thrown, stored, own.Context);
-            if (!result.Success) return result;
-            if (node.Entries.IsTruthy()) Entries.Set(new global::app.data.@this(name, node, context: Context));
-        }
-        return context.Ok();
-    }
+    /// <summary>Stores <paramref name="part"/> and every part under it, from this node, each live part named in
+    /// <paramref name="thrown"/> written as it stood at an error's throw (its variables and frames). A part reached a
+    /// second time (an actor's app) stays where it was first stored, and a node that holds nothing is left out.</summary>
+    internal data.@this Store(ISnapshot part, actor.context.@this context, params (ISnapshot Live, ISnapshot Thrown)[] thrown)
+        => new walk(thrown).Store(this, part, context);
 
     /// <summary>Starts <paramref name="part"/> from this node, then every part under it from the node at its place — the
     /// order it was stored in, so a part starts after the parts declared before it (the providers before the actors). A
     /// live part with no node held nothing when it was stored, and stays as it is.</summary>
     internal System.Threading.Tasks.Task<data.@this> Start(ISnapshot part, actor.context.@this context)
-        => Start(part, new HashSet<ISnapshot>(ReferenceEqualityComparer.Instance), context);
+        => new walk([]).Start(this, part, context);
 
-    private async System.Threading.Tasks.Task<data.@this> Start(ISnapshot part, HashSet<ISnapshot> started,
-        actor.context.@this context)
+    // One walk over the parts: the parts standing for live ones (an error's throw), and the parts it has reached, each
+    // reached once.
+    private sealed class walk
     {
-        started.Add(part);
-        var own = await part.Start(this, context);
-        if (!own.Success) return own;
-        foreach (var (name, child) in Parts(part))
+        private readonly Dictionary<ISnapshot, ISnapshot> _thrown = new(ReferenceEqualityComparer.Instance);
+        private readonly HashSet<ISnapshot> _reached = new(ReferenceEqualityComparer.Instance);
+
+        internal walk((ISnapshot Live, ISnapshot Thrown)[] thrown)
         {
-            if (started.Contains(child) || Entries.Get(name, Context)?.Peek() is not @this node) continue;
-            var result = await node.Start(child, started, own.Context);
-            if (!result.Success) return result;
+            foreach (var (live, standing) in thrown) _thrown[live] = standing;
         }
-        return context.Ok();
-    }
 
-    // The parts a part holds, by the member that holds each: a member is read only when its declared type takes part.
-    private IEnumerable<(string Name, ISnapshot Part)> Parts(ISnapshot part)
-    {
-        foreach (var property in part.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
-            if (typeof(ISnapshot).IsAssignableFrom(property.PropertyType) && property.GetIndexParameters().Length == 0
-                && property.GetValue(part) is ISnapshot child)
-                yield return (property.Name, child);
+        internal data.@this Store(@this node, ISnapshot part, actor.context.@this context)
+        {
+            _reached.Add(part);
+            var own = (_thrown.GetValueOrDefault(part) ?? part).Store(node, context);
+            if (!own.Success) return own;
+            foreach (var (name, child) in Parts(part))
+            {
+                if (_reached.Contains(child)) continue;
+                var under = new @this(node.Context);
+                var result = Store(under, child, own.Context);
+                if (!result.Success) return result;
+                if (under.Entries.IsTruthy()) node.Entries.Set(new global::app.data.@this(name, under, context: node.Context));
+            }
+            return context.Ok();
+        }
+
+        internal async System.Threading.Tasks.Task<data.@this> Start(@this node, ISnapshot part, actor.context.@this context)
+        {
+            _reached.Add(part);
+            var own = await part.Start(node, context);
+            if (!own.Success) return own;
+            foreach (var (name, child) in Parts(part))
+            {
+                if (_reached.Contains(child) || node.Entries.Get(name, node.Context)?.Peek() is not @this under) continue;
+                var result = await Start(under, child, own.Context);
+                if (!result.Success) return result;
+            }
+            return context.Ok();
+        }
+
+        // The parts a part holds, by the member that holds each: a member is read only when its declared type takes part.
+        private static IEnumerable<(string Name, ISnapshot Part)> Parts(ISnapshot part)
+        {
+            foreach (var property in part.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+                if (typeof(ISnapshot).IsAssignableFrom(property.PropertyType) && property.GetIndexParameters().Length == 0
+                    && property.GetValue(part) is ISnapshot child)
+                    yield return (property.Name, child);
+        }
     }
 }
