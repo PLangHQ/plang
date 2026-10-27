@@ -135,28 +135,31 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     }
 
     /// <summary>
-    /// Puts the stored tree back as this stack's: walking down from <c>root</c>, each frame born again under the frame it
-    /// sits under, with the id it was saved with, where it stood, its own variables and the rest of its state. The root
-    /// goes under the frame current now — a resume inside a run is a call, so its tree goes under the resuming action's
-    /// frame — and the stored current is held, with that frame, for <see cref="Resume"/>. Each frame's goal is found by its address through <c>app.goal</c>, its
-    /// hash checked against the live goal, its step and action found by index. A frame that can't come back is the answer
-    /// (<c>CallbackGoalHashMismatch</c>, <see cref="CallbackGoalNotFound"/>, <see cref="CallbackActionMismatch"/>,
-    /// <c>CallbackFrameIncomplete</c>).
+    /// Puts the stored frames back as this stack's, from the root to the frame the run stopped in: each row read in turn
+    /// as its kind (the type it was stored as), made under the frame entered before it — the first under the frame
+    /// current now: a resume inside a run is a call, so its frames go under the resuming action's — then entered under
+    /// the restored app's setting, read once. The last is where the run stopped, held with the frame they went under for
+    /// <see cref="Resume"/>. A row whose key finds nothing (a goal changed since the save, an action no longer at its
+    /// place) is the answer, its error whole.
     /// </summary>
     async System.Threading.Tasks.Task<global::app.data.@this> global::app.snapshot.ISnapshot.Start(global::app.snapshot.@this snapshot, global::app.actor.context.@this context)
     {
         try
         {
-            if (snapshot.In("root", context) is not { } rootEntry) return context.Ok();
-            if (await rootEntry.Value<global::app.snapshot.@this>() is not { } root) return rootEntry;
-            var back = new Dictionary<string, call.@this>(StringComparer.Ordinal);
-            var started = await Start(root, back, context);
-            if (!started.Success) return started;
-            if (snapshot.In("current", context) is { } current)
+            if (snapshot.In("frames", context) is not { } entry) return context.Ok();
+            if (await entry.Value<global::app.type.item.list.@this>() is not { } rows) return entry;
+            var under = _current.Value;
+            var setting = await Setting();
+            call.@this? stopped = null;
+            // each row read only once the one before it is entered: it is made under it, its caller
+            foreach (var row in rows.Items(context))
             {
-                if (await current.Value<global::app.type.item.text.@this>() is not { } id) return current;
-                _resumed = back.GetValueOrDefault(id.ToString()) is { } stopped ? (stopped, _current.Value) : null;
+                if (await row.Value<call.@this>() is not { } frame)
+                    return row.Error != null ? row : context.Error(new global::app.error.@this(
+                        "the snapshot's 'frames' holds a row that reads as no frame", "SnapshotRowUnread", 400));
+                stopped = Enter(frame, setting);
             }
+            _resumed = stopped is { } last ? (last, under) : null;
             return context.Ok();
         }
         catch (AppException ex)
@@ -164,34 +167,6 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
             // a frame's constructor has no answer to give, so what it can't place it throws
             return context.Error(ex.Error);
         }
-    }
-
-    // One stored frame born again under the current frame (none: the root): its async half (call.Find) while its caller
-    // is current, then its kind's own Create, the type it was stored as; then it is current while the frames under it
-    // come back, each by id into back. The current set here is undone when this returns.
-    private async System.Threading.Tasks.Task<global::app.data.@this> Start(global::app.snapshot.@this node,
-        Dictionary<string, call.@this> back, global::app.actor.context.@this context)
-    {
-        var found = await call.@this.Find(node, this, context);
-        if (!found.Success) return found;
-        if (node.Entries.Get("type", context) is not { } stored) return context.Error(call.@this.Incomplete("type"));
-        if (await stored.Value<global::app.type.@this>() is not { } kind) return stored;
-        var born = new global::app.data.@this("frame", context: context);
-        if (kind.Make(node, born) is not call.@this frame)
-            return born.Success ? context.Error(call.@this.Incomplete("type")) : born;
-
-        // in as a push enters: among its caller's children (the root when there is none), and current
-        Enter(frame, await Setting());
-        back[frame.Id.ToString()] = frame;
-
-        var children = await node.Read<global::app.snapshot.@this>("children", context);
-        if (await children.Value() is not { } nodes) return children;
-        foreach (var child in nodes.Items())
-        {
-            var started = await Start(child, back, context);
-            if (!started.Success) return started;
-        }
-        return context.Ok();
     }
 
 

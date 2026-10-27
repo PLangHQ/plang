@@ -11,20 +11,20 @@ public sealed class @this : binding.@this, global::app.type.item.ICreate<@this>
         IEnumerable<global::app.data.@this>? names, global::app.goal.step.action.@this? callee)
         : base(type, caller, stack, names, callee) { }
 
-    /// <summary>An isolated frame come back from a snapshot: its stored <paramref name="node"/> read whole — every write
-    /// made under it among its own variables — under <paramref name="stack"/>'s current frame.</summary>
-    private @this(global::app.snapshot.@this node, global::app.type.@this type, list.@this stack, global::app.actor.context.@this context)
-        : base(node, type, stack, context) { }
+    /// <summary>An isolated frame come back from a snapshot: its stored <paramref name="record"/> read onto it — every
+    /// write made under it among its own variables — under <paramref name="stack"/>'s current frame.</summary>
+    private @this(global::app.type.item.dict.@this record, global::app.type.@this type, list.@this stack, global::app.actor.context.@this context)
+        : base(record, type, stack, context) { }
 
     /// <summary>The pure core — an isolated frame passes through; nothing else converts into one.</summary>
     public static new @this? Create(object? raw) => raw as @this;
 
-    /// <summary>An isolated frame passes through; a stored one's node comes back as one, under the current frame of the
-    /// stack <paramref name="data"/>'s context calls.</summary>
+    /// <summary>An isolated frame passes through; a stored one's record comes back as one, made under the current frame of
+    /// the stack <paramref name="data"/>'s context calls, not entered.</summary>
     public static new @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data) => raw switch
     {
         @this isolated => isolated,
-        global::app.snapshot.@this node => new @this(node, type ?? data.Context.App.type.list[typeof(@this)], data.Context.call, data.Context),
+        global::app.type.item.dict.@this record => new @this(record, type ?? data.Context.App.type.list[typeof(@this)], data.Context.call, data.Context),
         _ => null,
     };
 

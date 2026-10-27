@@ -171,30 +171,22 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// (<see cref="goal.@this"/>) answers yes.</summary>
     internal virtual bool IsGoal => false;
 
-    /// <summary>A frame come back from a snapshot: its stored <paramref name="node"/> (the read copy its async half
-    /// filled, <see cref="Find"/>) read whole — the id it was saved with, its goal, step and action where they stood, the
-    /// setting it is born with, its own variables and the names it was born with among them, its errors and whether
-    /// they were handled, the event running in it, its tags and what it keeps — under <paramref name="stack"/>'s current
-    /// frame, its caller, which is back already. Ending it goes back to its caller.</summary>
-    private protected @this(global::app.snapshot.@this node, global::app.type.@this type, global::app.call.list.@this stack,
-        global::app.actor.context.@this context, global::app.goal.step.action.@this? callee = null)
-        : this(Stored<global::app.type.item.text.@this>(node, "id", context).ToString(), type,
-            stack.Current, stack.Current, stack, stack.Variables, callee: callee)
-    {
-        // a collection left out was empty
-        if (node.Entries.Get<global::app.snapshot.@this>("variables", context) is { } variables)
-            foreach (var variable in variables.In(context)) _variables[variable.Name] = variable;
-        foreach (var name in Stored<global::app.type.item.list.@this<global::app.type.item.text.@this>>(node, "arguments", context).Items())
-            _arguments.Add(name.ToString());
-        foreach (var error in Stored<global::app.type.item.list.@this<global::app.error.@this>>(node, "errors", context).Items())
-            Errors.Add(error);
-        _handled = Stored<global::app.type.item.@bool.@this>(node, "handled", context).Value;
-        Event = node.Entries.Get("event", context);
-        if (node.Entries.Get<global::app.type.item.dict.@this>("tags", context) is { } tags)
-            foreach (var tag in tags.Entries(context)) Tags.Set(tag);
-        if (node.Entries.Get<global::app.type.item.property.list.@this>("property", context) is { } added)
-            foreach (var (name, each) in added.Members) property.Add(name, each);
-    }
+    /// <summary>A frame come back from a snapshot, made, not entered: born under <paramref name="stack"/>'s current
+    /// frame, its caller, which is entered already, and its kept members read onto it as the snapshot wrote them — its
+    /// variables (the names it is born with), the error in play, the event running in it, its tags and what a program
+    /// added. Its element its own kind reads (<see cref="Kept{T}"/>). The stack enters it.</summary>
+    private protected @this(global::app.type.item.dict.@this record, global::app.type.@this type, global::app.call.list.@this stack,
+        global::app.actor.context.@this context)
+        : this(null, type, stack.Current, stack.Current, stack, stack.Variables)
+        => ((global::app.type.item.kind.reflection.@this)context.App.type.list["item"].kind["*"]!)
+            .Read(record, this, context, global::app.View.Snapshot);
+
+    /// <summary>The element a stored frame's <paramref name="record"/> keeps under <paramref name="name"/> — a goal, a
+    /// step, an action — read in the snapshot view: the live one its key finds. A key that finds none is refused, thrown
+    /// to the read boundary.</summary>
+    private protected static T? Kept<T>(global::app.type.item.dict.@this record, string name, global::app.actor.context.@this context)
+        where T : global::app.type.item.@this
+        => global::app.View.Snapshot.Make(context.App.type.list[typeof(T)], record.Get(name, context)?.Peek(), context) as T;
 
     /// <summary>
     /// Every frame's making: it holds back-references to the owning stack and the frame it goes back to when it ends
@@ -497,4 +489,27 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             return $"<{t.Name} @ {col.Count} items>";
         return $"<{t.Name}>";
     }
+
+    /// <summary>The pure core — a frame passes through; nothing else converts into one.</summary>
+    public static @this? Create(object? raw) => raw as @this;
+
+    /// <summary>A frame passes through; a stored frame comes back through its own kind's Create (a goal's, a step's, an
+    /// action's, a binding's, an isolated one), the type it was stored as.</summary>
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data) => raw as @this;
+
+    /// <summary>Whether it has ended — a frame kept among its caller's children after that is history, not state.</summary>
+    internal bool Ended => _ended;
+
+    /// <summary>Whether it is one of <paramref name="stack"/>'s frames — a task's first frame sits among its caller's
+    /// children but belongs to the task's own stack.</summary>
+    internal bool Of(global::app.call.list.@this stack) => ReferenceEquals(_stack, stack);
+
+    /// <summary>
+    /// What is left of this frame's run once it has ended and what it called has returned, run in its caller — the
+    /// call stack's resume goes outward from the frame the run stopped in, each frame in turn doing its own rest
+    /// (<paramref name="again"/>: this is the frame the run stopped in). A frame of its own kind says what its rest is
+    /// (an action's, a step's); any other leaves nothing — its caller goes on.
+    /// </summary>
+    internal virtual System.Threading.Tasks.Task<data.@this> Rest(actor.context.@this context, bool again)
+        => System.Threading.Tasks.Task.FromResult(context.Ok());
 }

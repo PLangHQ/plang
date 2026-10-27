@@ -12,10 +12,10 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
     internal @this(global::app.type.@this type, list.@this stack, global::app.goal.step.@this step)
         : base(null, type, stack.Current, stack.Current, stack, stack.Variables) => Step = step;
 
-    /// <summary>A step's frame come back from a snapshot: its stored <paramref name="node"/> read whole, under
-    /// <paramref name="stack"/>'s current frame.</summary>
-    private @this(global::app.snapshot.@this node, global::app.type.@this type, list.@this stack, global::app.actor.context.@this context)
-        : base(node, type, stack, context) => Step = Placed(node, context).Step;
+    /// <summary>A step's frame come back from a snapshot: born with the step its <paramref name="record"/>'s key finds,
+    /// under <paramref name="stack"/>'s current frame.</summary>
+    private @this(global::app.type.item.dict.@this record, global::app.type.@this type, list.@this stack, global::app.actor.context.@this context)
+        : base(record, type, stack, context) => Step = Kept<global::app.goal.step.@this>(record, "step", context);
 
     /// <summary>The step it runs; its goal is the step's.</summary>
     [Store, Out, Debug]
@@ -24,12 +24,12 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
     /// <summary>The pure core — a step's frame passes through; nothing else converts into one.</summary>
     public static new @this? Create(object? raw) => raw as @this;
 
-    /// <summary>A step's frame passes through; a stored one's node comes back as one, under the current frame of the
-    /// stack <paramref name="data"/>'s context calls.</summary>
+    /// <summary>A step's frame passes through; a stored one's record comes back as one, made under the current frame of
+    /// the stack <paramref name="data"/>'s context calls, not entered.</summary>
     public static new @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data) => raw switch
     {
         @this frame => frame,
-        global::app.snapshot.@this node => new @this(node, type ?? data.Context.App.type.list[typeof(@this)], data.Context.call, data.Context),
+        global::app.type.item.dict.@this record => new @this(record, type ?? data.Context.App.type.list[typeof(@this)], data.Context.call, data.Context),
         _ => null,
     };
 
