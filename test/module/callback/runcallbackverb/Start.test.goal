@@ -1,9 +1,9 @@
-/ Fix, then go on from the same step: Work's first step throws while 'workspace/broken' exists. Its handler fixes the
+/ Fix, then go on from the same step: Work's first step throws while 'workspace/broken.txt' exists. Its handler fixes the
 / cause (deletes the file), then starts the error's callback, which goes on from the step that threw, in an app of its
 / own: the step runs again, no longer throws, and that run goes on to its end, through this goal too, answering
 / "completed". The callback is the run as it stood at the throw, so %resumed% is set only here, in the asker.
 Start
-- write "broken" to file 'workspace/broken'
+- write "broken" to file 'workspace/broken.txt'
 - call Work
 - if %resumed% is not empty
     - assert %resumed% equals "completed", "the callback's run should have gone on to its end"
@@ -11,11 +11,11 @@ Start
 
 / The step that throws while the file exists, its handler the fix.
 Work
-- if file 'workspace/broken' exists
+- if file 'workspace/broken.txt' exists
     - throw error "boom", on error call CaptureCallback
 
 / The fix, then the run goes on from the step that threw.
 CaptureCallback
-- delete file 'workspace/broken'
+- delete file 'workspace/broken.txt'
 - set %cb% = %!error.callback%
 - callback.start callback=%cb%, write to %resumed%
