@@ -112,7 +112,7 @@ public sealed partial class @this
     /// <summary>The goal this step belongs to — a BIRTH FACT. The reader constructs the goal shell
     /// first and hands it to each step at construction, so this is set once and never reassigned.
     /// <c>init</c> is the enforcement: there is no stamping it in afterwards, and no repair getter.</summary>
-    [JsonIgnore, LlmBuilder]
+    [JsonIgnore, LlmBuilder, Snapshot]
     public global::app.goal.@this Goal { get; init; } = null!;
 
     /// <summary>The list that holds this step — its goal's steps, or the body of the action it sits in. A birth fact,

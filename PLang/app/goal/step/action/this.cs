@@ -147,7 +147,7 @@ public partial class @this
     /// action exist outside any program and therefore have no step — a catalog element (a
     /// module-minted descriptor), and a synthetic action composed in C# (<c>new action(new sign{...}, context)</c>,
     /// the signing/verify/ask seam) when it starts before any goal runs.</summary>
-    [JsonIgnore, LlmBuilder]
+    [JsonIgnore, LlmBuilder, Snapshot]
     public Step? Step { get; init; }
 
     // Teaching prose (Description / Notes / Examples) is not stored on the action host — it lives
