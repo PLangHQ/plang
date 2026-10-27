@@ -178,8 +178,10 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     public Action? Action { get; set; }
     [global::app.LlmBuilder]
     public Step? Step { get; set; }
+    /// <summary>The goal it happened in: its step's; an error about a goal itself (no step) holds the goal it names.</summary>
     [global::app.LlmBuilder]
-    public Goal? Goal { get; set; }
+    public Goal? Goal { get => Step?.Goal ?? _goal; set => _goal = value; }
+    private Goal? _goal;
     [global::app.LlmBuilder]
     public IReadOnlyList<Call> CallFrames { get; set; } = Array.Empty<Call>();
     /// <summary>The variables as they were when the error happened — each variable's Data whole,
@@ -256,14 +258,11 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         };
 
     /// <summary>
-    /// Creates an error tied to a specific step. Goal is inferred from step.Goal.
+    /// Creates an error tied to a specific step; its goal is the step's.
     /// </summary>
     public @this(string message, Step? step, string key = "Error", global::app.type.item.status.@this? status = null)
         : this(message, key, status)
-    {
-        Step = step;
-        Goal = step?.Goal;
-    }
+        => Step = step;
 
     /// <summary>
     /// Creates an error with a step and explicit Call chain snapshot.
@@ -280,6 +279,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     public @this(string message, actor.context.@this context, string key = "Error", global::app.type.item.status.@this? status = null)
         : this(message, context.call.Step, key, status)
     {
+        // in a goal's own frame there is no step: the goal is the one in play
         Goal = context.call.Goal;
         Context = context;
         CallFrames = context.call.Current?.Chain ?? (IReadOnlyList<Call>)Array.Empty<Call>();

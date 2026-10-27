@@ -173,6 +173,21 @@ public class CallStackFramesTests
         await Assert.That((await order.Value())?.ToString()).IsEqualTo("second");
     }
 
+    // An error first placed where a frame observed it (Record) is in that frame's step, so in its goal: %!error.goal%.
+    [Test]
+    public async Task AnErrorPlacedByAFrame_IsInItsStepsGoal()
+    {
+        await using var app = App();
+        var (goal, _, action) = MakeFrame(app, "ErrGoal");
+        var context = app.actor.list.User.Context;
+        await using var frame = context.call.Push(action, await context.call.Setting());
+        var error = new global::app.error.@this("it broke", "Broke");
+
+        frame.Record(error, context);
+
+        await Assert.That(error.Goal).IsSameReferenceAs(goal);
+    }
+
     [Test]
     public async Task ARestoreThatFails_LeavesNothingEnteredBehind()
     {
