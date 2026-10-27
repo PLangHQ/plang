@@ -29,7 +29,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         // typed entry is: its own type says what it is. A list of no kind streams each element as a raw
         // slot. Generic — the list is about type X, never a specific element.
         var elementReader = kind is { } elementType
-            ? ctx.Context.App.type.list.Reader.Reader(elementType, null, ctx.Context)
+            ? ctx.View.Reader(ctx.Context.App.type.list[elementType], null, ctx.Context)
             : null;
         // a list given one value (a prompt written as text for a list of messages) holds that one element
         if (reader.Peek() != global::app.type.format.TokenKind.Array)

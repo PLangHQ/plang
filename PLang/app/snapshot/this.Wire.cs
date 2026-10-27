@@ -23,14 +23,15 @@ public sealed partial class @this
     /// <summary>
     /// The born-with-context creation door (<c>Data.Value&lt;snapshot&gt;</c> dispatches here): a snapshot passes
     /// through; its text (a file read, a db row) is read by the snapshot's own reader (<see cref="serializer.Reader"/>),
-    /// the one door from text to a snapshot; anything else declines.
+    /// the one door from text to a snapshot, in the view it was written in; anything else declines.
     /// </summary>
     public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
         if (raw is @this snapshot) return snapshot;
         var context = data.Context;
+        var view = global::app.View.Snapshot;
         if (raw is global::app.type.item.text.@this text)
-            return text.Read(context.App.type.list.Reader.Reader("snapshot", null, context), null, context, global::app.View.Out) as @this;
+            return text.Read(view.Reader(context.App.type.list[typeof(@this)], null, context), null, context, view) as @this;
         data.Fail(new global::app.error.@this(
             $"%{data.Name}% holds a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name} — a snapshot is made from a snapshot or its text",
             "CreateItemDeclined", 400));

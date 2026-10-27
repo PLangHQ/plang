@@ -51,7 +51,7 @@ public class OneTypeObjectTests : System.IAsyncDisposable
         var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
         utf8.Read();
         var reader = new global::app.type.item.kind.json.Reader(utf8, bytes);
-        var read = app.type.list.Reader.Typed("guid", null)!.Read(ref reader, null, new global::app.type.reader.ReadContext(context));
+        var read = app.type.list.Reader.Reader("guid", null, context).Read(ref reader, null, new global::app.type.reader.ReadContext(context));
         await Assert.That(read.IsNull).IsTrue();
         await Assert.That(ReferenceEquals(read.Type, app.type.list["guid"])).IsTrue();
     }
