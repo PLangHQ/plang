@@ -575,34 +575,6 @@ public class VariablesTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task GetNames_ReturnsUserNames()
-    {
-        var stack = new Variables(_app.actor.list.User.Context);
-        stack.Set("name", "John");
-        stack.Set("age", 30);
-
-        var names = stack.GetNames().ToList();
-
-        await Assert.That(names).Contains("name");
-        await Assert.That(names).Contains("age");
-        // Note: GetNames returns all names except those starting with "!"
-        // System variables (Now, NowUtc, GUID) are included
-    }
-
-    [Test]
-    public async Task GetNames_ExcludesSystemVariablesStartingWithBang()
-    {
-        var stack = new Variables(_app.actor.list.User.Context);
-        stack.Set("!system", "value");
-        stack.Set("normal", "value");
-
-        var names = stack.GetNames().ToList();
-
-        await Assert.That(names).DoesNotContain("!system");
-        await Assert.That(names).Contains("normal");
-    }
-
-    [Test]
     public async Task GetAll_ReturnsNonSystemVariables()
     {
         var stack = new Variables(_app.actor.list.User.Context);
@@ -656,95 +628,6 @@ public class VariablesTests : System.IAsyncDisposable
         await Assert.That(stack.Contains("GUID")).IsTrue();
     }
 
-    [Test]
-    public async Task Clone_CreatesShallowCopy()
-    {
-        var stack = new Variables(_app.actor.list.User.Context);
-        stack.Set("name", "John");
-        stack.Set("count", 42);
-
-        var clone = stack.Clone();
-
-        await Assert.That((await (await clone.Get("name"))!.Value())?.ToString()).IsEqualTo("John");
-        await Assert.That((await (await clone.Get("count"))!.Value())?.ToString()).IsEqualTo("42");
-    }
-
-    [Test]
-    public async Task Clone_IndependentFromOriginal()
-    {
-        var stack = new Variables(_app.actor.list.User.Context);
-        stack.Set("name", "John");
-
-        var clone = stack.Clone();
-        clone.Set("name", "Jane");
-
-        await Assert.That((await (await stack.Get("name"))!.Value())?.ToString()).IsEqualTo("John");
-        await Assert.That((await (await clone.Get("name"))!.Value())?.ToString()).IsEqualTo("Jane");
-    }
-
-    [Test]
-    public async Task Clone_PreservesSystemVariables()
-    {
-        var stack = new Variables(_app.actor.list.User.Context);
-
-        var clone = stack.Clone();
-
-        await Assert.That(clone.Contains("Now")).IsTrue();
-        await Assert.That(clone.Contains("NowUtc")).IsTrue();
-        await Assert.That(clone.Contains("GUID")).IsTrue();
-    }
-
-    [Test]
-    public async Task ToDictionary_ReturnsAllVariables()
-    {
-        var stack = new Variables(_app.actor.list.User.Context);
-        stack.Set("name", "John");
-        stack.Set("age", 30);
-
-        var dict = stack.ToDictionary();
-
-        await Assert.That((dict["name"])?.ToString()).IsEqualTo("John");
-        // a value is the plang value it is: 30 is a number
-        await Assert.That(dict["age"] is global::app.type.item.number.@this).IsTrue();
-        await Assert.That(dict["age"]?.ToString()).IsEqualTo("30");
-    }
-
-    [Test]
-    public async Task ToDictionary_ExcludesSystemVariablesByDefault()
-    {
-        var stack = new Variables(_app.actor.list.User.Context);
-        stack.Set("!system", "value");
-        stack.Set("normal", "value");
-
-        var dict = stack.ToDictionary();
-
-        await Assert.That(dict.ContainsKey("!system")).IsFalse();
-        await Assert.That(dict.ContainsKey("normal")).IsTrue();
-    }
-
-    [Test]
-    public async Task ToDictionary_IncludesSystemVariablesWhenRequested()
-    {
-        var stack = new Variables(_app.actor.list.User.Context);
-        stack.Set("!system", "value");
-
-        var dict = stack.ToDictionary(includeSystem: true);
-
-        await Assert.That(dict.ContainsKey("!system")).IsTrue();
-    }
-
-    [Test]
-    public async Task ToDictionary_CaseInsensitiveKeys()
-    {
-        var stack = new Variables(_app.actor.list.User.Context);
-        stack.Set("Name", "John");
-
-        var dict = stack.ToDictionary();
-
-        await Assert.That(dict.ContainsKey("name")).IsTrue();
-        await Assert.That(dict.ContainsKey("NAME")).IsTrue();
-    }
-
     // --- Phase 2: Context stamping via global::app.actor.context.@this ---
 
     [Test]
@@ -772,34 +655,6 @@ public class VariablesTests : System.IAsyncDisposable
         await Assert.That(data.Context).IsEqualTo(engine.actor.list.User.Context);
     }
 
-    [Test]
-    public async Task Clone_PreservesDataContext()
-    {
-        await using var engine = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
-        var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
-
-        context.Variable.Set("name", "John");
-
-        var clone = context.Variable.Clone();
-
-        // Clone preserves the context so Type.Kind/Compressible/ClrType still resolve
-        await Assert.That(clone.Context).IsEqualTo(context);
-    }
-
-    [Test]
-    public async Task ClonedMemory_ItsData_KeepsItsBirthContext()
-    {
-        await using var engine = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
-        var parentContext = new global::app.actor.context.@this(engine, engine.actor.list.User);
-        parentContext.Variable.Set("name", "John");
-
-        var clone = parentContext.Variable.Clone();
-
-        // The clone holds the variable; the Data keeps the context it was born with — never re-pointed.
-        var seen = (await clone.Get("name"))!;
-        await Assert.That((await seen.Value())!.ToString()).IsEqualTo("John");
-        await Assert.That(seen.Context).IsEqualTo(parentContext);
-    }
 }
 
 public class VariablesAccessorTests : System.IAsyncDisposable
@@ -807,19 +662,6 @@ public class VariablesAccessorTests : System.IAsyncDisposable
     private readonly global::app.@this _app = new global::app.@this(
         "/tmp/varsacc-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
-
-    [Test]
-    public async Task Clone_PreservesContext()
-    {
-        var engine = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
-        var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
-        context.Variable.Set("x", 1);
-
-        var clone = context.Variable.Clone();
-
-        await Assert.That(clone.Context).IsNotNull();
-        await Assert.That(clone.Context).IsEqualTo(context.Variable.Context);
-    }
 
     // --- Goal sub-goal navigation tests ---
     // These validate that --debug variable watches and __Resolve can navigate Goal.Child[0].Name

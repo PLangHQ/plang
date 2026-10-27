@@ -54,15 +54,12 @@ public partial class @this
     [JsonIgnore]
     internal actor.context.@this Context => _context;
 
-    /// <summary>
-    /// Production ctor — born from the owning context. Every Variables in a running
-    /// App belongs to exactly one context, passed in here.
-    /// </summary>
     // The memory a name its frames and this memory hold nothing for is read from: a task's context, whose calls
     // continue its caller's (its root frame's caller is the frame its caller was in), reads its caller's, live. None
     // for every other memory.
     private @this? Outer => _context.call.Root?.Caller != null ? _context.Parent?.Variable : null;
 
+    /// <summary>A memory born in its context, the one it belongs to.</summary>
     public @this(actor.context.@this context)
     {
         _context = context;
@@ -356,21 +353,6 @@ public partial class @this
         return type is { } variable && variable.IsBoundAfter("remove", _context) ? await variable.on.remove.After(Named(name), removed, _context) : removed;
     }
 
-    /// <summary>
-    /// Returns variables that changed since the given time. Uses Data.Updated timestamp.
-    /// </summary>
-    public Dictionary<string, string> GetChangedSince(DateTime since)
-    {
-        var result = new Dictionary<string, string>();
-        foreach (var (name, data) in _variables)
-        {
-            if (IsSystem(name)) continue; // skip system variables
-            if (data.Updated > since)
-                result[name] = data.Peek()?.ToString() ?? "(null)";
-        }
-        return result;
-    }
-
     /// <summary>The variables this memory holds, as a list — <c>%!app.variable.list%</c>: one variable per
     /// name, the current call's first (they shadow the actor's), a setting (<c>!</c>) left out. Born on
     /// each read; the memory itself is the one store.</summary>
@@ -392,14 +374,6 @@ public partial class @this
             return variables;
         }
     }
-
-    /// <summary>
-    /// Gets all variable names.
-    /// </summary>
-    public IEnumerable<string> GetNames()
-        // this memory's own, then the system's under it that no own name shadows
-        => _variables.Keys.Where(k => !IsSystem(k))
-            .Concat(_system.Names.Where(name => !IsSystem(name) && !_variables.ContainsKey(name)));
 
     /// <summary>
     /// Gets all variables ordered by last update.
@@ -433,57 +407,6 @@ public partial class @this
         {
             Rows.TryRemove(key, out _);
         }
-    }
-
-    /// <summary>
-    /// Creates a deep clone of this Variables instance.
-    /// Values are deep-cloned so mutations in the clone do not affect the original.
-    /// </summary>
-    public @this Clone()
-    {
-        var clone = new @this(_context);
-        foreach (var kvp in _variables)
-        {
-            // System context vars (! prefix) — skip, they're per-execution
-            if (IsSystem(kvp.Key)) continue;
-
-            clone.Rows[kvp.Key] = kvp.Value.Clone();
-        }
-        return clone;
-    }
-
-    /// <summary>
-    /// Saves a snapshot of current variable keys for later restore.
-    /// </summary>
-    public HashSet<string> Save() => new HashSet<string>(_variables.Keys, StringComparer.OrdinalIgnoreCase);
-
-    /// <summary>
-    /// Restores to a saved snapshot: removes any variables added after the snapshot.
-    /// </summary>
-    public void Restore(HashSet<string> snapshot)
-    {
-        foreach (var key in _variables.Keys)
-        {
-            if (!snapshot.Contains(key))
-                Rows.TryRemove(key, out _);
-        }
-    }
-
-    /// <summary>
-    /// Converts Variables to a dictionary (for serialization/debugging).
-    /// </summary>
-    public Dictionary<string, object?> ToDictionary(bool includeSystem = false)
-    {
-        var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-        foreach (var kvp in _variables)
-        {
-            if (!includeSystem && IsSystem(kvp.Key))
-                continue;
-            dict[kvp.Key] = kvp.Value.Peek();
-        }
-        foreach (var (name, system) in _system.All)
-            if (includeSystem || !IsSystem(name)) dict.TryAdd(name, system.Peek());
-        return dict;
     }
 
     /// <summary>
