@@ -24,23 +24,23 @@ and the commit names the decisions below.
 | `app.call.Diff` positional `ctor(Name, Before, At)`; its members `{ get; init; }` → `{ get; }` | 153 (review2 N4) — one birth |
 | `app.type.item.variable.list.this`: `Clone()`, `GetChangedSince(since)`, `GetNames()`, `Restore(snapshot)`, `Save()`, `ToDictionary(includeSystem)` | 153 (review2 O1) — no runtime code for tests |
 | action `signing.sign` property `StoreView : bool` | 117 (Ingi's "action.StoreView — obpv"): `sign.View` is the one member |
-| `app.call.list.this`: `Diff()`, `History()`, `Tags()`, `Timing()`, `Variables { get; }` | earlier landing list (77, 81, 101, 103, 113, 117, 120, 121) |
-| `app.call.this.Variable : IEnumerable<data> [Store]` | earlier landing list — replaced by `Parameter` (117/121) |
+| `app.call.list.this`: `Diff()`, `History()`, `Tags()`, `Timing()`, `Variables { get; }` | 111 (boy-scout ruling: test-only members) / 114 (a11d5b71e) |
+| `app.call.this.Variable : IEnumerable<data> [Store]` | 113 (Ingi's 4) — replaced by `Parameter` |
 
 ## Changed (a removal and its addition are one change)
 
 | from → to | decision |
 |---|---|
-| `app.this.Snapshot(context)` / `Snapshot(error, context)` : `data<snapshot>` → `Task<data<snapshot>>` | earlier landing list (the snapshot taken once, as bytes, async) |
-| `app.call.list.this.Push(…, action held = …)` / `Isolate(…, action held = …, caller = …)` → parameter named `call` | earlier landing list (creative name `held`) |
-| `Tagged.PropertiesFor(Type type, View mode)` → `View view` | earlier landing list (103) |
-| `property.list.this.static Read(ref json.Reader reader, …)` → parameter `json` | earlier landing list |
+| `app.this.Snapshot(context)` / `Snapshot(error, context)` : `data<snapshot>` → `Task<data<snapshot>>` | 113 (Ingi's 3: taken once, as bytes) |
+| `app.call.list.this.Push(…, action held = …)` / `Isolate(…, action held = …, caller = …)` → parameter named `call` | 111 (creative name) / 112 (`_call`/`call`) |
+| `Tagged.PropertiesFor(Type type, View mode)` → `View view` | 111 (creative name) / 114 (e426b0df1) |
+| `property.list.this.static Read(ref json.Reader reader, …)` → parameter `json` | 111 / 114 (ba8312e6e) |
 
 ## Additions
 
 | surface line | decision |
 |---|---|
-| `app.call.this.Parameter : property.list [LlmBuilder, Store]`, and `.parameter` on each frame type (`call`, `call.action`, `call.binding`, `call.composed`, `call.goal`, `call.isolated`, `call.step`) | 117 / 121 (Parameter's LlmBuilder) |
+| `app.call.this.Parameter : property.list [LlmBuilder, Store]`, and `.parameter` on each frame type (`call`, `call.action`, `call.binding`, `call.composed`, `call.goal`, `call.isolated`, `call.step`) | 113 (Ingi's 4); its `[LlmBuilder]` 121 |
 
 ## Not on the golden, for the record
 
