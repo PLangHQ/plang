@@ -19,8 +19,9 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
     private @this(global::app.snapshot.@this node, global::app.type.@this type, list.@this stack, global::app.actor.context.@this context)
         : base(node, type, stack, context) => Action = Placed(node, context).Action;
 
-    /// <summary>The action it runs, which no step holds.</summary>
-    [Store, Out, Debug]
+    /// <summary>The action it runs, which no step holds: in a trace, never kept, since nothing finds it again. A frame
+    /// come back from a snapshot holds none; its rest was nothing either way.</summary>
+    [Out, Debug]
     public override global::app.goal.step.action.@this? Action { get; }
 
     /// <summary>The pure core — a composed action's frame passes through; nothing else converts into one.</summary>
