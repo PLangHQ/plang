@@ -1,1 +1,1 @@
-{ "status": "fail", "summary": "153's items all done; one small finding born in the fix: a view's name is written x3 and found by a hand-listed four in the signature, no owner (S1)" }
+{ "status": "pass", "summary": "153's items all done; S1 (a view's name written x3, found by a hand-listed four) ruled to Ingi's list since app.View is locked (159); Narrowed-twice is the architect's, after the landing" }
