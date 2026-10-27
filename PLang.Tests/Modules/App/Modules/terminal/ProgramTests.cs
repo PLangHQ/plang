@@ -58,7 +58,7 @@ public class ProgramTests : IDisposable
     {
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(Context, "Run" + Guid.NewGuid().ToString("N")[..6], steps));
         _app.goal.list.Add(goal);
-        return await _app.Start(goal, Context);
+        return await goal.Start(Context);
     }
 
     private async Task<List<string?>> Lines()

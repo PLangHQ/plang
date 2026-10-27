@@ -70,7 +70,7 @@ public class DebugSmokeTests
 
         // If the widened lambda mis-handles the (action, result) params (e.g. dereferences a
         // null), this call throws. If signatures are correct, it completes and emits to stderr.
-        await _app.Start(goal, _app.actor.list.User.Context);
+        await goal.Start(_app.actor.list.User.Context);
 
         var debugOut = ReadCapture();
         // Step-level markers come from the always-on handlers.
@@ -101,7 +101,7 @@ public class DebugSmokeTests
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(ctx, "Dbg", Make.Step("fail", line.Items().ToArray())));
         _app.goal.list.Add(goal);
 
-        await _app.Start(goal, ctx);
+        await goal.Start(ctx);
 
         var debugOut = ReadCapture();
         await Assert.That((await (await ctx.Variable.Get("seen")).Value())?.ToString()).IsEqualTo("it broke");
@@ -127,7 +127,7 @@ public class DebugSmokeTests
             Make.Step("set copy", Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "copy", "variable"), ("Value", "%app%")))));
         _app.goal.list.Add(goal);
 
-        var run = await _app.Start(goal, ctx);
+        var run = await goal.Start(ctx);
 
         await run.IsSuccess();
         var debugOut = ReadCapture();

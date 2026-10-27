@@ -45,7 +45,7 @@ public class PermissionTests : IDisposable
         parameters.AddRange(more);
         var goal = Make.Goal(Context, "Run" + Guid.NewGuid().ToString("N")[..6],
             Make.Step("run it", Make.Action(Context, "terminal", "start", parameters.ToArray())));
-        return await _app.Start(wire ? await RealGoalLoad.ViaChannel(_app, goal) : goal, Context);
+        return await (wire ? await RealGoalLoad.ViaChannel(_app, goal) : goal).Start(Context);
     }
 
     /// <summary>One permission: <paramref name="path"/> with <paramref name="verbs"/>.</summary>
@@ -297,7 +297,7 @@ public class PermissionTests : IDisposable
         await read.IsSuccess();
         var actions = ((global::app.goal.step.action.list.@this)read.Peek()!).Items().ToArray();
         var goal = Make.Goal(Context, made.Name, Make.Step(formal, actions));
-        return await _app.Start(await RealGoalLoad.ViaChannel(_app, goal), Context);
+        return await (await RealGoalLoad.ViaChannel(_app, goal)).Start(Context);
     }
 
     [Test]

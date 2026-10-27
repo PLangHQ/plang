@@ -159,7 +159,7 @@ public class PipeTests : IDisposable
         parameters.AddRange(more);
         var goal = Make.Goal(Context, "Open" + Guid.NewGuid().ToString("N")[..6],
             Make.Step("open it", Make.Action(Context, "terminal", "open", parameters.ToArray())));
-        var opened = await _app.Start(goal, Context);
+        var opened = await goal.Start(Context);
         await opened.IsSuccess();
         return (await opened.Value() as global::app.module.terminal.type.process.@this)!;
     }

@@ -79,7 +79,7 @@ public sealed class @this
         {
             foreach (var goal in Goals)
             {
-                var result = await app.Start(goal, context, ct);
+                var result = await goal.Start(context);
                 if (!result.Success) return result;
             }
             return context.Ok();

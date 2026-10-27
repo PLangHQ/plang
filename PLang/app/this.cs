@@ -548,14 +548,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         return await on.start.After(this, result, user);
     }
 
-    /// <summary>
-    /// Starts a goal already in memory, under <paramref name="context"/>.
-    /// </summary>
-    public async Task<data.@this> Start(Goal goal, actor.context.@this context, CancellationToken ct = default)
-    {
-        return await goal.Start(context);
-    }
-
     public async ValueTask DisposeAsync()
     {
         if (_disposed)

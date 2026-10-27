@@ -16,7 +16,7 @@ public class ImageHoldsItsDeclaredTypeTests
             Make.Step("set x", Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "x", "variable"),
                 ("Value", value), ("Type", declared)))));
         app.goal.list.Add(goal);
-        await (await app.Start(goal, ctx)).IsSuccess();
+        await (await goal.Start(ctx)).IsSuccess();
         return (await ctx.Variable.Get("x")).Peek().Type;
     }
 
