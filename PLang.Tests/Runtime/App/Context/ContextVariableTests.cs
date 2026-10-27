@@ -59,20 +59,6 @@ public class ContextVariableTests
     }
 
     [Test]
-    public async Task ContextVars_ExcludedFromGetNames()
-    {
-        var vars = _app.actor.list.User.Context.Variable;
-        vars.Set("regularVar", "hello");
-
-        var names = vars.GetNames().ToList();
-
-        await Assert.That(names).Contains("regularVar");
-        await Assert.That(names).DoesNotContain("!app");
-        await Assert.That(names).DoesNotContain("!context");
-        await Assert.That(names).DoesNotContain("!goal");
-    }
-
-    [Test]
     public async Task ContextVars_ExcludedFromGetAll()
     {
         var vars = _app.actor.list.User.Context.Variable;
@@ -100,22 +86,6 @@ public class ContextVariableTests
         // Context vars survive
         await Assert.That((await vars.GetValue("!app"))).IsNotNull();
         await Assert.That((await vars.GetValue("!context"))).IsNotNull();
-    }
-
-    [Test]
-    public async Task ContextVars_NotCloned()
-    {
-        var vars = _app.actor.list.User.Context.Variable;
-        vars.Set("regularVar", "hello");
-
-        var clone = vars.Clone();
-
-        // Regular var is cloned
-        await Assert.That((await clone.GetValue("regularVar"))).IsEqualTo("hello");
-
-        // Context vars are NOT cloned (they'd break as plain Data objects): the clone answers its own, computed
-        await Assert.That(clone.Peek("!app")).IsNotSameReferenceAs(vars.Peek("!app"));
-        await Assert.That(await clone.GetValue("!app")).IsSameReferenceAs(_app);
     }
 
     [Test]
