@@ -193,7 +193,9 @@ public class Ed25519ProviderTests : System.IAsyncDisposable
     [Test]
     public async Task Verify_ASignatureOverAStandardBase64Key_IsRefused()
     {
+        // a key whose standard form has a + or / in it: one the URL-safe alphabet can't read
         var kp = _provider.GenerateKeyPair().keys!;
+        while (!kp.PublicKey.Contains('-') && !kp.PublicKey.Contains('_')) kp = _provider.GenerateKeyPair().keys!;
         var standard = kp.PublicKey.Replace('-', '+').Replace('_', '/').PadRight((kp.PublicKey.Length + 3) / 4 * 4, '=');
         var unsigned = Unsigned(standard);
         var signed = unsigned.Signed(_provider.Sign(unsigned, app.actor.list.User.Context.Text(kp.PrivateKey)));
