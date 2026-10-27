@@ -193,38 +193,38 @@ public sealed partial class @this : global::app.type.item.@this
     /// <param name="setting">What the stack captures, as its async caller read it (<see cref="Setting"/>).</param>
     /// <param name="names">The variables its frame is born with — a goal call's parameters.</param>
     public call.@this Push(global::app.goal.@this goal, setting.@this setting, IEnumerable<global::app.data.@this>? names = null)
-        => Push((goal, setting, names), static (stack, s) => new call.goal.@this(stack._types[typeof(call.goal.@this)], stack, s.goal, s.setting, s.names));
+        => Push((goal, names), setting, static (stack, s) => new call.goal.@this(stack._types[typeof(call.goal.@this)], stack, s.goal, s.names));
 
     /// <summary>Pushes a frame that only binds <paramref name="names"/> (a loop's item, a handler's error) — for
     /// <paramref name="held"/> when its runner supplies them to that one call (a tool call's state).</summary>
     public call.@this Push(IEnumerable<global::app.data.@this>? names, setting.@this setting, global::app.goal.step.action.@this? held = null)
-        => Enter(new call.binding.@this(Binding, _current.Value, this, names, held, setting));
+        => Enter(new call.binding.@this(Binding, _current.Value, this, names, held), setting);
 
     /// <summary>Pushes a frame with memory of its own, born with <paramref name="names"/>: every write under it stays
     /// in it (a tool's goal, a shortcut's). A task's run starts its chain with one whose <paramref name="caller"/> is
     /// the frame its caller was in — reads fall through to the caller's frames and memory.</summary>
     public call.@this Isolate(IEnumerable<global::app.data.@this>? names, setting.@this setting,
         global::app.goal.step.action.@this? held = null, call.@this? caller = null)
-        => Enter(new call.isolated.@this(Isolated, caller ?? _current.Value, this, names, held, setting));
+        => Enter(new call.isolated.@this(Isolated, caller ?? _current.Value, this, names, held), setting);
 
     /// <summary>Pushes the frame of a step starting: its goal and itself.</summary>
     public call.@this Push(global::app.goal.step.@this step, setting.@this setting)
-        => Push((step, setting), static (stack, s) => new call.step.@this(stack._types[typeof(call.step.@this)], stack, s.step, s.setting));
+        => Push(step, setting, static (stack, step) => new call.step.@this(stack._types[typeof(call.step.@this)], stack, step));
 
     /// <summary>Pushes the frame of an action a step holds starting: its step's goal, its step and itself.
     /// <paramref name="variables"/> is the store for diff capture (when Diff is on).</summary>
     public call.@this Push(global::app.goal.step.action.@this action, setting.@this setting, Variables? variables = null)
-        => Push((action, setting, variables), static (stack, s) => new call.action.@this(stack._types[typeof(call.action.@this)], stack, s.action, s.setting, s.variables));
+        => Push((action, variables), setting, static (stack, s) => new call.action.@this(stack._types[typeof(call.action.@this)], stack, s.action, s.variables));
 
     /// <summary>Pushes the frame of an action composed in C# (it sits in no step's code: nothing of it is left once it has
     /// run). <paramref name="variables"/> is the store for diff capture (when Diff is on).</summary>
     public call.@this Compose(global::app.goal.step.action.@this action, setting.@this setting, Variables? variables = null)
-        => Push((action, setting, variables), static (stack, s) => new call.composed.@this(stack._types[typeof(call.composed.@this)], stack, s.action, s.setting, s.variables));
+        => Push((action, variables), setting, static (stack, s) => new call.composed.@this(stack._types[typeof(call.composed.@this)], stack, s.action, s.variables));
 
     // A call frame (a goal's, a step's, an action's) pushed: past MaxDepth (its caller's depth), or with the thread's
     // stack run short, it is the overflow, refused before anything of it is made — a stack that overflows can't be
     // caught and ends the process. Its state rides in, so the making captures nothing.
-    private call.@this Push<TState>(TState state, Func<@this, TState, call.@this> make)
+    private call.@this Push<TState>(TState state, setting.@this setting, Func<@this, TState, call.@this> make)
     {
         if (_current.Value is { } caller)
         {
@@ -233,14 +233,16 @@ public sealed partial class @this : global::app.type.item.@this
                 throw new CallStackOverflowException((int)caller.Depth,
                     $"Call stack overflow: the thread's stack ran short at {caller.Depth} frames");
         }
-        return Enter(make(this, state));
+        return Enter(make(this, state), setting);
     }
 
-    // The frame becomes current: it joins its caller's children (Children owns its own lock + FIFO eviction), and a
-    // frame that starts an empty chain is the run's root — reassigned each time, so %!call.Root% is the live run's,
-    // never a stale one already popped.
-    private call.@this Enter(call.@this frame)
+    // A frame's run begins, under the setting its caller read: it becomes current, joins its caller's children
+    // (Children owns its own lock + FIFO eviction, by the setting just begun), and a frame that starts an empty chain
+    // is the run's root — reassigned each time, so %!call.Root% is the live run's, never a stale one already popped.
+    // A pushed frame and one come back from a snapshot enter the same way.
+    internal call.@this Enter(call.@this frame, setting.@this setting)
     {
+        frame.Begin(setting);
         frame.Caller?.Children.Add(frame);
         if (_current.Value == null) _root = frame;
         _current.Value = frame;

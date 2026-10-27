@@ -9,9 +9,8 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
     /// <summary>plang's own: no step names a frame's kind.</summary>
     public static bool Internal => true;
 
-    internal @this(global::app.type.@this type, list.@this stack, global::app.goal.step.@this step,
-        global::app.call.setting.@this setting)
-        : base(null, type, stack.Current, stack.Current, stack, stack.Variables, setting) => Step = step;
+    internal @this(global::app.type.@this type, list.@this stack, global::app.goal.step.@this step)
+        : base(null, type, stack.Current, stack.Current, stack, stack.Variables) => Step = step;
 
     /// <summary>A step's frame come back from a snapshot: its stored <paramref name="node"/> read whole, under
     /// <paramref name="stack"/>'s current frame.</summary>

@@ -181,7 +181,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
             return born.Success ? context.Error(call.@this.Incomplete("type")) : born;
 
         // in as a push enters: among its caller's children (the root when there is none), and current
-        Enter(frame);
+        Enter(frame, await Setting());
         back[frame.Id.ToString()] = frame;
 
         var children = await node.Read<global::app.snapshot.@this>("children", context);
