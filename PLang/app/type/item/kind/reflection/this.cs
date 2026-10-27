@@ -192,11 +192,17 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
         var read = new global::System.Collections.Generic.List<(global::System.Reflection.PropertyInfo, object?)>();
         foreach (var entry in Tagged.PropertiesFor(target, view))
         {
-            if (!entry.Property.CanWrite || !byName.TryGetValue(entry.WireName, out var key)) continue;
-            var type = entry.Property.PropertyType;
+            // the member as the class that declares it has it: a base's private setter is no setter seen from the host's
+            // own class
+            var member = entry.Property.DeclaringType is { } owner && owner != target
+                ? owner.GetProperty(entry.Property.Name, global::System.Reflection.BindingFlags.Public
+                    | global::System.Reflection.BindingFlags.Instance | global::System.Reflection.BindingFlags.DeclaredOnly) ?? entry.Property
+                : entry.Property;
+            if (!member.CanWrite || !byName.TryGetValue(entry.WireName, out var key)) continue;
+            var type = member.PropertyType;
             // A plang member is made as the view makes its type; any other entry lowers ITSELF to the property's CLR
             // type — at the exit door, no context.
-            read.Add((entry.Property, context != null && typeof(global::app.type.item.@this).IsAssignableFrom(type)
+            read.Add((member, context != null && typeof(global::app.type.item.@this).IsAssignableFrom(type)
                 ? view.Make(context.App.type.list[type], slots.Get(key, context)?.Peek(), context)
                 : slots.Clr(key, type)));
         }
