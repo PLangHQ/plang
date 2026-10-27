@@ -92,6 +92,21 @@ What I'll check when it reports:
 5. The found goal is the app's live goal (the same instance `goal.list` holds), and a changed goal without a re-sign is refused, as at the frame (57).
 6. The surface pin re-pins citing "snapshot 91"; FoundElsewhereTests' goal-in-a-variable goes green; the `.pr` goldens unmoved.
 
+**After Ingi's 93 (written before the coder reports; not sent):** the read knows its view, and the goal's reader in the snapshot view loads the goal.
+
+```csharp
+// the restore reads under the view the bytes were signed for: the snapshot's
+new ReadContext(context, …) { View = View.Snapshot }
+
+// goal/serializer/<snapshot reader>.cs — NEW: goal read in the snapshot view: its key {name, pr, hash} in, the live goal out
+//   the goal list's goal for (pr, name); a changed hash refused (409); answers a goal, never a dict (pattern 9)
+// the dispatch asks the view, as item.Output does on the write (pattern 7): a type's reader for the view it's read in
+// the async load: the sync read keeps the key, and the async Decode loads it before it answers (as DeferVerify does)
+// step: by its goal and index (goal[index]); action: by its step and index (step.Code[index]), module and name checked
+```
+
+What goes: `View.Type`, the writer asking it, `goal.kind.key`, `goal/serializer/Key.cs`, `goal.Select`'s dict arm. Checks: a frame's `Goal` member and a variable's goal come back by the same reader; nothing unpacks a key by its names outside the goal's own reader; the reader answers a goal; Store, Out and Debug reads are unchanged (the `.pr` reader stays goal's reader outside the snapshot view).
+
 **Compared (067c4e5f2, decision 92):** checks 2 (the view writes the kind, through `View.Type`), 4, 5 and 6 hold. Check 2 also found the view coining `key` on every found type (file too): ruled that only a type that holds a `key` kind writes under it. Checks 1 and 3 miss: the key is a plain dict, unpacked in `goal.Select` by its keys' names, and the mapping loop copies the general read. The typed key above goes to Ingi, since it's a new type.
 - A step, by its goal and its goal-wide index: one lookup the goal owns, across its bodies (NEW, the coder names it).
 - An action, by its place in its step's code, with the module/name check.
