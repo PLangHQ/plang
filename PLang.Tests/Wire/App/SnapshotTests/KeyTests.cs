@@ -53,7 +53,7 @@ public class KeyTests
     {
         var written = await global::app.type.item.wire.@this.Of(value, global::app.View.Snapshot, context);
         var wire = new global::app.type.item.wire.@this((string)written.Raw, context.App.type.list[typeof(T)],
-            (global::app.type.item.wire.kind.plang.@this)context.App.type.list["wire"].kind["plang"]!, global::app.View.Snapshot);
+            context.App.type.list.Plang, global::app.View.Snapshot);
         var read = new global::app.data.@this("", wire, context: context);
         await read.Value();
         return read;
@@ -92,7 +92,7 @@ public class KeyTests
         var json = await Written(step, context);
         json["extra"] = 1;
         var wire = new global::app.type.item.wire.@this(json.ToJsonString(), context.App.type.list[typeof(Step)],
-            (global::app.type.item.wire.kind.plang.@this)context.App.type.list["wire"].kind["plang"]!, global::app.View.Snapshot);
+            context.App.type.list.Plang, global::app.View.Snapshot);
         var read = new global::app.data.@this("", wire, context: context);
 
         await read.Value();
@@ -111,7 +111,7 @@ public class KeyTests
         // the same step text, built into another action since the save
         action.Name = "get";
         var wire = new global::app.type.item.wire.@this((string)written.Raw, context.App.type.list[typeof(global::app.goal.step.action.@this)],
-            (global::app.type.item.wire.kind.plang.@this)context.App.type.list["wire"].kind["plang"]!, global::app.View.Snapshot);
+            context.App.type.list.Plang, global::app.View.Snapshot);
         var other = new global::app.data.@this("", wire, context: context);
 
         await other.Value();

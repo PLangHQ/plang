@@ -12,7 +12,7 @@ public class StandardRoundTripTests : System.IAsyncDisposable
     // the value stored on the plang wire, a typed row, and read back
     private async Task<global::app.type.item.@this?> Stored(global::app.type.item.@this value)
     {
-        var format = Ctx.App.type.list["wire"].kind["plang"]!;
+        var format = Ctx.App.type.list.Plang;
         using var stream = new System.IO.MemoryStream();
         await (await format.Encode(stream, new global::app.data.@this("v", value, context: Ctx), Ctx, global::app.View.Store)).IsSuccess();
         stream.Position = 0;

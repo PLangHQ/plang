@@ -831,7 +831,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// file answers its contents and its name. Ok, or why it can't be packed.</summary>
     internal virtual async System.Threading.Tasks.Task<(global::app.data.@this result, string held, string? name)> Pack(
         global::app.data.@this self, System.IO.Stream into, actor.context.@this context)
-        => (await context.App.type.list["wire"].kind["plang"]!.Encode(into, self, context, ct: context.CancellationToken), "data", null);
+        => (await context.App.type.list.Plang.Encode(into, self, context, ct: context.CancellationToken), "data", null);
 
     /// <summary>
     /// This value as a diagnostic shows it — an assertion message, a test report line, a debug dump. A leaf

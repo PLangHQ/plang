@@ -51,7 +51,7 @@ public class OutsideTextTests
         await using var _ = app;
         var row = "{\"name\":\"p\",\"type\":" + type + ",\"value\":\"" + AppVariable + ".txt\"}";
 
-        var read = await ctx.App.type.list["wire"].kind["plang"]!.Decode(System.Text.Encoding.UTF8.GetBytes(row), ctx,
+        var read = await ctx.App.type.list.Plang.Decode(System.Text.Encoding.UTF8.GetBytes(row), ctx,
             view: global::app.View.Store);
         await read.IsSuccess();
 

@@ -55,7 +55,7 @@ public class DeciderKeyProbeTests
         // the setting's debug dump masks it; nothing written to the user's output holds it
         using var debug = new System.IO.MemoryStream();
         var setting = await user.Setting.Get<global::app.module.llm.decider.setting>();
-        await (await app.type.list["wire"].kind["plang"]!.Encode(debug, new global::app.data.@this("s", setting, context: user), user, global::app.View.Debug)).IsSuccess();
+        await (await app.type.list.Plang.Encode(debug, new global::app.data.@this("s", setting, context: user), user, global::app.View.Debug)).IsSuccess();
         await Assert.That(System.Text.Encoding.UTF8.GetString(debug.ToArray())).DoesNotContain(Pasted);
         await Assert.That(System.Text.Encoding.UTF8.GetString(written.ToArray())).DoesNotContain(Pasted);
         // sent once, to the setting's endpoint

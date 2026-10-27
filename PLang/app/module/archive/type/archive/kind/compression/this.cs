@@ -49,7 +49,7 @@ public abstract class @this : kind.@this
             {
                 using var whole = new System.IO.MemoryStream();
                 await read.CopyToAsync(whole, context.CancellationToken);
-                return await context.App.type.list["wire"].kind["plang"]!.Decode(whole.ToArray(), context, ct: context.CancellationToken);
+                return await context.App.type.list.Plang.Decode(whole.ToArray(), context, ct: context.CancellationToken);
             }
             if (into == null)
                 return context.Error(new global::app.error.ServiceError(

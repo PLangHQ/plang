@@ -40,7 +40,7 @@ public sealed class @this : global::app.store.@this
     private database Connected => _connected ?? System.Threading.LazyInitializer.EnsureInitialized(ref _connected, () => new connected(this));
 
     // A row is a whole Data in plang's own format (application/plang).
-    private global::app.type.kind.@this Format => Context.App.type.list["wire"].kind["plang"]!;
+    private global::app.type.kind.@this Format => Context.App.type.list.Plang;
     private bool _disposed;
 
     /// <summary>

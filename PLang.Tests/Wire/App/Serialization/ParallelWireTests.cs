@@ -63,7 +63,7 @@ public class ParallelWireTests
     {
         await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
-        var plang = app.type.list["wire"].kind["plang"]!;
+        var plang = app.type.list.Plang;
         using var stream = new System.IO.MemoryStream();
         await (await plang.Encode(stream, new global::app.data.@this("p", parallel, context: context), context, global::app.View.Store)).IsSuccess();
         var read = await plang.Decode(stream.ToArray(), context, view: global::app.View.Store);

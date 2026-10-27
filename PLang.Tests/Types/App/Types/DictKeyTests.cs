@@ -32,7 +32,7 @@ public class DictKeyTests : System.IAsyncDisposable
     [Test] public async Task Key_OfAnUnreadDict_OpensIt_AndIsTheFirstKey()
     {
         var slice = Context.App.type.list["dict"].Make("{\"name\":\"Ada\",\"age\":36}",
-            (global::app.type.item.wire.kind.plang.@this)Context.App.type.list["wire"].kind["plang"]!, global::app.View.Out);
+            Context.App.type.list.Plang, global::app.View.Out);
         Context.Variable.Set(new global::app.data.@this("person", slice, context: Context));
 
         var key = await Read("%person!key%");

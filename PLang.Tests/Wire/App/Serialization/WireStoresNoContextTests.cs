@@ -16,7 +16,7 @@ public class WireStoresNoContextTests
     public async Task Cleanup() => await _app.DisposeAsync();
 
     private global::app.type.item.@this Wire(string slice, string type)
-        => _app.type.list[type].Make(slice, (global::app.type.item.wire.kind.plang.@this)_app.type.list["wire"].kind["plang"]!, global::app.View.Out);
+        => _app.type.list[type].Make(slice, _app.type.list.Plang, global::app.View.Out);
 
     [Test]
     public async Task UnloadedWire_LoweredThroughItsData_DecodesWithTheDatasContext()
