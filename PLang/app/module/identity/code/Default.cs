@@ -74,7 +74,7 @@ public sealed class Default : IIdentity
         if (!loadResult.Success) return loadResult;
         var identity = (await loadResult.Value())!;
 
-        if (identity.IsDefault && (await action.Force.Value())?.Value != true)
+        if (identity.IsDefault && !await action.Force.ToBooleanAsync())
             return action.Context.Error<Identity>(new ActionError(
                 "Cannot archive the default identity. Set a different default first, or use force.",
                 "CannotArchiveDefault", 400));

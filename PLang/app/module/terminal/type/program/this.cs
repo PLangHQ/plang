@@ -75,7 +75,7 @@ public sealed partial class @this(IProgram asked)
             => given?.Peek() is not { } item || item.Variable.All(global::app.type.item.path.@this.IsAnchor);
         var named = Written(app) && Written(parameter) && Written(environment) && Written(workingDirectory)
             && Written(clean) && Written(keep);
-        var cleanStart = clean != null && (await clean.Value())?.Value == true;
+        var cleanStart = clean != null && await clean.ToBooleanAsync();
         // an option the step doesn't write is read from the actor's settings (terminal.start.setting.<option>, then
         // terminal.setting.<option>): for a start that would be trusted, that is the actor choosing what runs — the
         // folder, the arguments, the environment — so a start is the step's own only when no setting gives it an option
