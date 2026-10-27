@@ -152,20 +152,8 @@ public sealed partial class @this
 
         var answer = await on.start.Before(this, context);
         data.@this result;
-        if (answer is { Success: false } or { Handled: true }) result = answer;
-        else
-        {
-            try
-            {
-                result = await Code.Start(context);   // action.list owns the chain loop + fire
-            }
-            // a program's error that travelled as an exception is the step's answer, whole
-            catch (global::app.error.AppException ex) { result = context.Error(ex.Error); }
-            catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException or OperationCanceledException))
-            {
-                result = context.Error(global::app.error.@this.FromException(ex));
-            }
-        }
+        // action.list owns the chain loop, its fire, and a program's error that travels as an exception
+        result = answer is { Success: false } or { Handled: true } ? answer : await Code.Start(context);
         result = await on.start.After(this, result, context);
         return result;
     }

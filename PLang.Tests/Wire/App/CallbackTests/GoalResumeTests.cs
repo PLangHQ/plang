@@ -7,7 +7,7 @@ using ActionEntity = global::app.goal.step.action.@this;
 
 namespace PLang.Tests.App.CallbackTests;
 
-/// What is left of a run, for a resumed call stack: a step's actions from one on (`Step.Resume`), and what follows a
+/// What is left of a run, for a resumed call stack: a step's chain from one action on (`step.Code.Start(context, from)`), and what follows a
 /// step in the list that holds it, a goal's steps or a body's (`step.list.Rest`).
 public class GoalResumeTests
 {
@@ -41,7 +41,7 @@ public class GoalResumeTests
         actionA = actionA.In(step); actionB = actionB.In(step);
         step.Code.Add(actionA); step.Code.Add(actionB);
 
-        var result = await step.Resume(context, 0);
+        var result = await step.Code.Start(context, 0);
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("a"))).IsEqualTo("A");
         await Assert.That((await context.Variable.GetValue("b"))).IsEqualTo("B");
@@ -58,7 +58,7 @@ public class GoalResumeTests
         actionA = actionA.In(step); actionB = actionB.In(step);
         step.Code.Add(actionA); step.Code.Add(actionB);
 
-        var result = await step.Resume(context, 1);
+        var result = await step.Code.Start(context, 1);
         await result.IsSuccess();
         await Assert.That((await context.Variable.Get("a")).IsInitialized).IsFalse(); // skipped
         await Assert.That((await context.Variable.GetValue("b"))).IsEqualTo("B");
