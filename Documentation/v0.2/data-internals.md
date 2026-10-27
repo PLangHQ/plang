@@ -292,7 +292,7 @@ The dispatch path is: callbacks read `RestoredFrame` to identify the resume `Pos
 Action handlers declare their return shape on the method signature, not via a separate attribute:
 
 - `Task<Data<T>>` for a concrete T (`Data<string>`, `Data<bool>`, `Data<byte[]>`, `Data<path>`, `Data<List<path>>`, …). Renders in the action catalog as `→ returns T`.
-- `Task<Data<object>>` for genuinely polymorphic actions (`goal.call`, `environment.run`, `llm.query`, `callback.run`, `mock.verify`, `loop.foreach`, the `list.*` cascade, `math.*`, `condition.*` operators returning bool/string/…). Renders as `→ returns data`.
+- `Task<Data<object>>` for genuinely polymorphic actions (`goal.call`, `llm.query`, `callback.start`, `loop.foreach`, the `list.*` cascade, `math.*`, `condition.*` operators returning bool/string/…). Renders as `→ returns data`.
 - Bare `Task<Data>` for actions that produce no value (`output.write`, `error.throw`, side-effect-only writes). The catalog omits the `→ returns` line and the compile LLM rule treats `write to %x%` after such a step as invalid.
 
 `Modules.Describe()` reads the signature by reflection; `action.@this.ReturnTypeName` carries T's PLang name; the per-step template (`stepActionDetails.template`) renders the return line; the compile LLM uses T as the type-annotation on the trailing `variable.set`'s `Value`. There is no separate `Type=` parameter — the `Data<T>` wrapper carries it.

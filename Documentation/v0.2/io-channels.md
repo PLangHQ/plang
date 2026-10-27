@@ -17,7 +17,7 @@ App
                            └── Serializers (content-type → serializer)
 ```
 
-Three actors, three independent registries. The entry point (PlangConsole today; future PlangWeb) wires the four default-named channels on each actor before user code runs. `environment.run` enforces this — boot fails with `MissingRequiredChannelAtBoot` if any of `output`/`error`/`input` is absent.
+Three actors, three independent registries. The entry point (PlangConsole today; future PlangWeb) wires the four default-named channels on each actor before user code runs. The app's `Start()` enforces this (`PLang/app/this.cs:513-519`) — boot fails with `MissingRequiredChannelAtBoot` if any of `output`/`error`/`input` is absent.
 
 ## The registry: `app.channel.@this`
 
