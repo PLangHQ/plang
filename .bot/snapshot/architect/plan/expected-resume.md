@@ -4,9 +4,11 @@ What I expect the coder to write. It is shown to Ingi, not sent to the coder, an
 
 ## The goal step
 
+**Changed by 168:** a waited resume answers its run's own result, not the app (reversing 160's "%app% is the app"), and the sub app is disposed when its run ends.
+
 ```plang
-- resume %snapshot%, write to %app%               / waits: the restored app's run goes to its end (or its next stop), then %app% is the app
-- resume %snapshot%, don't wait, write to %app%   / %app% is a task<app>; the app goes on
+- resume %snapshot%, write to %result%               / waits: the restored run goes to its end; %result% is what it answers
+- resume %snapshot%, don't wait, write to %task%     / a task of that result; the run goes on
 ```
 
 A failed resumed run answers its error, all the way up (167), as a failed `call` does.
@@ -35,8 +37,9 @@ public async Task<data.@this> Resume(actor.context.@this context, CancellationTo
     var app = new global::app.@this(context.App.filesystem.root.Absolute, context.Actor!);   // as test/list/this.cs:185
     var started = await Start(app, context);              // every part into the sub app (was: Start(context.App, …))
     if (!started.Success) return started;
-    var ran = await <the restored actor's context, the one whose stack holds where the run stopped>.call.Resume(…);
-    return ran.Success ? context.Ok(app) : ran;           // the app, or its error all the way up (167)
+    await using (app)                                     // disposed when its run ends (168)
+        return await <the restored actor's context, the one whose stack holds where the run stopped>.call.Resume(…);
+    // the run's own answer: its result, or its error all the way up (167); no ternary (168)
 }
 ```
 
