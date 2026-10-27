@@ -30,18 +30,16 @@ public partial class @this
     [JsonIgnore]
     public int ReturnDepth { get; set; } = 1;
 
-    private global::app.error.@this? _error;
-
     [JsonIgnore]
     [Out, Store]
-    public global::app.error.@this? Error { get => _error; set => _error = value; }
+    public global::app.error.@this? Error { get; set; }
 
     // What travels with a result, taken whole from the Data this one is made over: whether it was handled and how far a
     // return goes, always; its error, the snapshot an exit holds and the signature it arrived in, unless this Data holds
     // its own. What a value carries (its attachment) is the maker's: a face shares it, a copy takes a copy.
     private protected void Take(@this result)
     {
-        _error ??= result._error;
+        Error ??= result.Error;
         Handled = result.Handled;
         Returned = result.Returned;
         ReturnDepth = result.ReturnDepth;
@@ -56,12 +54,12 @@ public partial class @this
     {
         // An error meeting its first run here takes this Data's context as where it happened.
         error.Context ??= Context;
-        _error = error;
+        Error = error;
     }
 
     [JsonIgnore]
     [Out, Store]
-    public bool Success => _error == null;
+    public bool Success => Error == null;
 
     public static implicit operator bool(@this d) => d.Success;
 

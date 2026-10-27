@@ -115,9 +115,8 @@ public sealed partial class @this
     [JsonIgnore, LlmBuilder, Snapshot]
     public global::app.goal.@this Goal { get; init; } = null!;
 
-    /// <summary>The list that holds this step — its goal's steps, or the body of the action it sits in. A birth fact,
-    /// handed in where the step is made, as its goal is; the build's fold, which moves a step into a body, is the one
-    /// that says where it is then.</summary>
+    /// <summary>The list that holds this step — its goal's steps, or the body of the action it sits in: the list says
+    /// so as it takes the step in (a step read from a .pr is born holding it).</summary>
     [JsonIgnore]
     public global::app.goal.step.list.@this List { get; internal set; } = null!;
 
@@ -151,11 +150,9 @@ public sealed partial class @this
         await using var _frame = frame;
 
         var answer = await on.start.Before(this, context);
-        data.@this result;
         // action.list owns the chain loop, its fire, and a program's error that travels as an exception
-        result = answer is { Success: false } or { Handled: true } ? answer : await Code.Start(context);
-        result = await on.start.After(this, result, context);
-        return result;
+        var result = answer is { Success: false } or { Handled: true } ? answer : await Code.Start(context);
+        return await on.start.After(this, result, context);
     }
 
 

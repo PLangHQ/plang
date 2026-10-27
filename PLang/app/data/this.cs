@@ -145,7 +145,7 @@ public partial class @this
     /// </list></summary>
     public virtual async System.Threading.Tasks.ValueTask<@this> Settle()
     {
-        if (!HasVariable || _error != null || Signature != null) return this;
+        if (!HasVariable || Error != null || Signature != null) return this;
         @this answer;
         if (!IsVariable) answer = await Rendered();
         else if (await Follow(Context) is { IsInitialized: true } named) answer = named.Copy(Name, named._context);
@@ -643,7 +643,7 @@ public partial class @this
         clone.Take(this);
         clone._item = answer ?? Empty;
         // A declined ask lands its reason on this binding (asking.Fail) and answers null: the typed view holds no value
-        if (answer == null && _error != null) clone.IsInitialized = false;
+        if (answer == null && Error != null) clone.IsInitialized = false;
         return clone;
     }
 

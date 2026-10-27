@@ -224,16 +224,17 @@ public class Default : IBuilder
         // never changes its input, so `sort %people% by age` with no destination must write the answer back to
         // %people%. Inserted here, AFTER Read, so Cover's "is it listed?" check (which refuses the writer's own
         // variable.set) doesn't apply. A literal input has no name to write back to — refused, so FixSteps retries.
-        if (await Destination(goal, context) is { } refused)
+        if (await Route(goal, context) is { } refused)
             return context.Error(refused);
 
         return context.Ok(true);
     }
 
-    // Give the deterministic write-back to a destination-less result-only action. The write-back target is
-    // the action's [Input] property's variable (its List, %people%), read from the catalog element — a built
-    // action's own properties don't carry IsInput (the formal reader builds Name/Type/Value only).
-    private async Task<global::app.error.@this?> Destination(
+    // Routes each destination-less result-only action's answer back to its input: a variable.set inserted right after
+    // it, to the action's [Input] property's variable (its List, %people%), read from the catalog element — a built
+    // action's own properties don't carry IsInput (the formal reader builds Name/Type/Value only). Answers why when an
+    // input has no name to write back to.
+    private async Task<global::app.error.@this?> Route(
         global::app.goal.@this goal, global::app.actor.context.@this context)
     {
         var modules = context.App.module.list;
