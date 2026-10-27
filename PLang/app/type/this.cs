@@ -453,7 +453,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             return eager.Read(ref reader, null, ctx);
 
         // The slot is captured in plang's own format — the wire type's plang kind, which reads it on first touch.
-        var transport = (global::app.type.item.wire.kind.plang.@this)ctx.Context.App.type.list["wire"].kind["plang"]!;
+        var transport = ctx.Context.App.type.list.Plang;
 
         // A null slot is a typed absence now, as a birth's null is — under `item`, the null type's own.
         if (reader.Null()) return Make(null, ctx.Context);

@@ -78,10 +78,10 @@ public class MissingKeyTests
 
         await Assert.That((await (await ctx.Variable.Get("shown")).Value())?.ToString()).IsEqualTo("password: ****");
         using var store = new System.IO.MemoryStream();
-        await (await ctx.App.type.list["wire"].kind["plang"]!.Encode(store, await ctx.Variable.Get("pw"), ctx, global::app.View.Store)).IsSuccess();
+        await (await ctx.App.type.list.Plang.Encode(store, await ctx.Variable.Get("pw"), ctx, global::app.View.Store)).IsSuccess();
         await Assert.That(System.Text.Encoding.UTF8.GetString(store.ToArray())).Contains(Pasted);
         using var debug = new System.IO.MemoryStream();
-        await (await ctx.App.type.list["wire"].kind["plang"]!.Encode(debug, await ctx.Variable.Get("pw"), ctx, global::app.View.Debug)).IsSuccess();
+        await (await ctx.App.type.list.Plang.Encode(debug, await ctx.Variable.Get("pw"), ctx, global::app.View.Debug)).IsSuccess();
         await Assert.That(System.Text.Encoding.UTF8.GetString(debug.ToArray())).DoesNotContain(Pasted);
     }
 }

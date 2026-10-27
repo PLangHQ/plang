@@ -74,7 +74,7 @@ public class FailedWriteTests
             from.Error(new global::app.error.@this("the disk is full", "DiskFull", 507)), from);
         await encoded.IsSuccess();
 
-        var read = await receiver.type.list["wire"].kind["plang"]!.Decode(body.ToArray(), to);
+        var read = await receiver.type.list.Plang.Decode(body.ToArray(), to);
 
         await read.IsFailure();
         await Assert.That(read.Error!.Key).IsEqualTo("DiskFull");

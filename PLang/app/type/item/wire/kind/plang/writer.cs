@@ -19,7 +19,7 @@ public sealed class Writer : global::app.type.format.IWriter
         _json = new global::app.type.item.kind.json.Writer(writer, view, context);
         View = view;
         Context = context;
-        Kind = context.App.type.list["wire"].kind["plang"]!;
+        Kind = context.App.type.list.Plang;
     }
 
     public global::app.type.kind.@this Kind { get; }

@@ -122,6 +122,11 @@ public sealed partial class @this
     /// <summary>True when some type holds a kind <paramref name="name"/> names (by name, alias, MIME or extension).</summary>
     public bool HasKind(string name) => !string.IsNullOrEmpty(name) && Types.Any(type => type.kind[name] != null);
 
+    /// <summary>plang's own format (<c>application/plang</c>): the wire type's plang kind, as itself — what a slice is
+    /// captured by, read through and written in.</summary>
+    internal global::app.type.item.wire.kind.plang.@this Plang
+        => (global::app.type.item.wire.kind.plang.@this)this[typeof(global::app.type.item.wire.@this)].kind["plang"]!;
+
     /// <summary>
     /// The format content of this MIME is — a kind of the type that reads it: <c>image/png</c> → image's png,
     /// <c>text/plain</c> → text's own, <c>application/json; charset=utf-8</c> → item's json, <c>video/mp4</c> →

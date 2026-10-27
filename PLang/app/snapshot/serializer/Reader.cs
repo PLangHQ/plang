@@ -40,7 +40,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         if (reader.Peek() == global::app.type.format.TokenKind.String)
         {
             var types = ctx.Context.App.type.list;
-            var plang = (global::app.type.item.wire.kind.plang.@this)types["wire"].kind["plang"]!;
+            var plang = types.Plang;
             return plang.Read(new global::app.type.item.wire.@this(reader.String(), types[typeof(global::app.snapshot.@this)], plang, ctx.View), ctx);
         }
 

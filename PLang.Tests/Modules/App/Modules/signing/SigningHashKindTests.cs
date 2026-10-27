@@ -20,7 +20,7 @@ public class SigningHashKindTests
     private static async Task<byte[]> Written(global::app.@this app, global::app.actor.context.@this ctx, string value)
     {
         using var wire = new MemoryStream();
-        await (await app.type.list["wire"].kind["plang"]!.Encode(wire, new global::app.data.@this("v", value, context: ctx), ctx)).IsSuccess();
+        await (await app.type.list.Plang.Encode(wire, new global::app.data.@this("v", value, context: ctx), ctx)).IsSuccess();
         return wire.ToArray();
     }
 
@@ -35,7 +35,7 @@ public class SigningHashKindTests
                 .Set(ctx.Ok(ctx.Text("sha256")), ctx)).IsSuccess();
 
             var wire = await Written(app, ctx, "signed with sha256");
-            var back = await app.type.list["wire"].kind["plang"]!.Decode(wire, ctx);
+            var back = await app.type.list.Plang.Decode(wire, ctx);
 
             await Assert.That(System.Text.Encoding.UTF8.GetString(wire)).Contains("\"hash\":{\"type\":\"sha256\"");
             await back.IsSuccess();
@@ -54,7 +54,7 @@ public class SigningHashKindTests
             var written = System.Text.Encoding.UTF8.GetString(await Written(app, ctx, "x"))
                 .Replace("\"hash\":{\"type\":\"keccak256\"", "\"hash\":{\"type\":\"md5\"");
 
-            var back = await app.type.list["wire"].kind["plang"]!.Decode(System.Text.Encoding.UTF8.GetBytes(written), ctx);
+            var back = await app.type.list.Plang.Decode(System.Text.Encoding.UTF8.GetBytes(written), ctx);
 
             await back.IsFailure();
             await Assert.That(back.Error!.Key).IsEqualTo("SignatureInvalid");

@@ -49,8 +49,7 @@ public class @this : global::app.type.item.source
         using var bytes = new System.IO.MemoryStream();
         await using (var utf8 = new System.Text.Json.Utf8JsonWriter(bytes))
             await value.Output(new kind.plang.Writer(utf8, view, context));
-        var plang = (kind.plang.@this)context.App.type.list[typeof(@this)].kind["plang"]!;
-        return new(System.Text.Encoding.UTF8.GetString(bytes.ToArray()), value.Type, plang, view);
+        return new(System.Text.Encoding.UTF8.GetString(bytes.ToArray()), value.Type, context.App.type.list.Plang, view);
     }
 
     /// <summary>The text as written: a string slice is the text it holds (unquoted, as a source's is); any other

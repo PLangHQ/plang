@@ -163,9 +163,9 @@ public class ArchiveActionTests : IDisposable
         var archive = (await (await Pack(Text("note", "wired"))).Value())!;
         var data = new global::app.data.@this("archived", archive, context: Ctx);
         using var wire = new MemoryStream();
-        await (await _app.type.list["wire"].kind["plang"]!.Encode(wire, data, Ctx)).IsSuccess();
+        await (await _app.type.list.Plang.Encode(wire, data, Ctx)).IsSuccess();
 
-        var back = await _app.type.list["wire"].kind["plang"]!.Decode(wire.ToArray(), Ctx);
+        var back = await _app.type.list.Plang.Decode(wire.ToArray(), Ctx);
 
         await Assert.That(System.Text.Encoding.UTF8.GetString(wire.ToArray())).Contains("\"held\":{\"type\":\"data\"");
         await back.IsSuccess();

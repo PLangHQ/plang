@@ -28,9 +28,9 @@ public class TemplateKindTests
         var row = "{\"name\":\"x\",\"type\":{\"name\":\"text\",\"template\":\"fluid\"},\"value\":\"hi %name%\"}";
 
         // the read answers the refusal — a decode never throws what the bytes' own value refused
-        var refused = await ctx.App.type.list["wire"].kind["plang"]!.Decode(
+        var refused = await ctx.App.type.list.Plang.Decode(
             System.Text.Encoding.UTF8.GetBytes(row), ctx, view: global::app.View.Store);
-        var plang = await ctx.App.type.list["wire"].kind["plang"]!.Decode(System.Text.Encoding.UTF8.GetBytes(row.Replace("fluid", "plang")), ctx,
+        var plang = await ctx.App.type.list.Plang.Decode(System.Text.Encoding.UTF8.GetBytes(row.Replace("fluid", "plang")), ctx,
             view: global::app.View.Store);
 
         await refused.IsFailure();
@@ -75,7 +75,7 @@ public class TemplateKindTests
     {
         await using var app = new global::app.@this("/tmp/tplkind-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
-        var plang = ctx.App.type.list["wire"].kind["plang"]!;
+        var plang = ctx.App.type.list.Plang;
         var error = "{\"name\":\"e\",\"type\":{\"name\":\"error\",\"template\":\"plang\"},\"value\":\"%err%\","
             + "\"variable\":[{\"text\":\"%err%\",\"code\":[{\"variable\":\"err\"}]}]}";
         var snapshot = "{\"name\":\"s\",\"type\":{\"name\":\"snapshot\"},\"value\":{}}";
