@@ -161,11 +161,11 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     public System.Threading.Tasks.Task<global::app.data.@this<global::app.snapshot.@this>> Callback(actor.context.@this context)
     {
         if (_callback != null) return _callback;
-        // an error that holds no run has no context for its answer to be born with
+        // an error that holds no run answers so, to its asker
         if (Context == null)
-            throw new global::app.error.AppException(new Error(
+            return System.Threading.Tasks.Task.FromResult(context.Error<global::app.snapshot.@this>(new Error(
                 $"error '{Key}' holds no run (it wasn't raised inside one, or it came back from a stored state), so it has no callback to resume.",
-                "NoCallback", 400));
+                "NoCallback", 400)));
         return _callback = Taken(Context);
 
         async System.Threading.Tasks.Task<global::app.data.@this<global::app.snapshot.@this>> Taken(actor.context.@this run)
