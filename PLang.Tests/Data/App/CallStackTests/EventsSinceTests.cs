@@ -50,6 +50,19 @@ public class EventsSinceTests
         await Assert.That(events.Any()).IsFalse();
     }
 
+    // A change kept as it was is the value's own copy: a value no change reaches (a text) is held as it is, never a walk
+    // of everything it reaches (a task's value reaches the whole app).
+    [Test]
+    public async Task AChangeKeptAsItWas_HoldsTheValuesOwnCopy()
+    {
+        var (app, _) = BuildLive("EvtD");
+        var text = new global::app.type.item.text.@this(new string('x', 300), app.type.list[typeof(global::app.type.item.text.@this)]);
+
+        var diff = new global::app.call.Diff("t", text, deep: true);
+
+        await Assert.That(diff.Before).IsSameReferenceAs(text);
+    }
+
     // A frame on the current chain sits in the tree under the root as well: its changes come once.
     [Test]
     public async Task EventsSince_YieldsEachFramesChangesOnce()
