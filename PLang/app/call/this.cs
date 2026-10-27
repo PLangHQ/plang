@@ -114,9 +114,10 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public child.list.@this Children { get; }
 
     // --- Timing tier (null when Flags.Timing off) ---
-    // The app's type its push handed: when it ran is a value of it (datetime). How long is made as its asker's setting
-    // says a span is.
+    // The app's types its push handed: when it ran is a value of the one (datetime), how long a span, written in the
+    // standard its asker's setting names.
     private readonly global::app.type.@this _datetime;
+    private readonly global::app.type.@this _span;
 
     /// <summary>When it was pushed. Null when the Timing flag was off at Push.</summary>
     [Out, Debug]
@@ -126,10 +127,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public global::app.type.item.datetime.@this? CompletedAt => _completedAt is { } completed ? new(completed, _datetime) : null;
 
     /// <summary>Wall time this frame has run — while in flight (an after-binding runs inside the frame) and, once
-    /// popped, its whole duration — made in the standard its asker's setting names. Null when the Timing flag was off
-    /// at Push.</summary>
-    public global::app.type.item.duration.@this? Duration(global::app.actor.context.@this context)
-        => _stopwatch is { } watch ? global::app.type.item.duration.@this.Create(watch.Elapsed, context) : null;
+    /// popped, its whole duration — a span, written in the standard its asker's setting names. Null when the Timing flag
+    /// was off at Push.</summary>
+    [Out, Debug]
+    public global::app.type.item.duration.@this? Duration
+        => _stopwatch is { } watch ? new global::app.type.item.duration.span.@this(watch.Elapsed, _span) : null;
 
     // --- Diff tier (null when Flags.Diff off) ---
     /// <summary>
@@ -221,6 +223,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         _diffSource = diffSource;
         _for = callee;
         _datetime = stack.Datetime;
+        _span = stack.Span;
         Tags = new global::app.type.item.dict.@this(stack.Dict);
         Errors = new global::app.error.list.@this(stack.Errors);
         property = new(stack.Properties);

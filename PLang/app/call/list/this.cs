@@ -61,6 +61,12 @@ public sealed partial class @this : global::app.type.item.@this
     /// <summary>The app's datetime type — a frame's start and end are of it.</summary>
     internal global::app.type.@this Datetime => _datetimeType ??= _types[typeof(global::app.type.item.datetime.@this)];
 
+    /// <summary>The span type a frame's run time is: a duration with no form of its own, written in its asker's
+    /// standard.</summary>
+    internal global::app.type.@this Span => _spanType ??= _types[typeof(global::app.type.item.duration.span.@this)];
+
+    private global::app.type.@this? _spanType;
+
     /// <summary>The app's dict type — a frame's tags are of it.</summary>
     internal global::app.type.@this Dict => _dictType ??= _types[typeof(global::app.type.item.dict.@this)];
 
