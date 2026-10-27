@@ -31,7 +31,7 @@ public partial class json
             global::app.type.format.TokenKind.Null => null,
             global::app.type.format.TokenKind.Bool => reader.Bool(),
             global::app.type.format.TokenKind.Number => reader.Number(),
-            global::app.type.format.TokenKind.String => Slot(reader.String(), ctx),
+            global::app.type.format.TokenKind.String => Stamped(reader.String(), ctx),
             _ => Parse(reader.RawValue(), ctx),
         };
 
@@ -50,7 +50,7 @@ public partial class json
             global::app.type.format.TokenKind.Null => null,
             global::app.type.format.TokenKind.Bool => reader.Bool(),
             global::app.type.format.TokenKind.Number => reader.Number(),
-            global::app.type.format.TokenKind.String => Slot(reader.String(), ctx),
+            global::app.type.format.TokenKind.String => Stamped(reader.String(), ctx),
             _ => Entry(reader.RawValue(), ctx),
         };
 
@@ -64,7 +64,7 @@ public partial class json
     // template survives the container's fresh-per-read); a literal slot stays a raw scalar
     // (flagging it would change its canonicalization/signing). A runtime-ingest slot is
     // never a template (injection-safe). The text takes the row's variables it holds.
-    private object? Slot(string s, global::app.type.reader.ReadContext? ctx)
+    private object? Stamped(string s, global::app.type.reader.ReadContext? ctx)
         => ctx?.Template is { } template
            && new text.@this(s, _context.App.type.list[new global::app.type.@this("text", template: template), _context], ctx.Variable) is { HasVariable: true } value
             ? value
@@ -191,7 +191,7 @@ public partial class json
             throw new System.InvalidOperationException($"JSON nesting exceeds maximum depth ({Deepest})");
         return element.ValueKind switch
         {
-            System.Text.Json.JsonValueKind.String => Slot(element.GetString() ?? "", ctx),
+            System.Text.Json.JsonValueKind.String => Stamped(element.GetString() ?? "", ctx),
             // a number: its raw text, read by number's one rule
             System.Text.Json.JsonValueKind.Number => number.@this.Parse(element.GetRawText()),
             System.Text.Json.JsonValueKind.True => true,
@@ -215,7 +215,7 @@ public partial class json
         if (ctx?.Template != null)
         {
             // a template's text is the one a template slot makes
-            if (Slot(s, ctx) is text.@this value) return value;
+            if (Stamped(s, ctx) is text.@this value) return value;
         }
         else if (s.Contains('%') && new global::app.type.item.variable.parser.@this(s, _context.App.type.list).Variable.Count > 0)
             return s;
