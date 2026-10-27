@@ -188,6 +188,33 @@ public class CallStackFramesTests
         await Assert.That(error.Goal).IsSameReferenceAs(goal);
     }
 
+    // An isolated frame keeps every write made under it, so it holds names it wasn't born with: they come back as
+    // written there, never as names its runner supplied.
+    [Test]
+    public async Task AnIsolatedFramesWrite_ComesBack_NotAsANameItWasBornWith()
+    {
+        await using var src = App();
+        var (_, _, a1) = MakeFrame(src, "IsoGoal");
+        var context = src.actor.list.User.Context;
+        string text;
+        await using (context.call.Push(a1, await context.call.Setting()))
+        await using (context.call.Isolate([new global::app.data.@this("city", "Reykjavik", context: context)], await context.call.Setting()))
+        {
+            await context.Variable.Set("written", "here");
+            text = await src.Snapshot(context).Saved().Text(context);
+        }
+
+        await using var dst = App();
+        MakeFrame(dst, "IsoGoal");
+        var into = dst.actor.list.User.Context;
+        await dst.Restore(await into.Snapshot(text), into);
+
+        var isolated = into.call.Root!.Children.Single();
+        await Assert.That(isolated.TryGet("written", out _)).IsTrue();
+        await Assert.That(isolated.Arguments.Contains("city")).IsTrue();
+        await Assert.That(isolated.Arguments.Contains("written")).IsFalse();
+    }
+
     [Test]
     public async Task ARestoreThatFails_LeavesNothingEnteredBehind()
     {
