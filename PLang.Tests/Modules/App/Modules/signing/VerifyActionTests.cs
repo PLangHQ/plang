@@ -91,10 +91,10 @@ public class VerifyActionTests
         var l = Layer(signed);
         var rebuilt = new global::app.type.item.signature.@this(
             l.Type, l.Value, algorithm ?? l.Algorithm, l.Nonce, created ?? l.Created,
-            l.Identity, hash ?? l.Hash, signature ?? l.Signature, l.Expires,
+            l.Identity, hash ?? l.Hash, signature ?? l.Signature, l.View, l.Expires,
             contractsNull ? null : l.Contracts,
             window is null ? global::app.type.item.signature.Origin.Signed : global::app.type.item.signature.Origin.Live,
-            window is { } w ? signed.Context.Duration(w) : null, l.View);
+            window is { } w ? signed.Context.Duration(w) : null);
         return signed.Copy(rebuilt);
     }
 
@@ -398,6 +398,20 @@ public class VerifyActionTests
         await (await VerifyHelper(signed, contracts: new List<string> { "C0" })).IsSuccess();
     }
 
+    // A signature is born holding the view it was hashed in, whichever it is: one signed in the Debug view verifies there,
+    // and plang reads its view as its name.
+    [Test]
+    public async Task ASignatureSignedInDebug_VerifiesInDebug()
+    {
+        // signed as the serializer and the snapshot sign, the view handed whole to the signer
+        var signer = _app.Code.Get<global::app.module.signing.code.ISigning>().Provider!;
+        var signed = await signer.SignAsync(new sign(Ctx) { Data = new Data("", "hello", context: Ctx), View = global::app.View.Debug });
+        await signed.IsSuccess();
+
+        await Assert.That(Layer(signed).View).IsSameReferenceAs(global::app.View.Debug);
+        await (await VerifyHelper(signed)).IsSuccess();
+    }
+
     // A signature read live is born with its window: one without is refused at construction.
     [Test]
     public async Task ALiveSignatureWithNoWindow_IsRefused()
@@ -405,7 +419,7 @@ public class VerifyActionTests
         var l = Layer(await SignHelper("test"));
 
         var refused = Assert.Throws<global::app.error.AppException>(() => new global::app.type.item.signature.@this(
-            l.Type, l.Value, l.Algorithm, l.Nonce, l.Created, l.Identity, l.Hash, l.Signature, null, l.Contracts,
+            l.Type, l.Value, l.Algorithm, l.Nonce, l.Created, l.Identity, l.Hash, l.Signature, l.View, null, l.Contracts,
             global::app.type.item.signature.Origin.Live, window: null));
 
         await Assert.That(refused!.Error.Key).IsEqualTo("LiveSignatureNeedsWindow");

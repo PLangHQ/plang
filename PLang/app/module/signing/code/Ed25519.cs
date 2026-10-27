@@ -62,7 +62,7 @@ public class Ed25519 : ISigning
             expires: expires is { } e ? new global::app.type.item.datetime.@this(e, datetime) : null,
             contracts: contracts,
             // the view it was hashed in, signed with it: verify re-hashes there, whatever carries it
-            view: new global::app.type.item.text.@this(view.ToString().ToLowerInvariant(), text));
+            view: view);
 
         try
         {
@@ -108,10 +108,9 @@ public class Ed25519 : ISigning
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError(
                 "The signed hash names no kind — it can't be checked", "DataHashMismatch", 400));
 
-        // Re-hash in the view the data was signed in, by the kind it was signed with: the view the signature records, or,
-        // for one that records none, the view its origin says (a store read is a property-bag carrying every [Store]
-        // field; hashing it in Out, a subset, would diverge).
-        if (!(await signature.Over(bearer).Value.Digest(signature.Hashed, kind, action.Context)).DigestEquals(storedHash))
+        // Re-hash in the view the data was signed in, by the kind it was signed with: the signature's own view, born with
+        // it (a store read is a property-bag carrying every [Store] field; hashing it in Out, a subset, would diverge).
+        if (!(await signature.Over(bearer).Value.Digest(signature.View, kind, action.Context)).DigestEquals(storedHash))
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
 
         // 4. Signature verification — over the signature's canonical signing bytes.

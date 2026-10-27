@@ -1,13 +1,11 @@
 namespace PLang.Tests.App.Settings;
 
 /// <summary>
-/// Pin for decision 790 (the fix-it-by-hand rule): an old-shape settings row — one written by
-/// the pre-789 binary with type <c>{"name":"setting","kind":"llm.setting"}</c> — reads loudly,
-/// not silently. The fixture (<c>fixtures/oldshapesettingrow/data.sqlite</c>) is the committed
-/// row the old binary wrote (one row <c>user!llm.setting</c>, no secrets — Key/Endpoint/Model
-/// cleared when it was generated). A fresh App over that store asks for the <c>llm.setting</c>
-/// class; the read throws an <c>AppException</c> whose <c>Error</c> is <c>SettingsUnreadable</c>,
-/// names the row's key, and says how to fix it (delete it and set it again).
+/// A settings row an older binary wrote reads loudly, never as a silent default. The fixture
+/// (<c>fixtures/oldshapesettingrow/data.sqlite</c>) is the committed row the old binary wrote (one row
+/// <c>user!llm.setting</c>, no secrets): its signature names no view, so it can't be checked and is refused. A
+/// fresh App over that store asks for the <c>llm.setting</c> class: the answer is <c>SettingsUnreadable</c>, naming
+/// the row's key and how to fix it (delete it and set it again), its cause the signature's refusal.
 /// </summary>
 public class AnOldShapeSettingRowIsNamedLoudlyTests
 {
@@ -38,13 +36,13 @@ public class AnOldShapeSettingRowIsNamedLoudlyTests
 
         var read = await app.actor.list.User.Setting.Get("llm.setting");
 
-        // The read of an old-shape row surfaces SettingsUnreadable, names the row's key
-        // (user!llm.setting), and spells out the by-hand fix.
+        // The read of the old row surfaces SettingsUnreadable, names the row's key (user!llm.setting) and spells out
+        // the by-hand fix; why is the signature's refusal, whole.
         await read.IsFailure();
         var err = read.Error!;
         await Assert.That(err.Key).IsEqualTo("SettingsUnreadable");
         await Assert.That(err.Message).Contains("llm.setting");
-        await Assert.That(err.Message).Contains("older shape");
         await Assert.That(err.Message).Contains("delete it and set it again");
+        await Assert.That(err.list.Single().Key).IsEqualTo("SignatureInvalid");
     }
 }
