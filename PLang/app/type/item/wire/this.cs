@@ -64,7 +64,7 @@ public class @this : global::app.type.item.source
 
     // The slice's own read keeps whose bytes they are, and what they were written for: a row nested in the build's
     // slice (a goal call's parameters) is the build's too, and one in a snapshot is read as a snapshot's.
-    private protected override global::app.type.item.@this Read(actor.context.@this context)
+    internal override global::app.type.item.@this Read(actor.context.@this context)
         => _reader.Read(this, new global::app.type.reader.ReadContext(context, Type.Template, Variable: Variable, IsBuilt: IsBuilt) { View = _view });
 
     // What the slice's view needs loaded before it is read (a goal's .pr, in a snapshot).

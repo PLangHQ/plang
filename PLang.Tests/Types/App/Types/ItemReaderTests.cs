@@ -58,9 +58,9 @@ public class ItemReaderTests : System.IAsyncDisposable
         await Assert.That(answer.Error!.Key).IsEqualTo("NotTokens");
     }
 
-    // an entry still encoded (a .pr's lazy slice) can't be read without the context that decodes it: the write answers
-    // that as its error, never a .NET exception
-    [Test] public async Task ADictHoldingAnUnreadSlice_IntoARecordMember_AnswersWireUndecoded()
+    // an entry still encoded (a .pr's lazy slice) is read as the value it decodes to, in the read's context: the write
+    // answers what the same dict decoded answers
+    [Test] public async Task ADictHoldingAnUnreadSlice_IntoARecordMember_ReadsTheSliceAsItsValue()
     {
         var owner = Box();
         var slice = Ctx.App.type.list[new global::app.type.@this("dict"), Ctx].Make("{\"inner\": 1}",
@@ -70,7 +70,7 @@ public class ItemReaderTests : System.IAsyncDisposable
         var answer = await owner.Set("limit", false, nested, Ctx);
 
         await answer.IsFailure();
-        await Assert.That(answer.Error!.Key).IsEqualTo("WireUndecoded");
+        await Assert.That(answer.Error!.Key).IsEqualTo("NotTokens");
     }
 
     // a member that can't be written answers why, never a throw

@@ -87,7 +87,9 @@ public struct Reader : IReader
         }
         var (name, value) = open.Items.Current;
         key = name.Peek().ToString() ?? "";
-        _at = value.Peek();
+        // a value still unread (a slice, a source) is read as what it is, in this reader's context: its tokens are the
+        // value's, never its bytes'; one that reads as itself stays a leaf
+        _at = value.Peek() is global::app.type.item.source unread ? unread.Read(_context) : value.Peek();
         if (ReferenceEquals(_at, open.Container))
             throw new global::app.error.AppException(new global::app.error.@this(
                 $"a {open.Container.Type.Name} reads as tokens only as a value, a list or a dict — it holds no members of its own",
