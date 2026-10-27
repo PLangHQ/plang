@@ -140,33 +140,44 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     /// current now: a resume inside a run is a call, so its frames go under the resuming action's — then entered under
     /// the restored app's setting, read once. The last is where the run stopped, held with the frame they went under for
     /// <see cref="Resume"/>. A row whose key finds nothing (a goal changed since the save, an action no longer at its
-    /// place) is the answer, its error whole.
+    /// place) is the answer, its error whole, and the frames entered before it end, the last first, as any call ends:
+    /// current goes back to the frame they went under, and they leave its children (with history kept, they stay among
+    /// them ended, history not state).
     /// </summary>
     async System.Threading.Tasks.Task<global::app.data.@this> global::app.snapshot.ISnapshot.Start(global::app.snapshot.@this snapshot, global::app.actor.context.@this context)
     {
+        if (snapshot.In("frames", context) is not { } entry) return context.Ok();
+        if (await entry.Value<global::app.type.item.list.@this>() is not { } rows) return entry;
+        var under = _current.Value;
+        var setting = await Setting();
+        var entered = new List<call.@this>();
+        var answer = context.Ok();
         try
         {
-            if (snapshot.In("frames", context) is not { } entry) return context.Ok();
-            if (await entry.Value<global::app.type.item.list.@this>() is not { } rows) return entry;
-            var under = _current.Value;
-            var setting = await Setting();
-            call.@this? stopped = null;
             // each row read only once the one before it is entered: it is made under it, its caller
             foreach (var row in rows.Items(context))
             {
                 if (await row.Value<call.@this>() is not { } frame)
-                    return row.Error != null ? row : context.Error(new global::app.error.@this(
+                {
+                    answer = row.Error != null ? row : context.Error(new global::app.error.@this(
                         "the snapshot's 'frames' holds a row that reads as no frame", "SnapshotRowUnread", 400));
-                stopped = Enter(frame, setting);
+                    break;
+                }
+                entered.Add(Enter(frame, setting));
             }
-            _resumed = stopped is { } last ? (last, under) : null;
-            return context.Ok();
         }
         catch (AppException ex)
         {
             // a frame's constructor has no answer to give, so what it can't place it throws
-            return context.Error(ex.Error);
+            answer = context.Error(ex.Error);
         }
+        if (!answer.Success)
+        {
+            for (var at = entered.Count - 1; at >= 0; at--) await entered[at].DisposeAsync();
+            return answer;
+        }
+        _resumed = entered.Count > 0 ? (entered[^1], under) : null;
+        return answer;
     }
 
 

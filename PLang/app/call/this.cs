@@ -182,11 +182,13 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             .Read(record, this, context, global::app.View.Snapshot);
 
     /// <summary>The element a stored frame's <paramref name="record"/> keeps under <paramref name="name"/> — a goal, a
-    /// step, an action — read in the snapshot view: the live one its key finds. A key that finds none is refused, thrown
-    /// to the read boundary.</summary>
-    private protected static T? Kept<T>(global::app.type.item.dict.@this record, string name, global::app.actor.context.@this context)
+    /// step, an action — read in the snapshot view: the live one its key finds. A key that finds none, or a record that
+    /// keeps none, is refused, thrown to the read boundary: a frame is never born without its element.</summary>
+    private protected T Kept<T>(global::app.type.item.dict.@this record, string name, global::app.actor.context.@this context)
         where T : global::app.type.item.@this
-        => global::app.View.Snapshot.Make(context.App.type.list[typeof(T)], record.Get(name, context)?.Peek(), context) as T;
+        => global::app.View.Snapshot.Make(context.App.type.list[typeof(T)], record.Get(name, context)?.Peek(), context) as T
+           ?? throw new global::app.error.DeclinedException(new global::app.error.@this(
+               $"a saved {Type.Name} frame keeps no {name}", "FrameKeyIncomplete", 400));
 
     /// <summary>
     /// Every frame's making: it holds back-references to the owning stack and the frame it goes back to when it ends
