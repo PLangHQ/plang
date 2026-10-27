@@ -7,5 +7,5 @@ Start
 - save %snapshot% to 'workspace/saved.plang'
 - read file 'workspace/saved.plang', write to %back%
 - assert %back.actor.list.user.context.variable.name% equals "Bob"
-- assert %back.actor.list.user.context.call.frames[0].goal.path% contains "SavesTheRun"
+- assert %back.actor.list.user.context.call.frames[0].goal.path% equals "/plan/snapshot/module/snapshot/save/SavesTheRun/SavesTheRun.test.goal"
 - delete file 'workspace/saved.plang'
