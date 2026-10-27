@@ -429,7 +429,7 @@ public sealed partial class @this
         var lines = text.Split('\n');
         var goals = new List<@this>();
         var goal = (@this?)null;
-        // The step being read: continuation lines rebuild it, and it is added to its goal's steps at each boundary
+        // The step being read: it takes its continuation lines, and is added to its goal's steps at each boundary
         // (next step / blank / goal / EOF).
         var step = (Step?)null;
         // the comment lines read since the last step or goal, the comment of whichever comes next
@@ -518,9 +518,9 @@ public sealed partial class @this
                 // Finalize the previous step before starting this one (continuations are done).
                 if (step != null) goal.Step.Add(step);
 
-                // The step's text is canonical at birth: every line trimmed at both ends (its \r gone),
-                // continuation lines joined by \n — nothing inside a line changes. Readers compare and
-                // print it as is (goal.Merge's `==`, the prompts), never trimming it again.
+                // The step's text is canonical: every line trimmed at both ends (its \r gone), continuation lines
+                // joined by \n — nothing inside a line changes. Readers compare and print it as is (goal.Merge's
+                // `==`, the prompts), never trimming it again.
                 step = new Step(context.App.type.list)
                 {
                     Goal = goal,   // birth fact — the parser holds the goal, so it hands it over

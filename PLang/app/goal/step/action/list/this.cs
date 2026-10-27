@@ -23,8 +23,6 @@ public sealed class @this : global::app.type.item.list.bare.@this<Action>, globa
     public @this(global::app.type.@this type) : base(new List<object?>(), type) { }
     public @this(global::app.type.item.list.@this source, global::app.type.@this type) : base(source, type) { }
 
-    /// <summary>Clone/render keep this concrete node type, context-free.</summary>
-
     /// <summary>Starts the chain from <paramref name="from"/> (0: the whole chain; a resume, where the run stopped or
     /// after it): setup / non-condition actions take their turn in order (a clause leaves the chain's result as it
     /// stands); a condition evaluates, and if truthy starts its <c>Child</c> branch and stops (the rest of the chain —
@@ -57,11 +55,6 @@ public sealed class @this : global::app.type.item.list.bare.@this<Action>, globa
         return result;
     }
 
-    /// <summary>What is wrong with this chain, or null when nothing is. The node iterates ITSELF and
-    /// each action judges itself, the same shape as <see cref="Start"/>; the causes of every element
-    /// gather into one error for the chain.
-    /// <para>An EMPTY chain is the list's own verdict, not a pass: a step maps to at least one
-    /// action, and the list is the only thing that can see there is nothing to judge.</para></summary>
     /// <summary>The actions this code runs as its own (<c>module.action</c>): top level with its clauses, a
     /// condition's body — not an action held as a value, nor a clause's recovery.</summary>
     public IEnumerable<string> Own
@@ -90,6 +83,11 @@ public sealed class @this : global::app.type.item.list.bare.@this<Action>, globa
         }
     }
 
+    /// <summary>What is wrong with this chain, or null when nothing is. The node iterates ITSELF and
+    /// each action judges itself, the same shape as <see cref="Start"/>; the causes of every element
+    /// gather into one error for the chain.
+    /// <para>An EMPTY chain is the list's own verdict, not a pass: a step maps to at least one
+    /// action, and the list is the only thing that can see there is nothing to judge.</para></summary>
     public async System.Threading.Tasks.Task<global::app.error.@this?> Validate(actor.context.@this context)
     {
         if (Count == 0)

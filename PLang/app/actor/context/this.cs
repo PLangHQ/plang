@@ -151,10 +151,6 @@ public sealed class @this : IDisposable, global::app.snapshot.ISnapshot
 
         // a frame's values are the app's types
         call = new(app.type.list, () => Setting);
-
-        // %!app% and %!context% are the memory's system variables, under it: the goal, step, error, test and channels in
-        // play are the app's shortcuts (/system/shortcut/: %!goal%, %!step%, %!error%, %!test%, %!channel%), each
-        // reading its asker's place through the app.
     }
 
     // A context holds its parts (its calls, its variables): it answers in itself, so the walk stores and starts them in it.
