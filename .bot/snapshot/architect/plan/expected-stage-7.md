@@ -145,6 +145,49 @@ Tests:
 - The text has no `children`, `current` or ids.
 - The surface is re-pinned citing "snapshot 77, 81".
 
+## After Ingi's 113 (written before the coder reports; not sent)
+
+**2, the goal's key names its `.goal`:**
+
+```csharp
+// goal/this.cs:110 — the key's location is the source; the .pr follows from it
+[Debug, LlmBuilder, Snapshot] public path.@this? Path { … }                       // + Snapshot
+[Debug] public file.@this? Pr => Parent?.Pr ?? _pr;                                 // − Snapshot (derived from Path)
+
+// goal/serializer/Snapshot.cs — case "path" replaces case "pr"
+case "path": path = ctx.View.Reader(types[typeof(path.@this)], null, context).Read(ref reader, null, ctx) as path.file.@this; break;
+// the goal the load put in the list (View.Load's location arm → goal.Load → goal.list.Load(path), list/this.cs:45)
+if (path == null) throw Refused(… "GoalKeyIncomplete", 400);
+if (context.App.goal.list[path.Pr]?.Named(name) is not { } goal) throw Refused(… "GoalNotFound", 404);
+// hash compared exactly, as now (409)
+```
+Checks: no new load code (the location arm and `goal.list.Load` already exist); a sub app gets its parent's goal; a setup goal and an unbuilt one refused by the load; FreshAppGoesOn green; the nested-load pin test red and named for what it wants.
+
+**3, the snapshot taken at once:**
+
+```csharp
+// app/this.Snapshot.cs — the walk, then written once in the snapshot view: the state at this moment
+public async Task<data.@this<snapshot.@this>> Snapshot(actor.context.@this context)                    // was sync
+    => … var snapshot = new snapshot.@this(context); var stored = snapshot.Store(this, thrown, context);
+       … return context.Ok(await wire.@this.Of(snapshot, View.Snapshot, context));                    // moved from save.cs:19
+
+// module/snapshot/save.cs — signs what app.Snapshot answers; no wire.Of of its own
+var taken = await Context.App.Snapshot(Context);
+// error/this.cs:161 — taken once, cached, awaited
+[LlmBuilder] public async ValueTask<data.@this<snapshot.@this>> Callback() { … }                      // was a property
+// channel/type/message/this.cs:21 — the ask holds what app.Snapshot answers
+```
+Checks: one door writes the snapshot (pattern 7), no part's Store goes async, Call_Restore_* restore from bytes and pass, `%!error.callback%` reads in plang as before; the variables part's per-value copy goes if the write is the copy (stored twice).
+
+**4, a frame's own variables are its parameters:**
+
+```csharp
+// call/this.cs — replaces Variable (call/this.cs:274–287 on the wip), which hid item.Variable
+/// <summary>The frame's own variables by name (%!call.scope.parameter.order%), as goal.call names them.</summary>
+[Store] public dict.@this Parameter { get => …; private set => …; }      // NEW: keyed, each entry by its name; the setter the birth's names logic
+```
+Checks: written keyed (the snapshot view names a Data by where it is held, View.cs:249–251); the binding's `%item%` and a goal call's parameters come back by name; reflection finds one member named for it; AFramesOwnVariables and AFramesVariable green.
+
 ## Not in this stage
 
 Question 3 (a loop goes on at its item; a held call comes back where it was) and 4b (goal, step and module properties).
