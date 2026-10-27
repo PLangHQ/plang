@@ -15,6 +15,10 @@ public static class SnapshotTextExtensions
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }
 
+    /// <summary>What the snapshot <paramref name="snapshot"/> answers writes in text.</summary>
+    public static async Task<string> Text(this Task<global::app.snapshot.@this> snapshot, global::app.actor.context.@this context)
+        => await (await snapshot).Text(context);
+
     /// <summary>The snapshot <paramref name="text"/> is, asked as one — the door <c>resume %snapshot%</c> takes.</summary>
     public static async Task<global::app.snapshot.@this> Snapshot(this global::app.actor.context.@this context, string text)
     {

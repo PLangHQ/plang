@@ -36,8 +36,9 @@ public static class SnapshotReadExtensions
     public static async Task<List<T>> Records<T>(this Snapshot s, string key)
     {
         var records = new List<T>();
+        // each row opened in the snapshot's context (a snapshot read from its bytes holds its rows unread), then lowered
         foreach (var row in await s.Rows(key))
-            if (Lower<T>(row.Peek()) is { } record) records.Add(record);
+            if (Lower<T>(await row.Value()) is { } record) records.Add(record);
         return records;
     }
 

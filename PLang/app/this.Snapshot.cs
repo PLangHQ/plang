@@ -4,10 +4,12 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
 {
     /// <summary>
     /// The run's state as a snapshot: the app and every part under it (<see cref="snapshot.@this.Store(snapshot.ISnapshot, actor.context.@this)"/>),
-    /// each at its place. A save inside a task is refused: a task's context is no member of anything the walk reaches, so
-    /// its variables and its frames would be missing from what was saved.
+    /// each at its place, taken once — written in the snapshot's own view (no secret in it) and answered as those bytes,
+    /// so the run going on never changes what was taken, and whatever carries it (a save, an ask's pending state, an
+    /// error's callback, a file) carries exactly them. A save inside a task is refused: a task's context is no member of
+    /// anything the walk reaches, so its variables and its frames would be missing from what was saved.
     /// </summary>
-    public data.@this<snapshot.@this> Snapshot(actor.context.@this context)
+    public System.Threading.Tasks.Task<data.@this<snapshot.@this>> Snapshot(actor.context.@this context)
         => Snapshot(new Dictionary<snapshot.ISnapshot, snapshot.ISnapshot>(ReferenceEqualityComparer.Instance), context);
 
     /// <summary>
@@ -16,14 +18,15 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     /// (<see cref="global::app.type.item.variable.list.@this.SnapshotAt"/>, the chain the error carried). Everything else
     /// is unchanged across handling, so it is stored live.
     /// </summary>
-    public data.@this<snapshot.@this> Snapshot(global::app.error.@this error, actor.context.@this context)
+    public System.Threading.Tasks.Task<data.@this<snapshot.@this>> Snapshot(global::app.error.@this error, actor.context.@this context)
         => Snapshot(new Dictionary<snapshot.ISnapshot, snapshot.ISnapshot>(ReferenceEqualityComparer.Instance)
         {
             [context.Variable] = context.Variable.SnapshotAt(error),
             [context.call] = context.call.At(error.CallFrames),
         }, context);
 
-    private data.@this<snapshot.@this> Snapshot(Dictionary<snapshot.ISnapshot, snapshot.ISnapshot> thrown, actor.context.@this context)
+    private async System.Threading.Tasks.Task<data.@this<snapshot.@this>> Snapshot(
+        Dictionary<snapshot.ISnapshot, snapshot.ISnapshot> thrown, actor.context.@this context)
     {
         if (!ReferenceEquals(context, context.Actor.Context))
             return global::app.data.@this<snapshot.@this>.FromError(new global::app.error.@this(
@@ -31,7 +34,9 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
                 "SnapshotInTask", 400), context);
         var snapshot = new snapshot.@this(context);
         var stored = snapshot.Store(this, thrown, context);
-        return stored.Success ? context.Ok(snapshot) : global::app.data.@this<snapshot.@this>.FromError(stored.Error!, context);
+        if (!stored.Success) return global::app.data.@this<snapshot.@this>.FromError(stored.Error!, context);
+        return global::app.data.@this<snapshot.@this>.From(
+            context.Ok(await global::app.type.item.wire.@this.Of(snapshot, global::app.View.Snapshot, context)));
     }
 
     // The app is the root part and holds nothing of its own: what a program added to it is its property, a part at

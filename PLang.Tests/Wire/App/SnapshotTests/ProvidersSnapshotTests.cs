@@ -99,7 +99,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         var context = src.actor.list.User.Context;
         await Load(src, TestProviderDll);
         await src.Code.SetDefault(typeof(global::app.module.signing.code.ISigning), "test-signing").IsSuccess();
-        var snap = src.Snapshot(context).Saved();
+        var snap = (await src.Snapshot(context).Saved());
 
         // one record of the DLL: its provider is no registration of its own, and the override names its kind by plang name
         await Assert.That((await snap.Node("Code").Records<global::app.module.code.registration.@this>("registration"))!.Count).IsEqualTo(0);
@@ -169,7 +169,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
     {
         var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
         src.Code.Register(typeof(global::app.data.code.IGrep), new CustomGrep());
-        var snap = src.Snapshot(src.actor.list.User.Context).Saved();
+        var snap = (await src.Snapshot(src.actor.list.User.Context).Saved());
 
         // stored by its kind's plang name and its own, never a C# type name
         var registration = (await snap.Node("Code").Records<global::app.module.code.registration.@this>("registration"))!.Single();
@@ -228,7 +228,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
     {
         // what a fresh app's registry holds is made again by it — nothing of it is stored
         var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
-        var snap = app.Snapshot(app.actor.list.User.Context).Saved();
+        var snap = (await app.Snapshot(app.actor.list.User.Context).Saved());
 
         await Assert.That((await snap.Node("Code").Records<global::app.module.code.registration.@this>("registration"))!.Count).IsEqualTo(0);
         await Assert.That((await snap.Node("Code").Rows("dll")).Count).IsEqualTo(0);

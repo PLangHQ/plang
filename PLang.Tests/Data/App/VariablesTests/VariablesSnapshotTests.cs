@@ -13,7 +13,7 @@ public class VariablesSnapshotTests : System.IAsyncDisposable
         src.actor.list.User.Context.Variable.Set("x", 1);
         src.actor.list.User.Context.Variable.Set("obj", new Dictionary<string, object?> { ["a"] = 1 });
 
-        var snap = src.Snapshot(src.actor.list.User.Context).Saved();
+        var snap = (await src.Snapshot(src.actor.list.User.Context).Saved());
         var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
         await dst.Restore(snap, dst.actor.list.User.Context);
 
@@ -41,7 +41,7 @@ public class VariablesSnapshotTests : System.IAsyncDisposable
         vars.Set("user", "alice");        // user var — survives
         vars.Set("!myInfra", "infra");    // !-prefixed — skipped
 
-        var snap = src.Snapshot(src.actor.list.User.Context).Saved();
+        var snap = (await src.Snapshot(src.actor.list.User.Context).Saved());
         var captured = snap.Node(SnapshotPathExtensions.UserVariable).Entries.Entries(snap.Context).ToList();   // each captured variable is its own entry
 
         var names = captured.Select(d => d.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);

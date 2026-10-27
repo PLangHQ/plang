@@ -6,10 +6,14 @@ namespace PLang.Tests;
 /// </summary>
 public static class SnapshotSaveExtensions
 {
-    /// <summary>The snapshot <paramref name="saved"/> holds; a refused save throws its error (a test of the refusal
-    /// asks the Data).</summary>
-    public static global::app.snapshot.@this Saved(this global::app.data.@this<global::app.snapshot.@this> saved)
-        => saved.Success ? (global::app.snapshot.@this)saved.Peek() : throw new global::app.error.AppException(saved.Error!);
+    /// <summary>The snapshot <paramref name="saved"/> holds — the bytes the app took, opened, as a resume opens them; a
+    /// refused save throws its error (a test of the refusal asks the Data).</summary>
+    public static async Task<global::app.snapshot.@this> Saved(this Task<global::app.data.@this<global::app.snapshot.@this>> saved)
+    {
+        var taken = await saved;
+        if (!taken.Success) throw new global::app.error.AppException(taken.Error!);
+        return await taken.Value() as global::app.snapshot.@this ?? throw new global::app.error.AppException(taken.Error!);
+    }
 
     /// <summary>Starts <paramref name="app"/> and every part under it from <paramref name="snapshot"/>; a part that
     /// can't come back throws its error.</summary>

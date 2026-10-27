@@ -143,7 +143,7 @@ public class GoalResumeTests
         await using (stack.Push(goal, await stack.Setting()))
         await using (stack.Push(step, await stack.Setting()))
         await using (stack.Push(step.Code[0], await stack.Setting()))
-            snap = app.Snapshot(context).Saved();
+            snap = (await app.Snapshot(context).Saved());
 
         var result = await snap.Resume(context);
 
