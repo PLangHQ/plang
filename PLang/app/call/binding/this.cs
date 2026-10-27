@@ -39,8 +39,4 @@ public class @this : call.@this, global::app.type.item.ICreate<@this>
     internal override bool Deepens => false;
 
     internal override bool Measured => false;
-
-    /// <summary>Nothing of its own is left once it ends: no step or action runs in it, so its caller goes on.</summary>
-    internal override System.Threading.Tasks.Task<global::app.data.@this> Rest(global::app.actor.context.@this context, bool again)
-        => System.Threading.Tasks.Task.FromResult(context.Ok());
 }
