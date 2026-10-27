@@ -263,13 +263,13 @@ public sealed class Reader
                     // an empty body reads: it breaks a rule, not the syntax — the chain check refuses it,
                     // with the step's other problems, saying where the body goes for that step
                     Take("}");
-                    action.Child.Add(new global::app.goal.step.@this(_context.App.type.list) { Goal = _step.Goal, List = action.Child, Line = _step.Line });
+                    action.Child.Add(new global::app.goal.step.@this(_context.App.type.list) { Goal = _step.Goal, Line = _step.Line });
                     return (action, start);
                 }
                 var bodyStart = _pos;
                 // a condition's body is a child step of this step's goal, its actions born holding it —
                 // written on this step's line
-                var child = new global::app.goal.step.@this(_context.App.type.list) { Goal = _step.Goal, List = action.Child, Line = _step.Line };
+                var child = new global::app.goal.step.@this(_context.App.type.list) { Goal = _step.Goal, Line = _step.Line };
                 var body = new Cursor(_text, child, _context, _index, _modules) { _pos = _pos };
                 var bodyActions = await body.Actions("}");
                 _pos = body._pos;
