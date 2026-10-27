@@ -1,10 +1,11 @@
 namespace app.goal.serializer;
 
 /// <summary>
-/// A goal read in the snapshot view: its key comes in (<c>{name, pr, hash}</c>, what the snapshot wrote for it) and the
-/// live goal comes out — the goal of that name in what its <c>.pr</c> holds, as long as it is the goal it was. The
-/// <c>.pr</c> is loaded before this read (the snapshot view's <c>Load</c>), so the read finds it held. A key that names
-/// no goal held, or a goal changed since the save, is refused, thrown to the read boundary.
+/// A goal read in the snapshot view: its key comes in (<c>{name, path, hash}</c>, what the snapshot wrote for it) and the
+/// live goal comes out — the goal of that name in the file its <c>.goal</c> is, found through the <c>.pr</c> that file is
+/// built to, as long as it is the goal it was. The goal list loads that file before this read (the snapshot view's
+/// <c>Load</c>), so the read finds it held. A key that names no goal held, or a goal changed since the save, is refused,
+/// thrown to the read boundary.
 /// </summary>
 public sealed class Snapshot : global::app.type.reader.ITypeReader
 {
@@ -20,27 +21,27 @@ public sealed class Snapshot : global::app.type.reader.ITypeReader
     {
         var context = ctx.Context;
         string name = "", hash = "";
-        global::app.type.item.file.@this? pr = null;
-        // each member read as the key wrote it: the name and hash as text, the .pr by its own type's reader
+        global::app.type.item.path.@this? path = null;
+        // each member read as the key wrote it: the name and hash as text, the .goal by path's own reader
         reader.BeginObject();
         while (reader.NextName(out var member))
             switch (member)
             {
                 case "name": name = reader.String(); break;
                 case "hash": hash = reader.String(); break;
-                case "pr":
-                    var file = context.App.type.list[typeof(global::app.type.item.file.@this)];
-                    pr = ctx.View.Reader(file, null, context).Read(ref reader, null, ctx) as global::app.type.item.file.@this;
+                case "path":
+                    var type = context.App.type.list[typeof(global::app.type.item.path.@this)];
+                    path = ctx.View.Reader(type, null, context).Read(ref reader, null, ctx) as global::app.type.item.path.@this;
                     break;
                 default: throw Refused($"key '{member}' isn't in this snapshot's format for a goal", "SnapshotFormatOutdated", 400);
             }
         reader.EndObject();
 
-        // the goal its .pr holds, and the goal of that name in it: that one or one of its children
-        if (pr == null)
-            throw Refused($"the saved goal '{name}' names no .pr to find it in", "GoalKeyIncomplete", 400);
-        if (context.App.goal.list[pr.Path]?.Named(name) is not { } goal)
-            throw Refused($"the saved goal '{name}' is not in {pr.Path}", "GoalNotFound", 404);
+        // the goal the .goal's .pr holds, and the goal of that name in it: that one or one of its children
+        if (path is not global::app.type.item.path.file.@this file)
+            throw Refused($"the saved goal '{name}' names no .goal to find it in", "GoalKeyIncomplete", 400);
+        if (context.App.goal.list[file.Pr]?.Named(name) is not { } goal)
+            throw Refused($"the saved goal '{name}' is not in {file}", "GoalNotFound", 404);
         if (!string.Equals(goal.Hash ?? "", hash, StringComparison.OrdinalIgnoreCase))
             throw Refused($"the saved goal '{name}' is not the one there now: saved hash {hash}, live {goal.Hash}.", "GoalHashMismatch", 409);
         return goal;
