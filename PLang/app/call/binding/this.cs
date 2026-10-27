@@ -10,8 +10,8 @@ namespace app.call.binding;
 public class @this : call.@this, global::app.type.item.ICreate<@this>
 {
     internal @this(global::app.type.@this type, call.@this? caller, list.@this stack,
-        IEnumerable<global::app.data.@this>? names, global::app.goal.step.action.@this? callee, global::app.call.setting.@this setting)
-        : base(null, type, caller, stack.Current, stack, null, setting, names, callee) { }
+        IEnumerable<global::app.data.@this>? names, global::app.goal.step.action.@this? callee)
+        : base(null, type, caller, stack.Current, stack, null, names, callee) { }
 
     /// <summary>A binding come back from a snapshot: its stored <paramref name="node"/> read whole, under
     /// <paramref name="stack"/>'s current frame. The call it was pushed for is not stored: it was read only while that

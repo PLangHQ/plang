@@ -8,8 +8,8 @@ namespace app.call.isolated;
 public sealed class @this : binding.@this, global::app.type.item.ICreate<@this>
 {
     internal @this(global::app.type.@this type, call.@this? caller, list.@this stack,
-        IEnumerable<global::app.data.@this>? names, global::app.goal.step.action.@this? callee, global::app.call.setting.@this setting)
-        : base(type, caller, stack, names, callee, setting) { }
+        IEnumerable<global::app.data.@this>? names, global::app.goal.step.action.@this? callee)
+        : base(type, caller, stack, names, callee) { }
 
     /// <summary>An isolated frame come back from a snapshot: its stored <paramref name="node"/> read whole — every write
     /// made under it among its own variables — under <paramref name="stack"/>'s current frame.</summary>

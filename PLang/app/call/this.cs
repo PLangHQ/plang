@@ -29,12 +29,12 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     [Store, global::app.LlmBuilder]
     public global::app.type.item.property.list.@this property { get; private set; }
 
-    private readonly Stopwatch? _stopwatch;
+    private Stopwatch? _stopwatch;
     private readonly global::app.call.list.@this _stack;
     private readonly @this? _previousCurrent;
     private readonly Variables? _diffSource;
     // A diff keeps a deep copy of the value before (the diff.deep setting when pushed), else a summary.
-    private readonly bool _deep;
+    private bool _deep;
     private Dictionary<global::System.Type, object>? _items;
 
     // The frame's facts as it holds them — a frame is pushed per action, so its plang faces below are made
@@ -43,7 +43,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     internal readonly int _depth;
     private bool _handled;
     private bool _ended;
-    private readonly DateTimeOffset? _startedAt;
+    private DateTimeOffset? _startedAt;
     private DateTimeOffset? _completedAt;
 
     /// <summary>
@@ -139,7 +139,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// on at Push. See <see cref="diff.@this"/> for thread-safety + snapshot iteration.
     /// </summary>
     [Out, Debug, global::app.LlmBuilder]
-    public diff.@this? Diffs { get; }
+    public diff.@this? Diffs { get; private set; }
 
     // --- Tag tier ---
     /// <summary>
@@ -179,8 +179,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     private protected @this(global::app.snapshot.@this node, global::app.type.@this type, global::app.call.list.@this stack,
         global::app.actor.context.@this context, global::app.goal.step.action.@this? callee = null)
         : this(Stored<global::app.type.item.text.@this>(node, "id", context).ToString(), type,
-            stack.Current, stack.Current, stack, stack.Variables,
-            Stored<global::app.call.setting.@this>(node, "setting", context), callee: callee)
+            stack.Current, stack.Current, stack, stack.Variables, callee: callee)
     {
         // a collection left out was empty
         if (node.Entries.Get<global::app.snapshot.@this>("variables", context) is { } variables)
@@ -210,12 +209,10 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         @this? previous,
         global::app.call.list.@this stack,
         Variables? diffSource,
-        global::app.call.setting.@this setting,
         IEnumerable<global::app.data.@this>? names = null,
         global::app.goal.step.action.@this? callee = null) : base(type)
     {
         _id = id ?? Guid.NewGuid().ToString("N")[..8];
-        Setting = setting;
         Caller = caller;
         _depth = (caller?._depth ?? 0) + (Deepens ? 1 : 0);
         _stack = stack;
@@ -229,7 +226,16 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         property = new(stack.Properties);
         Children = new child.list.@this(stack);
         Variable = names ?? [];
+    }
 
+    /// <summary>
+    /// The frame's run begins, as its stack enters it: it runs under <paramref name="setting"/>, timed and capturing
+    /// its store's changes when the setting says so. A frame made and never entered has no run, so nothing it writes
+    /// reads the setting.
+    /// </summary>
+    internal void Begin(global::app.call.setting.@this setting)
+    {
+        Setting = setting;
         if (!Measured) return;
         if (setting.Timing.Value)
         {
@@ -237,17 +243,17 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             _stopwatch = Stopwatch.StartNew();
         }
 
-        if (stack.IsDiffing(setting) && diffSource != null)
+        if (_stack.IsDiffing(setting) && _diffSource != null)
         {
             Diffs = new diff.@this();
             _deep = setting.Diff.Deep.Value;
-            stack.Open(this);
+            _stack.Open(this);
         }
     }
 
-    /// <summary>What the stack captured when this frame was pushed — its async caller read it and handed it in: the
+    /// <summary>What the stack captured when this frame's run began — its async caller read it and handed it in: the
     /// frame's timing and diff, whether it stays among its caller's children, how many of them are kept.</summary>
-    internal global::app.call.setting.@this Setting { get; }
+    internal global::app.call.setting.@this Setting { get; private set; } = null!;
 
     /// <summary>The frame a write to <paramref name="name"/> lands in: this one when it was born with the name, else
     /// the nearest caller that was; null when none was — the write goes to its context's memory.</summary>

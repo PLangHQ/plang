@@ -11,8 +11,8 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
 
     /// <summary>A composed action's frame; <paramref name="variables"/> the store a diff captures, else the stack's.</summary>
     internal @this(global::app.type.@this type, list.@this stack, global::app.goal.step.action.@this action,
-        global::app.call.setting.@this setting, Variables? variables)
-        : base(null, type, stack.Current, stack.Current, stack, variables ?? stack.Variables, setting) => Action = action;
+        Variables? variables)
+        : base(null, type, stack.Current, stack.Current, stack, variables ?? stack.Variables) => Action = action;
 
     /// <summary>A composed action's frame come back from a snapshot: its stored <paramref name="node"/> read whole,
     /// under <paramref name="stack"/>'s current frame.</summary>

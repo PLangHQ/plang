@@ -10,8 +10,8 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
     public static bool Internal => true;
 
     internal @this(global::app.type.@this type, list.@this stack, global::app.goal.@this goal,
-        global::app.call.setting.@this setting, IEnumerable<global::app.data.@this>? names)
-        : base(null, type, stack.Current, stack.Current, stack, stack.Variables, setting, names) => Goal = goal;
+        IEnumerable<global::app.data.@this>? names)
+        : base(null, type, stack.Current, stack.Current, stack, stack.Variables, names) => Goal = goal;
 
     /// <summary>A goal's frame come back from a snapshot: its stored <paramref name="node"/> read whole, under
     /// <paramref name="stack"/>'s current frame.</summary>
