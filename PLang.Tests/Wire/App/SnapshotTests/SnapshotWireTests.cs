@@ -210,6 +210,92 @@ public class SnapshotWireTests
         await Assert.That((await context.Variable.Get("s0")).IsInitialized).IsFalse();
     }
 
+    // A resume goes on through the rest of the stopped action's step as its chain does: a clause after it (on.error)
+    // leaves the chain's result and %!data% as they stand, so the action after the clause reads the stopped action's.
+    [Test]
+    public async Task AResume_GoesOnThroughItsStepsChain_AClauseLeavesTheResult()
+    {
+        var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-chain-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        var goal = new Goal(app.type.list) { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", context) };
+        var step = new Step(app.type.list) { Goal = goal, List = goal.Step, Index = 0, Text = "set %a% = one, on error ignore, set %after% = %!data%" };
+        // the step's line read as the builder reads one: a clause belongs to the action before it
+        var read = await new global::app.goal.step.action.formal.Reader(step, app.module.list).Read(
+            "variable.set(Name=%a%, Value=\"one\"); on.error(Ignore=true); variable.set(Name=%after%, Value=%!data%)", context);
+        await read.IsSuccess();
+        foreach (var action in ((global::app.goal.step.action.list.@this)read.Peek()).Items()) step.Code.Add(action);
+        step.Code.Attach();
+        var stopped = step.Code[0];
+        goal.Step.Add(step);
+        app.goal.list.Add(goal);
+
+        string json;
+        await using (var outer = context.call.Push(step, await context.call.Setting()))
+        await using (var call = context.call.Push(stopped, await context.call.Setting(), context.Variable))
+        {
+            json = await app.Snapshot(context).Saved().Text(context);
+            await call.DisposeAsync();
+            await outer.DisposeAsync();
+        }
+
+        var result = await (await context.Snapshot(json)).Resume(context);
+
+        await result.IsSuccess();
+        await Assert.That(await context.Variable.GetValue("after")).IsEqualTo("one");
+    }
+
+    // A run saved inside an if's body goes on through the body, then the goal: the if's branch was taken, so its
+    // chain ends there — the else after it never starts.
+    [Test]
+    public async Task AResume_InsideAnIfsBody_EndsItsChain_TheElseNeverRuns()
+    {
+        var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-inif-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        var goal = new Goal(app.type.list) { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", context) };
+        var holder = new Step(app.type.list) { Goal = goal, List = goal.Step, Index = 0, Text = "if true, else" };
+        var when = (await context.Action("condition.if(Left=true)")).In(holder);
+        var otherwise = (await context.Action("condition.else()")).In(holder);
+        holder.Code.Add(when);
+        holder.Code.Add(otherwise);
+        goal.Step.Add(holder);
+        async Task<Step> InBody(global::app.goal.step.action.@this owner, int index, string name, string value)
+        {
+            var step = new Step(app.type.list) { Goal = goal, List = owner.Child, Index = index, Text = $"set %{name}% = {value}" };
+            step.Code.Add((await context.Action($"variable.set(Name=%{name}%, Value=\"{value}\")")).In(step));
+            owner.Child.Add(step);
+            return step;
+        }
+        var stopped = await InBody(when, 1, "b1", "one");
+        await InBody(when, 2, "b2", "two");
+        await InBody(otherwise, 3, "elsed", "yes");
+        await SetStep(context, goal, 4, "s4", "four");
+        app.goal.list.Add(goal);
+
+        // a body runs under its condition's frame: the step's, the if's, then the body step's and its action's
+        string json;
+        await using (var outer = context.call.Push(holder, await context.call.Setting()))
+        await using (var condition = context.call.Push(when, await context.call.Setting()))
+        await using (var inner = context.call.Push(stopped, await context.call.Setting()))
+        await using (var call = context.call.Push(stopped.Code[0], await context.call.Setting(), context.Variable))
+        {
+            json = await app.Snapshot(context).Saved().Text(context);
+            await call.DisposeAsync();
+            await inner.DisposeAsync();
+            await condition.DisposeAsync();
+            await outer.DisposeAsync();
+        }
+
+        var result = await (await context.Snapshot(json)).Resume(context);
+
+        await result.IsSuccess();
+        await Assert.That(await context.Variable.GetValue("b1")).IsEqualTo("one");
+        await Assert.That(await context.Variable.GetValue("b2")).IsEqualTo("two");
+        await Assert.That(await context.Variable.GetValue("s4")).IsEqualTo("four");
+        await Assert.That((await context.Variable.Get("elsed")).IsInitialized).IsFalse();
+    }
+
     [Test]
     public async Task SerializedString_ConvertsToSnapshotViaTypeSystem_AndResumesToSuccess()
     {
