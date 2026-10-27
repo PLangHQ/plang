@@ -7,11 +7,13 @@ This is every line the re-pin moves, taken from the uncapped diff of the current
 Re-pin: `OPENAI_API_KEY= PLang.Tests/Wire/bin/Debug/net10.0/PLang.Tests.Wire --treenode-filter "/*/*/SurfaceTests/AcceptTheSurface"`,
 and the commit names the decisions below.
 
-## Held — not to land until Ingi answers
+## Approved by Ingi (was held)
+
+Known red that lands with 7c: the plang `FreshAppGoesOn` (resume reshaped as an app instance, its own stage after 7c).
 
 | change | decision |
 |---|---|
-| `kind.Read(obj, reader, kind, ReadContext ctx)` replaces `(…, actor.context context)`; json's override likewise | review 8 (2f263160e) — **keep or revert: Ingi** (130) |
+| `kind.Read(obj, reader, kind, ReadContext ctx)` replaces `(…, actor.context context)`; json's override likewise | review 8 (2f263160e); approved by Ingi, snapshot 158 |
 
 ## Removals
 
