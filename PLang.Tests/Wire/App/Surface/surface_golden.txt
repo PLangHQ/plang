@@ -52,6 +52,7 @@ class app.call.Diff : System.IEquatable<app.call.Diff>
   ctor(System.String Name, System.Object Before, System.DateTimeOffset At)
 
 class app.call.action.this : app.call.this, app.type.item.ICreate<app.call.action.this>
+  override Action : app.goal.step.action.this { get; }
   static Create(System.Object raw) : app.call.action.this
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.action.this
   static Internal : System.Boolean { get; }
@@ -70,6 +71,7 @@ class app.call.child.list.this : System.Collections.Generic.IEnumerable<app.call
   Remove(app.call.this child) : System.Void
 
 class app.call.composed.this : app.call.this, app.type.item.ICreate<app.call.composed.this>
+  override Action : app.goal.step.action.this { get; }
   static Create(System.Object raw) : app.call.composed.this
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.composed.this
   static Internal : System.Boolean { get; }
@@ -148,7 +150,6 @@ class app.call.step.this : app.call.this, app.type.item.ICreate<app.call.step.th
   static Internal : System.Boolean { get; }
 
 class app.call.this : app.type.item.this, System.IAsyncDisposable, app.type.item.ICreate<app.call.this>, app.type.item.property.IOwner
-  Action : app.goal.step.action.this { get; } [LlmBuilder]
   Caller : app.call.this { get; } [LlmBuilder]
   Chain : System.Collections.Generic.IReadOnlyList<app.call.this> { get; }
   Children : app.call.child.list.this { get; }
@@ -181,6 +182,7 @@ class app.call.this : app.type.item.this, System.IAsyncDisposable, app.type.item
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   static Create(System.Object raw) : app.call.this
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.this
+  virtual Action : app.goal.step.action.this { get; } [LlmBuilder]
   virtual Goal : app.goal.this { get; } [LlmBuilder]
   virtual Step : app.goal.step.this { get; } [LlmBuilder]
 
@@ -3456,10 +3458,10 @@ type app.call
   .depth : number
 
 type app.call.action
+  .action : action
   .property : app.type.item.property.list
   .goal : goal
   .step : step
-  .action : action
   .caller : app.call
   .errors : list<error>
   .diffs : list<clr>
@@ -3478,10 +3480,10 @@ type app.call.binding
   .depth : number
 
 type app.call.composed
+  .action : action
   .property : app.type.item.property.list
   .goal : goal
   .step : step
-  .action : action
   .caller : app.call
   .errors : list<error>
   .diffs : list<clr>

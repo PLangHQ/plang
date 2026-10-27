@@ -101,9 +101,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     [global::app.LlmBuilder]
     public virtual global::app.goal.step.@this? Step => Action?.Step;
 
-    /// <summary>The action this frame runs. Null in a goal's or a step's frame.</summary>
+    /// <summary>The action this frame runs. Null in a goal's, a step's or a binding's frame.</summary>
     [global::app.LlmBuilder]
-    public global::app.goal.step.action.@this? Action { get; }
+    public virtual global::app.goal.step.action.@this? Action => null;
 
     /// <summary>The event whose bound call is running in this frame, as <c>%!event%</c> reads it — its value the
     /// running event, its properties <c>item</c> and <c>result</c>. Set only while that call runs.</summary>
@@ -207,7 +207,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     private protected @this(global::app.snapshot.@this node, global::app.type.@this type, global::app.call.list.@this stack,
         global::app.actor.context.@this context, global::app.goal.step.action.@this? callee = null)
         : this(Stored<global::app.type.item.text.@this>(node, "id", context).ToString(), type,
-            Placed(node, context).Action, stack.Current, stack.Current, stack, stack.Variables,
+            stack.Current, stack.Current, stack, stack.Variables,
             Stored<global::app.call.setting.@this>(node, "setting", context), callee: callee)
     {
         // a collection left out was empty
@@ -234,7 +234,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     private protected @this(
         string? id,
         global::app.type.@this type,
-        global::app.goal.step.action.@this? action,
         @this? caller,
         @this? previous,
         global::app.call.list.@this stack,
@@ -245,7 +244,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     {
         _id = id ?? Guid.NewGuid().ToString("N")[..8];
         Setting = setting;
-        Action = action;
         Caller = caller;
         _depth = (caller?._depth ?? 0) + (Deepens ? 1 : 0);
         _stack = stack;

@@ -11,7 +11,7 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
 
     internal @this(global::app.type.@this type, list.@this stack, global::app.goal.step.@this step,
         global::app.call.setting.@this setting)
-        : base(null, type, null, stack.Current, stack.Current, stack, stack.Variables, setting) => Step = step;
+        : base(null, type, stack.Current, stack.Current, stack, stack.Variables, setting) => Step = step;
 
     /// <summary>A step's frame come back from a snapshot: its stored <paramref name="node"/> read whole, under
     /// <paramref name="stack"/>'s current frame.</summary>

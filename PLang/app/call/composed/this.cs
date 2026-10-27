@@ -12,12 +12,15 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
     /// <summary>A composed action's frame; <paramref name="variables"/> the store a diff captures, else the stack's.</summary>
     internal @this(global::app.type.@this type, list.@this stack, global::app.goal.step.action.@this action,
         global::app.call.setting.@this setting, Variables? variables)
-        : base(null, type, action, stack.Current, stack.Current, stack, variables ?? stack.Variables, setting) { }
+        : base(null, type, stack.Current, stack.Current, stack, variables ?? stack.Variables, setting) => Action = action;
 
     /// <summary>A composed action's frame come back from a snapshot: its stored <paramref name="node"/> read whole,
     /// under <paramref name="stack"/>'s current frame.</summary>
     private @this(global::app.snapshot.@this node, global::app.type.@this type, list.@this stack, global::app.actor.context.@this context)
-        : base(node, type, stack, context) { }
+        : base(node, type, stack, context) => Action = Placed(node, context).Action;
+
+    /// <summary>The action it runs, which no step holds.</summary>
+    public override global::app.goal.step.action.@this? Action { get; }
 
     /// <summary>The pure core — a composed action's frame passes through; nothing else converts into one.</summary>
     public static new @this? Create(object? raw) => raw as @this;
