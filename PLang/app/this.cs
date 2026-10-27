@@ -415,7 +415,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // app.pr is the app's identity, not a goal: its raw content. Its value would go through the .pr
         // format's goal reader, which refuses a file that isn't a goal.
         var bytes = await prPath.Bytes(context);
-        if (!bytes.Success) return Unreadable(bytes.Error?.Message);
+        if (!bytes.Success) return Unreadable(bytes.Error);
         var raw = (await bytes.Value())?.Clr<byte[]>();
         if (raw is not { Length: > 0 } || raw.All(b => b is (byte)' ' or (byte)'\n' or (byte)'\r' or (byte)'\t'))
             return context.Ok();
@@ -425,20 +425,21 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
             // app.pr rests as an {item, json} source; reading the identity is a USE, so it opens through
             // the use door — json parses the bytes into the dict the app's [Store] face reads back from.
             if (await decoded.Open() is not global::app.type.item.dict.@this identity || !decoded.Success)
-                return Unreadable(decoded.Error?.Message ?? "not a json object");
+                return Unreadable(decoded.Error ?? new global::app.error.@this("it holds no json object", "NotAnObject", 400));
             ((global::app.type.item.kind.reflection.@this)type.list["item"].kind["*"]!).Read(identity, this, context);
             _stored = true;
             return context.Ok();
         }
         // an identity value its type declines (text that isn't a datetime) is an app.pr that isn't the identity
-        catch (global::app.error.DeclinedException declined) { return Unreadable(declined.Error.Message); }
+        catch (global::app.error.DeclinedException declined) { return Unreadable(declined.Error); }
         catch (Exception ex) when (ex is JsonException or FormatException or InvalidCastException or InvalidOperationException)
         {
-            return Unreadable(ex.Message);
+            return Unreadable(global::app.error.@this.FromException(ex));
         }
 
-        data.@this Unreadable(string? why) => context.Error(new global::app.error.@this(
-            $"{prPath} is not the app's identity: {why}", "AppIdentityUnreadable", 400));
+        // app.pr is not the identity: said as such, why whole as its cause
+        data.@this Unreadable(global::app.error.@this? cause) => context.Error(new global::app.error.@this(
+            $"{prPath} is not the app's identity", "AppIdentityUnreadable", 400) { list = cause is null ? [] : [cause] });
     }
 
     // The identity is in .build/app.pr: read from it at startup, or written there since.
