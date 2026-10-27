@@ -151,9 +151,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // Parallel branches tag one caller's frame; the frame serializes the merge into its dict.
     private readonly object _tagging = new();
 
-    // This frame's own variables: every name it binds (born with or written into it), and which of them it was born
-    // with — what its runner supplied (a goal call's parameters, a tool's arguments).
-    private readonly Dictionary<string, global::app.data.@this> _variables = new(StringComparer.OrdinalIgnoreCase);
+    // Which of this frame's own variables (Parameter) it was born with — what its runner supplied (a goal call's
+    // parameters, a tool's arguments).
     private readonly HashSet<string> _arguments = new(StringComparer.OrdinalIgnoreCase);
     // The call this frame was pushed for (a tool invocation, a goal call) — the one call its supplied names are for.
     private readonly global::app.goal.step.action.@this? _call;
@@ -217,6 +216,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         Errors = new global::app.error.list.@this(stack.Errors);
         property = new(stack.Properties);
         Children = new child.list.@this(stack);
+        _parameter = new(stack.Properties);
         foreach (var name in names ?? [])
             if (name != null && !string.IsNullOrEmpty(name.Name)) Born(name.Name, name);
     }
@@ -262,7 +262,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public bool TryGet(string name, out global::app.data.@this value)
     {
         for (var frame = this; frame != null; frame = frame.Caller)
-            if (frame._variables.TryGetValue(name, out var variable)) { value = variable; return true; }
+            if (frame._parameter[name] is { } variable) { value = variable; return true; }
         value = null!;
         return false;
     }
@@ -270,28 +270,25 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>The names this frame was born with — a goal call's own arguments, not its callers'.</summary>
     internal IEnumerable<string> Arguments => _arguments;
 
-    /// <summary>This frame's own variables, each the Data whole under its name (<c>%!call.scope.parameter.order%</c>).
-    /// Kept, they come back as names it is born with, as a goal call's parameters are: a write to one lands here
-    /// again.</summary>
-    [Store]
+    /// <summary>This frame's own variables, each the Data whole under its name (<c>%!call.scope.parameter.order%</c>) —
+    /// the list itself, so what is written through it is the frame's. Kept, they come back as names it is born with,
+    /// as a goal call's parameters are: a write to one lands here again.</summary>
+    [Store, global::app.LlmBuilder]
     public global::app.type.item.property.list.@this Parameter
     {
-        get
-        {
-            var parameter = new global::app.type.item.property.list.@this(_stack.Properties);
-            foreach (var (name, variable) in _variables) parameter.Add(name, variable);
-            return parameter;
-        }
+        get => _parameter;
         private set
         {
-            foreach (var (name, variable) in value.Members) Born(name, variable);
+            _parameter = value;
+            foreach (var (name, _) in value.Members) _arguments.Add(name);
         }
     }
+    private global::app.type.item.property.list.@this _parameter;
 
     // A name this frame is born with: bound here, and one of the names it was born with (last wins on a duplicate).
     private void Born(string name, global::app.data.@this variable)
     {
-        _variables[name] = variable;
+        _parameter.Add(name, variable);
         _arguments.Add(name);
     }
 
@@ -301,16 +298,16 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         get
         {
             for (var frame = this; frame != null; frame = frame.Caller)
-                foreach (var name in frame._variables.Keys) yield return name;
+                foreach (var (name, _) in frame._parameter.Members) yield return name;
         }
     }
 
     /// <summary>Writes <paramref name="value"/> into this frame under <paramref name="name"/> (the frame
     /// <see cref="Keeper"/> chose).</summary>
-    public void Set(string name, global::app.data.@this value) => _variables[name] = value;
+    public void Set(string name, global::app.data.@this value) => _parameter.Add(name, value);
 
     /// <summary>True if this frame itself (not its callers) holds <paramref name="name"/>.</summary>
-    public bool Holds(string name) => _variables.ContainsKey(name);
+    public bool Holds(string name) => _parameter[name] != null;
 
     /// <summary>
     /// A change of <paramref name="store"/>: when it is the store this frame captures, the diff lands here —
