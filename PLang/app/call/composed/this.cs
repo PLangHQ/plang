@@ -24,8 +24,6 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
     [Out, Debug]
     public override global::app.goal.step.action.@this? Action { get; }
 
-    /// <summary>The pure core — a composed action's frame passes through; nothing else converts into one.</summary>
-    public static new @this? Create(object? raw) => raw as @this;
 
     /// <summary>A composed action's frame passes through; a stored one's record comes back as one, made under the current
     /// frame of the stack <paramref name="data"/>'s context calls, not entered.</summary>
