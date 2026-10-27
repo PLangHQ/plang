@@ -41,8 +41,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     public static @this? Create(object? raw) => raw switch
     {
         @this message => message,
-        global::app.type.item.text.@this text => new() { Role = "user", Content = text.ToString() },
-        string text => new() { Role = "user", Content = text },
+        global::app.type.item.text.@this or string => new() { Role = "user", Content = raw.ToString() },
         _ => null,
     };
 }
