@@ -46,7 +46,12 @@ public static class Tagged
             // matches what an STJ read expects, key for key.
             var wireName = prop.GetCustomAttribute<System.Text.Json.Serialization.JsonPropertyNameAttribute>()?.Name
                 ?? System.Text.Json.JsonNamingPolicy.CamelCase.ConvertName(prop.Name);
-            entries.Add(new Entry(prop, view.Masks(prop), wireName));
+            // the member as the class that declares it has it: a base's private setter is no setter seen from the
+            // subclass, and every read onto a host sets through this entry
+            var member = prop.DeclaringType is { } owner && owner != type
+                ? owner.GetProperty(prop.Name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly) ?? prop
+                : prop;
+            entries.Add(new Entry(member, view.Masks(prop), wireName));
         }
 
         // Materialize as an array — fixed-size, no overhead vs List<T>'s
