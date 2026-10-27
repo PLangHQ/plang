@@ -11,7 +11,7 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
 
     internal @this(global::app.type.@this type, list.@this stack, global::app.goal.@this goal,
         IEnumerable<global::app.data.@this>? names)
-        : base(null, type, stack.Current, stack.Current, stack, stack.Variables, names) => Goal = goal;
+        : base(null, type, stack.Current, stack.Current, stack, null, names) => Goal = goal;
 
     /// <summary>A goal's frame come back from a snapshot: born with the goal its <paramref name="record"/>'s key finds,
     /// under <paramref name="stack"/>'s current frame.</summary>

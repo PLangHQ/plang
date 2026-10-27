@@ -22,7 +22,6 @@ public class SnapshotAtErrorTests
         var (app, action) = BuildLive("SAa");
         var stack = app.actor.list.User.Context.call;
         var vars = app.actor.list.User.Context.Variable;
-        stack.Variables = vars;
         await using var call = stack.Push(action, await stack.Setting(), vars);
 
         // Establish %x%=1 *before* the error fires.
@@ -45,7 +44,6 @@ public class SnapshotAtErrorTests
         var (app, action) = BuildLive("SAb");
         var stack = app.actor.list.User.Context.call;
         var vars = app.actor.list.User.Context.Variable;
-        stack.Variables = vars;
         await using var call = stack.Push(action, await stack.Setting(), vars);
 
         vars.Set("a", "before");
@@ -66,7 +64,6 @@ public class SnapshotAtErrorTests
         var (app, action) = BuildLive("SAc");
         var stack = app.actor.list.User.Context.call;
         var vars = app.actor.list.User.Context.Variable;
-        stack.Variables = vars;
         await using var call = stack.Push(action, await stack.Setting(), vars);
 
         vars.Set("x", 1);
@@ -85,7 +82,6 @@ public class SnapshotAtErrorTests
         var (app, action) = BuildLive("SAd");
         var stack = app.actor.list.User.Context.call;
         var vars = app.actor.list.User.Context.Variable;
-        stack.Variables = vars;
         await using var call = stack.Push(action, await stack.Setting(), vars);
 
         vars.Set("x", "stable");
@@ -104,7 +100,6 @@ public class SnapshotAtErrorTests
         var (app, action) = BuildLive("SAe");
         var stack = app.actor.list.User.Context.call;
         var vars = app.actor.list.User.Context.Variable;
-        stack.Variables = vars;
         await using var call = stack.Push(action, await stack.Setting(), vars);
 
         vars.Set("v", 10);

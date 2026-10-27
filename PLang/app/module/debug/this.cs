@@ -18,10 +18,11 @@ public sealed class @this
     /// flags once.</summary>
     public System.Threading.Tasks.ValueTask<setting.@this> Setting() => _context.Setting.Get<setting.@this>();
 
-    // The watched names, as the store names them (no %).
+    // The watched names, as the store names them: each written one read as the variable it is (%x% or a bare x).
     private async System.Threading.Tasks.ValueTask<HashSet<string>> Watched()
-        => (await Setting()).Variables.Items(_context).Select(v => (v.Peek()?.ToString() ?? "").Trim('%'))
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        => (await Setting()).Variables.Items(_context)
+            .Select(v => new global::app.type.item.variable.parser.@this(v.Peek()?.ToString() ?? "", _context.App.type.list).Whole?.Name)
+            .OfType<string>().ToHashSet(StringComparer.OrdinalIgnoreCase);
 
     [System.Text.Json.Serialization.JsonIgnore]
     private Regex? _grepRegex;
@@ -88,9 +89,9 @@ public sealed class @this
         // backing (stderr, a file) decides where it lands.
         if (setting.Llm is { } llm && (llm.System == true || llm.User == true || llm.Response == true || llm.Schema == true))
         {
-            if (_context.App.Code.Get<global::app.module.llm.code.ILlm>().Provider is global::app.module.llm.code.OpenAi oai)
+            if (_context.App.Code.Get<global::app.module.llm.code.ILlm>().Provider is { } provider)
             {
-                oai.OnBeforeRequest += async (messages, schema) =>
+                provider.OnBeforeRequest += async (messages, schema) =>
                 {
                     if (llm.System)
                     {
@@ -113,7 +114,7 @@ public sealed class @this
                 };
                 if (llm.Response)
                 {
-                    oai.OnAfterResponse += (rawResponse) =>
+                    provider.OnAfterResponse += (rawResponse) =>
                         Show("LLM RESPONSE", new[] { rawResponse ?? "(null)" });
                 }
             }
@@ -422,19 +423,12 @@ public sealed class @this
 
     // Debug output can land in logs, terminals, CI artefacts — anywhere — so a value is shown through the one
     // diagnostic door: a structure written in full in the Debug view, a [Sensitive] member masked. Truncation
-    // happens at Show via maxLength; a raw collection says how many it holds. A value that cannot be shown
-    // shows why — a debug view answers, never ends the program it watches.
+    // happens at Show via maxLength. A value that cannot be shown shows why — a debug view answers, never ends the
+    // program it watches.
     private async System.Threading.Tasks.ValueTask<string> Text(object? value, actor.context.@this context)
     {
-        string shown;
-        try { shown = await global::app.type.item.@this.Create(value, context).Debug(context); }
+        try { return await global::app.type.item.@this.Create(value, context).Debug(context); }
         catch (global::app.error.AppException ex) { return $"(cannot be shown: {ex.Error.Message})"; }
-        return value switch
-        {
-            System.Collections.IDictionary d => $"{shown} ({d.Count} keys)",
-            System.Collections.IList l => $"{shown} ({l.Count} items)",
-            _ => shown,
-        };
     }
 
 }

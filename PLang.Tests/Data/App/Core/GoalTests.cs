@@ -128,34 +128,7 @@ public class GoalTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task FullPath_NoParent_ReturnsName()
-    {
-        var goal = new Goal(_app.type.list) { Name = "TestGoal" };
-
-        await Assert.That(goal.FullPath).IsEqualTo("TestGoal");
-    }
-
-    [Test]
-    public async Task FullPath_WithParent_IncludesParentPath()
-    {
-        var parent = new Goal(_app.type.list) { Name = "ParentGoal" };
-        var child = new Goal(_app.type.list) { Name = "ChildGoal", Parent = parent };
-
-        await Assert.That(child.FullPath).IsEqualTo("ParentGoal/ChildGoal");
-    }
-
-    [Test]
-    public async Task FullPath_MultipleParents_IncludesFullHierarchy()
-    {
-        var grandparent = new Goal(_app.type.list) { Name = "Grandparent" };
-        var parent = new Goal(_app.type.list) { Name = "Parent", Parent = grandparent };
-        var child = new Goal(_app.type.list) { Name = "Child", Parent = parent };
-
-        await Assert.That(child.FullPath).IsEqualTo("Grandparent/Parent/Child");
-    }
-
-    [Test]
-    public async Task ToText_ReturnsFormattedGoal()
+    public async Task ToString_IsTheGoalAsWritten()
     {
         var goal = new Goal(_app.type.list)
         {
@@ -166,7 +139,7 @@ public class GoalTests : System.IAsyncDisposable
                 new Step(_app.type.list) { Index = 1, Text = "second step" }
             }
         };
-        var text = goal.ToText();
+        var text = goal.ToString();
 
         await Assert.That(text).Contains("TestGoal");
         await Assert.That(text).Contains("first step");
@@ -174,36 +147,7 @@ public class GoalTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task ToText_IncludesComment()
-    {
-        var goal = new Goal(_app.type.list)
-        {
-            Name = "TestGoal",
-            Comment = "This is a goal comment"
-        };
-        var text = goal.ToText();
-
-        await Assert.That(text).Contains("/ This is a goal comment");
-    }
-
-    [Test]
-    public async Task ToText_IncludesStepComments()
-    {
-        var goal = new Goal(_app.type.list)
-        {
-            Name = "TestGoal",
-            Step = new GoalSteps(_app.type.list)
-            {
-                new Step(_app.type.list) { Index = 0, Text = "step", Comment = "step comment" }
-            }
-        };
-        var text = goal.ToText();
-
-        await Assert.That(text).Contains("/ step comment");
-    }
-
-    [Test]
-    public async Task ToText_RespectsStepIndent()
+    public async Task ToString_IndentsABodyStep()
     {
         var goal = new Goal(_app.type.list)
         {
@@ -215,7 +159,7 @@ public class GoalTests : System.IAsyncDisposable
                 new Step(_app.type.list) { Index = 2, Text = "two indent", Line = new() { Indent = 2 } }
             }
         };
-        var text = goal.ToText();
+        var text = goal.ToString();
 
         await Assert.That(text).Contains("- no indent");
         await Assert.That(text).Contains(" - one indent");

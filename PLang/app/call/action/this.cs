@@ -10,10 +10,10 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
     /// <summary>plang's own: no step names a frame's kind.</summary>
     public static bool Internal => true;
 
-    /// <summary>An action's frame; <paramref name="variables"/> the store a diff captures, else the stack's.</summary>
+    /// <summary>An action's frame; <paramref name="variables"/> the store a diff captures (none: it captures none).</summary>
     internal @this(global::app.type.@this type, list.@this stack, global::app.goal.step.action.@this action,
         Variables? variables)
-        : base(null, type, stack.Current, stack.Current, stack, variables ?? stack.Variables) => Action = action;
+        : base(null, type, stack.Current, stack.Current, stack, variables) => Action = action;
 
     /// <summary>An action's frame come back from a snapshot: born with the action its <paramref name="record"/>'s key
     /// finds, under <paramref name="stack"/>'s current frame.</summary>

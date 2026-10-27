@@ -9,27 +9,15 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     // its own flow: a current set inside the awaited start would be undone when it returns.
     private (call.@this Stopped, call.@this? Under)? _resumed;
 
-    // CallStack-level diff stream — every change of the store it was opened on, while a diff scope
-    // (EnableDiffStream) is open. Independent of per-Call Diffs (which require Flags.Diff at Push
-    // time). Errors.Push uses this so handler-time mutations during an error scope land
-    // on the stream even when Flags.Diff was off when the live Calls were pushed.
-    private readonly List<Diff> _streamDiffs = new();
-    private readonly object _streamLock = new();
+    // CallStack-level diff stream — every change of the store it was opened on, while a diff scope (DiffScope) is open.
+    // Independent of per-Call Diffs (which require Flags.Diff at Push time). Errors.Push uses this so handler-time
+    // mutations during an error scope land on the stream even when Flags.Diff was off when the live Calls were pushed.
+    private readonly diff.@this _stream = new();
     private global::app.type.item.variable.list.@this? _streamVariables;
 
     // The frames capturing their store's diffs (Diff was on when they were pushed), each until it ends.
     private readonly object _diffingLock = new();
     private call.@this[] _diffing = [];
-
-    /// <summary>
-    /// Opens the stream on <paramref name="vars"/>: from now every change of that store appends to the
-    /// CallStack's own diff stream. Idempotent — opening it again while open is a no-op.
-    /// </summary>
-    internal void EnableDiffStream(global::app.type.item.variable.list.@this? vars)
-    {
-        if (vars == null || _streamVariables != null) return;
-        _streamVariables = vars;
-    }
 
     /// <summary>A frame starts capturing its store's diffs, until it ends (<see cref="Close"/>).</summary>
     internal void Open(call.@this frame)
@@ -51,7 +39,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     internal void Record(global::app.type.item.variable.list.@this store, string name, object? before)
     {
         if (ReferenceEquals(_streamVariables, store))
-            lock (_streamLock) _streamDiffs.Add(new Diff(name, before, DateTimeOffset.UtcNow));
+            _stream.Add(new Diff(name, before, DateTimeOffset.UtcNow));
         foreach (var frame in _diffing) frame.Record(store, name, before);
     }
 
@@ -68,7 +56,8 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     public IDisposable DiffScope(global::app.type.item.variable.list.@this? variables)
     {
         Interlocked.Increment(ref _diffScopes);
-        EnableDiffStream(variables);
+        // the stream opens on the store asked for; opening it again while open changes nothing
+        if (variables != null && _streamVariables == null) _streamVariables = variables;
         return new Diffing(this);
     }
 
@@ -83,13 +72,11 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
         {
             if (_disposed) return;
             _disposed = true;
-            _stack.DisableDiffStream();
+            // the stream closes
+            _stack._streamVariables = null;
             Interlocked.Decrement(ref _stack._diffScopes);
         }
     }
-
-    /// <summary>Closes the stream opened by <see cref="EnableDiffStream"/>.</summary>
-    internal void DisableDiffStream() => _streamVariables = null;
 
     /// <summary>
     /// This stack as it stood at a throw point — the chain an error carried (<c>CallFrames</c>, the failing frame
@@ -214,39 +201,18 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     /// </summary>
     public IEnumerable<Diff> EventsSince(DateTimeOffset t)
     {
-        // CallStack-level stream (populated by EnableDiffStream — used by error auto-flip).
-        Diff[] stream;
-        lock (_streamLock) stream = _streamDiffs.ToArray();
-        foreach (var d in stream)
-            if (d.At > t) yield return d;
-
-        var seen = new HashSet<call.@this>(ReferenceEqualityComparer.Instance);
+        // CallStack-level stream (opened by a diff scope — used by error auto-flip).
+        foreach (var diff in _stream.Since(t))
+            yield return diff;
 
         // Per-Call Diffs (populated when Flags.Diff was on at Push time).
         for (var node = _current.Value; node != null; node = node.Caller)
-            foreach (var diff in DiffsOf(node, t))
-                yield return diff;
+            if (node.Diffs is { } diffs)
+                foreach (var diff in diffs.Since(t))
+                    yield return diff;
 
         if (_root != null)
-            foreach (var diff in WalkTree(_root, t, seen))
+            foreach (var diff in _root.Since(t, new HashSet<call.@this>(ReferenceEqualityComparer.Instance)))
                 yield return diff;
-    }
-
-    private static IEnumerable<Diff> WalkTree(call.@this node, DateTimeOffset t, HashSet<call.@this> seen)
-    {
-        if (!seen.Add(node))
-            yield break;
-        foreach (var diff in DiffsOf(node, t))
-            yield return diff;
-        foreach (var child in node.Children)
-            foreach (var diff in WalkTree(child, t, seen))
-                yield return diff;
-    }
-
-    private static IEnumerable<Diff> DiffsOf(call.@this call, DateTimeOffset t)
-    {
-        if (call.Diffs == null) yield break;
-        foreach (var d in call.Diffs)
-            if (d.At > t) yield return d;
     }
 }
