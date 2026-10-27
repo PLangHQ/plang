@@ -271,12 +271,14 @@ public sealed class @this : global::app.store.@this
                 using (var reader = cmd.ExecuteReader())
                     while (reader.Read())
                         if (!reader.IsDBNull(1)) raws.Add((reader.GetString(0), reader.GetString(1)));
-                // each row answered under its key — the key it was set under, whatever the Data's own name
+                // each row answered under its key — the key it was set under, whatever the Data's own name. A row that
+                // doesn't read is answered holding why, never dropped: whoever reads it (a setting) says so, loud; a row
+                // that reads to nothing is no row.
                 var list = _store.Empty;
                 foreach (var (key, raw) in raws)
                 {
                     var loaded = await _store.Hydrate<T>(raw);
-                    if (loaded.Success && !loaded.Peek().IsNull) list.Add(loaded.Copy(key));
+                    if (!loaded.Success || !loaded.Peek().IsNull) list.Add(loaded.Copy(key));
                 }
                 return _store.Context.Ok<global::app.type.item.list.@this>(list);
             });
