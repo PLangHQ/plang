@@ -209,6 +209,21 @@ public class SignedSnapshotTests
         await Assert.That(result.Error!.Key).IsEqualTo("SnapshotUnsigned");
     }
 
+    // A Data signed for plang's own store, read from a .plang file, is never judged at rest: its type states no view of
+    // its own, so it is re-hashed in Out, and its Out bytes are not the Store bytes it was signed over: refused.
+    [Test]
+    public async Task AStoreSignedData_FromAFile_IsNeverAtRest()
+    {
+        await using var app = App();
+        var context = app.actor.list.User.Context;
+        var file = await Plang(await Signed(context, store: true), context);
+
+        var read = await Read(file, context);
+
+        await read.IsFailure();
+        await Assert.That(read.Error!.Key).IsEqualTo("DataHashMismatch");
+    }
+
     [Test]
     public async Task ASensitiveLeaf_ComesBackNull()
     {
