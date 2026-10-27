@@ -44,7 +44,7 @@ public class JsonCompareTests
             steps.Add(Make.Step(line, ((global::app.goal.step.action.list.@this)read.Peek()!).Items().ToArray()));
         }
         var goal = await RealGoalLoad.ViaChannel(app, Make.Goal(ctx, "Start", steps.ToArray()));
-        await (await app.Start(goal, ctx)).IsSuccess();
+        await (await goal.Start(ctx)).IsSuccess();
 
         await Assert.That(await Compared(await ctx.Variable.Get("d"), await ctx.Variable.Get("d2"), ctx))
             .IsEqualTo(global::app.data.Comparison.Equal);

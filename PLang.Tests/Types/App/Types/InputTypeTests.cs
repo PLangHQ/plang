@@ -111,7 +111,7 @@ public class InputTypeTests : IAsyncDisposable
         await Context.Variable.Set("click", new Input.mouse.@this(Types, Input.mouse.Gesture.down, 1, 2, Input.mouse.Button.left, 1));
         var goal = Make.Goal(Context, "Kind", Make.Step("the kind",
             Make.Action(Context, "variable", "set", Make.Param(Context, "Name", "variant", "variable"), ("Value", "%click!type.kind%"))));
-        await (await _app.Start(goal, Context)).IsSuccess();
+        await (await goal.Start(Context)).IsSuccess();
         await Assert.That((await Context.Variable.Get("variant"))?.ToString()).IsEqualTo("mouse");
     }
 
@@ -124,7 +124,7 @@ public class InputTypeTests : IAsyncDisposable
         var goal = Make.Goal(Context, "Modifier",
             Make.Step("the first", Make.Action(Context, "variable", "set", Make.Param(Context, "Name", "first", "variable"), ("Value", "%click.modifier%"))),
             Make.Step("every one", Make.Action(Context, "variable", "set", Make.Param(Context, "Name", "every", "variable"), ("Value", "%click.modifier.list%"))));
-        await (await _app.Start(goal, Context)).IsSuccess();
+        await (await goal.Start(Context)).IsSuccess();
         await Assert.That((await (await Context.Variable.Get("first"))!.Value())?.ToString()).IsEqualTo("ctrl");
         var every = await (await Context.Variable.Get("every"))!.Value();
         await Assert.That(every).IsTypeOf<global::app.type.item.list.@this<Input.modifier.@this>>();

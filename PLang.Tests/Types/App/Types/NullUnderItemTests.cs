@@ -38,7 +38,7 @@ public class NullUnderItemTests
         var goal = await RealGoalLoad.ViaChannel(app, Make.Goal(ctx, "Start",
             Make.Step(line, ((global::app.goal.step.action.list.@this)read.Peek()!).Items().ToArray())));
 
-        await (await app.Start(goal, ctx)).IsSuccess();
+        await (await goal.Start(ctx)).IsSuccess();
 
         var name = await new global::app.type.item.variable.@this("x!type.name", app.type.list).Start(ctx);
         await Assert.That((await name.Value())?.ToString()).IsEqualTo("null");

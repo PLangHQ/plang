@@ -108,7 +108,7 @@ public class PlangRuntimeTests : IDisposable
                 Make.Action(_app.actor.list.User.Context, "output", "write", ("Data", "hello runtime")))));
 
         var context = _app.actor.list.User.Context;
-        var result = await _app.Start(goal, context);
+        var result = await goal.Start(context);
 
         await result.IsSuccess();
 

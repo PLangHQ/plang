@@ -133,7 +133,7 @@ public class PrPipelineTests
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
-        var result = await engine.Start(goal, context);
+        var result = await goal.Start(context);
 
         // File found — relative resolves to {root}/sub/subdata.txt (goal folder)
         await result.IsSuccess();
@@ -153,7 +153,7 @@ public class PrPipelineTests
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
-        var result = await engine.Start(goal, context);
+        var result = await goal.Start(context);
 
         await result.IsSuccess();
         await Assert.That((await result.Value())!.ToString()).IsEqualTo("Hello from test file");
@@ -172,7 +172,7 @@ public class PrPipelineTests
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
-        var result = await engine.Start(goal, context);
+        var result = await goal.Start(context);
 
         await result.IsSuccess();
         await Assert.That((await result.Value())!.ToString()).IsEqualTo("Hello from subfolder");
@@ -191,7 +191,7 @@ public class PrPipelineTests
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
-        var result = await engine.Start(goal, context);
+        var result = await goal.Start(context);
 
         // file/read returns Data.FromError for missing files
         await result.IsFailure();
@@ -211,7 +211,7 @@ public class PrPipelineTests
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
-        var result = await engine.Start(goal, context);
+        var result = await goal.Start(context);
 
         // PLangFileSystem should block path escape — either throws FileAccessException or returns error
         await result.IsFailure();

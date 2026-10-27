@@ -31,7 +31,7 @@ public class AfterActionPayloadTests
             Make.Step("set var",
                 Make.Action(_app.actor.list.User.Context, "variable", "set", Make.Param(_app.actor.list.User.Context, "Name", varName, "variable"), ("Value", value)))));
         _app.goal.list.Add(goal);
-        await _app.Start(goal, _app.actor.list.User.Context);
+        await goal.Start(_app.actor.list.User.Context);
     }
 
     // An after-binding is handed the Action that just ran — Action.Module, .Name, .Step, .Goal all accessible.
@@ -79,7 +79,7 @@ public class AfterActionPayloadTests
             return Task.FromResult(context.Ok());
         });
 
-        await _app.Start(goal, _app.actor.list.User.Context);
+        await goal.Start(_app.actor.list.User.Context);
 
         // Exact count — duplicate firings would corrupt coverage counts silently.
         await Assert.That(observed.Count).IsEqualTo(1);
@@ -117,7 +117,7 @@ public class AfterActionPayloadTests
         Data? captured = null;
         Bind(global::app.@event.When.after, (_, result, context) => { captured = result; return Task.FromResult(context.Ok()); });
 
-        await _app.Start(goal, _app.actor.list.User.Context);
+        await goal.Start(_app.actor.list.User.Context);
 
         await Assert.That(captured).IsNotNull();
         await captured!.IsFailure();
