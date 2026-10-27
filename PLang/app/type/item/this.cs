@@ -690,13 +690,14 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// uses: the value is read as tokens (a dict an object, a list an array, a leaf its token), so a dict
     /// handed to a record's slot is the record its own reader makes. <paramref name="kind"/> is the declared
     /// type's element kind (<c>list&lt;action&gt;</c> → <c>action</c>), so a list reader loops the element's
-    /// reader. A value that arrived in a format (a <c>clr</c> carrier holding json) bridges its format instead.
+    /// reader. It is read in <paramref name="view"/>, what the value was written for (a frame's member in the snapshot).
+    /// A value that arrived in a format (a <c>clr</c> carrier holding json) bridges its format instead.
     /// </summary>
     internal virtual object? Read(global::app.type.reader.ITypeReader reader, string? kind,
-                                  global::app.actor.context.@this context)
+                                  global::app.actor.context.@this context, global::app.View view)
     {
         var tokens = new global::app.type.format.item.Reader(this, context);
-        return reader.Read(ref tokens, kind, new global::app.type.reader.ReadContext(context));
+        return reader.Read(ref tokens, kind, new global::app.type.reader.ReadContext(context) { View = view });
     }
 
     /// <summary>

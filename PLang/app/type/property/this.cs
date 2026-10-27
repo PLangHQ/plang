@@ -126,7 +126,7 @@ public sealed class @this : global::app.type.item.note.IAbout
             try
             {
                 var read = item.Read(context.App.type.list.Reader.Reader(Type.Name, null, context),
-                    Type.kind.IsEmpty ? null : Type.kind.Name, context);
+                    Type.kind.IsEmpty ? null : Type.kind.Name, context, global::app.View.Out);
                 // a typed list member (list<action>) holds the rows the list reader read, as its own type
                 if (read is global::app.type.item.list.@this rows && !slot.PropertyType.IsInstanceOfType(rows)
                     && typeof(global::app.type.item.list.@this).IsAssignableFrom(slot.PropertyType))
