@@ -9,8 +9,11 @@ namespace app.snapshot;
 /// comes back literal: the bytes' origin is not known below the snapshot's reader.
 /// </summary>
 [global::app.Attributes.PlangType("snapshot")]
-public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
+public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IView<@this>
 {
+    /// <summary>A snapshot is written and read in the snapshot view: a run's state at rest.</summary>
+    public static global::app.View View => global::app.View.Snapshot;
+
     /// <summary>
     /// The actor context this snapshot tree is born in. The snapshot renders its entries
     /// as self-describing Data (its leaf serializer builds them), so it must carry the

@@ -517,6 +517,15 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         where T : item.@this, global::app.type.item.ILoad<T>
         => T.Load(location, app);
 
+    /// <summary>The view a value of this type is written and read in, when its class states one (<c>IView</c>: a
+    /// snapshot's, at rest); null for any other. Bound once, on first use, like
+    /// <see cref="Make(object?, global::app.data.@this)"/>.</summary>
+    internal global::app.View? View => (_view ??= _viewing.For(this))();
+
+    private System.Func<global::app.View?>? _view;
+
+    private static global::app.View? Viewed<T>() where T : item.@this, global::app.snapshot.IView<T> => T.View;
+
     // The doors a type's class answers through, each a static family method closed once per type on first use.
     private static readonly door<System.Func<object?, @this, global::app.data.@this, item.@this?>> _lifting =
         new(nameof(Create), type => type.Implementer(typeof(global::app.type.item.ICreate<>)), static (_, _, _) => null);
@@ -530,6 +539,8 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     private static readonly door<System.Func<item.path.@this, global::app.@this, System.Threading.Tasks.Task<global::app.data.@this>>> _loading =
         new(nameof(Loaded), type => type.Implementer(typeof(global::app.type.item.ILoad<>)),
             static (_, app) => System.Threading.Tasks.Task.FromResult(app.actor.list.System.Context.Ok()));
+    private static readonly door<System.Func<global::app.View?>> _viewing =
+        new(nameof(Viewed), type => type.Implementer(typeof(global::app.snapshot.IView<>)), static () => null);
 
     // A static family method of a type's class, closed once on first use: the class its family names closes the open
     // method; a class outside the family declines.

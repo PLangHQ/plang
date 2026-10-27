@@ -16,7 +16,7 @@ public sealed partial class @this
     {
         var context = writer.Context;
         using var ms = new System.IO.MemoryStream();
-        await context.App.type.list["goal"].kind.Encode(ms, context.Ok(this), context, global::app.View.Snapshot);
+        await context.App.type.list["goal"].kind.Encode(ms, context.Ok(this), context, View);
         writer.String(System.Text.Encoding.UTF8.GetString(ms.ToArray()));
     }
 
@@ -29,9 +29,8 @@ public sealed partial class @this
     {
         if (raw is @this snapshot) return snapshot;
         var context = data.Context;
-        var view = global::app.View.Snapshot;
         if (raw is global::app.type.item.text.@this text)
-            return text.Read(view.Reader(context.App.type.list[typeof(@this)], null, context), null, context, view) as @this;
+            return text.Read(View.Reader(context.App.type.list[typeof(@this)], null, context), null, context, View) as @this;
         data.Fail(new global::app.error.@this(
             $"%{data.Name}% holds a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name} — a snapshot is made from a snapshot or its text",
             "CreateItemDeclined", 400));
