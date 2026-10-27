@@ -87,27 +87,15 @@ public sealed class Writer : IWriter
                 $"a value nested deeper than {Depth} levels can't be written: plang's readers read {Depth} levels", "ValueTooDeep", 400));
     }
 
-    // How deep the objects and arrays in a json slice go (a string's brackets are its characters, not levels).
+    // How deep the objects and arrays in a json slice go, as json's own reader counts them.
     private int Nesting(string json)
     {
-        int depth = 0, deepest = 0;
-        var quoted = false;
-        for (var i = 0; i < json.Length; i++)
-        {
-            var c = json[i];
-            if (quoted)
-            {
-                if (c == '\\') i++;
-                else if (c == '"') quoted = false;
-                continue;
-            }
-            switch (c)
-            {
-                case '"': quoted = true; break;
-                case '{' or '[': deepest = System.Math.Max(deepest, ++depth); break;
-                case '}' or ']': depth--; break;
-            }
-        }
+        var reader = new System.Text.Json.Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(json),
+            new System.Text.Json.JsonReaderOptions { MaxDepth = int.MaxValue });
+        var deepest = 0;
+        while (reader.Read())
+            if (reader.TokenType is System.Text.Json.JsonTokenType.StartObject or System.Text.Json.JsonTokenType.StartArray)
+                deepest = System.Math.Max(deepest, reader.CurrentDepth + 1);
         return deepest;
     }
     public void Name(string name) => _writer.WritePropertyName(name);
