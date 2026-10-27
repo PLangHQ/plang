@@ -138,16 +138,30 @@ public sealed class Reader
             _pos += s.Length;
         }
 
-        private string? Match(string pattern)
+        // The tokens a line is read by, each anchored where the cursor stands (\G), made once.
+        private static readonly System.Text.RegularExpressions.Regex Name = new(@"\G[A-Za-z_][A-Za-z0-9_]*");
+        private static readonly System.Text.RegularExpressions.Regex BareKey = new(@"\G[A-Za-z_][\w-]*");
+        private static readonly System.Text.RegularExpressions.Regex ActionHead = new(@"\G[A-Za-z_]\w*\.[A-Za-z_]\w*\s*\(");
+        private static readonly System.Text.RegularExpressions.Regex TypeWord = new(@"\G\w+(?:<\w+>)?");
+        private static readonly System.Text.RegularExpressions.Regex Symbol = new(@"\G[=!<>]+");
+        private static readonly System.Text.RegularExpressions.Regex Word = new(@"\G[A-Za-z_]\w*(?![\w.(])");
+        private static readonly System.Text.RegularExpressions.Regex TextWord = new(@"\G[A-Za-z_]\w*(?![\w.(%])");
+        private static readonly System.Text.RegularExpressions.Regex Span = new(@"\G-?(?:P[0-9A-Za-z.]+|\d+(?:\.\d+)?(?:ms|s|m|h|d))(?![\w.(%])");
+        private static readonly System.Text.RegularExpressions.Regex Quoted = new(@"\G""(?:[^""\\]|\\.)*""");
+        private static readonly System.Text.RegularExpressions.Regex Number = new(@"\G-?\d+(?:\.\d+)?(?![\w.])");
+        private static readonly System.Text.RegularExpressions.Regex Bare = new(@"\G[A-Za-z_/][\w./-]*");
+        private static readonly System.Text.RegularExpressions.Regex Constant = new(@"\G(?:true|false|null)\b");
+
+        private string? Match(System.Text.RegularExpressions.Regex token)
         {
             Space();
-            var m = new System.Text.RegularExpressions.Regex(@"\G(?:" + pattern + ")").Match(_text, _pos);
+            var m = token.Match(_text, _pos);
             return m.Success ? m.Value : null;
         }
 
         private string Ident()
         {
-            var name = Match(@"[A-Za-z_][A-Za-z0-9_]*");
+            var name = Match(Name);
             if (name == null) Fail("expected a name");
             _pos += name!.Length;
             return name;
@@ -157,13 +171,13 @@ public sealed class Reader
         // `X-Probe: "x"`). A key holding anything else is written quoted.
         private string Key()
         {
-            var key = Match(@"[A-Za-z_][\w-]*");
+            var key = Match(BareKey);
             if (key == null) Fail("expected a key");
             _pos += key!.Length;
             return key;
         }
 
-        private bool AtAction() => Match(@"[A-Za-z_]\w*\.[A-Za-z_]\w*\s*\(") != null;
+        private bool AtAction() => Match(ActionHead) != null;
 
         // ---------------------------------------------------------------- actions
 
@@ -288,7 +302,7 @@ public sealed class Reader
             Take(":");
             Space();
             var at = _pos;
-            var type = Match(@"\w+(?:<\w+>)?");
+            var type = Match(TypeWord);
             if (type == null) Fail("expected a type after `:`");
             _pos += type!.Length;
             if (slot != null && slot != "item" && type != slot) Fail($"`{prop}` is {slot}, not {type}", at);
@@ -309,34 +323,34 @@ public sealed class Reader
             var frozen = Peek("?=");
             var options = property.Type.Values;
             // a choice's symbol option may stand bare right after its `=`: Operator=== is Operator="=="
-            var afterEquals = new System.Text.RegularExpressions.Regex(@"\G[=!<>]+").Match(_text, System.Math.Min(_pos + (frozen ? 2 : 1), _text.Length)).Value;
+            var afterEquals = Symbol.Match(_text, System.Math.Min(_pos + (frozen ? 2 : 1), _text.Length)).Value;
             if (Peek("==") && !(options is { Count: > 0 } && options.Contains(afterEquals)))
                 Fail($"one `=` gives a value: {prop}=\"==\"");
             Take(frozen ? "?=" : "=");
             Space();
             var at = _pos;
             Literal value;
-            if (options is { Count: > 0 } && Match(@"[=!<>]+") is { } symbol)
+            if (options is { Count: > 0 } && Match(Symbol) is { } symbol)
             {
                 // a symbol option, bare: a name out of the same closed set, written with no quotes
                 if (!options.Contains(symbol)) Fail($"`{prop}` is one of {string.Join(", ", options)}; `{symbol}` is not", at);
                 _pos += symbol.Length;
                 value = Scalar(System.Text.Json.JsonSerializer.Serialize(symbol), System.Text.Json.JsonValueKind.String);
             }
-            else if (options is { Count: > 0 } && Match(@"[A-Za-z_]\w*(?![\w.(])") is { } word && word is not ("true" or "false" or "null"))
+            else if (options is { Count: > 0 } && Match(Word) is { } word && word is not ("true" or "false" or "null"))
             {
                 // a choice's option may stand bare: it is a name out of a closed set
                 if (!options.Contains(word)) Fail($"`{prop}` is one of {string.Join(", ", options)}; `{word}` is not", at);
                 _pos += word.Length;
                 value = Scalar(System.Text.Json.JsonSerializer.Serialize(word), System.Text.Json.JsonValueKind.String);
             }
-            else if (property.Type.Name == "text" && Match(@"[A-Za-z_]\w*(?![\w.(%])") is { } text && text is not ("true" or "false" or "null"))
+            else if (property.Type.Name == "text" && Match(TextWord) is { } text && text is not ("true" or "false" or "null"))
             {
                 // a single unquoted word in a text property is that text
                 _pos += text.Length;
                 value = Scalar(System.Text.Json.JsonSerializer.Serialize(text), System.Text.Json.JsonValueKind.String);
             }
-            else if (property.Type.Name == "duration" && Match(@"-?(?:P[0-9A-Za-z.]+|\d+(?:\.\d+)?(?:ms|s|m|h|d))(?![\w.(%])") is { } span
+            else if (property.Type.Name == "duration" && Match(Span) is { } span
                      && global::app.type.item.duration.@this.Resolve(span, _context) != null)
             {
                 // a duration reads its own literal bare, as a choice reads its option: After=5s is After="5s",
@@ -509,7 +523,7 @@ public sealed class Reader
             var c = _text[_pos];
             if (c == '"')
             {
-                var s = Match(@"""(?:[^""\\]|\\.)*""");
+                var s = Match(Quoted);
                 if (s == null) Fail("a text is not closed");
                 _pos += s!.Length;
                 return Scalar(s, System.Text.Json.JsonValueKind.String);
@@ -565,13 +579,21 @@ public sealed class Reader
                 Take("}");
                 return new Literal { Entries = entries };
             }
-            if (Match(@"-?\d+(?:\.\d+)?(?![\w.])") is { } number)
+            if (Match(Number) is { } number)
             {
                 _pos += number.Length;
                 return Scalar(number, System.Text.Json.JsonValueKind.Number);
             }
-            foreach (var (word, kind) in new[] { ("true", System.Text.Json.JsonValueKind.True), ("false", System.Text.Json.JsonValueKind.False), ("null", System.Text.Json.JsonValueKind.Null) })
-                if (Match(word + @"\b") != null) { _pos += word.Length; return Scalar(word, kind); }
+            if (Match(Constant) is { } word)
+            {
+                _pos += word.Length;
+                return Scalar(word, word switch
+                {
+                    "true" => System.Text.Json.JsonValueKind.True,
+                    "false" => System.Text.Json.JsonValueKind.False,
+                    _ => System.Text.Json.JsonValueKind.Null,
+                });
+            }
             if (AtAction())
             {
                 // an action held as a value stands alone: a modifier there has no action before it
@@ -579,7 +601,7 @@ public sealed class Reader
                 Attach(actions, await Action());
                 return new Literal { Action = actions[0] };
             }
-            if (Match(@"[A-Za-z_/][\w./-]*") is { } bare) Fail($"a text must be in quotes: write \"{bare}\", not {bare}");
+            if (Match(Bare) is { } bare) Fail($"a text must be in quotes: write \"{bare}\", not {bare}");
             if (_text[_pos] == '?') Fail("a `?` is still there: fill it with the value the step gives");
             Fail("expected a value: \"text\", a number, true, false, null, %variable%, [list], {dict} or an action");
             return null!;
