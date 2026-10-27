@@ -28,6 +28,7 @@ public class FoundElsewhereTests
 
         var text = await src.Snapshot(context).Saved().Text(context);
         await Assert.That(text).Contains("\"pr\"");
+        await Assert.That(text).Contains("\"key\"");
         await Assert.That(text).DoesNotContain("set %x% = 1");
 
         await using var dst = new global::app.@this(folder, global::PLang.Tests.Parent.Actor).Testing();
@@ -72,6 +73,11 @@ public class FoundElsewhereTests
 
         var text = await src.Snapshot(context).Saved().Text(context);
         await Assert.That(text).DoesNotContain("before");
+        // a file is its own key: its record's type is file, no kind
+        var note = text[text.IndexOf("\"note\"", System.StringComparison.Ordinal)..];
+        var type = note[note.IndexOf("\"type\"", System.StringComparison.Ordinal)..note.IndexOf("\"value\"", System.StringComparison.Ordinal)];
+        await Assert.That(type).Contains("\"file\"");
+        await Assert.That(type).DoesNotContain("\"kind\"");
 
         System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "note.txt"), "after");
         await using var dst = new global::app.@this(folder, global::PLang.Tests.Parent.Actor).Testing();

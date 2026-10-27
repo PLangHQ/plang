@@ -179,11 +179,12 @@ public abstract class View
         internal override System.Threading.Tasks.ValueTask Output(global::app.type.item.@this value, global::app.type.format.IWriter writer)
             => Found(value.GetType()) ? value.Members(writer) : writer.Write(value);
 
-        // what a found value writes is its key, so its record shows under its type's key kind: what reads it back
-        // reads a key, and the type finds the value from it
+        // a found value whose type holds a key kind writes its key, so its record shows under that kind: what reads it
+        // back reads a key, and the type finds the value from it. A type that holds none (a file) is its own key.
         internal override global::app.type.@this? Type(global::app.data.@this record, global::app.actor.context.@this context)
-            => record.Error == null && record.Peek() is { } value && Found(value.GetType()) && base.Type(record, context) is { IsNull: false } type
-                ? context.App.type.list[new global::app.type.@this(type.Name, "key"), context]
+            => record.Error == null && record.Peek() is { } value && Found(value.GetType())
+               && base.Type(record, context) is { IsNull: false } type && context.App.type.list[type.Name].kind["key"] is { } key
+                ? context.App.type.list.Of(key, context)
                 : base.Type(record, context);
 
         // Whether a type tags what finds it: read once per type.
