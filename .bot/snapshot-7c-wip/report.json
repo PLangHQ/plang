@@ -1,0 +1,33 @@
+{
+  "branch": "snapshot-7c-wip",
+  "sessions": [
+    {
+      "id": "db109c2c-ac70-45bd-803f-b1788150add4",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-27T15:44:02Z",
+      "timestamp_end": "2026-10-27T15:44:02Z",
+      "intent": "Full OBP review of snapshot-7c-wip",
+      "before": {
+        "assumptions": "diff reviews missed new-beside-old",
+        "risk": "large surface"
+      },
+      "plan": ".bot/snapshot-7c-wip/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/snapshot-7c-wip/codeanalyzer/review.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "36 findings; V-marked ones re-read, others traced by readers"
+        }
+      ],
+      "after": {
+        "status": "review written",
+        "health": "fail",
+        "notes": "architect rules"
+      }
+    }
+  ]
+}
