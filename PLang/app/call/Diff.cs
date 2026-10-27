@@ -5,31 +5,23 @@ namespace app.call;
 /// pre-mutation value; the current value lives on Variables. For scalar-only capture
 /// (default), Before is the raw scalar; for non-scalar values (lists, dicts, objects),
 /// Before is a summary string like <c>"&lt;List&lt;int&gt; @ 5042 items&gt;"</c> unless
-/// the setting's <c>diff.deep</c> is on, in which case Before is a deep clone. In a trace it shows its name and when.
+/// the setting's <c>diff.deep</c> is on, in which case Before is the value's own copy. In a trace it shows its name and when.
 /// </summary>
 public sealed record Diff([property: Out, Debug] string Name, object? Before, [property: Out, Debug] DateTimeOffset At)
 {
     /// <summary>A change of <paramref name="name"/> now, its value before it captured by the capture rule: a scalar as it
-    /// is, any other value as its summary, or deep-cloned when <paramref name="deep"/> (the diff.deep setting) — a
-    /// summary by default keeps tight loops over large lists from holding every copy.</summary>
+    /// is, any other value as its summary, or as it was when <paramref name="deep"/> (the diff.deep setting, the error
+    /// stream) — a summary by default keeps tight loops over large lists from holding every copy.</summary>
     internal Diff(string name, object? before, bool deep) : this(name, null, DateTimeOffset.UtcNow)
         => Before = Captured(before, deep);
 
+    // A value kept as it was is its own copy (item.Copy: a container's rows copied, any other value — which no change
+    // reaches — as it is), never a walk of everything it reaches: a task's value reaches the whole app.
     private object? Captured(object? value, bool deep)
     {
         if (value == null) return null;
         if (IsScalar(value)) return value;
-        if (deep)
-        {
-            // A value the cloner can't copy (no reflection access, an unsupported member) is
-            // captured as its summary; any other failure is a bug and bubbles.
-            try { return Force.DeepCloner.DeepClonerExtensions.DeepClone(value); }
-            catch (System.Exception ex) when (ex is NotSupportedException or MemberAccessException
-                or System.Security.SecurityException or InvalidOperationException)
-            {
-                return Summary(value);
-            }
-        }
+        if (deep && value is global::app.type.item.@this item) return item.Copy();
         return Summary(value);
     }
 
