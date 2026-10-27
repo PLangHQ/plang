@@ -1,22 +1,7 @@
 # snapshot — coder summary
 
-**Version:** v4 (second round: stages 8 and 9 done; stage 7 waits on Ingi's answer on the frame's shape; 10, 11 after)
-
-## Second round (v4, decisions 42–76)
-
-- **Stage 8, `property`** (2a019554a, 955b852dc): what a program adds to a thing is its `property`
-  (`app.type.item.property.list`, an item: `["name"]`, `.list`, writes and reads itself, a snapshot part). The six
-  keepers (app, actor, call, goal, step, module) declare a `[Store, LlmBuilder]` `property` node through
-  `property.IOwner`; item's Get/Set fall through to it. Data's `Kept` → `Property`; the wire member is `property`.
-- **Stage 9, signed in its own view** (d60c08ceb, 327ea4ba3, 751cf5de5, 627ad7f56): `View.Snapshot` (store, no
-  `[Sensitive]` member, a sensitive leaf null, no Data name); a signature records its `view` inside the signed bytes,
-  and only a recorded `snapshot` reads at rest; `snapshot.save` is walk → `wire.Of` → sign; `resume` refuses
-  `SnapshotUnsigned`, `SnapshotSignatureInvalid`, `SnapshotNotTheApps`; a snapshot file is `.plang`; a file's content
-  opening carries the read's signature and properties onto the binding (`Data.Carry`); writers refuse a value deeper
-  than the readers' 64 levels (`ValueTooDeep`), a pasted slice counting its own depth.
-- **Known red:** `FreshAppGoesOn` (plang) is refused at the save (`ValueTooDeep`) under `--test` until stage 7 saves the
-  stack as a chain.
-- **Next:** stage 7 (the chain and the frame's record), 10 (the run's other state), 11 (`sign snapshot`, re-sign).
+**Version:** v4 (third round: stage 7c done on `snapshot-7c-wip`, landing held for codeanalyzer's review 118; stages
+10, 11 after)
 
 ## What this is
 
@@ -24,64 +9,66 @@ A run's exact state as a value, kept on disk or in a db and resumed later, in th
 
 ```plang
 - save snapshot, write to %snapshot%
-- save %snapshot% to file 'run.txt'
+- save %snapshot% to file 'run.plang'
 … in a fresh app …
-- read file 'run.txt', write to %snapshot% as snapshot
+- read file 'run.plang', write to %snapshot%
 - resume %snapshot%
 ```
 
-The plan: `.bot/snapshot/architect/plan/start.md`. The doc of what is: `Documentation/v0.2/snapshots.md`.
+The plan: `.bot/snapshot/architect/plan/start.md`; 7c's: `.bot/snapshot/coder/v4/plan-stage-7c.md`. The doc of what
+is: `Documentation/v0.2/snapshots.md`.
 
-## What was done
+## Stage 7c (snapshot 91–122) — a run's frames read back as themselves
 
-- **Stage 1, ISnapshot and the walk.** A part implements `ISnapshot` (Store, Start, both answering Data). `app.Snapshot`
-  walks public ISnapshot members from `app`, each part at its member path, each in its own context
-  (`snapshot/this.Store.cs`). Code records the DLLs a run took in (`code.dll.loaded`, `code.dll.added`), registrations
-  and kinds' defaults (`code.default`).
-- **Stage 2, the call stack as it lives** (1b + 1c): the stack is a nested tree (root, children, current). A frame
-  writes goal {address, hash}, step, action {index, module, name}, its variables (its own node), arguments, errors,
-  handled, event, tags, kept. It comes back through `call.Find` (async: opens entries, finds the goal, the setting) and
-  then its kind's own `Create` (`call`, `binding`, `isolated`). Resume is a call: it stops at the resume action's frame.
-- **Stage 3, text:** a snapshot in text is its own typed form; `read … as snapshot` reads it through its reader.
-- **Stage 4:** a sensitive variable is not stored. A `[Sensitive]` member inside a value still writes (a pinned red,
-  waiting on `View.Snapshot`, Ingi's).
-- **Stage 5:** `snapshot.save` (`module/snapshot/save.cs`), and the plang proof
-  (`test/plan/snapshot/module/snapshot/`): `SavesTheRun` and `FreshAppGoesOn` (resumes the committed `run.txt`,
-  written by `Record.goal`; its `start.md` says when to run it again).
-- **Stage 6:** `snapshots.md` and `callbacks.md` (callbacks later) rewritten to what is.
-- **Security (snapshot 25):** every restored Data answers as its own actor, through one door, `snapshot.In(context)`.
-  Before, it carried whoever read the text. This predates the branch.
-- **Clones (snapshot 39):** item.Clone's deep copy copied a context, and with it the app, through a Data inside a dict
-  or list. That crashed the full plang suite. Lists, dicts and snapshots now clone by their elements, and live or shared
-  values are themselves. This predates the branch. The rest of the sweep is in the backlog.
-- **Also:** the llm C# test recordings are keyed on the request body (they had answered nothing for a month). An llm
-  tool call is a plang value (`tool.call`). Code's records go by plang names. The app's mode is not stored.
+- **The state is taken once, as bytes** (113): `app.Snapshot` (async, an approved locked change) walks the parts and
+  writes them once in `View.Snapshot`, answering those bytes. `save` signs them; an ask's pending state and an
+  error's `Callback(context)` hold them and open them into the node a resume goes on from.
+- **The stack is its frames** (99–101): written as `frames`, root to the frame the run stopped in, each frame by its
+  tags. Start reads them in order, each row made under the frame entered before it (its kind's `Create` from its
+  record, not pushed), then entered under the restored app's setting; a failed row ends what was entered.
+- **Found values are written as their key and read back by their own snapshot reader** (103–105): goal
+  `{name, path, hash}` (found through the `.pr` its `.goal` is built to, loaded by the goal list, hash compared), step
+  `{goal, index}`, action `{step, index, module, name}`, module `{name}`. A key member no reader knows is refused
+  (`SnapshotFormatOutdated`).
+- **A read asks its view for the reader** (103, 107): readers are keyed by (type, kind, view) (`ITypeReader.View`);
+  `View.Reader` is the one door; the wire is born holding its view; `item.Read` reads in the view it is given; the
+  general read onto a host reads each member by its type's reader in its view, taking members as their declaring
+  class has them (`Tagged`).
+- **A frame's own variables are its `Parameter`** (113, 119): the property list it holds, keyed by name
+  (`%!call.scope.parameter.order%`); `call.Variable` went.
+- **Also** (111, 114, 117, 120): a boy-scout pass over the files 7c touched (renames and smells; locked rows to the
+  Ingi list); `sign.StoreView` replaced by `sign.View`, the one member; the wire's plang kind is `type.list.Plang`;
+  five bool reads ask `ToBooleanAsync()`.
 
-## Waiting on Ingi (via the architect)
+## Known reds and held work
 
-- the text's shape (question 1);
-- the removals and `call.list.Resume` sign-off (1d, 1e);
-- `View.Snapshot` (2), with the sensitive-member red;
-- the program as references (2b), with the event-through-text red, which is held uncommitted in
-  `CallStackSnapshotTests.cs`;
-- loops and held calls (3);
-- refusals and "everything" (4, 4b);
-- the resume verb (5);
-- `%result%` in OnToolCall;
-- the frame kinds' plang names;
-- the origin of a read lost below containers (backlog).
+- `AGoalKeptInWhatAProgramAdded_IsLoaded_InAnAppThatMustLoadIt` — pins the nested-load gap (a found value inside a
+  non-found member isn't loaded before the token walk opens it; then a structure entry has no raw bytes for
+  `json.Entry`). Logged by the architect.
+- The running `%!event%` tests: `CallStackEventTests`, skipped for stage 10.
+- `ReadmeIsACopyOfStartMd`: docs', fixed on runtime2. `TheCoresSurface_IsThePinnedOne`: the landing re-pin.
+
+## Next
+
+1. The landing (held for 118): rebase onto `origin/snapshot`, merge `origin/runtime2` (docs), re-pin the surface golden
+   once (citing 77, 81, 101, 103, 113, 117, 120, 121), one sweep, fast-forward `snapshot`.
+2. Stage 10 (the run's other state: settings, the actor's hold, the running event), stage 11 (`sign snapshot`).
 
 ## Code example
 
 ```csharp
-// the door every restored Data comes through: cloned, born again in the receiving part's context
-internal IEnumerable<global::app.data.@this> In(global::app.actor.context.@this context)
-{
-    foreach (var entry in Entries.Entries(context)) yield return entry.Clone().Copy(context);
-}
+// a goal read in the snapshot view: its key in, the live goal out — found, not rebuilt
+if (path is not global::app.type.item.path.file.@this file)
+    throw Refused($"the saved goal '{name}' names no .goal to find it in", "GoalKeyIncomplete", 400);
+if (context.App.goal.list[file.Pr]?.Named(name) is not { } goal)
+    throw Refused($"the saved goal '{name}' is not in {file}", "GoalNotFound", 404);
+if (!string.Equals(goal.Hash ?? "", hash, StringComparison.OrdinalIgnoreCase))
+    throw Refused($"the saved goal '{name}' is not the one there now …", "GoalHashMismatch", 409);
+return goal;
 ```
 
-## State
+## Earlier rounds (decisions 1–76)
 
-- C# sweep: the 3 known reds only (event-through-text, held; ReadmeIsACopyOfStartMd; ASensitiveMember).
-- Plang suite: 308 total, 306 pass, 1 known fail (BareLiteralJudgedByForm), 1 skipped.
+Stage 1 (ISnapshot and the walk), 2 (the call stack, since replaced by 7c), 3 (text), 4 (sensitive values), 5
+(`snapshot.save`, the plang proof), 6 (docs), 8 (`property`), 9 (signed in its own view). See git history and the
+architect's summary for the detail.
