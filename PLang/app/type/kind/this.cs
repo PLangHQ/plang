@@ -358,9 +358,10 @@ public class @this : global::app.type.@this
     /// <paramref name="reader"/> (the declared type's own reader), handing it the element
     /// <paramref name="kind"/> (list&lt;action&gt; → action) so a list reader loops the element's
     /// reader. This is the ONLY place a format is named — a format kind (json/…) overrides; a kind
-    /// that is not a format has nothing to bridge and declines (null → the caller's Clr path).</summary>
+    /// that is not a format has nothing to bridge and declines (null → the caller's Clr path). It reads
+    /// under <paramref name="ctx"/>, the read it is part of (its view: what the content was written for).</summary>
     public virtual object? Read(object obj, global::app.type.reader.ITypeReader reader, string? kind,
-                                global::app.actor.context.@this context) => null;
+                                global::app.type.reader.ReadContext ctx) => null;
 
     public override string ToString() => Name;
 

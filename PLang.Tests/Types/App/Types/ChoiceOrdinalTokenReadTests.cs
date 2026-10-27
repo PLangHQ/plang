@@ -18,7 +18,8 @@ public class ChoiceOrdinalTokenReadTests
         utf8.Read();
         var reader = new global::app.type.item.kind.json.Reader(utf8, bytes);
         var reflection = (global::app.type.item.kind.reflection.@this)app.type.list["item"].kind["*"]!;
-        return (Box)reflection.Read(ref reader, typeof(Box), new global::app.type.reader.ReadContext(context))!;
+        // the box's members are what plang's store keeps, so it is read as the store wrote it
+        return (Box)reflection.Read(ref reader, typeof(Box), new global::app.type.reader.ReadContext(context) { View = global::app.View.Store })!;
     }
 
     [Test]

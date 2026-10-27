@@ -100,7 +100,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
         return new(new global::app.type.clr.@this(host, ctx));
     }
 
-    // The inverse of item's tagged write: build a host CLR object by reflecting its [Store] props and pulling
+    // The inverse of item's tagged write: build a host CLR object by reflecting the props its read's view shows, pulling
     // each off the format-agnostic reader (wire order drives, unknown names skip, missing names
     // keep the property default). A collection host (List<action>) reads as an
     // array of its element; List<Data> props hand their bytes to the @schema:data reader
@@ -137,11 +137,11 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
             return coll;
         }
 
-        // Object host — its [Store] props, matched to wire names (the same selector Output writes).
+        // Object host — the props the read's view shows, matched to wire names (the same selector Output writes).
         var host = global::System.Activator.CreateInstance(target)!;
         var byName = new global::System.Collections.Generic.Dictionary<string, global::System.Reflection.PropertyInfo>(
             global::System.StringComparer.OrdinalIgnoreCase);
-        foreach (var entry in Tagged.PropertiesFor(target, global::app.View.Store))
+        foreach (var entry in Tagged.PropertiesFor(target, ctx.View))
             byName[entry.WireName] = entry.Property;
 
         reader.BeginObject();

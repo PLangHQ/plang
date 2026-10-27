@@ -114,10 +114,10 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
 
     /// <summary>The format→type read door — the carrier hands its <see cref="Kind"/> its own content,
     /// the declared type's reader, and the element kind. The kind bridges the format (json → a json
-    /// reader); the type reads its own structure, with the reader's context.</summary>
+    /// reader); the type reads its own structure, with the reader's context, in the read's view.</summary>
     internal override object? Read(global::app.type.reader.ITypeReader reader, string? kind,
                                    global::app.actor.context.@this context, global::app.View view)
-        => Kind.Read(Value, reader, kind, context);
+        => Kind.Read(Value, reader, kind, new global::app.type.reader.ReadContext(context) { View = view });
 
     /// <summary>The child-write door — the carrier routes to its <see cref="Kind"/> (the * kind
     /// reflects a settable property, the list kind writes an index). The kind returns the value
