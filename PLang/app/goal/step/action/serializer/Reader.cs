@@ -43,8 +43,8 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.goal.step.action.@this Made()
             => action ??= module == null || actionName == null
                 ? throw new global::app.error.PrFormatOutdatedException("an action's module and name come first", ctx.Origin)
-                // Provenance at birth: an action READ is authored, not injected — so it is non-synthetic. A name
-                // the module doesn't carry still reads (validation names it), as a plain action.
+                // An action read is its module's program action, in its step; a name the module doesn't carry still
+                // reads (validation names it), as a plain action.
                 : module[actionName]?.Program(_step)
                   ?? new global::app.goal.step.action.@this(ctx.Context.App.type.list) { Module = module, Name = actionName, Step = _step };
 

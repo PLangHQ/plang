@@ -5,8 +5,8 @@ namespace app.snapshot;
 /// is an entry whose value is itself a snapshot — one structure, so a reader walks it without asking
 /// what kind of member it is looking at. Each <see cref="ISnapshot"/> part writes its own node and
 /// reads it back through the entries' typed asks when it starts. The shape is the app's member tree. A template comes
-/// back only from bytes the gate trusts (<c>type/item/source.cs:76–81</c>); today a template inside a container comes
-/// back literal by every road, since the origin is lost below the snapshot's reader.
+/// back only from bytes the gate trusts (<see cref="global::app.type.item.source"/>), so a template inside a container
+/// comes back literal: the bytes' origin is not known below the snapshot's reader.
 /// </summary>
 [global::app.Attributes.PlangType("snapshot")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>

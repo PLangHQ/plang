@@ -16,13 +16,13 @@ public sealed class Reader : global::app.type.reader.ITypeReader
 {
     public string Kind => global::app.type.reader.@this.AnyKind;
 
-    /// <summary>A section is structure, not content: <see cref="app.snapshot.@this.Section"/> and
-    /// its sibling views navigate straight into it, so it must be a real snapshot when they look,
-    /// not a slice waiting to be asked.</summary>
+    /// <summary>A section is structure, not content: a part starting reads its node straight from its entries
+    /// (<see cref="app.snapshot.@this.In(string, global::app.actor.context.@this)"/>), so it must be a real snapshot
+    /// when they look, not a slice waiting to be asked.</summary>
     public bool IsEager => true;
 
-    /// <summary>A snapshot is an object of its entries (or null); a string in a slot names a variable holding one. Its own
-    /// text (a file read, a db row) is read when it is asked as a snapshot (<see cref="Read{TReader}"/>).</summary>
+    /// <summary>A snapshot is an object of its entries (or null). Its own text (a file read, a db row) is read when it
+    /// is asked as a snapshot (<see cref="Read{TReader}"/>).</summary>
     public bool Reads(global::app.type.format.TokenKind token)
         => token is global::app.type.format.TokenKind.Object or global::app.type.format.TokenKind.Null;
 

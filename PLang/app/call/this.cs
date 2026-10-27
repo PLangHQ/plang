@@ -21,11 +21,12 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>A frame is a live place in a run, as a channel is: a copy of it is it.</summary>
     protected internal override global::app.type.item.@this Clone() => this;
 
-    /// <summary>What a program adds to the call (<c>%!call.scope.retries%</c>) — kept as long as the call lives.</summary>
     // The frame is written by its tags: in a trace (Out, Debug) its id, depth, when, whether its error was handled,
     // its errors and the changes it saw; kept (Store) its element (the goal, step or action it runs, which a snapshot
     // writes as what finds it), its variables, what a program added, its tags, the event running in it and the error
     // in play. Its caller and children are where it sits, never written.
+
+    /// <summary>What a program adds to the call (<c>%!call.scope.retries%</c>) — kept as long as the call lives.</summary>
     [Store, global::app.LlmBuilder]
     public global::app.type.item.property.list.@this property { get; private set; }
 
