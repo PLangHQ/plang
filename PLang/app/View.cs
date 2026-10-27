@@ -201,8 +201,7 @@ public abstract class View
 
         // a value found elsewhere is read from its key, which may name a location (a goal's): each location a key
         // names is loaded by its owner's type first, so the key's own read finds what it names without waiting. A
-        // record that is not one (a frame) holds its found members the same way. A type whose class loads nothing from
-        // a location (a file, read again when used) has nothing to load.
+        // record that is not one (a frame) holds its found members the same way.
         internal override System.Threading.Tasks.Task<global::app.data.@this> Load(global::app.type.@this type, string raw,
             global::app.actor.context.@this context)
             => type.ClrType is { } clr ? Load(clr, Key(raw, context), context) : base.Load(type, raw, context);
@@ -230,10 +229,9 @@ public abstract class View
                 if (key.Get(entry.WireName, context)?.Peek() is not { } member) continue;
                 var declared = System.Nullable.GetUnderlyingType(entry.Property.PropertyType) ?? entry.Property.PropertyType;
                 var loaded = Found(declared) ? await Load(declared, member as global::app.type.item.dict.@this, context)
-                    : Found(clr) && types[clr] is { Loads: true } owner
-                      && typeof(global::app.type.item.path.@this).IsAssignableFrom(declared)
+                    : Found(clr) && typeof(global::app.type.item.path.@this).IsAssignableFrom(declared)
                       && types[declared].Make(member, context) is global::app.type.item.path.@this location
-                        ? await owner.Load(location, context.App)
+                        ? await types[clr].Load(location, context.App)
                         : context.Ok();
                 if (!loaded.Success) return loaded;
             }

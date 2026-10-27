@@ -32,27 +32,18 @@ public sealed class Snapshot : global::app.type.reader.ITypeReader
                     var file = context.App.type.list[typeof(global::app.type.item.file.@this)];
                     pr = ctx.View.Reader(file, null, context).Read(ref reader, null, ctx) as global::app.type.item.file.@this;
                     break;
-                default: reader.Skip(); break;
+                default: throw Refused($"key '{member}' isn't in this snapshot's format for a goal", "SnapshotFormatOutdated", 400);
             }
         reader.EndObject();
 
         // the goal its .pr holds, and the goal of that name in it: that one or one of its children
         if (pr == null)
             throw Refused($"the saved goal '{name}' names no .pr to find it in", "GoalKeyIncomplete", 400);
-        if ((context.App.goal.list[pr.Path] is { } top ? Named(top, name) : null) is not { } goal)
+        if (context.App.goal.list[pr.Path]?.Named(name) is not { } goal)
             throw Refused($"the saved goal '{name}' is not in {pr.Path}", "GoalNotFound", 404);
         if (!string.Equals(goal.Hash ?? "", hash, StringComparison.OrdinalIgnoreCase))
             throw Refused($"the saved goal '{name}' is not the one there now: saved hash {hash}, live {goal.Hash}.", "GoalHashMismatch", 409);
         return goal;
-    }
-
-    // The goal named `name`: `goal` itself, else one of its children, at any depth.
-    private global::app.goal.@this? Named(global::app.goal.@this goal, string name)
-    {
-        if (string.Equals(goal.Name, name, StringComparison.OrdinalIgnoreCase)) return goal;
-        foreach (var child in goal.Child.Items())
-            if (Named(child, name) is { } found) return found;
-        return null;
     }
 
     private global::app.error.DeclinedException Refused(string message, string key, int status)

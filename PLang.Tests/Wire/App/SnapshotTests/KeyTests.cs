@@ -84,6 +84,24 @@ public class KeyTests
     }
 
     [Test]
+    public async Task AKeyHoldingAMemberNoKeyHolds_IsRefused_NotReadShort()
+    {
+        await using var app = new global::app.@this(System.IO.Path.GetTempPath(), global::PLang.Tests.Parent.Actor).Testing();
+        var (goal, step, _, context) = await Holds(app);
+        app.goal.list.Add(goal);
+        var json = await Written(step, context);
+        json["extra"] = 1;
+        var wire = new global::app.type.item.wire.@this(json.ToJsonString(), context.App.type.list[typeof(Step)],
+            (global::app.type.item.wire.kind.plang.@this)context.App.type.list["wire"].kind["plang"]!, global::app.View.Snapshot);
+        var read = new global::app.data.@this("", wire, context: context);
+
+        await read.Value();
+
+        await Assert.That(read.Error?.Key).IsEqualTo("SnapshotFormatOutdated");
+        await Assert.That(read.Error!.Message).Contains("extra");
+    }
+
+    [Test]
     public async Task AnActionChangedAtItsPlace_IsRefused()
     {
         await using var app = new global::app.@this(System.IO.Path.GetTempPath(), global::PLang.Tests.Parent.Actor).Testing();

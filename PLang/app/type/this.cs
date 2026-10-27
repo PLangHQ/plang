@@ -539,19 +539,16 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         m => m.Name == nameof(Named) && m.IsGenericMethodDefinition)!;
 
     /// <summary>The one <paramref name="location"/> holds, as this type's class loads it (<c>ILoad</c>: a goal by its
-    /// <c>.goal</c>), read as <paramref name="app"/> itself; a type whose class loads nothing from a location answers
-    /// so. Bound once, on first use, like <see cref="Make(object?, global::app.data.@this)"/>.</summary>
+    /// <c>.goal</c>), read as <paramref name="app"/> itself; a type whose class loads nothing from a location (a file,
+    /// read again when used) has nothing to load. Bound once, on first use, like
+    /// <see cref="Make(object?, global::app.data.@this)"/>.</summary>
     internal System.Threading.Tasks.Task<global::app.data.@this> Load(item.path.@this location, global::app.@this app)
-        => (_load ??= Loads
-            ? _loading.MakeGenericMethod(ClrType!).CreateDelegate<System.Func<item.path.@this, global::app.@this, System.Threading.Tasks.Task<global::app.data.@this>>>()
-            : (_, loading) => System.Threading.Tasks.Task.FromResult(loading.actor.list.System.Context.Error(
-                new global::app.error.@this($"a {Name} isn't loaded from a location", "NotSupported", 400))))(location, app);
+        => (_load ??= ClrType is { } clr && System.Array.Exists(clr.GetInterfaces(),
+                i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.ILoad<>) && i.GenericTypeArguments[0] == clr)
+            ? _loading.MakeGenericMethod(clr).CreateDelegate<System.Func<item.path.@this, global::app.@this, System.Threading.Tasks.Task<global::app.data.@this>>>()
+            : (_, loading) => System.Threading.Tasks.Task.FromResult(loading.actor.list.System.Context.Ok()))(location, app);
 
     private System.Func<item.path.@this, global::app.@this, System.Threading.Tasks.Task<global::app.data.@this>>? _load;
-
-    /// <summary>Whether this type's class loads one of its own from a location (<c>ILoad</c>: a goal by its <c>.goal</c>).</summary>
-    internal bool Loads => ClrType is { } clr && System.Array.Exists(clr.GetInterfaces(),
-        i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.ILoad<>) && i.GenericTypeArguments[0] == clr);
 
     private static System.Threading.Tasks.Task<global::app.data.@this> Loaded<T>(item.path.@this location, global::app.@this app)
         where T : item.@this, global::app.type.item.ILoad<T>

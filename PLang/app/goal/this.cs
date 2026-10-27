@@ -78,6 +78,16 @@ public sealed partial class @this
     [Store, Out, LlmBuilder, Debug, Default]
     public child.@this Child { get; }
 
+    /// <summary>The goal of <paramref name="name"/> in this goal's file, from here down: this goal, else one of its
+    /// children at any depth; null when none is.</summary>
+    internal @this? Named(string name)
+    {
+        if (string.Equals(Name, name, StringComparison.OrdinalIgnoreCase)) return this;
+        foreach (var child in Child.Items())
+            if (child.Named(name) is { } named) return named;
+        return null;
+    }
+
     /// <summary>A file's first goal is public; the goals under it are private to it.</summary>
     [Store, Out, LlmBuilder, Debug, Default]
     public global::app.type.item.choice.@this<Visibility> Visibility

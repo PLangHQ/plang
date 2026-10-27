@@ -20,39 +20,36 @@ public sealed class Snapshot : global::app.type.reader.ITypeReader
         where TReader : global::app.type.format.IReader, allows ref struct
     {
         var context = ctx.Context;
+        var types = context.App.type.list;
         global::app.goal.step.@this? step = null;
+        global::app.module.@this? module = null;
         int? index = null;
-        string module = "", name = "";
+        string name = "";
         reader.BeginObject();
         while (reader.NextName(out var member))
             switch (member)
             {
                 case "step":
-                    var type = context.App.type.list[typeof(global::app.goal.step.@this)];
-                    step = ctx.View.Reader(type, null, context).Read(ref reader, null, ctx) as global::app.goal.step.@this;
+                    step = ctx.View.Reader(types[typeof(global::app.goal.step.@this)], null, context).Read(ref reader, null, ctx)
+                        as global::app.goal.step.@this;
+                    break;
+                case "module":
+                    module = ctx.View.Reader(types[typeof(global::app.module.@this)], null, context).Read(ref reader, null, ctx)
+                        as global::app.module.@this;
                     break;
                 case "index": index = reader.Int(); break;
                 case "name": name = reader.String(); break;
-                // a module's key is its name
-                case "module":
-                    reader.BeginObject();
-                    while (reader.NextName(out var part))
-                        if (part == "name") module = reader.String();
-                        else reader.Skip();
-                    reader.EndObject();
-                    break;
-                default: reader.Skip(); break;
+                default: throw Refused($"key '{member}' isn't in this snapshot's format for an action", "SnapshotFormatOutdated", 400);
             }
         reader.EndObject();
 
-        if (step == null || index is not { } at)
-            throw Refused($"a saved action's key names {(step == null ? "no step" : "no index")}", "ActionKeyIncomplete", 400);
+        if (step == null || module == null || index is not { } at)
+            throw Refused($"a saved action's key names no {(step == null ? "step" : module == null ? "module" : "index")}", "ActionKeyIncomplete", 400);
         if (at < 0 || at >= step.Code.Count)
             throw Refused($"the saved action {at} is not in step {step.Index} of goal '{step.Goal.Name}'", "ActionNotFound", 404);
         var action = step.Code[at];
-        if (!string.Equals(action.Module.Name, module, StringComparison.OrdinalIgnoreCase)
-            || !string.Equals(action.Name, name, StringComparison.OrdinalIgnoreCase))
-            throw Refused($"the saved action at '{step.Goal.Name}' step {step.Index} action {at}: saved '{module}.{name}', "
+        if (!ReferenceEquals(action.Module, module) || !string.Equals(action.Name, name, StringComparison.OrdinalIgnoreCase))
+            throw Refused($"the saved action at '{step.Goal.Name}' step {step.Index} action {at}: saved '{module.Name}.{name}', "
                 + $"live '{action.Module.Name}.{action.Name}'.", "CallbackActionMismatch", 409);
         return action;
     }
