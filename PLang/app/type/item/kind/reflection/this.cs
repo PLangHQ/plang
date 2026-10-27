@@ -116,13 +116,13 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
         // IS that list; a read-only domain wrapper (action.list, step.list — IReadOnlyList<T>, no
         // parameterless ctor) takes the sequence through its ctor; a mutable ICollection<T> fills
         // via Add. The target owns HOW it holds the sequence — reflection just supplies it.
-        var element = ElementTypeOf(target);
+        var element = Element(target);
         if (element != null)
         {
             var listType = typeof(global::System.Collections.Generic.List<>).MakeGenericType(element);
             var inner = (global::System.Collections.IList)global::System.Activator.CreateInstance(listType)!;
             reader.BeginArray();
-            while (reader.NextElement()) inner.Add(ReadValue(ref reader, element, ctx));
+            while (reader.NextElement()) inner.Add(Value(ref reader, element, ctx));
             reader.EndArray();
 
             if (target.IsInstanceOfType(inner)) return inner;   // List<T> / IList<T> / IReadOnlyList<T> target — the list IS it
@@ -148,7 +148,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
         while (reader.NextName(out var name))
         {
             if (byName.TryGetValue(name, out var prop) && prop.CanWrite)
-                prop.SetValue(host, ReadValue(ref reader, prop.PropertyType, ctx));
+                prop.SetValue(host, Value(ref reader, prop.PropertyType, ctx));
             else
                 reader.Skip();
         }
@@ -206,7 +206,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
     }
 
     // Read one value AS its declared CLR type off the reader.
-    private object? ReadValue<TReader>(ref TReader reader, global::System.Type type,
+    private object? Value<TReader>(ref TReader reader, global::System.Type type,
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
@@ -233,17 +233,17 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
 
         // List<Data> (Parameters / Defaults) — each element a {name,type,value} through the
         // @schema:data reader over its own verbatim bytes (sign-identical to the byte path).
-        if (IsListOfData(t)) return ReadDataList(ref reader, t, ctx);
+        if (IsListOfData(t)) return Rows(ref reader, t, ctx);
 
         // A nested object/collection host → recurse the same walk.
-        if (ElementTypeOf(t) != null || t.IsClass) return Read(ref reader, t, ctx);
+        if (Element(t) != null || t.IsClass) return Read(ref reader, t, ctx);
 
         // Scalar fallback: raw slot lowered to the target.
         var raw = new global::app.type.item.serializer.json(ctx.Context).Entry(ref reader, ctx);
         return raw is global::app.type.item.@this iv ? iv.Clr(t) : raw;
     }
 
-    private object? ReadDataList<TReader>(ref TReader reader,
+    private object? Rows<TReader>(ref TReader reader,
         global::System.Type listType, global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
@@ -269,7 +269,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
     // The element type of a collection host — a mutable IList<T>, or a read-only domain wrapper
     // (IReadOnlyList<T>/ICollection<T>: action.list, step.list). Not string, not List<Data>, and
     // never a plang item.@this (those own their own conversion, never reflect-as-collection).
-    private global::System.Type? ElementTypeOf(global::System.Type t)
+    private global::System.Type? Element(global::System.Type t)
     {
         if (t == typeof(string) || IsListOfData(t)) return null;
         if (typeof(global::app.type.item.@this).IsAssignableFrom(t)) return null;
