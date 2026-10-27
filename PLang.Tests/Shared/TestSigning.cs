@@ -22,7 +22,7 @@ public sealed class TestSigning : global::app.module.signing.code.ISigning
     public async Task<global::app.data.@this> SignAsync(global::app.module.signing.sign action)
     {
         // the data as the view it is signed in takes it, as the real signer settles it
-        var view = action.StoreView != null && (await action.StoreView.Value())?.Value == true ? global::app.View.Store : global::app.View.Out;
+        var view = action.View;
         var data = await action.Data!.Settle(view);
         var unsigned = new global::app.type.item.signature.@this(
             type: action.Context.App.type.list[new global::app.type.@this("signature", Name), action.Context],

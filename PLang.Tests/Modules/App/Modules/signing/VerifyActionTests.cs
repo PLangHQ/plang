@@ -314,11 +314,11 @@ public class VerifyActionTests
     [Test]
     public async Task AStoredSignedValue_BoundUnderAnotherName_Verifies()
     {
-        var signed = await Program("signing", "sign", ("Data", new Dictionary<string, object?> { ["total"] = 5L }), ("StoreView", true));
-        await signed.IsSuccess();
+        // the store's write signs it, in the store's view
+        var value = new Data("row", global::app.type.item.@this.Create(new Dictionary<string, object?> { ["total"] = 5L }, Ctx), context: Ctx);
         var plang = _app.type.list.Mime("application/plang");
         using var store = new System.IO.MemoryStream();
-        await (await plang.Encode(store, signed, Ctx, global::app.View.Store)).IsSuccess();
+        await (await plang.Encode(store, value, Ctx, global::app.View.Store)).IsSuccess();
         var read = await plang.Decode(store.ToArray(), Ctx, global::app.View.Store);
         await read.IsSuccess();
         await Ctx.Variable.Set("row", read);
