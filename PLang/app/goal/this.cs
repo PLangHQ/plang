@@ -204,18 +204,6 @@ public sealed partial class @this
     public global::app.goal.tag.list.@this Tag { get; init; }
 
 
-    /// <summary>
-    /// Folder path of this goal, derived from Path.
-    /// Starts with / (relative to app root, not OS root).
-    /// E.g., \Cache\Start.goal → /Cache/, \Start.goal → /
-    /// </summary>
-    [JsonIgnore]
-    [LlmIgnore]
-    public global::app.type.item.path.@this? FolderPath
-    {
-        get => Path?.Parent;
-    }
-
     [LlmIgnore]
     [JsonIgnore]
     public @this? Parent { get; set; }
@@ -223,17 +211,6 @@ public sealed partial class @this
     [Debug]
     [LlmBuilder]
     public global::app.warning.list.@this Warning { get; init; }
-
-    [Debug, Default]
-    public string FullPath
-    {
-        get
-        {
-            if (Parent == null)
-                return Name;
-            return $"{Parent.FullPath}/{Name}";
-        }
-    }
 
     /// <summary>The goal's app-absolute address — the name a call anywhere in the app reaches it by:
     /// its .goal path without the extension (<c>/system/builder/EmitBuildEvent</c>); a sub-goal is its
@@ -254,27 +231,6 @@ public sealed partial class @this
     /// or null when the call keeps the name it was written with: a goal in the caller's own file (a child, or
     /// the file's root) stays bare, it wins by rule and can't be shadowed.</summary>
     public string? Reference(@this? caller) => Equals(Path, caller?.Path) ? null : Address;
-
-    public string ToText()
-    {
-        var lines = new List<string>();
-
-        if (!string.IsNullOrEmpty(Comment))
-            lines.Add($"/ {Comment}");
-
-        lines.Add(Name);
-
-        foreach (var step in Step.Items())
-        {
-            if (!string.IsNullOrEmpty(step.Comment))
-                lines.Add($"/ {step.Comment}");
-
-            var prefix = new string(' ', step.Line.Indent) + "- ";
-            lines.Add(prefix + step.Text);
-        }
-
-        return string.Join("\n", lines);
-    }
 
     /// <summary>
     /// Merges LLM-derived fields from an existing built goal onto this freshly-parsed goal.
@@ -490,21 +446,8 @@ public sealed partial class @this
     }
 
     /// <summary>
-    /// Visits every action in every step (ignoring Steps' disabled-skip iterator).
-    /// Moves the "foreach step, foreach action" skeleton onto Goal so handlers can
-    /// query the shape of a built goal without reaching through its children.
-    /// </summary>
-    public void ForEachAction(System.Action<Step, global::app.goal.step.action.@this> visitor)
-    {
-        foreach (var step in Step.Items())
-            foreach (var action in step.Code.Items())
-                visitor(step, action);
-    }
-
-    /// <summary>
     /// Parses .goal file text into a list of Child.
     /// The first goal holds the Path; the rest are its sub-goals, in its file. First goal is Public, rest are Private.
-    /// Inverse of ToText().
     ///
     /// Stays <c>static</c>: relocating this onto <c>path</c>
     /// (<c>path.ReadAsGoal</c>) or <c>text</c> (<c>text.AsGoal</c>) would put a

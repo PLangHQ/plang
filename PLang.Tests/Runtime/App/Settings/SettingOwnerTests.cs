@@ -16,14 +16,14 @@ public class SettingOwnerTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        await Assert.That((await app.actor.list.User.Context.call.Timing()).Value).IsFalse();
+        await Assert.That((await app.actor.list.User.Context.call.Setting()).Timing.Value).IsFalse();
 
         var set = await new global::app.type.item.variable.parser.@this("%!app.actor[\"user\"].context.call.setting.timing%", ctx.App.type.list).Variable.Single()
             .Set(new global::app.data.@this("timing", true, context: ctx), ctx);
         await set.IsSuccess();
 
-        await Assert.That((await app.actor.list.User.Context.call.Timing()).Value).IsTrue();
-        await Assert.That((await app.actor.list.System.Context.call.Timing()).Value).IsFalse();
+        await Assert.That((await app.actor.list.User.Context.call.Setting()).Timing.Value).IsTrue();
+        await Assert.That((await app.actor.list.System.Context.call.Setting()).Timing.Value).IsFalse();
     }
 
     // The system's value (a CLI flag) reaches both actors' stacks — the user falls back to it.
@@ -31,8 +31,8 @@ public class SettingOwnerTests
     {
         await using var app = new global::app.@this("/test").Testing();
         await (await app.actor.list.System.Setting.Flag("app.call.setting", new Dictionary<string, object?> { ["history"] = true }, app.actor.list.System.Context)).IsSuccess();
-        await Assert.That((await app.actor.list.System.Context.call.History()).Value).IsTrue();
-        await Assert.That((await app.actor.list.User.Context.call.History()).Value).IsTrue();
+        await Assert.That((await app.actor.list.System.Context.call.Setting()).History.Value).IsTrue();
+        await Assert.That((await app.actor.list.User.Context.call.Setting()).History.Value).IsTrue();
     }
 
     // A call stack reads through its actor's context's settings: a value written there (a goal's own set) reaches
@@ -41,8 +41,8 @@ public class SettingOwnerTests
     {
         await using var app = new global::app.@this("/test").Testing();
         await (await app.actor.list.User.Context.Setting.Flag("app.call.setting", new Dictionary<string, object?> { ["timing"] = true }, app.actor.list.User.Context)).IsSuccess();
-        await Assert.That((await app.actor.list.User.Context.call.Timing()).Value).IsTrue();
-        await Assert.That((await app.actor.list.System.Context.call.Timing()).Value).IsFalse();
+        await Assert.That((await app.actor.list.User.Context.call.Setting()).Timing.Value).IsTrue();
+        await Assert.That((await app.actor.list.System.Context.call.Setting()).Timing.Value).IsFalse();
     }
 
     // Debug, once born, takes a later value under its path.

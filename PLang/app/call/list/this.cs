@@ -51,30 +51,26 @@ public sealed partial class @this : global::app.type.item.@this
     private readonly Func<global::app.actor.setting.@this> _settings;
 
     // The app's types, handed to each frame at its push: the frame's own (a call, a binding, an isolated call), its
-    // start and end (datetime), and its tags (dict) — each found at the first push that needs it (a context that calls
-    // nothing finds none).
+    // start and end (datetime), and its tags (dict) — each asked of the types when a frame needs it.
     private readonly global::app.type.list.@this _types;
-    private global::app.type.@this? _bindingType, _isolatedType, _datetimeType, _dictType, _errorsType, _propertiesType;
-    private global::app.type.@this Binding => _bindingType ??= _types[typeof(call.binding.@this)];
-    private global::app.type.@this Isolated => _isolatedType ??= _types[typeof(call.isolated.@this)];
+    private global::app.type.@this Binding => _types[typeof(call.binding.@this)];
+    private global::app.type.@this Isolated => _types[typeof(call.isolated.@this)];
 
     /// <summary>The app's datetime type — a frame's start and end are of it.</summary>
-    internal global::app.type.@this Datetime => _datetimeType ??= _types[typeof(global::app.type.item.datetime.@this)];
+    internal global::app.type.@this Datetime => _types[typeof(global::app.type.item.datetime.@this)];
 
     /// <summary>The span type a frame's run time is: a duration with no form of its own, written in its asker's
     /// standard.</summary>
-    internal global::app.type.@this Span => _spanType ??= _types[typeof(global::app.type.item.duration.span.@this)];
-
-    private global::app.type.@this? _spanType;
+    internal global::app.type.@this Span => _types[typeof(global::app.type.item.duration.span.@this)];
 
     /// <summary>The app's dict type — a frame's tags are of it.</summary>
-    internal global::app.type.@this Dict => _dictType ??= _types[typeof(global::app.type.item.dict.@this)];
+    internal global::app.type.@this Dict => _types[typeof(global::app.type.item.dict.@this)];
 
     /// <summary>The app's error list type — a frame's errors and the audit are of it.</summary>
-    internal global::app.type.@this Errors => _errorsType ??= _types[typeof(global::app.error.list.@this)];
+    internal global::app.type.@this Errors => _types[typeof(global::app.error.list.@this)];
 
     /// <summary>The app's property list type — what a program adds to a frame is of it.</summary>
-    internal global::app.type.@this Properties => _propertiesType ??= _types[typeof(global::app.type.item.property.list.@this)];
+    internal global::app.type.@this Properties => _types[typeof(global::app.type.item.property.list.@this)];
 
     /// <summary>A context's calls, of the app's <paramref name="types"/>, reading what they capture through its
     /// <paramref name="settings"/>.</summary>
@@ -93,14 +89,9 @@ public sealed partial class @this : global::app.type.item.@this
     // An open diff scope (DiffScope) turns Diff on for as long as it's open, whatever the setting says.
     private int _diffScopes;
 
-    public async System.Threading.Tasks.ValueTask<@bool> Timing() => (await Setting()).Timing;
-    public async System.Threading.Tasks.ValueTask<@bool> Diff() => IsDiffing(await Setting()) ? @bool.True : @bool.False;
-
     /// <summary>Whether a push captures diffs under <paramref name="setting"/>: an open diff scope says yes whatever
     /// the setting says.</summary>
     internal bool IsDiffing(setting.@this setting) => Volatile.Read(ref _diffScopes) > 0 || setting.Diff.Enabled.Value;
-    public async System.Threading.Tasks.ValueTask<@bool> Tags() => (await Setting()).Tags;
-    public async System.Threading.Tasks.ValueTask<@bool> History() => (await Setting()).History;
 
     /// <summary>
     /// Every error observed this run at every frame (handled or unhandled). Survives Pop. Made when first asked — at
@@ -111,13 +102,6 @@ public sealed partial class @this : global::app.type.item.@this
     public global::app.error.list.@this Audit
         => _audit ?? LazyInitializer.EnsureInitialized(ref _audit, () => new(Errors));
     private global::app.error.list.@this? _audit;
-
-    /// <summary>
-    /// Optional Variables source for diff capture — the store a Call captures when pushed with none of its own
-    /// (<see cref="Push"/>'s <c>variables</c>); the store records each change here (<c>Record</c>) and a Call
-    /// pushed while <see cref="Diff"/> is on keeps its store's.
-    /// </summary>
-    public Variables? Variables { get; internal set; }
 
     /// <summary>
     /// The current Call in this async context. Null when no Push has happened on this branch.

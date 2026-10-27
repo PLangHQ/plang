@@ -21,7 +21,6 @@ public class EventsSinceTests
         var (app, action) = BuildLive("EvtA");
         var stack = app.actor.list.User.Context.call;
         var vars = app.actor.list.User.Context.Variable;
-        stack.Variables = vars;
         app.actor.list.User.Context.Setting.Set("app.call.setting.diff.enabled", true);
 
         await using var call = stack.Push(action, await stack.Setting(), vars);

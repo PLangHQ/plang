@@ -200,6 +200,17 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     [System.Text.Json.Serialization.JsonIgnore]
     public actor.context.@this? Context { get; set; }
 
+    /// <summary>This error placed where <paramref name="frame"/> observed it, in <paramref name="context"/>: the chain it
+    /// happened in, its step and context unless it already holds them, and the variables as they are when it keeps
+    /// them. Where an error happened is known only where it is observed, so it is placed there.</summary>
+    internal void At(Call frame, actor.context.@this context)
+    {
+        if (CallFrames.Count == 0) CallFrames = frame.Chain;
+        Step ??= frame.Step;
+        Context ??= context;
+        if (Variables == null && Keeps(context)) Variables = context.Variable.Snapshot();
+    }
+
     /// <summary>
     /// Creates an error with a message. Use for errors not tied to a specific execution context.
     /// </summary>

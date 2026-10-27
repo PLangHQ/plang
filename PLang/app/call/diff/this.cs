@@ -31,6 +31,9 @@ public sealed class @this : IReadOnlyList<Diff>
         get { lock (_lock) return _entries[index]; }
     }
 
+    /// <summary>The changes later than <paramref name="t"/>, in the order they were recorded.</summary>
+    internal IEnumerable<Diff> Since(DateTimeOffset t) => this.Where(diff => diff.At > t);
+
     public IEnumerator<Diff> GetEnumerator()
     {
         Diff[] snapshot;

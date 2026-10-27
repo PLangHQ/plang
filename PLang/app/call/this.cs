@@ -114,24 +114,22 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public child.list.@this Children { get; }
 
     // --- Timing tier (null when Flags.Timing off) ---
-    // The app's types its push handed: when it ran is a value of the one (datetime), how long a span, written in the
-    // standard its asker's setting names.
-    private readonly global::app.type.@this _datetime;
-    private readonly global::app.type.@this _span;
+    // When it ran is a value of its stack's datetime type, how long a span, written in the standard its asker's setting
+    // names.
 
     /// <summary>When it was pushed. Null when the Timing flag was off at Push.</summary>
     [Out, Debug]
-    public global::app.type.item.datetime.@this? StartedAt => _startedAt is { } started ? new(started, _datetime) : null;
+    public global::app.type.item.datetime.@this? StartedAt => _startedAt is { } started ? new(started, _stack.Datetime) : null;
 
     /// <summary>When it was popped. Null while in flight, and when the Timing flag was off.</summary>
-    public global::app.type.item.datetime.@this? CompletedAt => _completedAt is { } completed ? new(completed, _datetime) : null;
+    public global::app.type.item.datetime.@this? CompletedAt => _completedAt is { } completed ? new(completed, _stack.Datetime) : null;
 
     /// <summary>Wall time this frame has run — while in flight (an after-binding runs inside the frame) and, once
     /// popped, its whole duration — a span, written in the standard its asker's setting names. Null when the Timing flag
     /// was off at Push.</summary>
     [Out, Debug]
     public global::app.type.item.duration.@this? Duration
-        => _stopwatch is { } watch ? new global::app.type.item.duration.span.@this(watch.Elapsed, _span) : null;
+        => _stopwatch is { } watch ? new global::app.type.item.duration.span.@this(watch.Elapsed, _stack.Span) : null;
 
     // --- Diff tier (null when Flags.Diff off) ---
     /// <summary>
@@ -177,7 +175,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// added. Its element its own kind reads (<see cref="Kept{T}"/>). The stack enters it.</summary>
     private protected @this(global::app.type.item.dict.@this record, global::app.type.@this type, global::app.call.list.@this stack,
         global::app.actor.context.@this context)
-        : this(null, type, stack.Current, stack.Current, stack, stack.Variables)
+        : this(null, type, stack.Current, stack.Current, stack, null)
         => ((global::app.type.item.kind.reflection.@this)context.App.type.list["item"].kind["*"]!)
             .Read(record, this, context, global::app.View.Snapshot);
 
@@ -213,8 +211,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         _previousCurrent = previous;
         _diffSource = diffSource;
         _for = callee;
-        _datetime = stack.Datetime;
-        _span = stack.Span;
         Tags = new global::app.type.item.dict.@this(stack.Dict);
         Errors = new global::app.error.list.@this(stack.Errors);
         property = new(stack.Properties);
@@ -313,7 +309,20 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     internal void Record(Variables store, string name, object? before)
     {
         if (ReferenceEquals(store, _diffSource))
-            Diffs?.Add(new Diff(name, CaptureBefore(before, _deep), DateTimeOffset.UtcNow));
+            Diffs?.Add(new Diff(name, before, _deep));
+    }
+
+    /// <summary>The changes this frame and every frame under it captured later than <paramref name="t"/>, each frame
+    /// once (<paramref name="seen"/>).</summary>
+    internal IEnumerable<Diff> Since(DateTimeOffset t, HashSet<@this> seen)
+    {
+        if (!seen.Add(this)) yield break;
+        if (Diffs is { } diffs)
+            foreach (var diff in diffs.Since(t))
+                yield return diff;
+        foreach (var child in Children)
+            foreach (var diff in child.Since(t, seen))
+                yield return diff;
     }
 
     /// <summary>
@@ -394,10 +403,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// a layer that passes the same error through records nothing new.</para></summary>
     public void Record(global::app.error.@this error, actor.context.@this context)
     {
-        if (error.CallFrames.Count == 0) error.CallFrames = Chain;
-        error.Step ??= Step;
-        error.Context ??= context;
-        if (error.Variables == null && error.Keeps(context)) error.Variables = context.Variable.Snapshot();
+        error.At(this, context);
         if (Errors.Any(x => ReferenceEquals(x, error))) return;
         Errors.Add(error);
         _stack.Audit.Add(error);
@@ -437,59 +443,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         _stack.RestoreCurrent(this, _previousCurrent);
 
         return ValueTask.CompletedTask;
-    }
-
-    /// <summary>
-    /// Capture rule for diff Before values. Scalars (int/bool/decimal/DateTimeOffset/short
-    /// strings) pass through; non-scalars become summary strings unless diff.deep is on,
-    /// in which case they're deep-cloned. Default-scalar capture mitigates the OOM scenario
-    /// observed under tight loops with large lists.
-    /// </summary>
-    private static object? CaptureBefore(object? value, bool deep)
-    {
-        if (value == null) return null;
-        if (IsScalar(value)) return value;
-        if (deep)
-        {
-            // A value the cloner can't copy (no reflection access, an unsupported member) is
-            // captured as its summary; any other failure is a bug and bubbles.
-            try { return Force.DeepCloner.DeepClonerExtensions.DeepClone(value); }
-            catch (System.Exception ex) when (ex is NotSupportedException or MemberAccessException
-                or System.Security.SecurityException or InvalidOperationException)
-            {
-                return SummaryString(value);
-            }
-        }
-        return SummaryString(value);
-    }
-
-    private static bool IsScalar(object value) =>
-        value switch
-        {
-            global::app.type.item.text.@this t => t.Length.ToInt32() <= 256,
-            // Scalar wrappers are deeply immutable (the wrapper-immutability
-            // gate) — holding the instance as Before is safe, no clone needed.
-            global::app.type.item.@this i => i.IsLeaf,
-            string s => s.Length <= 256,
-            bool or int or long or short or byte or sbyte or uint or ulong or ushort => true,
-            float or double or decimal => true,
-            DateTime or DateTimeOffset or TimeSpan or Guid => true,
-            _ => false
-        };
-
-    private static string SummaryString(object value)
-    {
-        // A native plang collection summarises by its plang type name and item
-        // count — never the C# class name ("this"), which leaks the internal type
-        // into user-facing debug output.
-        if (value is global::app.type.item.list.@this list)
-            return $"<list @ {list.CountRaw} items>";
-        if (value is global::app.type.item.dict.@this dict)
-            return $"<dict @ {dict.CountRaw} items>";
-        var t = value.GetType();
-        if (value is System.Collections.ICollection col)
-            return $"<{t.Name} @ {col.Count} items>";
-        return $"<{t.Name}>";
     }
 
     /// <summary>The pure core — a frame passes through; nothing else converts into one.</summary>
