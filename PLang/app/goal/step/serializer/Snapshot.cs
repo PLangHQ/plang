@@ -30,14 +30,15 @@ public sealed class Snapshot : global::app.type.reader.ITypeReader
                     goal = ctx.View.Reader(type, null, context).Read(ref reader, null, ctx) as global::app.goal.@this;
                     break;
                 case "index": index = reader.Int(); break;
-                default: reader.Skip(); break;
+                default: throw Refused($"key '{member}' isn't in this snapshot's format for a step", "SnapshotFormatOutdated", 400);
             }
         reader.EndObject();
 
         if (goal == null || index is not { } at)
-            throw new global::app.error.DeclinedException(new global::app.error.@this(
-                $"a saved step's key names {(goal == null ? "no goal" : "no index")}", "StepKeyIncomplete", 400));
-        return goal[at] ?? throw new global::app.error.DeclinedException(new global::app.error.@this(
-            $"the saved step {at} is not in goal '{goal.Name}'", "StepNotFound", 404));
+            throw Refused($"a saved step's key names {(goal == null ? "no goal" : "no index")}", "StepKeyIncomplete", 400);
+        return goal[at] ?? throw Refused($"the saved step {at} is not in goal '{goal.Name}'", "StepNotFound", 404);
     }
+
+    private global::app.error.DeclinedException Refused(string message, string key, int status)
+        => new(new global::app.error.@this(message, key, status));
 }
