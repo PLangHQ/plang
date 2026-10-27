@@ -120,21 +120,26 @@ public abstract class @this
     /// classes read this way, and a record a type can't be made from declines loudly.
     /// </summary>
     public ITypeReader Reader(string typeName, string? kind, actor.context.@this context)
-    {
-        if (string.Equals(typeName, "binary", System.StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(kind)
-            && context.App.type.list["binary"].kind[kind!] == null)
-        {
-            // Bytes stamped with a kind binary doesn't hold (a stamp written before the format was its
-            // type's): narrow by the kind as an extension (a format's name is its extension — png, json,
-            // md, csv), never an app-wide search by bare name. Narrow ONLY when the kind's type can read
-            // it; otherwise the bytes ride as binary.
-            var inner = context.App.type.list.Extension(kind!, context).Name;
-            if (!string.Equals(inner, "binary", System.StringComparison.OrdinalIgnoreCase)
-                && Typed(inner, kind, null) is not null) typeName = inner;
-        }
         // A type that ships no reader of its own reads its stored value as a record and makes itself from it
         // (the item owns how it's made) — the settings classes read this way.
-        return Typed(typeName, kind, null) ?? new Record(typeName);
+        => Registered(typeName, kind, context) ?? new Record(Narrowed(typeName, kind, context));
+
+    /// <summary>The reader <paramref name="typeName"/>/<paramref name="kind"/> registers — binary content narrowed to
+    /// the type its kind names first; null when the type registers none.</summary>
+    internal ITypeReader? Registered(string typeName, string? kind, actor.context.@this context)
+        => Typed(Narrowed(typeName, kind, context), kind, null);
+
+    // Bytes stamped with a kind binary doesn't hold (a stamp written before the format was its type's) are the type the
+    // kind names as an extension (a format's name is its extension — png, json, md, csv), never an app-wide search by
+    // bare name — ONLY when that type can read them; otherwise the bytes ride as binary.
+    private string Narrowed(string typeName, string? kind, actor.context.@this context)
+    {
+        if (!string.Equals(typeName, "binary", System.StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(kind)
+            || context.App.type.list["binary"].kind[kind!] != null)
+            return typeName;
+        var inner = context.App.type.list.Extension(kind!, context).Name;
+        return !string.Equals(inner, "binary", System.StringComparison.OrdinalIgnoreCase) && Typed(inner, kind, null) is not null
+            ? inner : typeName;
     }
 
 
