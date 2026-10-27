@@ -120,10 +120,16 @@ public abstract class View
             .Any(p => Is<OutAttribute>(p) || Is<StoreAttribute>(p) || Is<SnapshotAttribute>(p) || Is<SensitiveAttribute>(p) || Is<MaskedAttribute>(p));
 
     /// <summary>The reader a value of <paramref name="type"/> (its kind <paramref name="kind"/>) is read by in this view:
-    /// the one its type registers for this view (a goal's in the snapshot), else the type's own.</summary>
+    /// the one it registers (<see cref="Registered"/>), else as a record its type makes itself from.</summary>
     internal global::app.type.reader.ITypeReader Reader(global::app.type.@this type, string? kind,
         global::app.actor.context.@this context)
-        => context.App.type.list.Reader.Typed(type.Name, kind, this) ?? context.App.type.list.Reader.Reader(type.Name, kind, context);
+        => Registered(type, kind, context) ?? context.App.type.list.Reader.Reader(type.Name, kind, context);
+
+    // The reader a value of `type` registers in this view: this view's (a goal's in the snapshot, from its key), else
+    // its own; none when it registers neither.
+    private global::app.type.reader.ITypeReader? Registered(global::app.type.@this type, string? kind,
+        global::app.actor.context.@this context)
+        => context.App.type.list.Reader.Typed(type.Name, kind, this) ?? context.App.type.list.Reader.Registered(type.Name, kind, context);
 
     /// <summary>A member of <paramref name="type"/> made from <paramref name="slot"/>, the value a record holds for it, in
     /// this view: a type that registers a reader (this view's, as a goal in the snapshot reads from its key, or its own,
@@ -134,8 +140,7 @@ public abstract class View
     {
         if (slot == null) return null;
         var kind = type.kind.IsEmpty ? null : type.kind.Name;
-        var readers = context.App.type.list.Reader;
-        if ((readers.Typed(type.Name, kind, this) ?? readers.Typed(type.Name, kind, null)) is { } reader)
+        if (Registered(type, kind, context) is { } reader)
             return slot.Read(reader, kind, context, this) as global::app.type.item.@this;
         // a birth that declines says why, as a read that can't make it does
         var born = new global::app.data.@this("", context: context);
