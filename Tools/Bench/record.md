@@ -51,6 +51,7 @@ per birth + dispose; a request app is born, a goal loaded and run, disposed, × 
 | Date | Branch | Commit | Load | Sub birth | Root birth | Sub request | Root request | Held, sub (MB) | Held, root (MB) | `plang --test` | C# sweep | Build, clean | Build, incr. |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 <!-- rows -->
+| 2026-10-27 | snapshot-7c-wip | 23d61537b (snapshot-recheck) | 2.70 | 0.16 ms, 107 KB | 19.00 ms, 2312 KB | 2.03 ms, 529 KB | 20.25 ms, 3785 KB | 1.6 → 2.0 → 2.0 → 2.0 | 0.1 → 1.9 → 1.9 → 1.9 | 4.8 s (298 pass, 2 fail) | 73.0 s (red: Wire,Runtime) | - | - |
 | 2026-10-27 | snapshot-7c-wip | d119e797f (snapshot-7c-wip-calm) | 2.88 | 0.16 ms, 110 KB | 22.52 ms, 2493 KB | 2.11 ms, 578 KB | 22.65 ms, 4076 KB | 1.7 → 2.1 → 2.1 → 2.1 | 0.1 → 2.0 → 2.0 → 2.0 | 6.9 s (298 pass, 3 fail) | 51.5 s (red: Wire,Data,Runtime) | - | - |
 | 2026-10-27 | snapshot-7c-wip | d119e797f (snapshot-7c-wip) | 9.46 | 0.16 ms, 110 KB | 28.16 ms, 2495 KB | 2.65 ms, 583 KB | 22.31 ms, 4083 KB | 1.7 → 2.1 → 2.1 → 2.1 → 1.9 | 0.1 → 2.0 → 2.0 → 2.0 → 1.1 | 4.8 s (298 pass, 2 fail) | 110.1 s (red: Wire,Data,Runtime) | - | - |
 | 2026-10-26 | windows | 149256d61 (windows-tip) | 2.91 | 0.14 ms, 109 KB | 18.93 ms, 2392 KB | 1.84 ms, 543 KB | 17.92 ms, 3839 KB | 1.6 → 2.1 → 2.1 → 2.1 | 0.1 → 1.9 → 1.9 → 1.9 | 4.5 s (298 pass, 1 fail) | 41.8 s (red: Wire) | - | - |
