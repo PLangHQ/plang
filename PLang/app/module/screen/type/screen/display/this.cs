@@ -65,6 +65,7 @@ public sealed class @this : screen.@this
         var display = new Wayland(new code.Size(width, height), "is", socket.Absolute, output,
             font == null ? null : (await font.Value())?.RawBytes, note => notes.Writer.TryWrite(note));
         var screen = new @this(title, width, height, display, folder.Absolute);
+        screen._closing += () => notes.Writer.TryComplete();
         screen.Told(context);
         screen.Watched(context);
         display.Start();
@@ -93,6 +94,7 @@ public sealed class @this : screen.@this
             $"The screen could not hand on {e.ToJsonString()}", "ScreenEventFailed") { list = [global::app.error.@this.FromException(ex)] }));
 
         var told = System.Threading.Channels.Channel.CreateUnbounded<JsonObject>();
+        _closing += () => told.Writer.TryComplete();
         _ = Task.Run(async () =>
         {
             await foreach (var e in told.Reader.ReadAllAsync())
@@ -114,6 +116,7 @@ public sealed class @this : screen.@this
         // and to what draws onto the display (a browser pairing its windows with their pages), in order, on a pump of
         // its own: it waits on its program (DevTools), and must never wait behind a goal, nor a goal behind it
         var followed = System.Threading.Channels.Channel.CreateUnbounded<JsonObject>();
+        _closing += () => followed.Writer.TryComplete();
         _ = Task.Run(async () =>
         {
             await foreach (var e in followed.Reader.ReadAllAsync())
@@ -147,6 +150,7 @@ public sealed class @this : screen.@this
     {
         Wayland.Watching = context.App.Debug != null;
         var watched = System.Threading.Channels.Channel.CreateUnbounded<string>();
+        _closing += () => watched.Writer.TryComplete();
         Wayland.Noted = note => watched.Writer.TryWrite(note);
         _ = Task.Run(async () =>
         {
@@ -312,5 +316,13 @@ public sealed class @this : screen.@this
         catch (JsonException) { return null; }
     }
 
-    internal override void Close() => Wayland.Stop();
+    // What ends this screen's pumps (its notes, its told and followed events, what it watches): each loop ends when its
+    // channel is completed.
+    private System.Action? _closing;
+
+    internal override void Close()
+    {
+        Wayland.Stop();
+        _closing?.Invoke();
+    }
 }
