@@ -132,6 +132,11 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         catch (global::app.error.AppException refused) { return context.Error(refused.Error); }
     }
 
+    /// <summary>The children of the host, via its <see cref="Kind"/> — for <c>foreach</c>, handed
+    /// out with the caller's context.</summary>
+    public System.Collections.Generic.IEnumerable<global::app.data.@this> Enumerate(global::app.actor.context.@this context)
+        => Kind.Enumerate(Value, context);
+
     /// <summary>The host is a sequence when its <see cref="Kind"/> holds it by position (a json array, a CLR list).</summary>
     public override bool IsSequence => Kind.IsSequence(Value);
 
