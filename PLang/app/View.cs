@@ -125,14 +125,22 @@ public abstract class View
         global::app.actor.context.@this context)
         => context.App.type.list.Reader.Typed(type.Name, kind, this) ?? context.App.type.list.Reader.Reader(type.Name, kind, context);
 
-    /// <summary>A member of <paramref name="type"/> read from <paramref name="slot"/>, the value a record holds for it, in
-    /// this view: by the reader this view reads its type by (a goal in the snapshot from its key; an error, a record's
-    /// properties, by their own), as a <c>.pr</c> slot is read. A record with no value for it gives none.</summary>
+    /// <summary>A member of <paramref name="type"/> made from <paramref name="slot"/>, the value a record holds for it, in
+    /// this view: a type that registers a reader (this view's, as a goal in the snapshot reads from its key, or its own,
+    /// as an error does) is read by it, as a <c>.pr</c> slot is read; a type that registers none is born from the slot
+    /// by its own birth (a record's properties from what they wrote). A record with no value for it gives none.</summary>
     internal global::app.type.item.@this? Make(global::app.type.@this type, global::app.type.item.@this? slot,
         global::app.actor.context.@this context)
     {
+        if (slot == null) return null;
         var kind = type.kind.IsEmpty ? null : type.kind.Name;
-        return slot?.Read(Reader(type, kind, context), kind, context, this) as global::app.type.item.@this;
+        var readers = context.App.type.list.Reader;
+        if ((readers.Typed(type.Name, kind, this) ?? readers.Typed(type.Name, kind, null)) is { } reader)
+            return slot.Read(reader, kind, context, this) as global::app.type.item.@this;
+        // a birth that declines says why, as a read that can't make it does
+        var born = new global::app.data.@this("", context: context);
+        return type.Make(slot, born) ?? throw new global::app.error.AppException(born.Error
+            ?? new global::app.error.@this($"a {type.Name} is not made from a {slot.Type.Name}", "CreateItemDeclined", 400));
     }
 
     /// <summary>What a value of <paramref name="type"/>, as <paramref name="raw"/> holds it, needs loaded before it is
