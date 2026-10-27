@@ -65,7 +65,36 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     // The goal held from `pr` while its .pr is as it was read; null when none is held, or the file changed since —
     // then it is read again.
     private async Task<goal.@this?> Fresh(global::app.type.item.path.@this pr, actor.context.@this context)
-        => this[pr] is { } held && await held.IsFresh(context) ? held : null;
+        => this[pr] is { } held && _stamp.TryGetValue(held, out var stamp) && await stamp.IsFresh(context) ? held : null;
+
+    // What this list knows of the .pr each goal it holds was read from, kept with the goal: whether it is still the one
+    // to answer is the list's question, as the list is what holds it.
+    private readonly System.Runtime.CompilerServices.ConditionalWeakTable<goal.@this, stamp> _stamp = new();
+
+    /// <summary>A goal's .pr as this list read the goal from it — each kind says whether the file is still as it was.</summary>
+    private abstract record stamp
+    {
+        internal abstract Task<bool> IsFresh(actor.context.@this context);
+
+        /// <summary>Not read from a file (added as it is, or held by the app's origin): the goal is as it is.</summary>
+        internal sealed record none : stamp
+        {
+            internal override Task<bool> IsFresh(actor.context.@this context) => Task.FromResult(true);
+        }
+
+        /// <summary>Read from a file whose stat failed: what it held is unknown, so it is read again.</summary>
+        internal sealed record unknown : stamp
+        {
+            internal override Task<bool> IsFresh(actor.context.@this context) => Task.FromResult(false);
+        }
+
+        /// <summary>Read from <paramref name="Pr"/> with <paramref name="Stat"/>: still as it was while its stat is the same.</summary>
+        internal sealed record stat(global::app.type.item.path.@this Pr, global::app.type.item.path.@this.StatInfo Stat) : stamp
+        {
+            internal override async Task<bool> IsFresh(actor.context.@this context)
+                => await Pr.Stat(context) is { Success: true } now && await now.Value() is { } info && info.Same(Stat);
+        }
+    }
 
     // The goal at `source` as the app's origin loads it, as itself — held by this app too and loaded here through this
     // app's own on.load; null when the origin gives none. A goal never goes up from a sub app: the parent reads it, so
@@ -120,9 +149,8 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
                     $"Failed to parse goal file: {pr} — read produced {content.GetType().Name}, not a goal"));
 
             // the stamp holds the .pr the goal itself has
-            goal.Stamp = stat.Success && await stat.Value() is { } info && goal.Pr?.Path is { } path
-                ? new goal.@this.stamp.stat(path, info) : new goal.@this.stamp.unknown();
-            Add(goal);
+            Add(goal, stat.Success && await stat.Value() is { } info && goal.Pr?.Path is { } path
+                ? new stamp.stat(path, info) : new stamp.unknown());
             return await goal.on.load.After(goal, read, context);
         }
         // a refused .pr names itself — its reader was born knowing the file
@@ -135,7 +163,10 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     /// <summary>
     /// Adds a goal read from its <c>.pr</c>; the goal held from the same <c>.pr</c> gives way.
     /// </summary>
-    public void Add(goal.@this goal)
+    public void Add(goal.@this goal) => Add(goal, new stamp.none());
+
+    // Adds `goal`, kept with what this list knows of the .pr it was read from.
+    private void Add(goal.@this goal, stamp stamp)
     {
         if (goal.Pr?.Path is not { } pr)
             throw new ArgumentException($"Goal '{goal.Name}' must have a Path set. Its .pr is derived from Path and is required for keying.");
@@ -152,6 +183,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
                 }
             }
             base.Add((global::app.type.item.@this)goal);
+            _stamp.AddOrUpdate(goal, stamp);
             _app = _system = null;
         }
     }

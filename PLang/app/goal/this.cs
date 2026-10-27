@@ -342,37 +342,6 @@ public sealed partial class @this
     // A goal by its location, as item's ILoad door asks it: the app's goals load it.
     public static Task<data.@this> Load(global::app.type.item.path.@this source, global::app.@this app) => app.goal.list.Load(source);
 
-    /// <summary>What the goal knows of the .pr it was read from; a goal not read from a file has none.</summary>
-    internal stamp Stamp { get; set; } = new stamp.none();
-
-    /// <summary>A goal's .pr as the goal was read from it — each kind says whether the file is still as it was.</summary>
-    internal abstract record stamp
-    {
-        internal abstract Task<bool> IsFresh(actor.context.@this context);
-
-        /// <summary>Not read from a file: the goal is as it is.</summary>
-        internal sealed record none : stamp
-        {
-            internal override Task<bool> IsFresh(actor.context.@this context) => Task.FromResult(true);
-        }
-
-        /// <summary>Read from a file whose stat failed: what it held is unknown, so it is read again.</summary>
-        internal sealed record unknown : stamp
-        {
-            internal override Task<bool> IsFresh(actor.context.@this context) => Task.FromResult(false);
-        }
-
-        /// <summary>Read from <paramref name="Pr"/> with <paramref name="Stat"/>: still as it was while its stat is the same.</summary>
-        internal sealed record stat(global::app.type.item.path.@this Pr, global::app.type.item.path.@this.StatInfo Stat) : stamp
-        {
-            internal override async Task<bool> IsFresh(actor.context.@this context)
-                => await Pr.Stat(context) is { Success: true } now && await now.Value() is { } info && info.Same(Stat);
-        }
-    }
-
-    /// <summary>Whether the .pr this goal was read from is as it was then.</summary>
-    internal Task<bool> IsFresh(actor.context.@this context) => Stamp.IsFresh(context);
-
     /// <summary>A goal starts through the goal type's events, then its own. A goal of plang's own (<see cref="IsSystem"/>)
     /// is none of the app's goals, so it starts through its own events alone: "each goal" never hears it, a binding on
     /// it by name does.</summary>
