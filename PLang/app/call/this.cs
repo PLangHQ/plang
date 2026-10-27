@@ -468,9 +468,13 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>
     /// What is left of this frame's run once it has ended and what it called has returned, run in its caller — the
     /// call stack's resume goes outward from the frame the run stopped in, each frame in turn doing its own rest
-    /// (<paramref name="again"/>: this is the frame the run stopped in). A frame of its own kind says what its rest is
-    /// (an action's, a step's); any other leaves nothing — its caller goes on.
+    /// (<paramref name="again"/>: this is the frame the run stopped in) after what came out of the frames inside it,
+    /// <paramref name="result"/>. A frame of its own kind says what its rest is (an action's, a step's); any other
+    /// leaves nothing, so what came out of it is its answer — its caller goes on.
     /// </summary>
-    internal virtual System.Threading.Tasks.Task<data.@this> Rest(actor.context.@this context, bool again)
-        => System.Threading.Tasks.Task.FromResult(context.Ok());
+    internal virtual System.Threading.Tasks.Task<data.@this> Rest(actor.context.@this context, bool again, data.@this result)
+        => System.Threading.Tasks.Task.FromResult(result);
+
+    /// <summary>The answer as it leaves this frame: as it is, but a goal's frame ends a return made in it.</summary>
+    internal virtual data.@this Leave(data.@this result) => result;
 }

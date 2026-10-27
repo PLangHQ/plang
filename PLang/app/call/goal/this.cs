@@ -33,4 +33,7 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
     };
 
     internal override bool IsGoal => true;
+
+    // a return made in the goal ends here, as the goal's own start ends it
+    internal override global::app.data.@this Leave(global::app.data.@this result) => Goal?.Leave(result) ?? result;
 }

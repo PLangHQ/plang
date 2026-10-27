@@ -173,8 +173,9 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     /// Goes on from the frame a snapshot's start put back as current, in this flow (which makes it current), outward:
     /// each frame ends — current goes back to its caller — and what is left of its run runs there (<c>Rest</c>): the
     /// stopped action again and the rest of its step, the rest of each goal, the action after each call — up to the frame
-    /// the restored tree went under, where it stops: a resume inside a run is a call, and the resuming goal goes on
-    /// itself, once. A result that exits the goal (an ask) is the answer; otherwise the restored run's last answer is.
+    /// the restored tree went under. An answer that leaves its goal (a return, an ask) runs no rest: it leaves each frame
+    /// in turn, and a goal's frame ends a return made in it, as the goal's own start does, so its caller goes on. The
+    /// answer is the run's last, as a goal call's is.
     /// </summary>
     internal async System.Threading.Tasks.Task<global::app.data.@this> Resume(global::app.actor.context.@this context)
     {
@@ -188,8 +189,8 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
         {
             // ending a frame is synchronous, so the current it puts back stays in this flow
             await frame.DisposeAsync();
-            result = await frame.Rest(context, ReferenceEquals(frame, current));
-            if (result.ShouldExit()) return result;
+            if (!result.ShouldExit()) result = await frame.Rest(context, ReferenceEquals(frame, current), result);
+            result = frame.Leave(result);
         }
         return result;
     }

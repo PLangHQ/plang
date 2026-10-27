@@ -397,7 +397,13 @@ public sealed partial class @this
     private async Task<data.@this> Enter(actor.context.@this context)
     {
         if (Elsewhere is { } app) return await app.Run(Name, context);
-        var result = await Step.Start(context);
+        return Leave(await Step.Start(context));
+    }
+
+    /// <summary>The answer as it leaves this goal: a return made in it ends here (a return of more levels goes on, one
+    /// fewer). A goal started and a goal's frame gone on from a snapshot leave the same way.</summary>
+    internal data.@this Leave(data.@this result)
+    {
         if (result.Returned)
         {
             result.ReturnDepth--;

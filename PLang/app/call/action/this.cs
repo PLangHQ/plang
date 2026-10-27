@@ -37,7 +37,8 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
     /// <summary>The rest of its step's chain, as the chain runs it: this action again when the run stopped in it
     /// (<paramref name="again"/>: the ask takes its answer), else from the one after it (the call it made returned) —
     /// but a condition whose branch was running has taken it, which ends the chain.</summary>
-    internal override System.Threading.Tasks.Task<global::app.data.@this> Rest(global::app.actor.context.@this context, bool again)
+    internal override System.Threading.Tasks.Task<global::app.data.@this> Rest(global::app.actor.context.@this context, bool again,
+        global::app.data.@this result)
     {
         if (!again && Action!.IsCondition) return System.Threading.Tasks.Task.FromResult(context.Ok());
         // the action of an action's frame is one its step holds, so it has its place there

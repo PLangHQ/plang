@@ -34,11 +34,14 @@ public class ResumeInAnAppTests
         }
         app.goal.list.Add(goal);
         await context.Variable.Set("note", "original");
+        // as a run stands in it: the goal's frame, its step's, then its action's
+        await using var running = context.call.Push(goal, await context.call.Setting());
         await using var frame = context.call.Push(goal.Step[stop], await context.call.Setting());
         await using var call = context.call.Push(goal.Step[stop].Code[0], await context.call.Setting(), context.Variable);
         var saved = await new global::app.module.snapshot.save(context).Start();
         await call.DisposeAsync();
         await frame.DisposeAsync();
+        await running.DisposeAsync();
         return saved;
     }
 
@@ -72,6 +75,31 @@ public class ResumeInAnAppTests
         await Assert.That(await context.Variable.GetValue("note")).IsEqualTo("the asker's");
         await Assert.That((await context.Variable.Get("s1")).IsInitialized).IsFalse();
         await Assert.That(context.call.Current).IsSameReferenceAs(current);
+    }
+
+    // A run's return ends that run, as a goal call's callee's does: the asker's step after the resume goes on.
+    [Test]
+    public async Task ARunThatReturns_LeavesTheAskersNextStepToRun()
+    {
+        await using var app = App();
+        var context = app.actor.list.User.Context;
+        var saved = await Saved(app, 1, "variable.set(Name=%s0%, Value=\"first\")", "variable.set(Name=%s1%, Value=\"second\")",
+            "goal.return(Data=%s1%)");
+        await context.Variable.Set("snap", saved);
+        var outer = new Goal(app.type.list) { Name = "Outer", Path = global::app.type.item.path.@this.Resolve("/Outer.goal", context) };
+        foreach (var (index, line) in new[] { (0, "snapshot.resume(Snapshot=%snap%)"), (1, "variable.set(Name=%after%, Value=\"went on\")") })
+        {
+            var step = new Step(app.type.list) { Goal = outer, Index = index, Text = line };
+            step.Code.Add((await context.Action(line)).In(step));
+            outer.Step.Add(step);
+        }
+        app.goal.list.Add(outer);
+
+        var result = await outer.Start(context, new List<global::app.data.@this>());
+
+        await result.IsSuccess();
+        await Assert.That(result.Returned).IsFalse();
+        await Assert.That(await context.Variable.GetValue("after")).IsEqualTo("went on");
     }
 
     [Test]
