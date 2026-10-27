@@ -1,0 +1,52 @@
+# snapshot-7c-wip — landing note (surface re-pin)
+
+The surface golden (`PLang.Tests/Wire/App/Surface/surface_golden.txt`) was last re-pinned at b4b562053 (snapshot 103).
+This is every line the re-pin moves, taken from the uncapped diff of the current surface against that pin
+(the test shows only the first 20 each way), each with the decision that allowed it. 19 lines added, 34 removed.
+
+Re-pin: `OPENAI_API_KEY= PLang.Tests/Wire/bin/Debug/net10.0/PLang.Tests.Wire --treenode-filter "/*/*/SurfaceTests/AcceptTheSurface"`,
+and the commit names the decisions below.
+
+## Held — not to land until Ingi answers
+
+| change | decision |
+|---|---|
+| `kind.Read(obj, reader, kind, ReadContext ctx)` replaces `(…, actor.context context)`; json's override likewise | review 8 (2f263160e) — **keep or revert: Ingi** (130) |
+| signature's `View` born as an `app.View` (item 1) — not committed; held in `stash@{0}` | review2 item 1 — **stored signatures, (a) or (b): Ingi** (154) |
+
+## Removals
+
+| surface line | decision |
+|---|---|
+| `app.this.Start(goal, context, ct)` | 143 (review 31) — a goal starts itself |
+| `app.type.reader.this.Typed(typeName, kind)` (the view-less one) | 123 (review 3) |
+| `app.call.this.static Create(object raw)` and the six frame kinds' (`action`, `binding`, `composed`, `goal`, `isolated`, `step`) | 140 (review 35) — ICreate's own default |
+| `app.call.Diff` positional `ctor(Name, Before, At)`; its members `{ get; init; }` → `{ get; }` | 153 (review2 N4) — one birth |
+| `app.type.item.variable.list.this`: `Clone()`, `GetChangedSince(since)`, `GetNames()`, `Restore(snapshot)`, `Save()`, `ToDictionary(includeSystem)` | 153 (review2 O1) — no runtime code for tests |
+| action `signing.sign` property `StoreView : bool` | 117 (Ingi's "action.StoreView — obpv"): `sign.View` is the one member |
+| `app.call.list.this`: `Diff()`, `History()`, `Tags()`, `Timing()`, `Variables { get; }` | earlier landing list (77, 81, 101, 103, 113, 117, 120, 121) |
+| `app.call.this.Variable : IEnumerable<data> [Store]` | earlier landing list — replaced by `Parameter` (117/121) |
+
+## Changed (a removal and its addition are one change)
+
+| from → to | decision |
+|---|---|
+| `app.this.Snapshot(context)` / `Snapshot(error, context)` : `data<snapshot>` → `Task<data<snapshot>>` | earlier landing list (the snapshot taken once, as bytes, async) |
+| `app.call.list.this.Push(…, action held = …)` / `Isolate(…, action held = …, caller = …)` → parameter named `call` | earlier landing list (creative name `held`) |
+| `Tagged.PropertiesFor(Type type, View mode)` → `View view` | earlier landing list (103) |
+| `property.list.this.static Read(ref json.Reader reader, …)` → parameter `json` | earlier landing list |
+
+## Additions
+
+| surface line | decision |
+|---|---|
+| `app.call.this.Parameter : property.list [LlmBuilder, Store]`, and `.parameter` on each frame type (`call`, `call.action`, `call.binding`, `call.composed`, `call.goal`, `call.isolated`, `call.step`) | 117 / 121 (Parameter's LlmBuilder) |
+
+## Not on the golden, for the record
+
+These change members outside the golden's locked namespaces, or internal ones, and need no re-pin:
+- `action.Synthetic` removed (review 4); `app.error.CallbackGoalNotFound` / `CallbackActionMismatch` removed (review 33).
+- `Data.Error` an auto-property (same signature); Data's private `Take` (review 13); the observed-error tracking removed (127).
+- `goal.Pr` is now the path (`path?`), the `file` item wrapper gone (review 32); goal's stamp moved into `goal.list` (131).
+- Each frame's `Rest` on binding removed (review2 N2); `View.Make`/`Reader` with one private `Registered`, and the registry's internal `Registered` (149, review2 N1).
+- The ICode, Copy/Clone, `Uninitialized`, `IncomparableException` and module-registry proposals are Ingi's and change nothing yet.
