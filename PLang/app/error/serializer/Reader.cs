@@ -35,7 +35,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "message":       message = reader.String(); break;
                 case "key":           key = reader.String(); break;
                 case "status":
-                    if (ctx.Context.App.type.list.Reader.Reader("status", null, ctx.Context).Read(ref reader, null, ctx) is global::app.type.item.status.@this read)
+                    if (ctx.View.Reader(ctx.Context.App.type.list["status"], null, ctx.Context).Read(ref reader, null, ctx) is global::app.type.item.status.@this read)
                         status = read;
                     break;
                 case "createdutc":    createdUtc = reader.DateTime(); break;

@@ -112,7 +112,8 @@ public sealed class @this : global::app.type.item.note.IAbout
 
     /// <summary>Writes <paramref name="value"/> as this member of <paramref name="owner"/>: read as this member's type by
     /// that type's reader (its own, else as a record its Create makes), then set. A member that can't be written, or a
-    /// value that doesn't read as its type, answers why.</summary>
+    /// value that doesn't read as its type, answers why. The value is the running program's, so it is read in the view a
+    /// run's values live in: Out.</summary>
     public async System.Threading.Tasks.ValueTask<global::app.data.@this> Write(global::app.type.item.@this owner,
         object? value, global::app.actor.context.@this context)
     {
@@ -125,8 +126,9 @@ public sealed class @this : global::app.type.item.note.IAbout
         {
             try
             {
-                var read = item.Read(context.App.type.list.Reader.Reader(Type.Name, null, context),
-                    Type.kind.IsEmpty ? null : Type.kind.Name, context, global::app.View.Out);
+                var view = global::app.View.Out;
+                var read = item.Read(view.Reader(Type, null, context),
+                    Type.kind.IsEmpty ? null : Type.kind.Name, context, view);
                 // a typed list member (list<action>) holds the rows the list reader read, as its own type
                 if (read is global::app.type.item.list.@this rows && !slot.PropertyType.IsInstanceOfType(rows)
                     && typeof(global::app.type.item.list.@this).IsAssignableFrom(slot.PropertyType))

@@ -86,17 +86,10 @@ public abstract class @this
     public Read? Of(string typeName, string? kind) => Payload(typeName, kind);
 
     /// <summary>
-    /// Returns the <see cref="ITypeReader"/> registered for
-    /// <paramref name="typeName"/> + <paramref name="kind"/> — the format-agnostic
-    /// pull reader. Same precedence as <see cref="Of"/>: runtime-exact →
-    /// generated-exact → runtime-"*" → generated-"*". Null when the type has not
-    /// been converted to a typed reader yet (the caller falls back to <see cref="Of"/>).
+    /// The format-agnostic pull reader registered for <paramref name="typeName"/> + <paramref name="kind"/> that reads
+    /// for <paramref name="view"/> alone (null: the one that reads in every view). Same precedence as <see cref="Of"/>:
+    /// runtime-exact → generated-exact → runtime-"*" → generated-"*". Null when none is registered.
     /// </summary>
-    public ITypeReader? Typed(string typeName, string? kind) => Token(typeName, kind, null);
-
-    /// <summary>The token reader registered for <paramref name="typeName"/> + <paramref name="kind"/> that reads for
-    /// <paramref name="view"/> alone (null: the one that reads in every view), in the precedence of
-    /// <see cref="Typed(string, string?)"/>.</summary>
     internal ITypeReader? Typed(string typeName, string? kind, View? view) => Token(typeName, kind, view);
 
     // The whole-payload decode these readers hold for the type and kind, in the precedence Of names.
@@ -137,11 +130,11 @@ public abstract class @this
             // it; otherwise the bytes ride as binary.
             var inner = context.App.type.list.Extension(kind!, context).Name;
             if (!string.Equals(inner, "binary", System.StringComparison.OrdinalIgnoreCase)
-                && Typed(inner, kind) is not null) typeName = inner;
+                && Typed(inner, kind, null) is not null) typeName = inner;
         }
         // A type that ships no reader of its own reads its stored value as a record and makes itself from it
         // (the item owns how it's made) — the settings classes read this way.
-        return Typed(typeName, kind) ?? new Record(typeName);
+        return Typed(typeName, kind, null) ?? new Record(typeName);
     }
 
 

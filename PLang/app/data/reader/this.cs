@@ -67,7 +67,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                             + $"\"{reader.String()}\" (value slot '{(string.IsNullOrEmpty(name) ? "(unnamed)" : name)}').");
                     typeRef = reader.Null()
                         ? null
-                        : ctx.Context.App.type.list.Reader.Reader("type", null, ctx.Context)
+                        : ctx.View.Reader(ctx.Context.App.type.list["type"], null, ctx.Context)
                               .Read(ref reader, null, ctx)
                           as global::app.type.@this;
                     break;

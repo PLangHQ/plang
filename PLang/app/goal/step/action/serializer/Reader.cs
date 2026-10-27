@@ -127,7 +127,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             {
                 case "name": name = row.Null() ? "" : row.String(); break;
                 case "type":
-                    type = row.Null() ? null : ctx.Context.App.type.list.Reader.Reader("type", null, ctx.Context)
+                    type = row.Null() ? null : ctx.View.Reader(ctx.Context.App.type.list["type"], null, ctx.Context)
                         .Read(ref row, null, ctx) as global::app.type.@this;
                     break;
                 case "value":

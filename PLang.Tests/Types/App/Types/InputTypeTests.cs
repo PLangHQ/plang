@@ -28,7 +28,7 @@ public class InputTypeTests : IAsyncDisposable
         var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
         utf8.Read();
         var reader = new global::app.type.item.kind.json.Reader(utf8, bytes);
-        return Context.App.type.list.Reader.Typed(type, null)!.Read(ref reader, null, new global::app.type.reader.ReadContext(Context));
+        return Context.App.type.list.Reader.Reader(type, null, Context).Read(ref reader, null, new global::app.type.reader.ReadContext(Context));
     }
 
     private sealed class Seen : Input.ITarget

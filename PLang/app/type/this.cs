@@ -347,9 +347,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
                 _ => null,
             } is { } name)
         {
+            // a value made here is the running program's: read in Out, the view a run's values live in
             var reader = new global::app.type.format.value.Reader(name);
-            return context.App.type.list.Reader.Reader(Name, null, context)
-                .Read(ref reader, null, new global::app.type.reader.ReadContext(context));
+            var read = new global::app.type.reader.ReadContext(context);
+            return read.View.Reader(this, null, context).Read(ref reader, null, read);
         }
 
         // A raw this bare type owns (text ← string, binary ← byte[]) has nothing to read: no kind to
