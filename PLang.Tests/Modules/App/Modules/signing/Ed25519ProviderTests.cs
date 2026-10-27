@@ -189,7 +189,7 @@ public class Ed25519ProviderTests : System.IAsyncDisposable
     }
 
     // An identity's key is URL-safe from birth: a signature over the key in standard base64 (+ / =) is no signer's, so it
-    // fails to decode — the throw the verify boundary answers as SignatureInvalid.
+    // fails to decode — so the signature does not verify.
     [Test]
     public async Task Verify_ASignatureOverAStandardBase64Key_IsRefused()
     {
@@ -200,7 +200,7 @@ public class Ed25519ProviderTests : System.IAsyncDisposable
         var unsigned = Unsigned(standard);
         var signed = unsigned.Signed(_provider.Sign(unsigned, app.actor.list.User.Context.Text(kp.PrivateKey)));
 
-        await Assert.That(() => _provider.Verify(signed)).Throws<FormatException>();
+        await Assert.That(_provider.Verify(signed).Value).IsFalse();
     }
 
     // Padding doesn't change a key's bytes, but a padded key is not the form the identity wrote: verify answers as Made does.
@@ -212,14 +212,14 @@ public class Ed25519ProviderTests : System.IAsyncDisposable
         var unsigned = Unsigned(padded);
         var signed = unsigned.Signed(_provider.Sign(unsigned, app.actor.list.User.Context.Text(kp.PrivateKey)));
 
-        await Assert.That(() => _provider.Verify(signed)).Throws<FormatException>();
+        await Assert.That(_provider.Verify(signed).Value).IsFalse();
     }
 
     [Test]
-    public async Task Verify_InvalidBase64PublicKey_Throws()
+    public async Task Verify_AnUnreadablePublicKey_IsRefused()
     {
         var signed = Unsigned("not-valid-base64!!!").Signed(new global::app.type.item.binary.@this(new byte[64], app.type.list[typeof(global::app.type.item.binary.@this)]));
-        await Assert.That(() => _provider.Verify(signed)).Throws<FormatException>();
+        await Assert.That(_provider.Verify(signed).Value).IsFalse();
     }
 
     #endregion
