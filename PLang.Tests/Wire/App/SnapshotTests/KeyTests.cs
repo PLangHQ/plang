@@ -42,7 +42,7 @@ public class KeyTests
 
         await Assert.That(json["index"]!.GetValue<int>()).IsEqualTo(0);
         await Assert.That(json["module"]!["name"]!.GetValue<string>()).IsEqualTo("variable");
-        await Assert.That(json["action"]!.GetValue<string>()).IsEqualTo("set");
+        await Assert.That(json["name"]!.GetValue<string>()).IsEqualTo("set");
         await Assert.That(json["step"]!["index"]!.GetValue<int>()).IsEqualTo(0);
         await Assert.That(json["step"]!["goal"]!["name"]!.GetValue<string>()).IsEqualTo("G");
     }

@@ -24,7 +24,6 @@ public partial class @this
     }
 
     [Store, LlmBuilder, Debug, Default, Snapshot]
-    [JsonPropertyName("action")]
     public string Name { get; set; } = "";
 
     /// <summary>Where this action stands in its step's code — what finds it there, beside its module and name. An action
