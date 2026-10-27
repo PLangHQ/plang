@@ -151,6 +151,7 @@ public sealed class Reader
         private static readonly System.Text.RegularExpressions.Regex Number = new(@"\G-?\d+(?:\.\d+)?(?![\w.])");
         private static readonly System.Text.RegularExpressions.Regex Bare = new(@"\G[A-Za-z_/][\w./-]*");
         private static readonly System.Text.RegularExpressions.Regex Constant = new(@"\G(?:true|false|null)\b");
+        private static readonly System.Text.RegularExpressions.Regex EntryType = new(@"\G(\w+(?:<\w+>)?)\s*(\?=|=)");
 
         private string? Match(System.Text.RegularExpressions.Regex token)
         {
@@ -568,7 +569,7 @@ public sealed class Reader
                     Space();
                     // `key: type = value` is a typed argument row
                     string? type = null;
-                    var typed = new System.Text.RegularExpressions.Regex(@"\G(\w+(?:<\w+>)?)\s*(\?=|=)").Match(_text, _pos);
+                    var typed = EntryType.Match(_text, _pos);
                     if (typed.Success && typed.Groups[1].Value is not ("true" or "false" or "null"))
                     {
                         type = typed.Groups[1].Value;
