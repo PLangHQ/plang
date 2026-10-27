@@ -90,7 +90,7 @@ public sealed class @this : screen.@this
     private void Told(global::app.actor.context.@this context)
     {
         // an event that couldn't be handed on is said, its cause whole
-        Task Unhanded(JsonObject e, Exception ex) => context.Actor.Channel.Report(context.Error(new ServiceError(
+        Task Undelivered(JsonObject e, Exception ex) => context.Actor.Channel.Report(context.Error(new ServiceError(
             $"The screen could not hand on {e.ToJsonString()}", "ScreenEventFailed") { list = [global::app.error.@this.FromException(ex)] }));
 
         var told = System.Threading.Channels.Channel.CreateUnbounded<JsonObject>();
@@ -109,7 +109,7 @@ public sealed class @this : screen.@this
                 }
                 catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
                 {
-                    await Unhanded(e, ex);
+                    await Undelivered(e, ex);
                 }
             }
         });
@@ -127,7 +127,7 @@ public sealed class @this : screen.@this
                     try { await one(e, context); }
                     catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
                     {
-                        await Unhanded(e, ex);
+                        await Undelivered(e, ex);
                     }
                 }
             }
