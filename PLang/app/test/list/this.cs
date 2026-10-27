@@ -139,7 +139,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         var goalRead = await file.Read(context);
         var goalContent = goalRead.Success ? await goalRead.Value() : null;
         if (!goalRead.Success)
-            return Stale(new global::app.goal.@this(context.App.type.list) { Path = file }, "goal read error: " + (goalRead.Error?.Message ?? ""));
+            return Stale(new global::app.goal.@this(context.App.type.list) { Path = file }, "the goal file didn't read", goalRead.Error);
         var source = goalContent as global::app.goal.@this
             ?? global::app.goal.@this.Parse(goalContent?.ToString() ?? "", file, context)
             ?? new global::app.goal.@this(context.App.type.list) { Path = file };
@@ -152,20 +152,26 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         // refuses (an old format names itself: PrFormatOutdated) is a test that could not load, never an
         // aborted discovery.
         var prRead = await pr.Read(context);
-        if (!prRead.Success) return Stale(source, prRead.Error?.Message ?? "pr corrupt");
+        if (!prRead.Success) return Stale(source, "the .pr didn't read", prRead.Error);
         global::app.goal.@this? goal;
         try { goal = (await prRead.Value()) as global::app.goal.@this; }
-        catch (global::app.error.AppException refused) { return Stale(source, refused.Message); }
-        if (goal == null) return Stale(source, prRead.Error?.Message ?? "pr corrupt");
+        catch (global::app.error.AppException refused) { return Stale(source, "the .pr didn't read", refused.Error); }
+        if (goal == null) return Stale(source, "the .pr didn't read", prRead.Error);
         if (!string.Equals(source.Hash, goal.Hash, StringComparison.OrdinalIgnoreCase)) return Stale(source, "rebuild needed");
         // the same words, but the saved code must still hold against today's catalogue (the build's own judgement), its
         // sub-goals' too
-        if (await goal.Invalid(context) is { } invalid) return Stale(source, "rebuild needed: " + invalid.Message);
+        if (await goal.Invalid(context) is { } invalid) return Stale(source, "rebuild needed", invalid);
 
         return await global::app.test.@this.From(goal, context);
 
-        global::app.test.@this Stale(global::app.goal.@this goal, string reason)
-            => new(context.App.type.list) { Goal = goal, Status = Status.Stale, StatusReason = reason };    }
+        // a test that could not load: why, in words, and the error that says so, whole
+        global::app.test.@this Stale(global::app.goal.@this goal, string reason, global::app.error.@this? error = null)
+        {
+            var test = new global::app.test.@this(context.App.type.list) { Goal = goal, StatusReason = reason };
+            test.Complete(Status.Stale, error);
+            return test;
+        }
+    }
 
     // One test: this run's coverage takes in the goals it reaches (a site that never runs still shows); a test
     // that isn't Ready is recorded, not run; a Ready one runs itself in an App of its own, made by the asker's actor
