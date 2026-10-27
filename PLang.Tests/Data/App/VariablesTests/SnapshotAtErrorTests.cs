@@ -38,6 +38,30 @@ public class SnapshotAtErrorTests
         }
     }
 
+    // A list changed in place after the throw, under the error's diff scope, stands at the throw as it was then: the
+    // change keeps the value the list held before it, not the list it changes.
+    [Test]
+    public async Task SnapshotAt_AListChangedInPlaceAfterTheThrow_StandsAsItWas()
+    {
+        var (app, action) = BuildLive("SAlist");
+        var context = app.actor.list.User.Context;
+        var stack = context.call;
+        var vars = context.Variable;
+        await using var call = stack.Push(action, await stack.Setting(), vars);
+
+        await vars.Set("items", new List<object?> { 1L, 2L });
+        var error = new ServiceError("boom", "TestErr", 400);
+        using (stack.DiffScope(vars))
+        {
+            // the handler adds to the list where it is
+            await (await (await context.Action("list.add(Value=3, ListName=%items%)")).Start(context)).IsSuccess();
+
+            var projection = vars.SnapshotAt(error);
+            var items = await (await projection.Get("items")).Value<global::app.type.item.list.@this>();
+            await Assert.That(items!.CountRaw).IsEqualTo(2);
+        }
+    }
+
     [Test]
     public async Task SnapshotAt_ConsultsCallStackEventsSince_AndReverseApplies()
     {

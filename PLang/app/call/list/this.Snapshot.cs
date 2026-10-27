@@ -38,8 +38,9 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     /// </summary>
     internal void Record(global::app.type.item.variable.list.@this store, string name, object? before)
     {
+        // the stream is what a throw's standing is reverse-applied from, so it keeps the value as it was: a deep copy
         if (ReferenceEquals(_streamVariables, store))
-            _stream.Add(new Diff(name, before, DateTimeOffset.UtcNow));
+            _stream.Add(new Diff(name, before, deep: true));
         foreach (var frame in _diffing) frame.Record(store, name, before);
     }
 
@@ -205,14 +206,16 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
         foreach (var diff in _stream.Since(t))
             yield return diff;
 
-        // Per-Call Diffs (populated when Flags.Diff was on at Push time).
+        // Per-Call Diffs (populated when Flags.Diff was on at Push time), each frame's once: the current chain's, then
+        // the tree's under the root, which holds the chain's frames too.
+        var seen = new HashSet<call.@this>(ReferenceEqualityComparer.Instance);
         for (var node = _current.Value; node != null; node = node.Caller)
-            if (node.Diffs is { } diffs)
+            if (seen.Add(node) && node.Diffs is { } diffs)
                 foreach (var diff in diffs.Since(t))
                     yield return diff;
 
         if (_root != null)
-            foreach (var diff in _root.Since(t, new HashSet<call.@this>(ReferenceEqualityComparer.Instance)))
+            foreach (var diff in _root.Since(t, seen))
                 yield return diff;
     }
 }
