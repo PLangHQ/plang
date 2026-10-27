@@ -91,6 +91,8 @@ What I'll check when it reports:
 4. **Not (iii):** `data.Value<T>()`'s `T.IsSelected` door (`data/this.cs:620`) unchanged.
 5. The found goal is the app's live goal (the same instance `goal.list` holds), and a changed goal without a re-sign is refused, as at the frame (57).
 6. The surface pin re-pins citing "snapshot 91"; FoundElsewhereTests' goal-in-a-variable goes green; the `.pr` goldens unmoved.
+
+**Compared (067c4e5f2, decision 92):** checks 2 (the view writes the kind, through `View.Type`), 4, 5 and 6 hold. Check 2 also found the view coining `key` on every found type (file too): ruled that only a type that holds a `key` kind writes under it. Checks 1 and 3 miss: the key is a plain dict, unpacked in `goal.Select` by its keys' names, and the mapping loop copies the general read. The typed key above goes to Ingi, since it's a new type.
 - A step, by its goal and its goal-wide index: one lookup the goal owns, across its bodies (NEW, the coder names it).
 - An action, by its place in its step's code, with the module/name check.
 - `file`, `url` and `directory`, each made unread from `{path}` by its own `Create` (80).
