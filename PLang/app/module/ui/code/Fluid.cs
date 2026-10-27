@@ -71,7 +71,8 @@ public class Fluid : ITemplate
                 "ui.render requires a template", "MissingTemplate"));
         // the template's characters, handed to Fluid's parser (the .NET boundary)
         var templateContent = template.Clr<string>() ?? "";
-        var isFile = action.IsFile == null ? null : (await action.IsFile.Value());
+        // an IsFile the step didn't give leaves it to the template's own form: a path is a file
+        var isFile = action.IsFile is { HasValue: true } given ? await given.ToBooleanAsync() : IsPath(templateContent);
         string? sourceFile = null;
         // What the render is: the content-kind entity the template file's extension names (a .json template is
         // {item, json}) — the format whose own birth the rendered characters go through. An inline template, or a
@@ -79,7 +80,7 @@ public class Fluid : ITemplate
         global::app.type.@this? format = null;
 
         // Resolve template content: file or inline
-        if (isFile?.Value == true || (isFile == null && IsPath(templateContent)))
+        if (isFile)
         {
             var path = global::app.type.item.path.@this.Resolve(templateContent, action.Context);
             if (!await path.AsBooleanAsync(action.Context))

@@ -49,7 +49,7 @@ public sealed class @this
             // are derived from the app's root so this is always in-root.
             var exists = await file.Exists(context);
             if (!exists.Success) return exists;
-            if ((await exists.Value())?.Value != true) continue;
+            if (!await exists.ToBooleanAsync()) continue;
 
             // read as the app's goals read every .pr (through the goal's on.load, stamped, held); a setup file that
             // doesn't read or parse is the answer — setup doesn't run past it

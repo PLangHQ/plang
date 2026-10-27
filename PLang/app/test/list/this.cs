@@ -146,7 +146,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
 
         if (source.Pr?.Path is not global::app.type.item.path.file.@this pr) return Stale(source, "no .pr derivable from goal source");
         var prExists = await pr.Exists(context);
-        if (!prExists.Success || (await prExists.Value())?.Value != true) return Stale(source, "no .pr");
+        if (!prExists.Success || !await prExists.ToBooleanAsync()) return Stale(source, "no .pr");
 
         // The .pr lands as a file reference; its value is what its format (.pr → goal) decodes. A .pr the reader
         // refuses (an old format names itself: PrFormatOutdated) is a test that could not load, never an
