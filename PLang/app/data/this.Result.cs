@@ -30,27 +30,18 @@ public partial class @this
     [JsonIgnore]
     public int ReturnDepth { get; set; } = 1;
 
-    // Observation is opt-in handling: reading Success/Error IS the
-    // guard. A handler that never looks at a failed param can't swallow it —
-    // the generator's post-Run epilogue surfaces any UNOBSERVED param error as
-    // the action's result, type-authored message intact.
     private global::app.error.@this? _error;
-    private bool _errorObserved;
 
     [JsonIgnore]
     [Out, Store]
-    public global::app.error.@this? Error
-    {
-        get { _errorObserved = true; return _error; }
-        set { _error = value; _errorObserved = false; }
-    }
+    public global::app.error.@this? Error { get => _error; set => _error = value; }
 
-    // What travels with a result, taken whole from the Data this one is made over: its error, whether it was handled,
-    // how far a return goes, the snapshot an exit holds and the signature it arrived in — each unless this Data already
-    // holds its own. What a value carries (its attachment) is the maker's: a face shares it, a copy takes a copy.
+    // What travels with a result, taken whole from the Data this one is made over: whether it was handled and how far a
+    // return goes, always; its error, the snapshot an exit holds and the signature it arrived in, unless this Data holds
+    // its own. What a value carries (its attachment) is the maker's: a face shares it, a copy takes a copy.
     private protected void Take(@this result)
     {
-        if (_error == null && result._error != null) { _error = result._error; _errorObserved = false; }
+        _error ??= result._error;
         Handled = result.Handled;
         Returned = result.Returned;
         ReturnDepth = result.ReturnDepth;
@@ -66,20 +57,11 @@ public partial class @this
         // An error meeting its first run here takes this Data's context as where it happened.
         error.Context ??= Context;
         _error = error;
-        _errorObserved = false;
     }
-
-    /// <summary>True when a failure was recorded and no one has looked at it —
-    /// the generator's post-Run epilogue reads this (without observing).</summary>
-    internal bool HasUnobservedError => _error != null && !_errorObserved;
-
-    /// <summary>The error without marking it observed — for relays (wire,
-    /// debug views) that carry the failure without handling it.</summary>
-    internal global::app.error.@this? ErrorUnobserved => _error;
 
     [JsonIgnore]
     [Out, Store]
-    public bool Success { get { _errorObserved = true; return _error == null; } }
+    public bool Success => _error == null;
 
     public static implicit operator bool(@this d) => d.Success;
 
