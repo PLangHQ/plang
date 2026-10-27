@@ -125,16 +125,14 @@ public abstract class View
         global::app.actor.context.@this context)
         => context.App.type.list.Reader.Typed(type.Name, kind, this) ?? context.App.type.list.Reader.Reader(type.Name, kind, context);
 
-    /// <summary>A member of <paramref name="type"/> made from <paramref name="slot"/>, the value a record holds for it, in
-    /// this view: read by the reader its type registers for this view (a goal from its key), else made by the type
-    /// from the value.</summary>
+    /// <summary>A member of <paramref name="type"/> read from <paramref name="slot"/>, the value a record holds for it, in
+    /// this view: by the reader this view reads its type by (a goal in the snapshot from its key; an error, a record's
+    /// properties, by their own), as a <c>.pr</c> slot is read. A record with no value for it gives none.</summary>
     internal global::app.type.item.@this? Make(global::app.type.@this type, global::app.type.item.@this? slot,
         global::app.actor.context.@this context)
     {
         var kind = type.kind.IsEmpty ? null : type.kind.Name;
-        return slot != null && context.App.type.list.Reader.Typed(type.Name, kind, this) is { } reader
-            ? slot.Read(reader, kind, context) as global::app.type.item.@this
-            : type.Make(slot, context);
+        return slot?.Read(Reader(type, kind, context), kind, context, this) as global::app.type.item.@this;
     }
 
     /// <summary>What a value of <paramref name="type"/>, as <paramref name="raw"/> holds it, needs loaded before it is

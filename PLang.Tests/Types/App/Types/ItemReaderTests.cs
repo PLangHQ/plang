@@ -103,7 +103,7 @@ public class ItemReaderTests : System.IAsyncDisposable
     {
         var reader = _app.type.list.Reader.Reader("limit", null, Ctx);
 
-        var viaTokens = Dict().Read(reader, null, Ctx) as Limit;
+        var viaTokens = Dict().Read(reader, null, Ctx, global::app.View.Out) as Limit;
 
         var bytes = System.Text.Encoding.UTF8.GetBytes("{\"token\":500,\"tool\":3}");
         var utf8 = new System.Text.Json.Utf8JsonReader(bytes);

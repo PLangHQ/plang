@@ -106,8 +106,8 @@ public class @this : global::app.type.item.source
 
     // Read as another type, an undecoded wire is what it decodes to, read as tokens.
     internal override object? Read(global::app.type.reader.ITypeReader reader, string? kind,
-                                   global::app.actor.context.@this context)
-        => Decoded(context).Read(reader, kind, context);
+                                   global::app.actor.context.@this context, global::app.View view)
+        => Decoded(context).Read(reader, kind, context, view);
 
     // Re-declared, the slice is what its new declaration makes of it — a template only when marked one.
     internal override global::app.type.item.source Declared(global::app.type.@this type)

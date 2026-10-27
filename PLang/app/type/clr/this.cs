@@ -117,7 +117,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// the declared type's reader, and the element kind. The kind bridges the format (json → a json
     /// reader); the type reads its own structure, with the reader's context.</summary>
     internal override object? Read(global::app.type.reader.ITypeReader reader, string? kind,
-                                   global::app.actor.context.@this context)
+                                   global::app.actor.context.@this context, global::app.View view)
         => Kind.Read(Value, reader, kind, context);
 
     /// <summary>The child-write door — the carrier routes to its <see cref="Kind"/> (the * kind

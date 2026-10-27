@@ -30,7 +30,7 @@ public sealed partial class @this
         if (raw is @this snapshot) return snapshot;
         var context = data.Context;
         if (raw is global::app.type.item.text.@this text)
-            return text.Read(context.App.type.list.Reader.Reader("snapshot", null, context), null, context) as @this;
+            return text.Read(context.App.type.list.Reader.Reader("snapshot", null, context), null, context, global::app.View.Out) as @this;
         data.Fail(new global::app.error.@this(
             $"%{data.Name}% holds a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name} — a snapshot is made from a snapshot or its text",
             "CreateItemDeclined", 400));

@@ -27,8 +27,7 @@ public sealed class Snapshot : global::app.type.reader.ITypeReader
             {
                 case "goal":
                     var type = context.App.type.list[typeof(global::app.goal.@this)];
-                    // a key's members are keys of this reader's view, whatever view reached it
-                    goal = View.Reader(type, null, context).Read(ref reader, null, ctx) as global::app.goal.@this;
+                    goal = ctx.View.Reader(type, null, context).Read(ref reader, null, ctx) as global::app.goal.@this;
                     break;
                 case "index": index = reader.Int(); break;
                 default: throw Refused($"key '{member}' isn't in this snapshot's format for a step", "SnapshotFormatOutdated", 400);
