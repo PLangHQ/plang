@@ -19,3 +19,6 @@ Requested by the architect (snapshot 172–175). Pattern: 3 (a choice belongs on
 
 ## Verdict
 **FAIL, one finding (D1); coder next.** Everything else is clean. Mechanical: one fix in `iso.Read` and two pins.
+
+## Re-check at 68a209eaf: D1 fixed — PASS
+`iso.Read` (`duration/iso/this.cs:25–50`) answers null for a text ending in `T` (so `PT`, `P1DT`), a second `T`, and a unit written twice (`P1D1D`, `PT1H1H`; the units string is checked per unit, so months-before-`T` still hit the existing refusal). `duration.IsStandard` and `as iso` both go through it. Pins: four rows in `LiteralStandardFormTests` and four in `StandardRoundTripTests.AText_InAnotherStandard_IsRefused_NamingTheDeclaredOne`. Low, not blocking: the units' order is not enforced (`PT1S1H` reads), a label no one writes. Verdict v2: **PASS**, tester next.

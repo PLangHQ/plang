@@ -1,1 +1,1 @@
-{ "status": "fail", "summary": "one finding: duration's IsStandard rides iso.Read, which accepts 'PT', 'P1DT' and repeated units, so a quoted 'PT' is typed duration; date, datetime and time are strict" }
+{ "status": "pass", "summary": "D1 fixed: iso.Read refuses a text ending in P/T, a second T and a repeated unit; pins in both test classes; low: unit order not enforced" }
