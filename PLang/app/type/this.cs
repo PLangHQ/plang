@@ -106,22 +106,21 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// never loops a walk.</summary>
     protected virtual global::app.type.kind.@this BornKind() => new global::app.type.kind.empty.@this(this);
 
-    /// <summary>The kind a value class declares for <paramref name="name"/> — or its own format for the empty
+    /// <summary>The kind this type's class declares for <paramref name="name"/> — or its own format for the empty
     /// name — read from the class's <c>[Format]</c>: the facts (MIME, extension, whether it is characters) a
-    /// value carries without asking the app, a kind of <paramref name="owner"/>, the class-built type asking. Null
-    /// when the class declares no such format, so the caller keeps the bare by-name kind. Only a class-built type
-    /// asks: a value born through an operator, with no app.</summary>
-    private static global::app.type.kind.@this? KindOfClass(System.Type clr, string? name, @this owner)
+    /// value carries without asking the app, a kind of this type. Null when the class declares no such format, so the
+    /// bare by-name kind stays. Only a class-built type asks: a value born through an operator, with no app.</summary>
+    private global::app.type.kind.@this? Declared(string? name)
     {
         var wanted = name ?? "";
         global::app.Attributes.FormatAttribute? format = null;
-        foreach (var attribute in clr.GetCustomAttributes(typeof(global::app.Attributes.FormatAttribute), inherit: false))
+        foreach (var attribute in ClrType!.GetCustomAttributes(typeof(global::app.Attributes.FormatAttribute), inherit: false))
             if (attribute is global::app.Attributes.FormatAttribute fmt
                 && string.Equals(fmt.Name, wanted, System.StringComparison.OrdinalIgnoreCase)) { format = fmt; break; }
         if (format == null) return null;
         var facts = (global::app.type.kind.@this)System.Activator.CreateInstance(
-            typeof(global::app.type.kind.format.@this<>).MakeGenericType(clr), format, owner, null, null)!;
-        return wanted.Length == 0 ? new global::app.type.kind.empty.@this(owner, facts) : facts;
+            typeof(global::app.type.kind.format.@this<>).MakeGenericType(ClrType), format, this, null, null)!;
+        return wanted.Length == 0 ? new global::app.type.kind.empty.@this(this, facts) : facts;
     }
 
     /// <summary>
@@ -619,8 +618,8 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         && string.Equals(kind.Name, other.kind.Name, System.StringComparison.OrdinalIgnoreCase)
         && Strict == other.Strict;
 
-    public override int GetHashCode() => System.HashCode.Combine(
-        Name.ToLowerInvariant(), kind.Name.ToLowerInvariant(), Strict);
+    // a type's name and its kind's are lowercase from birth
+    public override int GetHashCode() => System.HashCode.Combine(Name, kind.Name, Strict);
 
     /// <summary>
     /// Does this type stand in for <paramref name="other"/> — is it the same
@@ -646,16 +645,14 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// lives on the VALUE's type history (a value born from a path carries a "path" entry), asked via
     /// <see cref="item.@this.Is"/>. No CLR-inheritance lattice, no reflection.</summary>
     public bool Is(@this? other)
-        => other != null
-           && (string.Equals(Name, other.Name, System.StringComparison.OrdinalIgnoreCase)
-               || string.Equals(other.Name, "item", System.StringComparison.OrdinalIgnoreCase))
+        => other != null && Is(other.Name)
            && (other.kind.IsEmpty || string.Equals(kind.Name, other.kind.Name, System.StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
-    /// Name-string IS-A query — resolves <paramref name="typeName"/> to a type and
-    /// asks <see cref="Is(@this)"/>. Lets <c>if %x% is dict</c> / <c>is number</c> /
-    /// <c>is item</c> resolve from a PLang type name without the caller minting a
-    /// comparison entity. <c>item</c> is the apex: true for any value.
+    /// The name half of <see cref="Is(@this)"/>, with no kind asked: this type's name is
+    /// <paramref name="typeName"/>, or <paramref name="typeName"/> is the apex <c>item</c> (true for any value). Lets
+    /// <c>if %x% is dict</c> / <c>is number</c> / <c>is item</c> ask by a PLang type name without the caller minting a
+    /// comparison entity.
     /// </summary>
     public bool Is(string typeName)
     {
@@ -799,7 +796,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     internal @this(string name, System.Type? clrType, string? kind = null, bool strict = false, global::app.type.item.template.kind.@this? template = null)
         : this(name, clrType, kind, strict, template, known: true)
     {
-        if (clrType != null && typeof(item.@this).IsAssignableFrom(clrType) && KindOfClass(clrType, kind, this) is { } format)
+        if (clrType != null && typeof(item.@this).IsAssignableFrom(clrType) && Declared(kind) is { } format)
             _kind = format;
     }
 

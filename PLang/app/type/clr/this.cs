@@ -36,7 +36,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// renders its HOST (via <see cref="Host"/>), not its own kind. Reflecting it would
     /// pull the generic JSON serializer into the kind token's context-dependent accessors.</remarks>
     [System.Text.Json.Serialization.JsonIgnore]
-    public global::app.type.kind.@this Kind { get; }
+    public global::app.type.kind.@this Kind => Type.kind;
 
     /// <summary>A producer may stamp a <paramref name="kind"/> when it knows the host's format;
     /// otherwise the kind system resolves it from the host's CLR type at birth, through the
@@ -65,7 +65,6 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
             throw new System.InvalidOperationException(
                 "A Data may not be carried in a clr — nested Data is not a supported shape. "
                 + "Return the inner value via its own factory, never wrap a Data.");
-        Kind = kind;
     }
 
     /// <summary>In memory now = the carrier itself (a closed box, like every other item whose
@@ -132,11 +131,6 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         // the host's kind refuses the child (no such member, an index out of range): the write's answer
         catch (global::app.error.AppException refused) { return context.Error(refused.Error); }
     }
-
-    /// <summary>The children of the host, via its <see cref="Kind"/> — for <c>foreach</c>, handed
-    /// out with the caller's context.</summary>
-    public System.Collections.Generic.IEnumerable<global::app.data.@this> Enumerate(global::app.actor.context.@this context)
-        => Kind.Enumerate(Value, context);
 
     /// <summary>The host is a sequence when its <see cref="Kind"/> holds it by position (a json array, a CLR list).</summary>
     public override bool IsSequence => Kind.IsSequence(Value);

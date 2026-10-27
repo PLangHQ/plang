@@ -109,7 +109,7 @@ public class source : @this
         // Text content decodes to its text face: a text-kinded raw (json — its kind answers IsText), or a
         // plain text whose own kind hasn't loaded its format yet (the empty kind reads IsText false until then,
         // so the type name is the floor that keeps a plain text's bytes decoding).
-        if (_value is byte[] b && (Type.kind.IsText || Type.Name.ToLowerInvariant() is "text"))
+        if (_value is byte[] b && (Type.kind.IsText || Type.Name is "text"))
         {
             try { return new System.Text.UTF8Encoding(false, throwOnInvalidBytes: true).GetString(b); }
             catch (System.Text.DecoderFallbackException) { return b; }
