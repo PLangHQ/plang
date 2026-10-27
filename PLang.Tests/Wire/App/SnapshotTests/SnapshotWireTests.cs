@@ -654,7 +654,7 @@ public class SnapshotWireTests
         await Assert.That(System.Convert.ToInt64((await context.Variable.GetValue("seen")))).IsEqualTo(2L);
     }
 
-    // a snapshot never carries a sensitive value: a variable holding one is not saved, so a resumed run asks again
+    // a snapshot never carries a sensitive value: the snapshot view writes it as null, so a resumed run asks again
     [Test]
     public async Task ASensitiveVariable_IsNotInTheSnapshotsText()
     {
@@ -665,7 +665,8 @@ public class SnapshotWireTests
         var text = await app.Snapshot(context).Saved().Text(context);
 
         await Assert.That(text).DoesNotContain("hunter2");
-        await Assert.That((await context.Snapshot(text)).Node(SnapshotPathExtensions.UserVariable).Entries.Get("password", context)).IsNull();
+        var password = (await context.Snapshot(text)).Node(SnapshotPathExtensions.UserVariable).Entries.Get("password", context);
+        await Assert.That(await password!.Value()).IsTypeOf<global::app.type.item.@null.@this>();
     }
 
     // a [Sensitive] member of a value a variable holds is not in the snapshot's text (an identity's private key); red
