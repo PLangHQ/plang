@@ -12,7 +12,6 @@ and the commit names the decisions below.
 | change | decision |
 |---|---|
 | `kind.Read(obj, reader, kind, ReadContext ctx)` replaces `(…, actor.context context)`; json's override likewise | review 8 (2f263160e) — **keep or revert: Ingi** (130) |
-| signature's `View` born as an `app.View` (item 1) — not committed; held in `stash@{0}` | review2 item 1 — **stored signatures, (a) or (b): Ingi** (154) |
 
 ## Removals
 
@@ -35,6 +34,13 @@ and the commit names the decisions below.
 | `app.call.list.this.Push(…, action held = …)` / `Isolate(…, action held = …, caller = …)` → parameter named `call` | 111 (creative name) / 112 (`_call`/`call`) |
 | `Tagged.PropertiesFor(Type type, View mode)` → `View view` | 111 (creative name) / 114 (e426b0df1) |
 | `property.list.this.static Read(ref json.Reader reader, …)` → parameter `json` | 111 / 114 (ba8312e6e) |
+
+## The signature's view (review2 item 1, Ingi 156)
+
+| from → to | decision |
+|---|---|
+| `signature.this.View : text?` → `View : app.View`, born with the signature; the public constructor takes `View view` (required, after `signature`), no longer an optional `text? view` last | 153 (review2 item 1) |
+| a signature that names no view is refused (`SignatureInvalid`) | Ingi 156 (strict, no backward compat) |
 
 ## Additions
 

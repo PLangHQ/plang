@@ -27,7 +27,7 @@ public sealed class signature : ISchemaReader
         // reconstruction the writer produced.
         var text = context.App.type.list[typeof(global::app.type.item.text.@this)];
         global::app.type.item.text.@this algorithm = new("ed25519", text), nonce = new("", text), identity = new("", text);
-        global::app.type.item.text.@this? view = null;
+        global::app.View? view = null;
         System.DateTimeOffset created = default;
         System.DateTimeOffset? expires = null;
         // the hash's kind is what the layer says — none said, the signature is refused below, never a kind guessed
@@ -51,7 +51,7 @@ public sealed class signature : ISchemaReader
                 case "created": created = reader.DateTimeOffset(); break;
                 case "expires": expires = reader.Null() ? null : reader.DateTimeOffset(); break;
                 case "identity": identity = new(reader.String(), text); break;
-                case "view": view = new(reader.String(), text); break;
+                case "view": view = Named(reader.String()); break;
                 case "contracts":
                 {
                     reader.BeginArray();
@@ -91,22 +91,25 @@ public sealed class signature : ISchemaReader
             is not global::app.module.crypto.type.hash.kind.@this hashKind)
             throw new global::app.error.DeclinedException(new global::app.error.@this(
                 $"a signature's hash is of a kind there is none of: '{hashAlgo}'", "SignatureInvalid", 400));
+        // the view it was hashed in is inside its signed bytes: one that names none is no signature that can be checked
+        if (view is null)
+            throw new global::app.error.DeclinedException(new global::app.error.@this(
+                "a signature names no view (the view it was hashed in) — it can't be checked", "SignatureInvalid", 400));
 
         // A signature read live off the wire is good for the signing setting's window after it was made; one read
         // from plang's own store keeps only what its signer signed, and covers the value's stored form. A run's state
         // its signer marked so (the snapshot's view, inside the signed bytes) is at rest wherever it is carried; any
         // other recorded view is judged by where it is read.
-        var stored = ctx.View == global::app.View.Store
-            || string.Equals(view?.ToString(), global::app.View.Snapshot.ToString(), System.StringComparison.OrdinalIgnoreCase);
+        var stored = ctx.View == global::app.View.Store || view == global::app.View.Snapshot;
         var datetime = context.App.type.list[typeof(global::app.type.item.datetime.@this)];
         var layer = new global::app.type.item.signature.@this(
             context.App.type.list[new global::app.type.@this("signature", algorithm.ToString()), context],
             inner, algorithm, nonce, new global::app.type.item.datetime.@this(created, datetime), identity,
             new global::app.module.crypto.type.hash.@this(hashValue, hashKind,
-                context.App.type.list[new global::app.type.@this("hash", hashKind.Name), context]), sig,
+                context.App.type.list[new global::app.type.@this("hash", hashKind.Name), context]), sig, view,
             expires is { } ex ? new global::app.type.item.datetime.@this(ex, datetime) : null, contracts,
             stored ? global::app.type.item.signature.Origin.Stored : global::app.type.item.signature.Origin.Live,
-            stored ? null : ctx.Window, view);
+            stored ? null : ctx.Window);
 
         // The OUTER read verifies the signature; a NESTED reconstruction (ctx.Verify == false) peels
         // without verifying — the inner Data is already covered by the outer signature, and an inner
@@ -130,4 +133,11 @@ public sealed class signature : ISchemaReader
                 ?? new global::app.error.ServiceError("Signature verification failed", "SignatureInvalid", 400));
         return peeled;
     }
+
+    // The view a signature names, by its name; a name no view has is refused, never a view guessed.
+    private global::app.View Named(string name)
+        => new[] { global::app.View.Store, global::app.View.Out, global::app.View.Snapshot, global::app.View.Debug }
+               .FirstOrDefault(each => string.Equals(each.ToString(), name, System.StringComparison.OrdinalIgnoreCase))
+           ?? throw new global::app.error.DeclinedException(new global::app.error.@this(
+               $"a signature's view is one no view is named: '{name}'", "SignatureInvalid", 400));
 }
