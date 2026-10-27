@@ -30,7 +30,8 @@ public sealed class Snapshot : global::app.type.reader.ITypeReader
                 case "hash": hash = reader.String(); break;
                 case "pr":
                     var file = context.App.type.list[typeof(global::app.type.item.file.@this)];
-                    pr = ctx.View.Reader(file, null, context).Read(ref reader, null, ctx) as global::app.type.item.file.@this;
+                    // a key's members are keys of this reader's view, whatever view reached it
+                    pr = View.Reader(file, null, context).Read(ref reader, null, ctx) as global::app.type.item.file.@this;
                     break;
                 default: throw Refused($"key '{member}' isn't in this snapshot's format for a goal", "SnapshotFormatOutdated", 400);
             }

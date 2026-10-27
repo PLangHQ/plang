@@ -30,11 +30,12 @@ public sealed class Snapshot : global::app.type.reader.ITypeReader
             switch (member)
             {
                 case "step":
-                    step = ctx.View.Reader(types[typeof(global::app.goal.step.@this)], null, context).Read(ref reader, null, ctx)
+                    // a key's members are keys of this reader's view, whatever view reached it
+                    step = View.Reader(types[typeof(global::app.goal.step.@this)], null, context).Read(ref reader, null, ctx)
                         as global::app.goal.step.@this;
                     break;
                 case "module":
-                    module = ctx.View.Reader(types[typeof(global::app.module.@this)], null, context).Read(ref reader, null, ctx)
+                    module = View.Reader(types[typeof(global::app.module.@this)], null, context).Read(ref reader, null, ctx)
                         as global::app.module.@this;
                     break;
                 case "index": index = reader.Int(); break;
