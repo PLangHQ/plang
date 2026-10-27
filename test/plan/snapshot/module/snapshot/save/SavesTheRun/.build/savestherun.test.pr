@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "comment": "save snapshot answers the run's state as a value. Kept in a .plang file outside the tracked tree (signed, as the save\nsigned it) and read back in this app, it holds the run's variables and its call stack: the frame this goal runs in\ncomes back, by its goal's address, which only a real snapshot holds.",
+  "comment": "save snapshot answers the run's state as a value. Kept in a .plang file outside the tracked tree (signed, as the save\nsigned it) and read back in this app, it holds the run's variables and its call stack: the frame this goal runs in\ncomes back as the first of its frames, by its goal's path, which only a real snapshot holds.",
   "step": [
     {
       "index": 0,
@@ -159,7 +159,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 2 uses file.save, which the decider was not sure of (0.97)"
+          "message": "step 2 uses file.save, which the decider was not sure of (0.96)"
         }
       ]
     },
@@ -244,6 +244,12 @@
             }
           ]
         }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 3 uses variable.set, which the decider was not sure of (0.84)"
+        }
       ]
     },
     {
@@ -307,7 +313,7 @@
     },
     {
       "index": 5,
-      "text": "assert %back.actor.list.user.context.call.root.goal.address% contains \"SavesTheRun\"",
+      "text": "assert %back.actor.list.user.context.call.frames[0].goal.path% contains \"SavesTheRun\"",
       "line": {
         "number": 10,
         "indent": 0
@@ -323,10 +329,10 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%back.actor.list.user.context.call.root.goal.address%",
+              "value": "%back.actor.list.user.context.call.frames[0].goal.path%",
               "variable": [
                 {
-                  "text": "%back.actor.list.user.context.call.root.goal.address%",
+                  "text": "%back.actor.list.user.context.call.frames[0].goal.path%",
                   "code": [
                     {
                       "variable": "back"
@@ -347,13 +353,18 @@
                       "property": "call"
                     },
                     {
-                      "property": "root"
+                      "property": "frames"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
                     },
                     {
                       "property": "goal"
                     },
                     {
-                      "property": "address"
+                      "property": "path"
                     }
                   ]
                 }
@@ -405,5 +416,5 @@
   ],
   "visibility": "Public",
   "file": "SavesTheRun.test.goal",
-  "hash": "374b242523e5430f8ddc78b12a53d788999a6a2ef7c8dd8ea6e97d3585e509ac"
+  "hash": "df3c0988bde3fecab1defc72edc196dabe61b53bb31d478dcd9a8fe5fe2c0e1e"
 }
