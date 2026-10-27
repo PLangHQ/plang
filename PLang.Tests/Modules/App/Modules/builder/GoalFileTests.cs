@@ -139,7 +139,7 @@ public class GoalFileTests : System.IAsyncDisposable
     {
         var goal = Goal.Parse("MyGoal\n- step", global::app.type.item.path.@this.Resolve("/folder/MyGoal.goal", app.actor.list.User.Context), app.actor.list.User.Context);
 
-        await Assert.That(goal!.Pr?.Path.ToString()).IsEqualTo("/folder/.build/mygoal.pr");
+        await Assert.That(goal!.Pr.ToString()).IsEqualTo("/folder/.build/mygoal.pr");
     }
 
     [Test]

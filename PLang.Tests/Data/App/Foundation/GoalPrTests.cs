@@ -15,37 +15,37 @@ public class GoalPrTests : System.IAsyncDisposable
     public async Task Pr_DerivedFromPath_Correctly()
     {
         var goal = new Goal(app.type.list) { Name = "Test", Path = global::app.type.item.path.@this.Resolve("\\Test.goal".AdjustPathToOs(), app.actor.list.User.Context) };
-        await Assert.That(goal.Pr?.Path.ToString()).IsEqualTo("/.build/test.pr");
+        await Assert.That(goal.Pr.ToString()).IsEqualTo("/.build/test.pr");
     }
 
     [Test]
     public async Task Pr_SubDirectory_DerivedCorrectly()
     {
         var goal = new Goal(app.type.list) { Name = "Inner", Path = global::app.type.item.path.@this.Resolve("\\SubDir\\Inner.goal".AdjustPathToOs(), app.actor.list.User.Context) };
-        await Assert.That(goal.Pr?.Path.ToString()).IsEqualTo("/SubDir/.build/inner.pr");
+        await Assert.That(goal.Pr.ToString()).IsEqualTo("/SubDir/.build/inner.pr");
     }
 
     [Test]
     public async Task Pr_ForwardSlashPath_DerivedCorrectly()
     {
         var goal = new Goal(app.type.list) { Name = "Test", Path = global::app.type.item.path.@this.Resolve("/Test.goal", app.actor.list.User.Context) };
-        await Assert.That(goal.Pr?.Path.ToString()).IsEqualTo("/.build/test.pr");
+        await Assert.That(goal.Pr.ToString()).IsEqualTo("/.build/test.pr");
     }
 
     [Test]
     public async Task Pr_NullPath_ReturnsNull()
     {
         var goal = new Goal(app.type.list) { Name = "Test" };
-        await Assert.That(goal.Pr?.Path).IsNull();
+        await Assert.That(goal.Pr).IsNull();
     }
 
     [Test]
     public async Task Pr_UpdatesWhenPathChanges()
     {
         var goal = new Goal(app.type.list) { Name = "Test", Path = global::app.type.item.path.@this.Resolve("\\Test.goal".AdjustPathToOs(), app.actor.list.User.Context) };
-        await Assert.That(goal.Pr?.Path.ToString()).IsEqualTo("/.build/test.pr");
+        await Assert.That(goal.Pr.ToString()).IsEqualTo("/.build/test.pr");
 
         goal.Path = global::app.type.item.path.@this.Resolve("\\Other\\Test.goal".AdjustPathToOs(), app.actor.list.User.Context);
-        await Assert.That(goal.Pr?.Path.ToString()).IsEqualTo("/Other/.build/test.pr");
+        await Assert.That(goal.Pr.ToString()).IsEqualTo("/Other/.build/test.pr");
     }
 }

@@ -122,26 +122,18 @@ public sealed partial class @this
     public global::app.type.item.path.@this? Path
     {
         get => Parent?.Path ?? _path;
-        set
-        {
-            _path = value;
-            // the .pr it is built to, worked out where its file is given: a file reference, of the types this goal's own
-            // type is among
-            _pr = value is global::app.type.item.path.file.@this { Absolute.Length: > 0 } source && Type.Types is { } types
-                ? new global::app.type.item.file.@this(source.Pr, types) : null;
-        }
+        set => _path = value;
     }
     private global::app.type.item.path.@this? _path;
-    private global::app.type.item.file.@this? _pr;
 
     /// <summary>The folder holding this goal's source .goal file — what a relative path in it resolves against.
     /// Null for a goal with no Path.</summary>
     public global::app.type.item.path.@this? Folder => Path?.Parent;
 
-    /// <summary>The .pr this goal is built to, a file reference (its file's <c>Pr</c>), worked out where its Path is set; a
-    /// sub-goal's is its parent's; none without a Path.</summary>
+    /// <summary>The .pr this goal is built to: its file's own (<c>Pr</c>), so a sub-goal's is its parent's; none without a
+    /// file.</summary>
     [Debug]
-    public global::app.type.item.file.@this? Pr => Parent?.Pr ?? _pr;
+    public global::app.type.item.path.@this? Pr => Path is global::app.type.item.path.file.@this { Absolute.Length: > 0 } file ? file.Pr : null;
 
     [Store, Out, Debug, Snapshot]
     public string? Hash
@@ -333,7 +325,7 @@ public sealed partial class @this
 
     /// <summary>
     /// The goal <paramref name="source"/> (a <c>.goal</c>) is built to, loaded as <paramref name="app"/> itself from
-    /// its .pr (<see cref="PrPath"/>): the one already held from there, else read through its <c>on.load</c> — what is bound
+    /// its .pr (<see cref="Pr"/>): the one already held from there, else read through its <c>on.load</c> — what is bound
     /// before a goal loads is the goal type's, handed the .pr (there is no goal yet), and a failure or a Handled
     /// answer is the load's answer with nothing read; the path reads itself into a goal, the app's goals hold it,
     /// and what is bound after it runs across the goal's levels, handed the goal. A setup goal is refused — it runs
