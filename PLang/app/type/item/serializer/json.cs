@@ -97,12 +97,18 @@ public partial class json
     internal global::app.data.@this? Typed(byte[] utf8, global::app.type.reader.ReadContext ctx)
     {
         using var doc = System.Text.Json.JsonDocument.Parse(utf8);
-        var element = doc.RootElement;
-        return element.ValueKind == System.Text.Json.JsonValueKind.Object
-               && (IsDataMarked(element) || IsTypedEntry(element))
-            ? new global::app.data.reader.@this().Read(utf8, new global::app.type.reader.ReadContext(_context, Verify: false, IsBuilt: ctx.IsBuilt) { View = ctx.View })
-            : null;
+        return Row(doc.RootElement, ctx);
     }
+
+    // The Data an object element is when it is a typed value or a marked Data — read as every nested entry reads (no
+    // verify: the outer read covers it; in the view of the read that holds it, whose bytes are the build's when its
+    // are); null for any other element.
+    private global::app.data.@this? Row(System.Text.Json.JsonElement element, global::app.type.reader.ReadContext? ctx)
+        => element.ValueKind == System.Text.Json.JsonValueKind.Object && (IsDataMarked(element) || IsTypedEntry(element))
+            ? new global::app.data.reader.@this().Read(System.Text.Encoding.UTF8.GetBytes(element.GetRawText()),
+                new global::app.type.reader.ReadContext(_context, Verify: false, IsBuilt: ctx?.IsBuilt ?? false)
+                { View = ctx?.View ?? global::app.View.Out })
+            : null;
 
     private object? ParseRaw(byte[] utf8, global::app.type.reader.ReadContext? ctx)
     {
@@ -192,11 +198,7 @@ public partial class json
             System.Text.Json.JsonValueKind.False => false,
             System.Text.Json.JsonValueKind.Null => null,
             System.Text.Json.JsonValueKind.Undefined => null,
-            System.Text.Json.JsonValueKind.Object => IsDataMarked(element) || IsTypedEntry(element)
-                ? new global::app.data.reader.@this().Read(System.Text.Encoding.UTF8.GetBytes(element.GetRawText()),
-                    new global::app.type.reader.ReadContext(_context, Verify: false, IsBuilt: ctx?.IsBuilt ?? false)
-                    { View = ctx?.View ?? global::app.View.Out })
-                : ObjectLeaf(element, ctx, depth),
+            System.Text.Json.JsonValueKind.Object => (object?)Row(element, ctx) ?? ObjectLeaf(element, ctx, depth),
             System.Text.Json.JsonValueKind.Array => ArrayLeaf(element, ctx, depth),
             _ => element.GetRawText(),
         };
@@ -210,10 +212,10 @@ public partial class json
     {
         // if/return, NOT a ternary: the common type of (string, text.@this)
         // would silently convert the wrapper back via text's implicit operator.
-        if (ctx?.Template is { } template)
+        if (ctx?.Template != null)
         {
-            var value = new text.@this(s, _context.App.type.list[new global::app.type.@this("text", template: template), _context], ctx.Variable);
-            if (value.HasVariable) return value;
+            // a template's text is the one a template slot makes
+            if (StringSlot(s, ctx) is text.@this value) return value;
         }
         else if (s.Contains('%') && new global::app.type.item.variable.parser.@this(s, _context.App.type.list).Variable.Count > 0)
             return s;
