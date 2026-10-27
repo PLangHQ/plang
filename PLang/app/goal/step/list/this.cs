@@ -20,7 +20,20 @@ public sealed class @this : global::app.type.item.list.bare.@this<Step>
     public @this(global::app.type.@this type) : base(new List<object?>(), type) { }
     public @this(global::app.type.item.list.@this source, global::app.type.@this type) : base(source, type) { }
 
-    /// <summary>Clone/render keep this concrete node type, context-free.</summary>
+    // A view over steps another list holds: they are read through it, never taken into it.
+    private @this(List<object?> steps, global::app.type.@this type) : base(steps, type) { }
+
+    /// <summary>A step taken into this list is held by it, and says so (<see cref="global::app.goal.step.@this.List"/>):
+    /// wherever it is added from (the reader, the parse, the build's fold), a step knows the list it goes on in.</summary>
+    protected override void Admit(object? slot)
+    {
+        if ((slot is data.@this held ? held.Peek() : slot) is Step step) step.List = this;
+    }
+
+    protected override void Admit(global::app.type.item.list.@this other)
+    {
+        foreach (var slot in other.Slots()) Admit(slot);
+    }
 
     /// <summary>Starts the steps in sequence. A return / exit propagates up (ShouldExit folds Returned).
     /// No indent skip-state — a fired control-flow action starts its own Child, so nesting is structural.
@@ -76,14 +89,16 @@ public sealed class @this : global::app.type.item.list.bare.@this<Step>
 
     /// <summary>The steps indented under the step at <paramref name="index"/> — the consecutive steps
     /// after it written deeper than it: its body as the author laid it out (the parser records each
-    /// step's indent). Empty when nothing is indented under it.</summary>
+    /// step's indent). Empty when nothing is indented under it. A view: the steps stay this list's.</summary>
     public @this Body(int index)
     {
-        var body = new @this(Type);
-        if (index < 0 || index >= CountRaw) return body;
-        var indent = this[index].Line.Indent;
-        for (int j = index + 1; j < CountRaw && this[j].Line.Indent > indent; j++) body.Add(this[j]);
-        return body;
+        var steps = new List<object?>();
+        if (index >= 0 && index < CountRaw)
+        {
+            var indent = this[index].Line.Indent;
+            for (int j = index + 1; j < CountRaw && this[j].Line.Indent > indent; j++) steps.Add(this[j]);
+        }
+        return new @this(steps, Type);
     }
 
     // A step's line in the answer: `[i]` at the start of a line.

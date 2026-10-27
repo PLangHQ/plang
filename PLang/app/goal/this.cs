@@ -563,7 +563,6 @@ public sealed partial class @this
                 step = new Step(context.App.type.list)
                 {
                     Goal = goal,   // birth fact — the parser holds the goal, so it hands it over
-                    List = goal.Step,
                     Index = stepIndex,
                     Text = trimmed.Length > 2 ? trimmed[2..].Trim() : "",
                     Line = new global::app.goal.step.line.@this { Number = lineNumber, Indent = (raw.Length - trimmed.Length) / 4 },
@@ -581,7 +580,6 @@ public sealed partial class @this
                 step = new Step(context.App.type.list)
                 {
                     Goal = step.Goal,
-                    List = step.List,
                     Index = step.Index,
                     Text = step.Text + "\n" + trimmed.TrimEnd(),
                     Line = step.Line,
@@ -596,7 +594,6 @@ public sealed partial class @this
                 step = new Step(context.App.type.list)
                 {
                     Goal = step.Goal,
-                    List = step.List,
                     Index = step.Index,
                     Text = step.Text + "\n" + trimmed[1..].TrimEnd(),
                     Line = step.Line,
