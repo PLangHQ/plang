@@ -22,25 +22,32 @@ public sealed class @this : duration.@this, global::app.type.item.ICreate<@this>
         return null;
     }
 
-    /// <summary>The span a text in ISO 8601 spells (<c>PT30S</c>, <c>-P1DT2H</c>); null for any other text, and for
-    /// years and months.</summary>
+    /// <summary>The span a text in ISO 8601 spells (<c>PT30S</c>, <c>-P1DT2H</c>); null for any other text: years and
+    /// months, a text ending in its <c>P</c> or <c>T</c>, a unit written twice.</summary>
     internal static System.TimeSpan? Read(string s)
     {
         bool negative = s.StartsWith('-');
         if (negative) s = s[1..];
-        if (s.Length < 2 || s[0] != 'P') return null;
+        if (s.Length < 2 || s[0] != 'P' || s[^1] == 'T') return null;
         s = s[1..];
         double days = 0, hours = 0, minutes = 0, seconds = 0;
         bool inTime = false;
+        var units = "";
         int i = 0;
         while (i < s.Length)
         {
-            if (s[i] == 'T') { inTime = true; i++; continue; }
+            if (s[i] == 'T')
+            {
+                if (inTime) return null;
+                inTime = true; i++; continue;
+            }
             int start = i;
             while (i < s.Length && (char.IsDigit(s[i]) || s[i] == '.')) i++;
             if (i == start || i >= s.Length) return null;
             if (!double.TryParse(s[start..i], System.Globalization.NumberStyles.Number,
                 System.Globalization.CultureInfo.InvariantCulture, out var n)) return null;
+            if (units.Contains(s[i])) return null;
+            units += s[i];
             switch (s[i])
             {
                 case 'Y':

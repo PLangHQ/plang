@@ -35,6 +35,10 @@ public class LiteralStandardFormTests
     [Arguments("\"5s\"", "text")]
     [Arguments("\"hello\"", "text")]
     [Arguments("\"P1Y\"", "text")]
+    [Arguments("\"PT\"", "text")]
+    [Arguments("\"P1DT\"", "text")]
+    [Arguments("\"P1D1D\"", "text")]
+    [Arguments("\"PT1H1H\"", "text")]
     [Arguments("\"2026-01-01 10:00:00\"", "text")]
     public async Task AnUnannotatedLiteralInAnItemSlot_IsTypedByItsStandardForm(string literal, string type)
         => await Assert.That(await ValueTypeOf(literal)).IsEqualTo(type);
