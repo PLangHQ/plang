@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "one finding: duration's IsStandard rides iso.Read, which accepts 'PT', 'P1DT' and repeated units, so a quoted 'PT' is typed duration; date, datetime and time are strict" }
