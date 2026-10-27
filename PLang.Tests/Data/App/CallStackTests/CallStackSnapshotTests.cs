@@ -297,7 +297,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
             await Assert.That(frames[1].Step).IsSameReferenceAs(dg1.Step[0]);
             await Assert.That(frames[1].Action).IsNull();                  // the step's frame
             await Assert.That(frames[5].Goal!.Name).IsEqualTo("FrInner");
-            await Assert.That((int)frames[5].Index.ToInt32()).IsEqualTo(0);
+            await Assert.That(frames[5].Action!.Index).IsEqualTo(0);
             await Assert.That((int)frames[5].Depth.ToInt32()).IsEqualTo(6);
         }
     }

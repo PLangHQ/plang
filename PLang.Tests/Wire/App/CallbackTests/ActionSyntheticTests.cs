@@ -36,7 +36,8 @@ public class ActionSyntheticTests
 
         await using var s1 = app.actor.list.User.Context.call.Push(synthetic, await app.actor.list.User.Context.call.Setting());
         await Assert.That(s1.Action!.Synthetic).IsTrue();
-        await Assert.That(s1.IsResumable.Value).IsFalse();
+        // a frame's place is its action's own index; an action no step holds has none
+        await Assert.That(s1.Action!.Index).IsNull();
     }
 
     [Test] public async Task SnapshotWireSerializer_DropsSyntheticFrames()
