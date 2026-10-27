@@ -1,21 +1,19 @@
-/ Fix, then go on from the same step: Work's first step throws while 'workspace/broken.txt' exists. Its handler fixes the
-/ cause (deletes the file), then starts the error's callback, which goes on from the step that threw, in an app of its
-/ own: the step runs again, no longer throws, and that run goes on to its end, through this goal too, answering
-/ "completed". The callback is the run as it stood at the throw, so %resumed% is set only here, in the asker.
+/ Fix, then go on from the same step: Work reads a file that isn't there yet, and its handler fixes the cause (writes
+/ the file), then starts the error's callback. The callback goes on from the read, in an app of its own: the read runs
+/ again, finds the file, and the run goes on to its end, answering what it read. The handler checks that answer; the
+/ resumed run never reaches the handler, as its read no longer fails.
 Start
-- write "broken" to file 'workspace/broken.txt'
 - call Work
-- if %resumed% is not empty
-    - assert %resumed% equals "completed", "the callback's run should have gone on to its end"
-- return "completed"
 
-/ The step that throws while the file exists, its handler the fix.
+/ The step that fails while the file is missing, its handler the fix.
 Work
-- if file 'workspace/broken.txt' exists
-    - throw error "boom", on error call CaptureCallback
+- read file 'workspace/needed.txt', write to %content%, on error call CaptureCallback
+- return %content%
 
-/ The fix, then the run goes on from the step that threw.
+/ The fix, then the run goes on from the step that failed.
 CaptureCallback
-- delete file 'workspace/broken.txt'
+- write "fixed" to file 'workspace/needed.txt'
 - set %cb% = %!error.callback%
 - callback.start callback=%cb%, write to %resumed%
+- assert %resumed% equals "fixed", "the callback's run should go on from the read"
+- delete file 'workspace/needed.txt'
