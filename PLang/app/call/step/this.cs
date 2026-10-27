@@ -21,8 +21,6 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
     [Store, Out, Debug]
     public override global::app.goal.step.@this? Step { get; }
 
-    /// <summary>The pure core — a step's frame passes through; nothing else converts into one.</summary>
-    public static new @this? Create(object? raw) => raw as @this;
 
     /// <summary>A step's frame passes through; a stored one's record comes back as one, made under the current frame of
     /// the stack <paramref name="data"/>'s context calls, not entered.</summary>

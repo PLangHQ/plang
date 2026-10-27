@@ -453,9 +453,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         return ValueTask.CompletedTask;
     }
 
-    /// <summary>The pure core — a frame passes through; nothing else converts into one.</summary>
-    public static @this? Create(object? raw) => raw as @this;
-
     /// <summary>A frame passes through; a stored frame comes back through its own kind's Create (a goal's, a step's, an
     /// action's, a binding's, an isolated one), the type it was stored as.</summary>
     public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data) => raw as @this;

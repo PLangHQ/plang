@@ -20,8 +20,6 @@ public class @this : call.@this, global::app.type.item.ICreate<@this>
         global::app.actor.context.@this context)
         : base(record, type, stack, context) { }
 
-    /// <summary>The pure core — a binding passes through; nothing else converts into one.</summary>
-    public static new @this? Create(object? raw) => raw as @this;
 
     /// <summary>A binding passes through; a stored binding's record comes back as one, made under the current frame of
     /// the stack <paramref name="data"/>'s context calls, not entered.</summary>

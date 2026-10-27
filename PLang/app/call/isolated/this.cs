@@ -16,8 +16,6 @@ public sealed class @this : binding.@this, global::app.type.item.ICreate<@this>
     private @this(global::app.type.item.dict.@this record, global::app.type.@this type, list.@this stack, global::app.actor.context.@this context)
         : base(record, type, stack, context) { }
 
-    /// <summary>The pure core — an isolated frame passes through; nothing else converts into one.</summary>
-    public static new @this? Create(object? raw) => raw as @this;
 
     /// <summary>An isolated frame passes through; a stored one's record comes back as one, made under the current frame of
     /// the stack <paramref name="data"/>'s context calls, not entered.</summary>
