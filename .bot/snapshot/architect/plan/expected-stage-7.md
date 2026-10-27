@@ -188,6 +188,18 @@ Checks: one door writes the snapshot (pattern 7), no part's Store goes async, Ca
 ```
 Checks: written keyed (the snapshot view names a Data by where it is held, View.cs:249–251); the binding's `%item%` and a goal call's parameters come back by name; reflection finds one member named for it; AFramesOwnVariables and AFramesVariable green.
 
+## After Ingi's 162 (written before the coder reports; not sent)
+
+```csharp
+// type/item/signature: no View member; Write and ToSigningBytes as on runtime2 (no "view" key)
+// module/signing/sign.cs: internal View View { get; init; } = View.Out stays: the view the signer hashes in
+// data/schema/signature.cs: the view verify re-hashes in, and "at rest", decided once at the read —
+//   the signed value says it is a snapshot (its type, inside the hash) → View.Snapshot, at rest
+//   else read from plang's store (ctx.View == View.Store)       → View.Store, at rest
+//   else                                                         → View.Out, live (window, replay)
+```
+Checks: no field names the view; no type-name compare decides "a snapshot" (the value's own type answers it, by a door the coder names first); a snapshot file older than the signing window resumes; a second resume of one snapshot isn't a replay; a store row and a wire message verify as before stage 9; the Debug pin gone.
+
 ## Not in this stage
 
 Question 3 (a loop goes on at its item; a held call comes back where it was) and 4b (goal, step and module properties).
