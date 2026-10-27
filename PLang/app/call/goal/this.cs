@@ -19,6 +19,7 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
         : base(node, type, stack, context) => Goal = Placed(node, context).Goal;
 
     /// <summary>The goal it runs.</summary>
+    [Store, Out, Debug]
     public override global::app.goal.@this? Goal { get; }
 
     /// <summary>The pure core — a goal's frame passes through; nothing else converts into one.</summary>

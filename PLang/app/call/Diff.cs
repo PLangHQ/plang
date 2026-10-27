@@ -5,6 +5,6 @@ namespace app.call;
 /// pre-mutation value; the current value lives on Variables. For scalar-only capture
 /// (default), Before is the raw scalar; for non-scalar values (lists, dicts, objects),
 /// Before is a summary string like <c>"&lt;List&lt;int&gt; @ 5042 items&gt;"</c> unless
-/// the setting's <c>diff.deep</c> is on, in which case Before is a deep clone.
+/// the setting's <c>diff.deep</c> is on, in which case Before is a deep clone. In a trace it shows its name and when.
 /// </summary>
-public sealed record Diff(string Name, object? Before, DateTimeOffset At);
+public sealed record Diff([property: Out, Debug] string Name, object? Before, [property: Out, Debug] DateTimeOffset At);
