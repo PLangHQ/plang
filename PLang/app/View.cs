@@ -44,10 +44,6 @@ public abstract class View
     /// (a server's binding label is not API surface).</summary>
     internal virtual string? Name(global::app.data.@this record) => null;
 
-    /// <summary>The type <paramref name="record"/> shows under in this view: its value's, or its error's when it failed.</summary>
-    internal virtual global::app.type.@this? Type(global::app.data.@this record, global::app.actor.context.@this context)
-        => record.Error?.Type ?? record.Type;
-
     /// <summary>Whether <paramref name="type"/> declares what it shows in this view: any wire tag, or (in a dump) a
     /// <c>[Debug]</c> member.</summary>
     internal virtual bool Declares(System.Type type) => Tagged(type);
@@ -203,17 +199,10 @@ public abstract class View
         internal override System.Threading.Tasks.ValueTask Output(global::app.type.item.@this value, global::app.type.format.IWriter writer)
             => Found(value.GetType()) ? value.Members(writer) : writer.Write(value);
 
-        // a found value whose type holds a key kind writes its key, so its record shows under that kind: what reads it
-        // back reads a key, and the type finds the value from it. A type that holds none (a file) is its own key.
-        internal override global::app.type.@this? Type(global::app.data.@this record, global::app.actor.context.@this context)
-            => record.Error == null && record.Peek() is { } value && Found(value.GetType())
-               && base.Type(record, context) is { IsNull: false } type && context.App.type.list[type.Name].kind["key"] is { } key
-                ? context.App.type.list.Of(key, context)
-                : base.Type(record, context);
-
         // a value found elsewhere is read from its key, which may name a location (a goal's): each location a key
         // names is loaded by its owner's type first, so the key's own read finds what it names without waiting. A
-        // record that is not one (a frame) holds its found members the same way.
+        // record that is not one (a frame) holds its found members the same way. A type whose class loads nothing from
+        // a location (a file, read again when used) has nothing to load.
         internal override System.Threading.Tasks.Task<global::app.data.@this> Load(global::app.type.@this type, string raw,
             global::app.actor.context.@this context)
             => type.ClrType is { } clr ? Load(clr, Key(raw, context), context) : base.Load(type, raw, context);
@@ -241,9 +230,10 @@ public abstract class View
                 if (key.Get(entry.WireName, context)?.Peek() is not { } member) continue;
                 var declared = System.Nullable.GetUnderlyingType(entry.Property.PropertyType) ?? entry.Property.PropertyType;
                 var loaded = Found(declared) ? await Load(declared, member as global::app.type.item.dict.@this, context)
-                    : Found(clr) && typeof(global::app.type.item.path.@this).IsAssignableFrom(declared)
+                    : Found(clr) && types[clr] is { Loads: true } owner
+                      && typeof(global::app.type.item.path.@this).IsAssignableFrom(declared)
                       && types[declared].Make(member, context) is global::app.type.item.path.@this location
-                        ? await types[clr].Load(location, context.App)
+                        ? await owner.Load(location, context.App)
                         : context.Ok();
                 if (!loaded.Success) return loaded;
             }

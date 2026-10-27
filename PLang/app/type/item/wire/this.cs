@@ -67,6 +67,10 @@ public class @this : global::app.type.item.source
     private protected override global::app.type.item.@this Read(actor.context.@this context)
         => _reader.Read(this, new global::app.type.reader.ReadContext(context, Type.Template, Variable: Variable, IsBuilt: IsBuilt) { View = _view });
 
+    // What the slice's view needs loaded before it is read (a goal's .pr, in a snapshot).
+    private protected override System.Threading.Tasks.Task<global::app.data.@this> Load(actor.context.@this context)
+        => _view.Load(Type, (string)Raw, context);
+
     // The decoded value, with the caller's context: the kind owns the decode (one Parse, the same
     // value Value() materializes to); a kind that declines (csv, png) falls to the type reader.
     private protected global::app.type.item.@this Decoded(actor.context.@this context)

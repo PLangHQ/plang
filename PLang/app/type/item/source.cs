@@ -220,6 +220,13 @@ public class source : @this
                 value.history.Add(this);
                 return await value.Value(data);
             }
+            // what the read needs loaded first (a goal's .pr, in a snapshot), so the type's reader finds it held
+            var held = await Load(asking);
+            if (!held.Success)
+            {
+                data.Fail(held.Error!);
+                return data.Empty;
+            }
             var item = Read(asking);
             if (ReferenceEquals(item, this)) return this;
             // Container round-trip guard: a value DECLARED a container (dict/list) that
@@ -305,6 +312,11 @@ public class source : @this
         var reader = new global::app.type.format.value.Reader(_value);
         return ctx.View.Reader(Type, kind, context).Read(ref reader, kind, ctx);
     }
+
+    /// <summary>What the raw needs loaded before it is read, in the view it was written for; a plain source's content
+    /// needs nothing (a wire's slice is read in its view, which may: a goal's <c>.pr</c> in a snapshot).</summary>
+    private protected virtual System.Threading.Tasks.Task<global::app.data.@this> Load(actor.context.@this context)
+        => System.Threading.Tasks.Task.FromResult(context.Ok());
 
     /// <summary>Re-birth under a new declaration — the source owns its own re-typing (kills the
     /// type entity reaching into a source's raw/format). The wire override carries its captured
