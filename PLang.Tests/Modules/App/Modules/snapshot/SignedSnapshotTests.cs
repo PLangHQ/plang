@@ -209,41 +209,6 @@ public class SignedSnapshotTests
         await Assert.That(result.Error!.Key).IsEqualTo("SnapshotUnsigned");
     }
 
-    // Only a recorded snapshot view reads at rest: a Data signed for plang's own store that arrives over the wire still
-    // meets the window and the replay check.
-    [Test]
-    public async Task AStoreSignedData_ThroughTheWire_MeetsTheWindowAndTheReplay()
-    {
-        await using var app = App();
-        var context = app.actor.list.User.Context;
-        var file = await Plang(await Signed(context, store: true), context);
-
-        await (await Read(file, context)).IsSuccess();
-        var again = await Read(file, context);
-        await again.IsFailure();
-        await Assert.That(again.Error!.Key).IsEqualTo("NonceReplay");
-
-        var fresh = await Plang(await Signed(context, store: true), context);
-        await Short(context);
-        await Task.Delay(50);
-        var late = await Read(fresh, context);
-        await late.IsFailure();
-        await Assert.That(late.Error!.Key).IsEqualTo("Expired");
-    }
-
-    [Test]
-    public async Task AFlippedView_Fails()
-    {
-        await using var app = App();
-        var context = app.actor.list.User.Context;
-        var file = System.Text.Encoding.UTF8.GetString(await Plang(await Signed(context, store: false), context));
-        await Assert.That(file).Contains("\"view\":\"out\"");
-
-        var read = await Read(System.Text.Encoding.UTF8.GetBytes(file.Replace("\"view\":\"out\"", "\"view\":\"snapshot\"")), context);
-
-        await read.IsFailure();
-    }
-
     [Test]
     public async Task ASensitiveLeaf_ComesBackNull()
     {

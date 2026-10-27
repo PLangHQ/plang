@@ -2582,8 +2582,7 @@ class app.type.item.signature.this : app.type.item.this, app.type.item.ICreate<a
   Signature : app.type.item.binary.this { get; }
   Signed(app.type.item.binary.this signature) : app.type.item.signature.this
   Value : app.data.this { get; }
-  View : app.View { get; }
-  ctor(app.type.this type, app.data.this value, app.type.item.text.this algorithm, app.type.item.text.this nonce, app.type.item.datetime.this created, app.type.item.text.this identity, app.module.crypto.type.hash.this hash, app.type.item.binary.this signature, app.View view, app.type.item.datetime.this expires = …, app.type.item.list.this contracts = …, app.type.item.signature.Origin origin = …, app.type.item.duration.this window = …)
+  ctor(app.type.this type, app.data.this value, app.type.item.text.this algorithm, app.type.item.text.this nonce, app.type.item.datetime.this created, app.type.item.text.this identity, app.module.crypto.type.hash.this hash, app.type.item.binary.this signature, app.type.item.datetime.this expires = …, app.type.item.list.this contracts = …, app.type.item.signature.Origin origin = …, app.type.item.duration.this window = …)
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean

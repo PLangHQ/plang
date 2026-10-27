@@ -85,12 +85,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     }
 
     /// <summary>One step down: <c>identity</c> names the signer only of a Data this signature verifies — the Data it is
-    /// read off (its bearer) is verified first, and a verify that fails is the answer, never the name; <c>view</c> is
-    /// the view's name; every other member as any item answers it.</summary>
+    /// read off (its bearer) is verified first, and a verify that fails is the answer, never the name; every other
+    /// member as any item answers it.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
     {
-        if (string.Equals(key, nameof(View), System.StringComparison.OrdinalIgnoreCase))
-            return new global::app.data.@this(key, View.ToString().ToLowerInvariant(), parent: parent);
         if (string.Equals(key, nameof(Identity), System.StringComparison.OrdinalIgnoreCase))
         {
             if (parent.Parent is not { } bearer)
@@ -106,10 +104,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The signing identity (public-key name).</summary>
     public text Identity { get; }
 
-    /// <summary>The view the value was hashed in when it was signed — inside the signed bytes by its name, so verify
-    /// re-hashes in it whatever carries the value; a snapshot's is read at rest. Born with it, as its signer named it.
-    /// Read in plang as its name (<c>%x!signature.view%</c>).</summary>
-    public global::app.View View { get; }
+    /// <summary>The view the value is re-hashed in to verify it: the one its own type is written in (a snapshot's), else
+    /// the one its origin says — plang's own store's, else the wire's.</summary>
+    internal global::app.View Hashed
+        => Value.Type?.View ?? (Origin.Value == global::app.type.item.signature.Origin.Stored ? global::app.View.Store : global::app.View.Out);
 
     /// <summary>Contracts asserted by this signature (e.g. <c>["C0"]</c>).</summary>
     public global::app.type.item.list.@this? Contracts { get; }
@@ -122,7 +120,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public binary Signature { get; }
 
     /// <summary>A signature over <paramref name="value"/>, born holding <paramref name="type"/> — the app's
-    /// <c>{signature, &lt;algorithm&gt;}</c> — and the <paramref name="view"/> it was hashed in.</summary>
+    /// <c>{signature, &lt;algorithm&gt;}</c>.</summary>
     public @this(
         global::app.type.@this type,
         global::app.data.@this value,
@@ -132,12 +130,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         text identity,
         hash hash,
         binary signature,
-        global::app.View view,
         datetime? expires = null,
         global::app.type.item.list.@this? contracts = null,
         global::app.type.item.signature.Origin origin = global::app.type.item.signature.Origin.Signed,
         global::app.type.item.duration.@this? window = null)
-        : this(type, value, algorithm, nonce, created, identity, hash, signature, expires, contracts, origin, window, view, new Arrival())
+        : this(type, value, algorithm, nonce, created, identity, hash, signature, expires, contracts, origin, window, new Arrival())
     {
     }
 
@@ -155,7 +152,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         global::app.type.item.list.@this? contracts,
         global::app.type.item.signature.Origin origin,
         global::app.type.item.duration.@this? window,
-        global::app.View view,
         Arrival arrival)
         : base(type)
     {
@@ -177,7 +173,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         _expires = expires;
         Contracts = contracts;
         _window = window;
-        View = view;
     }
 
     /// <summary>A copy of this layer with the signature bytes filled in — used by
@@ -191,7 +186,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     // This layer again, with the value it signs or its signature bytes in place of its own — every other member as it is.
     private @this Copy(global::app.data.@this? value = null, binary? signature = null)
-        => new(Type, value ?? Value, Algorithm, Nonce, Created, Identity, Hash, signature ?? Signature, _expires, Contracts, Origin.Value, _window, View, _arrival);
+        => new(Type, value ?? Value, Algorithm, Nonce, Created, Identity, Hash, signature ?? Signature, _expires, Contracts, Origin.Value, _window, _arrival);
 
     // The read this layer arrived by, shared by every copy of it: whether its nonce was presented, and the answer.
     private readonly Arrival _arrival;
@@ -246,7 +241,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         w.Name("created"); await Created.Output(w);
         if (_expires is { } exp) { w.Name("expires"); await exp.Output(w); }
         w.Name("identity"); await Identity.Output(w);
-        w.Name("view"); w.String(View.ToString().ToLowerInvariant());
         // Contracts are bare strings on the wire (and in ToSigningBytes), not
         // data records — emit the strings directly.
         if (Contracts is not null)

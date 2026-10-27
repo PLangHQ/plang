@@ -34,8 +34,7 @@ public sealed class TestSigning : global::app.module.signing.code.ISigning
             identity: action.Context.Text("test-public-key"),
             hash: new global::app.module.crypto.type.hash.@this(System.Array.Empty<byte>(),
                 (global::app.module.crypto.type.hash.kind.@this)action.Context.App.type.list[typeof(global::app.module.crypto.type.hash.@this)].kind["keccak256"]!),
-            signature: new global::app.type.item.binary.@this(System.Array.Empty<byte>(), action.Context.App.type.list[typeof(global::app.type.item.binary.@this)]),
-            view: view);
+            signature: new global::app.type.item.binary.@this(System.Array.Empty<byte>(), action.Context.App.type.list[typeof(global::app.type.item.binary.@this)]));
         // the Data it settled, holding its layer — as the real signer answers
         return data.Copy(unsigned);
     }

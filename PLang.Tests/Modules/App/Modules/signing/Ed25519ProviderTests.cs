@@ -102,8 +102,7 @@ public class Ed25519ProviderTests : System.IAsyncDisposable
             created: new global::app.type.item.datetime.@this(DateTimeOffset.UnixEpoch, app.type.list[typeof(global::app.type.item.datetime.@this)]),
             identity: app.actor.list.User.Context.Text(identityPublicKey),
             hash: new global::app.module.crypto.type.hash.@this(Array.Empty<byte>(), (global::app.module.crypto.type.hash.kind.keccak256.@this)app.type.list[typeof(global::app.module.crypto.type.hash.@this)].kind["keccak256"]!),
-            signature: new global::app.type.item.binary.@this(Array.Empty<byte>(), app.type.list[typeof(global::app.type.item.binary.@this)]),
-            view: global::app.View.Out);
+            signature: new global::app.type.item.binary.@this(Array.Empty<byte>(), app.type.list[typeof(global::app.type.item.binary.@this)]));
 
     // A copy of a signed signature with one field swapped — for the mismatch tests.
     private global::app.type.item.signature.@this Rebuilt(global::app.type.item.signature.@this s,
@@ -111,7 +110,7 @@ public class Ed25519ProviderTests : System.IAsyncDisposable
         => new(s.Type, s.Value, s.Algorithm,
             nonce == null ? s.Nonce : app.actor.list.User.Context.Text(nonce), s.Created,
             identity == null ? s.Identity : app.actor.list.User.Context.Text(identity),
-            s.Hash, signature ?? s.Signature, s.View, s.Expires, s.Contracts);
+            s.Hash, signature ?? s.Signature, s.Expires, s.Contracts);
 
     private global::app.type.item.signature.@this Signed(KeyPair kp, string nonce = "nonce-1")
     {
