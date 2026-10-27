@@ -22,41 +22,38 @@ public class CallSnapshotTests : System.IAsyncDisposable
         return (app, action);
     }
 
+    // A frame as the snapshot writes it: its tagged members, its element as the key that finds it.
+    private static async Task<System.Text.Json.Nodes.JsonObject> Written(global::app.call.@this frame, global::app.actor.context.@this context)
+        => System.Text.Json.Nodes.JsonNode.Parse((string)(await global::app.type.item.wire.@this.Of(frame, global::app.View.Snapshot, context)).Raw)!.AsObject();
+
     [Test]
-    public async Task Call_Store_WritesItsGoal_AsAddressPlusHash_NotTheWholeGoal()
+    public async Task Call_Store_WritesItsGoal_AsItsKey_NotTheWholeGoal()
     {
         var (app, action) = BuildLiveAction("StubGoal");
         var stack = app.actor.list.User.Context.call;
         await using var call = stack.Push(action, await stack.Setting());
 
-        var snap = new Snapshot(app.actor.list.User.Context);
-        call.Store(snap, app.actor.list.User.Context);
+        var json = await Written(call, app.actor.list.User.Context);
 
-        // the goal is the name a call reaches it by, and its hash — never the goal written out
-        await Assert.That(await snap.Node("goal").Text("address")).IsEqualTo(action.Step!.Goal!.Address);
-        await Assert.That(await snap.Node("goal").Text("hash")).IsEqualTo(action.Step.Goal.Hash);
-        await Assert.That(snap.Has("steps")).IsFalse();
+        // the goal is what finds it — its name and hash — never the goal written out
+        await Assert.That(json["action"]!["step"]!["goal"]!["name"]!.GetValue<string>()).IsEqualTo("StubGoal");
+        await Assert.That(json["action"]!["step"]!["goal"]!["hash"]!.GetValue<string>()).IsEqualTo(action.Step!.Goal!.Hash);
+        await Assert.That(json.ToJsonString()).DoesNotContain("test step");
     }
 
-    // A frame's captured position is written exactly so — its facts ride as the plain tokens they always have,
-    // whatever their plang faces are.
+    // A frame is written as what it keeps: its element, never an id, a place of its own, its caller or its children.
     [Test]
-    public async Task Call_Capture_WritesItsExactShape()
+    public async Task Call_Capture_WritesOnlyWhatItKeeps()
     {
         var (app, action) = BuildLiveAction("G", "a step");
-        app.Compact();
         var user = app.actor.list.User.Context;
-        await using var call = app.actor.list.User.Context.call.Push(action, await app.actor.list.User.Context.call.Setting());
-        var snap = new Snapshot(user);
-        call.Store(snap, app.actor.list.User.Context);
+        await using var call = user.call.Push(action, await user.call.Setting());
 
-        using var ms = new MemoryStream();
-        await user.Format("application/json").Encode(ms, user.Ok(snap), user);
-        var json = System.Text.Encoding.UTF8.GetString(ms.ToArray()).Replace(call.Id.ToString()!, "ID");
+        var json = await Written(call, user);
 
-        await Assert.That(json).IsEqualTo(
-            "{\"id\":\"ID\",\"type\":{\"name\":\"app.call.action\"},\"goal\":{\"address\":\"/G\",\"hash\":\"" + action.Step!.Goal!.Hash
-            + "\"},\"step\":0,\"action\":{\"index\":0,\"module\":\"test\",\"name\":\"test\"},\"handled\":false}");
+        await Assert.That(json.ContainsKey("action")).IsTrue();
+        foreach (var member in new[] { "id", "goal", "step", "index", "handled", "caller", "children", "current" })
+            await Assert.That(json.ContainsKey(member)).IsFalse();
     }
 
     [Test]
@@ -66,11 +63,10 @@ public class CallSnapshotTests : System.IAsyncDisposable
         var stack = app.actor.list.User.Context.call;
         await using var call = stack.Push(action, await stack.Setting());
 
-        var snap = new Snapshot(app.actor.list.User.Context);
-        call.Store(snap, app.actor.list.User.Context);
+        var json = await Written(call, app.actor.list.User.Context);
 
-        await Assert.That(await snap.Int("step")).IsEqualTo(0);
-        await Assert.That(await snap.Node("action").Int("index")).IsEqualTo(0);
+        await Assert.That(json["action"]!["index"]!.GetValue<int>()).IsEqualTo(0);
+        await Assert.That(json["action"]!["step"]!["index"]!.GetValue<int>()).IsEqualTo(0);
     }
 
     [Test]
@@ -115,8 +111,8 @@ public class CallSnapshotTests : System.IAsyncDisposable
 
             var started = await snap.Start(dst, dst.actor.list.User.Context);
             await Assert.That(started.Success).IsFalse();
-            // the goal list's own answer, whole
-            await Assert.That(started.Error!.Key).IsEqualTo("NotFound");
+            // the goal's key finds no goal held from its .pr
+            await Assert.That(started.Error!.Key).IsEqualTo("GoalNotFound");
         }
     }
 
@@ -138,9 +134,9 @@ public class CallSnapshotTests : System.IAsyncDisposable
             dst.goal.list.Add(dstGoal);
 
             var started = await snap.Start(dst, dst.actor.list.User.Context);
-            // a keyed program error: the resume's result carries CallbackGoalHashMismatch, not ServiceError
+            // the goal's key refuses a goal changed since the save
             await Assert.That(started.Success).IsFalse();
-            await Assert.That(started.Error!.Key).IsEqualTo("CallbackGoalHashMismatch");
+            await Assert.That(started.Error!.Key).IsEqualTo("GoalHashMismatch");
         }
     }
 
@@ -205,13 +201,12 @@ public class CallSnapshotTests : System.IAsyncDisposable
         (await app.actor.list.User.Context.call.Setting()).Timing = true;
         await using var call = app.actor.list.User.Context.call.Push(action, await app.actor.list.User.Context.call.Setting());
 
-        var snap = new Snapshot(app.actor.list.User.Context);
-        call.Store(snap, app.actor.list.User.Context);
+        var json = await Written(call, app.actor.list.User.Context);
 
         // Drop bucket: timing tier and any in-flight network state never reach the snapshot.
-        await Assert.That(snap.Has("startedAt")).IsFalse();
-        await Assert.That(snap.Has("completedAt")).IsFalse();
-        await Assert.That(snap.Has("duration")).IsFalse();
-        await Assert.That(snap.Has("inFlight")).IsFalse();
+        await Assert.That(json.ContainsKey("startedAt")).IsFalse();
+        await Assert.That(json.ContainsKey("completedAt")).IsFalse();
+        await Assert.That(json.ContainsKey("duration")).IsFalse();
+        await Assert.That(json.ContainsKey("inFlight")).IsFalse();
     }
 }

@@ -13,22 +13,22 @@ public class @this : call.@this, global::app.type.item.ICreate<@this>
         IEnumerable<global::app.data.@this>? names, global::app.goal.step.action.@this? callee)
         : base(null, type, caller, stack.Current, stack, null, names, callee) { }
 
-    /// <summary>A binding come back from a snapshot: its stored <paramref name="node"/> read whole, under
+    /// <summary>A binding come back from a snapshot: its stored <paramref name="record"/> read onto it, under
     /// <paramref name="stack"/>'s current frame. The call it was pushed for is not stored: it was read only while that
     /// call bound its parameters, before anything ran under the binding.</summary>
-    private protected @this(global::app.snapshot.@this node, global::app.type.@this type, list.@this stack,
+    private protected @this(global::app.type.item.dict.@this record, global::app.type.@this type, list.@this stack,
         global::app.actor.context.@this context)
-        : base(node, type, stack, context) { }
+        : base(record, type, stack, context) { }
 
     /// <summary>The pure core — a binding passes through; nothing else converts into one.</summary>
     public static new @this? Create(object? raw) => raw as @this;
 
-    /// <summary>A binding passes through; a stored binding's node comes back as one, under the current frame of the stack
-    /// <paramref name="data"/>'s context calls.</summary>
+    /// <summary>A binding passes through; a stored binding's record comes back as one, made under the current frame of
+    /// the stack <paramref name="data"/>'s context calls, not entered.</summary>
     public static new @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data) => raw switch
     {
         @this binding => binding,
-        global::app.snapshot.@this node => new @this(node, type ?? data.Context.App.type.list[typeof(@this)], data.Context.call, data.Context),
+        global::app.type.item.dict.@this record => new @this(record, type ?? data.Context.App.type.list[typeof(@this)], data.Context.call, data.Context),
         _ => null,
     };
 
