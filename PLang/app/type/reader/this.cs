@@ -120,9 +120,12 @@ public abstract class @this
     /// classes read this way, and a record a type can't be made from declines loudly.
     /// </summary>
     public ITypeReader Reader(string typeName, string? kind, actor.context.@this context)
+    {
         // A type that ships no reader of its own reads its stored value as a record and makes itself from it
         // (the item owns how it's made) — the settings classes read this way.
-        => Registered(typeName, kind, context) ?? new Record(Narrowed(typeName, kind, context));
+        var name = Narrowed(typeName, kind, context);
+        return Typed(name, kind, null) ?? new Record(name);
+    }
 
     /// <summary>The reader <paramref name="typeName"/>/<paramref name="kind"/> registers — binary content narrowed to
     /// the type its kind names first; null when the type registers none.</summary>
