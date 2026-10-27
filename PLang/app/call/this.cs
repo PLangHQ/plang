@@ -32,7 +32,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     private Stopwatch? _stopwatch;
     private readonly global::app.call.list.@this _stack;
     private readonly @this? _previousCurrent;
-    private readonly Variables? _diffSource;
+    // The variables whose changes this frame captures as its diffs (none: it captures none).
+    private readonly Variables? _store;
     // A diff keeps a deep copy of the value before (the diff.deep setting when pushed), else a summary.
     private bool _deep;
     private Dictionary<global::System.Type, object>? _items;
@@ -154,8 +155,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // with — what its runner supplied (a goal call's parameters, a tool's arguments).
     private readonly Dictionary<string, global::app.data.@this> _variables = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _arguments = new(StringComparer.OrdinalIgnoreCase);
-    // The action this frame was pushed to run (a tool invocation) — the one call its supplied names are FOR.
-    private readonly global::app.goal.step.action.@this? _for;
+    // The call this frame was pushed for (a tool invocation, a goal call) — the one call its supplied names are for.
+    private readonly global::app.goal.step.action.@this? _call;
 
     /// <summary>Whether this frame counts toward the chain's depth (<see cref="Depth"/>, the depth limit) — a goal's,
     /// a step's or an action's does; a frame that only binds names does not.</summary>
@@ -192,7 +193,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// Every frame's making: it holds back-references to the owning stack and the frame it goes back to when it ends
     /// (<paramref name="previous"/>, the frame current when it was pushed), so DisposeAsync can restore them and remove
     /// self from Children when history is off. <paramref name="names"/> are the variables it is born with; its
-    /// <paramref name="id"/> is the one it was saved with, or a new one (8 hex chars, short enough for log lines).
+    /// <paramref name="id"/> is the one it was saved with, or a new one (8 hex chars, short enough for log lines);
+    /// <paramref name="store"/> the variables whose changes it captures; <paramref name="call"/> the call it was pushed for.
     /// </summary>
     private protected @this(
         string? id,
@@ -200,17 +202,17 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         @this? caller,
         @this? previous,
         global::app.call.list.@this stack,
-        Variables? diffSource,
+        Variables? store,
         IEnumerable<global::app.data.@this>? names = null,
-        global::app.goal.step.action.@this? callee = null) : base(type)
+        global::app.goal.step.action.@this? call = null) : base(type)
     {
         _id = id ?? Guid.NewGuid().ToString("N")[..8];
         Caller = caller;
         _depth = (caller?._depth ?? 0) + (Deepens ? 1 : 0);
         _stack = stack;
         _previousCurrent = previous;
-        _diffSource = diffSource;
-        _for = callee;
+        _store = store;
+        _call = call;
         Tags = new global::app.type.item.dict.@this(stack.Dict);
         Errors = new global::app.error.list.@this(stack.Errors);
         property = new(stack.Properties);
@@ -233,7 +235,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             _stopwatch = Stopwatch.StartNew();
         }
 
-        if (_stack.IsDiffing(setting) && _diffSource != null)
+        if (_stack.IsDiffing(setting) && _store != null)
         {
             Diffs = new diff.@this();
             _deep = setting.Diff.Deep.Value;
@@ -252,7 +254,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>True when this frame was pushed FOR <paramref name="call"/> and born with <paramref name="name"/> — its
     /// runner supplied it (a tool's argument), so the supplied value wins over the call's own row.</summary>
     public bool Supplies(global::app.goal.step.action.@this call, string name)
-        => ReferenceEquals(_for, call) && _arguments.Contains(name);
+        => ReferenceEquals(_call, call) && _arguments.Contains(name);
 
     /// <summary>What <paramref name="name"/> holds, read from this frame outward — an inner frame's shadows an outer's.
     /// Case-insensitive.</summary>
@@ -308,7 +310,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// </summary>
     internal void Record(Variables store, string name, object? before)
     {
-        if (ReferenceEquals(store, _diffSource))
+        if (ReferenceEquals(store, _store))
             Diffs?.Add(new Diff(name, before, _deep));
     }
 
@@ -440,7 +442,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
         // AsyncLocal restore: only flip back if we're still the Current. If a parallel branch
         // has its own Current, we leave that alone.
-        _stack.RestoreCurrent(this, _previousCurrent);
+        _stack.Leave(this, _previousCurrent);
 
         return ValueTask.CompletedTask;
     }
