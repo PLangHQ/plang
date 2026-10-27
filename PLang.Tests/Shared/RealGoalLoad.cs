@@ -28,7 +28,7 @@ public static class RealGoalLoad
         // Write the .pr the way the real builder now does — through goal.Output (Store), not STJ —
         // so the test exercises the actual write path, not the soon-to-be-deleted PrWrite.
         // a goal is where its .pr is found: read as found in this app, at the .pr its path builds to
-        var found = goal.Pr?.Path is { } pr ? global::app.type.item.path.@this.Resolve(pr.Raw, app.actor.list.User.Context) : null;
+        var found = goal.Pr is { } pr ? global::app.type.item.path.@this.Resolve(pr.Raw, app.actor.list.User.Context) : null;
         return await Read(app, await app.actor.list.User.Context.Pr(goal), found);
     }
 

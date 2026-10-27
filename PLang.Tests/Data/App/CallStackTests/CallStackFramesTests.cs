@@ -142,7 +142,7 @@ public class CallStackFramesTests
             text = await src.Snapshot(context).Saved().Text(context);
         }
         // only the kept goal is on disk, built
-        var pr = System.IO.Path.Combine(folder, kept.Pr!.Path.Raw.TrimStart('/'));
+        var pr = System.IO.Path.Combine(folder, kept.Pr!.Raw.TrimStart('/'));
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(pr)!);
         System.IO.File.WriteAllText(pr, await context.Pr(kept));
 

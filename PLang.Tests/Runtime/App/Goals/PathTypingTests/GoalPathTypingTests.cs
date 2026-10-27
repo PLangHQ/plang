@@ -34,8 +34,8 @@ public class GoalPathTypingTests
             Name = "Test",
             Path = global::app.type.item.path.@this.Resolve("/Cache/Start.goal", context)
         };
-        await Assert.That(goal.Pr?.Path).IsNotNull();
-        var rel = goal.Pr!.Path.Relative(context).Raw.Replace('\\', '/');
+        await Assert.That(goal.Pr).IsNotNull();
+        var rel = goal.Pr!.Relative(context).Raw.Replace('\\', '/');
         await Assert.That(rel).IsEqualTo("/Cache/.build/start.pr");
     }
 
@@ -50,7 +50,7 @@ public class GoalPathTypingTests
             Name = "Test",
             Path = global::app.type.item.path.@this.Resolve("/Start.goal", context),
         };
-        var rel = goal.Pr!.Path.Relative(context).Raw.Replace('\\', '/');
+        var rel = goal.Pr!.Relative(context).Raw.Replace('\\', '/');
         // Init was a no-op — derived from Path, not the explicitly-passed PrPath.
         await Assert.That(rel).IsEqualTo("/.build/start.pr");
     }

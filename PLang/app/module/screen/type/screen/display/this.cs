@@ -197,7 +197,7 @@ public sealed class @this : screen.@this
         if (e["url"] is not JsonObject url)
             e["url"] = url = new JsonObject { ["path"] = e["url"]?.DeepClone() };
         var origin = url["origin"] as JsonObject ?? new JsonObject();
-        origin["pr"] = stack.Goal?.Pr?.Path.ToString();
+        origin["pr"] = stack.Goal?.Pr?.ToString();
         origin["goal"] = stack.Goal?.Name;
         origin["step"] = new JsonObject { ["index"] = step.Index, ["text"] = step.Text };
         url["origin"] = origin;

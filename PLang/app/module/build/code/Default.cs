@@ -203,8 +203,8 @@ public class Default : IBuilder
         var context = action.Context;
         var goal = (await action.Goal.Value())!;
 
-        var prPath = goal.Pr?.Path;
-        if (prPath == null)
+        var pr = goal.Pr;
+        if (pr == null)
             return context.Error(new global::app.error.ActionError("Goal has no Path set, cannot derive its .pr", "NoPrPath", 400));
 
         // Final safety net before persisting: the goal judges itself. Refusing to write the .pr is
@@ -213,7 +213,7 @@ public class Default : IBuilder
 
         // The goal is saved to its .pr; the file's format (goal's own) writes it — symmetric with the goal
         // reader's bare read.
-        var saveResult = await prPath.Save(context.Ok(goal), context);
+        var saveResult = await pr.Save(context.Ok(goal), context);
 
         var elapsed = _buildTimer.Elapsed;
         await context.Actor.Channel[global::app.channel.list.@this.Output].WriteText(
@@ -338,10 +338,10 @@ public class Default : IBuilder
     /// </summary>
     private static async Task MergePrData(Goal goal, actor.context.@this context)
     {
-        var prPath = goal.Pr?.Path;
-        if (prPath == null) return;
+        var pr = goal.Pr;
+        if (pr == null) return;
 
-        var readResult = await prPath.Read(context);
+        var readResult = await pr.Read(context);
         if (!readResult.Success) return;
 
         // File provider auto-deserializes .pr files into a single Goal. A .pr left
@@ -361,7 +361,7 @@ public class Default : IBuilder
             goal.Warning.Add(new global::app.warning.@this(context.App.type.list)
             {
                 Key = "CorruptPrFile",
-                Message = $"Failed to deserialize .pr file at {prPath}: {ex.Message}"
+                Message = $"Failed to deserialize .pr file at {pr}: {ex.Message}"
             });
             return;
         }
@@ -371,7 +371,7 @@ public class Default : IBuilder
             goal.Warning.Add(new global::app.warning.@this(context.App.type.list)
             {
                 Key = "CorruptPrFile",
-                Message = $"Failed to parse .pr file at {prPath}"
+                Message = $"Failed to parse .pr file at {pr}"
             });
             return;
         }

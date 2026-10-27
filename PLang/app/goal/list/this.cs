@@ -149,7 +149,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
                     $"Failed to parse goal file: {pr} — read produced {content.GetType().Name}, not a goal"));
 
             // the stamp holds the .pr the goal itself has
-            Add(goal, stat.Success && await stat.Value() is { } info && goal.Pr?.Path is { } path
+            Add(goal, stat.Success && await stat.Value() is { } info && goal.Pr is { } path
                 ? new stamp.stat(path, info) : new stamp.unknown());
             return await goal.on.load.After(goal, read, context);
         }
@@ -168,7 +168,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     // Adds `goal`, kept with what this list knows of the .pr it was read from.
     private void Add(goal.@this goal, stamp stamp)
     {
-        if (goal.Pr?.Path is not { } pr)
+        if (goal.Pr is not { } pr)
             throw new ArgumentException($"Goal '{goal.Name}' must have a Path set. Its .pr is derived from Path and is required for keying.");
         lock (_gate)
         {
@@ -295,7 +295,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
                 || canonical.Equals("/" + leaf, StringComparison.OrdinalIgnoreCase)
                 || canonical.Equals("/" + leaf + ".goal", StringComparison.OrdinalIgnoreCase));
         if (goals.FirstOrDefault(g => Written(g.Path?.ToString().Replace('\\', '/'))
-                                     || Written(g.Pr?.Path.ToString().Replace('\\', '/'))) is { } byPath)
+                                     || Written(g.Pr?.ToString().Replace('\\', '/'))) is { } byPath)
             return byPath;
 
         if (name.Contains('/') || name.Contains('\\'))
@@ -379,5 +379,5 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     // A goal is found by its .pr. It is a fact of the goal by the time the list holds it: its Path is set as it is
     // made (the reader, a build) and a sub-goal, whose .pr is its parent's, is never a row; nothing changes a held
     // goal's Path or Parent.
-    private protected override object? Key(object? row) => (row as goal.@this)?.Pr?.Path;
+    private protected override object? Key(object? row) => (row as goal.@this)?.Pr;
 }
