@@ -537,6 +537,26 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         typeof(@this).GetMethods(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static),
         m => m.Name == nameof(Named) && m.IsGenericMethodDefinition)!;
 
+    /// <summary>The one <paramref name="location"/> holds, as this type's class loads it (<c>ILoad</c>: a goal by its
+    /// <c>.goal</c>), read as <paramref name="app"/> itself; a type whose class loads nothing from a location answers
+    /// so. Bound once, on first use, like <see cref="Make(object?, global::app.data.@this)"/>.</summary>
+    internal System.Threading.Tasks.Task<global::app.data.@this> Load(item.path.@this location, global::app.@this app)
+        => (_load ??= ClrType is { } clr && System.Array.Exists(clr.GetInterfaces(),
+                i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.ILoad<>) && i.GenericTypeArguments[0] == clr)
+            ? _loading.MakeGenericMethod(clr).CreateDelegate<System.Func<item.path.@this, global::app.@this, System.Threading.Tasks.Task<global::app.data.@this>>>()
+            : (_, loading) => System.Threading.Tasks.Task.FromResult(loading.actor.list.System.Context.Error(
+                new global::app.error.@this($"a {Name} isn't loaded from a location", "NotSupported", 400))))(location, app);
+
+    private System.Func<item.path.@this, global::app.@this, System.Threading.Tasks.Task<global::app.data.@this>>? _load;
+
+    private static System.Threading.Tasks.Task<global::app.data.@this> Loaded<T>(item.path.@this location, global::app.@this app)
+        where T : item.@this, global::app.type.item.ILoad<T>
+        => T.Load(location, app);
+
+    private static readonly System.Reflection.MethodInfo _loading = System.Array.Find(
+        typeof(@this).GetMethods(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static),
+        m => m.Name == nameof(Loaded) && m.IsGenericMethodDefinition)!;
+
     private static readonly System.Reflection.MethodInfo _taking = System.Array.Find(
         typeof(@this).GetMethods(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static),
         m => m.Name == nameof(Takes) && m.IsGenericMethodDefinition)!;

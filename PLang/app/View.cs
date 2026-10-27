@@ -123,6 +123,12 @@ public abstract class View
         => type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
             .Any(p => Is<OutAttribute>(p) || Is<StoreAttribute>(p) || Is<SnapshotAttribute>(p) || Is<SensitiveAttribute>(p) || Is<MaskedAttribute>(p));
 
+    /// <summary>What a value of <paramref name="type"/>, as <paramref name="raw"/> holds it, needs loaded before it is
+    /// read in this view — the async half a sync reader can't do. By default nothing.</summary>
+    internal virtual System.Threading.Tasks.Task<global::app.data.@this> Load(global::app.type.@this type, string raw,
+        global::app.actor.context.@this context)
+        => System.Threading.Tasks.Task.FromResult(context.Ok());
+
     /// <summary><paramref name="value"/> written in this view — every value's write comes through here
     /// (<c>item.Output</c>): by default the value writes itself, its own look for the writer.</summary>
     internal virtual System.Threading.Tasks.ValueTask Output(global::app.type.item.@this value, global::app.type.format.IWriter writer)
@@ -186,6 +192,45 @@ public abstract class View
                && base.Type(record, context) is { IsNull: false } type && context.App.type.list[type.Name].kind["key"] is { } key
                 ? context.App.type.list.Of(key, context)
                 : base.Type(record, context);
+
+        // a value found elsewhere is read from its key, which may name a location (a goal's): each location a key
+        // names is loaded by its owner's type first, so the key's own read finds what it names without waiting. A
+        // record that is not one (a frame) holds its found members the same way.
+        internal override System.Threading.Tasks.Task<global::app.data.@this> Load(global::app.type.@this type, string raw,
+            global::app.actor.context.@this context)
+            => type.ClrType is { } clr ? Load(clr, Key(raw, context), context) : base.Load(type, raw, context);
+
+        // a key as the record it is written as, its members as the general read makes them
+        private static global::app.type.item.dict.@this? Key(string raw, global::app.actor.context.@this context)
+        {
+            var bytes = System.Text.Encoding.UTF8.GetBytes(raw);
+            var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
+            utf8.Read();
+            var json = new global::app.type.item.kind.json.Reader(utf8, bytes);
+            return json.Peek() == global::app.type.format.TokenKind.Object
+                ? new global::app.type.item.dict.serializer.Reader().Read(ref json, null, new global::app.type.reader.ReadContext(context)) as global::app.type.item.dict.@this
+                : null;
+        }
+
+        // the walk: a member found elsewhere in turn (a step's goal), a location loaded by the type that owns it
+        private async System.Threading.Tasks.Task<global::app.data.@this> Load(System.Type clr, global::app.type.item.dict.@this? key,
+            global::app.actor.context.@this context)
+        {
+            if (key == null) return context.Ok();
+            var types = context.App.type.list;
+            foreach (var entry in global::app.type.item.kind.reflection.Tagged.PropertiesFor(clr, this))
+            {
+                if (key.Get(entry.WireName, context)?.Peek() is not { } member) continue;
+                var declared = System.Nullable.GetUnderlyingType(entry.Property.PropertyType) ?? entry.Property.PropertyType;
+                var loaded = Found(declared) ? await Load(declared, member as global::app.type.item.dict.@this, context)
+                    : Found(clr) && typeof(global::app.type.item.path.@this).IsAssignableFrom(declared)
+                      && types[declared].Make(member, context) is global::app.type.item.path.@this location
+                        ? await types[clr].Load(location, context.App)
+                        : context.Ok();
+                if (!loaded.Success) return loaded;
+            }
+            return context.Ok();
+        }
 
         // Whether a type tags what finds it: read once per type.
         private readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, bool> _found = new();
