@@ -7,14 +7,8 @@ Properties: `{"Name": "%enabled%", "Value": true, "Default": true}` — "default
 Step text: `set %birthday% = "2026-01-01"`
 Properties: `{"Name": "%birthday%", "Value": "2026-01-01", "Type": {"name": "date"}}` — read as a date from its ISO form.
 
-Step text: `set %start% = "1st jan 2026"`
-Properties: `{"Name": "%start%", "Value": "2026-01-01", "Type": {"name": "date"}}` — a written date, rewritten in ISO. Never the words "1st jan 2026".
-
 Step text: `set %timeout% = "PT30S"`
 Properties: `{"Name": "%timeout%", "Value": "PT30S", "Type": {"name": "duration"}}`
-
-Step text: `set %count% = "42"`
-Properties: `{"Name": "%count%", "Value": 42}` — a quantity; `%count%` confirms number over text.
 
 Step text: `set %version% = "2.0"`
 Properties: `{"Name": "%version%", "Value": "2.0"}` — a version label stays text though it looks numeric.

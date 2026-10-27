@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "D1 fixed: iso.Read refuses a text ending in P/T, a second T and a repeated unit; pins in both test classes; low: unit order not enforced" }
