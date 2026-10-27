@@ -130,12 +130,6 @@ public abstract class @this : global::app.type.item.@this
     /// <summary>Display is the location — content never leaks through ToString.</summary>
     public override string ToString() => Path.ToString();
 
-    /// <summary>
-    /// The reference renders itself as its CONTENT once sampled (its value door was opened): text content as its
-    /// text, any other as its bytes — the format says which. An unsampled reference renders its location:
-    /// writing it out is not consent to read it.
-    /// </summary>
-
     /// <summary>Opened to be written out: the content is sampled through the location's gate, so its write is
     /// the content, not the location.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.error.@this?> Open(global::app.actor.context.@this context)

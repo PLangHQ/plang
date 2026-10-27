@@ -9,9 +9,9 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     // its own flow: a current set inside the awaited start would be undone when it returns.
     private (call.@this Stopped, call.@this? Under)? _resumed;
 
-    // CallStack-level diff stream — every change of the store it was opened on, while a diff scope (DiffScope) is open.
-    // Independent of per-Call Diffs (which require Flags.Diff at Push time). Errors.Push uses this so handler-time
-    // mutations during an error scope land on the stream even when Flags.Diff was off when the live Calls were pushed.
+    // The stack's diff stream — every change of the store it was opened on, while a diff scope (DiffScope) is open, apart
+    // from the frames' own diffs (on only where the diff setting was on when they were pushed): an error's scope opens it,
+    // so what its handler changes lands here whatever the frames record.
     private readonly diff.@this _stream = new();
     private global::app.type.item.variable.list.@this? _streamVariables;
 
