@@ -39,5 +39,9 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
     /// <summary>The rest of its step's code: this action again when the run stopped in it (<paramref name="again"/>:
     /// the ask takes its answer), else from the one after it (the call it made returned).</summary>
     internal override System.Threading.Tasks.Task<global::app.data.@this> Rest(global::app.actor.context.@this context, bool again)
-        => Step!.Resume(context, again ? Place : Place + 1);
+    {
+        // the action of an action's frame is one its step holds, so it has its place there
+        var at = Action!.Index!.Value;
+        return Step!.Resume(context, again ? at : at + 1);
+    }
 }
