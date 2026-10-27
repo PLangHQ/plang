@@ -92,7 +92,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         if (raw is global::app.type.item.dict.@this written)
         {
             var made = new @this(type ?? data.Context.App.type.list[typeof(@this)]);
-            foreach (var property in written.Entries(data.Context)) made._property[property.Name] = property;
+            // each property by the key it was written under: a Data kept in a snapshot is named by where it is held
+            foreach (var name in written.KeyNames) made._property[name] = written.Get(name, data.Context)!;
             return made;
         }
         data.Fail(new global::app.error.@this(
