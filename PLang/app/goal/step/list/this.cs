@@ -54,13 +54,13 @@ public sealed class @this : global::app.type.item.list.bare.@this<Step>
 
     /// <summary>What follows <paramref name="step"/>, one of these, run in sequence from the one after it, as
     /// <see cref="Start"/> runs them (a step knows the list that holds it: <see cref="global::app.goal.step.@this.List"/>).
-    /// Nothing follows a step this list doesn't hold.</summary>
-    internal async System.Threading.Tasks.Task<data.@this> Rest(Step step, actor.context.@this context)
+    /// What <paramref name="step"/> answered, <paramref name="result"/>, is the answer when nothing follows it, as a
+    /// list's last step's answer is the list's.</summary>
+    internal async System.Threading.Tasks.Task<data.@this> Rest(Step step, actor.context.@this context, data.@this result)
     {
         var position = -1;
         for (int i = 0; i < Count && position < 0; i++)
             if (ReferenceEquals(this[i], step)) position = i;
-        data.@this result = context.Ok();
         if (position < 0) return result;
         for (int i = position + 1; i < Count; i++)
         {

@@ -102,6 +102,46 @@ public class ResumeInAnAppTests
         await Assert.That(await context.Variable.GetValue("after")).IsEqualTo("went on");
     }
 
+    // A run saved inside a goal another called goes on through its caller as the call would have: the callee's answer
+    // comes out of the call, the last thing its caller does, so it is the caller's answer and the run's.
+    [Test]
+    public async Task ARunSavedInACalledGoal_HandsTheCalleesAnswerToItsCaller()
+    {
+        await using var app = App();
+        var context = app.actor.list.User.Context;
+        async Task<Goal> Goal(string name, params string[] lines)
+        {
+            var goal = new Goal(app.type.list) { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", context) };
+            for (var index = 0; index < lines.Length; index++)
+            {
+                var step = new Step(app.type.list) { Goal = goal, List = goal.Step, Index = index, Text = lines[index] };
+                var read = await new global::app.goal.step.action.formal.Reader(step, app.module.list).Read(lines[index], context);
+                await read.IsSuccess();
+                foreach (var action in ((global::app.goal.step.action.list.@this)read.Peek()).Items()) step.Code.Add(action);
+                step.Code.Attach();
+                goal.Step.Add(step);
+            }
+            app.goal.list.Add(goal);
+            return goal;
+        }
+        var inner = await Goal("Inner", "variable.set(Name=%s0%, Value=\"read\")", "goal.return(Data=%s0%)");
+        var outer = await Goal("Outer", "goal.call(Name=\"Inner\")");
+        var setting = await context.call.Setting();
+        global::app.data.@this saved;
+        await using (context.call.Push(outer, setting))
+        await using (context.call.Push(outer.Step[0], setting))
+        await using (context.call.Push(outer.Step[0].Code[0], setting, context.Variable))
+        await using (context.call.Push(inner, setting))
+        await using (context.call.Push(inner.Step[0], setting))
+        await using (context.call.Push(inner.Step[0].Code[0], setting, context.Variable))
+            saved = await new global::app.module.snapshot.save(context).Start();
+
+        var result = await Resume(saved, context);
+
+        await result.IsSuccess();
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("read");
+    }
+
     [Test]
     public async Task NotWaited_AnswersATask_WhoseWaitGivesTheResult()
     {

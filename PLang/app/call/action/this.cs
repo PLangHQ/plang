@@ -40,9 +40,11 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
     internal override System.Threading.Tasks.Task<global::app.data.@this> Rest(global::app.actor.context.@this context, bool again,
         global::app.data.@this result)
     {
-        if (!again && Action!.IsCondition) return System.Threading.Tasks.Task.FromResult(context.Ok());
-        // the action of an action's frame is one its step holds, so it has its place there
+        // a taken branch ends the chain: what it answered is the chain's
+        if (!again && Action!.IsCondition) return System.Threading.Tasks.Task.FromResult(result);
+        // the action of an action's frame is one its step holds, so it has its place there; after it, the chain goes on
+        // from what it answered, as it would have
         var at = Action!.Index!.Value;
-        return Step!.Code.Start(context, again ? at : at + 1);
+        return again ? Step!.Code.Start(context, at) : Step!.Code.Start(context, at + 1, result);
     }
 }

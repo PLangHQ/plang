@@ -28,10 +28,12 @@ public sealed class @this : global::app.type.item.list.bare.@this<Action>, globa
     /// stands); a condition evaluates, and if truthy starts its <c>Child</c> branch and stops (the rest of the chain —
     /// elseif/else — is skipped). An ordinary action has an empty Child so never enters. Context is the ASK's, handed to
     /// each action's own Start. A program's error that travels as an exception is the chain's answer, whole. The node
-    /// iterates ITSELF (the typed positional face), never a harvested element list.</summary>
-    public async System.Threading.Tasks.Task<data.@this> Start(actor.context.@this context, int from = 0)
+    /// iterates ITSELF (the typed positional face), never a harvested element list. A resume after an action hands in
+    /// that action's <paramref name="result"/>, the chain's result as it stood, so the actions after it read it as they
+    /// would have; with nothing left to start, it is the chain's answer.</summary>
+    public async System.Threading.Tasks.Task<data.@this> Start(actor.context.@this context, int from = 0, data.@this? result = null)
     {
-        data.@this result = context.Ok();
+        result ??= context.Ok();
         try
         {
             for (int i = from; i < Count; i++)

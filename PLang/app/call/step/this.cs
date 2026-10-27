@@ -34,5 +34,5 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
     /// <summary>The rest of the list that holds its step, from the step after it — the step knows its list.</summary>
     internal override System.Threading.Tasks.Task<global::app.data.@this> Rest(global::app.actor.context.@this context, bool again,
         global::app.data.@this result)
-        => Step!.List.Rest(Step, context);
+        => Step!.List.Rest(Step, context, result);
 }

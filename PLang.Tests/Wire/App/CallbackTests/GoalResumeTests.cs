@@ -74,7 +74,7 @@ public class GoalResumeTests
         await SetStep(context, goal, 1, "s1", "after");
         await SetStep(context, goal, 2, "s2", "and-after");
 
-        var result = await goal.Step.Rest(first, context);
+        var result = await goal.Step.Rest(first, context, context.Ok());
         await result!.IsSuccess();
         await Assert.That((await context.Variable.Get("s0")).IsInitialized).IsFalse();
         await Assert.That((await context.Variable.GetValue("s1"))).IsEqualTo("after");
@@ -109,7 +109,7 @@ public class GoalResumeTests
         await Body(context, goal, holder, 3, "b3", "after");
         await SetStep(context, goal, 4, "s4", "not-in-the-body");
 
-        var result = await inBody.List!.Rest(inBody, context);
+        var result = await inBody.List!.Rest(inBody, context, context.Ok());
         await result!.IsSuccess();
         await Assert.That((await context.Variable.Get("b2")).IsInitialized).IsFalse();
         await Assert.That((await context.Variable.GetValue("b3"))).IsEqualTo("after");
