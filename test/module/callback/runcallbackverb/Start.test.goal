@@ -1,10 +1,21 @@
-/ Materialize a callback via %!error.callback%, then dispatch it via callback.start.
-/ The original failing action re-runs through the live execution path.
+/ Fix, then go on from the same step: Work's first step throws while 'workspace/broken' exists. Its handler fixes the
+/ cause (deletes the file), then starts the error's callback, which goes on from the step that threw, in an app of its
+/ own: the step runs again, no longer throws, and that run goes on to its end, through this goal too, answering
+/ "completed". The callback is the run as it stood at the throw, so %resumed% is set only here, in the asker.
 Start
-- throw error "boom", on error call CaptureCallback
-- assert %ranCallback% is true, "callback dispatch should have completed"
+- write "broken" to file 'workspace/broken'
+- call Work
+- if %resumed% is not empty
+    - assert %resumed% equals "completed", "the callback's run should have gone on to its end"
+- return "completed"
 
+/ The step that throws while the file exists, its handler the fix.
+Work
+- if file 'workspace/broken' exists
+    - throw error "boom", on error call CaptureCallback
+
+/ The fix, then the run goes on from the step that threw.
 CaptureCallback
+- delete file 'workspace/broken'
 - set %cb% = %!error.callback%
-- callback.start callback=%cb%, on error ignore
-- set %ranCallback% = true
+- callback.start callback=%cb%, write to %resumed%

@@ -38,6 +38,10 @@ internal sealed class code : @this
     // the actions, born with the app the code is made for: that app answers for them
     public global::app.module.@this Module(global::app.@this app) => new global::app.module.@this(app);
 
+    public global::app.module.code.@this? Code => null;
+
+    public int Depth => 0;
+
     public System.Threading.Tasks.Task<global::app.data.@this?> Goal(global::app.type.item.path.@this source, global::app.@this app)
         => System.Threading.Tasks.Task.FromResult<global::app.data.@this?>(null);
 

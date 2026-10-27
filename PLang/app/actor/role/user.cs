@@ -8,6 +8,8 @@ internal sealed class user : @this
 {
     internal override string Name => "User";
 
+    internal override global::app.actor.@this In(global::app.actor.list.@this list) => list.User;
+
     internal override void Stand(global::app.actor.permission.@this view, global::app.@this app)
         => view.Stand(app.filesystem.os, Verb.read, Verb.execute);
 }

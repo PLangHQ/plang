@@ -201,6 +201,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     global::app.module.@this global::app.origin.@this.Module(global::app.@this app) => App.module;
 
+    global::app.module.code.@this? global::app.origin.@this.Code => App.Code;
+
+    int global::app.origin.@this.Depth => App.Depth + 1;
+
     // its app's goals are the sub app's while the sub app holds no code of its own (a goal is bound to its modules and
     // types when it is read, so a goal its app reads reaches only its app's) and shares its folder (a .pr is then the same
     // file in both)

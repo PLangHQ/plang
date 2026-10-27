@@ -13,8 +13,10 @@ namespace app.module.snapshot;
 /// signature doesn't verify (a changed value, a moved view), or one signed by an identity that is not one of the app's
 /// own (another app's, or an archived one) is refused before anything is restored.</para>
 ///
-/// <para>Resuming re-enters the captured CallStack position
-/// (<see cref="global::app.snapshot.@this.Resume"/>) — deterministic, no live LLM.</para>
+/// <para>Every resume comes through here (<c>start %callback%</c> too), so every one is checked. The run goes on in an
+/// app of its own, a sub app of the asker's (<see cref="global::app.snapshot.@this.Resume"/>), from the captured
+/// position — deterministic, no live LLM — and the asker's own memory is never touched: the step answers what the run
+/// answers.</para>
 /// </summary>
 [Action("resume", Cacheable = false)]
 public partial class resume : IContext
@@ -23,13 +25,17 @@ public partial class resume : IContext
     [IsNotNull]
     public partial data.@this<global::app.snapshot.@this> Snapshot { get; init; }
 
+    /// <summary>Runs on its own (<c>resume %snapshot%, don't wait</c>): the resume answers a <c>task</c> at once and the
+    /// step goes on; the task's wait gives what the run answers. Left out, the run goes on to its end first.</summary>
+    public partial data.@this<global::app.type.item.parallel.@this>? Parallel { get; init; }
+
     /// <summary>Resumes the snapshot once its signature says this app saved it as it is. A value that isn't one is the
     /// answer: the typed ask's own reason when it gave one, else that it holds none (a text its reader reads as nothing)
     /// and the step that reads a snapshot from text.</summary>
     public async Task<data.@this> Start()
     {
         if (await Refusal() is { } refused) return refused;
-        if (await Snapshot.Value() is { } snap) return await snap.Resume(Context);
+        if (await Snapshot.Value() is { } snap) return await snap.Resume(Context, Parallel);
         if (Snapshot.Error is { } error) return Context.Error(error);
         return Context.Error(new global::app.error.@this(
             $"%{Snapshot.Name}% holds no snapshot: read one where it is kept, in a .plang file (`read file 'run.plang', write to %{Snapshot.Name}%`)",

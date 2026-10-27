@@ -12,6 +12,9 @@ internal abstract class @this
     /// change.</summary>
     internal abstract string Name { get; }
 
+    /// <summary>The actor of this role in <paramref name="list"/>: another app's actor that stands where this one does.</summary>
+    internal abstract global::app.actor.@this In(global::app.actor.list.@this list);
+
     /// <summary>Stands this role's grants on <paramref name="app"/>'s folders in <paramref name="view"/>, as it is made.</summary>
     internal abstract void Stand(global::app.actor.permission.@this view, global::app.@this app);
 }

@@ -17,15 +17,16 @@ public class TestSigningProvider : ISigning
     public (KeyPair? keys, app.error.@this? error) GenerateKeyPair()
         => (new KeyPair("testPub", "testPriv"), null);
 
+    // signs and verifies as the built-in does: an app whose default this is still signs what it takes (its snapshots)
     public global::app.type.item.binary.@this Sign(global::app.type.item.signature.@this unsigned, global::app.type.item.text.@this privateKey)
-        => new global::app.type.item.binary.@this(new byte[64]);
+        => new Ed25519().Sign(unsigned, privateKey);
 
     public global::app.type.item.@bool.@this Verify(global::app.type.item.signature.@this signature)
-        => new global::app.type.item.@bool.@this(true);
+        => new Ed25519().Verify(signature);
 
     public Task<app.data.@this> SignAsync(sign action)
-        => Task.FromResult(action.Context.Ok());
+        => new Ed25519().SignAsync(action);
 
     public Task<app.data.@this<global::app.type.item.@bool.@this>> VerifyAsync(verify action)
-        => Task.FromResult(action.Context.Ok<global::app.type.item.@bool.@this>(true));
+        => new Ed25519().VerifyAsync(action);
 }

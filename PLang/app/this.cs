@@ -62,6 +62,15 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     internal bool HasCode => type.list.HasOwn || module.HasOwn;
     private bool _disposed;
 
+    /// <summary>How deep the app is nested, as its origin answers at its birth: the code's app is 0, a sub app one
+    /// under its maker's. A sub app deeper than <see cref="MaxDepth"/> is refused before anything of it is made.</summary>
+    internal int Depth { get; }
+
+    /// <summary>The deepest a sub app is made: a test's app and a resume or two are real nesting; past this a
+    /// program is making apps without end (a run that resumes itself), refused before the thread's stack gives out in
+    /// the walks down the makers — near 380 apps on an 8 MB stack, so near 47 on Windows' 1 MB main thread.</summary>
+    internal const int MaxDepth = 16;
+
     private global::app.service.list.@this? _services;
 
     /// <summary>
@@ -310,6 +319,11 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     private @this(string absolutePath, global::app.origin.@this origin, string? environment)
     {
         this.origin = origin;
+        Depth = origin.Depth;
+        if (Depth > MaxDepth)
+            throw new global::app.error.AppException(new global::app.error.@this(
+                $"an app is nested {Depth} deep, past the {MaxDepth} an app may be: a program is making apps without end (a run that resumes itself goes on in an app under the one it resumed in)",
+                "AppTooDeep", 508));
         // the app's disk, holding the app's folder as what / is — first, as its origin answers it: a folder a sub app
         // may not be made in is refused before anything of the app is made
         filesystem = origin.Filesystem(absolutePath);
@@ -336,7 +350,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // Debug/Build are born on their flag (--debug/--build), not at
         // startup — null = off. Presence is the enable signal (no IsEnabled).
         // the code providers, the built-ins registered at the registry's first use
-        Code = new AppCode(actor.list.System.Context);
+        // a sub app's, a layer over its maker's
+        Code = new AppCode(actor.list.System.Context, origin.Code);
         // the actions, a layer of its own over the ones the origin answers
         module = new(this, origin.Module(this));
         goal = new(this);

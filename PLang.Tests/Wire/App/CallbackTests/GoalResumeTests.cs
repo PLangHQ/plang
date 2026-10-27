@@ -13,7 +13,7 @@ public class GoalResumeTests
 {
     private static global::app.@this NewApp() =>
         new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-rf-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
+            "plang-rf-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing().TestIdentity();
 
     // The goal comes first — a step is born knowing it, so it cannot be built loose
     // and grafted on afterwards.
@@ -136,7 +136,13 @@ public class GoalResumeTests
         await SetStep(context, goal, 0, "s0", "skip");
         var step = await SetStep(context, goal, 1, "s1", "again");
         await SetStep(context, goal, 2, "s2", "after");
+        // the run's last step answers what it saw: its memory is its own app's
+        var answer = new Step(app.type.list) { Goal = goal, Index = 3, Text = "return {s0, s1, s2}" };
+        answer.Code.Add((await context.Action("goal.return(Data={\"s0\": %s0%, \"s1\": %s1%, \"s2\": %s2%})")).In(answer));
+        goal.Step.Add(answer);
         app.goal.list.Add(goal);
+        // seeded before the save: a step that never runs again leaves it so
+        await context.Variable.Set("s0", "never");
 
         global::app.snapshot.@this snap;
         var stack = context.call;
@@ -145,12 +151,12 @@ public class GoalResumeTests
         await using (stack.Push(step.Code[0], await stack.Setting()))
             snap = (await app.Snapshot(context).Saved());
 
-        var result = await snap.Resume(context);
+        var result = await snap.Resumed(context);
 
         await result.IsSuccess();
-        await Assert.That((await context.Variable.Get("s0")).IsInitialized).IsFalse();
-        await Assert.That((await context.Variable.GetValue("s1"))).IsEqualTo("again");
-        await Assert.That((await context.Variable.GetValue("s2"))).IsEqualTo("after");
-        await Assert.That(stack.Current).IsNull();   // every frame that came back has ended
+        await Assert.That((await (await result.Get("s0")).Value())?.ToString()).IsEqualTo("never");
+        await Assert.That((await (await result.Get("s1")).Value())?.ToString()).IsEqualTo("again");
+        await Assert.That((await (await result.Get("s2")).Value())?.ToString()).IsEqualTo("after");
+        await Assert.That(stack.Current).IsNull();   // the asker's stack stands as it did: nothing came back into it
     }
 }

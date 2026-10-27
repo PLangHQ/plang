@@ -8,6 +8,8 @@ internal sealed class system : @this
 {
     internal override string Name => "System";
 
+    internal override global::app.actor.@this In(global::app.actor.list.@this list) => list.System;
+
     internal override void Stand(global::app.actor.permission.@this view, global::app.@this app)
     {
         view.Stand(app.filesystem.os, Verb.read, Verb.execute, Verb.write, Verb.delete);

@@ -54,12 +54,51 @@ public class NamedProviderRegistryTests
         await Assert.That(((global::app.module.code.ICode)result.Provider!).Name).IsEqualTo("custom");
     }
 
+    // A sub app's registry is a layer over its maker's: a provider the maker registered in-process is found there.
+    [Test]
+    public async Task ASubApp_FindsItsMakersInProcessProvider()
+    {
+        var provider = new MockSigningProvider("maker-only");
+        _app.Code.Register<ISigning>(provider);
+        await using var sub = new PLangEngine(_tempDir, _app.actor.list.User);
+
+        var (found, error) = sub.Code.Get<ISigning>("maker-only");
+
+        await Assert.That(error).IsNull();
+        await Assert.That(found).IsSameReferenceAs(provider);
+    }
+
+    // What a sub app registers stays its own: its maker never sees it.
+    [Test]
+    public async Task ASubAppsProvider_IsNotSeenByItsMaker()
+    {
+        await using var sub = new PLangEngine(_tempDir, _app.actor.list.User);
+        await sub.Code.Register<ISigning>(new MockSigningProvider("sub-only")).IsSuccess();
+
+        await Assert.That(sub.Code.Get<ISigning>("sub-only").Error).IsNull();
+        await Assert.That(_app.Code.Get<ISigning>("sub-only").Error!.Key).IsEqualTo("ProviderNotFound");
+    }
+
+    // A default a sub app sets is its own: its maker's default stays as it was.
+    [Test]
+    public async Task ASubAppsDefault_LeavesItsMakersDefault()
+    {
+        _app.Code.Register<ISigning>(new MockSigningProvider("maker-only"));
+        var before = ((global::app.module.code.ICode)_app.Code.Get<ISigning>().Provider!).Name;
+        await using var sub = new PLangEngine(_tempDir, _app.actor.list.User);
+
+        await sub.Code.SetDefault<ISigning>("maker-only").IsSuccess();
+
+        await Assert.That(((global::app.module.code.ICode)sub.Code.Get<ISigning>().Provider!).Name).IsEqualTo("maker-only");
+        await Assert.That(((global::app.module.code.ICode)_app.Code.Get<ISigning>().Provider!).Name).IsEqualTo(before);
+    }
+
     // What the code ships for an interface is made the first time the interface is asked for: a first ask for one
     // makes that one, not every provider the code ships.
     [Test]
     public async Task AFirstAsk_MakesOnlyTheProviderAskedFor()
     {
-        var registry = new EngineProviders(_app.actor.list.System.Context);
+        var registry = new EngineProviders(_app.actor.list.System.Context, null);
 
         var (math, error) = registry.Get<global::app.module.math.code.IMath>();
 
@@ -71,7 +110,7 @@ public class NamedProviderRegistryTests
     [Test]
     public async Task AskingWhetherOneIsThere_MakesNone()
     {
-        var registry = new EngineProviders(_app.actor.list.System.Context);
+        var registry = new EngineProviders(_app.actor.list.System.Context, null);
 
         await Assert.That(registry.Has<global::app.module.math.code.IMath>()).IsTrue();
         await Assert.That(registry.All().Any()).IsFalse();

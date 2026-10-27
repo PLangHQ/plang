@@ -11,6 +11,9 @@ namespace app.module.code;
 /// Named provider registry. Each provider interface type can have multiple named implementations.
 /// First registered becomes default. Thread-safe via ConcurrentDictionary.
 /// Generic methods delegate to non-generic — single source of truth for all logic.
+/// <para>A sub app's registry is a layer over its maker's: a provider or a default it doesn't hold is its maker's, a
+/// provider the maker registered in-process among them. What it registers, and a default it sets, stay its own: the
+/// maker's registry is never written through it. Only the bottom registry, the code's, holds what the code ships.</para>
 /// </summary>
 public sealed partial class @this : IAsyncDisposable
 {
@@ -22,9 +25,17 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     private readonly actor.context.@this Context;
 
-    /// <summary>The registry of <paramref name="context"/>'s app, holding the built-in providers — registered at its
-    /// first use, so an app that asks for none makes none.</summary>
-    public @this(actor.context.@this context) => Context = context;
+    // The maker's registry this one is a layer over; null at the bottom.
+    private readonly @this? _under;
+
+    /// <summary>The registry of <paramref name="context"/>'s app, a layer over <paramref name="under"/> (a sub app's
+    /// maker's), or, with none under it, holding the built-in providers — registered at its first use, so an app that
+    /// asks for none makes none.</summary>
+    internal @this(actor.context.@this context, @this? under)
+    {
+        Context = context;
+        _under = under;
+    }
 
     // The registry's table, made at its first use, knowing what the code ships for each interface.
     private sealed class table
@@ -73,7 +84,8 @@ public sealed partial class @this : IAsyncDisposable
             {
                 if (_table is { } again) return again;
                 table = new table();
-                Ship(table);
+                // what the code ships is the bottom registry's: a layer finds it there
+                if (_under == null) Ship(table);
                 System.Threading.Volatile.Write(ref _table, table);
                 return table;
             }
@@ -119,20 +131,26 @@ public sealed partial class @this : IAsyncDisposable
     // provider comes back directly beside a typed error.
     public (T? Provider, global::app.error.@this? Error) Get<T>(string? name = null) where T : class, ICode
     {
-        if (Table.Of(typeof(T)) is not { } typeDict)
-            return (null, new ActionError($"No {typeof(T).Name} provider registered", "ProviderNotFound", 404));
-
         if (!string.IsNullOrEmpty(name))
-        {
-            if (!typeDict.TryGetValue(name, out var provider))
-                return (null, new ActionError($"Provider '{name}' not found for {typeof(T).Name}", "ProviderNotFound", 404));
-            return ((T)provider, null);
-        }
+            return Find(typeof(T), name) is T provider ? (provider, null)
+                : (null, new ActionError($"Provider '{name}' not found for {typeof(T).Name}", "ProviderNotFound", 404));
 
-        if (Table.Defaults.TryGetValue(typeof(T), out var defaultName) && typeDict.TryGetValue(defaultName, out var chosen))
-            return ((T)chosen, null);
+        if (Default(typeof(T)) is T chosen) return (chosen, null);
+        return (null, List(typeof(T)).Count == 0
+            ? new ActionError($"No {typeof(T).Name} provider registered", "ProviderNotFound", 404)
+            : new ActionError($"No default {typeof(T).Name} provider registered", "ProviderNotFound", 404));
+    }
 
-        return (null, new ActionError($"No default {typeof(T).Name} provider registered", "ProviderNotFound", 404));
+    // The provider of providerType named name: this registry's, else its maker's; null when neither holds one.
+    private ICode? Find(System.Type providerType, string name)
+        => Table.Of(providerType) is { } typeDict && typeDict.TryGetValue(name, out var provider) ? provider
+            : _under?.Find(providerType, name);
+
+    // The default provider of providerType: the one this registry set, else its maker's; null when there is none.
+    private ICode? Default(System.Type providerType)
+    {
+        Table.Of(providerType);
+        return Table.Defaults.TryGetValue(providerType, out var name) ? Find(providerType, name) : _under?.Default(providerType);
     }
 
     /// <summary>
@@ -157,10 +175,11 @@ public sealed partial class @this : IAsyncDisposable
     /// Lists all providers for a specific type.
     /// </summary>
     public IReadOnlyList<T> List<T>() where T : class, ICode
-        => Table.Of(typeof(T)) is { } typeDict ? typeDict.Values.Cast<T>().ToList() : Array.Empty<T>();
+        => List(typeof(T)).Cast<T>().ToList();
 
     /// <summary>
-    /// Lists all providers across all types — every one the code ships among them, so each is made.
+    /// Lists all providers across all types — every one the code ships among them, so each is made; a layer's own, then
+    /// each of its maker's that it doesn't hold one of the same name of.
     /// </summary>
     public IReadOnlyList<ICode> List()
     {
@@ -169,6 +188,8 @@ public sealed partial class @this : IAsyncDisposable
         var result = new List<ICode>();
         foreach (var typeDict in table.Providers.Values)
             result.AddRange(typeDict.Values);
+        if (_under != null)
+            result.AddRange(_under.List().Where(provider => !result.Any(own => own.Name.Equals(provider.Name, StringComparison.OrdinalIgnoreCase))));
         return result;
     }
 
@@ -184,7 +205,8 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     /// <remarks>Answered from what the code ships and what was made, making nothing.</remarks>
     public bool Has<T>() where T : class, ICode
-        => Table.Shipped.ContainsKey(typeof(T)) || Table.Providers.TryGetValue(typeof(T), out var typeDict) && !typeDict.IsEmpty;
+        => Table.Shipped.ContainsKey(typeof(T)) || Table.Providers.TryGetValue(typeof(T), out var typeDict) && !typeDict.IsEmpty
+            || _under?.Has<T>() == true;
 
     // --- Non-generic methods (single source of truth) ---
 
@@ -198,22 +220,30 @@ public sealed partial class @this : IAsyncDisposable
         => Put(Table, providerType, provider) ? Context.Ok()
             : Context.Error(new ActionError($"Provider '{provider.Name}' already registered for {providerType.Name}", "ProviderExists", 409));
 
-    // Registers provider for providerType in table; the first for a type becomes its default. False when a provider
-    // of its name is already there.
+    // Registers provider for providerType in table; the first for a type becomes its default — a layer's first only
+    // where its maker has none. False when a provider of its name is already there.
     private bool Put(table table, System.Type providerType, ICode provider)
     {
+        // a name names one provider as this registry sees it, its maker's among them
+        if (_under?.Find(providerType, provider.Name) != null) return false;
         var typeDict = table.Of(providerType)
             ?? table.Providers.GetOrAdd(providerType, _ => new ConcurrentDictionary<string, ICode>(StringComparer.OrdinalIgnoreCase));
         if (!typeDict.TryAdd(provider.Name, provider)) return false;
-        table.Defaults.TryAdd(providerType, provider.Name);
+        if (_under?.Default(providerType) == null) table.Defaults.TryAdd(providerType, provider.Name);
         return true;
     }
 
     /// <summary>
-    /// Lists all providers registered for a runtime-resolved type (typed C# access).
+    /// Lists all providers registered for a runtime-resolved type (typed C# access): a layer's own, then each of its
+    /// maker's that it doesn't hold one of the same name of.
     /// </summary>
     public IReadOnlyList<ICode> List(System.Type providerType)
-        => Table.Of(providerType) is { } typeDict ? typeDict.Values.ToList() : Array.Empty<ICode>();
+    {
+        var own = Table.Of(providerType) is { } typeDict ? typeDict.Values.ToList() : new List<ICode>();
+        if (_under != null)
+            own.AddRange(_under.List(providerType).Where(provider => !own.Any(o => o.Name.Equals(provider.Name, StringComparison.OrdinalIgnoreCase))));
+        return own;
+    }
 
     /// <summary>
     /// Removes a named provider by runtime-resolved type. Cannot remove the default.
@@ -223,15 +253,14 @@ public sealed partial class @this : IAsyncDisposable
         if (string.IsNullOrEmpty(name))
             return Context.Error(new ActionError("Provider name is required", "ValidationError", 400));
 
-        if (Table.Of(providerType) is not { } typeDict)
-            return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
-
-        if (!typeDict.TryGetValue(name, out var provider))
-            return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
-
-        if (Table.Defaults.TryGetValue(providerType, out var defaultName)
-            && string.Equals(defaultName, provider.Name, StringComparison.OrdinalIgnoreCase))
+        if (Default(providerType) is { } @default && string.Equals(@default.Name, name, StringComparison.OrdinalIgnoreCase))
             return Context.Error(new ActionError($"Cannot remove default provider '{name}'. Set another as default first.", "CannotRemoveDefault", 400));
+
+        // a layer removes only its own: its maker's providers are never written through it
+        if (Table.Of(providerType) is not { } typeDict || !typeDict.ContainsKey(name))
+            return Context.Error(new ActionError(Find(providerType, name) == null
+                ? $"Provider '{name}' not found"
+                : $"Provider '{name}' is the app's maker's: an app removes only a provider it registered itself", "ProviderNotFound", 404));
 
         typeDict.TryRemove(name, out _);
         return Context.Ok();
@@ -245,10 +274,8 @@ public sealed partial class @this : IAsyncDisposable
         if (string.IsNullOrEmpty(name))
             return Context.Error(new ActionError("Provider name is required", "ValidationError", 400));
 
-        if (Table.Of(providerType) is not { } typeDict)
-            return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
-
-        if (!typeDict.TryGetValue(name, out var newDefault))
+        // a provider its maker holds may be a layer's default too; the default is set in this registry alone
+        if (Find(providerType, name) is not { } newDefault)
             return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
         // One slot per interface — the provider's other interfaces keep their own default.

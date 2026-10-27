@@ -31,7 +31,7 @@ public sealed class TestSigning : global::app.module.signing.code.ISigning
             nonce: action.Context.Text("test-nonce"),
             created: new global::app.type.item.datetime.@this(System.DateTimeOffset.FromUnixTimeSeconds(0),
                 action.Context.App.type.list[typeof(global::app.type.item.datetime.@this)]),
-            identity: action.Context.Text("test-public-key"),
+            identity: action.Context.Text(TestIdentity.PublicKey),
             hash: new global::app.module.crypto.type.hash.@this(System.Array.Empty<byte>(),
                 (global::app.module.crypto.type.hash.kind.@this)action.Context.App.type.list[typeof(global::app.module.crypto.type.hash.@this)].kind["keccak256"]!),
             signature: new global::app.type.item.binary.@this(System.Array.Empty<byte>(), action.Context.App.type.list[typeof(global::app.type.item.binary.@this)]));

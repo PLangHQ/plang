@@ -21,22 +21,30 @@ public class SignedSnapshotTests
         return app;
     }
 
-    // Goal G: two steps, each setting a variable; the same goal (and hash) in every app that holds it.
+    // Goal G: two steps, each setting a variable, then a step answering what the run saw (a resumed run's memory is its
+    // own app's); the same goal (and hash) in every app that holds it.
     private static async Task<Step> Holds(global::app.@this app)
     {
         var context = app.actor.list.User.Context;
         var goal = new Goal(app.type.list) { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", context) };
-        Step? last = null;
-        foreach (var (index, name, value) in new[] { (0, "s0", "first"), (1, "s1", "second") })
+        Step? second = null;
+        foreach (var (index, line) in new[] { (0, "variable.set(Name=%s0%, Value=\"first\")"), (1, "variable.set(Name=%s1%, Value=\"second\")"),
+                     (2, "goal.return(Data={\"s1\": %s1%, \"note\": %note%})") })
         {
-            var action = await context.Action($"variable.set(Name=%{name}%, Value=\"{value}\")");
-            var step = new Step(app.type.list) { Goal = goal, Index = index, Text = $"set %{name}% = {value}" };
-            step.Code.Add(action.In(step));
+            var step = new Step(app.type.list) { Goal = goal, Index = index, Text = line };
+            step.Code.Add((await context.Action(line)).In(step));
             goal.Step.Add(step);
-            last = step;
+            if (index == 1) second = step;
         }
         app.goal.list.Add(goal);
-        return last!;
+        return second!;
+    }
+
+    // What the resumed run answers it saw.
+    private static async Task<string?> Saw(global::app.data.@this result, string name)
+    {
+        await result.IsSuccess();
+        return (await (await result.Get(name)).Value())?.ToString();
     }
 
     // `save snapshot`, run where G's second step stands, after a note was set.
@@ -45,9 +53,11 @@ public class SignedSnapshotTests
         var context = app.actor.list.User.Context;
         var step = await Holds(app);
         await context.Variable.Set("note", "original");
+        await using var frame = context.call.Push(step, await context.call.Setting());
         await using var call = context.call.Push(step.Code[0], await context.call.Setting(), context.Variable);
         var saved = await new global::app.module.snapshot.save(context).Start();
         await call.DisposeAsync();
+        await frame.DisposeAsync();
         return saved;
     }
 
@@ -79,9 +89,9 @@ public class SignedSnapshotTests
         var read = await Read(file, context);
         await read.IsSuccess();
 
-        await (await Resume(read, context)).IsSuccess();
-        await Assert.That(await context.Variable.GetValue("s1")).IsEqualTo("second");
-        await Assert.That(await context.Variable.GetValue("note")).IsEqualTo("original");
+        var result = await Resume(read, context);
+        await Assert.That(await Saw(result, "s1")).IsEqualTo("second");
+        await Assert.That(await Saw(result, "note")).IsEqualTo("original");
     }
 
     // The road a program takes: `save %run% to file 'run.plang'`, then `read file 'run.plang', write to %snap%`. The
@@ -98,8 +108,10 @@ public class SignedSnapshotTests
         var read = await (await context.Action("file.read(Path=\"run.plang\")")).Start(context);
         await read.IsSuccess();
 
-        await (await Resume(read, context)).IsSuccess();
-        await Assert.That(await context.Variable.GetValue("s1")).IsEqualTo("second");
+        var result = await Resume(read, context);
+        await Assert.That(await Saw(result, "s1")).IsEqualTo("second");
+        // the run went on in its own app: the asker's %s1% is as it set it
+        await Assert.That(await context.Variable.GetValue("s1")).IsEqualTo("not yet");
     }
 
     // What a .plang holds beside the value comes back through a file read too: its properties (`!`) and what a program
@@ -203,10 +215,25 @@ public class SignedSnapshotTests
         await using var app = App();
         var context = app.actor.list.User.Context;
 
-        var result = await Resume(await app.Snapshot(context), context);
+        // every snapshot the app takes is signed: one that isn't was made some other way
+        var result = await Resume(new global::app.data.@this("snap", new global::app.snapshot.@this(context), context: context), context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("SnapshotUnsigned");
+    }
+
+    // Every snapshot the app takes is born signed by its own identity — an ask's pending state and an error's callback
+    // too, before anything carries it.
+    [Test]
+    public async Task ASnapshotTheAppTakes_IsSigned()
+    {
+        await using var app = App();
+        var context = app.actor.list.User.Context;
+
+        var taken = await app.Snapshot(context);
+
+        await taken.IsSuccess();
+        await Assert.That(taken.Signature).IsNotNull();
     }
 
     // A Data signed for plang's own store, read from a .plang file, is never judged at rest: its type states no view of

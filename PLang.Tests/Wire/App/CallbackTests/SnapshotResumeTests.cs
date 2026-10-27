@@ -6,13 +6,13 @@ using ActionEntity = global::app.goal.step.action.@this;
 
 namespace PLang.Tests.App.CallbackTests;
 
-/// Stage 2a — Batch 5 (C# half): `Data.Snapshot.Resume(context)` recursive cross-
+/// Stage 2a — Batch 5 (C# half): `Data.Snapshot.Resumed(context)` recursive cross-
 /// goal continuation; `callback.start` is the resume entry and requires Snapshot.
 public class SnapshotResumeTests
 {
     private static global::app.@this NewApp() =>
         new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-sr-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
+            "plang-sr-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing().TestIdentity();
 
     // A step is born knowing its goal, and the goal is born knowing the step.
     // A value as a formal line writes it: a %variable% bare, anything else a JSON literal.
@@ -29,25 +29,31 @@ public class SnapshotResumeTests
         return step;
     }
 
-    [Test] public async Task CallbackRun_NullSnapshot_ReturnsNoSnapshotError()
+    // A callback goes on through the one resume door, so it is checked as every resume is: one nobody signed is refused.
+    [Test] public async Task CallbackRun_Unsigned_IsRefused()
     {
         var app = NewApp();
-        var data = app.Ok("v"); // Snapshot = null
-        var handler = new start(app.actor.list.User.Context) { Callback = data };
+        var context = app.actor.list.User.Context;
+        var unsigned = new global::app.data.@this("callback", new global::app.snapshot.@this(context), context: context);
+        var handler = new start(context) { Callback = unsigned };
         var result = await handler.Start();
         await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("NoSnapshot");
+        await Assert.That(result.Error!.Key).IsEqualTo("SnapshotUnsigned");
     }
 
-    [Test] public async Task CallbackRun_WithSnapshot_DelegatesToSnapshotResume()
+    // A signed callback goes on through the resume door: an empty snapshot holds no frame to go on from.
+    [Test] public async Task CallbackRun_Signed_GoesOnThroughTheResumeDoor()
     {
         var app = NewApp();
-        var data = app.Ok("v");
-        data.Snapshot = new global::app.snapshot.@this(app.actor.list.User.Context); // empty snapshot
-        var handler = new start(app.actor.list.User.Context) { Callback = data };
+        var context = app.actor.list.User.Context;
+        var (signer, _) = app.Code.Get<global::app.module.signing.code.ISigning>();
+        var signed = await signer!.SignAsync(new global::app.module.signing.sign(context)
+        {
+            Data = new global::app.data.@this("callback", new global::app.snapshot.@this(context), context: context),
+            View = global::app.View.Snapshot,
+        });
+        var handler = new start(context) { Callback = signed };
         var result = await handler.Start();
-        // Empty snapshot → no CallStack section → no current frame → NoFrameToResume.
-        // Confirms delegation reached Resume (we don't get NoSnapshot).
         await Assert.That(result.Error!.Key).IsEqualTo("NoFrameToResume");
     }
 
@@ -55,7 +61,7 @@ public class SnapshotResumeTests
     {
         var app = NewApp();
         var snap = new global::app.snapshot.@this(app.actor.list.User.Context);
-        var result = await snap.Resume(app.actor.list.User.Context);
+        var result = await snap.Resumed(app.actor.list.User.Context);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NoFrameToResume");
     }
@@ -69,20 +75,27 @@ public class SnapshotResumeTests
         var goal = new Goal(app.type.list) { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
         await SetStep(context, goal, 0, "s0", "first");
         var step1 = await SetStep(context, goal, 1, "s1", "second");
+        // the run's last step answers what it saw: its memory is its own app's
+        var answer = new Step(app.type.list) { Goal = goal, Index = 2, Text = "return {s0, s1}" };
+        answer.Code.Add((await context.Action("goal.return(Data={\"s0\": %s0%, \"s1\": %s1%})")).In(answer));
+        goal.Step.Add(answer);
         app.goal.list.Add(goal);
+        // seeded before the save: a step that never runs again leaves it so
+        await context.Variable.Set("s0", "never");
 
-        // Push the action of step1 so the snapshot captures (stepIdx=1, actionIdx=0).
+        // Push step1 and its action so the snapshot captures (stepIdx=1, actionIdx=0).
+        await using (var step = context.call.Push(step1, await context.call.Setting()))
         await using (var call = context.call.Push(step1.Code[0], await context.call.Setting(), context.Variable))
         {
             var snap = (await app.Snapshot(app.actor.list.User.Context).Saved());
-            // Pop the call frame before Resume so Restore doesn't conflict.
             await call.DisposeAsync();
+            await step.DisposeAsync();
 
-            var result = await snap.Resume(context);
+            var result = await snap.Resumed(context);
             await result.IsSuccess();
             // Step 1 ran on resume; step 0 should NOT have run (we resumed mid-goal).
-            await Assert.That((await context.Variable.GetValue("s1"))).IsEqualTo("second");
-            await Assert.That((await context.Variable.Get("s0")).IsInitialized).IsFalse();
+            await Assert.That((await (await result.Get("s1")).Value())?.ToString()).IsEqualTo("second");
+            await Assert.That((await (await result.Get("s0")).Value())?.ToString()).IsEqualTo("never");
         }
     }
 
@@ -94,7 +107,7 @@ public class SnapshotResumeTests
         // throwing on the recursive walk.
         var app = NewApp();
         var snap = new global::app.snapshot.@this(app.actor.list.User.Context);
-        var result = await snap.Resume(app.actor.list.User.Context);
+        var result = await snap.Resumed(app.actor.list.User.Context);
         // Empty chain → NoFrameToResume; demonstrates recursion entry doesn't NRE.
         await Assert.That(result.Error!.Key).IsEqualTo("NoFrameToResume");
     }
