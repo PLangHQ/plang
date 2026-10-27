@@ -1,6 +1,8 @@
 # codeanalyzer summary — snapshot-7c-wip
 
-**Version:** v2 (re-check at 23d61537b). Verdict: FAIL, coder next.
+**Version:** v3 (narrow third check, `review3.md`): all of 153's items are done; one small finding born in the fix (S1: a view's name written ×3 in the signature, found by a hand-listed four; the view should own `Name`/`Named`). FAIL on that alone, coder next. Below is v2.
+
+**v2** (re-check at 23d61537b). Verdict: FAIL, coder next.
 
 **What this is:** the full OBP review of the snapshot stage 7c wip. v1 (at d119e797f) found 36 items; v2 re-checks them at HEAD after the coder's fixes and the architect's rulings (123–151).
 
