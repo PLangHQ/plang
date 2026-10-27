@@ -46,13 +46,13 @@ enum app.Wiring
   static const none : app.Wiring
 
 class app.call.Diff : System.IEquatable<app.call.Diff>
-  At : System.DateTimeOffset { get; init; }
+  At : System.DateTimeOffset { get; init; } [Debug, Out]
   Before : System.Object { get; init; }
-  Name : System.String { get; init; }
+  Name : System.String { get; init; } [Debug, Out]
   ctor(System.String Name, System.Object Before, System.DateTimeOffset At)
 
 class app.call.action.this : app.call.this, app.type.item.ICreate<app.call.action.this>
-  override Action : app.goal.step.action.this { get; }
+  override Action : app.goal.step.action.this { get; } [Debug, Out, Store]
   static Create(System.Object raw) : app.call.action.this
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.action.this
   static Internal : System.Boolean { get; }
@@ -71,7 +71,7 @@ class app.call.child.list.this : System.Collections.Generic.IEnumerable<app.call
   Remove(app.call.this child) : System.Void
 
 class app.call.composed.this : app.call.this, app.type.item.ICreate<app.call.composed.this>
-  override Action : app.goal.step.action.this { get; }
+  override Action : app.goal.step.action.this { get; } [Debug, Out]
   static Create(System.Object raw) : app.call.composed.this
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.composed.this
   static Internal : System.Boolean { get; }
@@ -84,7 +84,7 @@ class app.call.diff.this : System.Collections.Generic.IEnumerable<app.call.Diff>
   ctor()
 
 class app.call.goal.this : app.call.this, app.type.item.ICreate<app.call.goal.this>
-  override Goal : app.goal.this { get; }
+  override Goal : app.goal.this { get; } [Debug, Out, Store]
   static Create(System.Object raw) : app.call.goal.this
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.goal.this
   static Internal : System.Boolean { get; }
@@ -144,7 +144,7 @@ class app.call.setting.this : app.type.item.setting.this
   static Internal : System.Boolean { get; }
 
 class app.call.step.this : app.call.this, app.type.item.ICreate<app.call.step.this>
-  override Step : app.goal.step.this { get; }
+  override Step : app.goal.step.this { get; } [Debug, Out, Store]
   static Create(System.Object raw) : app.call.step.this
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.step.this
   static Internal : System.Boolean { get; }
@@ -154,32 +154,30 @@ class app.call.this : app.type.item.this, System.IAsyncDisposable, app.type.item
   Chain : System.Collections.Generic.IReadOnlyList<app.call.this> { get; }
   Children : app.call.child.list.this { get; }
   CompletedAt : app.type.item.datetime.this { get; }
-  Depth : app.type.item.number.this { get; } [LlmBuilder]
-  Diffs : app.call.diff.this { get; } [LlmBuilder]
+  Depth : app.type.item.number.this { get; } [Debug, LlmBuilder, Out]
+  Diffs : app.call.diff.this { get; } [Debug, LlmBuilder, Out]
   DisposeAsync() : System.Threading.Tasks.ValueTask
-  Duration(app.actor.context.this context) : app.type.item.duration.this
-  Error : app.error.this { get; }
-  Errors : app.error.list.this { get; } [LlmBuilder]
-  Event : app.data.this { get; }
+  Duration : app.type.item.duration.this { get; } [Debug, Out]
+  Error : app.error.this { get; } [Store]
+  Errors : app.error.list.this { get; } [Debug, LlmBuilder, Out]
+  Event : app.data.this { get; } [Debug, Store]
   GetItem<T>() : T
-  Handled : app.type.item.bool.this { get; set; }
+  Handled : app.type.item.bool.this { get; set; } [Debug, Out]
   Holds(System.String name) : System.Boolean
-  Id : app.type.item.text.this { get; }
-  Index : app.type.item.number.this { get; }
-  IsResumable : app.type.item.bool.this { get; }
+  Id : app.type.item.text.this { get; } [Debug, Out]
   Record(app.error.this error, app.actor.context.this context) : System.Void
   Set(System.String name, app.data.this value) : System.Void
   SetItem<T>(T value) : System.Void
-  StartedAt : app.type.item.datetime.this { get; }
+  StartedAt : app.type.item.datetime.this { get; } [Debug, Out]
   Supplies(app.goal.step.action.this call, System.String name) : System.Boolean
   Tag(app.type.item.dict.this tags, app.actor.context.this context) : System.Void
-  Tags : app.type.item.dict.this { get; } [LlmBuilder]
+  Tags : app.type.item.dict.this { get; } [Debug, LlmBuilder, Out, Store]
   TryGet(System.String name, app.data.this& value) : System.Boolean
+  Variable : System.Collections.Generic.IEnumerable<app.data.this> { get; } [Store]
   override IsLeaf : System.Boolean { get; }
   override ToString() : System.String
   property : app.type.item.property.list.this { get; } [LlmBuilder, Store]
   protected override Clone() : app.type.item.this
-  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   static Create(System.Object raw) : app.call.this
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.this
   virtual Action : app.goal.step.action.this { get; } [LlmBuilder]
@@ -3108,10 +3106,10 @@ class app.type.item.wire.kind.plang.this : app.type.kind.this<app.type.item.wire
   override Mime : System.Collections.Generic.IReadOnlyList<System.String> { get; }
 
 class app.type.item.wire.template : app.type.item.wire.this
-  ctor(System.String slice, app.type.this type, app.type.item.wire.kind.plang.this reader, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable, System.Boolean built = …)
+  ctor(System.String slice, app.type.this type, app.type.item.wire.kind.plang.this reader, app.View view, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable, System.Boolean built = …)
 
 class app.type.item.wire.this : app.type.item.source [PlangType]
-  ctor(System.String slice, app.type.this type, app.type.item.wire.kind.plang.this reader, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable = …, System.Boolean built = …)
+  ctor(System.String slice, app.type.this type, app.type.item.wire.kind.plang.this reader, app.View view, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable = …, System.Boolean built = …)
   override RawText : System.String { get; }
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   protected override Write(app.type.item.kind.json.Writer writer) : System.Threading.Tasks.ValueTask
@@ -3297,6 +3295,7 @@ interface app.type.reader.ITypeReader
   abstract Read<TReader>(TReader& reader, System.String kind, app.type.reader.ReadContext ctx) : app.type.item.this
   virtual IsEager : System.Boolean { get; }
   virtual Reads(app.type.format.TokenKind token) : System.Boolean
+  virtual View : app.View { get; }
 
 class app.type.reader.ReadContext : System.IEquatable<app.type.reader.ReadContext>
   Context : app.actor.context.this { get; init; }

@@ -432,10 +432,11 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// the parse stays at first touch. The one place a slice is made (a re-declared slice comes back here).
     /// The capture build beside the content <see cref="Make(object?, actor.context.@this?)"/> build —
     /// same verb, the capture's knowledge as an argument, never a format name. Not a birth.
-    /// <paramref name="pr"/>: the slice is the build's own bytes, a <c>.pr</c> (its read granted it).</summary>
-    internal item.wire.@this Make(string slice, global::app.type.item.wire.kind.plang.@this reader,
+    /// <paramref name="pr"/>: the slice is the build's own bytes, a <c>.pr</c> (its read granted it). <paramref name="view"/>:
+    /// what the bytes were written for, the view the slice is read in.</summary>
+    internal item.wire.@this Make(string slice, global::app.type.item.wire.kind.plang.@this reader, global::app.View view,
         IReadOnlyList<global::app.type.item.variable.@this>? variable = null, bool pr = false)
-        => Template != null ? new item.wire.template(slice, this, reader, variable ?? [], pr) : new item.wire.@this(slice, this, reader, built: pr);
+        => Template != null ? new item.wire.template(slice, this, reader, view, variable ?? [], pr) : new item.wire.@this(slice, this, reader, view, built: pr);
 
     /// <summary>Reads a value slot of this type off the reader — the one door for a
     /// <c>{name, type, value}</c> row's value, a Data's or an action property's. The slot is exactly
@@ -448,8 +449,8 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         global::app.type.reader.ReadContext ctx)
     {
         // Which types are structure is the TYPE's declaration (ITypeReader.IsEager), never a list of names; which
-        // forms it reads is the reader's own (ITypeReader.Reads).
-        if (ctx.Context.App.type.list.Reader.Typed(Name, null) is { IsEager: true } eager && eager.Reads(reader.Peek()))
+        // forms it reads is the reader's own (ITypeReader.Reads). The reader is the one the read's view reads it by.
+        if (ctx.View.Reader(this, null, ctx.Context) is { IsEager: true } eager && eager.Reads(reader.Peek()))
             return eager.Read(ref reader, null, ctx);
 
         // The slot is captured in plang's own format — the wire type's plang kind, which reads it on first touch.
@@ -467,12 +468,12 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             // byte-identical). A name was read above, by its own eager reader.
             return Template != null
                 ? kind.Make(JsonSerializer.Deserialize<string>(slice)!, this, null, ctx.Variable, ctx.IsBuilt)
-                : Make(slice, transport, pr: ctx.IsBuilt);
+                : Make(slice, transport, ctx.View, pr: ctx.IsBuilt);
         }
         // EVERY other slot is a wire: a VERBATIM Slice with the capturing transport named at the
-        // mint site. Face validation is free — the type's own pull IS the validator on first touch.
-        // A container is a template only by its own row's marker, holding its row's variables.
-        return Make(System.Text.Encoding.UTF8.GetString(reader.Slice()), transport, ctx.Variable, ctx.IsBuilt);
+        // mint site, holding the view it was read in. Face validation is free — the type's own pull IS the validator
+        // on first touch. A container is a template only by its own row's marker, holding its row's variables.
+        return Make(System.Text.Encoding.UTF8.GetString(reader.Slice()), transport, ctx.View, ctx.Variable, ctx.IsBuilt);
     }
 
     // The birth build — THIS type makes itself from a value, as it declares (its kind, its template), for the

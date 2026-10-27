@@ -123,6 +123,24 @@ public abstract class View
         => type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
             .Any(p => Is<OutAttribute>(p) || Is<StoreAttribute>(p) || Is<SnapshotAttribute>(p) || Is<SensitiveAttribute>(p) || Is<MaskedAttribute>(p));
 
+    /// <summary>The reader a value of <paramref name="type"/> (its kind <paramref name="kind"/>) is read by in this view:
+    /// the one its type registers for this view (a goal's in the snapshot), else the type's own.</summary>
+    internal global::app.type.reader.ITypeReader Reader(global::app.type.@this type, string? kind,
+        global::app.actor.context.@this context)
+        => context.App.type.list.Reader.Typed(type.Name, kind, this) ?? context.App.type.list.Reader.Reader(type.Name, kind, context);
+
+    /// <summary>A member of <paramref name="type"/> made from <paramref name="slot"/>, the value a record holds for it, in
+    /// this view: read by the reader its type registers for this view (a goal from its key), else made by the type
+    /// from the value.</summary>
+    internal global::app.type.item.@this? Make(global::app.type.@this type, global::app.type.item.@this? slot,
+        global::app.actor.context.@this context)
+    {
+        var kind = type.kind.IsEmpty ? null : type.kind.Name;
+        return slot != null && context.App.type.list.Reader.Typed(type.Name, kind, this) is { } reader
+            ? slot.Read(reader, kind, context) as global::app.type.item.@this
+            : type.Make(slot, context);
+    }
+
     /// <summary>What a value of <paramref name="type"/>, as <paramref name="raw"/> holds it, needs loaded before it is
     /// read in this view — the async half a sync reader can't do. By default nothing.</summary>
     internal virtual System.Threading.Tasks.Task<global::app.data.@this> Load(global::app.type.@this type, string raw,

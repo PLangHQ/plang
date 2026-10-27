@@ -15,8 +15,8 @@ internal sealed class layer : @this
     private protected override Read? Payload(string typeName, string? kind)
         => base.Payload(typeName, kind) ?? _under.Of(typeName, kind);
 
-    private protected override ITypeReader? Token(string typeName, string? kind)
-        => base.Token(typeName, kind) ?? _under.Typed(typeName, kind);
+    private protected override ITypeReader? Token(string typeName, string? kind, View? view)
+        => base.Token(typeName, kind, view) ?? _under.Typed(typeName, kind, view);
 
     private protected override string? Owner(string kind) => base.Owner(kind) ?? _under.TypeOf(kind);
 }

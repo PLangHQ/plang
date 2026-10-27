@@ -124,7 +124,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
     {
         var type = source.Type;
         var kind = type.kind.IsEmpty ? null : type.kind.Name;
-        var typeReader = ctx.Context.App.type.list.Reader.Reader(type.Name, kind, ctx.Context);
+        var typeReader = ctx.View.Reader(type, kind, ctx.Context);
         byte[] bytes = source.Raw as byte[] ?? System.Text.Encoding.UTF8.GetBytes(source.Raw.ToString() ?? "");
         var utf8 = new Utf8JsonReader(bytes);
         utf8.Read();
