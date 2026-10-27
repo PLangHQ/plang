@@ -17,7 +17,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// context to born them — born-with-context, never construct-then-stamp. Sub-sections
     /// inherit it. Read-back (<see cref="Create"/>) borns in the data binding's context.
     /// </summary>
-    public global::app.actor.context.@this Context { get; internal set; }
+    public global::app.actor.context.@this Context { get; }
 
     /// <summary>The entries on this node as plang VALUES — the node they are, not a raw bag.
     /// An <c>object?</c> bag forces a central type-switch downstream to decide what each entry is;

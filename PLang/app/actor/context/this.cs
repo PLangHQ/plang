@@ -134,7 +134,7 @@ public sealed class @this : IDisposable, global::app.snapshot.ISnapshot
     /// </summary>
     public global::app.type.item.path.file.filesystem.@this Filesystem { get; }
 
-    public @this(app.@this app, ActorType owner, Variables? variables = null, @this? parent = null, CancellationToken? parentToken = null,
+    public @this(app.@this app, ActorType owner, @this? parent = null, CancellationToken? parentToken = null,
         global::app.type.item.path.file.filesystem.@this? filesystem = null)
     {
         Id = Guid.NewGuid().ToString("N")[..12];
@@ -142,14 +142,13 @@ public sealed class @this : IDisposable, global::app.snapshot.ISnapshot
         Trace = new(app.type.list);
         Actor = owner;
         Filesystem = filesystem ?? parent?.Filesystem ?? app.filesystem;
-        Variable = variables ?? new Variables(this);
+        // its memory is born with it, in it
+        Variable = new Variables(this);
         Parent = parent;
         CreatedAt = DateTime.UtcNow;
         var linkTo = parentToken ?? parent?.CancellationToken ?? app.ShutdownToken;
         _cts = CancellationTokenSource.CreateLinkedTokenSource(linkTo);
 
-        // Stamp context on Variables (propagates to all existing Data)
-        Variable.Context = this;
         // a frame's values are the app's types
         call = new(app.type.list, () => Setting);
 

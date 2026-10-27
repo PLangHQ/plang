@@ -32,7 +32,7 @@ public partial class @this
     private IReadOnlyDictionary<string, data.@this> _variables
         => (IReadOnlyDictionary<string, data.@this>?)System.Threading.Volatile.Read(ref _rows)
            ?? System.Collections.Immutable.ImmutableDictionary<string, data.@this>.Empty;
-    private actor.context.@this _context;
+    private readonly actor.context.@this _context;
 
     /// <summary>How deep a chain of references this flow is resolving (a variable holding a variable…) —
     /// the variable's read counts it, and a chain past its limit is a cycle.</summary>
@@ -52,11 +52,7 @@ public partial class @this
     }
 
     [JsonIgnore]
-    internal actor.context.@this Context
-    {
-        get => _context;
-        set => _context = value;
-    }
+    internal actor.context.@this Context => _context;
 
     /// <summary>
     /// Production ctor — born from the owning context. Every Variables in a running
@@ -69,7 +65,7 @@ public partial class @this
 
     public @this(actor.context.@this context)
     {
-        Context = context;
+        _context = context;
         _system = new system(this);
     }
 
@@ -453,7 +449,6 @@ public partial class @this
 
             clone.Rows[kvp.Key] = kvp.Value.Clone();
         }
-        clone.Context = Context;
         return clone;
     }
 

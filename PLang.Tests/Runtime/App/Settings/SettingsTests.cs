@@ -18,7 +18,7 @@ public class SettingsTests : System.IAsyncDisposable
     private global::app.actor.context.@this Ctx()
     {
         var engine = new EngineType("/app", global::PLang.Tests.Parent.Actor);
-        return new global::app.actor.context.@this(engine, engine.actor.list.User, new Variables(engine.actor.list.User.Context));
+        return new global::app.actor.context.@this(engine, engine.actor.list.User);
     }
 
     // The action an option is read for — the settings build its keys from the module's and the action's names.
@@ -108,7 +108,7 @@ public class SettingsTests : System.IAsyncDisposable
         var parent = Ctx();
         parent.Setting.Set("http.request.setting.timeout", parent.Ok(50L));
 
-        var child = new global::app.actor.context.@this(parent.App, parent.Actor, parent.Variable.Clone(), parent);
+        var child = new global::app.actor.context.@this(parent.App, parent.Actor, parent: parent);
         var d = await child.Setting.Get(Request(child.Setting), "timeout");
         await Assert.That((await d.Value())?.ToString()).IsEqualTo("50");
     }
@@ -119,7 +119,7 @@ public class SettingsTests : System.IAsyncDisposable
         var parent = Ctx();
         parent.Setting.Set("http.request.setting.timeout", parent.Ok(50L));
 
-        var child = new global::app.actor.context.@this(parent.App, parent.Actor, parent.Variable.Clone(), parent);
+        var child = new global::app.actor.context.@this(parent.App, parent.Actor, parent: parent);
         child.Setting.Set("http.request.setting.timeout", child.Ok(10L));
 
         await Assert.That((await (await child.Setting.Get(Request(child.Setting), "timeout")).Value())?.ToString()).IsEqualTo("10");
