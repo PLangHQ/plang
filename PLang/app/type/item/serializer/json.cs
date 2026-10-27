@@ -100,7 +100,7 @@ public partial class json
         var element = doc.RootElement;
         return element.ValueKind == System.Text.Json.JsonValueKind.Object
                && (IsDataMarked(element) || IsTypedEntry(element))
-            ? new global::app.data.reader.@this().Read(utf8, new global::app.type.reader.ReadContext(_context, Verify: false, IsBuilt: ctx.IsBuilt))
+            ? new global::app.data.reader.@this().Read(utf8, new global::app.type.reader.ReadContext(_context, Verify: false, IsBuilt: ctx.IsBuilt) { View = ctx.View })
             : null;
     }
 
@@ -194,7 +194,8 @@ public partial class json
             System.Text.Json.JsonValueKind.Undefined => null,
             System.Text.Json.JsonValueKind.Object => IsDataMarked(element) || IsTypedEntry(element)
                 ? new global::app.data.reader.@this().Read(System.Text.Encoding.UTF8.GetBytes(element.GetRawText()),
-                    new global::app.type.reader.ReadContext(_context, Verify: false, IsBuilt: ctx?.IsBuilt ?? false))
+                    new global::app.type.reader.ReadContext(_context, Verify: false, IsBuilt: ctx?.IsBuilt ?? false)
+                    { View = ctx?.View ?? global::app.View.Out })
                 : ObjectLeaf(element, ctx, depth),
             System.Text.Json.JsonValueKind.Array => ArrayLeaf(element, ctx, depth),
             _ => element.GetRawText(),

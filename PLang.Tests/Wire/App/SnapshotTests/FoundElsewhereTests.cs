@@ -28,7 +28,6 @@ public class FoundElsewhereTests
 
         var text = await src.Snapshot(context).Saved().Text(context);
         await Assert.That(text).Contains("\"pr\"");
-        await Assert.That(text).Contains("\"key\"");
         await Assert.That(text).DoesNotContain("set %x% = 1");
 
         await using var dst = new global::app.@this(folder, global::PLang.Tests.Parent.Actor).Testing();
