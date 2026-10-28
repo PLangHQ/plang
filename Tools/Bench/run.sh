@@ -25,6 +25,8 @@
 # incremental build touches a file's time, not its text.
 set -uo pipefail
 unset CreateSymbolicLinksForCopyLocalIfPossible CreateHardLinksForAdditionalFilesIfPossible OPENAI_API_KEY
+# tiered PGO's instrumentation allocates by timing: one binary gave 3566 or 3790 KB per root request run to run. Off, bytes repeat.
+export DOTNET_TieredPGO=0
 here="$(cd "$(dirname "$0")" && pwd)"
 repo="$(cd "$here/../.." && pwd)"
 cd "$repo"

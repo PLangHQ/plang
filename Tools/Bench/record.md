@@ -21,6 +21,11 @@ low load beside a slow row means "run it again").
 How far two runs at the same load differ, from the runs on `fast-apps` (stage 3b, stage 5, three rounds each, 8 cpus,
 load 1–3). A difference inside the band is noise; outside it is a change worth a look.
 
+**Tiered PGO (2026-10-28):** with the runtime's default, the same binary gave a root request of 3566 or 3790 KB, run to
+run (22 ms or 55 ms beside it); with `DOTNET_TieredPGO=0` or `DOTNET_TieredCompilation=0` it gave 3829 KB every time. The
+extra bytes are the runtime's instrumentation, not the code. `run.sh` sets `DOTNET_TieredPGO=0` from here on; rows before
+it may sit in either mode (root request 3555–3841), so compare a row before it only by its birth columns.
+
 | Number | Band (two runs, load < 3) | From |
 |---|---|---|
 | Sub app birth, ms | ±0.02 ms (0.14–0.16) | 6 Release rounds |
@@ -51,6 +56,7 @@ per birth + dispose; a request app is born, a goal loaded and run, disposed, × 
 | Date | Branch | Commit | Load | Sub birth | Root birth | Sub request | Root request | Held, sub (MB) | Held, root (MB) | `plang --test` | C# sweep | Build, clean | Build, incr. |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 <!-- rows -->
+| 2026-10-28 | snapshot | 7ed837a05 (snapshot-fdc1270f2-birth) | 3.05 | 0.14 ms, 99 KB | 14.42 ms, 2336 KB | - | - | - | - | - | - | - | - |
 | 2026-10-28 | snapshot | 92a556872 (snapshot-0cd33f185-request) | 13.59 | - | - | 2.21 ms, 518 KB | 31.90 ms, 3813 KB | 1.6 → 2.0 → 2.0 → 2.0 | 0.1 → 1.9 → 1.9 → 2.6 | - | - | - | - |
 | 2026-10-28 | snapshot | 0cd33f185 (snapshot-0cd33f185) | 2.74 | 0.15 ms, 99 KB | 20.43 ms, 2332 KB | 1.99 ms, 518 KB | 20.50 ms, 3828 KB | 1.6 → 2.0 → 2.0 → 2.0 | 0.1 → 1.9 → 1.9 → 1.9 | 5.1 s (300 pass, 1 fail) | 77.1 s (red: none) | - | - |
 | 2026-10-28 |  | 6fa2f5d87 (snapshot-6fa2f5d87-birth) | 2.77 | 0.15 ms, 100 KB | 19.68 ms, 2310 KB | - | - | - | - | - | - | - | - |
