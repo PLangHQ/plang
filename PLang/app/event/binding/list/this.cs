@@ -17,6 +17,13 @@ public abstract class @this : IReadOnlyList<binding.@this>
 
     public int Count => _bindings.Length;
 
+    /// <summary>Takes in <paramref name="maker"/>'s: each of its bindings, in order, as this side's own inherited binding —
+    /// run for <paramref name="app"/>'s actor in its role, never saved or taken off by the sub app.</summary>
+    internal void Inherit(@this maker, global::app.@this app)
+    {
+        foreach (var binding in maker._bindings) Add(side => new inherited.@this(side, binding, app));
+    }
+
     /// <summary>Whether a snapshot keeps anything on this side: a binding a program made.</summary>
     internal bool IsSaved => _bindings.Any(binding => binding.IsSaved);
 

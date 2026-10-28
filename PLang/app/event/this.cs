@@ -28,6 +28,14 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     /// <summary>The side started <paramref name="when"/> it fires — what a binding is added to.</summary>
     internal binding.list.@this this[When when] => when == When.before ? before : after;
 
+    /// <summary>Takes in <paramref name="maker"/>'s: each side inheriting the maker's side of the same when — what a sub
+    /// app (<paramref name="app"/>) is born holding.</summary>
+    internal void Inherit(@this maker, global::app.@this app)
+    {
+        before.Inherit(maker.before, app);
+        after.Inherit(maker.after, app);
+    }
+
     /// <summary>Whether a snapshot keeps anything of this event: a binding a program made, on either side.</summary>
     internal bool IsSaved => before.IsSaved || after.IsSaved;
 

@@ -20,12 +20,8 @@ public sealed class @this : global::app.type.item.@this
     internal @this(global::app.@this app, @this? maker) : base(app.type.list[typeof(@this)])
     {
         _app = app;
-        foreach (var events in maker?._on ?? [])
-            foreach (var name in events.Names)
-                if (events[name] is { } @event)
-                    foreach (var when in System.Enum.GetValues<When>())
-                        foreach (var binding in @event[when])
-                            Add(events.item!).Add(name)[when].Add(side => new binding.inherited.@this(side, binding, app));
+        // each item's events inherit the maker's, each level its own part
+        foreach (var events in maker?._on ?? []) Add(events.item!).Inherit(events, app);
     }
 
     /// <summary>The event in play for the asker — <c>%!app.event.current%</c>, which <c>%!event%</c> reads: the running

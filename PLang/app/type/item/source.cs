@@ -221,10 +221,10 @@ public class source : @this
                 return await value.Value(data);
             }
             // what the read needs loaded first (a goal's .pr, in a snapshot), so the type's reader finds it held
-            var load = await Load(asking);
-            if (!load.Success)
+            var answer = await Load(asking);
+            if (!answer.Success)
             {
-                data.Fail(load.Error!);
+                data.Fail(answer.Error!);
                 return data.Empty;
             }
             var item = Read(asking);

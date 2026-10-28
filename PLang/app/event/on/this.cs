@@ -70,6 +70,13 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         => Made.TryGetValue(name, out var made) ? made(new binding.list.before(), new binding.list.after())
             : new declared(name, new binding.list.before(), new binding.list.after());
 
+    /// <summary>Takes in <paramref name="maker"/>'s: each event the maker made, this item's event of that name inheriting
+    /// it — what a sub app (<paramref name="app"/>) is born holding.</summary>
+    internal void Inherit(@this maker, global::app.@this app)
+    {
+        foreach (var (name, @event) in maker._events ?? []) Add(name)!.Inherit(@event, app);
+    }
+
     /// <summary>The names of the events an item has: the core's (<c>ask</c>, <c>create</c>, … <c>write</c>), every item
     /// the same ones, and those its type declares; before or after one is a binding's <c>When</c>, never part of its name.</summary>
     public IEnumerable<string> Names => Made.Keys.Concat(_names).Order(StringComparer.Ordinal);
