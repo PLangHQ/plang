@@ -216,8 +216,12 @@ public sealed partial class @this : IAsyncDisposable
     public data.@this Register(System.Type providerType, ICode provider)
         // A provider is engine plumbing, never a plang value — the registration
         // just succeeds. Returning the provider as the value would wrap a CLR
-        // service in a Data (a throwaway clr); the value is never read.
-        => Put(Table, providerType, provider) ? Context.Ok()
+        // service in a Data (a throwaway clr); the value is never read. It is held under the interface it provides,
+        // the kind a snapshot names it by: a class (a Register<T> whose T was inferred from the provider) is refused.
+        => !providerType.IsInterface
+            ? Context.Error(new ActionError($"Provider '{provider.Name}' is registered by its class {providerType.Name}: register it by " +
+                "the interface it provides (Register<IIdentity>(provider))", "ProviderNotByInterface", 400))
+            : Put(Table, providerType, provider) ? Context.Ok()
             : Context.Error(new ActionError($"Provider '{provider.Name}' already registered for {providerType.Name}", "ProviderExists", 409));
 
     // Registers provider for providerType in table; the first for a type becomes its default — a layer's first only

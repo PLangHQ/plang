@@ -162,6 +162,18 @@ public class NamedProviderRegistryTests
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderExists");
     }
 
+    // a provider is held under the interface it provides, the kind a snapshot names it by: Register<T> with T inferred
+    // from the provider (its class) is refused, never held under a kind no snapshot can name again
+    [Test]
+    public async Task Register_ByTheProvidersClass_IsRefused()
+    {
+        var result = _app.Code.Register(new MockSigningProvider("by-class"));
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotByInterface");
+        await Assert.That(_app.Code.List(typeof(MockSigningProvider))).IsEmpty();
+    }
+
     #endregion
 
     #region Get
