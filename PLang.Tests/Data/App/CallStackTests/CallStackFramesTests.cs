@@ -41,38 +41,47 @@ public class CallStackFramesTests
     public async Task TheFrames_ComeBackInOrder_EachUnderTheOneBeforeIt()
     {
         await using var src = App();
-        var (_, _, a1) = MakeFrame(src, "Outer");
-        var (_, _, a2) = MakeFrame(src, "Inner");
+        var (_, s1, a1) = MakeFrame(src, "Outer");
+        var (_, s2, a2) = MakeFrame(src, "Inner");
         var context = src.actor.list.User.Context;
         string text;
+        // as a run stands: each action under its step's frame
+        await using (context.call.Push(s1, await context.call.Setting()))
         await using (context.call.Push(a1, await context.call.Setting()))
+        await using (context.call.Push(s2, await context.call.Setting()))
         await using (context.call.Push(a2, await context.call.Setting()))
             text = await src.Snapshot(context).Saved().Text(context);
 
         await using var dst = App();
-        var (_, _, da1) = MakeFrame(dst, "Outer");
-        var (_, _, da2) = MakeFrame(dst, "Inner");
+        var (_, ds1, da1) = MakeFrame(dst, "Outer");
+        var (_, ds2, da2) = MakeFrame(dst, "Inner");
         var into = dst.actor.list.User.Context;
         await dst.Restore(await into.Snapshot(text), into);
 
         var root = into.call.Root!;
-        await Assert.That(root.Action).IsSameReferenceAs(da1);
-        var child = root.Children.Single();
-        await Assert.That(child.Caller).IsSameReferenceAs(root);
-        await Assert.That(child.Action).IsSameReferenceAs(da2);
+        await Assert.That(root.Step).IsSameReferenceAs(ds1);
+        var frames = new List<global::app.call.@this> { root };
+        while (frames[^1].Children.SingleOrDefault() is { } child) frames.Add(child);
+        await Assert.That(frames.Count).IsEqualTo(4);
+        for (var at = 1; at < frames.Count; at++) await Assert.That(frames[at].Caller).IsSameReferenceAs(frames[at - 1]);
+        await Assert.That(frames[1].Action).IsSameReferenceAs(da1);
+        await Assert.That(frames[2].Step).IsSameReferenceAs(ds2);
+        await Assert.That(frames[3].Action).IsSameReferenceAs(da2);
     }
 
     [Test]
     public async Task ACompletedChild_IsHistory_NotAmongTheFrames()
     {
         await using var src = App();
-        var (_, _, a1) = MakeFrame(src, "Parent");
-        var (_, _, a2) = MakeFrame(src, "CompletedChild");
+        var (_, s1, a1) = MakeFrame(src, "Parent");
+        var (_, s2, a2) = MakeFrame(src, "CompletedChild");
         var context = src.actor.list.User.Context;
         // history keeps the completed child among its caller's children; the snapshot keeps only the live chain
         context.Setting.Set("app.call.setting.history", true);
 
+        await using var step = context.call.Push(s1, await context.call.Setting());
         await using var parent = context.call.Push(a1, await context.call.Setting());
+        await using (context.call.Push(s2, await context.call.Setting()))
         await using (context.call.Push(a2, await context.call.Setting())) { }
         var text = await src.Snapshot(context).Saved().Text(context);
 
@@ -193,22 +202,26 @@ public class CallStackFramesTests
     public async Task ARestoreThatFails_LeavesNothingEnteredBehind()
     {
         await using var src = App();
-        var (_, _, a1) = MakeFrame(src, "Kept");
-        var (_, _, a2) = MakeFrame(src, "Changed");
+        var (_, s1, a1) = MakeFrame(src, "Kept");
+        var (_, s2, a2) = MakeFrame(src, "Changed");
         var context = src.actor.list.User.Context;
         string text;
+        await using (context.call.Push(s1, await context.call.Setting()))
         await using (context.call.Push(a1, await context.call.Setting()))
+        await using (context.call.Push(s2, await context.call.Setting()))
         await using (context.call.Push(a2, await context.call.Setting()))
             text = await src.Snapshot(context).Saved().Text(context);
 
-        // the second frame's goal changed since the save: the first is entered, then the restore fails on the second
+        // the last frame's step holds no action now: the frames before it are made, then the restore fails on it
         await using var dst = App();
         MakeFrame(dst, "Kept");
-        MakeFrame(dst, "Changed", "another step");
+        var changed = new Goal(dst.type.list) { Name = "Changed", Path = global::app.type.item.path.@this.Resolve("/Changed.goal", dst.actor.list.User.Context) };
+        changed.Step.Add(new Step(dst.type.list) { Index = 0, Text = "step", Goal = changed });
+        dst.goal.list.Add(changed);
         var into = dst.actor.list.User.Context;
         var started = await (await into.Snapshot(text)).Start(dst, into);
 
-        await Assert.That(started.Error?.Key).IsEqualTo("GoalHashMismatch");
+        await Assert.That(started.Error?.Key).IsEqualTo("ActionNotFound");
         await Assert.That(into.call.Current).IsNull();
         await Assert.That(into.call.Root?.Children.Count ?? 0).IsEqualTo(0);
     }

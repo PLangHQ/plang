@@ -15,14 +15,35 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
         Variables? variables)
         : base(null, type, stack.Current, stack.Current, stack, variables) => Action = action;
 
-    /// <summary>An action's frame come back from a snapshot: born with the action its <paramref name="record"/>'s key
-    /// finds, under <paramref name="stack"/>'s current frame.</summary>
+    /// <summary>An action's frame come back from a snapshot, under its step's frame: born with the action at its saved
+    /// <see cref="Index"/> in that step's code, as the goal is now. A place past the step's end is refused, naming how many
+    /// actions the step holds, thrown to the read boundary.</summary>
     private @this(global::app.type.item.dict.@this record, global::app.type.@this type, list.@this stack, global::app.actor.context.@this context)
-        : base(record, type, stack, context) => Action = Kept<global::app.goal.step.action.@this>(record, "action", context);
+        : base(record, type, stack, context)
+        => Action = Caller?.Step is { } step && _index >= 0 && _index < step.Code.Count ? step.Code[_index]
+            : throw new global::app.error.DeclinedException(new global::app.error.@this(Caller?.Step is { } held
+                ? $"the saved action {_index} is past the end of step {held.Index} of '{held.Goal?.Name}' ({held.Code.Count} actions)"
+                : "a saved action's frame stands under no step", "ActionNotFound", 404));
 
     /// <summary>The action it runs; its step and goal are the action's.</summary>
-    [Store, Out, Debug, global::app.Snapshot]
+    [Store, Out, Debug]
     public override global::app.goal.step.action.@this? Action { get; }
+
+    /// <summary>Where the run stands in its step: its action's place in the step's code — one of the two numbers that say
+    /// where a resume goes on (the step's frame holds the other).</summary>
+    [global::app.Snapshot]
+    internal int Index { get => Action?.Index ?? _index; private set => _index = value; }
+    private int _index;
+
+    /// <summary>The module of the action that stood there when it was saved — checked against the one there now.</summary>
+    [global::app.Snapshot]
+    internal string Module { get => Action?.Module.Name ?? _module; private set => _module = value; }
+    private string _module = "";
+
+    /// <summary>The name of the action that stood there when it was saved — checked against the one there now.</summary>
+    [global::app.Snapshot]
+    internal string Name { get => Action?.Name ?? _name; private set => _name = value; }
+    private string _name = "";
 
 
     /// <summary>An action's frame passes through; a stored one's record comes back as one, made under the current frame
@@ -37,14 +58,22 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
     /// <summary>The rest of its step's chain, as the chain runs it: this action again when the run stopped in it
     /// (<paramref name="again"/>: the ask takes its answer), else from the one after it (the call it made returned) —
     /// but a condition whose branch was running has taken it, which ends the chain.</summary>
-    internal override System.Threading.Tasks.Task<global::app.data.@this> Rest(global::app.actor.context.@this context, bool again,
+    internal override async System.Threading.Tasks.Task<global::app.data.@this> Rest(global::app.actor.context.@this context, bool again,
         global::app.data.@this result)
     {
         // a taken branch ends the chain: what it answered is the chain's
-        if (!again && Action!.IsCondition) return System.Threading.Tasks.Task.FromResult(result);
+        if (!again && Action!.IsCondition) return result;
         // the action of an action's frame is one its step holds, so it has its place there; after it, the chain goes on
         // from what it answered, as it would have
         var at = Action!.Index!.Value;
-        return again ? Step!.Code.Start(context, at) : Step!.Code.Start(context, at + 1, result);
+        if (!again) return await Step!.Code.Start(context, at + 1, result);
+        // the run goes on at its place as the goal is now: another action standing there (the goal changed, or the place
+        // was edited) is said, and goes on
+        if (!string.Equals(Action.Module.Name, _module, StringComparison.OrdinalIgnoreCase)
+            || !string.Equals(Action.Name, _name, StringComparison.OrdinalIgnoreCase))
+            await context.Actor.Channel[global::app.channel.list.@this.Error].WriteText(
+                $"'{Step!.Goal?.Name}' step {Step.Index}, action {at} is {Action.Module.Name}.{Action.Name} now, not {_module}.{_name} " +
+                "as it was saved: going on there");
+        return await Step!.Code.Start(context, at);
     }
 }

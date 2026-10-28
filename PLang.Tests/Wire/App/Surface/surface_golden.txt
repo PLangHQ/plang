@@ -51,7 +51,7 @@ class app.call.Diff : System.IEquatable<app.call.Diff>
   Name : System.String { get; } [Debug, Out]
 
 class app.call.action.this : app.call.this, app.type.item.ICreate<app.call.action.this>
-  override Action : app.goal.step.action.this { get; } [Debug, Out, Snapshot, Store]
+  override Action : app.goal.step.action.this { get; } [Debug, Out, Store]
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.action.this
   static Internal : System.Boolean { get; }
 

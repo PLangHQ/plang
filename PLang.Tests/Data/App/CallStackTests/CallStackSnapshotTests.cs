@@ -47,11 +47,12 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
     [Test]
     public async Task CallStack_RoundTrip_AFramesErrors_ComeBackWithIt()
     {
-        var (g1, _, a1) = MakeFrame("ErrGoal");
+        var (g1, s1, a1) = MakeFrame("ErrGoal");
         var src = BuildAppWithGoals(g1);
         var context = src.actor.list.User.Context;
         var stack = context.call;
 
+        await using (stack.Push(s1, await stack.Setting()))
         await using (var frame = stack.Push(a1, await stack.Setting()))
         {
             frame.Record(new global::app.error.@this("it broke", "Broke", 500), context);
@@ -61,19 +62,20 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
             var dst = BuildAppWithGoals(dg1);
             await dst.Restore(snap, dst.actor.list.User.Context);
 
-            var root = dst.actor.list.User.Context.call.Root!;
-            await Assert.That(root.Error).IsNotNull();
-            await Assert.That(root.Error!.Key).IsEqualTo("Broke");
+            var action = dst.actor.list.User.Context.call.Root!.Children.Single();
+            await Assert.That(action.Error).IsNotNull();
+            await Assert.That(action.Error!.Key).IsEqualTo("Broke");
         }
     }
 
     [Test]
     public async Task CallStack_ThroughText_AFramesErrors_ComeBackWithIt()
     {
-        var (g1, _, a1) = MakeFrame("ErrTextGoal");
+        var (g1, s1, a1) = MakeFrame("ErrTextGoal");
         var src = BuildAppWithGoals(g1);
         var context = src.actor.list.User.Context;
 
+        await using (context.call.Push(s1, await context.call.Setting()))
         await using (var frame = context.call.Push(a1, await context.call.Setting()))
         {
             frame.Record(new global::app.error.@this("it broke", "Broke", 500), context);
@@ -84,10 +86,10 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
             var into = dst.actor.list.User.Context;
             await dst.Restore(await into.Snapshot(text), into);
 
-            var root = into.call.Root!;
-            await Assert.That(root.Error).IsNotNull();
-            await Assert.That(root.Error!.Key).IsEqualTo("Broke");
-            await Assert.That(root.Error.Message).IsEqualTo("it broke");
+            var action = into.call.Root!.Children.Single();
+            await Assert.That(action.Error).IsNotNull();
+            await Assert.That(action.Error!.Key).IsEqualTo("Broke");
+            await Assert.That(action.Error.Message).IsEqualTo("it broke");
         }
     }
 
@@ -95,10 +97,11 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
     public async Task CallStack_ThroughText_ABinding_ComesBackAsABinding_WithItsNames()
     {
         // a loop's %item%: a binding under the action's frame, through its own type's Create
-        var (g1, _, a1) = MakeFrame("BindTextGoal");
+        var (g1, s1, a1) = MakeFrame("BindTextGoal");
         var src = BuildAppWithGoals(g1);
         var context = src.actor.list.User.Context;
 
+        await using (context.call.Push(s1, await context.call.Setting()))
         await using (var frame = context.call.Push(a1, await context.call.Setting()))
         await using (context.call.Push([new global::app.data.@this("item", "apple", context: context)], await context.call.Setting()))
         {
@@ -109,9 +112,10 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
             var into = dst.actor.list.User.Context;
             await dst.Restore(await into.Snapshot(text), into);
 
-            var binding = into.call.Root!.Children.Single();
+            var action = into.call.Root!.Children.Single();
+            var binding = action.Children.Single();
             await Assert.That(binding is global::app.call.binding.@this and not global::app.call.isolated.@this).IsTrue();
-            await Assert.That(binding.Goal).IsSameReferenceAs(into.call.Root!.Goal);    // it stands where its caller stands
+            await Assert.That(binding.Goal).IsSameReferenceAs(action.Goal);    // it stands where its caller stands
             await Assert.That(binding.TryGet("item", out var item)).IsTrue();
             await Assert.That((await item.Value())?.ToString()).IsEqualTo("apple");
         }
@@ -121,10 +125,11 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
     public async Task CallStack_ThroughText_AnIsolatedFrame_ComesBackIsolated_KeepingItsWrites()
     {
         // a tool's goal runs in an isolated frame: what was written under it stays in it, and still does once it is back
-        var (g1, _, a1) = MakeFrame("IsolateTextGoal");
+        var (g1, s1, a1) = MakeFrame("IsolateTextGoal");
         var src = BuildAppWithGoals(g1);
         var context = src.actor.list.User.Context;
 
+        await using (context.call.Push(s1, await context.call.Setting()))
         await using (var frame = context.call.Push(a1, await context.call.Setting()))
         await using (context.call.Isolate([new global::app.data.@this("city", "Reykjavik", context: context)], await context.call.Setting()))
         {
@@ -135,7 +140,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
             var into = dst.actor.list.User.Context;
             await dst.Restore(await into.Snapshot(text), into);
 
-            var isolated = into.call.Root!.Children.Single();
+            var isolated = into.call.Root!.Children.Single().Children.Single();
             await Assert.That(isolated is global::app.call.isolated.@this).IsTrue();
             await Assert.That(isolated.TryGet("city", out var city)).IsTrue();
             await Assert.That((await city.Value())?.ToString()).IsEqualTo("Reykjavik");
@@ -147,7 +152,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
     public async Task CallStack_Start_FindsTheGoalByItsAddress_NotItsName()
     {
         // two files each hold a goal named Show: the frame's goal is the one at its address
-        var (g1, _, a1) = MakeFrame("Show");
+        var (g1, s1, a1) = MakeFrame("Show");
         var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var other = new Goal(app.type.list) { Name = "Show", Path = global::app.type.item.path.@this.Resolve("/other/Show.goal", app.actor.list.User.Context) };
         var otherStep = new Step(app.type.list) { Index = 0, Text = "step", Goal = other };
@@ -158,6 +163,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         var context = app.actor.list.User.Context;
 
         global::app.snapshot.@this snap;
+        await using (context.call.Push(s1, await context.call.Setting()))
         await using (context.call.Push(a1, await context.call.Setting()))
             snap = (await app.Snapshot(context).Saved());
         await app.Restore(snap, context);

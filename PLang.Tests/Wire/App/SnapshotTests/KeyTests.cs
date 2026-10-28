@@ -28,7 +28,8 @@ public class KeyTests
 
         await Assert.That(json["index"]!.GetValue<int>()).IsEqualTo(0);
         await Assert.That(json["goal"]!["name"]!.GetValue<string>()).IsEqualTo("G");
-        await Assert.That(json["goal"]!["hash"]!.GetValue<string>()).IsEqualTo(goal.Hash);
+        // no hash: a goal changed since the save is the goal as it is now
+        await Assert.That(json["goal"]!.AsObject().ContainsKey("hash")).IsFalse();
         await Assert.That(json.ToJsonString()).DoesNotContain("set %x% = 1");
     }
 

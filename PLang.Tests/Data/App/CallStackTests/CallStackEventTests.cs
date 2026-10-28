@@ -31,10 +31,11 @@ public class CallStackEventTests : System.IAsyncDisposable
     [Test]
     public async Task CallStack_RoundTrip_TheEventRunningInAFrame_ComesBackWithIt()
     {
-        var (g1, _, a1) = MakeFrame("EventGoal");
+        var (g1, s1, a1) = MakeFrame("EventGoal");
         var src = BuildAppWithGoals(g1);
         var context = src.actor.list.User.Context;
 
+        await using (context.call.Push(s1, await context.call.Setting()))
         await using (var frame = context.call.Push(a1, await context.call.Setting()))
         {
             frame.Event = new global::app.data.@this("!event", "fired", context: context);
@@ -44,9 +45,9 @@ public class CallStackEventTests : System.IAsyncDisposable
             var dst = BuildAppWithGoals(dg1);
             await dst.Restore(snap, dst.actor.list.User.Context);
 
-            var root = dst.actor.list.User.Context.call.Root!;
-            await Assert.That(root.Event).IsNotNull();
-            await Assert.That((await root.Event!.Value())?.ToString()).IsEqualTo("fired");
+            var action = dst.actor.list.User.Context.call.Root!.Children.Single();
+            await Assert.That(action.Event).IsNotNull();
+            await Assert.That((await action.Event!.Value())?.ToString()).IsEqualTo("fired");
         }
     }
 

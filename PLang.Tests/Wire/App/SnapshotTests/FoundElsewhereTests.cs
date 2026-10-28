@@ -39,8 +39,9 @@ public class FoundElsewhereTests
         await Assert.That(ReferenceEquals(back, live)).IsTrue();
     }
 
+    // what finds a goal is its name and its .goal: one changed since the save is that goal as it is now
     [Test]
-    public async Task AGoalChangedSinceTheSave_IsRefused()
+    public async Task AGoalChangedSinceTheSave_ComesBackAsItIsNow()
     {
         var folder = Folder();
         await using var src = new global::app.@this(folder, global::PLang.Tests.Parent.Actor).Testing();
@@ -49,13 +50,11 @@ public class FoundElsewhereTests
         var text = await src.Snapshot(context).Saved().Text(context);
 
         await using var dst = new global::app.@this(folder, global::PLang.Tests.Parent.Actor).Testing();
-        await Holds(dst, "set %x% = 2");
+        var live = await Holds(dst, "set %x% = 2");
         var into = dst.actor.list.User.Context;
         await dst.Restore(await into.Snapshot(text), into);
 
-        var g = await into.Variable.Get("g");
-        await Assert.That(await g.Value<Goal>()).IsNull();
-        await Assert.That(g.Error!.Key).IsEqualTo("GoalHashMismatch");
+        await Assert.That(await (await into.Variable.Get("g")).Value<Goal>()).IsSameReferenceAs(live);
     }
 
     [Test]

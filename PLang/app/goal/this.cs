@@ -135,7 +135,7 @@ public sealed partial class @this
     [Debug]
     public global::app.type.item.path.@this? Pr => Path is global::app.type.item.path.file.@this { Absolute.Length: > 0 } file ? file.Pr : null;
 
-    [Store, Out, Debug, Snapshot]
+    [Store, Out, Debug]
     public string? Hash
     {
         get

@@ -39,6 +39,6 @@ public sealed class Snapshot : global::app.type.reader.ITypeReader
             throw new global::app.error.DeclinedException(new global::app.error.@this(
                 $"a saved step's key names {(goal == null ? "no goal" : "no index")}", "StepKeyIncomplete", 400));
         return goal[at] ?? throw new global::app.error.DeclinedException(new global::app.error.@this(
-            $"the saved step {at} is not in goal '{goal.Name}'", "StepNotFound", 404));
+            $"the saved step {at} is past the end of '{goal.Name}' ({goal.Step.Count} steps)", "StepNotFound", 404));
     }
 }
