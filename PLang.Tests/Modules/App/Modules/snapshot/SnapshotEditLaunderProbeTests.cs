@@ -32,11 +32,13 @@ public class SnapshotEditLaunderProbeTests
         app.goal.list.Add(goal);
         await context.Variable.Set("note", "original");
         await context.Variable.Set("x", 1);
+        await using var running = context.call.Push(second!.Goal!, await context.call.Setting());
         await using var frame = context.call.Push(second!, await context.call.Setting());
         await using var call = context.call.Push(second!.Code[0], await context.call.Setting(), context.Variable);
         var saved = await new global::app.module.snapshot.save(context).Start();
         await call.DisposeAsync();
         await frame.DisposeAsync();
+        await running.DisposeAsync();
         return saved;
     }
 
@@ -171,7 +173,7 @@ public class SnapshotEditLaunderProbeTests
         await using var app = App();
         var context = app.actor.list.User.Context;
         await context.Variable.Set("snap", await Saved(app));
-        var edit = await (await context.Action("variable.set(Name=%snap.app.actor.list.user.context.call.current.caller.step.index%, Value=\"2\")")).Start(context);
+        var edit = await (await context.Action("variable.set(Name=%snap.app.actor.list.user.context.call.current.caller.index%, Value=\"0\")")).Start(context);
 
         var refused = await (await context.Action("snapshot.resume(Snapshot=%snap%)")).Start(context);
         var signed = await (await context.Action("signing.sign(Data=%snap%)")).Start(context);
@@ -205,7 +207,7 @@ public class SnapshotEditLaunderProbeTests
         await context.Variable.Set("snap", await Saved(app));
         var before = await Live(app, context);
 
-        await (await context.Action("variable.set(Name=%seen%, Value=%snap.app.actor.list.user.context.call.current.caller.step.index%)")).Start(context);
+        await (await context.Action("variable.set(Name=%seen%, Value=%snap.app.actor.list.user.context.call.current.caller.index%)")).Start(context);
         await (await context.Action("variable.set(Name=%seen2%, Value=%snap.app.actor.list.user.context.variable.row.note%)")).Start(context);
 
         await Assert.That(await Live(app, context)).IsEqualTo(before);
@@ -213,7 +215,7 @@ public class SnapshotEditLaunderProbeTests
 
     // K1: a navigation SET into the snapshot (the stop point, a variable) changes nothing live.
     [Test]
-    [Arguments("variable.set(Name=%snap.app.actor.list.user.context.call.current.caller.step.index%, Value=\"2\")")]
+    [Arguments("variable.set(Name=%snap.app.actor.list.user.context.call.current.caller.index%, Value=\"2\")")]
     [Arguments("variable.set(Name=%snap.app.actor.list.user.context.variable.row.note%, Value=\"EDITED\")")]
     [Arguments("variable.set(Name=%snap.app.actor.list.user.context.call.current.index%, Value=\"2\")")]
     public async Task K1_EditingASnapshot_ChangesNothingLive(string edit)
@@ -231,7 +233,29 @@ public class SnapshotEditLaunderProbeTests
         await Assert.That((context.call.Current?.Errors.Count ?? 0) + (context.call.Current?.Tags.Count ?? 0)).IsEqualTo(propertiesBefore);
     }
 
-    // K2: the re-written edited snapshot holds what was saved plus the edit: not the edit's own frame, nothing added.
+    // every leaf of a snapshot's text as path=value, a record {type: dict, value} taken as the bare dict it holds, the
+    // signature layer left out: what a snapshot says, not how it is wrapped
+    private static bool IsRecord(System.Text.Json.Nodes.JsonObject json)
+        => json.Count == 2 && json.ContainsKey("value") && json["type"] is System.Text.Json.Nodes.JsonObject type
+            && type["name"] is System.Text.Json.Nodes.JsonValue name && name.ToString() == "dict";
+
+    private static void Leaves(System.Text.Json.Nodes.JsonNode? node, string path, HashSet<string> into)
+    {
+        switch (node)
+        {
+            case System.Text.Json.Nodes.JsonObject json when IsRecord(json):
+                Leaves(json["value"], path, into); break;
+            case System.Text.Json.Nodes.JsonObject json:
+                foreach (var (key, child) in json) if (key is not ("signature" or "@schema" or "hash" or "nonce" or "created")) Leaves(child, path + "/" + key, into);
+                break;
+            case System.Text.Json.Nodes.JsonArray list:
+                for (var at = 0; at < list.Count; at++) Leaves(list[at], path + "[" + at + "]", into);
+                break;
+            default: into.Add(path + "=" + node?.ToJsonString()); break;
+        }
+    }
+
+    // K2: the re-written edited snapshot holds what was saved plus the edit, and nothing else.
     [Test]
     public async Task K2_AReWrittenEditedSnapshot_HoldsOnlyWhatWasSavedPlusTheEdit()
     {
@@ -244,10 +268,15 @@ public class SnapshotEditLaunderProbeTests
         await (await context.Action(Edit)).Start(context);
         var edited = System.Text.Encoding.UTF8.GetString(await Plang(await context.Variable.Get("snap"), context));
 
-        await TestContext.Current!.OutputWriter.WriteLineAsync($"K2 original.len={original.Length} edited.len={edited.Length} hasOwnFrame={edited.Contains("snap.app")}");
+        var was = new HashSet<string>(); var now = new HashSet<string>();
+        Leaves(System.Text.Json.Nodes.JsonNode.Parse(original), "", was);
+        Leaves(System.Text.Json.Nodes.JsonNode.Parse(edited), "", now);
+        var added = now.Except(was).ToList(); var gone = was.Except(now).ToList();
+        await TestContext.Current!.OutputWriter.WriteLineAsync($"K2 added={string.Join(" | ", added)} gone={string.Join(" | ", gone)}");
         await Assert.That(edited).DoesNotContain("snap.app");
-        // the one change is the note: EDITED in, original out; the signature and hash are the only other bytes that differ
-        await Assert.That(edited.Contains("EDITED")).IsTrue();
-        await Assert.That(edited.Replace("EDITED", "original").Length).IsEqualTo(original.Length);
+        await Assert.That(added.Count).IsEqualTo(1);
+        await Assert.That(added[0]).Contains("EDITED");
+        await Assert.That(gone.Count).IsEqualTo(1);
+        await Assert.That(gone[0]).Contains("original");
     }
 }
