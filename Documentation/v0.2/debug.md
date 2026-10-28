@@ -246,7 +246,7 @@ PLang code reaches the live tree through `%!callStack%`:
 | `%!callStack.Current.Caller%` | `Call?` | Sync parent. Null at root. |
 | `%!callStack.Current.Cause%` | `Call?` | Async origin (recovery body, event publish). Null for normal goal.call. |
 | `%!callStack.Current.Depth%` | int | Caller-chain length (1 = root). Derived. |
-| `%!callStack.Current.Chain%` | List | `[Current, Caller, ..., Root]`. **Foreach-friendly** — `- foreach %!callStack.Current.Chain%, call DoFrame frame=%frame%`. |
+| `%!call.current.list%` | List | The call and its callers: `[Current, Caller, ..., Root]`. **Foreach-friendly** — `- foreach %!call.current.list%, call DoFrame frame=%frame%`. |
 | `%!callStack.Current.Children%` | List | Live siblings under Current. |
 | `%!callStack.Current.Errors%` | List | Errors observed at this scope. |
 | `%!callStack.Current.Handled%` | bool | Set by error.handle.Wrap on recovery success. |
