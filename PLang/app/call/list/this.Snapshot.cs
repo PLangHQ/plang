@@ -66,7 +66,12 @@ public sealed partial class @this
         if (_resumed is not { } stopped || stopped.Setting != null) return;
         var setting = await Setting();
         var calls = stopped.list;
-        for (var at = calls.Count - 1; at >= 0; at--) Enter(calls[at], setting);
+        // the root stands under the frame current now; each frame under it counts its depth from its caller again
+        for (var at = calls.Count - 1; at >= 0; at--)
+        {
+            calls[at].Under(at == calls.Count - 1 ? _current.Value : calls[at].Caller);
+            Enter(calls[at], setting);
+        }
     }
 
     /// <summary>

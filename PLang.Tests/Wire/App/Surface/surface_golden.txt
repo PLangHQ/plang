@@ -51,6 +51,7 @@ class app.call.Diff : System.IEquatable<app.call.Diff>
   Name : System.String { get; } [Debug, Out]
 
 class app.call.action.this : app.call.this, app.type.item.ICreate<app.call.action.this>
+  index : System.Int32 { get; set; } [LlmBuilder, Snapshot]
   override Action : app.goal.step.action.this { get; } [Debug, Out, Store]
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.action.this
   static Internal : System.Boolean { get; }
@@ -130,7 +131,8 @@ class app.call.setting.this : app.type.item.setting.this
   static Internal : System.Boolean { get; }
 
 class app.call.step.this : app.call.this, app.type.item.ICreate<app.call.step.this>
-  override Step : app.goal.step.this { get; } [Debug, Out, Snapshot, Store]
+  index : System.Int32 { get; set; } [LlmBuilder, Snapshot]
+  override Step : app.goal.step.this { get; } [Debug, Out, Store]
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.step.this
   static Internal : System.Boolean { get; }
 
@@ -3442,6 +3444,7 @@ type app.call
 
 type app.call.action
   .action : action
+  .index : number
   .property : app.type.item.property.list
   .goal : goal
   .step : step
@@ -3519,6 +3522,7 @@ type app.call.setting.frame
 
 type app.call.step
   .step : step
+  .index : number
   .property : app.type.item.property.list
   .goal : goal
   .action : action

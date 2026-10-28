@@ -33,7 +33,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     private Stopwatch? _stopwatch;
     private readonly global::app.call.list.@this _stack;
-    private readonly @this? _previousCurrent;
+    private @this? _previousCurrent;
     // The variables whose changes this frame captures as its diffs (none: it captures none).
     private readonly Variables? _store;
     // A diff keeps a deep copy of the value before (the diff.deep setting when pushed), else a summary.
@@ -43,7 +43,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // The frame's facts as it holds them — a frame is pushed per action, so its plang faces below are made
     // when read, never at push.
     private readonly string _id;
-    internal readonly int _depth;
+    internal int _depth;
     private bool _handled;
     private bool _ended;
     private DateTimeOffset? _startedAt;
@@ -80,7 +80,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// Walk this for the "stack trace" view.
     /// </summary>
     [global::app.LlmBuilder, global::app.Snapshot]
-    public @this? Caller { get; }
+    public @this? Caller => _caller;
+    private @this? _caller;
 
     /// <summary>
     /// Errors observed at this scope. Populated by App.Run when the handler returns a
@@ -187,13 +188,24 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         => ((global::app.type.item.kind.reflection.@this)context.App.type.list["item"].kind["*"]!)
             .Read(record, this, context, global::app.View.Snapshot);
 
-    // The caller a saved frame's record holds, made as its own kind; none written: the stack's current frame.
+    // The caller a saved frame's record holds, made as its own kind; none written: none — the root of what was saved stands
+    // under no live call until the run is taken in (Under), so a snapshot opened to be read holds only its own frames.
     private static @this? Saved(global::app.type.item.dict.@this record, global::app.call.list.@this stack, global::app.actor.context.@this context)
         => record.Get("caller", context) is { } caller
             ? global::app.View.Snapshot.Make(caller.Type ?? context.App.type.list[typeof(@this)], caller.Peek(), context) as @this
               ?? throw new global::app.error.DeclinedException(new global::app.error.@this(
                   "a saved frame's caller reads as no frame", "FrameKeyIncomplete", 400))
-            : stack.Current;
+            : null;
+
+    /// <summary>A frame come back from a snapshot, taken into the run: it stands under <paramref name="caller"/> (the
+    /// root of what was saved, under the frame current when the run is taken in; any other, under its own caller) and
+    /// counts its depth from there, as a push would.</summary>
+    internal void Under(@this? caller)
+    {
+        _caller = caller;
+        _previousCurrent = caller;
+        _depth = (caller?._depth ?? 0) + (Deepens ? 1 : 0);
+    }
 
     /// <summary>The element a stored frame's <paramref name="record"/> keeps under <paramref name="name"/> — a goal, a
     /// step, an action — read in the snapshot view: the live one its key finds. A key that finds none, or a record that
@@ -222,7 +234,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         global::app.goal.step.action.@this? call = null) : base(type)
     {
         _id = id ?? Guid.NewGuid().ToString("N")[..8];
-        Caller = caller;
+        _caller = caller;
         _depth = (caller?._depth ?? 0) + (Deepens ? 1 : 0);
         _stack = stack;
         _previousCurrent = previous;

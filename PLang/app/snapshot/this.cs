@@ -38,18 +38,20 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         // a snapshot that holds nothing leaves the app as it is
         if (_app is not { } value) return context.Ok();
         // what the app wrote names locations (a frame's goal): each is loaded into the app the run goes on in first, so
-        // the read that follows finds what it names held. One opened and edited (a navigation) is written again first.
+        // the read that follows finds what it names held. One opened and edited (a navigation) is written again first, and
+        // read back from what it wrote: each object made again from the structure as it is now, never the objects the
+        // navigation made (a frame born with the step its place named before the edit).
         try
         {
             // the app's name, read now: what the snapshot names its app by is checked against it while the read can't wait
             await app.Name(context);
-            if ((value as global::app.type.item.wire.@this ?? await global::app.type.item.wire.@this.Of(value, View, context)) is { Raw: string raw })
+            var written = value as global::app.type.item.wire.@this ?? await global::app.type.item.wire.@this.Of(value, View, context);
+            if (written is { Raw: string raw })
             {
                 var loaded = await View.Load(app.type.list[typeof(global::app.@this)], raw, context);
                 if (!loaded.Success) return loaded;
             }
-            if ((value as global::app.type.item.dict.@this ?? View.Make(context.App.type.list[typeof(global::app.type.item.dict.@this)], value, context))
-                is not global::app.type.item.dict.@this dict)
+            if (View.Make(context.App.type.list[typeof(global::app.type.item.dict.@this)], written, context) is not global::app.type.item.dict.@this dict)
                 return context.Error(new global::app.error.@this(
                     $"the snapshot's app reads as a {value.Type.Name}, not what an app writes", "SnapshotRowUnread", 400));
             ((global::app.type.item.kind.reflection.@this)context.App.type.list["item"].kind["*"]!).Read(dict, app, context, View);

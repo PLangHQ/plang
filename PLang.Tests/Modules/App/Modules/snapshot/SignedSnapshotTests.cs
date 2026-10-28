@@ -53,11 +53,14 @@ public class SignedSnapshotTests
         var context = app.actor.list.User.Context;
         var step = await Holds(app);
         await context.Variable.Set("note", "original");
+        // as a run stands in it: the goal's frame, its step's, then its action's
+        await using var running = context.call.Push(step.Goal!, await context.call.Setting());
         await using var frame = context.call.Push(step, await context.call.Setting());
         await using var call = context.call.Push(step.Code[0], await context.call.Setting(), context.Variable);
         var saved = await new global::app.module.snapshot.save(context).Start();
         await call.DisposeAsync();
         await frame.DisposeAsync();
+        await running.DisposeAsync();
         return saved;
     }
 
@@ -187,13 +190,86 @@ public class SignedSnapshotTests
         await using var app = App();
         var context = app.actor.list.User.Context;
         await context.Variable.Set("snap", await Saved(app));
-        await (await (await context.Action("variable.set(Name=%snap.app.actor.list.user.context.call.current.caller.step.index%, Value=0)")).Start(context)).IsSuccess();
+        await (await (await context.Action("variable.set(Name=%snap.app.actor.list.user.context.call.current.caller.index%, Value=0)")).Start(context)).IsSuccess();
 
         var signed = await (await context.Action("signing.sign(Data=%snap%)")).Start(context);
         await signed.IsSuccess();
         await context.Variable.Set("signed", signed);
 
         await (await (await context.Action("signing.verify(Data=%signed%)")).Start(context)).IsSuccess();
+    }
+
+    // The frame a snapshot's text holds as current: its record's value.
+    private static System.Text.Json.Nodes.JsonObject Current(System.Text.Json.Nodes.JsonNode node)
+    {
+        if (node is System.Text.Json.Nodes.JsonObject json)
+        {
+            if (json["current"] is System.Text.Json.Nodes.JsonObject current) return current["value"]!.AsObject();
+            foreach (var (_, child) in json)
+                if (child != null && Find(child) is { } found) return found;
+        }
+        return null!;
+        static System.Text.Json.Nodes.JsonObject? Find(System.Text.Json.Nodes.JsonNode child) => Current(child);
+    }
+
+    // A snapshot's text with each dict written as a record ({type: dict, value}) taken as the dict it holds: an opened
+    // snapshot writes its plain members back as records, which read back as the same dicts.
+    private static System.Text.Json.Nodes.JsonNode? Bare(System.Text.Json.Nodes.JsonNode? node) => node switch
+    {
+        System.Text.Json.Nodes.JsonObject json when json.Count == 2 && json["type"]?["name"]?.GetValue<string>() == "dict" && json.ContainsKey("value")
+            => Bare(json["value"]),
+        System.Text.Json.Nodes.JsonObject json => new System.Text.Json.Nodes.JsonObject(json.Select(row =>
+            new KeyValuePair<string, System.Text.Json.Nodes.JsonNode?>(row.Key, Bare(row.Value)))),
+        System.Text.Json.Nodes.JsonArray list => new System.Text.Json.Nodes.JsonArray(list.Select(Bare).ToArray()),
+        _ => node?.DeepClone(),
+    };
+
+    // Where a run goes on is two numbers in its snapshot, each its frame's own: the step's frame's index and the action's.
+    // A program edits both, signs the snapshot again, and the run goes on exactly there — the steps before it are not run
+    // again. The edit changes the snapshot alone: the live goal is as it was, the snapshot written again is the one saved
+    // with those two numbers changed, and a frame's number is set, not added beside it.
+    [Test]
+    public async Task AnEditedPlace_SignedAgain_IsWhereTheRunGoesOn_AndTheLiveGoalIsUntouched()
+    {
+        await using var app = App();
+        var context = app.actor.list.User.Context;
+        var goal = new Goal(app.type.list) { Name = "P", Path = global::app.type.item.path.@this.Resolve("/P.goal", context) };
+        foreach (var (index, line) in new[] { (0, "variable.set(Name=%a%, Value=\"0\")"), (1, "variable.set(Name=%b%, Value=\"1\")"),
+                     (2, "goal.return(Data={\"a\": %a%, \"b\": %b%})") })
+        {
+            var step = new Step(app.type.list) { Goal = goal, Index = index, Text = line };
+            step.Code.Add((await context.Action(line)).In(step));
+            goal.Step.Add(step);
+        }
+        app.goal.list.Add(goal);
+        await context.Variable.Set("a", "before");
+        await context.Variable.Set("b", "before");
+        global::app.data.@this saved;
+        await using (context.call.Push(goal, await context.call.Setting()))
+        await using (context.call.Push(goal.Step[0], await context.call.Setting()))
+        await using (context.call.Push(goal.Step[0].Code[0], await context.call.Setting(), context.Variable))
+            saved = await new global::app.module.snapshot.save(context).Start();
+        var before = System.Text.Json.Nodes.JsonNode.Parse(await ((await saved.Value()) as global::app.snapshot.@this)!.Text(context))!;
+        await context.Variable.Set("snap", saved);
+
+        foreach (var line in new[] { "variable.set(Name=%snap.app.actor.list.user.context.call.current.caller.index%, Value=2)",
+                     "variable.set(Name=%snap.app.actor.list.user.context.call.current.index%, Value=0)" })
+            await (await (await context.Action(line)).Start(context)).IsSuccess();
+
+        // the live goal is as it was
+        for (var at = 0; at < 3; at++) await Assert.That(goal.Step[at].Index).IsEqualTo(at);
+        // the snapshot written again is the one saved, its step's place now 2 — nothing added, no frame of the edit's own
+        var after = System.Text.Json.Nodes.JsonNode.Parse(await ((await (await context.Variable.Get("snap")).Value()) as global::app.snapshot.@this)!.Text(context))!;
+        await Assert.That(Current(after).ContainsKey("property")).IsFalse();
+        Current(before)["caller"]!["value"]!["index"] = 2;
+        await Assert.That(System.Text.Json.Nodes.JsonNode.DeepEquals(Bare(before), Bare(after))).IsTrue();
+
+        var signed = await (await context.Action("signing.sign(Data=%snap%)")).Start(context);
+        await signed.IsSuccess();
+        var result = await Resume(signed, context);
+
+        await Assert.That(await Saw(result, "a")).IsEqualTo("before");
+        await Assert.That(await Saw(result, "b")).IsEqualTo("before");
     }
 
     // An edit nobody signed again is refused: the signature is the snapshot's as it was saved.
@@ -203,7 +279,7 @@ public class SignedSnapshotTests
         await using var app = App();
         var context = app.actor.list.User.Context;
         await context.Variable.Set("snap", await Saved(app));
-        await (await (await context.Action("variable.set(Name=%snap.app.actor.list.user.context.call.current.caller.step.index%, Value=0)")).Start(context)).IsSuccess();
+        await (await (await context.Action("variable.set(Name=%snap.app.actor.list.user.context.call.current.caller.index%, Value=0)")).Start(context)).IsSuccess();
 
         var result = await (await context.Action("snapshot.resume(Snapshot=%snap%)")).Start(context);
 

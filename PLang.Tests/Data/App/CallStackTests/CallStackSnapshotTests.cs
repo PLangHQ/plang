@@ -52,6 +52,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         var context = src.actor.list.User.Context;
         var stack = context.call;
 
+        await using (stack.Push(s1.Goal!, await stack.Setting()))
         await using (stack.Push(s1, await stack.Setting()))
         await using (var frame = stack.Push(a1, await stack.Setting()))
         {
@@ -62,7 +63,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
             var dst = BuildAppWithGoals(dg1);
             await dst.Restore(snap, dst.actor.list.User.Context);
 
-            var action = dst.actor.list.User.Context.call.Root!.Children.Single();
+            var action = dst.actor.list.User.Context.call.Root!.Children.Single().Children.Single();
             await Assert.That(action.Error).IsNotNull();
             await Assert.That(action.Error!.Key).IsEqualTo("Broke");
         }
@@ -75,6 +76,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         var src = BuildAppWithGoals(g1);
         var context = src.actor.list.User.Context;
 
+        await using (context.call.Push(s1.Goal!, await context.call.Setting()))
         await using (context.call.Push(s1, await context.call.Setting()))
         await using (var frame = context.call.Push(a1, await context.call.Setting()))
         {
@@ -86,7 +88,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
             var into = dst.actor.list.User.Context;
             await dst.Restore(await into.Snapshot(text), into);
 
-            var action = into.call.Root!.Children.Single();
+            var action = into.call.Root!.Children.Single().Children.Single();
             await Assert.That(action.Error).IsNotNull();
             await Assert.That(action.Error!.Key).IsEqualTo("Broke");
             await Assert.That(action.Error.Message).IsEqualTo("it broke");
@@ -101,6 +103,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         var src = BuildAppWithGoals(g1);
         var context = src.actor.list.User.Context;
 
+        await using (context.call.Push(s1.Goal!, await context.call.Setting()))
         await using (context.call.Push(s1, await context.call.Setting()))
         await using (var frame = context.call.Push(a1, await context.call.Setting()))
         await using (context.call.Push([new global::app.data.@this("item", "apple", context: context)], await context.call.Setting()))
@@ -112,7 +115,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
             var into = dst.actor.list.User.Context;
             await dst.Restore(await into.Snapshot(text), into);
 
-            var action = into.call.Root!.Children.Single();
+            var action = into.call.Root!.Children.Single().Children.Single();
             var binding = action.Children.Single();
             await Assert.That(binding is global::app.call.binding.@this and not global::app.call.isolated.@this).IsTrue();
             await Assert.That(binding.Goal).IsSameReferenceAs(action.Goal);    // it stands where its caller stands
@@ -129,6 +132,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         var src = BuildAppWithGoals(g1);
         var context = src.actor.list.User.Context;
 
+        await using (context.call.Push(s1.Goal!, await context.call.Setting()))
         await using (context.call.Push(s1, await context.call.Setting()))
         await using (var frame = context.call.Push(a1, await context.call.Setting()))
         await using (context.call.Isolate([new global::app.data.@this("city", "Reykjavik", context: context)], await context.call.Setting()))
@@ -140,7 +144,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
             var into = dst.actor.list.User.Context;
             await dst.Restore(await into.Snapshot(text), into);
 
-            var isolated = into.call.Root!.Children.Single().Children.Single();
+            var isolated = into.call.Root!.Children.Single().Children.Single().Children.Single();
             await Assert.That(isolated is global::app.call.isolated.@this).IsTrue();
             await Assert.That(isolated.TryGet("city", out var city)).IsTrue();
             await Assert.That((await city.Value())?.ToString()).IsEqualTo("Reykjavik");
@@ -163,6 +167,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         var context = app.actor.list.User.Context;
 
         global::app.snapshot.@this snap;
+        await using (context.call.Push(s1.Goal!, await context.call.Setting()))
         await using (context.call.Push(s1, await context.call.Setting()))
         await using (context.call.Push(a1, await context.call.Setting()))
             snap = (await app.Snapshot(context).Saved());

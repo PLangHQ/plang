@@ -84,6 +84,7 @@ public class SnapshotResumeTests
         await context.Variable.Set("s0", "never");
 
         // Push step1 and its action so the snapshot captures (stepIdx=1, actionIdx=0).
+        await using (context.call.Push(goal, await context.call.Setting()))
         await using (var step = context.call.Push(step1, await context.call.Setting()))
         await using (var call = context.call.Push(step1.Code[0], await context.call.Setting(), context.Variable))
         {

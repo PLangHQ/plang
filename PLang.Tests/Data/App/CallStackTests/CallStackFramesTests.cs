@@ -46,8 +46,10 @@ public class CallStackFramesTests
         var context = src.actor.list.User.Context;
         string text;
         // as a run stands: each action under its step's frame
+        await using (context.call.Push(s1.Goal!, await context.call.Setting()))
         await using (context.call.Push(s1, await context.call.Setting()))
         await using (context.call.Push(a1, await context.call.Setting()))
+        await using (context.call.Push(s2.Goal!, await context.call.Setting()))
         await using (context.call.Push(s2, await context.call.Setting()))
         await using (context.call.Push(a2, await context.call.Setting()))
             text = await src.Snapshot(context).Saved().Text(context);
@@ -58,15 +60,15 @@ public class CallStackFramesTests
         var into = dst.actor.list.User.Context;
         await dst.Restore(await into.Snapshot(text), into);
 
-        var root = into.call.Root!;
-        await Assert.That(root.Step).IsSameReferenceAs(ds1);
-        var frames = new List<global::app.call.@this> { root };
+        // goal, step, action, then the goal it called, its step, its action
+        var frames = new List<global::app.call.@this> { into.call.Root! };
         while (frames[^1].Children.SingleOrDefault() is { } child) frames.Add(child);
-        await Assert.That(frames.Count).IsEqualTo(4);
+        await Assert.That(frames.Count).IsEqualTo(6);
         for (var at = 1; at < frames.Count; at++) await Assert.That(frames[at].Caller).IsSameReferenceAs(frames[at - 1]);
-        await Assert.That(frames[1].Action).IsSameReferenceAs(da1);
-        await Assert.That(frames[2].Step).IsSameReferenceAs(ds2);
-        await Assert.That(frames[3].Action).IsSameReferenceAs(da2);
+        await Assert.That(frames[1].Step).IsSameReferenceAs(ds1);
+        await Assert.That(frames[2].Action).IsSameReferenceAs(da1);
+        await Assert.That(frames[4].Step).IsSameReferenceAs(ds2);
+        await Assert.That(frames[5].Action).IsSameReferenceAs(da2);
     }
 
     [Test]
@@ -79,8 +81,10 @@ public class CallStackFramesTests
         // history keeps the completed child among its caller's children; the snapshot keeps only the live chain
         context.Setting.Set("app.call.setting.history", true);
 
+        await using var running1 = context.call.Push(s1.Goal!, await context.call.Setting());
         await using var step = context.call.Push(s1, await context.call.Setting());
         await using var parent = context.call.Push(a1, await context.call.Setting());
+        await using (context.call.Push(s2.Goal!, await context.call.Setting()))
         await using (context.call.Push(s2, await context.call.Setting()))
         await using (context.call.Push(a2, await context.call.Setting())) { }
         var text = await src.Snapshot(context).Saved().Text(context);
@@ -206,8 +210,10 @@ public class CallStackFramesTests
         var (_, s2, a2) = MakeFrame(src, "Changed");
         var context = src.actor.list.User.Context;
         string text;
+        await using (context.call.Push(s1.Goal!, await context.call.Setting()))
         await using (context.call.Push(s1, await context.call.Setting()))
         await using (context.call.Push(a1, await context.call.Setting()))
+        await using (context.call.Push(s2.Goal!, await context.call.Setting()))
         await using (context.call.Push(s2, await context.call.Setting()))
         await using (context.call.Push(a2, await context.call.Setting()))
             text = await src.Snapshot(context).Saved().Text(context);

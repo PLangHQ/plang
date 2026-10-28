@@ -117,6 +117,7 @@ public class SnapshotWireTests
         // Suspend at step1/action0 (what the throw-time snapshot captures), as a run stands in it: its step's frame, then
         // its action's.
         string json;
+        await using (context.call.Push(goal, await context.call.Setting()))
         await using (var step = context.call.Push(step1, await context.call.Setting()))
         await using (var call = context.call.Push(step1.Code[0], await context.call.Setting(), context.Variable))
         {
@@ -155,6 +156,7 @@ public class SnapshotWireTests
 
         // as a run stands in it: the step's frame, then its action's
         string json;
+        await using (context.call.Push(goal, await context.call.Setting()))
         await using (var step = context.call.Push(third, await context.call.Setting()))
         await using (var call = context.call.Push(third.Code[0], await context.call.Setting(), context.Variable))
         {
@@ -197,6 +199,7 @@ public class SnapshotWireTests
 
         // a body runs under the step that holds it: that step's frame, then the body step's, then its action's
         string json;
+        await using (context.call.Push(goal, await context.call.Setting()))
         await using (var outer = context.call.Push(holder, await context.call.Setting()))
         await using (var inner = context.call.Push(stopped, await context.call.Setting()))
         await using (var call = context.call.Push(stopped.Code[0], await context.call.Setting(), context.Variable))
@@ -237,6 +240,7 @@ public class SnapshotWireTests
         app.goal.list.Add(goal);
 
         string json;
+        await using (context.call.Push(goal, await context.call.Setting()))
         await using (var outer = context.call.Push(step, await context.call.Setting()))
         await using (var call = context.call.Push(stopped, await context.call.Setting(), context.Variable))
         {
@@ -283,6 +287,7 @@ public class SnapshotWireTests
 
         // a body runs under its condition's frame: the step's, the if's, then the body step's and its action's
         string json;
+        await using (context.call.Push(goal, await context.call.Setting()))
         await using (var outer = context.call.Push(holder, await context.call.Setting()))
         await using (var condition = context.call.Push(when, await context.call.Setting()))
         await using (var inner = context.call.Push(stopped, await context.call.Setting()))
@@ -321,6 +326,7 @@ public class SnapshotWireTests
         app.goal.list.Add(goal);
 
         string json;
+        await using (context.call.Push(goal, await context.call.Setting()))
         await using (var step = context.call.Push(step1, await context.call.Setting()))
         await using (var call = context.call.Push(step1.Code[0], await context.call.Setting(), context.Variable))
         {
@@ -494,6 +500,7 @@ public class SnapshotWireTests
 
         await context.Variable.Set("x", 1L);
         string json;
+        await using (context.call.Push(goal, await context.call.Setting()))
         await using (var step = context.call.Push(goal.Step[1], await context.call.Setting()))
         await using (var call = context.call.Push(goal.Step[1].Code[0], await context.call.Setting(), context.Variable))
         {
@@ -568,6 +575,7 @@ public class SnapshotWireTests
 
         await context.Variable.Set("x", 1L);
         string json;
+        await using (context.call.Push(goal, await context.call.Setting()))
         await using (var step = context.call.Push(goal.Step[1], await context.call.Setting()))
         await using (var call = context.call.Push(goal.Step[1].Code[0], await context.call.Setting(), context.Variable))
         {
@@ -609,6 +617,7 @@ public class SnapshotWireTests
 
         await context.Variable.Set("x", 1L);
         string json;
+        await using (context.call.Push(goal, await context.call.Setting()))
         await using (var step = context.call.Push(goal.Step[1], await context.call.Setting()))
         await using (var call = context.call.Push(goal.Step[1].Code[0], await context.call.Setting(), context.Variable))
             json = await app.Snapshot(app.actor.list.User.Context).Saved().Text(app.actor.list.User.Context);
@@ -643,6 +652,7 @@ public class SnapshotWireTests
         // Suspend at step1 with %x% = 1 captured.
         await context.Variable.Set("x", 1L);
         string json;
+        await using (context.call.Push(goal, await context.call.Setting()))
         await using (var step = context.call.Push(goal.Step[1], await context.call.Setting()))
         await using (var call = context.call.Push(goal.Step[1].Code[0], await context.call.Setting(), context.Variable))
         {

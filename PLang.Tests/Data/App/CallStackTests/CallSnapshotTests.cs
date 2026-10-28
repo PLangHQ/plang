@@ -43,19 +43,24 @@ public class CallSnapshotTests : System.IAsyncDisposable
     private static global::app.call.@this Stopped(global::app.call.@this frame)
         => frame.Children.LastOrDefault() is { } child ? Stopped(child) : frame;
 
-    // A step's frame writes its step as the key that finds it: its goal's name and .goal, and its index — never the goal
-    // written out, and no hash: a goal changed since the save is the goal as it is now.
+    // A step's frame writes its place in its goal, never its step: the step is found from the place, under its goal's
+    // frame, which writes its goal as the key that finds it — its name and .goal, never the goal written out, and no hash:
+    // a goal changed since the save is the goal as it is now.
     [Test]
-    public async Task Call_Store_WritesItsStep_AsItsKey_NotTheWholeGoal()
+    public async Task Call_Store_WritesItsPlace_UnderItsGoalsKey_NotTheWholeGoal()
     {
         var (app, action) = BuildLiveAction("StubGoal");
         var stack = app.actor.list.User.Context.call;
+        await using var running1 = stack.Push(action.Step!.Goal!, await stack.Setting());
         await using var step = stack.Push(action.Step!, await stack.Setting());
 
         var json = await Written(step, app.actor.list.User.Context);
 
-        await Assert.That(json["step"]!["goal"]!["name"]!.GetValue<string>()).IsEqualTo("StubGoal");
-        await Assert.That(json["step"]!["goal"]!.AsObject().ContainsKey("hash")).IsFalse();
+        await Assert.That(json["index"]!.GetValue<int>()).IsEqualTo(0);
+        await Assert.That(json.ContainsKey("step")).IsFalse();
+        var goal = json["caller"]!["value"]!["goal"]!;
+        await Assert.That(goal["name"]!.GetValue<string>()).IsEqualTo("StubGoal");
+        await Assert.That(goal.AsObject().ContainsKey("hash")).IsFalse();
         await Assert.That(json.ToJsonString()).DoesNotContain("test step");
     }
 
@@ -66,6 +71,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
     {
         var (app, action) = BuildLiveAction("G", "a step");
         var user = app.actor.list.User.Context;
+        await using var running2 = user.call.Push(action.Step!.Goal!, await user.call.Setting());
         await using var step = user.call.Push(action.Step!, await user.call.Setting());
         await using var call = user.call.Push(action, await user.call.Setting());
 
@@ -83,11 +89,12 @@ public class CallSnapshotTests : System.IAsyncDisposable
     {
         var (app, action) = BuildLiveAction("PosGoal");
         var stack = app.actor.list.User.Context.call;
+        await using var running3 = stack.Push(action.Step!.Goal!, await stack.Setting());
         await using var step = stack.Push(action.Step!, await stack.Setting());
         await using var call = stack.Push(action, await stack.Setting());
 
         await Assert.That((await Written(call, app.actor.list.User.Context))["index"]!.GetValue<int>()).IsEqualTo(0);
-        await Assert.That((await Written(step, app.actor.list.User.Context))["step"]!["index"]!.GetValue<int>()).IsEqualTo(0);
+        await Assert.That((await Written(step, app.actor.list.User.Context))["index"]!.GetValue<int>()).IsEqualTo(0);
     }
 
     [Test]
@@ -95,6 +102,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
     {
         var (src, action) = BuildLiveAction("ResolveGoal");
         var stack = src.actor.list.User.Context.call;
+        await using (stack.Push(action.Step!.Goal!, await stack.Setting()))
         await using (stack.Push(action.Step!, await stack.Setting()))
         await using (stack.Push(action, await stack.Setting()))
         {
@@ -116,6 +124,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
     {
         var (src, action) = BuildLiveAction("DisappearingGoal");
         var stack = src.actor.list.User.Context.call;
+        await using (stack.Push(action.Step!.Goal!, await stack.Setting()))
         await using (stack.Push(action.Step!, await stack.Setting()))
         await using (stack.Push(action, await stack.Setting()))
         {
@@ -137,6 +146,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
     {
         var (src, action) = BuildLiveAction("HashGoal", "original step text");
         var stack = src.actor.list.User.Context.call;
+        await using (stack.Push(action.Step!.Goal!, await stack.Setting()))
         await using (stack.Push(action.Step!, await stack.Setting()))
         await using (stack.Push(action, await stack.Setting()))
         {
@@ -158,6 +168,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
     {
         var (src, action) = BuildLiveAction("RecompiledGoal", "same step text");
         var stack = src.actor.list.User.Context.call;
+        await using (stack.Push(action.Step!.Goal!, await stack.Setting()))
         await using (stack.Push(action.Step!, await stack.Setting()))
         await using (stack.Push(action, await stack.Setting()))
         {
@@ -207,6 +218,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
         var context = src.actor.list.User.Context;
         foreach (var name in new[] { "a", "b", "c" }) await context.Variable.Set(name, "before");
         global::app.snapshot.@this snap;
+        await using (context.call.Push(goal.Step[1].Goal!, await context.call.Setting()))
         await using (context.call.Push(goal.Step[1], await context.call.Setting()))
         await using (context.call.Push(goal.Step[1].Code[0], await context.call.Setting(), context.Variable))
             snap = await src.Snapshot(context).Saved();
@@ -243,6 +255,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
         var extra = new ActionEntity(src.type.list) { Module = src.actor.list.User.Context.App.Module("test"), Name = "test", Step = action.Step };
         action.Step!.Code.Add(extra);
         var stack = src.actor.list.User.Context.call;
+        await using (stack.Push(action.Step!.Goal!, await stack.Setting()))
         await using (stack.Push(action.Step!, await stack.Setting()))
         await using (stack.Push(extra, await stack.Setting()))
         {
@@ -263,6 +276,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
     {
         var (src, action) = BuildLiveAction("PureGoal");
         var stack = src.actor.list.User.Context.call;
+        await using (stack.Push(action.Step!.Goal!, await stack.Setting()))
         await using (stack.Push(action.Step!, await stack.Setting()))
         await using (stack.Push(action, await stack.Setting()))
         {
