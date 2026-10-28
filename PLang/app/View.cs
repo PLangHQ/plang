@@ -141,9 +141,9 @@ public abstract class View
         if (slot == null) return null;
         var kind = type.kind.IsEmpty ? null : type.kind.Name;
         // a slot still unread (its text) that reads as a value of the type is that value
-        if (slot is global::app.type.item.source unread && unread.Type.ClrType is { } written && type.ClrType is { } clr
-            && clr.IsAssignableFrom(written) && unread.Read(context) is { } opened && clr.IsInstanceOfType(opened))
-            return opened;
+        if (slot is global::app.type.item.source source && type.ClrType is { } clr
+            && clr.IsAssignableFrom(source.Type.ClrType) && source.Read(context) is { } value && clr.IsInstanceOfType(value))
+            return value;
         if (Registered(type, kind, context) is { } reader)
             return slot.Read(reader, kind, context, this) as global::app.type.item.@this;
         // a birth that declines says why, as a read that can't make it does
@@ -223,17 +223,17 @@ public abstract class View
             else await Whole(value, writer);
         }
 
-        // a [Snapshot] member is where its value lives: the value is written whole there, never its key; one made back
-        // from its record (no reader of its own finds it) whose class isn't the member's type carries its type, as a
-        // list's row does, so it reads back as what it is (a frame below its caller)
+        // a [Snapshot] member is where its value lives: the value is written whole there, never its key; one whose class
+        // isn't the member's type carries its type, as a list's row does, so it reads back as what it is (a frame below
+        // its caller) — unless the type's own reader makes what it is from what it wrote (an action from its key, a path
+        // from its location). A CLR member (a step's index) holds a value lifted to plang, of no class of its own.
         internal override async System.Threading.Tasks.ValueTask Member(global::app.type.item.kind.reflection.Tagged.Entry member,
             global::app.type.item.@this value, global::app.type.format.IWriter writer)
         {
-            var declared = System.Nullable.GetUnderlyingType(member.Property.PropertyType) ?? member.Property.PropertyType;
+            var type = System.Nullable.GetUnderlyingType(member.Property.PropertyType) ?? member.Property.PropertyType;
             if (!Is<SnapshotAttribute>(member.Property)) await value.Output(writer);
-            else if (declared != value.GetType() && typeof(global::app.type.item.@this).IsAssignableFrom(declared)
-                     && declared.IsInstanceOfType(value) && Chooses(declared)
-                     && Registered(writer.Context.App.type.list[declared], null, writer.Context) == null)
+            else if (type != value.GetType() && type.IsInstanceOfType(value)
+                     && Registered(writer.Context.App.type.list[type], null, writer.Context) == null)
                 await new global::app.data.@this("", value, context: writer.Context).Output(writer);
             else
                 await Whole(value, writer);

@@ -18,7 +18,7 @@ public sealed partial class @this
                 "a snapshot is saved from the run's own context, not from inside a task: a task's variables and frames are reached by nothing a snapshot saves",
                 "SnapshotInTask", 400), context);
         foreach (var actor in this.actor.list.Items())
-            if (actor.Context.call.Unsaved is { } busy) return global::app.data.@this<snapshot.@this>.FromError(busy, context);
+            if (actor.Context.call.Unsaved is { } error) return global::app.data.@this<snapshot.@this>.FromError(error, context);
         var taken = context.Ok(await global::app.type.item.wire.@this.Of(new snapshot.@this(this, context), global::app.View.Snapshot, context));
 
         // signed through the signer itself, so the view it names (the snapshot's, which no step gives) is the one it hashes in

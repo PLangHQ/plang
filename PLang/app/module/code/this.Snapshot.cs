@@ -6,9 +6,7 @@ public sealed partial class @this
     // out, a fresh app's registry holds them. A provider's kind is written by its plang name, never its C# type: the name
     // survives a version bump. Read back, the layer is held until the run goes on in this app (Take): taking a DLL in
     // again is asynchronous, and a default can name a provider only a DLL brings.
-    private global::app.type.item.list.@this? _dllSaved;
-    private global::app.type.item.dict.@this? _providerSaved;
-    private global::app.type.item.dict.@this? _defaultSaved;
+    private (global::app.type.item.list.@this? dll, global::app.type.item.dict.@this? provider, global::app.type.item.dict.@this? @default) _layer;
 
     /// <summary>Every DLL the run took in, in order, each by the door it came through (what came in with it: its
     /// providers, its types, its modules).</summary>
@@ -16,7 +14,7 @@ public sealed partial class @this
     public global::app.type.item.list.@this dll
     {
         get => new(_dll, Context.App.type.list[typeof(global::app.type.item.list.@this)]);
-        private set => _dllSaved = value;
+        private set => _layer.dll = value;
     }
 
     /// <summary>The providers registered in-process (no DLL brought them), each kind's by name.</summary>
@@ -37,7 +35,7 @@ public sealed partial class @this
             }
             return kinds;
         }
-        private set => _providerSaved = value;
+        private set => _layer.provider = value;
     }
 
     /// <summary>Each kind's default where the run chose one: one that differs from the default the kind was born with
@@ -59,7 +57,7 @@ public sealed partial class @this
             }
             return chosen;
         }
-        private set => _defaultSaved = value;
+        private set => _layer.@default = value;
     }
 
     /// <summary>
@@ -74,8 +72,8 @@ public sealed partial class @this
     /// </summary>
     internal async System.Threading.Tasks.Task<data.@this> Take(actor.context.@this context)
     {
-        var (dlls, providers, defaults) = (_dllSaved, _providerSaved, _defaultSaved);
-        (_dllSaved, _providerSaved, _defaultSaved) = (null, null, null);
+        var (dlls, providers, defaults) = _layer;
+        _layer = default;
 
         // Step 1 — the DLLs the run took in; a record that doesn't read is the answer
         foreach (var row in dlls?.Items(context) ?? [])
@@ -97,12 +95,13 @@ public sealed partial class @this
         foreach (var named in providers?.Rows(context) ?? [])
         {
             var kind = new data.@this("kind", named.Name, context: context);
-            if (await kind.Value<global::app.type.item.choice.@this<kind.@this>>() is not { } providerKind) return kind;
+            if (await kind.Value<global::app.type.item.choice.@this<kind.@this>>() is not { } choice) return kind;
             if (await named.Value<global::app.type.item.list.@this>() is not { } names) return named;
             foreach (var name in names.Items(context))
             {
-                var provider = (await name.Value())?.ToString();
-                if (List(providerKind.Value.Interface).Any(registered => registered.Name == provider)) continue;
+                // a provider is a C# object named by a string: the registry's key is where the name lowers
+                if (await name.Value<global::app.type.item.text.@this>() is not { } provider) return name;
+                if (List(choice.Value.Interface).Any(registered => registered.Name == provider.ToString())) continue;
                 return context.Error(new global::app.error.@this(
                     $"Provider '{provider}' for {named.Name} was registered in-process: no DLL brought it, so it can't come back.",
                     "ProviderInProcess", 500));
@@ -113,8 +112,9 @@ public sealed partial class @this
         foreach (var chosen in defaults?.Rows(context) ?? [])
         {
             var kind = new data.@this("kind", chosen.Name, context: context);
-            if (await kind.Value<global::app.type.item.choice.@this<kind.@this>>() is not { } providerKind) return kind;
-            var result = SetDefault(providerKind.Value.Interface, (await chosen.Value())?.ToString());
+            if (await kind.Value<global::app.type.item.choice.@this<kind.@this>>() is not { } choice) return kind;
+            if (await chosen.Value<global::app.type.item.text.@this>() is not { } provider) return chosen;
+            var result = SetDefault(choice.Value.Interface, provider.ToString());
             if (!result.Success) return result;
         }
         return context.Ok();

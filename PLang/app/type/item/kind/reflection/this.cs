@@ -185,51 +185,51 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
         global::app.View view)
     {
         var target = host.GetType();
-        if (host is global::app.actor.context.@this own) context = own;
+        context = host as global::app.actor.context.@this ?? context;
         // Index the dict's keys by name, case-insensitive — matching the IReader Read's key
         // policy (a hand-built plang dict's keys aren't guaranteed to match the wire-name casing).
         var byName = new global::System.Collections.Generic.Dictionary<string, string>(
             global::System.StringComparer.OrdinalIgnoreCase);
         foreach (var key in slots.KeyNames) byName[key] = key;
 
-        // Every value is made before any is written, so a slot that can't be read leaves the host as it was; what a held
-        // member wrote reads into it after.
-        var read = new global::System.Collections.Generic.List<(global::System.Reflection.PropertyInfo, object?)>();
-        var into = new global::System.Collections.Generic.List<(object, global::app.type.item.dict.@this)>();
+        // Every value is made before any is written, so a slot that can't be read leaves the host as it was; what a
+        // member the host was born holding wrote reads into it after.
+        var values = new global::System.Collections.Generic.List<(global::System.Reflection.PropertyInfo, object?)>();
+        var hosts = new global::System.Collections.Generic.List<(object, global::app.type.item.dict.@this)>();
         foreach (var entry in Tagged.PropertiesFor(target, view))
         {
             var member = entry.Property;
             if (!byName.TryGetValue(entry.WireName, out var key)) continue;
             var type = member.PropertyType;
+            var slot = context != null ? slots.Get(key, context) : null;
             if (!member.CanWrite)
             {
                 // a value made as its own type (a frame's caller) is made by its owner, never read into
-                if (context != null && slots.Get(key, context) is { } written
-                    && (written.Type == null || written.Type.ClrType == typeof(global::app.type.item.dict.@this))
-                    && member.GetValue(host) is { } live
-                    && Made(written, context.App.type.list[typeof(global::app.type.item.dict.@this)], context, view) is global::app.type.item.dict.@this held)
-                    into.Add((live, held));
+                if (slot != null && (slot.Type == null || slot.Type.ClrType == typeof(global::app.type.item.dict.@this))
+                    && member.GetValue(host) is { } value
+                    && Made(slot, context!.App.type.list[typeof(global::app.type.item.dict.@this)], context, view) is global::app.type.item.dict.@this dict)
+                    hosts.Add((value, dict));
                 continue;
             }
             // A plang member is made as the view makes its type; any other entry lowers ITSELF to the property's CLR
             // type — at the exit door, no context.
-            read.Add((member, context != null && typeof(global::app.type.item.@this).IsAssignableFrom(type)
-                ? slots.Get(key, context) is { } slot ? Made(slot, context.App.type.list[type], context, view) : null
+            values.Add((member, context != null && typeof(global::app.type.item.@this).IsAssignableFrom(type)
+                ? slot != null ? Made(slot, context.App.type.list[type], context, view) : null
                 : slots.Clr(key, type)));
         }
-        foreach (var (property, value) in read) property.SetValue(host, value);
-        foreach (var (live, held) in into) Read(held, live, context, view);
+        foreach (var (property, value) in values) property.SetValue(host, value);
+        foreach (var (value, dict) in hosts) Read(dict, value, context, view);
         return host;
     }
 
     // What a slot holds, made as the member's type, or as its own when it was written with one below the member's: a
     // value already of that type is itself, any other (one still unread) is made as the view makes it.
-    private static global::app.type.item.@this? Made(global::app.data.@this slot, global::app.type.@this declared,
+    private static global::app.type.item.@this? Made(global::app.data.@this slot, global::app.type.@this type,
         global::app.actor.context.@this context, global::app.View view)
     {
-        var type = slot.Type is { ClrType: { } clr } own && declared.ClrType is { } member && clr != member && member.IsAssignableFrom(clr)
-            ? own : declared;
-        return slot.Peek() is { } value && type.ClrType is { } made && made.IsInstanceOfType(value)
+        if (slot.Type is { ClrType: { } clr } && type.ClrType is { } member && clr != member && member.IsAssignableFrom(clr))
+            type = slot.Type;
+        return slot.Peek() is { } value && type.ClrType?.IsInstanceOfType(value) == true
             ? value
             : view.Make(type, slot.Peek(), context);
     }

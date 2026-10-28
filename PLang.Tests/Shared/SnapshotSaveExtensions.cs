@@ -7,8 +7,7 @@ namespace PLang.Tests;
 public static class SnapshotSaveExtensions
 {
     /// <summary>A snapshot that holds nothing, as one read back from <c>{}</c>, born in <paramref name="context"/>.</summary>
-    public static global::app.snapshot.@this EmptySnapshot(this global::app.actor.context.@this context)
-        => new(new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)]), context);
+    public static global::app.snapshot.@this EmptySnapshot(this global::app.actor.context.@this context) => new(null, context);
 
     /// <summary>The snapshot <paramref name="saved"/> holds — the bytes the app took, opened, as a resume opens them; a
     /// refused save throws its error (a test of the refusal asks the Data).</summary>

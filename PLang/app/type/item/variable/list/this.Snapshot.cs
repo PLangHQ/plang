@@ -16,30 +16,19 @@ public partial class @this
     {
         get
         {
-            var held = new global::app.type.item.dict.@this(_context.App.type.list[typeof(global::app.type.item.dict.@this)]);
-            foreach (var (name, variable) in Held) held.Set(name, variable);
-            return held;
+            var dict = new global::app.type.item.dict.@this(_context.App.type.list[typeof(global::app.type.item.dict.@this)]);
+            foreach (var (name, variable) in _variables)
+            {
+                // the rows a program set: not the system's, not a value made again where it is read — the lazy lives on
+                // the computed instance, so check the instance, not the Data subtype (a store re-wrap loses the subtype)
+                if (IsSystem(name) || variable is data.DynamicData || variable.Item is global::app.type.item.computed) continue;
+                dict.Set(name, variable);
+            }
+            return dict;
         }
         private set
         {
             foreach (var variable in value.Rows(_context)) Bind(variable.Name, variable.Clone().Copy(_context));
-        }
-    }
-
-    // The rows a program set: not the system's, not a value made again where it is read.
-    private IEnumerable<KeyValuePair<string, data.@this>> Held
-    {
-        get
-        {
-            foreach (var kvp in _variables)
-            {
-                if (IsSystem(kvp.Key)) continue;
-                // the lazy lives on the computed instance, so check the instance, not the Data subtype (a store re-wrap
-                // loses the subtype)
-                if (kvp.Value is data.DynamicData
-                    || kvp.Value.Item is global::app.type.item.computed) continue;
-                yield return kvp;
-            }
         }
     }
 }

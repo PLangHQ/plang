@@ -18,78 +18,59 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The actor context this snapshot is born in: what it holds answers as it.</summary>
     public global::app.actor.context.@this Context { get; }
 
-    // What the app wrote, as it was read back; null for one taken from a live app.
-    private readonly global::app.type.item.dict.@this? _written;
+    // The app: the live app when taken, what it wrote when read back (its bytes until a navigation opens them); null
+    // when the snapshot holds nothing.
+    private global::app.type.item.@this? _app;
 
-    /// <summary>The app whose run this is, taken in <paramref name="context"/>.</summary>
-    internal @this(global::app.@this app, global::app.actor.context.@this context) : base(context.App.type.list[typeof(@this)])
+    /// <summary>A snapshot of <paramref name="app"/>, born in <paramref name="context"/>: the live app taken, or what an
+    /// app wrote, read back.</summary>
+    internal @this(global::app.type.item.@this? app, global::app.actor.context.@this context) : base(context.App.type.list[typeof(@this)])
     {
         Context = context;
         _app = app;
     }
 
-    // The app taken; null for one read back.
-    private readonly global::app.@this? _app;
-
-    /// <summary>What a snapshot's text held (<paramref name="written"/>), read back in <paramref name="context"/>.</summary>
-    internal @this(global::app.type.item.dict.@this written, global::app.actor.context.@this context) : base(context.App.type.list[typeof(@this)])
-    {
-        Context = context;
-        _written = written;
-    }
-
-    /// <summary>Reads what the app wrote onto <paramref name="into"/>, the app the run goes on in: each object it holds
+    /// <summary>Reads what the app wrote onto <paramref name="app"/>, the app the run goes on in: each object it holds
     /// reads itself back (<see cref="global::app.type.item.kind.reflection.@this"/>'s read onto a host). What can't come
     /// back is the answer, its error whole.</summary>
-    internal async System.Threading.Tasks.Task<global::app.data.@this> Read(global::app.@this into, global::app.actor.context.@this context)
+    internal async System.Threading.Tasks.Task<global::app.data.@this> Read(global::app.@this app, global::app.actor.context.@this context)
     {
         // a snapshot that holds nothing leaves the app as it is
-        if (_written?.Get("app", context) is not { } held) return context.Ok();
+        if (_app is not { } value) return context.Ok();
         // what the app wrote names locations (a frame's goal): each is loaded into the app the run goes on in first, so
         // the read that follows finds what it names held. One opened and edited (a navigation) is written again first.
-        if ((held.Peek() as global::app.type.item.wire.@this ?? await global::app.type.item.wire.@this.Of(held.Peek()!, View, context))
-            is { Raw: string raw })
+        if ((value as global::app.type.item.wire.@this ?? await global::app.type.item.wire.@this.Of(value, View, context)) is { Raw: string raw })
         {
-            var loaded = await View.Load(into.type.list[typeof(global::app.@this)], raw, context);
+            var loaded = await View.Load(app.type.list[typeof(global::app.@this)], raw, context);
             if (!loaded.Success) return loaded;
         }
         try
         {
-            var dict = context.App.type.list[typeof(global::app.type.item.dict.@this)];
-            if ((held.Peek() as global::app.type.item.dict.@this ?? View.Make(dict, held.Peek(), context)) is not global::app.type.item.dict.@this written)
+            if ((value as global::app.type.item.dict.@this ?? View.Make(context.App.type.list[typeof(global::app.type.item.dict.@this)], value, context))
+                is not global::app.type.item.dict.@this dict)
                 return context.Error(new global::app.error.@this(
-                    $"the snapshot's app reads as a {held.Peek()?.Type.Name ?? "nothing"}, not what an app writes", "SnapshotRowUnread", 400));
-            ((global::app.type.item.kind.reflection.@this)context.App.type.list["item"].kind["*"]!).Read(written, into, context, View);
+                    $"the snapshot's app reads as a {value.Type.Name}, not what an app writes", "SnapshotRowUnread", 400));
+            ((global::app.type.item.kind.reflection.@this)context.App.type.list["item"].kind["*"]!).Read(dict, app, context, View);
             return context.Ok();
         }
-        catch (global::app.error.AppException refused) { return context.Error(refused.Error); }
+        catch (global::app.error.AppException ex) { return context.Error(ex.Error); }
     }
 
-    /// <summary>A copy of a read snapshot holds a copy of what it read, born in the same context; a taken one holds the
-    /// app, which is never copied.</summary>
-    protected internal override global::app.type.item.@this Clone()
-        => _written is { } written ? new @this((global::app.type.item.dict.@this)written.Clone(), Context) : this;
+    /// <summary>A copy holds a copy of its app, born in the same context: a live app is its own copy.</summary>
+    protected internal override global::app.type.item.@this Clone() => new @this(_app?.Clone(), Context);
 
     /// <summary>A snapshot that holds nothing is empty.</summary>
-    public override bool IsTruthy() => _app != null || _written?.IsTruthy() == true;
+    public override bool IsTruthy() => _app?.IsTruthy() == true;
 
-    /// <summary>A snapshot writes what it holds: the app whole, under <c>app</c> — the root is where the app lives — or
-    /// what the app wrote, as it was read.</summary>
+    /// <summary>A snapshot writes its app under <c>app</c>, the app writing itself: a live app its members, what an app
+    /// wrote as it was read (its bytes relayed as they are while nothing changed them).</summary>
     protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
-        if (_written is { } written)
-            // each as it was read: what the app wrote, its bytes relayed as they are while nothing changed them
-            foreach (var entry in written.Rows(Context))
-            {
-                writer.Name(entry.Name);
-                if (entry.Peek() is { } value) await value.Output(writer);
-                else writer.Null();
-            }
-        else
+        if (_app is { } app)
         {
             writer.Name("app");
-            await _app!.Members(writer);
+            await writer.Write(app);
         }
         writer.EndObject();
     }
