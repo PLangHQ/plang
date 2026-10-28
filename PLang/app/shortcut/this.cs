@@ -39,14 +39,22 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>What it reads as for <paramref name="asker"/>: its goal's answer, started in the asker's context
     /// under a call of its own, so every write the goal makes (its return's <c>%!data%</c> among them) ends with
     /// the read. Its goal is loaded through the goal list, which keeps what it loaded; one that doesn't load is this
-    /// read's answer, its load's own error, and nothing is kept of it — the next read loads again.</summary>
+    /// read's answer, its load's own error, and nothing is kept of it — the next read loads again. The goal a read
+    /// loaded is kept: every read after it starts it at once.</summary>
     public async System.Threading.Tasks.Task<global::app.data.@this> Read(global::app.actor.context.@this asker)
     {
-        var found = await asker.App.goal.list.Find(Path.ToString());
-        if (found.Peek() is not global::app.goal.@this goal) return found.Error != null ? found : asker.NotFound(Name);
+        if (_goal is not { } goal)
+        {
+            var loaded = await asker.App.goal.list.Load(Path);
+            if (loaded.Peek() is not global::app.goal.@this read) return loaded.Error != null ? loaded : asker.NotFound(Name);
+            goal = _goal = read;
+        }
         await using (asker.call.Isolate(null, await asker.call.Setting()))
             return await goal.Start(asker);
     }
+
+    // the goal a read loaded, kept once it loads; none while it hasn't
+    private global::app.goal.@this? _goal;
 
     public override string ToString() => Name;
 }
