@@ -160,4 +160,25 @@ public class SnapshotEditLaunderProbeTests
         await TestContext.Current!.OutputWriter.WriteLineAsync($"I before={refused.Error?.Key} sign.Success={signed.Success} sign.err={signed.Error?.Key} resume.Success={result.Success} note={note}");
         await Assert.That(refused.Error?.Key).IsEqualTo("SnapshotSignatureInvalid");
     }
+
+    // J: probe I with an edit that writes DIFFERENT bytes in the Out view and the Snapshot view (the stop point), run to the end:
+    // edit → resume refused → `sign` (default view) → resume goes on and answers. A text edit passes by coincidence (same bytes
+    // in both views), so this one is the real test of sign's default view.
+    [Test]
+    public async Task J_EditTheStopPoint_ThenSign_ThenResume_GoesOnToTheEnd()
+    {
+        await using var app = App();
+        var context = app.actor.list.User.Context;
+        await context.Variable.Set("snap", await Saved(app));
+        var edit = await (await context.Action("variable.set(Name=%snap.app.actor.list.user.context.call.current.caller.step.index%, Value=\"2\")")).Start(context);
+
+        var refused = await (await context.Action("snapshot.resume(Snapshot=%snap%)")).Start(context);
+        var signed = await (await context.Action("signing.sign(Data=%snap%)")).Start(context);
+        await context.Variable.Set("snap", signed);
+        var result = await (await context.Action("snapshot.resume(Snapshot=%snap%)")).Start(context);
+
+        await TestContext.Current!.OutputWriter.WriteLineAsync($"J edit={edit.Success}/{edit.Error?.Key} refused={refused.Error?.Key} sign={signed.Success} resume.Success={result.Success} key={result.Error?.Key}");
+        await Assert.That(refused.Error?.Key).IsEqualTo("SnapshotSignatureInvalid");
+        await Assert.That(result.Success).IsTrue();
+    }
 }
