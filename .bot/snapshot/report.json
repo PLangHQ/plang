@@ -169,6 +169,22 @@
           "context": "birth copy sweeps every event name per bound item; one ptest flake under load; dead Reach.Inner; string write door; inherited mirrors scope/filter" }
       ],
       "after": { "status": "review written", "health": "fail (small)", "notes": "coder next; no production edit, no mutation run" }
+    },
+    {
+      "id": "c4a9e1d2-7f35-4b68-8e0a-5d2c9b7f1e36",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-28T21:10:00Z",
+      "timestamp_end": "2026-10-29T01:00:00Z",
+      "intent": "Final review and bench before the merge (0cd33f185..1268c81f7)",
+      "before": { "assumptions": "PGO-off bytes repeat; the parent's numbers re-measured the same way", "risk": "the serializer write and the frame push are hot" },
+      "plan": ".bot/snapshot/codeanalyzer/v3/plan.md",
+      "actions": [
+        { "paths": ["Tools/Bench/record.md", "Tools/Bench/Program.cs"], "type": "review", "category": "test", "confidence": "high",
+          "context": "row at 1268c81f7; bisect of the sub request by commit (d67194934); probe mode `index`: action.Index allocates ~1.6 KB per call" },
+        { "paths": [".bot/snapshot/codeanalyzer/review.md"], "type": "review", "category": "code", "confidence": "high",
+          "context": "per-frame Index search (blocking), literal names in View.Record, Under late stamp, Module/Name copies, double Goal() list, naming" }
+      ],
+      "after": { "status": "review written", "health": "fail (one blocking)", "notes": "coder next; no production edit, no mutation run" }
     }
   ]
 }

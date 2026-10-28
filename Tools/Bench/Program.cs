@@ -94,6 +94,20 @@ switch (args.Length > 0 ? args[0] : "")
             Console.WriteLine(FormattableString.Invariant($"{sums[s] / (double)count:F0} B  {names[s]}"));
         break;
     }
+    case "index":
+    {
+        // bytes of one action.Index (a search of its step's code) over the actions of the request goal
+        await using var app = Make(false).Testing();
+        var loaded = await app.goal.Load("/module/condition/if/basic/Condition.test.goal");
+        var goal = (global::app.goal.@this)(await loaded.Value())!;
+        var actions = goal.Step.Items().SelectMany(s => s.Code.Items()).ToList();
+        foreach (var a in actions) _ = a.Index;
+        var at0 = GC.GetAllocatedBytesForCurrentThread();
+        for (var round = 0; round < 1000; round++) foreach (var a in actions) _ = a.Index;
+        var bytes = (GC.GetAllocatedBytesForCurrentThread() - at0) / 1000.0;
+        Console.WriteLine(FormattableString.Invariant($"index actions={actions.Count} bytes-per-pass={bytes:F0}"));
+        break;
+    }
     case "alloc":
     {
         // allocation ticks (one per ~100 KB, sampled by bytes) by type over BENCH_N births: `type kb-per-birth`
