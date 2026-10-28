@@ -6,6 +6,6 @@ Start
 - save snapshot, write to %snapshot%
 - save %snapshot% to 'workspace/saved.plang'
 - read file 'workspace/saved.plang', write to %back%
-- assert %back.actor.list.user.context.variable.name% equals "Bob"
-- assert %back.actor.list.user.context.call.frames[0].goal.path.name% equals "SavesTheRun.test.goal"
+- assert %back.app.actor.list.user.context.variable.row.name% equals "Bob"
+- assert %back.app.actor.list.user.context.call.current.goal.path.name% equals "SavesTheRun.test.goal"
 - delete file 'workspace/saved.plang'
