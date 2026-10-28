@@ -49,8 +49,10 @@ public sealed class Writer : IWriter
         Deeper(Nesting(value));
         _writer.WriteRawValue(value);
     }
-    public void DateTime(System.DateTime value) => _writer.WriteStringValue(value);
-    public void DateTimeOffset(System.DateTimeOffset value) => _writer.WriteStringValue(value);
+    // a datetime is its round-trip text, written as any text is (the encoder applies): the same characters as the text
+    // read back from it, so a signed datetime and that text hash alike
+    public void DateTime(System.DateTime value) => _writer.WriteStringValue(value.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
+    public void DateTimeOffset(System.DateTimeOffset value) => _writer.WriteStringValue(value.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
     public void TimeSpan(System.TimeSpan value) => _writer.WriteStringValue(value.ToString("c"));
     public void Guid(System.Guid value) => _writer.WriteStringValue(value);
     public void Enum(System.Enum value) => _writer.WriteStringValue(value.ToString());

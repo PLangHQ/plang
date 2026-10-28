@@ -95,6 +95,27 @@ public class PropertiesWireShapeTests
         await Assert.That(DateTime.Parse((await back.Properties.Value("k"))!.ToString()!).ToUniversalTime()).IsEqualTo(dt);
     }
 
+    // A datetime property signed for the wire verifies when it is read back as text: the digest hashes the characters the
+    // wire writes, the same whether the value is held as a datetime or as the text read back. On the real signer.
+    [Test] public async Task Properties_RoundTrip_DateTimePrimitive_VerifiesOnTheRealSigner()
+    {
+        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-prop-" + Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor);
+        app.test.list.Open(app.actor.list.User);
+        app.Code.Register<global::app.module.identity.code.IIdentity>(new global::PLang.Tests.Shared.TestIdentity { IsBuiltIn = true });
+        app.Code.SetDefault<global::app.module.identity.code.IIdentity>("test-identity");
+        var context = app.actor.list.User.Context;
+        var plang = context.Format("application/plang");
+        var d = new global::app.data.@this("thing", "v", context: context);
+        d.Properties["k"] = new DateTime(2026, 5, 27, 12, 0, 0, DateTimeKind.Utc);
+
+        var wire = (await plang.Serialize(d, context).Value())!.Clr<string>()!;
+        var back = plang.Deserialize(wire, context);
+
+        await Assert.That(back.Error?.Key).IsNull();
+        await Assert.That((await back.Properties.Value("k"))?.ToString()).Contains("2026-05-27T12:00:00");
+    }
+
     [Test] public async Task Properties_RoundTrip_ByteArrayPrimitive()
     {
         var bytes = new byte[] { 1, 2, 3, 4 };
