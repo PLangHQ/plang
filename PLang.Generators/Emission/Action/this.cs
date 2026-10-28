@@ -193,7 +193,6 @@ public static class @this
                 {
                     var app = context.App!;
                     var __step = action?.Step;
-                    var __call = context.call?.Current;
 
             """);
 
@@ -215,7 +214,7 @@ public static class @this
                                 if (__seed?.{{name}} is not { IsInitialized: true } &&
                                     (action["{{lower}}"]?.Value?.IsNull ?? true))
                                     return (null, new global::app.error.ServiceError(
-                                        "'{{lower}}' must have a value", __step, __call,"ValueRequired", 400));
+                                        "'{{lower}}' must have a value", __step, "ValueRequired", 400));
 
                     """);
             }
@@ -238,7 +237,7 @@ public static class @this
                                 if (__seed?.{{prop.Name}} is not { IsInitialized: true } &&
                                     action["{{lower}}"]?.Value == null)
                                     return (null, new global::app.error.ServiceError(
-                                        "Required property '{{lower}}' is missing or null", __step, __call,"MissingRequiredProperty", 400));
+                                        "Required property '{{lower}}' is missing or null", __step, "MissingRequiredProperty", 400));
 
                     """);
             }
@@ -332,8 +331,6 @@ public static class @this
                 {
                     var app = context.App!;
                     __action = action;
-                    var __step = action?.Step;
-                    var __call = context.call?.Current;
 
             """);
 
@@ -373,8 +370,6 @@ public static class @this
                     var context = Context;
                     var action = __action;
                     var app = context.App!;
-                    var __step = action?.Step;
-                    var __call = context.call?.Current;
 
             """);
         if (info.ImplementsIChannel)
@@ -392,7 +387,7 @@ public static class @this
                             Channel = (context.Actor ?? app.actor.list.User).Channel.Get(string.IsNullOrEmpty(__channelName) ? global::app.channel.list.@this.Output : __channelName);
                             if (Channel == null)
                                 return new global::app.error.ServiceError(
-                                    $"Channel '{__channelName ?? "output"}' not found", __step, __call,"ChannelNotFound", 404);
+                                    $"Channel '{__channelName ?? "output"}' not found", context, "ChannelNotFound", 404);
                         }
 
                 """);
@@ -412,7 +407,7 @@ public static class @this
                             && await __variable{{prop.Name}}.Start(context) is { Success: true, IsInitialized: true } __held{{prop.Name}}
                             && await __held{{prop.Name}}.Value() is null or { IsNull: true })
                             return new global::app.error.ServiceError(
-                                $"'{{lower}}' must have a value: {__variable{{prop.Name}}.Text} holds nothing", __step, __call,"ValueRequired", 400);
+                                $"'{{lower}}' must have a value: {__variable{{prop.Name}}.Text} holds nothing", context, "ValueRequired", 400);
 
                 """);
         }

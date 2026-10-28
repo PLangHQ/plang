@@ -571,7 +571,7 @@ public class SnapshotWireTests
         await using (var step = context.call.Push(goal.Step[1], await context.call.Setting()))
         await using (var call = context.call.Push(goal.Step[1].Code[0], await context.call.Setting(), context.Variable))
         {
-            var err = new ServiceError("boom", goal.Step[1], context.call.Current);
+            var err = new ServiceError("boom") { call = context.call.Current };
             json = await app.Snapshot(err, app.actor.list.User.Context).Saved().Text(app.actor.list.User.Context);   // throw-time overload
         }
 

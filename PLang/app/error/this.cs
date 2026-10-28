@@ -175,17 +175,17 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
             return taken;
         }
     }
-    /// <summary>The action it happened in: its call's; an error with no call (a build's, a validation's) holds its own.</summary>
-    public Action? Action { get => call?.Action ?? _action; set => _action = value; }
+    /// <summary>The action it happened in: the one it was born about (a build's, a validation's), else its call's.</summary>
+    public Action? Action { get => _action ?? call?.Action; set => _action = value; }
     private Action? _action;
-    /// <summary>The step it happened in: its call's; an error with no call holds its own.</summary>
+    /// <summary>The step it happened in: the one it was born about, else its call's — the frame that observed an error
+    /// born about a step is only where it was seen.</summary>
     [global::app.LlmBuilder]
-    public Step? Step { get => call?.Step ?? _step; set => _step = value; }
+    public Step? Step { get => _step ?? call?.Step; set => _step = value; }
     private Step? _step;
-    /// <summary>The goal it happened in: its call's, else its step's; an error about a goal itself (no call, no step)
-    /// holds the goal it names.</summary>
+    /// <summary>The goal it happened in: the one it was born about, else its step's, else its call's.</summary>
     [global::app.LlmBuilder]
-    public Goal? Goal { get => call?.Goal ?? _step?.Goal ?? _goal; set => _goal = value; }
+    public Goal? Goal { get => _goal ?? _step?.Goal ?? call?.Goal; set => _goal = value; }
     private Goal? _goal;
     /// <summary>The call it happened in; its callers are the call's own (<c>call.list</c>).</summary>
     [global::app.LlmBuilder]
@@ -270,19 +270,10 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         => Step = step;
 
     /// <summary>
-    /// Creates an error with a step and the call it happened in.
-    /// </summary>
-    public @this(string message, Step? step, Call? call, string key = "Error", global::app.type.item.status.@this? status = null)
-        : this(message, step, key, status)
-    {
-        this.call = call;
-    }
-
-    /// <summary>
     /// Creates an error from an execution context: the call it happened in, whose step, goal and callers it reads.
     /// </summary>
     public @this(string message, actor.context.@this context, string key = "Error", global::app.type.item.status.@this? status = null)
-        : this(message, context.call.Step, key, status)
+        : this(message, key, status)
     {
         Context = context;
         call = context.call.Current;
