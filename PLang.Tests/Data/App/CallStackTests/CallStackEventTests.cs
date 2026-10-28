@@ -50,11 +50,15 @@ public class CallStackEventTests : System.IAsyncDisposable
         }
     }
 
-    // The program: Log, bound before each goal, saves the run inside its call and keeps what %!event% fired for; Run
-    // answers it.
+    // The program: Bind binds Log before each goal; Log saves the run inside its call and keeps what %!event% fired for;
+    // Run answers it, and Other is any goal after.
     private static void Program(global::app.@this into)
     {
         var context = into.actor.list.User.Context;
+        Goal(into, "Bind", ("before each goal, call Log", [Make.Action(context, "on", "event", ("Event", "%!app.type.goal.on.start%"),
+            ("When", "before"), ("Action", Make.Call(context, "Log")))]));
+        Goal(into, "Other", ("set %other% = done",
+            [Make.Action(context, "variable", "set", Make.Param(context, "Name", "other", "variable"), ("Value", "done"))]));
         Goal(into, "Log",
             ("save snapshot to %snap%", [Make.Action(context, "snapshot", "save"),
                 Make.Action(context, "variable", "set", Make.Param(context, "Name", "snap", "variable"), ("Value", "%!data%"))]),
@@ -80,19 +84,20 @@ public class CallStackEventTests : System.IAsyncDisposable
     private static global::app.call.@this? Running(global::app.call.@this frame)
         => frame.Event != null ? frame : frame.Children.Select(Running).FirstOrDefault(found => found != null);
 
-    // The real case: a binding made by on.event fires before Run starts, and its call saves the run. The run goes on
-    // reading %!event!item.name% again; read back, the event is the resumed app's own, holding the binding. The frame's
-    // row is read whole and its event made from its key when it is read, so it is found whatever order the app's members
-    // are read in.
+    private static Goal Named(global::app.@this app, string name) => app.goal.list.Items().OfType<Goal>().First(goal => goal.Name == name);
+
+    // The real case: a binding a program's step made fires before Run starts, and its call saves the run. The run goes on
+    // reading %!event!item.name% again; read back, the event is the resumed app's own, holding the binding, which fires
+    // again on the next goal. The frame's row is read whole and its event made from its key when it is read, so it is
+    // found whatever order the app's members are read in.
     [Test]
     public async Task ARunSavedInsideABoundCall_ReadsItsEventAgain_AsTheResumedAppsOwn()
     {
         await using var src = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing().TestIdentity();
         var context = src.actor.list.User.Context;
         Program(src);
-        await (await Make.Action(context, "on", "event", ("Event", "%!app.type.goal.on.start%"), ("When", "before"),
-            ("Action", Make.Call(context, "Log"))).Start(context)).IsSuccess();
-        await (await src.goal.list.Items().OfType<Goal>().First(goal => goal.Name == "Run").Start(context)).IsSuccess();
+        await (await Named(src, "Bind").Start(context)).IsSuccess();
+        await (await Named(src, "Run").Start(context)).IsSuccess();
         var snap = await (await context.Variable.Get("snap")).Value() as global::app.snapshot.@this;
         await Assert.That(snap).IsNotNull();
 
@@ -106,6 +111,8 @@ public class CallStackEventTests : System.IAsyncDisposable
         await Assert.That(start).IsNotNull();
         await Assert.That(await running!.Event!.Value()).IsSameReferenceAs(start);
         await Assert.That(start!.before.Count).IsEqualTo(1);
+        await (await Named(dst, "Other").Start(into)).IsSuccess();
+        await Assert.That(await into.Variable.GetValue("seen")).IsEqualTo("Other");
 
         var resumed = await snap!.Resumed(context);
         await resumed.IsSuccess();
