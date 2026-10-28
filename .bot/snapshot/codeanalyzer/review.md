@@ -75,3 +75,41 @@ Probe in `Tools/Bench/Program.cs` (modes `alloc`, `steps`, and `BENCH_NOTEST=1`)
 
 ## Birth at 4da6a1e58 (bottom registry's table made in its constructor), quiet (load 2–3)
 Row `snapshot-4da6a1e58-birth`: sub birth 0.17 ms / **115 KB** (with `Testing()`; 85 KB without), root birth 19.03 ms / **2309 KB** (2292 KB without `Testing()`). Root: band ±25 around base 2387, **in band** (and unchanged from ab239e127's 2309, so the table in the constructor costs the root nothing measurable). Sub: the 115 is the artifact above; 85 KB is the program's.
+
+## Per-app event list: 941df01dd through 0cd33f185 (snapshot 259)
+
+Patterns first: 5 a birth fact, not a search (the app's list is born holding its maker's); 3 a choice belongs on the element (the inherited kind, `Remove` virtual); 7 one door (`app.event.Add`); 9 a reader refuses another type. Read whole: `event/this.cs`, `event/on/{this,empty,error,declared}.cs`, `event/on/list/this.cs`, `event/binding/{this,action,inherited,list/*}.cs`, the `module/on/*` binders, `module/debug/{this,setting/this}.cs`, `test/{this,Coverage}.cs`, `actor/this.cs`, `origin/*`. Known and held, not re-raised: the four-level birth copy, `app.event.on` as the rows' type name, `Kept<T>` (P7-2), S-1. Members of the surface golden are covered by 248. Grep `held`/`own`/`declared`: `held`/`own` only in comments as English; `declared` is a class and a field (P-name 6).
+
+### Bench (parts: birth, request, ptest, sweep; no store diff, no rests)
+| | parent 6e9db97b4 | 0cd33f185 | band |
+|---|---|---|---|
+| sub birth | 100 KB (6fa2f5d87) | **99 KB** (maker none); 105 KB (maker 4 bindings); 108 KB (maker 16) | ±5 |
+| root birth | 2310 KB | **2332 KB** (+22) | ±25, at the edge |
+| sub request | 519 KB, 1.94 ms | **518 KB**, 1.99 ms | ±10 |
+| root request | 3829 KB, 19.49 ms | **3813–3828 KB**, 20.5 ms | ±120 |
+| held (3,000 req.) | flat 2.0 | flat 2.0 | 0.2 |
+| `plang --test` | | 300/1 once at load 8; 307/0 twice after | |
+| C# sweep | | 77 s, red none | |
+
+The diff itself moves no request number (root 3829 → 3813–3828, sub 519 → 518). Separate note: the last root-request row on the branch, ab239e127, is **3555 KB**; the parent measures 3829 now, +274 (band ±120). It is not this diff; it came in between (1314cd233 to 6e9db97b4, no request row was taken there). Worth a look by the architect, not blocking this review.
+
+### Findings, ranked
+**1. P5 — the birth copy pays by name, not by binding (cost, Pass 4).** `list/this.cs:` the constructor loops `events.Names` (11 core names + declared) and, for each name, `events[name]` (a shared-closed event for every name nothing was bound on), `System.Enum.GetValues<When>()` (a fresh array per name) and an enumerator per side. Measured with the maker holding bindings on 4 items: sub birth 99 → **105 KB (+6, the band is 5)**; 16 bindings on the same 4 items: 108 KB. So ~1.5 KB per bound *item*, ~0.25 KB per *binding*: the cost is the name sweep. A request app is born per request, and a debug watch binds on 2–4 items. Fix: the `on` hands the events it made (it holds them in `_events`), each hands its sides; no `Names`, no shared events, no `GetValues` — this is also the "each level hands its part down" shape held for Ingi, so it can ride that decision, but the bytes say it should not wait. Also `Add(events.item!)` and `.Add(name)` are looked up again for every binding; take them once per event.
+
+**2. Behavioural — a plang test failed once under load.** In the bench's `plang --test` (load 8): `/plan/windows/app/event/EachGoalIsTheAppsOwn.test.goal`, `'Value' is %!event!item.name%, a variable that holds nothing`. Alone it passes; two full runs after (quiet) 307/0. A flake on the `%!event%` path (`binding.action.Handle` sets `frame.Event` on `context.call.Current` and reads it back in a nested call). I did not find the cause; the test reads `%!event!item%` in a goal the binding calls, so a firing whose frame is not the one that reads it would show exactly this. Needs the coder to run it in a loop under load (`--test.setting.parallel`) before the gate counts it green.
+
+**3. Pass 5 deletion — `Reach` returns a pair, one half is dead.** `event/this.cs` `Reach(...)` computes `(Outer, Inner)`; the only caller (`IsBound`) reads `.Outer >= 0`. `Inner` and the `outer`/`inner` bookkeeping delete with no test failing; `IsBound` is "any level is bound at `IsBoundAt`" for either side (two loops over the levels, each stopping at the first hit). Same area: `IsBoundBefore`/`IsBoundAfter` are two one-line wrappers over the private `IsBoundAt(…, When)`, and `item.IsBoundBefore/After(string, context)` wrap those again (`type/item/this.cs:478–483`): take `When` in one internal member. Trivial for the coder.
+
+**4. P7 — the write door is a string and a `!`.** `on.Add("start")!` at 8 sites (`module/on/{cache,error,timeout,event}.cs`, `module/debug/{this,setting/this}.cs`, `test/{this,Coverage}.cs`). The shape was approved (248). The `!` hides a null for a name that is no event, so a typo is a NullReferenceException at bind time instead of the `NoEvent` answer. The ones that name a core event could ask the typed read the old code had (`on.start`) for the *write*: a `Made` entry per core event gives `events.Add<start>()`-style or `Add(When…)`. Low; Ingi's call on the door.
+
+**5. P-flat copy / stored twice — `inherited` holds `_binding` and mirrors its `Scope` and filter** (`binding/this.cs` private-protected ctor copies `binding.Scope`, `binding._filter`). The actor differs by design (the sub's role); the scope and the filter are the maker binding's. `For` could ask `_binding.Scope`/`_binding` filter and the inherited kind would hold one reference and its own actor. Also a grandchild takes in the child's *inherited* binding, so the chain is inherited → inherited → action and each hop enters `TryEnterEvent`; taking the unwrapped binding at birth keeps it one hop. Low.
+
+**6. P-name — `declared`.** Class `app.event.on.declared` and `_declared`/`Declared` name an event by who declared it, where its siblings (`start`, `load`) are named for the event. `Declared` (internal property) is read once, by the private constructor (`on/this.cs:46`): `shared._declared` does it. Low.
+
+**7. Readability.** `Before`/`After` each have a public and a private overload of the same name (`this.cs`), told apart by an `int depth`; `Watch` (`debug/setting/this.cs`) now makes `var events = …Add(variable.type)` inside the `foreach`, once per watched variable (it was once before the loop). Low.
+
+**8. Pass 4, noted not raised:** the list holds each item by reference and scans `_on` linearly (`this[item]`), once per level per fire; with a handful of bound items it is one read, and a program that binds on many distinct items (a binding per loop item) grows and slows it. Not new (the actors' holds were the same); no row of the bench reaches it.
+
+### Verdict
+NEEDS WORK, small: 1 (bytes, from the copy), 2 (a flake, unexplained), 3 (dead half). The rest is low. Bench: births and request flat against the parent, held flat; the sub-birth number with a maker holding bindings is at the band's edge and grows by item.
+**FAIL — coder next** (1, 3 and the flake loop for 2; 4–7 are Ingi's/the coder's pick).
