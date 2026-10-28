@@ -18,12 +18,6 @@ public sealed class @this
     /// flags once.</summary>
     public System.Threading.Tasks.ValueTask<setting.@this> Setting() => _context.Setting.Get<setting.@this>();
 
-    // The watched names, as the store names them: each written one read as the variable it is (%x% or a bare x).
-    private async System.Threading.Tasks.ValueTask<HashSet<string>> Watched()
-        => (await Setting()).Variables.Items(_context)
-            .Select(v => new global::app.type.item.variable.parser.@this(v.Peek()?.ToString() ?? "", _context.App.type.list).Whole?.Name)
-            .OfType<string>().ToHashSet(StringComparer.OrdinalIgnoreCase);
-
     private Regex? _grep;
 
     public @this(actor.context.@this context) => _context = context;
@@ -71,20 +65,8 @@ public sealed class @this
         // born with System's context. They are held by the User, as long as the app lives.
         var user = _context.App.actor.list.User;
 
-        // The watch binds after every set and remove of a variable the User actor makes, for the watched names.
-        if (setting.Variables.CountRaw > 0)
-        {
-            var watched = await Watched();
-            bool Watches(global::app.type.item.@this item, actor.context.@this _)
-                => item is global::app.type.item.variable.@this variable && watched.Contains(variable.Name);
-            var variables = user.on[_context.App.variable.type];
-            variables.set.after.Add(side => new global::app.@event.binding.@this(side,
-                (item, result, context) => Set((global::app.type.item.variable.@this)item, result, context),
-                user, global::app.@event.binding.Scope.actor, Watches));
-            variables.remove.after.Add(side => new global::app.@event.binding.@this(side,
-                (item, _, context) => Remove((global::app.type.item.variable.@this)item, context),
-                user, global::app.@event.binding.Scope.actor, Watches));
-        }
+        // the watched variables print each set and remove the User actor makes of them
+        setting.Watch(user, this);
 
         // Subscribe to granular LLM tracing — each Llm.* flag writes its own block to the debug channel, whose
         // backing (stderr, a file) decides where it lands.
@@ -198,7 +180,7 @@ public sealed class @this
 
     /// <summary>A watched variable set: where it happened and the type it now holds. Answers a plain success — the watch
     /// never fails a program.</summary>
-    private async Task<data.@this> Set(global::app.type.item.variable.@this variable, data.@this? stored, actor.context.@this context)
+    internal async Task<data.@this> Set(global::app.type.item.variable.@this variable, data.@this? stored, actor.context.@this context)
     {
         var sb = new StringBuilder();
         sb.AppendLine($"=== WATCH [{variable.Name}] SET ===");
@@ -209,7 +191,7 @@ public sealed class @this
     }
 
     /// <summary>A watched variable removed: where it happened.</summary>
-    private async Task<data.@this> Remove(global::app.type.item.variable.@this variable, actor.context.@this context)
+    internal async Task<data.@this> Remove(global::app.type.item.variable.@this variable, actor.context.@this context)
     {
         await Write($"=== WATCH [{variable.Name}] DELETED ==={Environment.NewLine}  {Where(context)}{Environment.NewLine}");
         return context.Ok();
@@ -371,8 +353,9 @@ public sealed class @this
                 if (p.Value is { } value)
                     foreach (var v in value.Variable)
                         if (named.Add(v.Code.Root.Name)) shown.Add(new global::app.type.item.variable.@this(v.Code.Root.Name, context.App!.type.list));
-        foreach (var name in await Watched())
-            if (new global::app.type.item.variable.parser.@this(name, context.App.type.list).Whole is { } variable && named.Add(variable.Name))
+        foreach (var name in (await Setting()).Variables.Items(context))
+            if (new global::app.type.item.variable.parser.@this(name.Peek()?.ToString() ?? "", context.App.type.list).Whole is { } variable
+                && named.Add(variable.Name))
                 shown.Add(variable);
 
         if (shown.Count == 0) return;
