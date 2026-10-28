@@ -237,7 +237,7 @@ public class SnapshotEditLaunderProbeTests
     // signature layer left out: what a snapshot says, not how it is wrapped
     private static bool IsRecord(System.Text.Json.Nodes.JsonObject json)
         => json.Count == 2 && json.ContainsKey("value") && json["type"] is System.Text.Json.Nodes.JsonObject type
-            && type["name"] is System.Text.Json.Nodes.JsonValue name && name.ToString() == "dict";
+            && type["name"] is System.Text.Json.Nodes.JsonValue name && (name.ToString() == "dict" || name.ToString() == "text");
 
     private static void Leaves(System.Text.Json.Nodes.JsonNode? node, string path, HashSet<string> into)
     {
