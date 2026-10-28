@@ -152,7 +152,7 @@
           "context": "259-277: the codeanalyzer passed the event work; the root request's +274 KB was tiered PGO, not a commit; root birth's +26 KB is explained by 218." }
       ],
       "after": { "status": "The event work is complete and reviewed: security SAFE (10/10), codeanalyzer PASS, C# 0 red in all six projects, plang 307/308. What's left is Ingi's held list.", "health": "good",
-        "notes": "Misses: I told Ingi Chain was plang-reachable (it had no tag); my 219 getter order named the wrong step for build errors; I removed app.@event without tracing that %!event% resolved through it; I ruled channel.Key {actor, name} in 204; I let _held through a whole-file review. Two commits used a peer's Claude-Session line by mistake." }
+        "notes": "Misses: I told Ingi Chain was plang-reachable (it had no tag); my 219 getter order named the wrong step for build errors; I removed app.@event without tracing that %!event% resolved through it; I ruled channel.Key {actor, name} in 204; I let _held through a whole-file review. One commit (255) used a peer's Claude-Session line by mistake." }
     },
     {
       "id": "8d2f6a14-3b9c-4e71-a5d0-1c7e9b3f2a68",
