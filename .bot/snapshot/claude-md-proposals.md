@@ -22,3 +22,11 @@ Place `.bot/snapshot/architect/obp-patterns.md` as `Documentation/v0.2/obp-patte
 ```markdown
 a concept nothing is ever *inside* (`type`, `channel`, `module`, `format`) has no `.current`; `app.event` is the app's events, and its `.current` is the event whose bound call is running (`%!app.event.current%`, `%!event%`)
 ```
+
+## architect — snapshot 277 — 2026-10-28
+**Target:** /CLAUDE.md
+**Why:** The codeanalyzer bisected a +274 KB root-request regression on snapshot and found no commit: one binary measured 3566–3829 KB across runs, and the low runs were the slow ones. .NET's tiered PGO instruments and recompiles by timing, so bytes move by hundreds of KB between runs. With `DOTNET_TieredPGO=0`, 7 runs of 7 matched the parent exactly. `Tools/Bench/run.sh` now exports it, so a bot reading old rows needs to know that times since then aren't production times.
+**Proposed change:** in "## Speed record", after the first bullet, add:
+```markdown
+- `run.sh` runs with `DOTNET_TieredPGO=0`: tiered PGO allocates by timing, so one binary's bytes move by ±250 KB between runs. Bytes are stable with it off; times are then not production times, so a row is compared on time only with rows measured the same way (`record.md` marks the change).
+```
