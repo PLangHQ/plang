@@ -39,6 +39,10 @@ internal interface @this
     /// actor's app's, so a provider its app holds — one registered in-process too — is found in the sub app.</summary>
     global::app.module.code.@this? Code { get; }
 
+    /// <summary>The events the app is born holding the bindings of: the code, none; an actor's app's, each of its
+    /// bindings taken in by the sub app as its own.</summary>
+    global::app.@event.on.list.@this? @event { get; }
+
     /// <summary>The goal at <paramref name="source"/> as <paramref name="app"/> takes it from what it is made from —
     /// the code has none; an actor's app's, while <paramref name="app"/> holds no code of its own and shares its folder.
     /// Null when it takes none.</summary>

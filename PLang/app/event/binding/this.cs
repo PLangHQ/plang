@@ -30,6 +30,11 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         Scope = scope;
     }
 
+    /// <summary>A binding taken in from <paramref name="binding"/> on <paramref name="list"/>, for
+    /// <paramref name="actor"/>: its scope and the items it fires for are <paramref name="binding"/>'s.</summary>
+    private protected @this(list.@this list, @this binding, global::app.actor.@this actor)
+        : this(list, actor, binding.Scope, binding._filter) { }
+
     /// <summary>What it does when its event fires for <paramref name="item"/>: its handler, on the result as it
     /// stands. A kind of binding that is its own handler overrides it.</summary>
     private protected virtual System.Threading.Tasks.Task<global::app.data.@this> Handle(global::app.type.item.@this item,
@@ -62,6 +67,6 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         finally { context.ExitEvent(this); }
     }
 
-    /// <summary>Takes it off its event: it fires no more.</summary>
-    public void Remove() => _list.Remove(this);
+    /// <summary>Takes it off its event: it fires no more. A kind of binding that isn't its holder's to take off refuses.</summary>
+    public virtual void Remove() => _list.Remove(this);
 }

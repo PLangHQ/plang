@@ -502,6 +502,9 @@ class app.event.binding.action.this : app.event.binding.this
 
 class app.event.binding.clause.this : app.event.binding.this
 
+class app.event.binding.inherited.this : app.event.binding.this
+  override Remove() : System.Void
+
 class app.event.binding.list.after : app.event.binding.list.this
 
 class app.event.binding.list.before : app.event.binding.list.this
@@ -514,8 +517,8 @@ abstract class app.event.binding.list.this : System.Collections.Generic.IEnumera
 
 class app.event.binding.this : app.type.item.this, app.type.item.ICreate<app.event.binding.this>
   Actor : app.actor.this { get; }
-  Remove() : System.Void
   Scope : app.event.binding.Scope { get; }
+  virtual Remove() : System.Void
 
 class app.event.on.ask : app.event.this
 
@@ -524,11 +527,16 @@ class app.event.on.create : app.event.this
 class app.event.on.declared : app.event.this
 
 class app.event.on.empty : app.event.on.this
+  override Item[System.String] : app.event.this { get; }
 
 class app.event.on.error : app.event.this
   Catch(app.type.item.this item, app.data.this failed, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
 
 class app.event.on.hit : app.event.this
+
+class app.event.on.list.this : app.type.item.this
+  current(app.actor.context.this context) : app.data.this [LlmBuilder]
+  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
 
 class app.event.on.load : app.event.this
 
@@ -543,7 +551,6 @@ class app.event.on.set : app.event.this
 class app.event.on.start : app.event.this
 
 class app.event.on.this : app.type.item.this, app.type.item.ICreate<app.event.on.this>
-  Item[System.String] : app.event.this { get; }
   Names : System.Collections.Generic.IEnumerable<System.String> { get; }
   NoEvent(System.String name) : app.error.this
   ask : app.event.on.ask { get; }
@@ -557,6 +564,7 @@ class app.event.on.this : app.type.item.this, app.type.item.ICreate<app.event.on
   set : app.event.on.set { get; }
   start : app.event.on.start { get; }
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.event.on.this
+  virtual Item[System.String] : app.event.this { get; }
   write : app.event.on.write { get; }
 
 class app.event.on.write : app.event.this
@@ -575,6 +583,7 @@ abstract class app.event.this : app.type.item.this, app.type.item.ICreate<app.ev
   before : app.event.binding.list.before { get; }
   override ToString() : System.String
   protected override Type : app.type.this { get; }
+  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
 
 class app.module.ActionAttribute : System.Attribute
   Cacheable : System.Boolean { get; set; }
@@ -980,7 +989,7 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.type.item.prop
   ctor(System.String absolutePath, System.String environment = …, app.Wiring wiring = …)
   data(app.actor.context.this context) : app.data.this [LlmBuilder]
   error : app.type.node.current.this<app.error.this, app.error.list.this> { get; } [LlmBuilder, Out]
-  event(app.actor.context.this context) : app.data.this [LlmBuilder]
+  event : app.event.on.list.this { get; } [LlmBuilder, Snapshot]
   filesystem : app.type.item.path.file.filesystem.this { get; } [LlmBuilder]
   goal : app.type.node.current.this<app.goal.this, app.goal.list.this> { get; } [LlmBuilder, Out]
   module : app.module.this { get; } [LlmBuilder, Out]
@@ -3391,7 +3400,7 @@ type app
   .call : app.call.list
   .trace : app.actor.context.trace
   .data : item
-  .event : item
+  .event : app.event.on.list
   .startedAt : datetime
   .uptime : duration
   .module : module
@@ -3556,7 +3565,12 @@ type app.event.binding.action
 
 type app.event.binding.clause
 
+type app.event.binding.inherited
+
 type app.event.on
+
+type app.event.on.list
+  .current : item
 
 type app.goal.list.setting
 

@@ -40,6 +40,8 @@ internal sealed class code : @this
 
     public global::app.module.code.@this? Code => null;
 
+    public global::app.@event.on.list.@this? @event => null;
+
     public int Depth => 0;
 
     public System.Threading.Tasks.Task<global::app.data.@this?> Goal(global::app.type.item.path.@this source, global::app.@this app)

@@ -49,6 +49,67 @@ public class SavedBindingsTests
             await (await goal.Step[0].Code[0].Start(context)).IsSuccess();
     }
 
+    // a sub app holds its maker's binding, taken in at its birth, but it is the maker's: the sub app's save and its
+    // %!app.event% hold only what the sub app bound itself
+    [Test]
+    public async Task ASubAppsSave_HoldsItsOwnBindingsOnly()
+    {
+        var root = Root();
+        await using var maker = App(root);
+        await Bind(maker, Programs(maker, "%!app.type.goal.on.start%", null));
+        await using var sub = new global::app.@this(root, maker.actor.list.User);
+        var context = sub.actor.list.User.Context;
+
+        var text = await sub.Snapshot(context).Saved().Text(context);
+
+        await Assert.That(sub.@event[sub.type.list["goal"]]?.start.before.Count).IsEqualTo(1);
+        await Assert.That(text).DoesNotContain("\"before\"");
+        await Assert.That(sub.@event.list.Items(context).Count()).IsEqualTo(0);
+    }
+
+    // a binding calls the goal it names as seen from the goal its step sits in (/a/G names /a/Log), wherever the event
+    // fires (/b/H, beside its own /b/Log)
+    [Test]
+    public async Task ABinding_CallsItsGoalFromWhereItWasBound_NotWhereItFires()
+    {
+        var root = Root();
+        await using var app = App(root);
+        var context = app.actor.list.User.Context;
+        Goal At(string path, global::app.goal.step.action.@this action)
+        {
+            var goal = new Goal(app.type.list) { Name = System.IO.Path.GetFileNameWithoutExtension(path), Path = global::app.type.item.path.@this.Resolve(path, context) };
+            var step = new Step(app.type.list) { Goal = goal, List = goal.Step, Index = 0, Text = $"{path} step 0" };
+            step.Code.Add(action.In(step));
+            goal.Step.Add(step);
+            app.goal.list.Add(goal);
+            return goal;
+        }
+        // the two Logs are on disk, built, as a program's goals are: found by where they are, not by a name already loaded
+        async Task OnDisk(string path, string value)
+        {
+            var goal = new Goal(app.type.list) { Name = "Log", Path = global::app.type.item.path.@this.Resolve(path, context) };
+            var step = new Step(app.type.list) { Goal = goal, List = goal.Step, Index = 0, Text = $"{path} step 0" };
+            step.Code.Add(Make.Action(context, "variable", "set", Make.Param(context, "Name", "logged", "variable"), ("Value", value)).In(step));
+            goal.Step.Add(step);
+            var source = System.IO.Path.Combine(root, path.TrimStart('/'));
+            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(source)!);
+            await System.IO.File.WriteAllTextAsync(source, "Log\n- set %logged%\n");
+            var pr = System.IO.Path.Combine(root, goal.Pr!.Raw.TrimStart('/'));
+            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(pr)!);
+            await System.IO.File.WriteAllTextAsync(pr, await context.Pr(goal));
+        }
+        await OnDisk("/a/Log.goal", "a");
+        await OnDisk("/b/Log.goal", "b");
+        var bound = At("/a/G.goal", Make.Action(context, "on", "event", ("Event", "%!app.type.goal.on.start%"), ("When", "before"),
+            ("Action", Make.Call(context, "Log"))));
+        var fires = At("/b/H.goal", Make.Action(context, "variable", "set", Make.Param(context, "Name", "inner", "variable"), ("Value", "ran")));
+        await Bind(app, bound);
+
+        await (await fires.Start(context)).IsSuccess();
+
+        await Assert.That(await context.Variable.GetValue("logged")).IsEqualTo("a");
+    }
+
     [Test]
     public async Task ABindingBeforeEachGoal_IsSaved_AndFiresAgainInAFreshApp()
     {
@@ -63,7 +124,7 @@ public class SavedBindingsTests
         var into = fresh.actor.list.User.Context;
         await fresh.Restore(snapshot, into);
 
-        await Assert.That(fresh.actor.list.User.on.Of(fresh.type.list["goal"])?.start.before.Count).IsEqualTo(1);
+        await Assert.That(fresh.@event[fresh.type.list["goal"]]?.start.before.Count).IsEqualTo(1);
         await (await fresh.goal.list.Items().OfType<Goal>().First(goal => goal.Name == "Inner").Start(into)).IsSuccess();
         await Assert.That(await into.Variable.GetValue("logged")).IsEqualTo("yes");
     }
@@ -126,7 +187,7 @@ public class SavedBindingsTests
         Programs(fresh, "%!app.on.start%", null);
         await fresh.Restore(snapshot, fresh.actor.list.User.Context);
 
-        await Assert.That(fresh.actor.list.User.on.Of(fresh)?.start.before.Count).IsEqualTo(1);
+        await Assert.That(fresh.@event[fresh]?.start.before.Count).IsEqualTo(1);
     }
 
     // a cold app, its settings on disk and not yet read: the snapshot's read loads the app's name before it reads what
@@ -143,7 +204,7 @@ public class SavedBindingsTests
         Programs(cold, "%!app.on.start%", null);
         await cold.Restore(snapshot, cold.actor.list.User.Context);
 
-        await Assert.That(cold.actor.list.User.on.Of(cold)?.start.before.Count).IsEqualTo(1);
+        await Assert.That(cold.@event[cold]?.start.before.Count).IsEqualTo(1);
     }
 
     // a module's own action (its catalog element) is written as what finds it, its module and name, and read back as it
@@ -159,7 +220,7 @@ public class SavedBindingsTests
         Programs(fresh, "%!app.module.file.read.on.start%", null);
         await fresh.Restore(snapshot, fresh.actor.list.User.Context);
 
-        await Assert.That(fresh.actor.list.User.on.Of(fresh.Module("file")["read"]!)?.start.before.Count).IsEqualTo(1);
+        await Assert.That(fresh.@event[fresh.Module("file")["read"]!]?.start.before.Count).IsEqualTo(1);
     }
 
     [Test]
@@ -168,14 +229,14 @@ public class SavedBindingsTests
         var root = Root();
         await using var app = App(root);
         var user = app.actor.list.User;
-        user.on[app.type.list["goal"]].start.before.Add(side => new global::app.@event.binding.@this(side,
+        app.@event.Add(app.type.list["goal"]).Add("start")!.before.Add(side => new global::app.@event.binding.@this(side,
             (_, _, ctx) => Task.FromResult(ctx.Ok()), user, global::app.@event.binding.Scope.actor, global::app.@event.binding.@this.Always));
         var snapshot = await app.Snapshot(user.Context).Saved();
 
         await using var fresh = App(root);
         await fresh.Restore(snapshot, fresh.actor.list.User.Context);
 
-        await Assert.That(fresh.actor.list.User.on.Of(fresh.type.list["goal"])).IsNull();
+        await Assert.That(fresh.@event[fresh.type.list["goal"]]).IsNull();
     }
 
     [Test]

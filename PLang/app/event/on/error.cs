@@ -17,14 +17,24 @@ public sealed class error : global::app.@event.@this
     {
         if (!IsBound(item, context)) return failed;
         for (var depth = 0; item.Level(depth, context) is { } level; depth++)
-            // the level's own clauses, then what each actor of the asker's app holds for it
-            foreach (var @event in Outward(level, context))
-                foreach (var binding in @event.before)
-                {
-                    if (!binding.For(item, context)) continue;
-                    var answer = await binding.Start(item, failed, context);
-                    if (!ReferenceEquals(answer, failed)) return answer;
-                }
+        {
+            // the level's own clauses, then what the asker's app bound on it
+            if (await Catch(level.on[Name]?.before, item, failed, context) is { } answer) return answer;
+            if (await Catch(context.App.@event[level]?[Name]?.before, item, failed, context) is { } answered) return answered;
+        }
         return failed;
+    }
+
+    // The first binding on side that takes the failure answers; null when none does.
+    private async System.Threading.Tasks.ValueTask<global::app.data.@this?> Catch(binding.list.@this? side,
+        global::app.type.item.@this item, global::app.data.@this failed, global::app.actor.context.@this context)
+    {
+        foreach (var binding in side ?? (System.Collections.Generic.IEnumerable<binding.@this>)[])
+        {
+            if (!binding.For(item, context)) continue;
+            var answer = await binding.Start(item, failed, context);
+            if (!ReferenceEquals(answer, failed)) return answer;
+        }
+        return null;
     }
 }

@@ -49,7 +49,6 @@ public sealed class @this : global::app.type.item.setting.module.@this
     /// binds nothing.</summary>
     internal void Watch(global::app.actor.@this actor, global::app.module.debug.@this debug)
     {
-        var events = actor.on[actor.App.variable.type];
         foreach (var name in Variables.Items(actor.Context))
         {
             if (new global::app.type.item.variable.parser.@this(name.Peek()?.ToString() ?? "", actor.App.type.list).Whole is not { } watched)
@@ -57,10 +56,11 @@ public sealed class @this : global::app.type.item.setting.module.@this
             bool Is(global::app.type.item.@this item, global::app.actor.context.@this _)
                 => item is global::app.type.item.variable.@this variable
                    && string.Equals(variable.Name, watched.Name, System.StringComparison.OrdinalIgnoreCase);
-            events.set.after.Add(side => new global::app.@event.binding.@this(side,
+            var events = actor.App.@event.Add(actor.App.variable.type);
+            events.Add("set")!.after.Add(side => new global::app.@event.binding.@this(side,
                 (item, result, context) => debug.Set((global::app.type.item.variable.@this)item, result, context),
                 actor, global::app.@event.binding.Scope.actor, Is));
-            events.remove.after.Add(side => new global::app.@event.binding.@this(side,
+            events.Add("remove")!.after.Add(side => new global::app.@event.binding.@this(side,
                 (item, _, context) => debug.Remove((global::app.type.item.variable.@this)item, context),
                 actor, global::app.@event.binding.Scope.actor, Is));
         }

@@ -16,13 +16,13 @@ public class DeclaredEventsTests : System.IAsyncDisposable
     {
         var window = new Window();
         global::app.data.@this? heard = null;
-        _app.actor.list.User.on[window]["closed"]![global::app.@event.When.after].Add(side => new global::app.@event.binding.@this(side, (_, data, _) => { heard = data; return System.Threading.Tasks.Task.FromResult(data); }, _app.actor.list.User, global::app.@event.binding.Scope.actor, global::app.@event.binding.@this.Always));
+        _app.@event.Add(window).Add("closed")![global::app.@event.When.after].Add(side => new global::app.@event.binding.@this(side, (_, data, _) => { heard = data; return System.Threading.Tasks.Task.FromResult(data); }, _app.actor.list.User, global::app.@event.binding.Scope.actor, global::app.@event.binding.@this.Always));
 
-        await _app.actor.list.User.on[window]["closed"]!.After(window, Ctx.Ok((global::app.type.item.text.@this)"{\"window\":\"closed\",\"id\":3}"), Ctx);
+        await _app.@event.Add(window).Add("closed")!.After(window, Ctx.Ok((global::app.type.item.text.@this)"{\"window\":\"closed\",\"id\":3}"), Ctx);
 
         await Assert.That(heard).IsNotNull();
-        await Assert.That(_app.actor.list.User.on[window].Names).Contains("closed");
-        await Assert.That(_app.actor.list.User.on[window].Names).Contains("create");
+        await Assert.That(_app.@event.Add(window).Names).Contains("closed");
+        await Assert.That(_app.@event.Add(window).Names).Contains("create");
     }
 
     // nothing bound on a window yet: its declared events are still there to raise, shared and closed to bindings

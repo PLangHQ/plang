@@ -31,23 +31,19 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     // the events this item's type declares besides the core's
     private readonly FrozenSet<string> _declared;
 
-    // each event made so far, by its name; made when the first one is asked for
+    // each event a write made, by its name; made when the first one is added
     private ConcurrentDictionary<string, global::app.@event.@this>? _events;
 
-    private start? _start;
-    private load? _load;
-    private create? _create;
-    private set? _set;
-    private remove? _remove;
-    private write? _write;
-    private read? _read;
-    private ask? _ask;
-    private error? _error;
+    // the shared, closed events of the item's class: what a read answers for an event no write made
+    private readonly empty? _shared;
 
     private protected @this(IEnumerable<string> declared) => _declared = declared.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>The events of <paramref name="item"/>: the core's and the ones its type declares, each taking bindings.</summary>
-    internal @this(global::app.type.item.@this item) : this(empty.Of(item.GetType()).Declared) => this.item = item;
+    internal @this(global::app.type.item.@this item) : this(empty.Of(item.GetType()))
+        => this.item = item;
+
+    private @this(empty shared) : this(shared.Declared) => _shared = shared;
 
     /// <summary>The item these are the events of; none on a class's shared events (<see cref="empty"/>).</summary>
     internal global::app.type.item.@this? item { get; }
@@ -55,12 +51,18 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>The events the item's type declares besides the core's (a window's <c>closed</c>).</summary>
     internal IReadOnlyCollection<string> Declared => _declared;
 
-    /// <summary>The event named <paramref name="name"/>: one of the core's, or one the item's type declares; null when
-    /// there is no event of that name.</summary>
-    public global::app.@event.@this? this[string name]
+    /// <summary>The event named <paramref name="name"/> as it stands: its own if a binding was added to it, else the
+    /// class's shared one, closed, with empty sides. Makes nothing: a firing and a navigation (<c>%x.on.start%</c>) read
+    /// here. Null when there is no event of that name.</summary>
+    public virtual global::app.@event.@this? this[string name]
+        => _events?.GetValueOrDefault(name) ?? _shared![name];
+
+    /// <summary>The event named <paramref name="name"/> a binding is added to: made with lists that take bindings the
+    /// first time. Null when there is no event of that name.</summary>
+    internal global::app.@event.@this? Add(string name)
         => Made.ContainsKey(name) || _declared.Contains(name)
             ? (_events ?? System.Threading.LazyInitializer.EnsureInitialized(ref _events,
-                () => new(StringComparer.OrdinalIgnoreCase))).GetOrAdd(name, Event)
+                static () => new(StringComparer.OrdinalIgnoreCase))).GetOrAdd(name, static (named, events) => events.Event(named), this)
             : null;
 
     /// <summary>The event named <paramref name="name"/>, made with its two lists: lists that take bindings.</summary>
@@ -73,35 +75,31 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     public IEnumerable<string> Names => Made.Keys.Concat(_declared).Order(StringComparer.Ordinal);
 
     /// <summary>The start — what runs before and after the item starts.</summary>
-    public start start => _start ??= (start)this["start"]!;
+    public start start => (start)this["start"]!;
 
     /// <summary>The load — what runs before and after the item is loaded.</summary>
-    public load load => _load ??= (load)this["load"]!;
+    public load load => (load)this["load"]!;
 
     /// <summary>The create — what runs before and after a value of the item (a type) is born.</summary>
-    public create create => _create ??= (create)this["create"]!;
+    public create create => (create)this["create"]!;
 
     /// <summary>The error — what answers when the item fails.</summary>
-    public error error => _error ??= (error)this["error"]!;
+    public error error => (error)this["error"]!;
 
     /// <summary>The set — what runs before and after the item is set.</summary>
-    public set set => _set ??= (set)this["set"]!;
+    public set set => (set)this["set"]!;
 
     /// <summary>The remove — what runs before and after the item is removed.</summary>
-    public remove remove => _remove ??= (remove)this["remove"]!;
+    public remove remove => (remove)this["remove"]!;
 
     /// <summary>The write — what runs before and after the item writes.</summary>
-    public write write => _write ??= (write)this["write"]!;
+    public write write => (write)this["write"]!;
 
     /// <summary>The read — what runs before and after the item reads.</summary>
-    public read read => _read ??= (read)this["read"]!;
+    public read read => (read)this["read"]!;
 
     /// <summary>The ask — what runs before and after the item asks.</summary>
-    public ask ask => _ask ??= (ask)this["ask"]!;
-
-    /// <summary>The event named <paramref name="name"/> as these events hold it — made by a bind or an ask; null when
-    /// nothing asked for it. What a firing asks: it makes nothing.</summary>
-    internal virtual global::app.@event.@this? Bound(string name) => _events?.GetValueOrDefault(name);
+    public ask ask => (ask)this["ask"]!;
 
     /// <summary>The refusal of <paramref name="name"/>, which is no event: it says the events this item has (the core's
     /// and its type's), and that before or after one is a binding's When — so the name never binds.</summary>
@@ -117,9 +115,11 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
             ? new global::app.data.@this(key, @event, parent: parent)
             : parent.Context.Error(NoEvent(key)));
 
-    /// <summary>These events written: the item they are the events of, as what it is, then each event that holds a
-    /// binding a snapshot keeps, by its name, its sides by when they run — <c>{item, start: {before: [binding]}}</c>. A
-    /// binding a program can't make again from what it wrote (a C# one) is left out: its maker binds it again.</summary>
+    /// <summary>Whether a snapshot keeps anything of these events: an event that holds a binding a program made.</summary>
+    internal bool IsSaved => _events?.Values.Any(@event => @event.IsSaved) == true;
+
+    /// <summary>These events written: the item they are the events of, as what it is, then each event a snapshot keeps
+    /// anything of, by its name — <c>{item, start: {before: [binding]}}</c>. Each event writes its own sides.</summary>
     protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
@@ -127,28 +127,18 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         await new global::app.data.@this("", item, context: writer.Context).Output(writer);
         foreach (var (name, @event) in _events ?? [])
         {
-            var sides = System.Enum.GetValues<When>()
-                .Select(when => (when, saved: @event[when].Where(binding => binding.IsSaved).ToList()))
-                .Where(side => side.saved.Count > 0).ToList();
-            if (sides.Count == 0) continue;
+            if (!@event.IsSaved) continue;
             writer.Name(name);
-            writer.BeginObject();
-            foreach (var (when, saved) in sides)
-            {
-                writer.Name(when.ToString());
-                writer.BeginArray(saved.Count);
-                foreach (var binding in saved) await binding.Output(writer);
-                writer.EndArray();
-            }
-            writer.EndObject();
+            await @event.Output(writer);
         }
         writer.EndObject();
     }
 
     /// <summary>
-    /// Events read back from what they wrote (<see cref="Write"/>): the item they are the events of, read as what it says
-    /// it is, then each event's bindings, each made from its row on the side it runs on. A row that doesn't read is the
-    /// answer, as any read's is.
+    /// The events a snapshot kept, read back where they are held: the item they are the events of, read as what it says
+    /// it is, then each event reading its own sides onto the events the reading app holds for that item
+    /// (<c>context.App.event.Add(item)</c>) — what it holds already, taken in from its maker at birth, keeps its bindings
+    /// beside them. A row that doesn't read is the answer, as any read's is.
     /// </summary>
     public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
@@ -157,35 +147,23 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         if (raw is not global::app.type.item.dict.@this record || record.Get("item", context) is not { } kept
             || global::app.View.Snapshot.Make(kept.Type ?? context.App.type.list[typeof(global::app.type.item.@this)], kept.Peek(), context)
                 is not { } item)
-            return Declined(data, "a saved on's row names no item it is the events of");
+        {
+            data.Fail(new global::app.error.@this("a saved on's row names no item it is the events of", "SnapshotRowUnread", 400));
+            return null;
+        }
 
-        events = new @this(item);
+        events = context.App.@event.Add(item);
         foreach (var row in record.Rows(context))
         {
             if (string.Equals(row.Name, "item", StringComparison.OrdinalIgnoreCase)) continue;
-            if (events[row.Name] is not { } @event) { data.Fail(events.NoEvent(row.Name)); return null; }
+            if (events.Add(row.Name) is not { } @event) { data.Fail(events.NoEvent(row.Name)); return null; }
             if (row.Peek() is not global::app.type.item.dict.@this sides)
-                return Declined(data, $"a saved on's '{row.Name}' holds no sides");
-            foreach (var side in sides.Rows(context))
             {
-                if (!System.Enum.TryParse<When>(side.Name, ignoreCase: true, out var when)
-                    || side.Peek() is not global::app.type.item.list.@this bindings)
-                    return Declined(data, $"a saved on's '{row.Name}' holds '{side.Name}', which is no side of an event");
-                foreach (var binding in bindings.Items(context))
-                {
-                    if (binding.Peek() is not global::app.type.item.dict.@this saved)
-                        return Declined(data, $"a saved binding on '{row.Name}' is no record");
-                    @event[when].Add(list => new binding.action.@this(list, @event, saved, context));
-                }
+                data.Fail(new global::app.error.@this($"a saved on's '{row.Name}' holds no sides", "SnapshotRowUnread", 400));
+                return null;
             }
+            @event.Read(sides, context);
         }
         return events;
-    }
-
-    // a saved on's row that doesn't read: the read's answer
-    private static @this? Declined(global::app.data.@this data, string message)
-    {
-        data.Fail(new global::app.error.@this(message, "SnapshotRowUnread", 400));
-        return null;
     }
 }

@@ -97,7 +97,7 @@ public class FileChannelTests
     {
         var (app, context, dir) = MakeApp();
         await using var _ = app;
-        app.actor.list.User.on[app.type.list["image"]]["create"]![global::app.@event.When.before].Add(side => new global::app.@event.binding.@this(side, (_, _, ctx) =>
+        app.@event.Add(app.type.list["image"]).Add("create")![global::app.@event.When.before].Add(side => new global::app.@event.binding.@this(side, (_, _, ctx) =>
         {
             global::app.data.@this made = ctx.Ok(context.Image(Png1x1, "image/png"));
             made.Handled = true;

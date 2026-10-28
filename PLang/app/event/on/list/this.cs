@@ -1,62 +1,89 @@
 namespace app.@event.on.list;
 
 /// <summary>
-/// The bindings an actor's context holds — what that actor bound while a program ran, by the item each is on: that
-/// item's events as its own would hold them, made on the first bind on it. The item is held by reference while the
-/// context lives, so the app that bound keeps the binding and the item keeps nothing of it: on an entry its parent
-/// shares, a binding fires only in its own app and goes with it. What a program binds when it is read stays on the item.
+/// An app's events — <c>%!app.event%</c>: the events of each item something bound on while a program ran
+/// (<see cref="on.@this"/>, which knows its item), made on the first bind on it. A sub app is born holding what its maker
+/// had bound then, each binding taken in as its own (<see cref="binding.inherited.@this"/>), the maker's first; what it
+/// binds after is its own, and what its maker binds later never reaches it. The item is held by reference for the app's
+/// life, so a binding on an item an app shares fires only in the app that bound it. What a program binds when it is
+/// read (an action's clauses) stays on the item. Reading it as it stands takes no lock and makes nothing, so firing an
+/// event nothing is bound on costs one read.
 /// </summary>
-internal sealed class @this
+public sealed class @this : global::app.type.item.@this
 {
-    // The actor whose bindings these are: its app types the held events' rows.
-    private readonly global::app.actor.@this _actor;
+    private readonly global::app.@this _app;
+    private readonly object _gate = new();
+    private on.@this[] _on = [];
 
-    // Each item's held events, keyed by the item itself.
-    private readonly System.Collections.Concurrent.ConcurrentDictionary<global::app.type.item.@this, on.@this> _held =
-        new(System.Collections.Generic.ReferenceEqualityComparer.Instance);
-
-    /// <summary>The bindings <paramref name="actor"/> holds.</summary>
-    internal @this(global::app.actor.@this actor) => _actor = actor;
-
-    /// <summary>The events <paramref name="item"/> has held here — made on the first bind on it, with the events its
-    /// type declares. A binding is added to one of them (<c>on[item]["start"]![When.before].Add(…)</c>).</summary>
-    internal on.@this this[global::app.type.item.@this item] => _held.GetOrAdd(item, static each => new on.@this(each));
-
-    /// <summary>The events <paramref name="item"/> has held here; null when nothing was bound on it here.</summary>
-    internal on.@this? Of(global::app.type.item.@this item) => _held.TryGetValue(item, out var events) ? events : null;
-
-    /// <summary>What a snapshot keeps of this hold: the held events of each item a program bound on, which write the item
-    /// they are on and those bindings. An item only C# bound on (a handler, a mock) is left out: its maker binds it again.
-    /// Read back, each item's events are held again; where the item already holds events here (a binding its maker made
-    /// again at start), the read-back bindings join them.</summary>
-    [global::app.Snapshot]
-    internal global::app.type.item.list.@this list
+    /// <summary>The events of <paramref name="app"/>, born holding its maker's bindings (<paramref name="maker"/>), each
+    /// taken in as its own.</summary>
+    internal @this(global::app.@this app, @this? maker) : base(app.type.list[typeof(@this)])
     {
-        get => new(_held.Values
-                .Where(events => events.Names.Any(name => events.Bound(name) is { } @event
-                    && System.Enum.GetValues<When>().Any(when => @event[when].Any(binding => binding.IsSaved))))
-                .Cast<global::app.type.item.@this>().ToList(),
-            _actor.App.type.list[typeof(global::app.type.item.list.@this)]);
-        private set
+        _app = app;
+        foreach (var events in maker?._on ?? [])
+            foreach (var name in events.Names)
+                if (events[name] is { } @event)
+                    foreach (var when in System.Enum.GetValues<When>())
+                        foreach (var binding in @event[when])
+                            Add(events.item!).Add(name)[when].Add(side => new binding.inherited.@this(side, binding, app));
+    }
+
+    /// <summary>The event in play for the asker — <c>%!app.event.current%</c>, which <c>%!event%</c> reads: the running
+    /// bound call's Data whole, its value the event, its properties what it fired for (<c>!item</c>) and the result so far
+    /// (<c>!result</c>). Unset where no bound call is running.</summary>
+    [global::app.LlmBuilder]
+    public global::app.data.@this current(global::app.actor.context.@this context)
+        => context.call.Event ?? context.NotFound("current");
+
+    /// <summary>The events of <paramref name="item"/> this app bound on; null when it bound nothing on it. Makes
+    /// nothing.</summary>
+    internal on.@this? this[global::app.type.item.@this item]
+    {
+        get
         {
-            var context = _actor.Context;
-            foreach (var row in value.Items(context))
-            {
-                // each row read as what it says it is: an item's held events, read back as they wrote themselves
-                if (global::app.View.Snapshot.Make(row.Type ?? _actor.App.type.list[typeof(on.@this)], row.Peek(), context)
-                        is not on.@this events || events.item is not { } item) continue;
-                if (_held.TryAdd(item, events)) continue;
-                var held = _held[item];
-                foreach (var name in events.Names)
-                    if (events.Bound(name) is { } @event)
-                        foreach (var when in System.Enum.GetValues<When>())
-                            foreach (var binding in @event[when])
-                                if (binding is binding.action.@this saved)
-                                    held[name]![when].Add(side => new binding.action.@this(side, held[name]!, saved.action, saved.Actor, saved.Scope));
-            }
+            foreach (var events in _on)
+                if (ReferenceEquals(events.item, item)) return events;
+            return null;
         }
     }
 
-    /// <summary>Lets go of every binding held here — the context's end.</summary>
-    internal void Clear() => _held.Clear();
+    /// <summary>The events of <paramref name="item"/> this app binds on — added the first time, with the events its type
+    /// declares. A binding is added to one of them (<c>app.event.Add(item).Add("start").before.Add(…)</c>).</summary>
+    internal on.@this Add(global::app.type.item.@this item)
+    {
+        if (this[item] is { } events) return events;
+        lock (_gate)
+        {
+            if (this[item] is { } made) return made;
+            var added = new on.@this(item);
+            _on = [.. _on, added];
+            return added;
+        }
+    }
+
+    /// <summary>What a snapshot keeps of this app's events: the events a snapshot keeps anything of, which write the item
+    /// they are on and this app's own bindings. Read back, each row's bindings land in the events this app holds for its
+    /// item.</summary>
+    [global::app.Snapshot]
+    internal global::app.type.item.list.@this list
+    {
+        get => new(_on.Where(events => events.IsSaved).Cast<global::app.type.item.@this>().ToList(),
+            _app.type.list[typeof(global::app.type.item.list.@this)]);
+        private set
+        {
+            var context = _app.actor.list.System.Context;
+            var type = _app.type.list[typeof(on.@this)];
+            foreach (var row in value.Items(context))
+                global::app.View.Snapshot.Make(type, row.Peek(), context);
+        }
+    }
+
+    /// <summary>The app's events written: each item's, as it writes itself — the bindings this app made.</summary>
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+    {
+        var shown = _on.Where(events => events.IsSaved).ToList();
+        writer.BeginArray(shown.Count);
+        foreach (var events in shown) await events.Output(writer);
+        writer.EndArray();
+    }
 }

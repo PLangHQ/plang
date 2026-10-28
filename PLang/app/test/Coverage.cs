@@ -43,7 +43,7 @@ public sealed class Coverage
     /// own result is truthy), keyed by its position in the step's action chain. Answers the binding; whoever
     /// watches removes it when the watch ends.</summary>
     public global::app.@event.binding.@this Watch(global::app.actor.context.@this context)
-        => context.Actor!.on[context.App.type.list["action"]].start.after.Add(side => new global::app.@event.binding.@this(side,
+        => context.App.@event.Add(context.App.type.list["action"]).Add("start")!.after.Add(side => new global::app.@event.binding.@this(side,
             async (item, result, ctx) =>
             {
                 if (item is not global::app.goal.step.action.@this action) return ctx.Ok();

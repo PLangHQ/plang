@@ -65,13 +65,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     internal override System.Threading.Tasks.ValueTask<global::app.type.item.@this?> Key(global::app.actor.context.@this context)
         => new(new global::app.type.item.text.@this(Name, context.App.type.list[typeof(global::app.type.item.text.@this)]));
 
-    /// <summary>The bindings this actor made while a program ran, on the items each is on — every run-time binding,
-    /// whatever its scope, whichever of its contexts bound it; an event reads the holds of every actor of the asker's
-    /// app, and the binding decides whether it fires. Let go with the actor. A snapshot keeps the ones a program made,
-    /// each under the item it is on, and a resume holds them again here.</summary>
-    [global::app.Snapshot]
-    internal global::app.@event.on.list.@this on { get; }
-
     /// <summary>
     /// The PLang execution context owned by this actor.
     /// </summary>
@@ -143,7 +136,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         : base(app.type.list[typeof(@this)])
     {
         Role = role;
-        on = new(this);
         App = app;
         property = new(app.type.list[typeof(global::app.type.item.property.list.@this)]);
         _system = system;
@@ -209,6 +201,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     global::app.module.code.@this? global::app.origin.@this.Code => App.Code;
 
+    global::app.@event.on.list.@this? global::app.origin.@this.@event => App.@event;
+
     int global::app.origin.@this.Depth => App.Depth + 1;
 
     // its app's goals are the sub app's while the sub app holds no code of its own (a goal is bound to its modules and
@@ -242,7 +236,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         _cts.Cancel();
         _cts.Dispose();
-        on.Clear();
         Context.Dispose();
         await _channels.DisposeAsync();
         // the settings' store, when this actor's settings are the chain's root that made it

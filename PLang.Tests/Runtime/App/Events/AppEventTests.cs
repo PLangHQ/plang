@@ -1,8 +1,8 @@
 namespace PLang.Tests.App.Events;
 
 /// <summary>
-/// <c>%!app.event%</c> answers as its asker: the running bound call's Data — its value the event, its properties
-/// what it fired for and the result so far. Unset outside one; the event's type is <c>%!app.type.event%</c>.
+/// <c>%!app.event.current%</c> (what the shortcut <c>%!event%</c> reads) answers as its asker: the running bound call's Data —
+/// its value the event, its properties what it fired for and the result so far. Unset outside one.
 /// </summary>
 public class AppEventTests
 {
@@ -23,17 +23,17 @@ public class AppEventTests
         await using var frame = ctx.call.Push(goal, await ctx.call.Setting());
         frame.Event = running;
 
-        var read = await Read("%!app.event%", ctx);
+        var read = await Read("%!app.event.current%", ctx);
         await Assert.That(read).IsSameReferenceAs(running);
         await Assert.That(read.Peek()).IsSameReferenceAs(fired);
-        await Assert.That((await Read("%!app.event!item%", ctx)).Peek()).IsSameReferenceAs(goal);
-        await Assert.That((await (await Read("%!app.event!result%", ctx)).Value())?.ToString()).IsEqualTo("so far");
+        await Assert.That((await Read("%!app.event.current!item%", ctx)).Peek()).IsSameReferenceAs(goal);
+        await Assert.That((await (await Read("%!app.event.current!result%", ctx)).Value())?.ToString()).IsEqualTo("so far");
     }
 
     [Test] public async Task OutsideOne_IsUnset()
     {
         await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
-        var read = await Read("%!app.event%", app.actor.list.User.Context);
+        var read = await Read("%!app.event.current%", app.actor.list.User.Context);
         await Assert.That(read.IsInitialized).IsFalse();
     }
 }

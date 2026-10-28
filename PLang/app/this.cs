@@ -134,12 +134,10 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     [global::app.LlmBuilder]
     public global::app.data.@this? data(global::app.actor.context.@this context) => context.Variable.Peek("!data");
 
-    /// <summary>The event in play for <paramref name="context"/> — <c>%!app.event%</c> answers as its asker: the running
-    /// bound call's Data, its value the event, its properties what it fired for (<c>%!app.event!item%</c>) and the
-    /// result so far (<c>%!app.event!result%</c>). Unset outside one.</summary>
-    [global::app.LlmBuilder]
-    public global::app.data.@this @event(global::app.actor.context.@this context)
-        => context.call.Event ?? context.NotFound("event");
+    /// <summary>This app's events — <c>%!app.event%</c>: what was bound on each item while its programs ran, its maker's
+    /// taken in at its birth. A snapshot keeps the bindings this app made.</summary>
+    [global::app.LlmBuilder, global::app.Snapshot]
+    public global::app.@event.on.list.@this @event { get; }
 
     /// <summary>
     /// When the app was started.
@@ -357,6 +355,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // the code providers, the built-ins registered at the registry's first use
         // a sub app's, a layer over its maker's
         Code = new AppCode(actor.list.System.Context, origin.Code);
+        // this app's events, born holding its maker's bindings, each taken in as its own
+        @event = new(this, origin.@event);
         // the actions, a layer of its own over the ones the origin answers
         module = new(this, origin.Module(this));
         goal = new(this);

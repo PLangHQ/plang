@@ -41,6 +41,22 @@ public sealed class @this : global::app.@event.binding.@this
         if (bound == null || await bound.Value<global::app.goal.step.action.@this>() is not { } call)
             return bound?.Error != null ? bound : context.Error(new global::app.error.@this(
                 $"the binding made by '{action.Step?.Text}' runs no action", "BindingNoAction", 400));
+        if (call["name"]?.Value is not { } written)
+            return context.Error(new global::app.error.@this(
+                $"the binding made by '{action.Step?.Text}' runs {call.Module.Name}.{call.Name}: on.event runs a goal call", "BindingNoGoalCall", 400));
+
+        // the goal it calls is found where it was bound: in its own app, from the goal its step sits in — never one the
+        // firing app, or the firing goal's folder, would find first. Its name is read as written (a %variable% in it here,
+        // where the event fires, as its parameters are), never selected as a goal in the firing context.
+        var named = new global::app.data.@this("name", written, context: context);
+        var goal = await Actor.App.goal.list.Find((await named.Value())?.ToString() ?? "", action.Step?.Goal);
+        if (!goal.Success) return goal;
+        var parameter = call["parameter"]?.Data(context);
+        var calls = new global::app.goal.step.action.composed.@this(new global::app.module.goal.Call(context)
+        {
+            Name = goal,
+            Parameter = parameter == null ? null : global::app.data.@this<global::app.type.item.list.@this>.From(parameter),
+        }, context);
 
         // a property holds a value, never a Data — the result's value; a failed result is %!error%
         var running = new global::app.data.@this("!event", _event, context: context);
@@ -48,10 +64,10 @@ public sealed class @this : global::app.@event.binding.@this
         running.Properties.Set("result", result.Peek());
 
         var frame = context.call.Current;
-        if (frame == null) return await call.Start(context);
+        if (frame == null) return await calls.Start(context);
         var outer = frame.Event;
         frame.Event = running;
-        try { return await call.Start(context); }
+        try { return await calls.Start(context); }
         finally { frame.Event = outer; }
     }
 

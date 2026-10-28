@@ -20,9 +20,10 @@ public partial class OnCache : IContext, IClause
 
     public void Bind(global::app.goal.step.action.@this clause, global::app.goal.step.action.@this action, global::app.@event.on.@this on)
     {
-        on.start.before.Add(side => new global::app.@event.binding.clause.@this(
+        var start = on.Add("start")!;
+        start.before.Add(side => new global::app.@event.binding.clause.@this(
             side, clause, action, (handler, _, result, context) => ((OnCache)handler).Begin(result, context)));
-        on.start.after.Add(side => new global::app.@event.binding.clause.@this(
+        start.after.Add(side => new global::app.@event.binding.clause.@this(
             side, clause, action, (handler, _, result, context) => ((OnCache)handler).End(result, context)));
     }
 
