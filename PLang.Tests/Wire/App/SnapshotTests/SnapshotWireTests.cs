@@ -12,6 +12,21 @@ public class SnapshotWireTests
     private static async Task<global::app.snapshot.@this> RoundTrip(global::app.@this app, global::app.snapshot.@this snap)
         => await snap.Context.Snapshot(await snap.Text(snap.Context));
 
+    // a snapshot holds its app and nothing beside it: a set on any other key is refused, never kept beside the app
+    [Test]
+    public async Task ASnapshot_TakesASetOnItsAppOnly_AnyOtherKeyIsRefused()
+    {
+        await using var app = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing().TestIdentity();
+        var context = app.actor.list.User.Context;
+        await context.Variable.Set("snap", await RoundTrip(app, await app.Snapshot(context).Saved()));
+
+        var set = await new global::app.type.item.variable.@this("snap.variable", context.App.type.list)
+            .Set(new global::app.type.item.text.@this("x", context.App.type.list[typeof(global::app.type.item.text.@this)]), context);
+
+        await Assert.That(set.Error?.Key).IsEqualTo("SnapshotHoldsTheApp");
+        await Assert.That((await (await context.Variable.Get("snap")).Value() as global::app.snapshot.@this)!.IsTruthy()).IsTrue();
+    }
+
     [Test]
     public async Task Variables_SurviveWireRoundTrip_WithValueAndType()
     {
