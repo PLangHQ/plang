@@ -74,9 +74,7 @@ public class SetTests
         var context = _app.actor.list.User.Context;
         var births = new List<string>();
         foreach (var name in new[] { "path", "number" })
-            _app.actor.list.User.on.Bind(_app.type.list[name], "create", global::app.@event.When.after,
-                (_, data, c) => { births.Add(data.Type.Name); return Task.FromResult(data); },
-                global::app.@event.binding.Scope.actor);
+            _app.actor.list.User.on[_app.type.list[name]]["create"]![global::app.@event.When.after].Add(side => new global::app.@event.binding.@this(side, (_, data, c) => { births.Add(data.Type.Name); return Task.FromResult(data); }, _app.actor.list.User, global::app.@event.binding.Scope.actor, global::app.@event.binding.@this.Always));
 
         var asPath = await global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%p%", "variable"), ("value", "a.txt"), ("type", "path")).Start(context);
         var asNumber = await global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%n%", "variable"), ("value", 42), ("type", new global::app.type.@this("number", "int"))).Start(context);
@@ -92,9 +90,7 @@ public class SetTests
         var context = _app.actor.list.User.Context;
         var births = new List<string>();
         var number = _app.type.list["number"];
-        _app.actor.list.User.on.Bind(number, "create", global::app.@event.When.after,
-            (_, data, c) => { births.Add(data.Type.Name); return Task.FromResult(data); },
-            global::app.@event.binding.Scope.actor);
+        _app.actor.list.User.on[number]["create"]![global::app.@event.When.after].Add(side => new global::app.@event.binding.@this(side, (_, data, c) => { births.Add(data.Type.Name); return Task.FromResult(data); }, _app.actor.list.User, global::app.@event.binding.Scope.actor, global::app.@event.binding.@this.Always));
         var unread = number.Make("42", context);
 
         var result = await number.Create(unread, context, "n");

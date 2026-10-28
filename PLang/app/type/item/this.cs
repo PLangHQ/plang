@@ -458,12 +458,14 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         return deep;
     }
 
-    private global::app.@event.on.@this? _on;
+    // its events: its class's shared ones, unless it was born with its own (an action, which a clause binds on)
+    private protected global::app.@event.on.@this? _on;
 
-    /// <summary>This value's events (<c>%x.on.start%</c>) — its class's shared empty ones (the core's, and its type's
-    /// declared ones) until something is bound on it. Not written with the value, and not taught as one of its properties.</summary>
+    /// <summary>This value's events (<c>%x.on.start%</c>) — its class's shared ones (the core's, and its type's declared
+    /// ones), closed to bindings, unless it was born with its own. Not written with the value, and not taught as one of
+    /// its properties.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
-    public global::app.@event.on.@this on => _on ??= global::app.@event.on.@this.Of(GetType());
+    public global::app.@event.on.@this on => _on ??= global::app.@event.on.empty.Of(GetType());
 
     /// <summary>The item whose events this one's fire through at <paramref name="depth"/>, outermost first — the
     /// general wrapping the specific, the last being the item itself; null past the last. An item on its own has
@@ -486,18 +488,6 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     internal System.Threading.Tasks.ValueTask<global::app.data.@this?> Before(string @event, @this about,
         global::app.actor.context.@this context, global::app.data.@this result)
         => on[@event] is { } named ? named.BeforeAt(this, about, context, result) : default;
-
-    /// <summary>This value's own events, given to it by its first binding — what a clause its program's read attaches is
-    /// added to (<c>action.Take</c>). A binding made while a program runs is held by the context that binds it, never
-    /// here: an item can be every app's that shares it.</summary>
-    private protected global::app.@event.on.own Own()
-    {
-        if (_on is global::app.@event.on.own events) return events;
-        var shared = on;
-        events = new global::app.@event.on.own(shared.Declared);
-        return System.Threading.Interlocked.CompareExchange(ref _on, events, shared) is global::app.@event.on.own won
-            ? won : events;
-    }
 
     /// <summary>The variables this value holds, each once: a template's <c>%…%</c>, a container's
     /// entries', a variable itself. Read-only, born with the value; empty when none.</summary>

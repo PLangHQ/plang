@@ -69,7 +69,7 @@ public sealed class @this
 
         // Debug watches user execution, so its bindings are the User actor's (where user goals run) — Debug itself is
         // born with System's context. They are held by the User, as long as the app lives.
-        var on = _context.App.actor.list.User.on;
+        var user = _context.App.actor.list.User;
 
         // The watch binds after every set and remove of a variable the User actor makes, for the watched names.
         if (setting.Variables.CountRaw > 0)
@@ -77,10 +77,13 @@ public sealed class @this
             var watched = await Watched();
             bool Watches(global::app.type.item.@this item, actor.context.@this _)
                 => item is global::app.type.item.variable.@this variable && watched.Contains(variable.Name);
-            on.Bind(_context.App.variable.type, "set", When.after, (item, result, context) => Set((global::app.type.item.variable.@this)item, result, context),
-                global::app.@event.binding.Scope.actor, Watches);
-            on.Bind(_context.App.variable.type, "remove", When.after, (item, _, context) => Remove((global::app.type.item.variable.@this)item, context),
-                global::app.@event.binding.Scope.actor, Watches);
+            var variables = user.on[_context.App.variable.type];
+            variables.set.after.Add(side => new global::app.@event.binding.@this(side,
+                (item, result, context) => Set((global::app.type.item.variable.@this)item, result, context),
+                user, global::app.@event.binding.Scope.actor, Watches));
+            variables.remove.after.Add(side => new global::app.@event.binding.@this(side,
+                (item, _, context) => Remove((global::app.type.item.variable.@this)item, context),
+                user, global::app.@event.binding.Scope.actor, Watches));
         }
 
         // Subscribe to granular LLM tracing — each Llm.* flag writes its own block to the debug channel, whose
@@ -125,26 +128,27 @@ public sealed class @this
         // what it calls
 
         var actions = setting.Level.Value == global::app.module.debug.Level.Action;
-        Bind(on, types["goal"], [types["step"]], actions ? [types["action"]] : [], index);
+        Bind(user, types["goal"], [types["step"]], actions ? [types["action"]] : [], index);
 
         // A goal named by its address may be one of plang's own, which starts through its own events alone, as its
         // steps and actions do: it is looked up now and bound there, by name. (A goal is read when it is first called.)
         if (setting.Address is { } address && await (await _context.App.goal.list.Find(address)).Value() is global::app.goal.@this named)
-            Bind(on, named, named.Step.Items(), actions ? named.Step.Items().SelectMany(step => step.Code.Items()) : [], index);
+            Bind(user, named, named.Step.Items(), actions ? named.Step.Items().SelectMany(step => step.Code.Items()) : [], index);
         return null;
     }
 
     // Debug's bindings on what starts, each on its owner: a goal's, a step's, an action's start — on their types (every
     // goal, step and action) or on one goal's own (itself, its steps, their actions). The marks are bound before the
     // watchers, so a frame is marked before it is shown.
-    private void Bind(global::app.@event.on.list.@this on, global::app.type.item.@this goal,
+    private void Bind(global::app.actor.@this user, global::app.type.item.@this goal,
         IEnumerable<global::app.type.item.@this> steps, IEnumerable<global::app.type.item.@this> actions, int? index)
     {
         // a start of an item of T on `owner`, handed to `handler` — when debugged, only where debug follows
         void On<T>(global::app.type.item.@this owner, When when, Func<T, actor.context.@this, Task<data.@this>> handler, bool debugged)
             where T : global::app.type.item.@this
-            => on.Bind(owner, "start", when, (item, _, context) => handler((T)item, context), global::app.@event.binding.Scope.actor,
-                (item, context) => item is T && (!debugged || Debugged(context)));
+            => user.on[owner].start[when].Add(side => new global::app.@event.binding.@this(side,
+                (item, _, context) => handler((T)item, context), user, global::app.@event.binding.Scope.actor,
+                (item, context) => item is T && (!debugged || Debugged(context))));
 
         On<global::app.goal.@this>(goal, When.before, (each, context) => Attach(each, context, index), debugged: false);
         foreach (var step in steps)

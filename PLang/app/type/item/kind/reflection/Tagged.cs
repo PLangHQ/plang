@@ -27,7 +27,7 @@ public static class Tagged
 
     private static IReadOnlyList<Entry> Compute(System.Type type, global::app.View view)
     {
-        var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        var props = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
         var entries = new List<Entry>(props.Length);
 
         // A type with no Out/Store/Sensitive/Masked tag anywhere is transparent: every public property ships (nested
@@ -40,6 +40,9 @@ public static class Tagged
             // Indexed properties (this[int] etc.) have no name shape on the wire.
             if (prop.GetIndexParameters().Length > 0) continue;
             if (!prop.CanRead) continue;
+            // a member plang can't see shows only where the view's own tag is on it: a transparent type ships its
+            // public members alone
+            if (prop.GetMethod is not { IsPublic: true } && !tagged) continue;
             // the view says which members show, and which of those hide their value
             if (!view.Shows(prop, tagged)) continue;
             // [JsonPropertyName] wins (STJ honors it), else camelCase — so an Output-written shape
@@ -49,7 +52,7 @@ public static class Tagged
             // the member as the class that declares it has it: a base's private setter is no setter seen from the
             // subclass, and every read onto a host sets through this entry
             var member = prop.DeclaringType is { } owner && owner != type
-                ? owner.GetProperty(prop.Name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly) ?? prop
+                ? owner.GetProperty(prop.Name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly) ?? prop
                 : prop;
             entries.Add(new Entry(member, view.Masks(prop), wireName));
         }

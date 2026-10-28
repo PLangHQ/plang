@@ -39,13 +39,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (_app is not { } value) return context.Ok();
         // what the app wrote names locations (a frame's goal): each is loaded into the app the run goes on in first, so
         // the read that follows finds what it names held. One opened and edited (a navigation) is written again first.
-        if ((value as global::app.type.item.wire.@this ?? await global::app.type.item.wire.@this.Of(value, View, context)) is { Raw: string raw })
-        {
-            var loaded = await View.Load(app.type.list[typeof(global::app.@this)], raw, context);
-            if (!loaded.Success) return loaded;
-        }
         try
         {
+            if ((value as global::app.type.item.wire.@this ?? await global::app.type.item.wire.@this.Of(value, View, context)) is { Raw: string raw })
+            {
+                var loaded = await View.Load(app.type.list[typeof(global::app.@this)], raw, context);
+                if (!loaded.Success) return loaded;
+            }
             if ((value as global::app.type.item.dict.@this ?? View.Make(context.App.type.list[typeof(global::app.type.item.dict.@this)], value, context))
                 is not global::app.type.item.dict.@this dict)
                 return context.Error(new global::app.error.@this(

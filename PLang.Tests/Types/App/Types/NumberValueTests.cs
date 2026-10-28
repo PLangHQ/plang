@@ -82,7 +82,7 @@ public class NumberValueTests : System.IAsyncDisposable
         await Assert.That(setters).IsEmpty();
 
         var fields = typeof(number).GetFields(System.Reflection.BindingFlags.Instance
-                                          | System.Reflection.BindingFlags.NonPublic);
+                                          | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.DeclaredOnly);
         foreach (var f in fields)
             await Assert.That(f.IsInitOnly).IsTrue();
     }

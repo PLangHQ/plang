@@ -114,9 +114,10 @@ public abstract class View
     }
 
     /// <summary>Whether <paramref name="type"/> carries any wire tag (Out, Store, Snapshot, Sensitive, Masked): a
-    /// deliberate host whose members are a contract. A type with none is transparent.</summary>
+    /// deliberate host whose members are a contract. A type with none is transparent. A tagged member counts whether
+    /// plang can see it or not.</summary>
     internal bool Tagged(System.Type type)
-        => type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+        => type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
             .Any(p => Is<OutAttribute>(p) || Is<StoreAttribute>(p) || Is<SnapshotAttribute>(p) || Is<SensitiveAttribute>(p) || Is<MaskedAttribute>(p));
 
     /// <summary>The reader a value of <paramref name="type"/> (its kind <paramref name="kind"/>) is read by in this view:
@@ -318,7 +319,7 @@ public abstract class View
         // Whether a type chooses what this view shows of it (any [Snapshot] member): read once per type.
         private readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, bool> _chooses = new();
         private bool Chooses(System.Type type)
-            => _chooses.GetOrAdd(type, t => t.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            => _chooses.GetOrAdd(type, t => t.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
                 .Any(Is<SnapshotAttribute>));
 
         internal override void Sensitive(string characters, global::app.type.format.IWriter writer) => writer.Null();
@@ -389,7 +390,7 @@ public abstract class View
             => Is<SensitiveAttribute>(property) || Is<MaskedAttribute>(property);
 
         internal override bool Declares(System.Type type)
-            => Tagged(type) || type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            => Tagged(type) || type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
                 .Any(Is<DebugAttribute>);
 
         // a dump never throws: what declares nothing is written by its name, never walked

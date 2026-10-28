@@ -42,6 +42,10 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>Whose it is: the actor's, or the app's.</summary>
     public Scope Scope { get; }
 
+    /// <summary>Whether a snapshot keeps it: a binding a program made, which it can make again from what it wrote. A C#
+    /// binding (a handler, a mock) is not: its maker binds it again.</summary>
+    internal virtual bool IsSaved => false;
+
     /// <summary>Whether it fires for <paramref name="item"/> while <paramref name="context"/>'s actor runs: its
     /// scope takes the actor, and its filter the item.</summary>
     internal bool For(global::app.type.item.@this item, global::app.actor.context.@this context)

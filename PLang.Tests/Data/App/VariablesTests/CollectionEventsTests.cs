@@ -18,12 +18,12 @@ public class CollectionEventsTests : System.IAsyncDisposable
         await vars.Set("name", "old");
         string? name = null;
         string? stored = null;
-        app.actor.list.User.on.Bind(app.variable.type, "set", When.after, async (item, result, ctx) =>
+        app.actor.list.User.on[app.variable.type]["set"]![When.after].Add(side => new global::app.@event.binding.@this(side, async (item, result, ctx) =>
         {
             name = ((global::app.type.item.variable.@this)item).Name;
             stored = (await result.Value())?.ToString();
             return ctx.Ok();
-        }, Scope.app);
+        }, app.actor.list.User, Scope.app, global::app.@event.binding.@this.Always));
 
         await vars.Set("name", "new");
 
@@ -36,7 +36,7 @@ public class CollectionEventsTests : System.IAsyncDisposable
     {
         var vars = new Variables(app.actor.list.User.Context);
         var sets = 0;
-        app.actor.list.User.on.Bind(app.variable.type, "set", When.after, (_, _, ctx) => { sets++; return Task.FromResult(ctx.Ok()); }, Scope.app);
+        app.actor.list.User.on[app.variable.type]["set"]![When.after].Add(side => new global::app.@event.binding.@this(side, (_, _, ctx) => { sets++; return Task.FromResult(ctx.Ok()); }, app.actor.list.User, Scope.app, global::app.@event.binding.@this.Always));
 
         await vars.Set("name", "first");
 
@@ -49,7 +49,7 @@ public class CollectionEventsTests : System.IAsyncDisposable
         var vars = new Variables(app.actor.list.User.Context);
         var held = await vars.Set("name", "first");
         var sets = 0;
-        app.actor.list.User.on.Bind(app.variable.type, "set", When.after, (_, _, ctx) => { sets++; return Task.FromResult(ctx.Ok()); }, Scope.app);
+        app.actor.list.User.on[app.variable.type]["set"]![When.after].Add(side => new global::app.@event.binding.@this(side, (_, _, ctx) => { sets++; return Task.FromResult(ctx.Ok()); }, app.actor.list.User, Scope.app, global::app.@event.binding.@this.Always));
 
         await vars.Set("name", held);
 
@@ -62,11 +62,11 @@ public class CollectionEventsTests : System.IAsyncDisposable
         var vars = new Variables(app.actor.list.User.Context);
         await vars.Set("name", "old");
         string? about = null;
-        app.actor.list.User.on.Bind(app.variable.type, "set", When.before, async (_, result, ctx) =>
+        app.actor.list.User.on[app.variable.type]["set"]![When.before].Add(side => new global::app.@event.binding.@this(side, async (_, result, ctx) =>
         {
             about = (await result.Value())?.ToString();
             return ctx.Error(new global::app.error.@this("no", "Refused", 400));
-        }, Scope.app);
+        }, app.actor.list.User, Scope.app, global::app.@event.binding.@this.Always));
 
         var answer = await vars.Set("name", "new");
 
@@ -87,7 +87,7 @@ public class CollectionEventsTests : System.IAsyncDisposable
 
         // a restore is no program's set: what a program bound on a set never runs while the run's state comes back
         var ran = false;
-        app.actor.list.User.on.Bind(app.variable.type, "set", When.before, (_, _, ctx) => { ran = true; return Task.FromResult(ctx.Ok()); }, Scope.app);
+        app.actor.list.User.on[app.variable.type]["set"]![When.before].Add(side => new global::app.@event.binding.@this(side, (_, _, ctx) => { ran = true; return Task.FromResult(ctx.Ok()); }, app.actor.list.User, Scope.app, global::app.@event.binding.@this.Always));
         await app.Restore(snap, app.actor.list.User.Context);
 
         await Assert.That(ran).IsFalse();
@@ -98,12 +98,12 @@ public class CollectionEventsTests : System.IAsyncDisposable
     public async Task ACancellingBeforeSet_IsTheAnswer_AndNothingIsWritten()
     {
         var vars = new Variables(app.actor.list.User.Context);
-        app.actor.list.User.on.Bind(app.variable.type, "set", When.before, (_, _, ctx) =>
+        app.actor.list.User.on[app.variable.type]["set"]![When.before].Add(side => new global::app.@event.binding.@this(side, (_, _, ctx) =>
         {
             var instead = ctx.Ok("instead");
             instead.Handled = true;
             return Task.FromResult(instead);
-        }, Scope.app);
+        }, app.actor.list.User, Scope.app, global::app.@event.binding.@this.Always));
 
         var answer = await vars.Set("name", "new");
 
@@ -117,11 +117,11 @@ public class CollectionEventsTests : System.IAsyncDisposable
         var vars = new Variables(app.actor.list.User.Context);
         await vars.Set("name", "ingi");
         string? removed = null;
-        app.actor.list.User.on.Bind(app.variable.type, "remove", When.after, async (_, result, ctx) =>
+        app.actor.list.User.on[app.variable.type]["remove"]![When.after].Add(side => new global::app.@event.binding.@this(side, async (_, result, ctx) =>
         {
             removed = (await result.Value())?.ToString();
             return ctx.Ok();
-        }, Scope.app);
+        }, app.actor.list.User, Scope.app, global::app.@event.binding.@this.Always));
 
         var answer = await vars.Remove("name");
 
@@ -135,8 +135,7 @@ public class CollectionEventsTests : System.IAsyncDisposable
     {
         var vars = new Variables(app.actor.list.User.Context);
         await vars.Set("name", "ingi");
-        app.actor.list.User.on.Bind(app.variable.type, "remove", When.before,
-            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Refused", 400))), Scope.app);
+        app.actor.list.User.on[app.variable.type]["remove"]![When.before].Add(side => new global::app.@event.binding.@this(side, (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Refused", 400))), app.actor.list.User, Scope.app, global::app.@event.binding.@this.Always));
 
         var answer = await vars.Remove("name");
 
@@ -149,7 +148,7 @@ public class CollectionEventsTests : System.IAsyncDisposable
     {
         var vars = new Variables(app.actor.list.User.Context);
         var sets = 0;
-        app.actor.list.System.on.Bind(app.variable.type, "set", When.after, (_, _, ctx) => { sets++; return Task.FromResult(ctx.Ok()); }, Scope.actor);
+        app.actor.list.System.on[app.variable.type]["set"]![When.after].Add(side => new global::app.@event.binding.@this(side, (_, _, ctx) => { sets++; return Task.FromResult(ctx.Ok()); }, app.actor.list.System, Scope.actor, global::app.@event.binding.@this.Always));
 
         await vars.Set("name", "first");
 

@@ -79,7 +79,11 @@ public partial class @this
 
     /// <summary>An action of a role of its own (a clause, a keep, a loop), born holding <paramref name="type"/>.</summary>
     protected @this(global::app.type.list.@this types, global::app.type.@this type) : base(type)
-        => Child = new(types[typeof(global::app.goal.step.list.@this)]);
+    {
+        Child = new(types[typeof(global::app.goal.step.list.@this)]);
+        // born with its own events: a clause its step reads after it binds on them
+        _on = new global::app.@event.on.@this(this);
+    }
 
     /// <summary>
     /// The action a C#-composed <paramref name="seed"/> is — an operation one owner composes from another's
@@ -251,7 +255,7 @@ public partial class @this
     /// <summary>Takes <paramref name="clause"/>, read after this action, on its own events — the one door to an item's
     /// own events: what the program binds when it is read stays on the item, and what is bound while it runs is held
     /// by the context that binds it.</summary>
-    internal void Take(global::app.module.IClause handler, clause.@this clause) => handler.Bind(clause, this, Own());
+    internal void Take(global::app.module.IClause handler, clause.@this clause) => handler.Bind(clause, this, on);
 
     /// <summary>Whether this action belongs to <paramref name="before"/>, the step action it follows (a clause does: it
     /// is that action's) — a step action is its own, so after a condition it stands beside it.</summary>

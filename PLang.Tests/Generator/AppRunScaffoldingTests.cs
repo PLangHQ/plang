@@ -56,11 +56,11 @@ public class AppRunScaffoldingTests
         var action = MakeAction("matrix.plain", "stringplain", ("path", "hello"));
         action = action.In(dispatchStep);
         Step? during = null;
-        _app.actor.list.User.on.Bind(_app.type.list["action"], "start", global::app.@event.When.before, (_, _, c) =>
+        _app.actor.list.User.on[_app.type.list["action"]]["start"]![global::app.@event.When.before].Add(side => new global::app.@event.binding.@this(side, (_, _, c) =>
         {
             during = c.call.Step;
             return Task.FromResult(c.Ok());
-        }, global::app.@event.binding.Scope.actor);
+        }, _app.actor.list.User, global::app.@event.binding.Scope.actor, global::app.@event.binding.@this.Always));
 
         await action.Start(ctx);
 

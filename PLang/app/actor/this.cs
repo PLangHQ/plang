@@ -67,8 +67,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>The bindings this actor made while a program ran, on the items each is on — every run-time binding,
     /// whatever its scope, whichever of its contexts bound it; an event reads the holds of every actor of the asker's
-    /// app, and the binding decides whether it fires. Let go with the actor. Declared before the context: a snapshot
-    /// writes and reads members in the order they are declared, and a frame's run comes back onto the hold.</summary>
+    /// app, and the binding decides whether it fires. Let go with the actor. A snapshot keeps the ones a program made,
+    /// each under the item it is on, and a resume holds them again here.</summary>
+    [global::app.Snapshot]
     internal global::app.@event.on.list.@this on { get; }
 
     /// <summary>

@@ -498,6 +498,7 @@ enum app.event.binding.Scope [Choice, PlangType]
   static const app : app.event.binding.Scope
 
 class app.event.binding.action.this : app.event.binding.this
+  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
 
 class app.event.binding.clause.this : app.event.binding.this
 
@@ -522,6 +523,8 @@ class app.event.on.create : app.event.this
 
 class app.event.on.declared : app.event.this
 
+class app.event.on.empty : app.event.on.this
+
 class app.event.on.error : app.event.this
   Catch(app.type.item.this item, app.data.this failed, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
 
@@ -531,19 +534,6 @@ class app.event.on.load : app.event.this
 
 class app.event.on.miss : app.event.this
 
-class app.event.on.own : app.event.on.this
-  Bind<T>(System.String event, app.event.When when, System.Func<app.event.binding.list.this, T> make) : T
-  override Item[System.String] : app.event.this { get; }
-  override ask : app.event.on.ask { get; }
-  override create : app.event.on.create { get; }
-  override error : app.event.on.error { get; }
-  override load : app.event.on.load { get; }
-  override read : app.event.on.read { get; }
-  override remove : app.event.on.remove { get; }
-  override set : app.event.on.set { get; }
-  override start : app.event.on.start { get; }
-  override write : app.event.on.write { get; }
-
 class app.event.on.read : app.event.this
 
 class app.event.on.remove : app.event.this
@@ -552,21 +542,22 @@ class app.event.on.set : app.event.this
 
 class app.event.on.start : app.event.this
 
-class app.event.on.this : app.type.item.this
+class app.event.on.this : app.type.item.this, app.type.item.ICreate<app.event.on.this>
+  Item[System.String] : app.event.this { get; }
   Names : System.Collections.Generic.IEnumerable<System.String> { get; }
   NoEvent(System.String name) : app.error.this
+  ask : app.event.on.ask { get; }
+  create : app.event.on.create { get; }
+  error : app.event.on.error { get; }
+  load : app.event.on.load { get; }
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
-  static readonly Empty : app.event.on.this
-  virtual Item[System.String] : app.event.this { get; }
-  virtual ask : app.event.on.ask { get; }
-  virtual create : app.event.on.create { get; }
-  virtual error : app.event.on.error { get; }
-  virtual load : app.event.on.load { get; }
-  virtual read : app.event.on.read { get; }
-  virtual remove : app.event.on.remove { get; }
-  virtual set : app.event.on.set { get; }
-  virtual start : app.event.on.start { get; }
-  virtual write : app.event.on.write { get; }
+  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
+  read : app.event.on.read { get; }
+  remove : app.event.on.remove { get; }
+  set : app.event.on.set { get; }
+  start : app.event.on.start { get; }
+  static Create(System.Object raw, app.type.this type, app.data.this data) : app.event.on.this
+  write : app.event.on.write { get; }
 
 class app.event.on.write : app.event.this
 
@@ -615,7 +606,7 @@ interface app.module.IClass
   virtual Validate() : System.Threading.Tasks.Task<app.error.this>
 
 interface app.module.IClause
-  abstract Bind(app.goal.step.action.this clause, app.goal.step.action.this action, app.event.on.own on) : System.Void
+  abstract Bind(app.goal.step.action.this clause, app.goal.step.action.this action, app.event.on.this on) : System.Void
 
 interface app.module.ICodeGenerated
   abstract Start() : System.Threading.Tasks.Task<app.data.this>

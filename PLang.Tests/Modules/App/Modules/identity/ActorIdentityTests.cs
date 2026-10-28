@@ -52,8 +52,7 @@ public class ActorIdentityTests : System.IAsyncDisposable
     public async Task ALaterBornActor_HasItsIdentityVariablesAtOnce_WhateverIsBoundToSet()
     {
         var gate = new TaskCompletionSource();
-        _app.actor.list.User.on.Bind(_app.variable.type, "set", global::app.@event.When.before, async (_, _, ctx) => { await gate.Task; return ctx.Ok(); },
-            global::app.@event.binding.Scope.app);
+        _app.actor.list.User.on[_app.variable.type]["set"]![global::app.@event.When.before].Add(side => new global::app.@event.binding.@this(side, async (_, _, ctx) => { await gate.Task; return ctx.Ok(); }, _app.actor.list.User, global::app.@event.binding.Scope.app, global::app.@event.binding.@this.Always));
 
         await using var born = new global::app.actor.@this(new global::app.actor.role.user(), _app, system: _app.actor.list.System);
 
@@ -68,9 +67,7 @@ public class ActorIdentityTests : System.IAsyncDisposable
     {
         var fired = new List<string>();
         foreach (var when in new[] { global::app.@event.When.before, global::app.@event.When.after })
-            _app.actor.list.User.on.Bind(_app.variable.type, "set", when,
-                (item, _, ctx) => { fired.Add(((global::app.type.item.variable.@this)item).Name); return Task.FromResult(ctx.Ok()); },
-                global::app.@event.binding.Scope.app);
+            _app.actor.list.User.on[_app.variable.type]["set"]![when].Add(side => new global::app.@event.binding.@this(side, (item, _, ctx) => { fired.Add(((global::app.type.item.variable.@this)item).Name); return Task.FromResult(ctx.Ok()); }, _app.actor.list.User, global::app.@event.binding.Scope.app, global::app.@event.binding.@this.Always));
 
         await using var born = new global::app.actor.@this(new global::app.actor.role.user(), _app, system: _app.actor.list.System);
 

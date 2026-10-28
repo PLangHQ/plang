@@ -25,6 +25,9 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     /// <summary>What is started after it.</summary>
     public binding.list.after after { get; }
 
+    /// <summary>The side started <paramref name="when"/> it fires — what a binding is added to.</summary>
+    internal binding.list.@this this[When when] => when == When.before ? before : after;
+
     /// <summary>Whether anything is bound on this event, before or after it, at any of <paramref name="item"/>'s
     /// levels — so a door whose before is handed something it would have to make asks first.</summary>
     public bool IsBound(global::app.type.item.@this item, global::app.actor.context.@this context)

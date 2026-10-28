@@ -2,7 +2,8 @@ namespace app.goal.step.action.serializer;
 
 /// <summary>
 /// An action read in the snapshot view: its key comes in (<c>{step, index, module, name}</c>) and the live action comes
-/// out — its step read by the step's own snapshot reader, then the action at its index in the step's code. A goal's hash
+/// out — its step read by the step's own snapshot reader, then the action at its index in the step's code; a key with no
+/// step and no index (<c>{module, name}</c>) is its module's catalog action. A goal's hash
 /// covers its steps' text, not the actions built from it, so the live action is checked against the module and name it
 /// was saved with: another action there now is refused (<c>CallbackActionMismatch</c>), as is a key no action answers,
 /// thrown to the read boundary.
@@ -44,6 +45,10 @@ public sealed class Snapshot : global::app.type.reader.ITypeReader
             }
         reader.EndObject();
 
+        // a key with no step and no index is a module's own action, its catalog element (module[name])
+        if (step == null && index == null && module != null)
+            return module[name] ?? throw new global::app.error.DeclinedException(new global::app.error.@this(
+                $"the saved action '{module.Name}.{name}' is no action of its module", "ActionNotFound", 404));
         if (step == null || module == null || index is not { } at)
             throw new global::app.error.DeclinedException(new global::app.error.@this(
                 $"a saved action's key names no {(step == null ? "step" : module == null ? "module" : "index")}", "ActionKeyIncomplete", 400));
