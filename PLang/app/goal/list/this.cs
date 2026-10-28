@@ -215,7 +215,9 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         // a name is the goal beside its caller before any other of that name: one already read there, then one there on
         // disk; only then one read anywhere, then the app root's
         var folder = caller?.Folder;
-        if (folder != null && Goal(name, folder) is { } beside) return context.Ok(beside);
+        // the goals a name may be: every one read, newest first, but a setup goal — made once for the whole find
+        var goals = Items().Where(g => !g.IsSetup).Reverse().ToList();
+        if (folder != null && Goal(name, goals.Where(g => Equals(g.Folder, folder)).ToList()) is { } beside) return context.Ok(beside);
 
         var source = name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase) ? name : name + ".goal";
         if (!source.StartsWith('/') && !source.StartsWith('\\') && folder != null)
@@ -229,7 +231,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
                 if (!walks) break;
             }
         }
-        if (Goal(name, null) is { } match) return context.Ok(match);
+        if (Goal(name, goals) is { } match) return context.Ok(match);
         return await Open("/" + source.TrimStart('/', '\\'));
 
         // opens the goal the .goal at `raw` is built to, resolved as written (the app's /system/ first); its name is
@@ -280,14 +282,13 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         }
     }
 
-    // The goal already read that a call's name writes, beside folder when one is given: an address (a name that starts
-    // with /) by its .goal or .pr path exactly; any other by its name (the last read wins — sub-goals in different files
-    // may share one), its path in any of the forms a call writes, or, slash-qualified, a name whose folder is part of it
-    // (BuildGoal/Start is Start in a BuildGoal folder). A setup goal runs only through setup, never by a call.
-    private goal.@this? Goal(string name, global::app.type.item.path.@this? folder)
+    // The goal already read, of goals (newest first, no setup goal: one runs only through setup, never by a call), that
+    // a call's name writes: an address (a name that starts with /) by its .goal or .pr path exactly; any other by its name
+    // (the last read wins — sub-goals in different files may share one), its path in any of the forms a call writes, or,
+    // slash-qualified, a name whose folder is part of it (BuildGoal/Start is Start in a BuildGoal folder).
+    private goal.@this? Goal(string name, List<goal.@this> goals)
     {
         if (name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase)) name = name[..^5];
-        var goals = Items().Where(g => !g.IsSetup && (folder == null || Equals(g.Folder, folder))).Reverse().ToList();
         var isAddress = name.StartsWith('/') || name.StartsWith('\\');
 
         if (!isAddress && goals.FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) is { } named)

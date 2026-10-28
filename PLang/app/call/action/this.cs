@@ -16,7 +16,6 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
         : base(null, type, stack.Current, stack.Current, stack, variables)
     {
         Action = action;
-        index = action.Index ?? -1;
         Module = action.Module.Name;
         Name = action.Name;
     }
@@ -36,9 +35,12 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
     public override global::app.goal.step.action.@this? Action { get; }
 
     /// <summary>Where the run stands in its step: its action's place in the step's code — one of the two numbers that say
-    /// where a resume goes on (the step's frame holds the other). Set in a snapshot, it moves where the run goes on.</summary>
+    /// where a resume goes on (the step's frame holds the other). Set in a snapshot, it moves where the run goes on. A
+    /// pushed frame finds it the first time it is asked (a snapshot written, a resume) and keeps it; a run that never asks
+    /// never looks.</summary>
     [global::app.Snapshot, global::app.LlmBuilder]
-    public int index { get; set; }
+    public int index { get => _index ??= Action?.Index ?? -1; set => _index = value; }
+    private int? _index;
 
     /// <summary>The module of the action that stood there when it was saved — checked against the one there now.</summary>
     [global::app.Snapshot]
@@ -66,9 +68,9 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
     {
         // a taken branch ends the chain: what it answered is the chain's
         if (!again && Action!.IsCondition) return result;
-        // the action of an action's frame is one its step holds, so it has its place there; after it, the chain goes on
-        // from what it answered, as it would have
-        var at = Action!.Index!.Value;
+        // the action of an action's frame is one its step holds, at the frame's own place; after it, the chain goes on from
+        // what it answered, as it would have
+        var at = index;
         if (!again) return await Step!.Code.Start(context, at + 1, result);
         // the run goes on at its place as the goal is now: another action standing there (the goal changed, or the place
         // was edited) is said, and goes on

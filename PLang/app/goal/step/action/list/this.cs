@@ -36,7 +36,7 @@ public sealed class @this : global::app.type.item.list.bare.@this<Action>, globa
         result ??= context.Ok();
         try
         {
-            for (int i = from; i < Count; i++)
+            for (int i = from; i < CountRaw; i++)
             {
                 var action = this[i];
                 context.CancellationToken.ThrowIfCancellationRequested();
@@ -220,7 +220,7 @@ public sealed class @this : global::app.type.item.list.bare.@this<Action>, globa
     /// chain ran), or -1 when absent.</summary>
     public int IndexOf(Action a)
     {
-        for (int i = 0; i < Count; i++)
+        for (int i = 0; i < CountRaw; i++)
             if (ReferenceEquals(this[i], a)) return i;
         return -1;
     }

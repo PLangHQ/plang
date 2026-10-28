@@ -14,7 +14,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 {
     /// <summary>The shortcut the <c>.goal</c> file at <paramref name="path"/> is, named by its file — a value of the app's
     /// shortcut <paramref name="type"/>. Its goal is read when the shortcut is read.</summary>
-    internal @this(global::app.type.item.path.@this path, global::app.type.@this type) : base(type) => Path = path;
+    internal @this(global::app.type.item.path.@this path, global::app.type.@this type) : base(type)
+    {
+        Path = path;
+        IsSystem = path.ToString().StartsWith("/system/shortcut/", StringComparison.OrdinalIgnoreCase);
+    }
 
     /// <summary>Its name — its file's (<c>goal.goal</c> → <c>goal</c>), read as <c>%!goal%</c>.</summary>
     [global::app.Out]
@@ -24,7 +28,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public global::app.type.item.path.@this Path { get; }
 
     /// <summary>One of <c>/system/shortcut/</c> (the app's own copy or the os's): its name is sealed.</summary>
-    internal bool IsSystem => Path.ToString().StartsWith("/system/shortcut/", StringComparison.OrdinalIgnoreCase);
+    internal bool IsSystem { get; }
 
     /// <summary>A structure, not a single-token leaf.</summary>
     public override bool IsLeaf => false;
