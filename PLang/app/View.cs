@@ -233,12 +233,12 @@ public abstract class View
         // a row whose token already says its type — text a string, a number, a bool, a dict an object, a list an array —
         // is that token alone, read back as the same value; one that says more than its token (a kind, a template,
         // properties, a signature, an error, a typed null) and the signed layer keep their record
+        // — whatever holds it (the value itself, or the value as it was written, unread)
         private protected override System.Threading.Tasks.ValueTask Record(global::app.data.@this data, global::app.type.format.IWriter writer, bool layer)
             => !layer && data.Error == null && data.Signature == null && !data.HasProperty && !data.HasProperties
-               && data.Peek() is global::app.type.item.text.@this or global::app.type.item.number.@this or global::app.type.item.@bool.@this
-                   or global::app.type.item.dict.@this or global::app.type.item.list.@this
-               && data.Type is { Template: null } type && type.kind.IsEmpty && type.Name == data.Peek().Type.Name
-                ? data.Peek().Output(writer)
+               && data.Type is { Template: null, Name: "text" or "number" or "bool" or "dict" or "list" } type && type.kind.IsEmpty
+               && data.Peek() is { IsNull: false } value && value.Type.Name == type.Name && value.Type.kind.IsEmpty
+                ? value.Output(writer)
                 : base.Record(data, writer, layer);
 
         // a [Snapshot] member is where its value lives: the value is written whole there, never its key; one whose class

@@ -332,6 +332,36 @@ public class SignedSnapshotTests
         await Assert.That((await into.Variable.Get("none")).Type!.Name).IsEqualTo("text");
     }
 
+    // A snapshot's text with its signature layer's own keys left out, nothing else unwrapped or changed.
+    private static System.Text.Json.Nodes.JsonNode? WithoutSignature(System.Text.Json.Nodes.JsonNode? node) => node switch
+    {
+        System.Text.Json.Nodes.JsonObject json => new System.Text.Json.Nodes.JsonObject(json
+            .Where(row => row.Key is not ("signature" or "@schema" or "hash" or "nonce" or "created"))
+            .Select(row => new KeyValuePair<string, System.Text.Json.Nodes.JsonNode?>(row.Key, WithoutSignature(row.Value)))),
+        System.Text.Json.Nodes.JsonArray list => new System.Text.Json.Nodes.JsonArray(list.Select(WithoutSignature).ToArray()),
+        _ => node?.DeepClone(),
+    };
+
+    // An edited snapshot kept again (a .plang file) is the saved bytes with the one value changed, byte for byte: it is
+    // written in its own view whoever writes it, an untouched plain row stays bare, and so does the text a program set.
+    [Test]
+    public async Task AnEditedSnapshot_KeptAgain_IsTheSavedBytes_PlusTheEdit()
+    {
+        await using var app = App();
+        var context = app.actor.list.User.Context;
+        var saved = await Saved(app);
+        var original = System.Text.Encoding.UTF8.GetString(await Plang(saved, context));
+        await context.Variable.Set("snap", saved);
+
+        await (await (await context.Action("variable.set(Name=%snap.app.actor.list.user.context.variable.row.note%, Value=\"EDITED\")")).Start(context)).IsSuccess();
+        var edited = System.Text.Encoding.UTF8.GetString(await Plang(await context.Variable.Get("snap"), context));
+
+        var was = WithoutSignature(System.Text.Json.Nodes.JsonNode.Parse(original))!.ToJsonString();
+        var now = WithoutSignature(System.Text.Json.Nodes.JsonNode.Parse(edited))!.ToJsonString();
+        await Assert.That(now).Contains("\"note\":\"EDITED\"");
+        await Assert.That(now.Replace("\"EDITED\"", "\"original\"")).IsEqualTo(was);
+    }
+
     // An edit nobody signed again is refused: the signature is the snapshot's as it was saved.
     [Test]
     public async Task AnEditedSnapshot_NotSignedAgain_IsRefused()

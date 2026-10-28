@@ -66,15 +66,18 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>A snapshot that holds nothing is empty.</summary>
     public override bool IsTruthy() => _app?.IsTruthy() == true;
 
-    /// <summary>A snapshot writes its app under <c>app</c>, the app writing itself: a live app its members, what an app
-    /// wrote as it was read (its bytes relayed as they are while nothing changed them).</summary>
+    /// <summary>A snapshot writes its app under <c>app</c>, in the snapshot's own view whatever view writes it (a .plang
+    /// file, the wire): a live app its members, what an app wrote as it was read (its bytes relayed as they are while
+    /// nothing changed them), one opened and edited written again as the snapshot writes it.</summary>
     protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         if (_app is { } app)
         {
             writer.Name("app");
-            await writer.Write(app);
+            // what a navigation opened is written again as the snapshot writes it; the live app and the bytes it took
+            // write themselves, as they did
+            await writer.Write(app is global::app.type.item.dict.@this opened ? await global::app.type.item.wire.@this.Of(opened, View, writer.Context) : app);
         }
         writer.EndObject();
     }
