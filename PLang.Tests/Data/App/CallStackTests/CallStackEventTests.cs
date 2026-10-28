@@ -102,6 +102,8 @@ public class CallStackEventTests : System.IAsyncDisposable
         await (await Named(src, "Run").Start(context)).IsSuccess();
         var snap = await (await context.Variable.Get("snap")).Value() as global::app.snapshot.@this;
         await Assert.That(snap).IsNotNull();
+        // the event's key names it by its name, a string: its token says it is text
+        await Assert.That(System.Text.RegularExpressions.Regex.Replace(await snap!.Text(context), @"\s", "")).Contains("\"name\":\"start\"");
 
         await using var dst = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing().TestIdentity();
         Program(dst);

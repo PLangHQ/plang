@@ -14,8 +14,9 @@ public class ResumeTests
     private static async Task<global::app.goal.step.action.@this> Holding(global::app.actor.context.@this context, object value)
     {
         var (signer, _) = context.App.Code.Get<global::app.module.signing.code.ISigning>();
+        // signed as a program signs it: in its own type's view, the one a verify re-hashes it in
         var signed = await signer!.SignAsync(new global::app.module.signing.sign(context)
-            { Data = new global::app.data.@this("snap", value, context: context), View = global::app.View.Snapshot });
+            { Data = new global::app.data.@this("snap", value, context: context) });
         await context.Variable.Set("snap", signed);
         return await context.Action("snapshot.resume(Snapshot=%snap%)");
     }

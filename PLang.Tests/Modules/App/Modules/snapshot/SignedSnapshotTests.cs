@@ -212,18 +212,6 @@ public class SignedSnapshotTests
         static System.Text.Json.Nodes.JsonObject? Find(System.Text.Json.Nodes.JsonNode child) => Current(child);
     }
 
-    // A snapshot's text with each dict written as a record ({type: dict, value}) taken as the dict it holds: an opened
-    // snapshot writes its plain members back as records, which read back as the same dicts.
-    private static System.Text.Json.Nodes.JsonNode? Bare(System.Text.Json.Nodes.JsonNode? node) => node switch
-    {
-        System.Text.Json.Nodes.JsonObject json when json.Count == 2 && json["type"]?["name"]?.GetValue<string>() == "dict" && json.ContainsKey("value")
-            => Bare(json["value"]),
-        System.Text.Json.Nodes.JsonObject json => new System.Text.Json.Nodes.JsonObject(json.Select(row =>
-            new KeyValuePair<string, System.Text.Json.Nodes.JsonNode?>(row.Key, Bare(row.Value)))),
-        System.Text.Json.Nodes.JsonArray list => new System.Text.Json.Nodes.JsonArray(list.Select(Bare).ToArray()),
-        _ => node?.DeepClone(),
-    };
-
     // Where a run goes on is two numbers in its snapshot, each its frame's own: the step's frame's index and the action's.
     // A program edits both, signs the snapshot again, and the run goes on exactly there — the steps before it are not run
     // again. The edit changes the snapshot alone: the live goal is as it was, the snapshot written again is the one saved
@@ -262,7 +250,7 @@ public class SignedSnapshotTests
         var after = System.Text.Json.Nodes.JsonNode.Parse(await ((await (await context.Variable.Get("snap")).Value()) as global::app.snapshot.@this)!.Text(context))!;
         await Assert.That(Current(after).ContainsKey("property")).IsFalse();
         Current(before)["caller"]!["value"]!["index"] = 2;
-        await Assert.That(System.Text.Json.Nodes.JsonNode.DeepEquals(Bare(before), Bare(after))).IsTrue();
+        await Assert.That(System.Text.Json.Nodes.JsonNode.DeepEquals(before, after)).IsTrue();
 
         var signed = await (await context.Action("signing.sign(Data=%snap%)")).Start(context);
         await signed.IsSuccess();
@@ -309,6 +297,39 @@ public class SignedSnapshotTests
         await Assert.That(step.Text).IsNotEqualTo("rewritten");
         foreach (var goal in app.goal.list.Items().OfType<Goal>())
             for (var at = 0; at < goal.Step.Count; at++) await Assert.That(goal.Step[at].Index).IsEqualTo(at);
+    }
+
+    // A saved row says its type only where its token can't: a plain text is its string, read back as text; a datetime, a
+    // path, a kinded text and a typed null keep their type, and each reads back as what it was.
+    [Test]
+    public async Task ASavedRow_SaysItsType_OnlyWhereItsTokenCant()
+    {
+        await using var app = App();
+        var context = app.actor.list.User.Context;
+        var types = app.type.list;
+        await context.Variable.Set("x", "before");
+        await context.Variable.Set("when", new global::app.data.@this("when",
+            new global::app.type.item.datetime.@this(new System.DateTimeOffset(2026, 5, 27, 12, 0, 0, System.TimeSpan.Zero), types[typeof(global::app.type.item.datetime.@this)]), context: context));
+        await context.Variable.Set("where", new global::app.data.@this("where", global::app.type.item.path.@this.Resolve("/a.txt", context), context: context));
+        await context.Variable.Set("md", new global::app.data.@this("md", "# hi", new global::app.type.@this("text", "md"), context: context));
+        await context.Variable.Set("none", new global::app.data.@this("none", new global::app.type.item.@null.@this(types[typeof(global::app.type.item.text.@this)]), context: context));
+        var saved = await Saved(app);
+        var text = await ((await saved.Value()) as global::app.snapshot.@this)!.Text(context);
+        var compact = System.Text.RegularExpressions.Regex.Replace(text, @"\s", "");
+
+        await Assert.That(compact).Contains("\"x\":\"before\"");
+        foreach (var name in new[] { "when", "where", "md", "none" })
+            await Assert.That(compact).Contains($"\"{name}\":{{\"type\":");
+
+        await using var fresh = App();
+        await Holds(fresh);
+        var into = fresh.actor.list.User.Context;
+        await fresh.Restore(((await saved.Value()) as global::app.snapshot.@this)!, into);
+        await Assert.That(await (await into.Variable.Get("x")).Value()).IsTypeOf<global::app.type.item.text.@this>();
+        await Assert.That(await (await into.Variable.Get("when")).Value()).IsTypeOf<global::app.type.item.datetime.@this>();
+        await Assert.That(await (await into.Variable.Get("where")).Value()).IsAssignableTo<global::app.type.item.path.@this>();
+        await Assert.That((await into.Variable.Get("md")).Type!.kind.Name).IsEqualTo("md");
+        await Assert.That((await into.Variable.Get("none")).Type!.Name).IsEqualTo("text");
     }
 
     // An edit nobody signed again is refused: the signature is the snapshot's as it was saved.
