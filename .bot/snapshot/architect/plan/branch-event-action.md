@@ -51,6 +51,8 @@ Ingi: "yes, each binding". On snapshot every binding reaches (the default), and 
 
 OBP pattern: a compound name is a dot path; a type per kind, decided at birth.
 
+- **Names left for a member pass** (snapshot 267): `on.Declared` (the events an item's type declares beside the core's; `Names` is taken by all of them), and the `declared` event class (an event a type declares).
+
 ## Tests
 
 - The surface golden and `pick_golden.json` re-pinned under this branch's decisions.
