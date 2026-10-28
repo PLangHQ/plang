@@ -51,6 +51,8 @@ per birth + dispose; a request app is born, a goal loaded and run, disposed, × 
 | Date | Branch | Commit | Load | Sub birth | Root birth | Sub request | Root request | Held, sub (MB) | Held, root (MB) | `plang --test` | C# sweep | Build, clean | Build, incr. |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 <!-- rows -->
+| 2026-10-28 |  | 4da6a1e58 (snapshot-4da6a1e58-birth) | 2.93 | 0.17 ms, 115 KB | 19.03 ms, 2309 KB | - | - | - | - | - | - | - | - |
+| 2026-10-28 | snapshot | 1314cd233 (snapshot-1314cd233-birth) | 2.34 | 0.15 ms, 115 KB | 18.73 ms, 2309 KB | - | - | - | - | - | - | - | - |
 | 2026-10-28 | snapshot | ab239e127 (snapshot-quiet-HEAD) | 2.61 | 0.15 ms, 115 KB | 18.89 ms, 2309 KB | 1.95 ms, 537 KB | 23.13 ms, 3555 KB | 1.6 → 2.0 → 2.0 → 2.0 → 1.8 | 0.1 → 1.9 → 1.9 → 1.9 → 1.1 | 4.7 s (301 pass, 0 fail) | 43.2 s (red: none) | - | - |
 | 2026-10-28 | snapshot | 35c1b3377 (snapshot-35c1b3377) | 9.08 | 0.15 ms, 115 KB | 19.74 ms, 2308 KB | 2.68 ms, 537 KB | 19.25 ms, 3563 KB | 1.6 → 2.0 → 2.0 → 2.0 → 1.8 | 0.1 → 1.9 → 1.9 → 1.9 → 1.1 | 5.0 s (299 pass, 2 fail: a binary not yet rebuilt for the tip; rebuilt, 307 pass, 0 fail) | 115.4 s (red: none; load 9–14, time void) | - | - |
 | 2026-10-27 | snapshot-7c-wip | 23d61537b (snapshot-recheck) | 2.70 | 0.16 ms, 107 KB | 19.00 ms, 2312 KB | 2.03 ms, 529 KB | 20.25 ms, 3785 KB | 1.6 → 2.0 → 2.0 → 2.0 | 0.1 → 1.9 → 1.9 → 1.9 | 4.8 s (298 pass, 2 fail) | 73.0 s (red: Wire,Runtime) | - | - |
