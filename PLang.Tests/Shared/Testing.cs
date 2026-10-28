@@ -41,11 +41,25 @@ public static class AppTesting
     public static global::app.@this TestSigning(this global::app.@this app)
     {
         var provider = new global::PLang.Tests.Shared.TestSigning { IsBuiltIn = true };
-        app.Code.Register<global::app.module.signing.code.ISigning>(provider);
-        app.Code.Register<global::app.module.signing.code.IKey>(provider);
-        app.Code.SetDefault<global::app.module.signing.code.ISigning>("test-signing");
-        app.Code.SetDefault<global::app.module.signing.code.IKey>("test-signing");
+        app.Uses<global::app.module.signing.code.ISigning>(provider);
+        app.Uses<global::app.module.signing.code.IKey>(provider);
         return app;
+    }
+
+    // The app's T is the provider: registered and made the default only where its registry doesn't already find it so
+    // (a sub app's layer finds what its maker holds), so nothing is refused and nothing is written that's there.
+    private static void Uses<T>(this global::app.@this app, T provider) where T : class, global::app.module.code.ICode
+    {
+        if (!app.Code.List<T>().Any(registered => registered.Name == provider.Name))
+            Must(app.Code.Register<T>(provider));
+        if (app.Code.Get<T>().Provider?.Name != provider.Name)
+            Must(app.Code.SetDefault<T>(provider.Name));
+    }
+
+    // A registration the harness makes can't fail quietly: a refusal is the test's setup broken.
+    private static void Must(global::app.data.@this done)
+    {
+        if (!done.Success) throw new global::app.error.AppException(done.Error!);
     }
 
     /// <summary>The action <paramref name="formal"/> reads as (<c>file.read(Path="a.txt")</c>) — built as the
@@ -63,8 +77,7 @@ public static class AppTesting
     /// real-signing fixtures that need an identity to sign with but don't test the identity provider.</summary>
     public static global::app.@this TestIdentity(this global::app.@this app)
     {
-        app.Code.Register<global::app.module.identity.code.IIdentity>(new global::PLang.Tests.Shared.TestIdentity { IsBuiltIn = true });
-        app.Code.SetDefault<global::app.module.identity.code.IIdentity>("test-identity");
+        app.Uses<global::app.module.identity.code.IIdentity>(new global::PLang.Tests.Shared.TestIdentity { IsBuiltIn = true });
         return app;
     }
 }
