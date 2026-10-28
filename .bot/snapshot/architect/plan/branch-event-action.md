@@ -40,6 +40,10 @@ Ingi: "that is the path, app.event.goal.start.before". On snapshot, `%!app.event
 - on.event's `Event` examples change from `%!app.type.goal.on.start%` to `%!app.event.goal.start%` (teaching, re-pins).
 - The app's list moves from `event/on/list/` to `event/list/`, following the convention that `app.X` is typed `X.list.@this`.
 
+## A binding chooses whether it reaches sub apps (snapshot 249–250)
+
+Ingi: "yes, each binding". On snapshot every binding reaches (the default), and a sub app takes each in at birth as an inherited binding. This branch adds the plang option on on.event (proposed `Sub: inherit | none`, name pending Ingi), held on the binding, and the sub app's birth takes in only the bindings that say `inherit`. A new action property is a catalog change: it re-pins PickListTests, and ModulePageTests if `on/event.notes.md` gets a line. The notes also get security's rule: enforce in `before`; an `after` observes.
+
 ## Older problems that go with it (snapshot 230, items 7 and 8)
 
 - **The base is also the C# handler kind** (`binding/this.cs:37`, `_handler!`, two constructors). The C# handler (debug's, the test runner's, mocks) becomes its own kind beside `call` and `clause`, and the base keeps only what every action shares.
