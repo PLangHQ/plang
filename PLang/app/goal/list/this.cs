@@ -212,7 +212,9 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         if (Chain(caller).FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) is { } near)
             return context.Ok(near);
 
-        if (Goal(name) is { } match) return context.Ok(match);
+        // a name is the goal beside its caller before any other of that name: one already read there, then one there on
+        // disk; only then one read anywhere, then the app root's
+        if (caller?.Folder is { } held && Goal(name, held) is { } beside) return context.Ok(beside);
 
         var source = name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase) ? name : name + ".goal";
         if (!source.StartsWith('/') && !source.StartsWith('\\') && caller?.Folder is { } folder)
@@ -221,11 +223,12 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
             var walks = source.Contains('/') || source.Contains('\\');
             for (var at = folder; at.Raw is not ("/" or "\\" or "." or ""); at = at.Parent)
             {
-                var beside = await Open(at.Combine(source).Raw);
-                if (beside.IsInitialized) return beside;
+                var found = await Open(at.Combine(source).Raw);
+                if (found.IsInitialized) return found;
                 if (!walks) break;
             }
         }
+        if (Goal(name, null) is { } match) return context.Ok(match);
         return await Open("/" + source.TrimStart('/', '\\'));
 
         // opens the goal the .goal at `raw` is built to, resolved as written (the app's /system/ first); its name is
@@ -276,29 +279,30 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         }
     }
 
-    // The goal already read that a call's name writes: its name (the last read wins — sub-goals in
-    // different files may share one), its .goal or .pr path in any of the forms a call writes, or a
-    // slash-qualified name whose folder is part of it (BuildGoal/Start is Start in a BuildGoal folder).
-    // A setup goal runs only through setup, never by a call.
-    private goal.@this? Goal(string name)
+    // The goal already read that a call's name writes, beside folder when one is given: an address (a name that starts
+    // with /) by its .goal or .pr path exactly; any other by its name (the last read wins — sub-goals in different files
+    // may share one), its path in any of the forms a call writes, or, slash-qualified, a name whose folder is part of it
+    // (BuildGoal/Start is Start in a BuildGoal folder). A setup goal runs only through setup, never by a call.
+    private goal.@this? Goal(string name, global::app.type.item.path.@this? folder)
     {
         if (name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase)) name = name[..^5];
-        var goals = Items().Where(g => !g.IsSetup).Reverse().ToList();
+        var goals = Items().Where(g => !g.IsSetup && (folder == null || Equals(g.Folder, folder))).Reverse().ToList();
+        var address = name.StartsWith('/') || name.StartsWith('\\');
 
-        if (goals.FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) is { } named)
+        if (!address && goals.FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) is { } named)
             return named;
 
         var leaf = name.TrimStart('/', '\\').Replace('\\', '/');
         bool Written(string? canonical) => canonical != null
-            && (canonical.Equals(leaf, StringComparison.OrdinalIgnoreCase)
-                || canonical.Equals(leaf + ".goal", StringComparison.OrdinalIgnoreCase)
-                || canonical.Equals("/" + leaf, StringComparison.OrdinalIgnoreCase)
-                || canonical.Equals("/" + leaf + ".goal", StringComparison.OrdinalIgnoreCase));
+            && (canonical.Equals("/" + leaf, StringComparison.OrdinalIgnoreCase)
+                || canonical.Equals("/" + leaf + ".goal", StringComparison.OrdinalIgnoreCase)
+                || (!address && (canonical.Equals(leaf, StringComparison.OrdinalIgnoreCase)
+                    || canonical.Equals(leaf + ".goal", StringComparison.OrdinalIgnoreCase))));
         if (goals.FirstOrDefault(g => Written(g.Path?.ToString().Replace('\\', '/'))
                                      || Written(g.Pr?.ToString().Replace('\\', '/'))) is { } byPath)
             return byPath;
 
-        if (name.Contains('/') || name.Contains('\\'))
+        if (!address && (name.Contains('/') || name.Contains('\\')))
         {
             var qualified = "/" + leaf;
             var leafName = qualified[(qualified.LastIndexOf('/') + 1)..];
