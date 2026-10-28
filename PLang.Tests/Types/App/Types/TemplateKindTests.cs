@@ -80,11 +80,11 @@ public class TemplateKindTests
             + "\"variable\":[{\"text\":\"%err%\",\"code\":[{\"variable\":\"err\"}]}]}";
         var snapshot = "{\"name\":\"s\",\"type\":{\"name\":\"snapshot\"},\"value\":{}}";
 
-        var held = await plang.Decode(System.Text.Encoding.UTF8.GetBytes(error), ctx, view: global::app.View.Store);
+        var decoded = await plang.Decode(System.Text.Encoding.UTF8.GetBytes(error), ctx, view: global::app.View.Store);
         var read = await plang.Decode(System.Text.Encoding.UTF8.GetBytes(snapshot), ctx, view: global::app.View.Store);
 
-        await held.IsSuccess();
-        await Assert.That(held.Peek() is global::app.type.item.source).IsTrue();
+        await decoded.IsSuccess();
+        await Assert.That(decoded.Peek() is global::app.type.item.source).IsTrue();
         await Assert.That(read.Peek() is global::app.snapshot.@this).IsTrue();
     }
 

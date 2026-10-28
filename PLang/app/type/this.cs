@@ -838,11 +838,11 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     {
         // The type entity's own wire shape and kinds are taught by the prompt's type reference, not as facts.
         _list = clr == typeof(@this) ? null : types;
-        var declared = Facts(clr);
-        Alias = declared.Alias;
-        Owned = declared.Owned;
-        Internal = declared.Internal;
-        if (_list != null) _offer = declared.Offer;
+        var facts = Facts(clr);
+        Alias = facts.Alias;
+        Owned = facts.Owned;
+        Internal = facts.Internal;
+        if (_list != null) _offer = facts.Offer;
     }
 
     // The list this type is in — its facts name their property types through it; null for a type that is its

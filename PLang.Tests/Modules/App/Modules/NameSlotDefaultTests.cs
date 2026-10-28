@@ -23,10 +23,10 @@ public class NameSlotDefaultTests
                     checkedSlots.Add(where);
                     var (handler, error) = await new PrAction(app.type.list) { Module = module, Name = name }.Bind(context);
                     if (handler == null) { failed.Add($"{where}: {error?.Message}"); continue; }
-                    var held = (global::app.data.@this<global::app.type.item.variable.@this>?)handler.GetType().GetProperty(slot.Name)!.GetValue(handler);
-                    var variable = held == null ? null : await held.Value();
-                    if (held is not { Success: true } || variable?.Name != slot.Default?.ToString())
-                        failed.Add($"{where}: {held?.Error?.Message ?? variable?.Name ?? "nothing"}");
+                    var data = (global::app.data.@this<global::app.type.item.variable.@this>?)handler.GetType().GetProperty(slot.Name)!.GetValue(handler);
+                    var variable = data == null ? null : await data.Value();
+                    if (data is not { Success: true } || variable?.Name != slot.Default?.ToString())
+                        failed.Add($"{where}: {data?.Error?.Message ?? variable?.Name ?? "nothing"}");
                 }
             }
 

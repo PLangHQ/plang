@@ -150,9 +150,9 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     public async Task OutputAsk_EndsWhenTheRunIsCancelled()
     {
         // The run's cancellation (a timeout on the ask, a test's timeout, Ctrl-C) is what ends a waiting ask.
-        await using var own = new global::app.@this("/tmp/s2c-" + System.Guid.NewGuid().ToString("N")[..6], wiring: global::app.Wiring.none).Testing();
-        own.actor.list.User.Channel.Register(new StreamChannel(own.actor.list.User.Channel, global::app.channel.list.@this.Input, new BlockingStream(), ChannelDirection.Input, ownsStream: false) { Mime = "text/plain" });
-        var ctx = own.actor.list.User.Context;
+        await using var app = new global::app.@this("/tmp/s2c-" + System.Guid.NewGuid().ToString("N")[..6], wiring: global::app.Wiring.none).Testing();
+        app.actor.list.User.Channel.Register(new StreamChannel(app.actor.list.User.Channel, global::app.channel.list.@this.Input, new BlockingStream(), ChannelDirection.Input, ownsStream: false) { Mime = "text/plain" });
+        var ctx = app.actor.list.User.Context;
 
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
         ctx.PushCancellation(cts);

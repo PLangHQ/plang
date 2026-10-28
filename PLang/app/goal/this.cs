@@ -69,7 +69,7 @@ public sealed partial class @this
         {
             if (step.Index == index) return step;
             foreach (var action in step.Code.Items())
-                if (Numbered(action.Child, index) is { } held) return held;
+                if (Numbered(action.Child, index) is { } child) return child;
         }
         return null;
     }

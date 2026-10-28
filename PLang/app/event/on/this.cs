@@ -29,7 +29,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         }.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
 
     // the events this item's type declares besides the core's
-    private readonly FrozenSet<string> _declared;
+    private readonly FrozenSet<string> _names;
 
     // each event a write made, by its name; made when the first one is added
     private ConcurrentDictionary<string, global::app.@event.@this>? _events;
@@ -37,7 +37,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     // the shared, closed events of the item's class: what a read answers for an event no write made
     private readonly empty? _shared;
 
-    private protected @this(IEnumerable<string> declared) => _declared = declared.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+    private protected @this(IEnumerable<string> names) => _names = names.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>The events of <paramref name="item"/>: the core's and the ones its type declares, each taking bindings.</summary>
     internal @this(global::app.type.item.@this item) : this(empty.Of(item.GetType()))
@@ -49,7 +49,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     internal global::app.type.item.@this? item { get; }
 
     /// <summary>The events the item's type declares besides the core's (a window's <c>closed</c>).</summary>
-    internal IReadOnlyCollection<string> Declared => _declared;
+    internal IReadOnlyCollection<string> Declared => _names;
 
     /// <summary>The event named <paramref name="name"/> as it stands: its own if a binding was added to it, else the
     /// class's shared one, closed, with empty sides. Makes nothing: a firing and a navigation (<c>%x.on.start%</c>) read
@@ -60,7 +60,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>The event named <paramref name="name"/> a binding is added to: made with lists that take bindings the
     /// first time. Null when there is no event of that name.</summary>
     internal global::app.@event.@this? Add(string name)
-        => Made.ContainsKey(name) || _declared.Contains(name)
+        => Made.ContainsKey(name) || _names.Contains(name)
             ? (_events ?? System.Threading.LazyInitializer.EnsureInitialized(ref _events,
                 static () => new(StringComparer.OrdinalIgnoreCase))).GetOrAdd(name, static (named, events) => events.Event(named), this)
             : null;
@@ -72,7 +72,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
 
     /// <summary>The names of the events an item has: the core's (<c>ask</c>, <c>create</c>, … <c>write</c>), every item
     /// the same ones, and those its type declares; before or after one is a binding's <c>When</c>, never part of its name.</summary>
-    public IEnumerable<string> Names => Made.Keys.Concat(_declared).Order(StringComparer.Ordinal);
+    public IEnumerable<string> Names => Made.Keys.Concat(_names).Order(StringComparer.Ordinal);
 
     /// <summary>The start — what runs before and after the item starts.</summary>
     public start start => (start)this["start"]!;

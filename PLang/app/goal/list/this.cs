@@ -49,7 +49,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         if (source is not global::app.type.item.path.file.@this file)
             return context.Error(new global::app.error.@this($"{source}: a goal is built from a .goal file, which this isn't", "GoalNotAFile", 400));
         var pr = file.Pr;
-        var loaded = await Fresh(pr, context) is { } held ? context.Ok(held)
+        var loaded = await Fresh(pr, context) is { } goal ? context.Ok(goal)
             : await Inherited(source, context) ?? await Unbuilt(pr, source, context) ?? await Read(pr, context);
         if (loaded.Success && await loaded.Value() is goal.@this { IsSetup: true })
             return context.Error(new global::app.error.@this($"{pr}: a setup goal runs only through setup.", "SetupGoal", 400));
@@ -65,7 +65,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     // The goal held from `pr` while its .pr is as it was read; null when none is held, or the file changed since —
     // then it is read again.
     private async Task<goal.@this?> Fresh(global::app.type.item.path.@this pr, actor.context.@this context)
-        => this[pr] is { } held && _stamp.TryGetValue(held, out var stamp) && await stamp.IsFresh(context) ? held : null;
+        => this[pr] is { } goal && _stamp.TryGetValue(goal, out var stamp) && await stamp.IsFresh(context) ? goal : null;
 
     // What this list knows of the .pr each goal it holds was read from, kept with the goal: whether it is still the one
     // to answer is the list's question, as the list is what holds it.
@@ -115,7 +115,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         if (_reading.TryAdd(pr, ours.Task) is false && _reading.TryGetValue(pr, out var inFlight)) return await inFlight;
         try
         {
-            var answer = await Fresh(pr, context) is { } held ? context.Ok(held) : await Decode(pr, context);
+            var answer = await Fresh(pr, context) is { } goal ? context.Ok(goal) : await Decode(pr, context);
             ours.SetResult(answer);
             return answer;
         }
@@ -173,12 +173,12 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         lock (_gate)
         {
             // the goal held from the same .pr, found in one look, gives way — its row, by reference
-            if (this[pr] is { } held)
+            if (this[pr] is { } replaced)
             {
                 var at = 0;
                 foreach (var each in Items())
                 {
-                    if (ReferenceEquals(each, held)) { RemoveAt(at); break; }
+                    if (ReferenceEquals(each, replaced)) { RemoveAt(at); break; }
                     at++;
                 }
             }

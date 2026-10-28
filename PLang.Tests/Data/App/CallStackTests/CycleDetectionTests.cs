@@ -119,9 +119,9 @@ public class CycleDetectionTests : System.IAsyncDisposable
         await using var build = stack.Push(MakeAction(app.actor.list.User.Context, "Build"), await stack.Setting());
         await using var emit = stack.Push(MakeAction(app.actor.list.User.Context, "EmitBuildEvent"), await stack.Setting());
 
-        await using var held = stack.Push(MakeAction(app.actor.list.User.Context, "Build"), await stack.Setting());
+        await using var frame = stack.Push(MakeAction(app.actor.list.User.Context, "Build"), await stack.Setting());
 
-        await Assert.That(held).IsNotNull();
+        await Assert.That(frame).IsNotNull();
     }
 
     [Test]

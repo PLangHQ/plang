@@ -74,9 +74,9 @@ public class OneTypeObjectTests : System.IAsyncDisposable
     // The type list answers its own type from itself: {list, type}, the one object it hands out.
     [Test] public async Task TheTypeList_IsAListOfTypes_FromItself()
     {
-        var own = app.type.list.Type;
-        await Assert.That(own.Name).IsEqualTo("list");
-        await Assert.That(own.kind.Name).IsEqualTo("type");
-        await Assert.That(ReferenceEquals(own, app.type.list[typeof(global::app.type.list.@this)])).IsTrue();
+        var type = app.type.list.Type;
+        await Assert.That(type.Name).IsEqualTo("list");
+        await Assert.That(type.kind.Name).IsEqualTo("type");
+        await Assert.That(ReferenceEquals(type, app.type.list[typeof(global::app.type.list.@this)])).IsTrue();
     }
 }

@@ -50,8 +50,7 @@ public class MissingKeyTests
     [Test]
     public async Task NoOneToAsk_FailsNamingBothWays()
     {
-        var (app, _) = Asking(null);
-        await using var held = app;
+        await using var app = Asking(null).App;
         var ctx = app.actor.list.User.Context;
         ctx.Actor!.Channel.Remove(global::app.channel.list.@this.Input, ctx);
 

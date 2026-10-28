@@ -10,7 +10,7 @@ public sealed class empty : @this
     // Each class's shared events, its type's declared ones among them — a fact of the class, made once.
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, empty> Emptied = new();
 
-    private empty(IEnumerable<string> declared) : base(declared) { }
+    private empty(IEnumerable<string> names) : base(names) { }
 
     /// <summary>The shared events of an item of <paramref name="class"/>: the core's, and the ones its plang type
     /// declares.</summary>

@@ -267,11 +267,11 @@ public abstract class View
             foreach (var entry in global::app.type.item.kind.reflection.Tagged.PropertiesFor(clr, this))
             {
                 if (!key.TryGetProperty(entry.WireName, out var member)) continue;
-                var declared = System.Nullable.GetUnderlyingType(entry.Property.PropertyType) ?? entry.Property.PropertyType;
+                var type = System.Nullable.GetUnderlyingType(entry.Property.PropertyType) ?? entry.Property.PropertyType;
                 // a member written with its own type (a frame below its caller's) is walked by what it says it is
                 var loaded = Row(member, context) != null ? await Walk(member, context)
-                    : Chooses(declared) ? await Load(declared, member, context)
-                    : Chooses(clr) && typeof(global::app.type.item.path.@this).IsAssignableFrom(declared)
+                    : Chooses(type) ? await Load(type, member, context)
+                    : Chooses(clr) && typeof(global::app.type.item.path.@this).IsAssignableFrom(type)
                       && member.ValueKind == System.Text.Json.JsonValueKind.String
                         ? await types[clr].Load(global::app.type.item.path.@this.Resolve(member.GetString()!, context), context.App)
                         : await Walk(member, context);

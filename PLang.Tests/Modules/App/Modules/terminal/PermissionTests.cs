@@ -122,16 +122,16 @@ public class PermissionTests : IDisposable
     {
         Kernel();
         // twenty held programs at once, each trying outside; meanwhile plang's own threads and a free program write there
-        var held = Enumerable.Range(0, 20).Select(n => Sh(
+        var programs = Enumerable.Range(0, 20).Select(n => Sh(
             $"echo {n} > {_root}/granted/n{n}.txt; (echo x > {_outside}/held{n}.txt) 2>/dev/null || echo refused",
             Permissions(May("/granted", "write")))).ToList();
         var pool = Enumerable.Range(0, 200).Select(n => Task.Run(() => File.WriteAllText(Path.Combine(_outside, $"pool{n}.txt"), "x"))).ToList();
         var free = Sh($"echo free > {_outside}/free.txt", null);
-        await Task.WhenAll(held);
+        await Task.WhenAll(programs);
         await Task.WhenAll(pool);
         await (await free).IsSuccess();
 
-        foreach (var run in held) await Assert.That((await (await run).Value())?.ToString() ?? "").Contains("refused");
+        foreach (var run in programs) await Assert.That((await (await run).Value())?.ToString() ?? "").Contains("refused");
         await Assert.That(Enumerable.Range(0, 20).All(n => File.Exists(Path.Combine(_root, "granted", $"n{n}.txt")))).IsTrue();
         await Assert.That(Enumerable.Range(0, 20).Any(n => File.Exists(Path.Combine(_outside, $"held{n}.txt")))).IsFalse();
         await Assert.That(Enumerable.Range(0, 200).All(n => File.Exists(Path.Combine(_outside, $"pool{n}.txt")))).IsTrue();
@@ -223,10 +223,10 @@ public class PermissionTests : IDisposable
         System.Environment.SetEnvironmentVariable("PLANG_TEST_SECRET", "s3cret");
         try
         {
-            var held = await Sh("echo \"secret=[$PLANG_TEST_SECRET] given=[$GIVEN] path=[$PATH]\"", Permissions(May("/granted", "read")),
+            var ran = await Sh("echo \"secret=[$PLANG_TEST_SECRET] given=[$GIVEN] path=[$PATH]\"", Permissions(May("/granted", "read")),
                 environment: new Dictionary<string, object?> { ["GIVEN"] = "ok" });
-            await held.IsSuccess();
-            var said = (await held.Value())?.ToString() ?? "";
+            await ran.IsSuccess();
+            var said = (await ran.Value())?.ToString() ?? "";
             await Assert.That(said).Contains("secret=[]");
             await Assert.That(said).Contains("given=[ok]");
             await Assert.That(said).Contains("/usr/bin");

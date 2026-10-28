@@ -40,13 +40,13 @@ public class DeclaredEventsTests : System.IAsyncDisposable
     [Test] public async Task TheWindowListsEvents_AreReachedByName_AnIndexIsAWindow()
     {
         var list = new global::app.module.window.type.window.list.@this(null!);
-        var held = new global::app.data.@this("windows", list, context: Ctx);
+        var windows = new global::app.data.@this("windows", list, context: Ctx);
 
-        var closed = await held.Get("on.closed");
+        var closed = await windows.Get("on.closed");
         await closed.IsSuccess();
-        var desktop = await held.Get("[0]");
+        var desktop = await windows.Get("[0]");
         await desktop.IsSuccess();   // [0], the desktop: an index is a window
-        var none = await held.Get("[7]");
+        var none = await windows.Get("[7]");
         await Assert.That((await none.Value())?.IsNull ?? true).IsTrue();   // no window 7: nothing (not found)
     }
 
@@ -59,8 +59,8 @@ public class DeclaredEventsTests : System.IAsyncDisposable
         await Assert.That(text.on["closed"]).IsNull();
         await Assert.That(window.on["click"]).IsNull();
 
-        var held = new global::app.data.@this("w", window, context: Ctx);
-        var refused = await (await held.Get("on")).Get("click");
+        var data = new global::app.data.@this("w", window, context: Ctx);
+        var refused = await (await data.Get("on")).Get("click");
         await refused.IsFailure();
         await Assert.That(refused.Error!.Key).IsEqualTo("EventNotFound");
         await Assert.That(refused.Error.Message).Contains("closed");

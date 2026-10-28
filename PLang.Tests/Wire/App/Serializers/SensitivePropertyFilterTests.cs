@@ -125,12 +125,12 @@ public class SensitivePropertyFilterTests
     [Test]
     public async Task Sensitive_InADebugDumpOfADict_IsMasked()
     {
-        var held = new Dictionary<string, object?>
+        var values = new Dictionary<string, object?>
         {
             ["id"] = new Identity(_app.type.list[typeof(global::app.module.identity.Identity)]) { Name = "test", PublicKey = "pubkey123", PrivateKey = "secret456" },
         };
 
-        var json = await global::app.type.item.@this.Create(held, _app.actor.list.User.Context).Debug(_app.actor.list.User.Context);
+        var json = await global::app.type.item.@this.Create(values, _app.actor.list.User.Context).Debug(_app.actor.list.User.Context);
 
         await Assert.That(json).DoesNotContain("secret456");
         await Assert.That(json).Contains("privateKey");

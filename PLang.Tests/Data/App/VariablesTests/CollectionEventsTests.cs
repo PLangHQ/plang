@@ -47,11 +47,11 @@ public class CollectionEventsTests : System.IAsyncDisposable
     public async Task TheSameDataSetAgain_FiresNothing()
     {
         var vars = new Variables(app.actor.list.User.Context);
-        var held = await vars.Set("name", "first");
+        var first = await vars.Set("name", "first");
         var sets = 0;
         app.@event.Add(app.variable.type).Add("set")![When.after].Add(side => new global::app.@event.binding.@this(side, (_, _, ctx) => { sets++; return Task.FromResult(ctx.Ok()); }, app.actor.list.User, Scope.app, global::app.@event.binding.@this.Always));
 
-        await vars.Set("name", held);
+        await vars.Set("name", first);
 
         await Assert.That(sets).IsEqualTo(0);
     }
