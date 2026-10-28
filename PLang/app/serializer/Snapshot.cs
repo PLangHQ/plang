@@ -19,8 +19,11 @@ public sealed class Snapshot : global::app.type.reader.ITypeReader
     {
         var name = reader.String();
         var context = ctx.Context;
-        // the app's name is its settings': read once the run's settings are, so the read finishes at once
-        var named = context.App.Name(context).AsTask().GetAwaiter().GetResult();
+        // the app's name is its settings', which the snapshot's read loaded before it began: answered without waiting
+        if (context.App.Name(context) is not { IsCompletedSuccessfully: true } read)
+            throw new global::app.error.DeclinedException(new global::app.error.@this(
+                "the app's name wasn't loaded before the snapshot was read", "SnapshotAppUnnamed", 500));
+        var named = read.Result;
         return string.Equals(named.ToString(), name, System.StringComparison.Ordinal)
             ? context.App
             : throw new global::app.error.DeclinedException(new global::app.error.@this(

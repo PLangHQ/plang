@@ -41,6 +41,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         // the read that follows finds what it names held. One opened and edited (a navigation) is written again first.
         try
         {
+            // the app's name, read now: what the snapshot names its app by is checked against it while the read can't wait
+            await app.Name(context);
             if ((value as global::app.type.item.wire.@this ?? await global::app.type.item.wire.@this.Of(value, View, context)) is { Raw: string raw })
             {
                 var loaded = await View.Load(app.type.list[typeof(global::app.@this)], raw, context);

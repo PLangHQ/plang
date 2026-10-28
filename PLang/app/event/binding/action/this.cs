@@ -21,13 +21,12 @@ public sealed class @this : global::app.@event.binding.@this
     }
 
     /// <summary>A binding read back from what it wrote (<see cref="Write"/>): whose it was, and the action that bound it,
-    /// each read as what it says it is. A row that doesn't read is refused, thrown to the read boundary.</summary>
+    /// each read as its member's type. A row that doesn't read is refused, thrown to the read boundary.</summary>
     internal @this(global::app.@event.binding.list.@this side, global::app.@event.@this @event,
         global::app.type.item.dict.@this record, global::app.actor.context.@this context)
         : this(side, @event, Kept<global::app.goal.step.action.@this>(record, "action", context),
             Kept<global::app.actor.@this>(record, "actor", context),
-            System.Enum.TryParse<global::app.@event.binding.Scope>(record.Get("scope", context)?.Peek()?.ToString(), ignoreCase: true, out var scope)
-                ? scope : throw Unread("scope"))
+            Kept<global::app.type.item.choice.@this<global::app.@event.binding.Scope>>(record, "scope", context).Value)
     { }
 
     /// <summary>The <c>on.event</c> action that bound it; what it runs is that action's <c>Action</c>, read when it fires.</summary>
@@ -56,9 +55,10 @@ public sealed class @this : global::app.@event.binding.@this
         finally { frame.Event = outer; }
     }
 
-    /// <summary>It writes whose it is and the action that bound it, each as what it is: <c>{actor, scope, action}</c>. An
-    /// action that names its call by a variable (<c>Action=%x%</c>) is refused: read back, the variable would be read again
-    /// where the event fires.</summary>
+    /// <summary>It writes whose it is and the action that bound it: <c>{actor, scope, action}</c>, each as its member's
+    /// type, the actor by what finds it. The action carries its type: the snapshot's load pass finds the goal it names only
+    /// through a typed row. An action that names its call by a variable (<c>Action=%x%</c>) is refused: read back, the
+    /// variable would be read again where the event fires.</summary>
     protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         if (action["action"]?.Value is { IsVariable: true })
@@ -68,19 +68,19 @@ public sealed class @this : global::app.@event.binding.@this
         var context = writer.Context;
         writer.BeginObject();
         writer.Name("actor");
-        await new global::app.data.@this("", Actor, context: context).Output(writer);
+        await Actor.Output(writer);
         writer.Name("scope");
-        writer.String(Scope.ToString());
+        await ((global::app.type.item.choice.@this<global::app.@event.binding.Scope>)Scope).Output(writer);
         writer.Name("action");
         await new global::app.data.@this("", action, context: context).Output(writer);
         writer.EndObject();
     }
 
-    // the member a saved binding's record keeps under name, read in the snapshot view as what it says it is
+    // the member a saved binding's record keeps under name, read in the snapshot view as its member's type
     private static T Kept<T>(global::app.type.item.dict.@this record, string name, global::app.actor.context.@this context)
         where T : global::app.type.item.@this
         => record.Get(name, context) is { } kept
-           && global::app.View.Snapshot.Make(kept.Type ?? context.App.type.list[typeof(T)], kept.Peek(), context) is T value
+           && global::app.View.Snapshot.Make(context.App.type.list[typeof(T)], kept.Peek(), context) is T value
             ? value : throw Unread(name);
 
     private static global::app.error.DeclinedException Unread(string name)

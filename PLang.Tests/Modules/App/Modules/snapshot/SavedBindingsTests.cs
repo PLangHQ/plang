@@ -68,6 +68,32 @@ public class SavedBindingsTests
         await Assert.That(await into.Variable.GetValue("logged")).IsEqualTo("yes");
     }
 
+    // the fresh app hasn't loaded the goal whose step bound: the snapshot's load pass loads it from its .pr, as it is
+    // named in the binding's action, before the binding is read
+    [Test]
+    public async Task ABinding_WhoseGoalTheFreshAppHasNotLoaded_LoadsIt_AndFires()
+    {
+        var root = Root();
+        await using var app = App(root);
+        var context = app.actor.list.User.Context;
+        var bound = Programs(app, "%!app.type.goal.on.start%", null);
+        await Bind(app, bound);
+        var text = await app.Snapshot(context).Saved().Text(context);
+        // only the goal that bound is on disk, built
+        var pr = System.IO.Path.Combine(root, bound.Pr!.Raw.TrimStart('/'));
+        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(pr)!);
+        await System.IO.File.WriteAllTextAsync(pr, await context.Pr(bound));
+
+        await using var fresh = App(root);
+        var into = fresh.actor.list.User.Context;
+        Program(fresh, "Log", Make.Action(into, "variable", "set", Make.Param(into, "Name", "logged", "variable"), ("Value", "yes")));
+        var inner = Program(fresh, "Inner", Make.Action(into, "variable", "set", Make.Param(into, "Name", "inner", "variable"), ("Value", "ran")));
+        await fresh.Restore(await into.Snapshot(text), into);
+
+        await (await inner.Start(into)).IsSuccess();
+        await Assert.That(await into.Variable.GetValue("logged")).IsEqualTo("yes");
+    }
+
     [Test]
     public async Task ABindingOnTheApp_IsSaved_AndComesBackOnTheAppItGoesOnIn()
     {
@@ -81,6 +107,23 @@ public class SavedBindingsTests
         await fresh.Restore(snapshot, fresh.actor.list.User.Context);
 
         await Assert.That(fresh.actor.list.User.on.Of(fresh)?.start.before.Count).IsEqualTo(1);
+    }
+
+    // a cold app, its settings on disk and not yet read: the snapshot's read loads the app's name before it reads what
+    // the snapshot names its app by
+    [Test]
+    public async Task ABindingOnTheApp_ComesBack_InAnAppThatHasNotReadItsSettings()
+    {
+        var root = Root();
+        await using var app = App(root);
+        await Bind(app, Programs(app, "%!app.on.start%", null));
+        var snapshot = await app.Snapshot(app.actor.list.User.Context).Saved();
+
+        await using var cold = new global::app.@this(root, global::PLang.Tests.Parent.Actor).TestSigning().TestIdentity();
+        Programs(cold, "%!app.on.start%", null);
+        await cold.Restore(snapshot, cold.actor.list.User.Context);
+
+        await Assert.That(cold.actor.list.User.on.Of(cold)?.start.before.Count).IsEqualTo(1);
     }
 
     // a module's own action (its catalog element) is written as what finds it, its module and name, and read back as it
