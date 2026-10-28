@@ -182,4 +182,72 @@ public class SnapshotEditLaunderProbeTests
         await Assert.That(refused.Error?.Key).IsEqualTo("SnapshotSignatureInvalid");
         await Assert.That(result.Success).IsTrue();
     }
+
+    // ---- snapshot 298: navigating and editing a held snapshot must change nothing live ----
+
+    // What a running program is, in the parts an edit must never reach: the goals' steps, the variables, the call stack.
+    private static async Task<string> Live(global::app.@this app, global::app.actor.context.@this context)
+    {
+        var goals = string.Join(";", app.goal.list.Items().OrderBy(g => g.Name).Select(g =>
+            g.Name + ":" + string.Join(",", g.Step.Items().Select(step => step.Index + "=" + step.Text))));
+        var vars = string.Join(";", new[] { "note", "x", "s0", "s1" }.Select(name => name + "=" + context.Variable.GetValue(name).GetAwaiter().GetResult()));
+        var depth = context.call.Current?.Depth.ToString() ?? "none";
+        await Task.CompletedTask;
+        return $"goals[{goals}] vars[{vars}] depth[{depth}]";
+    }
+
+    // K0: only OPENING the snapshot for navigation (a read, no set) changes nothing live.
+    [Test]
+    public async Task K0_NavigatingASnapshot_ChangesNothingLive()
+    {
+        await using var app = App();
+        var context = app.actor.list.User.Context;
+        await context.Variable.Set("snap", await Saved(app));
+        var before = await Live(app, context);
+
+        await (await context.Action("variable.set(Name=%seen%, Value=%snap.app.actor.list.user.context.call.current.caller.step.index%)")).Start(context);
+        await (await context.Action("variable.set(Name=%seen2%, Value=%snap.app.actor.list.user.context.variable.row.note%)")).Start(context);
+
+        await Assert.That(await Live(app, context)).IsEqualTo(before);
+    }
+
+    // K1: a navigation SET into the snapshot (the stop point, a variable) changes nothing live.
+    [Test]
+    [Arguments("variable.set(Name=%snap.app.actor.list.user.context.call.current.caller.step.index%, Value=\"2\")")]
+    [Arguments("variable.set(Name=%snap.app.actor.list.user.context.variable.row.note%, Value=\"EDITED\")")]
+    [Arguments("variable.set(Name=%snap.app.actor.list.user.context.call.current.index%, Value=\"2\")")]
+    public async Task K1_EditingASnapshot_ChangesNothingLive(string edit)
+    {
+        await using var app = App();
+        var context = app.actor.list.User.Context;
+        await context.Variable.Set("snap", await Saved(app));
+        var before = await Live(app, context);
+        var frame = context.call.Current;
+        var propertiesBefore = (frame?.Errors.Count ?? 0) + (frame?.Tags.Count ?? 0);
+
+        await (await context.Action(edit)).Start(context);
+
+        await Assert.That(await Live(app, context)).IsEqualTo(before);
+        await Assert.That((context.call.Current?.Errors.Count ?? 0) + (context.call.Current?.Tags.Count ?? 0)).IsEqualTo(propertiesBefore);
+    }
+
+    // K2: the re-written edited snapshot holds what was saved plus the edit: not the edit's own frame, nothing added.
+    [Test]
+    public async Task K2_AReWrittenEditedSnapshot_HoldsOnlyWhatWasSavedPlusTheEdit()
+    {
+        await using var app = App();
+        var context = app.actor.list.User.Context;
+        var saved = await Saved(app);
+        var original = System.Text.Encoding.UTF8.GetString(await Plang(saved, context));
+        await context.Variable.Set("snap", saved);
+
+        await (await context.Action(Edit)).Start(context);
+        var edited = System.Text.Encoding.UTF8.GetString(await Plang(await context.Variable.Get("snap"), context));
+
+        await TestContext.Current!.OutputWriter.WriteLineAsync($"K2 original.len={original.Length} edited.len={edited.Length} hasOwnFrame={edited.Contains("snap.app")}");
+        await Assert.That(edited).DoesNotContain("snap.app");
+        // the one change is the note: EDITED in, original out; the signature and hash are the only other bytes that differ
+        await Assert.That(edited.Contains("EDITED")).IsTrue();
+        await Assert.That(edited.Replace("EDITED", "original").Length).IsEqualTo(original.Length);
+    }
 }
