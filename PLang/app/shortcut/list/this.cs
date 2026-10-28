@@ -3,8 +3,9 @@ namespace app.shortcut.list;
 /// <summary>
 /// The app's shortcuts — <c>%!app.shortcut.list%</c>. Read once, at the first ask: each goal under
 /// <c>/system/shortcut/</c> first — the app's own copy before the os's, its name sealed — then each under the app's
-/// own <c>/shortcut/</c>, which adds names. An app goal there that claims a system name is refused, and a system
-/// shortcut whose goal doesn't load is its load's error: the read answers why, and so does every ask after it. A shortcut goal built after the read is not one
+/// own <c>/shortcut/</c>, which adds names. Each is its file: its goal is read when it is read, so one that doesn't
+/// load answers its own error and the others answer as they are. An app goal there that claims a system name is
+/// refused: the read answers why (and how to override it), and so does every ask after it. A shortcut goal built after the read is not one
 /// until the app starts again.
 /// </summary>
 public sealed class @this : global::app.type.item.list.@this<global::app.shortcut.@this>
@@ -35,21 +36,15 @@ public sealed class @this : global::app.type.item.list.@this<global::app.shortcu
         // the system's names, the app's /system/shortcut/ and the os's; each found as the goal list finds it
         var system = (await Names(global::app.type.item.path.@this.Resolve("/system/shortcut", context)))
             .Union(await Names(_app.filesystem.os.Combine("system").Combine("shortcut")), global::app.type.item.variable.list.@this.Comparer);
+        // each a shortcut of its .goal file; its goal is read when the shortcut is read
         foreach (var name in system)
-        {
-            // a system shortcut whose goal doesn't load is the read's answer, never left out: left out, its name would
-            // read as whatever else answers it (the app's member of that name)
-            var found = await _app.goal.list.Find("/system/shortcut/" + name);
-            if (found.Peek() is not global::app.goal.@this goal) return found.Error != null ? found : context.NotFound("/system/shortcut/" + name);
-            Add(new global::app.shortcut.@this(goal, Shortcut));
-        }
+            Add(new global::app.shortcut.@this(global::app.type.item.path.@this.Resolve("/system/shortcut/" + name + ".goal", context), Shortcut));
         foreach (var name in await Names(global::app.type.item.path.@this.Resolve("/shortcut", context)))
         {
-            if (await Goal("/shortcut/" + name) is not { } goal) continue;
-            var shortcut = new global::app.shortcut.@this(goal, Shortcut);
+            var shortcut = new global::app.shortcut.@this(global::app.type.item.path.@this.Resolve("/shortcut/" + name + ".goal", context), Shortcut);
             if (Items().FirstOrDefault(s => s.IsSystem && global::app.type.item.variable.list.@this.Comparer.Equals(s.Name, shortcut.Name)) is { } taken)
                 return context.Error(new global::app.error.@this(
-                    $"{goal.Path} names %!{shortcut.Name}%, a system shortcut ({taken.Goal.Path}) — to change it, write " +
+                    $"{shortcut.Path} names %!{shortcut.Name}%, a system shortcut ({taken.Path}) — to change it, write " +
                     $"/system/shortcut/{shortcut.Name}.goal; to add one, name it otherwise",
                     "ShortcutCollision", 400));
             Add(shortcut);
@@ -68,14 +63,5 @@ public sealed class @this : global::app.type.item.list.@this<global::app.shortcu
         var listed = await at.List("*.goal", recursive: false, context);
         if (!listed.Success || await listed.Value() is not { } files) return [];
         return files.Items().Select(f => f.Stem.ToString()).ToList();
-    }
-
-    // The goal the address names, found as a call finds it; one that doesn't load is left out, said on debug.
-    private async System.Threading.Tasks.Task<global::app.goal.@this?> Goal(string address)
-    {
-        var data = await _app.goal.list.Find(address);
-        if (data.Peek() is global::app.goal.@this goal) return goal;
-        await (_app.Debug?.Write($"shortcut: {address} left out — {data.Error?.Message ?? "not found"}") ?? System.Threading.Tasks.Task.CompletedTask);
-        return null;
     }
 }
