@@ -124,6 +124,27 @@
         }
       ],
       "after": { "status": "review written", "health": "fail (structure)", "notes": "coder next" }
+    },
+    {
+      "id": "6f1c2b9e-4d7a-4e3b-9a1f-2c8d5e7b0a41",
+      "bot": "architect",
+      "timestamp_start": "2026-10-28T00:00:00Z",
+      "timestamp_end": "2026-10-28T23:59:00Z",
+      "intent": "Direct the snapshot bot line through the one write (183-200), its reviews, the bench, and 10a's proposal; bring locked-core and plang-visible choices to Ingi.",
+      "before": { "assumptions": "The one write was built but uncommitted, waiting on Ingi's answer about the error's callback (199).", "risk": "Piling up mechanism or questions on Ingi; sketches that don't match the code." },
+      "plan": ".bot/snapshot/architect/summary.md",
+      "actions": [
+        { "paths": [".bot/snapshot/architect/summary.md"], "type": "decision", "category": "doc", "confidence": "high",
+          "context": "200: Ingi said yes to the error's callback (the run as it stands, going on from where the error happened); what's saved is .call, never 'frames'. error.CallFrames -> error.call asked." },
+        { "paths": ["PLang/app/this.Snapshot.cs", "PLang/app/call/list/this.Snapshot.cs", "PLang/app/View.cs", "PLang/app/type/item/kind/reflection/this.cs", "PLang/app/snapshot/this.cs"], "type": "review", "category": "code", "confidence": "high",
+          "context": "201-202: reviewed coder 35c1b3377 (the one write); six findings by pattern; fixes accepted at add1a0e4c; the View.Make overload and the pre-pass DLL door were declined." },
+        { "paths": ["PLang/app/event/on/", "PLang/app/type/item/kind/reflection/Tagged.cs"], "type": "decision", "category": "code", "confidence": "medium",
+          "context": "203-207: 10a proposal sent back twice (it reversed 190; a tag contradicted its own write method; a public actor.on would clash with item.on); the walk sees tagged non-public members instead (patch held until Ingi's yes)." },
+        { "paths": ["PLang/app/module/code/this.cs", "PLang.Tests/Shared/Testing.cs", "Tools/Bench/"], "type": "decision", "category": "code", "confidence": "high",
+          "context": "209-214: sub birth +6 KB traced by codeanalyzer to the bench's own Testing() (a refused Register's error thrown away), not plang; the harness is fixed; the code layer's read makes nothing and the bottom table is made at birth (no 'own' name)." }
+      ],
+      "after": { "status": "10a waits on Ingi (after error.call); the gate is green (C# 0 red in all six projects, plang 307/308).", "health": "good",
+        "notes": "Misses: I asked the coder to run the bench (it declined, rightly), and I named a cause for the 6 KB before it was measured. Added own/Own to the banned names." }
     }
   ]
 }
