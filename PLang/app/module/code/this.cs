@@ -73,7 +73,11 @@ public sealed partial class @this : IAsyncDisposable
     private table? _table;
     private readonly object _gate = new();
 
-    // The table as it is now: made, knowing what the code ships, on the first use — the one door every other reads
+    // The table a read finds: the bottom registry's, made on its first use (it holds what the code ships); a layer's only
+    // once something was written to it (a Register, a SetDefault) — until then a read walks to the maker, making nothing.
+    private table? Own => _under == null ? Table : System.Threading.Volatile.Read(ref _table);
+
+    // The table as it is now: made, knowing what the code ships, on the first use — the one door every write goes
     // through.
     private table Table
     {
@@ -143,14 +147,15 @@ public sealed partial class @this : IAsyncDisposable
 
     // The provider of providerType named name: this registry's, else its maker's; null when neither holds one.
     private ICode? Find(System.Type providerType, string name)
-        => Table.Of(providerType) is { } typeDict && typeDict.TryGetValue(name, out var provider) ? provider
+        => Own?.Of(providerType) is { } typeDict && typeDict.TryGetValue(name, out var provider) ? provider
             : _under?.Find(providerType, name);
 
     // The default provider of providerType: the one this registry set, else its maker's; null when there is none.
     private ICode? Default(System.Type providerType)
     {
-        Table.Of(providerType);
-        return Table.Defaults.TryGetValue(providerType, out var name) ? Find(providerType, name) : _under?.Default(providerType);
+        var own = Own;
+        own?.Of(providerType);
+        return own != null && own.Defaults.TryGetValue(providerType, out var name) ? Find(providerType, name) : _under?.Default(providerType);
     }
 
     /// <summary>
@@ -183,11 +188,13 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public IReadOnlyList<ICode> List()
     {
-        var table = Table;
-        foreach (var type in table.Shipped.Keys) table.Of(type);
         var result = new List<ICode>();
-        foreach (var typeDict in table.Providers.Values)
-            result.AddRange(typeDict.Values);
+        if (Own is { } table)
+        {
+            foreach (var type in table.Shipped.Keys) table.Of(type);
+            foreach (var typeDict in table.Providers.Values)
+                result.AddRange(typeDict.Values);
+        }
         if (_under != null)
             result.AddRange(_under.List().Where(provider => !result.Any(own => own.Name.Equals(provider.Name, StringComparison.OrdinalIgnoreCase))));
         return result;
@@ -205,7 +212,7 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     /// <remarks>Answered from what the code ships and what was made, making nothing.</remarks>
     public bool Has<T>() where T : class, ICode
-        => Table.Shipped.ContainsKey(typeof(T)) || Table.Providers.TryGetValue(typeof(T), out var typeDict) && !typeDict.IsEmpty
+        => Own is { } table && (table.Shipped.ContainsKey(typeof(T)) || table.Providers.TryGetValue(typeof(T), out var typeDict) && !typeDict.IsEmpty)
             || _under?.Has<T>() == true;
 
     // --- Non-generic methods (single source of truth) ---
@@ -239,7 +246,7 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public IReadOnlyList<ICode> List(System.Type providerType)
     {
-        var own = Table.Of(providerType) is { } typeDict ? typeDict.Values.ToList() : new List<ICode>();
+        var own = Own?.Of(providerType) is { } typeDict ? typeDict.Values.ToList() : new List<ICode>();
         if (_under != null)
             own.AddRange(_under.List(providerType).Where(provider => !own.Any(o => o.Name.Equals(provider.Name, StringComparison.OrdinalIgnoreCase))));
         return own;
@@ -257,7 +264,7 @@ public sealed partial class @this : IAsyncDisposable
             return Context.Error(new ActionError($"Cannot remove default provider '{name}'. Set another as default first.", "CannotRemoveDefault", 400));
 
         // a layer removes only its own: its maker's providers are never written through it
-        if (Table.Of(providerType) is not { } typeDict || !typeDict.ContainsKey(name))
+        if (Own?.Of(providerType) is not { } typeDict || !typeDict.ContainsKey(name))
             return Context.Error(new ActionError(Find(providerType, name) == null
                 ? $"Provider '{name}' not found"
                 : $"Provider '{name}' is the app's maker's: an app removes only a provider it registered itself", "ProviderNotFound", 404));
