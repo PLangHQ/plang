@@ -136,7 +136,7 @@ public class AddedPropertyTests
     }
 
     [Test]
-    public async Task AnOwnMember_IsNeverWrittenOver_NorShadowed()
+    public async Task AReadOnlyMember_IsNeverWrittenOver_NorShadowed()
     {
         await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
@@ -144,7 +144,7 @@ public class AddedPropertyTests
         var set = await Set(ctx, "%!app.module%", ctx.Text("mine"));
 
         await set.IsFailure();
-        await Assert.That(set.Error!.Key).IsEqualTo("OwnMember");
+        await Assert.That(set.Error!.Key).IsEqualTo("ReadOnly");
         await Assert.That(await Read(ctx, "%!app.module%")).IsNotEqualTo("mine");
     }
 

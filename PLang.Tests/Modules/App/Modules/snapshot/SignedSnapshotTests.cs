@@ -292,7 +292,7 @@ public class SignedSnapshotTests
         var reached = await (await context.Action("variable.set(Name=%snap.app.actor.list.user.context.call.current.caller.step.index%, Value=2)")).Start(context);
 
         await reached.IsFailure();
-        await Assert.That(reached.Error!.Key).IsEqualTo("OwnMember");
+        await Assert.That(reached.Error!.Key).IsEqualTo("ReadOnly");
 
         // nor a goal or step a program holds: its name, a step's place and text are the goal's, every app's that shares it
         await context.Variable.Set("g", step.Goal);
@@ -302,7 +302,7 @@ public class SignedSnapshotTests
         {
             var write = await (await context.Action(line)).Start(context);
             await write.IsFailure();
-            await Assert.That(write.Error!.Key).IsEqualTo("OwnMember");
+            await Assert.That(write.Error!.Key).IsEqualTo("ReadOnly");
         }
         await Assert.That(step.Goal!.Name).IsEqualTo("G");
         await Assert.That(step.Index).IsEqualTo(1);

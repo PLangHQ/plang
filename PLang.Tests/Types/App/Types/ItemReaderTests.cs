@@ -79,7 +79,7 @@ public class ItemReaderTests : System.IAsyncDisposable
         var answer = await Box().Set("label", false, new global::app.type.item.text.@this("x", _app.type.list["text"]), Ctx);
 
         await answer.IsFailure();
-        await Assert.That(answer.Error!.Key).IsEqualTo("OwnMember");
+        await Assert.That(answer.Error!.Key).IsEqualTo("ReadOnly");
     }
 
     // a list of a record type holds that type: each element read by the element type's reader, Record when it has none
