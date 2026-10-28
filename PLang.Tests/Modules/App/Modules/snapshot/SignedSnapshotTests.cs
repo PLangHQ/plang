@@ -358,6 +358,7 @@ public class SignedSnapshotTests
 
         var was = WithoutSignature(System.Text.Json.Nodes.JsonNode.Parse(original))!.ToJsonString();
         var now = WithoutSignature(System.Text.Json.Nodes.JsonNode.Parse(edited))!.ToJsonString();
+        await Assert.That(was).DoesNotContain("\"app\":\"");    // the app written whole where it lives, never its key
         await Assert.That(now).Contains("\"note\":\"EDITED\"");
         await Assert.That(now.Replace("\"EDITED\"", "\"original\"")).IsEqualTo(was);
     }
