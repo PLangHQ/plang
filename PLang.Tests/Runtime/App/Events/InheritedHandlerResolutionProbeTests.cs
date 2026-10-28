@@ -33,10 +33,11 @@ public class InheritedHandlerResolutionProbeTests
         await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(folder, name + ".goal"), name + "\n");
     }
 
-    // A maker's handler goal calls Helper (another file). The child has its own Helper, already loaded. Which one does the
-    // call select, seen from the maker's handler goal, in the child's goal list (where goal.call looks it up)?
+    // Pinned by Ingi's ruling (snapshot 265): "it's fine that a sub app can have a checkpolicy and overwrite". A maker's handler
+    // goal calls Helper; the child's own Helper answers, as layers let a sub app override. So policy that must hold in a sub
+    // app is not built on an inherited handler's calls.
     [Test]
-    public async Task AHandlersNestedCall_IsNotShadowedBy_AChildsOwnGoalOfTheSameName()
+    public async Task AHandlersNestedCall_IsAnsweredBy_AChildsOwnGoalOfTheSameName_ByDesign()
     {
         var maker = new global::app.@this(_dir, global::PLang.Tests.Parent.Actor).Testing();
         await using var _m = maker;
@@ -54,7 +55,32 @@ public class InheritedHandlerResolutionProbeTests
 
         await Assert.That(found.Error?.Message ?? "ok").IsEqualTo("ok");
         var path = (found.Peek() as PLangGoal)?.Path?.Absolute.Replace('\\', '/') ?? "";
-        await Assert.That(path).DoesNotContain("/sub/");
+        await Assert.That(path).Contains("/sub/");
+    }
+
+    // Within ONE app: two loaded goals named Helper, in different folders. A bare name from a caller beside one selects that
+    // one, and an app-absolute `/Helper` is exactly /Helper.goal, never another folder's Helper by its suffix.
+    [Test]
+    public async Task InOneApp_ABareNamePrefersTheGoalBesideItsCaller_AndASlashAddressMatchesExactly()
+    {
+        var maker = new global::app.@this(_dir, global::PLang.Tests.Parent.Actor).Testing();
+        await using var _m = maker;
+        var other = System.IO.Path.Combine(_dir, "other");
+        await Write(maker, other, "Helper");
+        await Write(maker, _dir, "Helper");
+        var ctx = maker.actor.list.User.Context;
+        // the other folder's Helper is the one loaded last
+        await maker.goal.list.Find("/Helper", null);
+        await maker.goal.list.Find("/other/Helper", null);
+
+        var caller = new PLangGoal(maker.type.list) { Name = "Caller", Path = global::app.type.item.path.@this.Resolve("/Caller.goal", ctx) };
+        var bare = await maker.goal.list.Find("Helper", caller);
+        var slash = await maker.goal.list.Find("/Helper", null);
+
+        await Assert.That(bare.Error?.Message ?? "ok").IsEqualTo("ok");
+        await Assert.That((bare.Peek() as PLangGoal)?.Path?.Absolute.Replace('\\', '/') ?? "").DoesNotContain("/other/");
+        await Assert.That(slash.Error?.Message ?? "ok").IsEqualTo("ok");
+        await Assert.That((slash.Peek() as PLangGoal)?.Path?.Absolute.Replace('\\', '/') ?? "").DoesNotContain("/other/");
     }
 
     // The handler itself: found in the maker's own app (Actor.App), so a child's goal of the same name never answers.
