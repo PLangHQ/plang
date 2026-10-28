@@ -118,6 +118,53 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         await Assert.That(((ICode)signing.Provider!).Name).IsEqualTo("test-signing");
     }
 
+    // What a run took in is the run's: a DLL it loaded comes back in a fresh app, and its provider answers there. Read
+    // only through what the app answers, never the snapshot's layout. Plain apps: a test app's own signing mock answers
+    // to the fixture provider's name.
+    [Test]
+    public async Task ADllTheRunLoaded_ComesBackInAFreshApp_AndItsProviderAnswers()
+    {
+        var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-dll-" + System.Guid.NewGuid().ToString("N")[..8]);
+        await using var src = new global::app.@this(root + "-src");
+        src.TestIdentity();
+        var context = src.actor.list.User.Context;
+        await Load(src, TestProviderDll);
+        var text = await src.Snapshot(context).Saved().Text(context);
+
+        await using var dst = new global::app.@this(root + "-dst");
+        dst.TestIdentity();
+        var into = dst.actor.list.User.Context;
+        await Granted(dst, TestProviderDll);
+        await Assert.That(dst.Code.Get<global::app.module.signing.code.ISigning>("test-signing").Provider).IsNull();
+        await dst.Restore(await into.Snapshot(text), into);
+
+        var signing = dst.Code.Get<global::app.module.signing.code.ISigning>("test-signing");
+        await Assert.That(signing.Error).IsNull();
+        await Assert.That(((ICode)signing.Provider!).Name).IsEqualTo("test-signing");
+    }
+
+    // A DLL added for its modules comes back added again in a fresh app: what it brought answers there.
+    [Test]
+    public async Task ADllTheRunAdded_ComesBackInAFreshApp_AndWhatItBroughtAnswers()
+    {
+        var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
+        var context = src.actor.list.User.Context;
+        await (await new global::app.module.module.Add(context)
+        {
+            Path = context.Ok<global::app.type.item.path.@this>(await Granted(src, TypeProviderDll)),
+            Namespace = context.Ok<global::app.type.item.text.@this>(new global::app.type.item.text.@this("TypeProvider", src.type.list["text"])),
+        }.Start()).IsSuccess();
+        var text = await src.Snapshot(context).Saved().Text(context);
+
+        var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
+        var into = dst.actor.list.User.Context;
+        await Granted(dst, TypeProviderDll);
+        await Assert.That(dst.type.list.Contains("money")).IsFalse();
+        await dst.Restore(await into.Snapshot(text), into);
+
+        await Assert.That(dst.type.list.Contains("money")).IsTrue();
+    }
+
     [Test]
     public async Task Code_Start_ADllThatWontLoad_IsTheAnswer()
     {
