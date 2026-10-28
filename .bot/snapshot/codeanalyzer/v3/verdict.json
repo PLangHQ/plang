@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "1268c81f7: sub request +18 KB (band 10) from d67194934: every action frame runs action.Index, a linear search that allocates ~1.6 KB per call; births, root request, held, ptest 301/0, sweep red none; the rest low" }
