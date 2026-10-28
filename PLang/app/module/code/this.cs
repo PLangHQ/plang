@@ -29,12 +29,16 @@ public sealed partial class @this : IAsyncDisposable
     private readonly @this? _under;
 
     /// <summary>The registry of <paramref name="context"/>'s app, a layer over <paramref name="under"/> (a sub app's
-    /// maker's), or, with none under it, holding the built-in providers — registered at its first use, so an app that
-    /// asks for none makes none.</summary>
+    /// maker's), or, with none under it, holding what the code ships — each provider made the first time it is asked
+    /// for, so an app that asks for none makes none.</summary>
     internal @this(actor.context.@this context, @this? under)
     {
         Context = context;
         _under = under;
+        if (under != null) return;
+        var table = new table();
+        Ship(table);
+        _table = table;
     }
 
     // The registry's table, made at its first use, knowing what the code ships for each interface.
@@ -70,29 +74,18 @@ public sealed partial class @this : IAsyncDisposable
         }
     }
 
-    private table? _table;
+    // The registry's table: the bottom's made at its birth, holding what the code ships; a layer's made by its first
+    // write (a Register, a SetDefault) — until then null, and a read walks to the maker, making nothing.
+    private volatile table? _table;
     private readonly object _gate = new();
 
-    // The table a read finds: the bottom registry's, made on its first use (it holds what the code ships); a layer's only
-    // once something was written to it (a Register, a SetDefault) — until then a read walks to the maker, making nothing.
-    private table? Own => _under == null ? Table : System.Threading.Volatile.Read(ref _table);
-
-    // The table as it is now: made, knowing what the code ships, on the first use — the one door every write goes
-    // through.
+    // The table a write goes into: a layer's made on its first write.
     private table Table
     {
         get
         {
-            if (System.Threading.Volatile.Read(ref _table) is { } table) return table;
-            lock (_gate)
-            {
-                if (_table is { } again) return again;
-                table = new table();
-                // what the code ships is the bottom registry's: a layer finds it there
-                if (_under == null) Ship(table);
-                System.Threading.Volatile.Write(ref _table, table);
-                return table;
-            }
+            if (_table is { } table) return table;
+            lock (_gate) return _table ??= new table();
         }
     }
 
@@ -105,7 +98,7 @@ public sealed partial class @this : IAsyncDisposable
         if (_disposed) return;
         _disposed = true;
         // a registry never used made no provider, so it has none to dispose
-        if (System.Threading.Volatile.Read(ref _table) is not { } table) return;
+        if (_table is not { } table) return;
         foreach (var provider in table.Providers.Values.SelectMany(p => p.Values))
         {
             if (provider is IAsyncDisposable asyncProv)
@@ -147,15 +140,15 @@ public sealed partial class @this : IAsyncDisposable
 
     // The provider of providerType named name: this registry's, else its maker's; null when neither holds one.
     private ICode? Find(System.Type providerType, string name)
-        => Own?.Of(providerType) is { } typeDict && typeDict.TryGetValue(name, out var provider) ? provider
+        => _table?.Of(providerType) is { } typeDict && typeDict.TryGetValue(name, out var provider) ? provider
             : _under?.Find(providerType, name);
 
     // The default provider of providerType: the one this registry set, else its maker's; null when there is none.
     private ICode? Default(System.Type providerType)
     {
-        var own = Own;
-        own?.Of(providerType);
-        return own != null && own.Defaults.TryGetValue(providerType, out var name) ? Find(providerType, name) : _under?.Default(providerType);
+        var table = _table;
+        table?.Of(providerType);
+        return table != null && table.Defaults.TryGetValue(providerType, out var name) ? Find(providerType, name) : _under?.Default(providerType);
     }
 
     /// <summary>
@@ -189,14 +182,14 @@ public sealed partial class @this : IAsyncDisposable
     public IReadOnlyList<ICode> List()
     {
         var result = new List<ICode>();
-        if (Own is { } table)
+        if (_table is { } table)
         {
             foreach (var type in table.Shipped.Keys) table.Of(type);
             foreach (var typeDict in table.Providers.Values)
                 result.AddRange(typeDict.Values);
         }
         if (_under != null)
-            result.AddRange(_under.List().Where(provider => !result.Any(own => own.Name.Equals(provider.Name, StringComparison.OrdinalIgnoreCase))));
+            result.AddRange(_under.List().Where(provider => !result.Any(registered => registered.Name.Equals(provider.Name, StringComparison.OrdinalIgnoreCase))));
         return result;
     }
 
@@ -204,7 +197,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Iterates the provider instances made so far, across all types: one the code ships and nothing asked for is
     /// none of them. Used for disposal and inspection.
     /// </summary>
-    public IEnumerable<ICode> All() => (System.Threading.Volatile.Read(ref _table)?.Providers.Values ?? [])
+    public IEnumerable<ICode> All() => (_table?.Providers.Values ?? [])
         .SelectMany(dict => dict.Values);
 
     /// <summary>
@@ -212,7 +205,7 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     /// <remarks>Answered from what the code ships and what was made, making nothing.</remarks>
     public bool Has<T>() where T : class, ICode
-        => Own is { } table && (table.Shipped.ContainsKey(typeof(T)) || table.Providers.TryGetValue(typeof(T), out var typeDict) && !typeDict.IsEmpty)
+        => _table is { } table && (table.Shipped.ContainsKey(typeof(T)) || table.Providers.TryGetValue(typeof(T), out var typeDict) && !typeDict.IsEmpty)
             || _under?.Has<T>() == true;
 
     // --- Non-generic methods (single source of truth) ---
@@ -246,10 +239,10 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public IReadOnlyList<ICode> List(System.Type providerType)
     {
-        var own = Own?.Of(providerType) is { } typeDict ? typeDict.Values.ToList() : new List<ICode>();
+        var providers = _table?.Of(providerType) is { } typeDict ? typeDict.Values.ToList() : new List<ICode>();
         if (_under != null)
-            own.AddRange(_under.List(providerType).Where(provider => !own.Any(o => o.Name.Equals(provider.Name, StringComparison.OrdinalIgnoreCase))));
-        return own;
+            providers.AddRange(_under.List(providerType).Where(provider => !providers.Any(registered => registered.Name.Equals(provider.Name, StringComparison.OrdinalIgnoreCase))));
+        return providers;
     }
 
     /// <summary>
@@ -264,7 +257,7 @@ public sealed partial class @this : IAsyncDisposable
             return Context.Error(new ActionError($"Cannot remove default provider '{name}'. Set another as default first.", "CannotRemoveDefault", 400));
 
         // a layer removes only its own: its maker's providers are never written through it
-        if (Own?.Of(providerType) is not { } typeDict || !typeDict.ContainsKey(name))
+        if (_table?.Of(providerType) is not { } typeDict || !typeDict.ContainsKey(name))
             return Context.Error(new ActionError(Find(providerType, name) == null
                 ? $"Provider '{name}' not found"
                 : $"Provider '{name}' is the app's maker's: an app removes only a provider it registered itself", "ProviderNotFound", 404));

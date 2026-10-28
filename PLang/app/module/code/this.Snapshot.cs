@@ -25,7 +25,7 @@ public sealed partial class @this
         {
             var types = Context.App.type.list;
             var kinds = new global::app.type.item.dict.@this(types[typeof(global::app.type.item.dict.@this)]);
-            if (System.Threading.Volatile.Read(ref _table) is not { } table) return kinds;
+            if (_table is not { } table) return kinds;
             foreach (var (type, providers) in table.Providers)
             {
                 var names = providers.Where(named => !named.Value.IsBuiltIn && named.Value.Source == null)
@@ -48,7 +48,7 @@ public sealed partial class @this
         {
             var types = Context.App.type.list;
             var chosen = new global::app.type.item.dict.@this(types[typeof(global::app.type.item.dict.@this)]);
-            if (System.Threading.Volatile.Read(ref _table) is not { } table) return chosen;
+            if (_table is not { } table) return chosen;
             foreach (var (type, name) in table.Defaults)
             {
                 table.BuiltIn.TryGetValue(type, out var builtIn);
