@@ -1,0 +1,124 @@
+diff --git a/PLang.Tests/Wire/App/Serialization/FormalReaderTests.cs b/PLang.Tests/Wire/App/Serialization/FormalReaderTests.cs
+index 94f21d90d..eb8b080f2 100644
+--- a/PLang.Tests/Wire/App/Serialization/FormalReaderTests.cs
++++ b/PLang.Tests/Wire/App/Serialization/FormalReaderTests.cs
+@@ -153,7 +153,7 @@ public class FormalReaderTests : System.IAsyncDisposable
+         var bound = await goal.Step[0].Code[0].Start(ctx);
+ 
+         await bound.IsSuccess();
+-        await Assert.That(await bound.Value()).IsTypeOf<global::app.@event.binding.action.@this>();
++        await Assert.That(await bound.Value()).IsTypeOf<global::app.@event.action.@this>();
+     }
+ 
+     // a value made from a dict of literal members keeps them through a real .pr load
+diff --git a/PLang/app/event/binding/action/this.cs b/PLang/app/event/action/this.cs
+similarity index 99%
+rename from PLang/app/event/binding/action/this.cs
+rename to PLang/app/event/action/this.cs
+index 0568f1009..a0a3d46dc 100644
+--- a/PLang/app/event/binding/action/this.cs
++++ b/PLang/app/event/action/this.cs
+@@ -1,4 +1,4 @@
+-namespace app.@event.binding.action;
++namespace app.@event.action;
+ 
+ /// <summary>
+ /// A binding a program made (<c>on.event</c>): it holds the <c>on.event</c> action that bound it, and runs that action's
+diff --git a/PLang/app/event/binding/clause/this.cs b/PLang/app/event/clause/this.cs
+similarity index 97%
+rename from PLang/app/event/binding/clause/this.cs
+rename to PLang/app/event/clause/this.cs
+index 42025a1f9..4879f893b 100644
+--- a/PLang/app/event/binding/clause/this.cs
++++ b/PLang/app/event/clause/this.cs
+@@ -1,4 +1,4 @@
+-namespace app.@event.binding.clause;
++namespace app.@event.clause;
+ 
+ /// <summary>
+ /// A binding that runs a clause — the program's <c>on.error</c>, <c>on.cache</c>, <c>on.timeout</c> — on the
+diff --git a/PLang/app/event/on/list/this.cs b/PLang/app/event/on/list/this.cs
+index 612ff0464..60dc7a1d2 100644
+--- a/PLang/app/event/on/list/this.cs
++++ b/PLang/app/event/on/list/this.cs
+@@ -51,8 +51,8 @@ internal sealed class @this
+                     if (events.Bound(name) is { } @event)
+                         foreach (var when in System.Enum.GetValues<When>())
+                             foreach (var binding in @event[when])
+-                                if (binding is binding.action.@this saved)
+-                                    held[name]![when].Add(side => new binding.action.@this(side, held[name]!, saved.action, saved.Actor, saved.Scope));
++                                if (binding is global::app.@event.action.@this saved)
++                                    held[name]![when].Add(side => new global::app.@event.action.@this(side, held[name]!, saved.action, saved.Actor, saved.Scope));
+             }
+         }
+     }
+diff --git a/PLang/app/event/on/this.cs b/PLang/app/event/on/this.cs
+index bb28cb214..d87c021c3 100644
+--- a/PLang/app/event/on/this.cs
++++ b/PLang/app/event/on/this.cs
+@@ -175,7 +175,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
+                 {
+                     if (binding.Peek() is not global::app.type.item.dict.@this saved)
+                         return Declined(data, $"a saved binding on '{row.Name}' is no record");
+-                    @event[when].Add(list => new binding.action.@this(list, @event, saved, context));
++                    @event[when].Add(list => new global::app.@event.action.@this(list, @event, saved, context));
+                 }
+             }
+         }
+diff --git a/PLang/app/module/on/cache.cs b/PLang/app/module/on/cache.cs
+index 2293acd42..da6efd626 100644
+--- a/PLang/app/module/on/cache.cs
++++ b/PLang/app/module/on/cache.cs
+@@ -20,9 +20,9 @@ public partial class OnCache : IContext, IClause
+ 
+     public void Bind(global::app.goal.step.action.@this clause, global::app.goal.step.action.@this action, global::app.@event.on.@this on)
+     {
+-        on.start.before.Add(side => new global::app.@event.binding.clause.@this(
++        on.start.before.Add(side => new global::app.@event.clause.@this(
+             side, clause, action, (handler, _, result, context) => ((OnCache)handler).Begin(result, context)));
+-        on.start.after.Add(side => new global::app.@event.binding.clause.@this(
++        on.start.after.Add(side => new global::app.@event.clause.@this(
+             side, clause, action, (handler, _, result, context) => ((OnCache)handler).End(result, context)));
+     }
+ 
+diff --git a/PLang/app/module/on/error.cs b/PLang/app/module/on/error.cs
+index fb2dff598..06da72a37 100644
+--- a/PLang/app/module/on/error.cs
++++ b/PLang/app/module/on/error.cs
+@@ -48,7 +48,7 @@ public partial class OnError : IContext, IClause, IAction
+     }
+ 
+     public void Bind(Action clause, Action action, global::app.@event.on.@this on)
+-        => on.error.before.Add(side => new global::app.@event.binding.clause.@this(
++        => on.error.before.Add(side => new global::app.@event.clause.@this(
+             side, clause, action, (handler, a, failed, context) => ((OnError)handler).Catch(a, failed, context)));
+ 
+     /// <summary>This clause's answer to <paramref name="action"/>'s failure: the failure itself, handed back, when
+diff --git a/PLang/app/module/on/event.cs b/PLang/app/module/on/event.cs
+index 5cefd0f78..2b39fd4c3 100644
+--- a/PLang/app/module/on/event.cs
++++ b/PLang/app/module/on/event.cs
+@@ -75,6 +75,6 @@ public partial class OnEvent : IContext
+         var @event = actor.on[item][named.Name]!;
+         return data.@this<global::app.@event.binding.@this>.From(await When.Use(when => Scope.Use(scope => Action.Use(_ =>
+             Task.FromResult<data.@this>(Context.Ok<global::app.@event.binding.@this>(@event[when.Value].Add(side =>
+-                new global::app.@event.binding.action.@this(side, @event, __action!, actor, scope.Value))))))));
++                new global::app.@event.action.@this(side, @event, __action!, actor, scope.Value))))))));
+     }
+ }
+diff --git a/PLang/app/module/on/timeout.cs b/PLang/app/module/on/timeout.cs
+index 2a046b69c..79843fca6 100644
+--- a/PLang/app/module/on/timeout.cs
++++ b/PLang/app/module/on/timeout.cs
+@@ -18,9 +18,9 @@ public partial class OnTimeout : IContext, IClause
+ 
+     public void Bind(global::app.goal.step.action.@this clause, global::app.goal.step.action.@this action, global::app.@event.on.@this on)
+     {
+-        on.start.before.Add(side => new global::app.@event.binding.clause.@this(
++        on.start.before.Add(side => new global::app.@event.clause.@this(
+             side, clause, action, (handler, _, result, context) => ((OnTimeout)handler).Begin(result, context)));
+-        on.start.after.Add(side => new global::app.@event.binding.clause.@this(
++        on.start.after.Add(side => new global::app.@event.clause.@this(
+             side, clause, action, (handler, _, result, context) => ((OnTimeout)handler).End(result, context)));
+     }
+ 
