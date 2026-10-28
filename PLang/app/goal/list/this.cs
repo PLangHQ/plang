@@ -214,10 +214,11 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
 
         // a name is the goal beside its caller before any other of that name: one already read there, then one there on
         // disk; only then one read anywhere, then the app root's
-        if (caller?.Folder is { } held && Goal(name, held) is { } beside) return context.Ok(beside);
+        var folder = caller?.Folder;
+        if (folder != null && Goal(name, folder) is { } beside) return context.Ok(beside);
 
         var source = name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase) ? name : name + ".goal";
-        if (!source.StartsWith('/') && !source.StartsWith('\\') && caller?.Folder is { } folder)
+        if (!source.StartsWith('/') && !source.StartsWith('\\') && folder != null)
         {
             // a bare name looks in the caller's own folder only; a slash-qualified one walks up to the root's
             var walks = source.Contains('/') || source.Contains('\\');
@@ -287,22 +288,22 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     {
         if (name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase)) name = name[..^5];
         var goals = Items().Where(g => !g.IsSetup && (folder == null || Equals(g.Folder, folder))).Reverse().ToList();
-        var address = name.StartsWith('/') || name.StartsWith('\\');
+        var isAddress = name.StartsWith('/') || name.StartsWith('\\');
 
-        if (!address && goals.FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) is { } named)
+        if (!isAddress && goals.FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) is { } named)
             return named;
 
         var leaf = name.TrimStart('/', '\\').Replace('\\', '/');
         bool Written(string? canonical) => canonical != null
             && (canonical.Equals("/" + leaf, StringComparison.OrdinalIgnoreCase)
                 || canonical.Equals("/" + leaf + ".goal", StringComparison.OrdinalIgnoreCase)
-                || (!address && (canonical.Equals(leaf, StringComparison.OrdinalIgnoreCase)
+                || (!isAddress && (canonical.Equals(leaf, StringComparison.OrdinalIgnoreCase)
                     || canonical.Equals(leaf + ".goal", StringComparison.OrdinalIgnoreCase))));
         if (goals.FirstOrDefault(g => Written(g.Path?.ToString().Replace('\\', '/'))
                                      || Written(g.Pr?.ToString().Replace('\\', '/'))) is { } byPath)
             return byPath;
 
-        if (!address && (name.Contains('/') || name.Contains('\\')))
+        if (!isAddress && (name.Contains('/') || name.Contains('\\')))
         {
             var qualified = "/" + leaf;
             var leafName = qualified[(qualified.LastIndexOf('/') + 1)..];
