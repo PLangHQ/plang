@@ -42,7 +42,7 @@ Ingi: "that is the path, app.event.goal.start.before". On snapshot, `%!app.event
 
 ## A binding chooses whether it reaches sub apps (snapshot 249–250)
 
-Ingi: "yes, each binding". On snapshot every binding reaches (the default), and a sub app takes each in at birth as an inherited binding. This branch adds the plang option on on.event (proposed `Sub: inherit | none`, name pending Ingi), held on the binding, and the sub app's birth takes in only the bindings that say `inherit`. A new action property is a catalog change: it re-pins PickListTests, and ModulePageTests if `on/event.notes.md` gets a line. The notes also get security's rule: enforce in `before`; an `after` observes.
+Ingi: "yes, each binding". On snapshot every binding reaches (the default), and a sub app takes each in at birth as an inherited binding. This branch adds the plang option on on.event (proposed `Sub: inherit | none`, name pending Ingi), held on the binding, and the sub app's birth takes in only the bindings that say `inherit`. A new action property is a catalog change: it re-pins PickListTests, and ModulePageTests if `on/event.notes.md` gets a line. The notes also get security's rule: enforce in `before`; an `after` observes. And Ingi's ruling (snapshot 265): a handler inherited into a sub app calls the sub app's goals, which the sub app can replace with its own, so policy that must hold in a sub app isn't built on an inherited handler's calls.
 
 ## Older problems that go with it (snapshot 230, items 7 and 8)
 
