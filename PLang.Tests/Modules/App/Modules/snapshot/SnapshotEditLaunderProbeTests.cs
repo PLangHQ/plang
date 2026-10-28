@@ -141,4 +141,23 @@ public class SnapshotEditLaunderProbeTests
         await TestContext.Current!.OutputWriter.WriteLineAsync($"G text.has original={text.Contains("original")} read.Success={read.Success} signed={read.Signature != null} resume.Success={result.Success} note={note}");
         await Assert.That(note).IsNotEqualTo("EDITED!!");
     }
+
+    // I: Ingi's ruling (snapshot 287): an edit is resumed only after the program signs it again, explicitly (`sign %snap%`).
+    [Test]
+    public async Task I_EditThenSign_ThenResume_GoesOn_AndEditThenResume_IsRefused()
+    {
+        await using var app = App();
+        var context = app.actor.list.User.Context;
+        await context.Variable.Set("snap", await Saved(app));
+        await (await context.Action(Edit)).Start(context);
+
+        var refused = await (await context.Action("snapshot.resume(Snapshot=%snap%)")).Start(context);
+        var signed = await (await context.Action("signing.sign(Data=%snap%)")).Start(context);
+        await context.Variable.Set("snap", signed);
+        var result = await (await context.Action("snapshot.resume(Snapshot=%snap%)")).Start(context);
+
+        var note = result.Success ? (await (await result.Get("note")).Value())?.ToString() : "REFUSED:" + result.Error!.Key;
+        await TestContext.Current!.OutputWriter.WriteLineAsync($"I before={refused.Error?.Key} sign.Success={signed.Success} sign.err={signed.Error?.Key} resume.Success={result.Success} note={note}");
+        await Assert.That(refused.Error?.Key).IsEqualTo("SnapshotSignatureInvalid");
+    }
 }
