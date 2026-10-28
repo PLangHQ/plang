@@ -103,6 +103,24 @@ public class ShortcutTests
         await Assert.That(_app.shortcut.list.Items().Single(s => s.Name == "here").IsSystem).IsTrue();
     }
 
+    // a system shortcut whose goal doesn't load answers that load's error — its name never reads as the app's member of
+    // the same name (%!event% as the app's events)
+    [Test]
+    public async Task ASystemShortcut_ThatDoesntLoad_AnswersItsError_NotTheAppsMember()
+    {
+        var folder = System.IO.Path.Combine(_root, "system", "shortcut");
+        System.IO.Directory.CreateDirectory(folder);
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(folder, "event.goal"), "Event\n- return %!app.event.current%\n");
+
+        var thrown = await Assert.ThrowsAsync<global::app.error.AppException>(async () => await Reference("%!event%").Value());
+        var refused = await _app.shortcut.list.Read();
+
+        await Assert.That(thrown!.Error.Key).IsEqualTo("GoalNotBuilt");
+        await refused.IsFailure();
+        await Assert.That(refused.Error!.Key).IsEqualTo("GoalNotBuilt");
+        await Assert.That(refused.Error.Message).Contains("event.goal");
+    }
+
     // an app shortcut taking a system name is refused, saying how to override it
     [Test]
     public async Task AnAppShortcut_TakingASystemName_IsRefused_SayingHowToOverride()

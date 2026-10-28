@@ -3,8 +3,8 @@ namespace app.shortcut.list;
 /// <summary>
 /// The app's shortcuts — <c>%!app.shortcut.list%</c>. Read once, at the first ask: each goal under
 /// <c>/system/shortcut/</c> first — the app's own copy before the os's, its name sealed — then each under the app's
-/// own <c>/shortcut/</c>, which adds names. An app goal there that claims a system name is refused: the read answers
-/// why (and how to override it), and so does every ask after it. A shortcut goal built after the read is not one
+/// own <c>/shortcut/</c>, which adds names. An app goal there that claims a system name is refused, and a system
+/// shortcut whose goal doesn't load is its load's error: the read answers why, and so does every ask after it. A shortcut goal built after the read is not one
 /// until the app starts again.
 /// </summary>
 public sealed class @this : global::app.type.item.list.@this<global::app.shortcut.@this>
@@ -36,7 +36,13 @@ public sealed class @this : global::app.type.item.list.@this<global::app.shortcu
         var system = (await Names(global::app.type.item.path.@this.Resolve("/system/shortcut", context)))
             .Union(await Names(_app.filesystem.os.Combine("system").Combine("shortcut")), global::app.type.item.variable.list.@this.Comparer);
         foreach (var name in system)
-            if (await Goal("/system/shortcut/" + name) is { } goal) Add(new global::app.shortcut.@this(goal, Shortcut));
+        {
+            // a system shortcut whose goal doesn't load is the read's answer, never left out: left out, its name would
+            // read as whatever else answers it (the app's member of that name)
+            var found = await _app.goal.list.Find("/system/shortcut/" + name);
+            if (found.Peek() is not global::app.goal.@this goal) return found.Error != null ? found : context.NotFound("/system/shortcut/" + name);
+            Add(new global::app.shortcut.@this(goal, Shortcut));
+        }
         foreach (var name in await Names(global::app.type.item.path.@this.Resolve("/shortcut", context)))
         {
             if (await Goal("/shortcut/" + name) is not { } goal) continue;
