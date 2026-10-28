@@ -21,8 +21,9 @@ public partial class sign : IContext
 
     /// <summary>The view the data is hashed in, so it matches the bytes the verifier re-hashes — handed whole by C# that
     /// knows it (the serializer's sign-if-missing, the view it writes in; a snapshot, its own); no step gives it. None:
-    /// what crosses to others (Out).</summary>
-    internal global::app.View View { get; init; } = global::app.View.Out;
+    /// the view the data's own type is written in (a snapshot's), as its signature re-hashes it, else what crosses to
+    /// others (Out).</summary>
+    internal global::app.View? View { get; init; }
 
     [Code]
     public partial ISigning Signer { get; }

@@ -32,10 +32,11 @@ public class Ed25519 : ISigning
         // The data as the view it is signed in takes it, settled once — plang's own store as written, anything that
         // crosses a copy of what it names — and the signature hashes and holds that one Data: the variable changing
         // afterwards changes nothing it holds.
-        var view = action.View;
         global::app.data.@this data;
-        try { data = await action.Data!.Settle(view); }
+        try { data = await action.Data!.Settle(action.View ?? global::app.View.Out); }
         catch (global::app.error.AppException exception) { return action.Context.Error(exception.Error); }
+        // hashed in the view its signature re-hashes it in (signature.Hashed): the one given, else its own type's
+        var view = action.View ?? data.Type?.View ?? global::app.View.Out;
         // The digest of the inner data as it crosses the wire, in that view — what binds the value into the signed
         // bytes — by the kind of hash the signing setting names.
         var hash = await data.Digest(view, (await action.Context.Setting.Get<global::app.module.signing.setting.@this>()).Hash.Value, action.Context);

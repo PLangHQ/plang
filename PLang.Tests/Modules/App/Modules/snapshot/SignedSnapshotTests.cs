@@ -178,6 +178,39 @@ public class SignedSnapshotTests
         await Assert.That(read.Error!.Key).IsEqualTo("DataHashMismatch");
     }
 
+    // A program that edits its snapshot vouches for the edit by signing it again, by its own step: the step's sign hashes
+    // the snapshot in the snapshot's own view, the one a verify re-hashes it in. A step index writes differently on the
+    // wire than in the snapshot, so a sign in the wire's view would never verify.
+    [Test]
+    public async Task AnEditedSnapshot_SignedAgainByAStep_Verifies()
+    {
+        await using var app = App();
+        var context = app.actor.list.User.Context;
+        await context.Variable.Set("snap", await Saved(app));
+        await (await (await context.Action("variable.set(Name=%snap.app.actor.list.user.context.call.current.caller.step.index%, Value=0)")).Start(context)).IsSuccess();
+
+        var signed = await (await context.Action("signing.sign(Data=%snap%)")).Start(context);
+        await signed.IsSuccess();
+        await context.Variable.Set("signed", signed);
+
+        await (await (await context.Action("signing.verify(Data=%signed%)")).Start(context)).IsSuccess();
+    }
+
+    // An edit nobody signed again is refused: the signature is the snapshot's as it was saved.
+    [Test]
+    public async Task AnEditedSnapshot_NotSignedAgain_IsRefused()
+    {
+        await using var app = App();
+        var context = app.actor.list.User.Context;
+        await context.Variable.Set("snap", await Saved(app));
+        await (await (await context.Action("variable.set(Name=%snap.app.actor.list.user.context.call.current.caller.step.index%, Value=0)")).Start(context)).IsSuccess();
+
+        var result = await (await context.Action("snapshot.resume(Snapshot=%snap%)")).Start(context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("SnapshotSignatureInvalid");
+    }
+
     [Test]
     public async Task AnotherAppsSnapshot_IsRefused()
     {
