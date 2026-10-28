@@ -13,7 +13,7 @@ public class InheritedBindingsTests
     // A binding by app's user before item's start that records name.
     private static void Bind(global::app.@this app, global::app.type.item.@this item, List<string> ran, string name,
         Scope scope = Scope.actor)
-        => app.@event.Add(item).Add("start")!.before.Add(side => new global::app.@event.binding.@this(side,
+        => app.@event.Add(item).Add("start").before.Add(side => new global::app.@event.binding.@this(side,
             (_, _, ctx) => { lock (ran) ran.Add(name); return Task.FromResult(ctx.Ok()); },
             app.actor.list.User, scope, global::app.@event.binding.@this.Always));
 

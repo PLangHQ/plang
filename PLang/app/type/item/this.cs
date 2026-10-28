@@ -472,15 +472,11 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// one level, itself.</summary>
     protected internal virtual @this? Level(int depth, global::app.actor.context.@this context) => depth == 0 ? this : null;
 
-    /// <summary>Whether anything is bound before this item's event <paramref name="event"/>, at this item alone — on its
-    /// own events or in the hold of an actor of the asker's app: a door that would have to make what it hands a binding
-    /// asks first.</summary>
-    internal bool IsBoundBefore(string @event, global::app.actor.context.@this context)
-        => on[@event] is { } named && named.IsBoundBefore(this, context);
-
-    /// <summary>Whether anything is bound after this item's event <paramref name="event"/>, at this item alone.</summary>
-    internal bool IsBoundAfter(string @event, global::app.actor.context.@this context)
-        => on[@event] is { } named && named.IsBoundAfter(this, context);
+    /// <summary>Whether anything is bound on this item's event <paramref name="event"/>, on the side <paramref name="when"/>,
+    /// at this item alone — its own events or what the asker's app bound on it: a door that would have to make what it
+    /// hands a binding asks first.</summary>
+    internal bool IsBoundAt(string @event, global::app.@event.When when, global::app.actor.context.@this context)
+        => on[@event] is { } named && named.IsBoundAt(this, context, when);
 
     /// <summary>What is bound before this item's event <paramref name="event"/>, at this item alone, started on
     /// <paramref name="about"/> — something other than one of its own values (a load's .pr, before there is a goal);

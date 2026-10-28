@@ -190,9 +190,9 @@ public partial class @this
 
     // What is bound before `name` changes to `value` (the variable type's event `event`): null to go on — nothing bound,
     // or nothing refused — else a failure or a Handled answer, which is the write's answer. The variable is made only
-    // when something is bound on the variable type, its own or in an actor's hold.
+    // when something is bound on the variable type, its own or in the app's events.
     private System.Threading.Tasks.ValueTask<data.@this?> Before(string @event, string name, object? value)
-        => type is { } variable && variable.IsBoundBefore(@event, _context)
+        => type is { } variable && variable.IsBoundAt(@event, global::app.@event.When.before, _context)
             ? Before(variable.on[@event]!, name, value as data.@this ?? new data.@this(name, value, context: _context)) : default;
 
     private async System.Threading.Tasks.ValueTask<data.@this?> Before(global::app.@event.@this @event, string name, data.@this about)
@@ -206,7 +206,7 @@ public partial class @this
     private System.Threading.Tasks.ValueTask<data.@this> After(string name, object? before, data.@this stored)
     {
         _context.call.Record(this, name, before);
-        return type is { } variable && variable.IsBoundAfter("set", _context) ? variable.on.set.After(Named(name), stored, _context) : new(stored);
+        return type is { } variable && variable.IsBoundAt("set", global::app.@event.When.after, _context) ? variable.on.set.After(Named(name), stored, _context) : new(stored);
     }
 
     // The variable named `name`, as its events are handed it.
@@ -350,7 +350,7 @@ public partial class @this
         if (!_variables.TryGetValue(name, out var binding)) return _context.NotFound(name);
         if (await Before("remove", name, binding) is { } refused) return refused;
         if (!Rows.TryRemove(name, out var removed)) return _context.NotFound(name);
-        return type is { } variable && variable.IsBoundAfter("remove", _context) ? await variable.on.remove.After(Named(name), removed, _context) : removed;
+        return type is { } variable && variable.IsBoundAt("remove", global::app.@event.When.after, _context) ? await variable.on.remove.After(Named(name), removed, _context) : removed;
     }
 
     /// <summary>The variables this memory holds, as a list — <c>%!app.variable.list%</c>: one variable per

@@ -128,7 +128,7 @@ public sealed class @this
         // a start of an item of T on `owner`, handed to `handler` — when debugged, only where debug follows
         void On<T>(global::app.type.item.@this owner, When when, Func<T, actor.context.@this, Task<data.@this>> handler, bool debugged)
             where T : global::app.type.item.@this
-            => user.App.@event.Add(owner).Add("start")![when].Add(side => new global::app.@event.binding.@this(side,
+            => user.App.@event.Add(owner).Add("start")[when].Add(side => new global::app.@event.binding.@this(side,
                 (item, _, context) => handler((T)item, context), user, global::app.@event.binding.Scope.actor,
                 (item, context) => item is T && (!debugged || Debugged(context))));
 

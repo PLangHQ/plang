@@ -77,32 +77,16 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     /// <summary>Whether anything is bound on this event, before or after it, at any of <paramref name="item"/>'s
     /// levels — so a door whose before is handed something it would have to make asks first.</summary>
     public bool IsBound(global::app.type.item.@this item, global::app.actor.context.@this context)
-        => Reach(item, context, When.before).Outer >= 0 || Reach(item, context, When.after).Outer >= 0;
-
-    // The outermost and innermost of the item's levels with something on one side; -1 when none has.
-    private (int Outer, int Inner) Reach(global::app.type.item.@this item, global::app.actor.context.@this context, When when)
     {
-        int outer = -1, inner = -1;
         for (var depth = 0; item.Level(depth, context) is { } level; depth++)
-            if (IsBoundAt(level, context, when))
-            {
-                if (outer < 0) outer = depth;
-                inner = depth;
-            }
-        return (outer, inner);
+            if (IsBoundAt(level, context, When.before) || IsBoundAt(level, context, When.after)) return true;
+        return false;
     }
 
-    /// <summary>Whether anything is on this event's before at <paramref name="level"/> alone — its own clauses or what
-    /// the asker's app bound on it — so a door that would have to make what it hands a binding asks first.</summary>
-    internal bool IsBoundBefore(global::app.type.item.@this level, global::app.actor.context.@this context)
-        => IsBoundAt(level, context, When.before);
-
-    /// <summary>Whether anything is on this event's after at <paramref name="level"/> alone.</summary>
-    internal bool IsBoundAfter(global::app.type.item.@this level, global::app.actor.context.@this context)
-        => IsBoundAt(level, context, When.after);
-
-    // the level's own side (an action's clauses), then the side the asker's app bound on it: their lists, read
-    private bool IsBoundAt(global::app.type.item.@this level, global::app.actor.context.@this context, When when)
+    /// <summary>Whether anything is on this event's side <paramref name="when"/> at <paramref name="level"/> alone — its
+    /// own clauses or what the asker's app bound on it — so a door that would have to make what it hands a binding asks
+    /// first.</summary>
+    internal bool IsBoundAt(global::app.type.item.@this level, global::app.actor.context.@this context, When when)
         => level.on[Name]?[when].Count > 0 || context.App.@event[level]?[Name]?[when].Count > 0;
 
     /// <summary>What is on this event's before at <paramref name="level"/> alone — its own clauses, then what the asker's

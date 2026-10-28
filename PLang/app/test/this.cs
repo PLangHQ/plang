@@ -191,7 +191,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         var actor = context.Actor!;
         return
         [
-            context.App.@event.Add(context.App.type.list["step"]).Add("start")!.after.Add(side => new global::app.@event.binding.@this(side, (item, _, ctx) =>
+            context.App.@event.Add(context.App.type.list["step"]).Add("start").after.Add(side => new global::app.@event.binding.@this(side, (item, _, ctx) =>
             {
                 if (item is global::app.goal.step.@this step && Tested(step) && ctx.call.Current?.Duration is { } elapsed)
                     Timings.Add(new global::app.test.timing.@this { Step = step, Elapsed = elapsed });

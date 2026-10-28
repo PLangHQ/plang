@@ -73,7 +73,7 @@ public partial class OnEvent : IContext
         // action, whose Action it runs when the event fires, and the actor that bound it.
         return data.@this<global::app.@event.binding.@this>.From(await When.Use(when => Scope.Use(scope => Action.Use(_ =>
         {
-            var @event = Context.App.@event.Add(item).Add(named.Name)!;
+            var @event = Context.App.@event.Add(item).Add(named.Name);
             return Task.FromResult<data.@this>(Context.Ok<global::app.@event.binding.@this>(@event[when.Value].Add(side =>
                 new global::app.@event.binding.action.@this(side, @event, __action!, Context.Actor!, scope.Value))));
         }))));

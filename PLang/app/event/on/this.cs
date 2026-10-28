@@ -58,12 +58,12 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         => _events?.GetValueOrDefault(name) ?? _shared![name];
 
     /// <summary>The event named <paramref name="name"/> a binding is added to: made with lists that take bindings the
-    /// first time. Null when there is no event of that name.</summary>
-    internal global::app.@event.@this? Add(string name)
+    /// first time. A name that is no event is refused (<see cref="NoEvent"/>), thrown: no binding is added for it.</summary>
+    internal global::app.@event.@this Add(string name)
         => Made.ContainsKey(name) || _names.Contains(name)
             ? (_events ?? System.Threading.LazyInitializer.EnsureInitialized(ref _events,
                 static () => new(StringComparer.OrdinalIgnoreCase))).GetOrAdd(name, static (named, events) => events.Event(named), this)
-            : null;
+            : throw new global::app.error.AppException(NoEvent(name));
 
     /// <summary>The event named <paramref name="name"/>, made with its two lists: lists that take bindings.</summary>
     private protected virtual global::app.@event.@this Event(string name)
@@ -163,13 +163,14 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         foreach (var row in record.Rows(context))
         {
             if (string.Equals(row.Name, "item", StringComparison.OrdinalIgnoreCase)) continue;
-            if (events.Add(row.Name) is not { } @event) { data.Fail(events.NoEvent(row.Name)); return null; }
+            // a name that is no event is the read's answer, before anything is added for it
+            if (events[row.Name] == null) { data.Fail(events.NoEvent(row.Name)); return null; }
             if (row.Peek() is not global::app.type.item.dict.@this sides)
             {
                 data.Fail(new global::app.error.@this($"a saved on's '{row.Name}' holds no sides", "SnapshotRowUnread", 400));
                 return null;
             }
-            @event.Read(sides, context);
+            events.Add(row.Name).Read(sides, context);
         }
         return events;
     }

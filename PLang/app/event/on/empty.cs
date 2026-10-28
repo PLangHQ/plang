@@ -18,8 +18,10 @@ public sealed class empty : @this
         => Emptied.GetOrAdd(@class, static type => new(
             System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.Attributes.EventsAttribute>(type, inherit: false)?.Names ?? []));
 
-    /// <summary>The event named <paramref name="name"/>, shared and closed: made once for the class.</summary>
-    public override global::app.@event.@this? this[string name] => Add(name);
+    /// <summary>The event named <paramref name="name"/>, shared and closed: made once for the class. Null when there is
+    /// no event of that name.</summary>
+    public override global::app.@event.@this? this[string name]
+        => Made.ContainsKey(name) || Declared.Contains(name) ? Add(name) : null;
 
     /// <summary>The event named <paramref name="name"/>, made with lists closed to bindings.</summary>
     private protected override global::app.@event.@this Event(string name)

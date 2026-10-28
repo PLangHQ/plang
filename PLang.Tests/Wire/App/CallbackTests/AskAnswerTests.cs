@@ -103,7 +103,7 @@ public class AskAnswerTests
         var ctx = app.actor.list.User.Context;
         var input = Console(app, "never read\n");
         var given = ctx.Text("from the binding");
-        app.@event.Add(input).Add("ask")![global::app.@event.When.before].Add(side => new global::app.@event.binding.@this(side, (_, _, c) =>
+        app.@event.Add(input).Add("ask")[global::app.@event.When.before].Add(side => new global::app.@event.binding.@this(side, (_, _, c) =>
         {
             global::app.data.@this answered = c.Ok(given);
             answered.Handled = true;

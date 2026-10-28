@@ -48,7 +48,7 @@ public class OnEventTests
         var binding = await Bind("%!app.type.goal.on.start%", "before", "Log");
 
         // held on the binding actor's context, never on the type entry
-        var before = _app.@event.Add(_app.type.list["goal"]).Add("start")!.before;
+        var before = _app.@event.Add(_app.type.list["goal"]).Add("start").before;
         await Assert.That(before.Count).IsEqualTo(1);
         await Assert.That(_app.type.list["goal"].on.start.before.Count).IsEqualTo(0);
         await Assert.That(before[0]).IsSameReferenceAs(binding);
@@ -309,7 +309,7 @@ public class OnEventTests
         }.Start();
 
         await unbound.IsSuccess();
-        await Assert.That(_app.@event.Add(_app.type.list["goal"]).Add("start")!.before.Count).IsEqualTo(0);
+        await Assert.That(_app.@event.Add(_app.type.list["goal"]).Add("start").before.Count).IsEqualTo(0);
     }
 
     [Test]
