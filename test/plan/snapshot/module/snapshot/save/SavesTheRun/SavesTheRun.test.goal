@@ -1,6 +1,6 @@
 / save snapshot answers the run's state as a value. Kept in a .plang file outside the tracked tree (signed, as the save
 / signed it) and read back in this app, it holds the run's variables and its call stack: the frame this goal runs in
-/ comes back as the first of its frames, by its goal's path, which only a real snapshot holds.
+/ comes back as the call current there, by its goal's path, which only a real snapshot holds.
 Start
 - set %name% = "Bob"
 - save snapshot, write to %snapshot%
