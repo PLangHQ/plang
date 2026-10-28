@@ -99,18 +99,19 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
 
     /// <summary>What is on this event's before at <paramref name="level"/> alone — its own clauses, then what the asker's
     /// app bound on it — started on <paramref name="item"/>, something other than the level's own items (a load's .pr,
-    /// before there is a goal). A failure or a Handled answer stops it and is the answer; null when nothing is there.</summary>
+    /// before there is a goal), on <paramref name="result"/> (a plain success when none is given, made only when something
+    /// is there). A failure or a Handled answer stops it and is the answer; null when nothing is there.</summary>
     internal async System.Threading.Tasks.ValueTask<global::app.data.@this?> BeforeAt(global::app.type.item.@this level,
-        global::app.type.item.@this item, global::app.actor.context.@this context, global::app.data.@this result)
+        global::app.type.item.@this item, global::app.actor.context.@this context, global::app.data.@this? result)
     {
         global::app.data.@this? answer = null;
         if (level.on[Name]?.before is { Count: > 0 } clauses)
         {
-            answer = await clauses.Start(item, result, context);
+            answer = await clauses.Start(item, result ?? context.Ok(), context);
             if (!answer.Success || answer.Handled) return answer;
         }
         if (context.App.@event[level]?[Name]?.before is { Count: > 0 } bindings)
-            answer = await bindings.Start(item, answer ?? result, context);
+            answer = await bindings.Start(item, answer ?? result ?? context.Ok(), context);
         return answer;
     }
 
@@ -133,18 +134,20 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     public System.Threading.Tasks.ValueTask<global::app.data.@this?> Before(global::app.type.item.@this item,
         global::app.actor.context.@this context, global::app.data.@this? result = null)
     {
-        // nothing bound at any level: nothing to start, so nothing awaited or made
-        var outer = Reach(item, context, When.before).Outer;
-        return outer >= 0 ? Before(item, outer, context, result) : default;
+        // one pass, outermost level first: the levels are gone through until one's lists hold something, and from there
+        // on they start — with nothing there, nothing awaited or made
+        for (var depth = 0; item.Level(depth, context) is { } level; depth++)
+            if (IsBoundAt(level, context, When.before)) return Before(item, depth, context, result);
+        return default;
     }
 
-    // From the first level with a binding outward.
+    // From the first level whose lists hold something, outward.
     private async System.Threading.Tasks.ValueTask<global::app.data.@this?> Before(global::app.type.item.@this item,
         int depth, global::app.actor.context.@this context, global::app.data.@this? result)
     {
-        var answer = result ?? context.Ok();
+        global::app.data.@this? answer = null;
         for (; item.Level(depth, context) is { } level; depth++)
-            if (await BeforeAt(level, item, context, answer) is { } answered)
+            if (await BeforeAt(level, item, context, answer ?? result) is { } answered)
             {
                 answer = answered;
                 if (!answer.Success || answer.Handled) return answer;
@@ -159,12 +162,16 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     public System.Threading.Tasks.ValueTask<global::app.data.@this> After(global::app.type.item.@this item,
         global::app.data.@this result, global::app.actor.context.@this context)
     {
-        // nothing bound at any level: the result as it stands, nothing awaited
-        var inner = Reach(item, context, When.after).Inner;
-        return inner >= 0 ? After(item, result, inner, context) : new(result);
+        // one pass, innermost level first: from the deepest level out until one's lists hold something, and from there on
+        // they start — with nothing there, the result as it stands, nothing awaited
+        var depth = 0;
+        while (item.Level(depth + 1, context) != null) depth++;
+        for (; depth >= 0; depth--)
+            if (IsBoundAt(item.Level(depth, context)!, context, When.after)) return After(item, result, depth, context);
+        return new(result);
     }
 
-    // From the innermost level with a binding outward.
+    // From the innermost level whose lists hold something, outward.
     private async System.Threading.Tasks.ValueTask<global::app.data.@this> After(global::app.type.item.@this item,
         global::app.data.@this result, int depth, global::app.actor.context.@this context)
     {
