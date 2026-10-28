@@ -45,7 +45,7 @@ public class AddedPropertyTests
     }
 
     [Test]
-    public async Task AVariablesOwnValue_KeepsAProperty_InItsBinding()
+    public async Task AVariablesValue_KeepsAProperty_InItsBinding()
     {
         await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;

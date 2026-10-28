@@ -16,7 +16,7 @@ public class ContainerCloneTests : System.IAsyncDisposable
     private global::app.type.item.dict.@this Dict() => new(app.type.list[typeof(global::app.type.item.dict.@this)]);
 
     [Test]
-    public async Task ADictsClone_HoldsItsDataInTheirOwnContext_AndIsACopy()
+    public async Task ADictsClone_HoldsItsDataInTheirContext_AndIsACopy()
     {
         var nested = Dict();
         nested.Set(new global::app.data.@this("deep", "before", context: Context));
@@ -34,7 +34,7 @@ public class ContainerCloneTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task AListsClone_HoldsItsDataInTheirOwnContext_AndIsACopy()
+    public async Task AListsClone_HoldsItsDataInTheirContext_AndIsACopy()
     {
         var nested = Dict();
         nested.Set(new global::app.data.@this("deep", "before", context: Context));
@@ -54,7 +54,7 @@ public class ContainerCloneTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task ASnapshotInsideAList_ClonesInItsOwnContext()
+    public async Task ASnapshotInsideAList_ClonesInItsContext()
     {
         var written = new global::app.type.item.dict.@this(app.type.list[typeof(global::app.type.item.dict.@this)]);
         written.Set(new global::app.data.@this("id", "c1", context: Context));

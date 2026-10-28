@@ -34,7 +34,7 @@ public class ResumeTests
     }
 
     [Test]
-    public async Task ResumingADict_AnswersTheTypedAsksOwnReason_Whole()
+    public async Task ResumingADict_AnswersTheTypedAsksReason_Whole()
     {
         // a snapshot kept in a .json file reads as a dict: the resume answers why the slot's typed ask declined, as it
         // gave it — never a hand-built rebuild failure

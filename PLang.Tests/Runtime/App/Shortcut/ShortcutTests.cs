@@ -113,7 +113,7 @@ public class ShortcutTests
     // a shortcut is its file: one whose goal doesn't load answers that load's own error for its name alone — never the
     // app's member of the same name — while every other shortcut answers as it is
     [Test]
-    public async Task AShortcutThatDoesntLoad_AnswersItsOwnError_AndTheOthersStillAnswer()
+    public async Task AShortcutThatDoesntLoad_AnswersItsError_AndTheOthersStillAnswer()
     {
         var folder = System.IO.Path.Combine(_root, "system", "shortcut");
         System.IO.Directory.CreateDirectory(folder);

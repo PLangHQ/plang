@@ -28,7 +28,7 @@ public class SnapshotActorTests
     [Test]
     [Arguments(true)]
     [Arguments(false)]
-    public async Task AVariable_AnswersAsItsOwnActor_WhoeverStartedTheRestore(bool bySystem)
+    public async Task AVariable_AnswersAsItsActor_WhoeverStartedTheRestore(bool bySystem)
     {
         var text = await Saved(async (_, context) => await context.Variable.Set("t", "held"));
 
@@ -41,7 +41,7 @@ public class SnapshotActorTests
     [Test]
     [Arguments(true)]
     [Arguments(false)]
-    public async Task AValueInsideADict_AnswersAsItsOwnActor_WhoeverStartedTheRestore(bool bySystem)
+    public async Task AValueInsideADict_AnswersAsItsActor_WhoeverStartedTheRestore(bool bySystem)
     {
         var text = await Saved(async (src, context) =>
         {
@@ -62,7 +62,7 @@ public class SnapshotActorTests
     [Test]
     [Arguments(true)]
     [Arguments(false)]
-    public async Task AFramesVariable_AnswersAsItsOwnActor_WhoeverStartedTheRestore(bool bySystem)
+    public async Task AFramesVariable_AnswersAsItsActor_WhoeverStartedTheRestore(bool bySystem)
     {
         var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
         var user = src.actor.list.User.Context;

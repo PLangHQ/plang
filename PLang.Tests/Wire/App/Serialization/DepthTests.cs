@@ -54,7 +54,7 @@ public class DepthTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task AWirePastedUnderTwoLevels_CountsItsOwnDepth()
+    public async Task AWirePastedUnderTwoLevels_CountsItsDepth()
     {
         var context = app.actor.list.User.Context;
         var json = app.type.list.Mime("application/json");

@@ -33,7 +33,7 @@ public class ServiceErrorChainTests : System.IAsyncDisposable
     // An error born about an action's step (a resolve run with no frame of its own) names that step, not the frame
     // current when it is recorded.
     [Test]
-    public async Task AResolveError_RecordedUnderAnotherFrame_NamesItsOwnStep()
+    public async Task AResolveError_RecordedUnderAnotherFrame_NamesItsStep()
     {
         var context = app.actor.list.User.Context;
         var built = global::PLang.Tests.Shared.Make.Goal(context, "Start", "/Start.goal",

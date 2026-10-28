@@ -118,7 +118,7 @@ public class CallStackFramesTests
     }
 
     [Test]
-    public async Task AFramesOwnVariables_ComeBackByTheirNames()
+    public async Task AFramesVariables_ComeBackByTheirNames()
     {
         await using var src = App();
         var (g1, _, _) = MakeFrame(src, "VarGoal");

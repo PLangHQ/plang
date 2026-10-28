@@ -18,7 +18,7 @@ public class InheritedBindingsTests
             app.actor.list.User, scope, global::app.@event.binding.@this.Always));
 
     [Test]
-    public async Task ASubApp_TakesInItsMakersBinding_AtBirth_AndFiresItForItsOwnUser()
+    public async Task ASubApp_TakesInItsMakersBinding_AtBirth_AndFiresItForItsUser()
     {
         await using var maker = App();
         var item = maker.actor.list.User.Context.Dict();

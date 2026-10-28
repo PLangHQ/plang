@@ -52,7 +52,7 @@ public class SavedBindingsTests
     // a sub app holds its maker's binding, taken in at its birth, but it is the maker's: the sub app's save and its
     // %!app.event% hold only what the sub app bound itself
     [Test]
-    public async Task ASubAppsSave_HoldsItsOwnBindingsOnly()
+    public async Task ASubAppsSave_HoldsItsBindingsOnly()
     {
         var root = Root();
         await using var maker = App(root);
@@ -158,7 +158,7 @@ public class SavedBindingsTests
     // a binding whose action doesn't read (the goal's step now holds another action) answers its read's own error,
     // whole — never a reflection wrapper around it
     [Test]
-    public async Task ABinding_WhoseActionDoesNotRead_AnswersItsReadsOwnError()
+    public async Task ABinding_WhoseActionDoesNotRead_AnswersItsReadsError()
     {
         var root = Root();
         await using var app = App(root);

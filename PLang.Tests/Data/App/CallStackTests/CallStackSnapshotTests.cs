@@ -214,7 +214,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task CallStack_RoundTrip_AFramesOwnVariables_ComeBackWithIt()
+    public async Task CallStack_RoundTrip_AFramesVariables_ComeBackWithIt()
     {
         var (g1, _, _) = MakeFrame("VarGoal");
         var src = BuildAppWithGoals(g1);
