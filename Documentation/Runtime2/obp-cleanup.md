@@ -312,3 +312,15 @@ kind)` — a bare type, which stage 1 said nothing makes. A member's type should
 *cost.* `type/property/this.cs` `Read` finds `AsTask` and the task's `Result` by reflection each time a member that
 answers asynchronously is read. Reflection now lives only in `property`, but it could be bound once where the property
 is built from its member (a compiled getter that answers the awaited value), taking reflection off the read path.
+
+## debug's variable watch: the watched names don't watch themselves (snapshot)
+
+*shape.* `module/debug/this.cs` (the `if (setting.Variables.CountRaw > 0)` block) decides for its setting:
+- **fork:** debug asks the list's count to decide whether to bind.
+- **read twice:** `Watched()` reads `Setting()` again though the caller holds `setting`.
+- **opened box:** each name is lowered to a string (`v.Peek()?.ToString()`) and parsed again.
+- **verb+noun-ish:** `Watched()` names an act, not the names it answers.
+
+Ingi's direction: `debug.setting.variables` knows how to watch. The watched names bind their own watch on the user
+actor's hold (after set and remove of the variable type, filtered to themselves), and a list with no names binds
+nothing. Debug hands them the actor and what to show, and holds no count, no `Watched()` and no string.
