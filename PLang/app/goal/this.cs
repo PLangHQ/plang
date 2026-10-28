@@ -54,7 +54,7 @@ public sealed partial class @this
         // A plain slot. Every step in it was born knowing this goal — the reader constructs the
         // goal shell first and hands it down, so there is nothing to repair on read.
         get => _step;
-        set => _step = value;
+        internal set => _step = value;
     }
 
     /// <summary>The step this goal numbered <paramref name="index"/> — its own, or one in a body under them (the goal
@@ -122,7 +122,7 @@ public sealed partial class @this
     public global::app.type.item.path.@this? Path
     {
         get => Parent?.Path ?? _path;
-        set => _path = value;
+        internal set => _path = value;
     }
     private global::app.type.item.path.@this? _path;
 
@@ -167,7 +167,7 @@ public sealed partial class @this
     private string? _hash;
 
     [Store, Out, Debug]
-    public string? BuilderVersion { get; set; }
+    public string? BuilderVersion { get; internal set; }
 
     /// <summary>A setup goal — named Setup, or in the app's <c>/setup/</c>: it runs only through setup.</summary>
     [Debug]
@@ -199,7 +199,7 @@ public sealed partial class @this
 
     [LlmIgnore]
     [JsonIgnore]
-    public @this? Parent { get; set; }
+    public @this? Parent { get; internal set; }
 
     [Debug]
     [LlmBuilder]

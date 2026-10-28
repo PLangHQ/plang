@@ -245,7 +245,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// When present, actors use in-memory datasources.
     /// </summary>
     [global::app.LlmBuilder]
-    public global::app.module.build.@this? Build { get; set; }
+    public global::app.module.build.@this? Build { get; internal set; }
 
     /// <summary>What this App is doing — derived from what it holds: building when it has a Build,
     /// testing while its test session is open or while the app that made it is testing, otherwise running. Not a stored field, so there is no

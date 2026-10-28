@@ -86,12 +86,13 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
 
     // Write a child onto a host by reflection — the mirror of Descend: find the property, let the
     // value lower itself to the property's type (value.Clr(PropertyType) — a clr(json) builds the
-    // host shape there), set it in place. Returns the host carried as a clr.
+    // host shape there), set it in place. Returns the host carried as a clr. Only a public setter is a
+    // program's to write: an internal one sets a birth fact (a step's place in its goal), which plang never writes.
     public override global::System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(
         object host, string key, bool isIndex, object? value, global::app.actor.context.@this ctx)
     {
         var prop = Reflect(host.GetType(), key);
-        if (prop == null || !prop.CanWrite)
+        if (prop?.SetMethod is not { IsPublic: true })
             throw new global::app.error.AppException(new global::app.error.@this(
                 $"'{host.GetType().Name}' has no writable property '{key}'", "NoAddedMember", 404));
         if (value is global::app.type.item.@this iv && !prop.PropertyType.IsInstanceOfType(value))

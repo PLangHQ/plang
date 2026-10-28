@@ -272,6 +272,45 @@ public class SignedSnapshotTests
         await Assert.That(await Saw(result, "b")).IsEqualTo("before");
     }
 
+    // A step's place in its goal is a birth fact, every app's that shares the goal: no plang path writes it — not the run's
+    // own step, not the live step a snapshot's frame reaches. The frame's own number is the one a program sets.
+    [Test]
+    public async Task AStepsPlace_IsNoProgramsToWrite_InARunOrThroughASnapshot()
+    {
+        await using var app = App();
+        var context = app.actor.list.User.Context;
+        var step = await Holds(app);
+        await using (context.call.Push(step.Goal!, await context.call.Setting()))
+        await using (context.call.Push(step, await context.call.Setting()))
+        {
+            await (await context.Action("variable.set(Name=%!step.index%, Value=5)")).Start(context);
+        }
+        await Assert.That(step.Index).IsEqualTo(1);
+
+        await context.Variable.Set("snap", await Saved(app));
+        var live = await Holds(app);
+        var reached = await (await context.Action("variable.set(Name=%snap.app.actor.list.user.context.call.current.caller.step.index%, Value=2)")).Start(context);
+
+        await reached.IsFailure();
+        await Assert.That(reached.Error!.Key).IsEqualTo("OwnMember");
+
+        // nor a goal or step a program holds: its name, a step's place and text are the goal's, every app's that shares it
+        await context.Variable.Set("g", step.Goal);
+        await context.Variable.Set("s", step);
+        foreach (var line in new[] { "variable.set(Name=%g.name%, Value=\"Renamed\")", "variable.set(Name=%s.index%, Value=5)",
+                     "variable.set(Name=%s.text%, Value=\"rewritten\")" })
+        {
+            var write = await (await context.Action(line)).Start(context);
+            await write.IsFailure();
+            await Assert.That(write.Error!.Key).IsEqualTo("OwnMember");
+        }
+        await Assert.That(step.Goal!.Name).IsEqualTo("G");
+        await Assert.That(step.Index).IsEqualTo(1);
+        await Assert.That(step.Text).IsNotEqualTo("rewritten");
+        foreach (var goal in app.goal.list.Items().OfType<Goal>())
+            for (var at = 0; at < goal.Step.Count; at++) await Assert.That(goal.Step[at].Index).IsEqualTo(at);
+    }
+
     // An edit nobody signed again is refused: the signature is the snapshot's as it was saved.
     [Test]
     public async Task AnEditedSnapshot_NotSignedAgain_IsRefused()

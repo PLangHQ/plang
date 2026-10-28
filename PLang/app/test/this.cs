@@ -97,10 +97,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Lifecycle status: Ready/Stale/Skipped after discovery,
     /// Pass/Fail/Timeout after execution. A closed set — stays a C# enum, rides
     /// the wire as its name (like <c>Goal.Visibility</c>).</summary>
-    [Out, LlmBuilder] public Status Status { get; set; } = Status.Ready;
+    [Out, LlmBuilder] public Status Status { get; internal set; } = Status.Ready;
 
     /// <summary>Human-readable reason for a non-Ready discovery status (e.g., "no .pr", "rebuild needed").</summary>
-    [Out, LlmBuilder] public global::app.type.item.text.@this? StatusReason { get; set; }
+    [Out, LlmBuilder] public global::app.type.item.text.@this? StatusReason { get; internal set; }
 
     /// <summary>The test's tags: the goal's own (test.tag) ∪ the capabilities its reached
     /// actions require. Set by <see cref="app.test.list.@this.Create"/>.</summary>
@@ -116,7 +116,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>Text produced via the output channel during execution. Rendered on failure
     /// when verbose is off. Named Stdout (not Output) — Output is the wire-write method.</summary>
-    [Out] public global::app.type.item.text.@this? Stdout { get; set; }
+    [Out] public global::app.type.item.text.@this? Stdout { get; internal set; }
 
     /// <summary>Per-step wall-clock for the entry goal's top-level steps, in source order.</summary>
     [Out] public global::app.type.item.list.@this<global::app.test.timing.@this> Timings { get; }

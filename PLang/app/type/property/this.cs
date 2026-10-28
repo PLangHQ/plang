@@ -111,15 +111,17 @@ public sealed class @this : global::app.type.item.note.IAbout
     }
 
     /// <summary>Writes <paramref name="value"/> as this member of <paramref name="owner"/>: read as this member's type by
-    /// that type's reader (its own, else as a record its Create makes), then set. A member that can't be written, or a
-    /// value that doesn't read as its type, answers why. The value is the running program's, so it is read in the view a
-    /// run's values live in: Out.</summary>
+    /// that type's reader (its own, else as a record its Create makes), then set. Only a member with a public setter that
+    /// isn't init is a program's to write; any other — a birth fact (a step's place in its goal), a shared object's own
+    /// (a goal's steps) — answers that it can't be, as does a value that doesn't read as its type. The value is the
+    /// running program's, so it is read in the view a run's values live in: Out.</summary>
     public async System.Threading.Tasks.ValueTask<global::app.data.@this> Write(global::app.type.item.@this owner,
         object? value, global::app.actor.context.@this context)
     {
-        if (Member is not PropertyInfo { CanWrite: true } slot)
+        if (Member is not PropertyInfo { SetMethod: { IsPublic: true } setter } slot
+            || setter.ReturnParameter.GetRequiredCustomModifiers().Contains(typeof(System.Runtime.CompilerServices.IsExternalInit)))
             return context.Error(new global::app.error.@this(
-                $"{Name} is {owner.Type.Name}'s own — it can't be written", "OwnMember", 400));
+                $"'{owner.Type.Name}.{Name}' can't be set from a program", "OwnMember", 400));
         var item = value is global::app.data.@this data ? await data.Value() : value as global::app.type.item.@this;
         object? member = item ?? value;
         if (item != null && !slot.PropertyType.IsInstanceOfType(item))

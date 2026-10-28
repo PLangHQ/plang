@@ -20,11 +20,11 @@ public partial class @this
     {
         get => _module ?? throw new System.InvalidOperationException(
             $"action '{Name}' has no module — it was constructed outside a construction door.");
-        set => _module = value;
+        internal set => _module = value;
     }
 
     [Store, LlmBuilder, Debug, Default, Snapshot]
-    public string Name { get; set; } = "";
+    public string Name { get; internal set; } = "";
 
     /// <summary>Where this action stands in its step's code — what finds it there, beside its module and name. An action
     /// of no step (a catalog element) has none, and is written without it.</summary>
@@ -52,7 +52,7 @@ public partial class @this
     /// Both nesting forms land here: inline <c>if/elseif/else</c> (each condition action carries its body)
     /// and indented sub-step blocks (folded onto the gate action). A <c>step.list</c>, so it runs itself.</summary>
     [Store, Debug, Default]
-    public global::app.goal.step.list.@this Child { get; set; }
+    public global::app.goal.step.list.@this Child { get; internal set; }
 
     // `new`: this is the ACTION-cache flag (may this action's run result be
     // cached), a distinct concept from the item base's answer-keep rule —

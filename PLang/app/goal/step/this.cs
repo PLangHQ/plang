@@ -30,7 +30,7 @@ public sealed partial class @this
     /// @hint (PriorText != Text). Transient — not serialized to .pr.
     /// </summary>
     [JsonIgnore]
-    public string? PriorText { get; set; }
+    public string? PriorText { get; internal set; }
 
     /// <summary>The step is cached: its text is the prior build's, word for word, and it holds that
     /// build's code (goal.Merge). A cached step is not asked again — not of the decider, not of the
@@ -76,7 +76,7 @@ public sealed partial class @this
         // A plain slot. Every action in it was born knowing this step — the reader constructs the
         // step shell first and hands it down, so there is nothing to repair on read.
         get => _code;
-        set => _code = value;
+        internal set => _code = value;
     }
 
     private global::app.goal.step.pick.list.@this? _pick;
@@ -98,7 +98,7 @@ public sealed partial class @this
 
     /// <summary>Tag set by enrichResponse: "known" (prior text matched), "hint" (text changed, prior available), or "new".</summary>
     [Store, Out, Debug, Default]
-    public string? Source { get; set; }
+    public string? Source { get; internal set; }
 
     [Store, Out, Debug]
     public global::app.warning.list.@this Warning { get; private set; }
