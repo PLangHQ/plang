@@ -14,3 +14,11 @@ Place `.bot/snapshot/architect/obp-patterns.md` as `Documentation/v0.2/obp-patte
 ```markdown
 - **Goal properties**: `Path` (its .goal file) and `Pr` (its .pr file, whose path is `goal.pr.path`), relative; never a glued `PrPath`/`FilePath`/`PrFilePath`/`RelativePath`.
 ```
+
+## architect — snapshot 253 — 2026-10-28
+**Target:** /CLAUDE.md
+**Why:** Ingi (snapshot 244, 253): `app.event` is the app's event system (`%!app.event%` answers its events), and the event in play is `%!app.event.current%`, reached as `%!event%` through `os/system/shortcut/event.goal`, as `%!error%` is. The Runtime2 conventions line lists `event` among the concepts with no `.current`, which is no longer true.
+**Proposed change:** in "**`app.X` is the collection node, not a wrapper.**", replace "a concept nothing is ever *inside* (`type`, `channel`, `event`, `module`, `format`) has no `.current`" with:
+```markdown
+a concept nothing is ever *inside* (`type`, `channel`, `module`, `format`) has no `.current`; `app.event` is the app's events, and its `.current` is the event whose bound call is running (`%!app.event.current%`, `%!event%`)
+```
