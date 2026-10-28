@@ -94,6 +94,26 @@ public class SavedBindingsTests
         await Assert.That(await into.Variable.GetValue("logged")).IsEqualTo("yes");
     }
 
+    // a binding whose action doesn't read (the goal's step now holds another action) answers its read's own error,
+    // whole — never a reflection wrapper around it
+    [Test]
+    public async Task ABinding_WhoseActionDoesNotRead_AnswersItsReadsOwnError()
+    {
+        var root = Root();
+        await using var app = App(root);
+        var context = app.actor.list.User.Context;
+        await Bind(app, Programs(app, "%!app.type.goal.on.start%", null));
+        var snapshot = await app.Snapshot(context).Saved();
+
+        await using var fresh = App(root);
+        var into = fresh.actor.list.User.Context;
+        Program(fresh, "G", Make.Action(into, "variable", "set", Make.Param(into, "Name", "other", "variable"), ("Value", "x")));
+        var started = await snapshot.Start(fresh, into);
+
+        await started.IsFailure();
+        await Assert.That(started.Error!.Key).IsEqualTo("CallbackActionMismatch");
+    }
+
     [Test]
     public async Task ABindingOnTheApp_IsSaved_AndComesBackOnTheAppItGoesOnIn()
     {

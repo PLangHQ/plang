@@ -30,7 +30,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
         var member = Method(obj.GetType(), key, m => System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute))
             && m.ReturnType != typeof(void)
             && m.GetParameters() is [{ ParameterType: var p }] && p == typeof(global::app.actor.context.@this));
-        return member == null ? (false, null) : (true, member.Invoke(obj, [ctx]));
+        return member == null ? (false, null) : (true, member.Invoke(obj, System.Reflection.BindingFlags.DoNotWrapExceptions, null, [ctx], null));
     }
 
     /// <summary>The property <paramref name="key"/> names on <paramref name="class"/>, its case ignored, among those
@@ -96,7 +96,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
                 $"'{host.GetType().Name}' has no writable property '{key}'", "NoAddedMember", 404));
         if (value is global::app.type.item.@this iv && !prop.PropertyType.IsInstanceOfType(value))
             value = iv.Clr(prop.PropertyType);
-        prop.SetValue(host, value);
+        prop.SetValue(host, value, System.Reflection.BindingFlags.DoNotWrapExceptions, null, null, null);
         return new(new global::app.type.clr.@this(host, ctx));
     }
 
@@ -129,11 +129,11 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
             var seqCtor = target.GetConstructor(new[] { typeof(global::System.Collections.Generic.IReadOnlyList<>).MakeGenericType(element) })
                        ?? target.GetConstructor(new[] { typeof(global::System.Collections.Generic.IEnumerable<>).MakeGenericType(element) })
                        ?? target.GetConstructor(new[] { listType });
-            if (seqCtor != null) return seqCtor.Invoke(new object[] { inner });
+            if (seqCtor != null) return seqCtor.Invoke(System.Reflection.BindingFlags.DoNotWrapExceptions, null, new object[] { inner }, null);
 
             var coll = global::System.Activator.CreateInstance(target)!;   // mutable collection with a parameterless ctor
             var add = typeof(global::System.Collections.Generic.ICollection<>).MakeGenericType(element).GetMethod("Add")!;
-            foreach (var el in inner) add.Invoke(coll, new[] { el });
+            foreach (var el in inner) add.Invoke(coll, System.Reflection.BindingFlags.DoNotWrapExceptions, null, new[] { el }, null);
             return coll;
         }
 
@@ -148,7 +148,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
         while (reader.NextName(out var name))
         {
             if (byName.TryGetValue(name, out var prop) && prop.CanWrite)
-                prop.SetValue(host, Value(ref reader, prop.PropertyType, ctx));
+                prop.SetValue(host, Value(ref reader, prop.PropertyType, ctx), System.Reflection.BindingFlags.DoNotWrapExceptions, null, null, null);
             else
                 reader.Skip();
         }
@@ -217,7 +217,8 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
                 ? slot != null ? Made(slot, context.App.type.list[type], context, view) : null
                 : slots.Clr(key, type)));
         }
-        foreach (var (property, value) in values) property.SetValue(host, value);
+        foreach (var (property, value) in values)
+            property.SetValue(host, value, System.Reflection.BindingFlags.DoNotWrapExceptions, null, null, null);
         foreach (var (value, dict) in hosts) Read(dict, value, context, view);
         return host;
     }
