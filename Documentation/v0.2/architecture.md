@@ -465,7 +465,7 @@ An error is an `Error` — the one error type — and carries rich context:
 Error
   .Message, .Key, .StatusCode
   .Step, .Goal              execution location
-  .CallFrames               full stack trace
+  .call                     the call the error happened in; its callers are .call.list
   .Variables                each variable's Data at the time of error (assert; every error under --debug)
   .FixSuggestion, .HelpfulLinks
 ```
