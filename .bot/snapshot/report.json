@@ -145,6 +145,22 @@
       ],
       "after": { "status": "10a waits on Ingi (after error.call); the gate is green (C# 0 red in all six projects, plang 307/308).", "health": "good",
         "notes": "Misses: I asked the coder to run the bench (it declined, rightly), and I named a cause for the 6 KB before it was measured. Added own/Own to the banned names." }
+    },
+    {
+      "id": "8d2f6a14-3b9c-4e71-a5d0-1c7e9b3f2a68",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-28T19:55:00Z",
+      "timestamp_end": "2026-10-28T20:45:00Z",
+      "intent": "Review and bench the per-app event list (941df01dd..0cd33f185)",
+      "before": { "assumptions": "bytes columns are load-proof; the diff touches birth and the request app, not the store", "risk": "a fire is the hottest path; request apps are born per request" },
+      "plan": ".bot/snapshot/codeanalyzer/v2/plan.md",
+      "actions": [
+        { "paths": ["Tools/Bench/record.md", "Tools/Bench/Program.cs"], "type": "review", "category": "test", "confidence": "high",
+          "context": "rows at 0cd33f185 and the parent 6e9db97b4; BENCH_MAKER probe: sub birth 99 / 105 / 108 KB for a maker with 0 / 4 / 16 bindings" },
+        { "paths": [".bot/snapshot/codeanalyzer/review.md"], "type": "review", "category": "code", "confidence": "high",
+          "context": "birth copy sweeps every event name per bound item; one ptest flake under load; dead Reach.Inner; string write door; inherited mirrors scope/filter" }
+      ],
+      "after": { "status": "review written", "health": "fail (small)", "notes": "coder next; no production edit, no mutation run" }
     }
   ]
 }

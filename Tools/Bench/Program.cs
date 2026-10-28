@@ -14,7 +14,23 @@ using PLang.Tests;
 var mode = args.Length > 1 ? args[1] : "root";
 var child = mode == "child";
 var root = Environment.GetEnvironmentVariable("BENCH_ROOT") ?? Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../test"));
-var server = new Lazy<global::app.@this>(() => new global::app.@this(root, wiring: global::app.Wiring.none).Testing());
+var server = new Lazy<global::app.@this>(() => Bound(new global::app.@this(root, wiring: global::app.Wiring.none).Testing()));
+
+// BENCH_MAKER=n: the maker holds n bindings (a debug watch, an on.event): on its variable type's set and remove, a step's and an
+// action's start; a sub app is born taking them in
+static global::app.@this Bound(global::app.@this maker)
+{
+    if (!int.TryParse(Environment.GetEnvironmentVariable("BENCH_MAKER"), out var count)) return maker;
+    var items = new[] { (maker.variable.type, "set"), (maker.variable.type, "remove"), (maker.type.list["step"], "start"), (maker.type.list["action"], "start") };
+    for (var i = 0; i < count; i++)
+    {
+        var (item, name) = items[i % items.Length];
+        maker.@event.Add(item).Add(name)!.after.Add(side => new global::app.@event.binding.@this(side,
+            (_, _, context) => Task.FromResult(context.Ok()), maker.actor.list.User, global::app.@event.binding.Scope.actor,
+            global::app.@event.binding.@this.Always));
+    }
+    return maker;
+}
 global::app.@this Make(bool console) => child
     ? new global::app.@this(root, server.Value.actor.list.User)
     : new global::app.@this(root, wiring: console ? global::app.Wiring.console : global::app.Wiring.none);

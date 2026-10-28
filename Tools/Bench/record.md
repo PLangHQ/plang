@@ -89,3 +89,4 @@ Stage 0 and stage 5 are from `.bot/fast-apps/tester/baseline.md` (three rounds e
 built by the earlier bench in `.bot/fast-apps/tester/bench/`). Their build columns were not measured. Rows from
 `Tools/Bench/run.sh` give one number per column, not a range.
 | 2026-10-27 |  | d72538402 (base-d72538402) | 2.47 | 0.16 ms, 109 KB | 23.88 ms, 2387 KB | 2.15 ms, 542 KB | 21.81 ms, 3841 KB | 1.6 → 2.1 → 2.1 → 2.1 | 0.1 → 1.9 → 1.9 → 1.9 | - | - | - | - |
+| 2026-10-28 | snapshot | 6e9db97b4 (snapshot-6e9db97b4-request) | 2.76 | - | - | 1.94 ms, 519 KB | 19.49 ms, 3829 KB | 1.6 → 2.0 → 2.0 → 2.0 | 0.1 → 1.9 → 1.9 → 1.9 | - | - | - | - |

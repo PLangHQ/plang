@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "0cd33f185: bench flat against the parent (sub 99 KB, root 2332, request flat, held flat); the birth copy sweeps every event name per bound item (+6 KB with 4 bound items, band 5), one ptest flake under load, a dead half in Reach; the rest low" }
