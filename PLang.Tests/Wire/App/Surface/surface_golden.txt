@@ -144,7 +144,7 @@ class app.call.this : app.type.item.this, System.IAsyncDisposable, app.type.item
   Duration : app.type.item.duration.this { get; } [Debug, Out]
   Error : app.error.this { get; } [Snapshot, Store]
   Errors : app.error.list.this { get; } [Debug, LlmBuilder, Out]
-  Event : app.data.this { get; } [Debug, Store]
+  Event : app.data.this { get; } [Debug, Snapshot, Store]
   GetItem<T>() : T
   Handled : app.type.item.bool.this { get; set; } [Debug, Out]
   Holds(System.String name) : System.Boolean
@@ -572,6 +572,13 @@ class app.event.on.write : app.event.this
 class app.event.serializer.Reader : app.type.reader.ITypeReader
   Kind : System.String { get; }
   Read<TReader>(TReader& reader, System.String kind, app.type.reader.ReadContext ctx) : app.type.item.this
+  ctor()
+
+class app.event.serializer.Snapshot : app.type.reader.ITypeReader
+  Kind : System.String { get; }
+  Read<TReader>(TReader& reader, System.String kind, app.type.reader.ReadContext ctx) : app.type.item.this
+  Reads(app.type.format.TokenKind token) : System.Boolean
+  View : app.View { get; }
   ctor()
 
 abstract class app.event.this : app.type.item.this, app.type.item.ICreate<app.event.this> [PlangType]

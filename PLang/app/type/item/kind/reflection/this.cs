@@ -211,10 +211,12 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
                     hosts.Add((value, dict));
                 continue;
             }
-            // A plang member is made as the view makes its type; any other entry lowers ITSELF to the property's CLR
-            // type — at the exit door, no context.
+            // A plang member is made as the view makes its type; a Data member is the row whole, as it was written (its
+            // value and properties read when they are read); any other entry lowers ITSELF to the property's CLR type —
+            // at the exit door, no context.
             values.Add((member, context != null && typeof(global::app.type.item.@this).IsAssignableFrom(type)
                 ? slot != null ? Made(slot, context.App.type.list[type], context, view) : null
+                : context != null && type == typeof(global::app.data.@this) ? slot
                 : slots.Clr(key, type)));
         }
         foreach (var (property, value) in values)

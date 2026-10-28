@@ -70,8 +70,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public virtual global::app.goal.step.action.@this? Action => null;
 
     /// <summary>The event whose bound call is running in this frame, as <c>%!event%</c> reads it — its value the
-    /// running event, its properties <c>item</c> and <c>result</c>. Set only while that call runs.</summary>
-    [Store, Debug]
+    /// running event, its properties <c>item</c> and <c>result</c>. Set only while that call runs; kept, the event comes
+    /// back as the resumed app's own event of that name for that item.</summary>
+    [Store, Debug, global::app.Snapshot]
     public global::app.data.@this? Event { get; internal set; }
 
     /// <summary>

@@ -9,15 +9,28 @@ namespace app.@event;
 [global::app.Attributes.PlangType("event")]
 public abstract class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    private protected @this(string name, binding.list.before before, binding.list.after after)
+    private protected @this(global::app.@event.on.@this on, string name, binding.list.before before, binding.list.after after)
     {
+        this.on = on;
         Name = name;
         this.before = before;
         this.after = after;
     }
 
+    /// <summary>The events this one is of — the item's that made it, or its class's shared ones.</summary>
+    internal global::app.@event.on.@this on { get; }
+
     /// <summary>The event's name — the verb's own (<c>start</c> for <c>Start</c>), or the outcome's.</summary>
     public string Name { get; }
+
+    /// <summary>What finds this event where it is pointed at (a running bound call's <c>%!event%</c>): the item its events
+    /// are of, and its name — <c>{item, name}</c>, read back as the event of that name in the app's events for that item.
+    /// A class's shared event has no item and no key: it is written whole.</summary>
+    internal override System.Threading.Tasks.ValueTask<global::app.type.item.@this?> Key(global::app.actor.context.@this context)
+        => new(on.item is { } item
+            ? new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)])
+                .Set(new global::app.data.@this("item", item, context: context)).Set("name", Name)
+            : null);
 
     /// <summary>What is started before it.</summary>
     public binding.list.before before { get; }

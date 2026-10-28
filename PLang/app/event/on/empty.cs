@@ -25,6 +25,6 @@ public sealed class empty : @this
 
     /// <summary>The event named <paramref name="name"/>, made with lists closed to bindings.</summary>
     private protected override global::app.@event.@this Event(string name)
-        => Made.TryGetValue(name, out var made) ? made(binding.list.before.None, binding.list.after.None)
-            : new declared(name, binding.list.before.None, binding.list.after.None);
+        => Made.TryGetValue(name, out var made) ? made(this, binding.list.before.None, binding.list.after.None)
+            : new declared(this, name, binding.list.before.None, binding.list.after.None);
 }

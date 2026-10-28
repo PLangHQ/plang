@@ -12,20 +12,20 @@ namespace app.@event.on;
 public class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>Each event by its name, made with its two lists — the one place an event's class is named.</summary>
-    private protected static readonly FrozenDictionary<string, System.Func<binding.list.before, binding.list.after, global::app.@event.@this>> Made =
-        new Dictionary<string, System.Func<binding.list.before, binding.list.after, global::app.@event.@this>>(StringComparer.OrdinalIgnoreCase)
+    private protected static readonly FrozenDictionary<string, System.Func<@this, binding.list.before, binding.list.after, global::app.@event.@this>> Made =
+        new Dictionary<string, System.Func<@this, binding.list.before, binding.list.after, global::app.@event.@this>>(StringComparer.OrdinalIgnoreCase)
         {
-            ["start"] = (before, after) => new start(before, after),
-            ["load"] = (before, after) => new load(before, after),
-            ["create"] = (before, after) => new create(before, after),
-            ["set"] = (before, after) => new set(before, after),
-            ["remove"] = (before, after) => new remove(before, after),
-            ["write"] = (before, after) => new write(before, after),
-            ["read"] = (before, after) => new read(before, after),
-            ["ask"] = (before, after) => new ask(before, after),
-            ["error"] = (before, after) => new error(before, after),
-            ["hit"] = (before, after) => new hit(before, after),
-            ["miss"] = (before, after) => new miss(before, after),
+            ["start"] = (events, before, after) => new start(events, before, after),
+            ["load"] = (events, before, after) => new load(events, before, after),
+            ["create"] = (events, before, after) => new create(events, before, after),
+            ["set"] = (events, before, after) => new set(events, before, after),
+            ["remove"] = (events, before, after) => new remove(events, before, after),
+            ["write"] = (events, before, after) => new write(events, before, after),
+            ["read"] = (events, before, after) => new read(events, before, after),
+            ["ask"] = (events, before, after) => new ask(events, before, after),
+            ["error"] = (events, before, after) => new error(events, before, after),
+            ["hit"] = (events, before, after) => new hit(events, before, after),
+            ["miss"] = (events, before, after) => new miss(events, before, after),
         }.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
 
     // the events this item's type declares besides the core's
@@ -67,8 +67,8 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
 
     /// <summary>The event named <paramref name="name"/>, made with its two lists: lists that take bindings.</summary>
     private protected virtual global::app.@event.@this Event(string name)
-        => Made.TryGetValue(name, out var made) ? made(new binding.list.before(), new binding.list.after())
-            : new declared(name, new binding.list.before(), new binding.list.after());
+        => Made.TryGetValue(name, out var made) ? made(this, new binding.list.before(), new binding.list.after())
+            : new declared(this, name, new binding.list.before(), new binding.list.after());
 
     /// <summary>Takes in <paramref name="maker"/>'s: each event the maker made, this item's event of that name inheriting
     /// it — what a sub app (<paramref name="app"/>) is born holding.</summary>
@@ -126,7 +126,8 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     internal bool IsSaved => _events?.Values.Any(@event => @event.IsSaved) == true;
 
     /// <summary>These events written: the item they are the events of, as what it is, then each event a snapshot keeps
-    /// anything of, by its name — <c>{item, start: {before: [binding]}}</c>. Each event writes its own sides.</summary>
+    /// anything of, by its name — <c>{item, start: {before: [binding]}}</c>. Each event writes its own sides: here is where
+    /// it lives, so it is written whole, never by its key.</summary>
     protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
@@ -136,7 +137,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         {
             if (!@event.IsSaved) continue;
             writer.Name(name);
-            await @event.Output(writer);
+            await writer.Write(@event);
         }
         writer.EndObject();
     }

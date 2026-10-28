@@ -4,7 +4,7 @@ namespace app.@event.on;
 /// <c>on.error</c> clauses bound on it (on its <c>before</c> side, in the order they were written).</summary>
 public sealed class error : global::app.@event.@this
 {
-    internal error(binding.list.before before, binding.list.after after) : base("error", before, after) { }
+    internal error(@this on, binding.list.before before, binding.list.after after) : base(on, "error", before, after) { }
 
     /// <summary>
     /// The failure <paramref name="failed"/> handed to what is bound on <paramref name="item"/>'s error, level by
