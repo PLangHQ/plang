@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "35c1b3377: snapshot class has a dead second case (P2-1), the own-type write is four type tests incl. the shared View.Make (P3-1/2), Current's asymmetric setter + ?? (P5-1), two hand-called Take (P7-1); bench: sub birth +6 KB (band 5), memory flat, suites 0 red" }
