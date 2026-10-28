@@ -279,4 +279,34 @@ public class SnapshotEditLaunderProbeTests
         await Assert.That(gone.Count).IsEqualTo(1);
         await Assert.That(gone[0]).Contains("original");
     }
+
+    // the same text with the signature layer's own keys left out, nothing else unwrapped or changed
+    private static System.Text.Json.Nodes.JsonNode? WithoutSignature(System.Text.Json.Nodes.JsonNode? node) => node switch
+    {
+        System.Text.Json.Nodes.JsonObject json => new System.Text.Json.Nodes.JsonObject(json
+            .Where(row => row.Key is not ("signature" or "@schema" or "hash" or "nonce" or "created"))
+            .Select(row => new KeyValuePair<string, System.Text.Json.Nodes.JsonNode?>(row.Key, WithoutSignature(row.Value)))),
+        System.Text.Json.Nodes.JsonArray list => new System.Text.Json.Nodes.JsonArray(list.Select(WithoutSignature).ToArray()),
+        _ => node?.DeepClone(),
+    };
+
+    // K2b: byte for byte. The edited snapshot, written again, is the saved bytes with the one value changed: an untouched
+    // plain row stays bare, and so does the edited text (a plain text a program sets is still plain).
+    [Test]
+    public async Task K2b_AReWrittenEditedSnapshot_IsTheSavedBytes_PlusTheEdit_ByteForByte()
+    {
+        await using var app = App();
+        var context = app.actor.list.User.Context;
+        var saved = await Saved(app);
+        var original = System.Text.Encoding.UTF8.GetString(await Plang(saved, context));
+        await context.Variable.Set("snap", saved);
+
+        await (await context.Action(Edit)).Start(context);
+        var edited = System.Text.Encoding.UTF8.GetString(await Plang(await context.Variable.Get("snap"), context));
+
+        var was = WithoutSignature(System.Text.Json.Nodes.JsonNode.Parse(original))!.ToJsonString();
+        var now = WithoutSignature(System.Text.Json.Nodes.JsonNode.Parse(edited))!.ToJsonString();
+        await TestContext.Current!.OutputWriter.WriteLineAsync($"K2b was.len={was.Length} now.len={now.Length}");
+        await Assert.That(now.Replace("\"EDITED\"", "\"original\"")).IsEqualTo(was);
+    }
 }
