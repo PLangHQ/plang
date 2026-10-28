@@ -56,8 +56,9 @@ public class ContainerCloneTests : System.IAsyncDisposable
     [Test]
     public async Task ASnapshotInsideAList_ClonesInItsOwnContext()
     {
-        var snapshot = new global::app.snapshot.@this(Context);
-        snapshot.Entries.Set(new global::app.data.@this("id", "c1", context: Context));
+        var written = new global::app.type.item.dict.@this(app.type.list[typeof(global::app.type.item.dict.@this)]);
+        written.Set(new global::app.data.@this("id", "c1", context: Context));
+        var snapshot = new global::app.snapshot.@this(written, Context);
         var list = new global::app.type.item.list.@this(new global::app.type.item.@this[] { snapshot },
             app.type.list[typeof(global::app.type.item.list.@this)]);
 

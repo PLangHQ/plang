@@ -6,13 +6,13 @@ using app.module.identity.code;
 namespace app.actor;
 
 /// <summary>
-/// Represents an actor in the system with its own context and IO channels. Takes part in a snapshot as what holds its
-/// context and its property, with nothing of its own.
+/// Represents an actor in the system with its own context and IO channels. In a snapshot it is written whole where it
+/// lives, the app's actors (its property and its context), and anywhere else by its name.
 /// </summary>
 [global::app.Attributes.PlangType("actor")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IAsyncDisposable,
     global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>, global::app.type.item.ILoad<@this>,
-    global::app.type.item.IList<@this, global::app.actor.list.@this>, global::app.origin.@this, global::app.snapshot.ISnapshot,
+    global::app.type.item.IList<@this, global::app.actor.list.@this>, global::app.origin.@this,
     global::app.type.item.property.IOwner
 {
     /// <summary>An actor is live — its context, its channels, its tasks: a copy of it is it.</summary>
@@ -21,8 +21,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private readonly CancellationTokenSource _cts;
 
     /// <summary>What a program adds to the actor — kept as long as the actor lives, and in a snapshot.</summary>
-    [Store, global::app.LlmBuilder]
-    public global::app.type.item.property.list.@this property { get; }
+    [Store, global::app.Snapshot, global::app.LlmBuilder]
+    public global::app.type.item.property.list.@this property { get; private set; }
 
     /// <summary>A key names this actor by its name — <c>system</c>, <c>user</c>; case is not the program's to get right.</summary>
     public ValueTask<@this?> Match(string key)
@@ -61,16 +61,21 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         return default;
     }
 
-    /// <summary>
-    /// The PLang execution context owned by this actor.
-    /// </summary>
-    [global::app.LlmBuilder]
-    public context.@this Context { get; }
+    /// <summary>What finds an actor: its name, which its role goes by in every app.</summary>
+    internal override System.Threading.Tasks.ValueTask<global::app.type.item.@this?> Key(global::app.actor.context.@this context)
+        => new(new global::app.type.item.text.@this(Name, context.App.type.list[typeof(global::app.type.item.text.@this)]));
 
     /// <summary>The bindings this actor made while a program ran, on the items each is on — every run-time binding,
     /// whatever its scope, whichever of its contexts bound it; an event reads the holds of every actor of the asker's
-    /// app, and the binding decides whether it fires. Let go with the actor.</summary>
+    /// app, and the binding decides whether it fires. Let go with the actor. Declared before the context: a snapshot
+    /// writes and reads members in the order they are declared, and a frame's run comes back onto the hold.</summary>
     internal global::app.@event.on.list.@this on { get; }
+
+    /// <summary>
+    /// The PLang execution context owned by this actor.
+    /// </summary>
+    [global::app.LlmBuilder, global::app.Snapshot]
+    public context.@this Context { get; }
 
     /// <summary>
     /// Per-actor permission view — signed grants on paths, keyed by verb

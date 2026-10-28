@@ -142,6 +142,33 @@ public class ResumeInAnAppTests
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("read");
     }
 
+    // The steps after the save run in the called goal's frame, as the call would have: what the call handed it reads there.
+    [Test]
+    public async Task ARunSavedInACalledGoal_ReadsWhatTheCallHandedIt()
+    {
+        await using var app = App();
+        var context = app.actor.list.User.Context;
+        var inner = new Goal(app.type.list) { Name = "Inner", Path = global::app.type.item.path.@this.Resolve("/Inner.goal", context) };
+        foreach (var (index, line) in new[] { (0, "variable.set(Name=%s0%, Value=\"read\")"), (1, "goal.return(Data=%city%)") })
+        {
+            var step = new Step(app.type.list) { Goal = inner, List = inner.Step, Index = index, Text = line };
+            step.Code.Add((await context.Action(line)).In(step));
+            inner.Step.Add(step);
+        }
+        app.goal.list.Add(inner);
+        var setting = await context.call.Setting();
+        global::app.data.@this saved;
+        await using (context.call.Push(inner, setting, [new global::app.data.@this("city", "Reykjavik", context: context)]))
+        await using (context.call.Push(inner.Step[0], setting))
+        await using (context.call.Push(inner.Step[0].Code[0], setting, context.Variable))
+            saved = await new global::app.module.snapshot.save(context).Start();
+
+        var result = await Resume(saved, context);
+
+        await result.IsSuccess();
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("Reykjavik");
+    }
+
     [Test]
     public async Task NotWaited_AnswersATask_WhoseWaitGivesTheResult()
     {

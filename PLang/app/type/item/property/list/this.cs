@@ -8,7 +8,7 @@ namespace app.type.item.property.list;
 /// then one by name; a dot on the thing itself falls through to it (<c>%!app.home%</c>). It writes each property whole
 /// under its name, is made back from what it wrote, and takes part in a snapshot as the run's state.
 /// </summary>
-public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, global::app.snapshot.ISnapshot
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>Plang keeps it for its things: no step names it as a type.</summary>
     public static bool Internal => true;
@@ -113,21 +113,5 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         while (json.NextName(out var name)) list._property[name] = reader.Read(ref json, ctx);
         json.EndObject();
         return list;
-    }
-
-    /// <summary>The run's state: each property the Data it is, under its name, as variables are stored.</summary>
-    global::app.data.@this global::app.snapshot.ISnapshot.Store(global::app.snapshot.@this snapshot, global::app.actor.context.@this context)
-    {
-        foreach (var (name, property) in Members) snapshot.Entries.Set(name, property);
-        return context.Ok();
-    }
-
-    /// <summary>Back as they were saved: exactly the stored properties, each through the snapshot's door, in the part's
-    /// context.</summary>
-    System.Threading.Tasks.Task<global::app.data.@this> global::app.snapshot.ISnapshot.Start(global::app.snapshot.@this snapshot, global::app.actor.context.@this context)
-    {
-        _property.Clear();
-        foreach (var property in snapshot.In(context)) _property[property.Name] = property;
-        return System.Threading.Tasks.Task.FromResult(context.Ok());
     }
 }

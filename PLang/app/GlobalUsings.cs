@@ -39,7 +39,6 @@ global using Variables = app.type.item.variable.list.@this;
 
 // Snapshot subsystem
 global using Snapshot = app.snapshot.@this;
-global using ISnapshot = app.snapshot.ISnapshot;
 
 
 // One message in an llm conversation — the llm module's `message` type.

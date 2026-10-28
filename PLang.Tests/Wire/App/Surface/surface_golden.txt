@@ -51,7 +51,7 @@ class app.call.Diff : System.IEquatable<app.call.Diff>
   Name : System.String { get; } [Debug, Out]
 
 class app.call.action.this : app.call.this, app.type.item.ICreate<app.call.action.this>
-  override Action : app.goal.step.action.this { get; } [Debug, Out, Store]
+  override Action : app.goal.step.action.this { get; } [Debug, Out, Snapshot, Store]
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.action.this
   static Internal : System.Boolean { get; }
 
@@ -80,22 +80,19 @@ class app.call.diff.this : System.Collections.Generic.IEnumerable<app.call.Diff>
   ctor()
 
 class app.call.goal.this : app.call.this, app.type.item.ICreate<app.call.goal.this>
-  override Goal : app.goal.this { get; } [Debug, Out, Store]
+  override Goal : app.goal.this { get; } [Debug, Out, Snapshot, Store]
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.goal.this
   static Internal : System.Boolean { get; }
 
 class app.call.isolated.this : app.call.binding.this, app.type.item.ICreate<app.call.isolated.this>
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.isolated.this
 
-class app.call.list.this : app.type.item.this, app.snapshot.ISnapshot
-  At(System.Collections.Generic.IReadOnlyList<app.call.this> chain) : app.snapshot.ISnapshot
+class app.call.list.this : app.type.item.this
   Audit : app.error.list.this { get; } [LlmBuilder]
   Compose(app.goal.step.action.this action, app.call.setting.this setting, app.type.item.variable.list.this variables = …) : app.call.this
-  Current : app.call.this { get; } [LlmBuilder]
-  DiffScope(app.type.item.variable.list.this variables) : System.IDisposable
+  Current : app.call.this { get; } [LlmBuilder, Snapshot]
   Error : app.error.this { get; }
   Event : app.data.this { get; }
-  EventsSince(System.DateTimeOffset t) : System.Collections.Generic.IEnumerable<app.call.Diff>
   Goal : app.goal.this { get; }
   Isolate(System.Collections.Generic.IEnumerable<app.data.this> names, app.call.setting.this setting, app.goal.step.action.this call = …, app.call.this caller = …) : app.call.this
   MaxDepth : System.Int32 { get; init; }
@@ -133,12 +130,12 @@ class app.call.setting.this : app.type.item.setting.this
   static Internal : System.Boolean { get; }
 
 class app.call.step.this : app.call.this, app.type.item.ICreate<app.call.step.this>
-  override Step : app.goal.step.this { get; } [Debug, Out, Store]
+  override Step : app.goal.step.this { get; } [Debug, Out, Snapshot, Store]
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.step.this
   static Internal : System.Boolean { get; }
 
 class app.call.this : app.type.item.this, System.IAsyncDisposable, app.type.item.ICreate<app.call.this>, app.type.item.property.IOwner
-  Caller : app.call.this { get; } [LlmBuilder]
+  Caller : app.call.this { get; } [LlmBuilder, Snapshot]
   Chain : System.Collections.Generic.IReadOnlyList<app.call.this> { get; }
   Children : app.call.child.list.this { get; }
   CompletedAt : app.type.item.datetime.this { get; }
@@ -146,25 +143,25 @@ class app.call.this : app.type.item.this, System.IAsyncDisposable, app.type.item
   Diffs : app.call.diff.this { get; } [Debug, LlmBuilder, Out]
   DisposeAsync() : System.Threading.Tasks.ValueTask
   Duration : app.type.item.duration.this { get; } [Debug, Out]
-  Error : app.error.this { get; } [Store]
+  Error : app.error.this { get; } [Snapshot, Store]
   Errors : app.error.list.this { get; } [Debug, LlmBuilder, Out]
   Event : app.data.this { get; } [Debug, Store]
   GetItem<T>() : T
   Handled : app.type.item.bool.this { get; set; } [Debug, Out]
   Holds(System.String name) : System.Boolean
   Id : app.type.item.text.this { get; } [Debug, Out]
-  Parameter : app.type.item.property.list.this { get; } [LlmBuilder, Store]
+  Parameter : app.type.item.property.list.this { get; } [LlmBuilder, Snapshot, Store]
   Record(app.error.this error, app.actor.context.this context) : System.Void
   Set(System.String name, app.data.this value) : System.Void
   SetItem<T>(T value) : System.Void
   StartedAt : app.type.item.datetime.this { get; } [Debug, Out]
   Supplies(app.goal.step.action.this call, System.String name) : System.Boolean
   Tag(app.type.item.dict.this tags, app.actor.context.this context) : System.Void
-  Tags : app.type.item.dict.this { get; } [Debug, LlmBuilder, Out, Store]
+  Tags : app.type.item.dict.this { get; } [Debug, LlmBuilder, Out, Snapshot, Store]
   TryGet(System.String name, app.data.this& value) : System.Boolean
   override IsLeaf : System.Boolean { get; }
   override ToString() : System.String
-  property : app.type.item.property.list.this { get; } [LlmBuilder, Store]
+  property : app.type.item.property.list.this { get; } [LlmBuilder, Snapshot, Store]
   protected override Clone() : app.type.item.this
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.this
   virtual Action : app.goal.step.action.this { get; } [LlmBuilder]
@@ -963,10 +960,10 @@ class app.module.this : app.type.item.this, app.type.item.ICreate<app.module.thi
   protected override Setting(app.data.this parent) : System.Threading.Tasks.ValueTask<app.data.this>
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.module.this
 
-class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnapshot, app.type.item.property.IOwner, app.type.item.setting.ISetting<app.setting.this>
+class app.this : app.type.item.this, System.IAsyncDisposable, app.type.item.property.IOwner, app.type.item.setting.ISetting<app.setting.this>
   Build : app.module.build.this { get; set; } [LlmBuilder]
   Cache : app.module.cache.ICache { get; }
-  Code : app.module.code.this { get; }
+  Code : app.module.code.this { get; } [Snapshot]
   Created : app.type.item.datetime.this { get; } [LlmBuilder, Out, Store]
   Debug : app.module.debug.this { get; set; }
   DisposeAsync() : System.Threading.Tasks.ValueTask
@@ -987,7 +984,7 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnap
   Updated : app.type.item.datetime.this { get; } [LlmBuilder, Out, Store]
   Uptime : app.type.item.duration.this { get; } [LlmBuilder]
   Version : System.String { get; } [Out, Store]
-  actor : app.type.node.current.this<app.actor.this, app.actor.list.this> { get; } [LlmBuilder, Out]
+  actor : app.type.node.current.this<app.actor.this, app.actor.list.this> { get; } [LlmBuilder, Out, Snapshot]
   call(app.actor.context.this context) : app.call.list.this [LlmBuilder]
   ctor(System.String absolutePath, System.String environment = …, app.Wiring wiring = …)
   data(app.actor.context.this context) : app.data.this [LlmBuilder]
@@ -998,7 +995,7 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnap
   module : app.module.this { get; } [LlmBuilder, Out]
   override IsLeaf : System.Boolean { get; }
   parent : app.parent.this { get; } [LlmBuilder, Out]
-  property : app.type.item.property.list.this { get; } [LlmBuilder, Store]
+  property : app.type.item.property.list.this { get; } [LlmBuilder, Snapshot, Store]
   protected override Clone() : app.type.item.this
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   shortcut : app.type.node.this<app.shortcut.this, app.shortcut.list.this> { get; } [Out]
@@ -2467,7 +2464,7 @@ class app.type.item.permission.this : app.type.item.this, app.type.item.ICreate<
 interface app.type.item.property.IOwner
   abstract property : app.type.item.property.list.this { get; }
 
-class app.type.item.property.list.this : app.type.item.this, app.snapshot.ISnapshot, app.type.item.ICreate<app.type.item.property.list.this>
+class app.type.item.property.list.this : app.type.item.this, app.type.item.ICreate<app.type.item.property.list.this>
   Item[System.String] : app.data.this { get; }
   ctor(app.type.this type)
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
@@ -2977,7 +2974,7 @@ class app.type.item.variable.code.this : app.type.item.list.bare.this<app.type.i
   Set(System.Object value, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
   Start(app.actor.context.this context, app.data.this from = …) : System.Threading.Tasks.ValueTask<app.data.this>
 
-class app.type.item.variable.list.this : app.snapshot.ISnapshot
+class app.type.item.variable.list.this
   Clear() : System.Void
   Contains(System.String name) : System.Boolean
   Ensure(System.String name, System.Func<System.Threading.Tasks.ValueTask<app.data.this>> value) : System.Threading.Tasks.ValueTask<app.data.this>
@@ -2991,11 +2988,11 @@ class app.type.item.variable.list.this : app.snapshot.ISnapshot
   Set(System.String name, System.Object value) : System.Threading.Tasks.ValueTask<app.data.this>
   Set(app.data.this value) : System.Threading.Tasks.ValueTask<app.data.this>
   Snapshot() : app.type.item.dict.this
-  SnapshotAt(app.error.this error) : app.type.item.variable.list.this
   Supplies(app.goal.step.action.this call, System.String name) : System.Boolean
   Value(System.String name) : System.Threading.Tasks.ValueTask<app.type.item.this>
   ctor(app.actor.context.this context)
   list : app.type.item.list.this<app.type.item.variable.this> { get; }
+  row : app.type.item.dict.this { get; } [Snapshot]
 
 class app.type.item.variable.parser.this
   Error : System.Collections.Generic.IReadOnlyList<app.error.this> { get; }
@@ -3220,14 +3217,14 @@ class app.type.node.root.this : app.type.node.this<app.type.this, app.type.list.
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
 
-abstract class app.type.node.this : app.type.item.this, app.snapshot.ISnapshot [PlangType]
+abstract class app.type.node.this : app.type.item.this [PlangType]
   static Internal : System.Boolean { get; }
 
 class app.type.node.this<T, L> : app.type.node.this
   Get(System.String key, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this<T>>
   Load(System.String location) : System.Threading.Tasks.Task<app.data.this>
   ctor(app.this app)
-  list : L { get; }
+  list : L { get; } [Snapshot]
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
   override Get(app.data.this parent, System.String key, System.Boolean isIndex) : System.Threading.Tasks.ValueTask<app.data.this>
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
@@ -3690,15 +3687,11 @@ type clr
 
 type code
 
-type code.default
-
 type code.dll
 
 type code.dll.added
 
 type code.dll.loaded
-
-type code.registration
 
 type content
   .path : path

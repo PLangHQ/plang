@@ -32,8 +32,8 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     {
         if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("snapshot", kind), ctx.Context]);
 
-        // a snapshot's entries were written in the snapshot's view, so they are read in it: a value found elsewhere
-        // comes back as what its key finds
+        // a snapshot's entries were written in the snapshot's view, so they are read in it: a value whose type chooses
+        // what the view shows comes back from those members (a goal, as what its key finds)
         ctx = ctx with { View = global::app.View.Snapshot };
 
         // its text is its written form, plang's own: read back through here as the object it holds
@@ -48,10 +48,15 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         var json = new global::app.type.item.serializer.json(ctx.Context);
         // Born with the READING context: a restored snapshot belongs to the actor restoring it,
         // not to whoever captured it.
-        var snapshot = new global::app.snapshot.@this(ctx.Context);
+        var list = ctx.Context.App.type.list;
+        var written = new global::app.type.item.dict.@this(list[typeof(global::app.type.item.dict.@this)]);
+        // what an object wrote stays as its bytes until it is read back (a resume) or opened (a navigation): written
+        // again unopened, it is those bytes, as they were signed
         while (reader.NextName(out var name))
-            snapshot.Entries.Set(name, json.Entry(ref reader, ctx));
+            written.Set(name, reader.Peek() == global::app.type.format.TokenKind.Object
+                ? new global::app.type.item.wire.@this(System.Text.Encoding.UTF8.GetString(reader.RawValue()), list[typeof(global::app.type.item.dict.@this)], list.Plang, ctx.View)
+                : json.Entry(ref reader, ctx));
         reader.EndObject();
-        return snapshot;
+        return new global::app.snapshot.@this(written, ctx.Context);
     }
 }

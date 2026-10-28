@@ -1,22 +1,30 @@
 namespace app.snapshot;
 
 /// <summary>
-/// Snapshot — navigation. A snapshot is a plain container: its entries are a dict of Data, and a
-/// section is an entry whose value is a snapshot. So navigating and editing it is the dict's own
-/// navigation over its entries — <c>%snap.variables.x%</c> reads section "variables", entry "x", and
-/// <c>set %snap.variables.x% = 2</c> edits that entry. The snapshot knows nothing of what an owner
-/// keeps in its section; the owner reads its section back on restore.
+/// Snapshot — navigation. A snapshot read back is what the app wrote, so navigating and editing it is that dict's own:
+/// <c>%snap.app.actor.list.user.context.variable.list.x%</c> reads the user's saved <c>x</c>, and
+/// <c>set %snap.app.….x% = 2</c> edits it. The snapshot knows nothing of what each object keeps; each reads its own back
+/// on a resume.
 /// </summary>
 public sealed partial class @this
 {
-    /// <summary>A child read — one of this snapshot's entries (a section, or an entry of one).</summary>
+    /// <summary>A child read — what the app wrote, by key: opened once, the first time it is navigated, and kept open, so
+    /// an edit made through it is the snapshot's.</summary>
     public override System.Threading.Tasks.ValueTask<data.@this> Get(data.@this parent, string key)
-        => Entries.Get(parent, key);
+    {
+        if (_written is not { } written) return new(parent.Context.NotFound(key));
+        if (written.Get(key, parent.Context) is { } held && held.Peek() is global::app.type.item.source
+            && View.Make(parent.Context.App.type.list[typeof(global::app.type.item.dict.@this)], held.Peek(), parent.Context) is { } opened)
+            written.Set(new global::app.data.@this(held.Name, opened, context: parent.Context));
+        return written.Get(parent, key);
+    }
 
-    /// <summary>A child write — sets one of this snapshot's entries (create or overwrite).</summary>
+    /// <summary>A child write — sets an entry of what the app wrote (create or overwrite).</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(string key, bool isIndex, object? value, global::app.actor.context.@this context)
     {
-        var set = await Entries.Set(key, isIndex, value, context);
+        if (_written is not { } written) return context.Error(new global::app.error.@this(
+            "a snapshot being taken is written as it is: edit one read back", "SnapshotTaken", 400));
+        var set = await written.Set(key, isIndex, value, context);
         return set.Success ? context.Ok(this) : set;
     }
 }

@@ -851,11 +851,17 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         return System.Text.Encoding.UTF8.GetString(stream.ToArray());
     }
 
+    /// <summary>What finds this value from any place but the one where it lives (an actor its name, the app its name), as
+    /// <paramref name="context"/> has it; null for a value that is just a value, written whole wherever it is. A snapshot
+    /// writes a value's key where it points at it, and reads it back through the app.</summary>
+    internal virtual System.Threading.Tasks.ValueTask<@this?> Key(global::app.actor.context.@this context) => new((@this?)null);
+
     /// <summary>
     /// The item writes ITSELF into <paramref name="writer"/>: the writer hands it back its own write for the writer's
     /// own class (a text writer the text look, a formal writer the formal look, any other the value's own write). A
     /// value writing a member writes <c>member.Output(writer)</c>. Every write comes through here, so the writer's view
-    /// is asked first (a snapshot writes a value found elsewhere as what finds it); any other view lets it write itself.
+    /// is asked first (a snapshot writes a value whose type chooses what it shows by those members); any other view lets
+    /// it write itself.
     /// </summary>
     public System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer) => writer.View.Output(this, writer);
 
@@ -872,7 +878,8 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     protected internal virtual System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer) => Members(writer);
 
     /// <summary>The value's tagged members as its view shows them — the structure's face <see cref="Write(global::app.type.format.IWriter)"/>
-    /// writes by default, and what a view writes for a value whatever its own look (a snapshot, a value found elsewhere).</summary>
+    /// writes by default, and what a view writes for a value whatever its own look (a snapshot's, for a type that chooses
+    /// what it shows).</summary>
     internal async System.Threading.Tasks.ValueTask Members(global::app.type.format.IWriter writer)
     {
         var host = Host;
@@ -905,7 +912,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
             // an empty list says nothing, as a null says nothing
             if (member.IsSequence && !member.IsTruthy()) continue;
             writer.Name(entry.WireName);
-            await member.Output(writer);
+            await writer.View.Member(entry, member, writer);
         }
         writer.EndObject();
     }

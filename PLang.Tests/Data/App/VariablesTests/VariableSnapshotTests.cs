@@ -21,10 +21,9 @@ public class VariableSnapshotTests : System.IAsyncDisposable
         await context.Variable.Set("answer", result);
         await context.Variable.Set("last", result);
 
-        var snap = new Snapshot(context);
-        ((ISnapshot)context.Variable).Store(snap, context);
+        var snap = await app.Snapshot(context).Saved();
         var into = dst.actor.list.User.Context;
-        await ((ISnapshot)into.Variable).Start(snap, into);
+        await dst.Restore(snap, into);
 
         await Assert.That((await (await into.Variable.Get("answer")).Value())?.ToString()).IsEqualTo("42");
         await Assert.That((await (await into.Variable.Get("last")).Value())?.ToString()).IsEqualTo("42");

@@ -81,7 +81,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         var into = dst.actor.list.User.Context;
         await Granted(dst, TypeProviderDll);
         var snap = await into.Snapshot(text);
-        var record = await (await snap.Node("Code").Rows("dll")).Single().Value<global::app.module.code.dll.@this>();
+        var record = await (await (await snap.Node("app.code")).Rows("dll", into)).Single().Value<global::app.module.code.dll.@this>();
         await Assert.That(record is global::app.module.code.dll.added.@this { Namespace: "TypeProvider" }).IsTrue();
         await dst.Restore(snap, into);
 
@@ -102,9 +102,8 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         var snap = (await src.Snapshot(context).Saved());
 
         // one record of the DLL: its provider is no registration of its own, and the override names its kind by plang name
-        await Assert.That((await snap.Node("Code").Records<global::app.module.code.registration.@this>("registration"))!.Count).IsEqualTo(0);
-        var overrides = await snap.Node("Code").Records<global::app.module.code.@default.@this>("default");
-        await Assert.That(overrides!.Single(o => o.Provider == "test-signing").Kind).IsEqualTo("signing");
+        await Assert.That((await snap.Node("app.code.provider")).CountRaw).IsEqualTo(0);
+        await Assert.That(await (await snap.Node("app.code.default")).Text("signing", context)).IsEqualTo("test-signing");
 
         var text = await snap.Text(context);
         await using var dst = new global::app.@this(root + "-dst");
@@ -171,17 +170,12 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         // no silent fallback to the system defaults
         var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
         var context = src.actor.list.User.Context;
-        var snap = new Snapshot(context);
-        snap.Node("Code").Set("dll", new List<global::app.module.code.dll.@this>
-        {
-            new global::app.module.code.dll.loaded.@this(src.type.list[typeof(global::app.module.code.dll.loaded.@this)])
-            {
-                Source = global::app.type.item.path.@this.Resolve("/nonexistent/ghost-provider.dll", context),
-            }
-        });
+        await Load(src, TypeProviderDll);
+        var text = (await src.Snapshot(context).Saved().Text(context)).Replace("TypeProvider.dll", "ghost-provider.dll");
 
         var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
-        var started = await snap.Start(dst, dst.actor.list.User.Context);
+        var into = dst.actor.list.User.Context;
+        var started = await (await into.Snapshot(text)).Start(dst, into);
 
         await Assert.That(started.Success).IsFalse();
         await Assert.That(started.Error!.Key).IsEqualTo("DllNotLoaded");
@@ -193,15 +187,8 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         // a record with no source would otherwise be dropped, and the run would come back without its DLL
         var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
         var context = src.actor.list.User.Context;
-        var snap = new Snapshot(context);
-        snap.Node("Code").Set("dll", new List<global::app.module.code.dll.@this>
-        {
-            new global::app.module.code.dll.loaded.@this(src.type.list[typeof(global::app.module.code.dll.loaded.@this)])
-            {
-                Source = global::app.type.item.path.@this.Resolve("/nonexistent/ghost-provider.dll", context),
-            }
-        });
-        var text = (await snap.Text(context)).Replace("\"source\"", "\"elsewhere\"");
+        await Load(src, TypeProviderDll);
+        var text = (await src.Snapshot(context).Saved().Text(context)).Replace("\"source\"", "\"elsewhere\"");
 
         var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
         var into = dst.actor.list.User.Context;
@@ -219,9 +206,8 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         var snap = (await src.Snapshot(src.actor.list.User.Context).Saved());
 
         // stored by its kind's plang name and its own, never a C# type name
-        var registration = (await snap.Node("Code").Records<global::app.module.code.registration.@this>("registration"))!.Single();
-        await Assert.That(registration.Kind).IsEqualTo("grep");
-        await Assert.That(registration.Provider).IsEqualTo("custom");
+        var names = await (await snap.Node("app.code.provider")).Rows("grep", src.actor.list.User.Context);
+        await Assert.That((await names.Single().Value())?.ToString()).IsEqualTo("custom");
 
         var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
         var started = await snap.Start(dst, dst.actor.list.User.Context);
@@ -233,18 +219,10 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
     [Test]
     public async Task Providers_Restore_AnswersTheChoicesError_ForAKindTheRuntimeDoesntDeclare()
     {
-        var snap = new Snapshot(app.actor.list.User.Context);
-        snap.Node("Code").Set("default", new List<global::app.module.code.@default.@this>
-        {
-            new(app.actor.list.User.Context.App.type.list[typeof(global::app.module.code.@default.@this)])
-            {
-                Kind = "nosuchkind",
-                Provider = "ghost",
-            }
-        });
-
         var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
-        var started = await snap.Start(dst, dst.actor.list.User.Context);
+        var into = dst.actor.list.User.Context;
+        var snap = await into.Snapshot("{\"app\": {\"code\": {\"default\": {\"nosuchkind\": \"ghost\"}}}}");
+        var started = await snap.Start(dst, into);
 
         await Assert.That(started.Success).IsFalse();
         await Assert.That(started.Error!.Key).IsEqualTo("ChoiceInvalid");
@@ -254,18 +232,10 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
     public async Task Providers_Restore_HardErrors_OnUnresolvableDefaultSelectionName()
     {
         // the default-selection name doesn't match any registered provider → a hard error
-        var snap = new Snapshot(app.actor.list.User.Context);
-        snap.Node("Code").Set("default", new List<global::app.module.code.@default.@this>
-        {
-            new(app.actor.list.User.Context.App.type.list[typeof(global::app.module.code.@default.@this)])
-            {
-                Kind = "grep",
-                Provider = "phantom",
-            }
-        });
-
         var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
-        var started = await snap.Start(dst, dst.actor.list.User.Context);
+        var into = dst.actor.list.User.Context;
+        var snap = await into.Snapshot("{\"app\": {\"code\": {\"default\": {\"grep\": \"phantom\"}}}}");
+        var started = await snap.Start(dst, into);
 
         await Assert.That(started.Success).IsFalse();
     }
@@ -277,7 +247,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var snap = (await app.Snapshot(app.actor.list.User.Context).Saved());
 
-        await Assert.That((await snap.Node("Code").Records<global::app.module.code.registration.@this>("registration"))!.Count).IsEqualTo(0);
-        await Assert.That((await snap.Node("Code").Rows("dll")).Count).IsEqualTo(0);
+        await Assert.That((await snap.Node("app.code.provider")).CountRaw).IsEqualTo(0);
+        await Assert.That((await (await snap.Node("app.code")).Rows("dll", app.actor.list.User.Context)).Count).IsEqualTo(0);
     }
 }

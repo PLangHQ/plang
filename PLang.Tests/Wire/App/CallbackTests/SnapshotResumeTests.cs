@@ -34,7 +34,7 @@ public class SnapshotResumeTests
     {
         var app = NewApp();
         var context = app.actor.list.User.Context;
-        var unsigned = new global::app.data.@this("callback", new global::app.snapshot.@this(context), context: context);
+        var unsigned = new global::app.data.@this("callback", context.EmptySnapshot(), context: context);
         var handler = new start(context) { Callback = unsigned };
         var result = await handler.Start();
         await result.IsFailure();
@@ -49,7 +49,7 @@ public class SnapshotResumeTests
         var (signer, _) = app.Code.Get<global::app.module.signing.code.ISigning>();
         var signed = await signer!.SignAsync(new global::app.module.signing.sign(context)
         {
-            Data = new global::app.data.@this("callback", new global::app.snapshot.@this(context), context: context),
+            Data = new global::app.data.@this("callback", context.EmptySnapshot(), context: context),
             View = global::app.View.Snapshot,
         });
         var handler = new start(context) { Callback = signed };
@@ -60,7 +60,7 @@ public class SnapshotResumeTests
     [Test] public async Task SnapshotResume_EmptyChainAfterRestore_ReturnsNoFrameToResumeError()
     {
         var app = NewApp();
-        var snap = new global::app.snapshot.@this(app.actor.list.User.Context);
+        var snap = app.actor.list.User.Context.EmptySnapshot();
         var result = await snap.Resumed(app.actor.list.User.Context);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NoFrameToResume");
@@ -106,7 +106,7 @@ public class SnapshotResumeTests
         // just pin the API contract: ResumeChain handles >1 frame without
         // throwing on the recursive walk.
         var app = NewApp();
-        var snap = new global::app.snapshot.@this(app.actor.list.User.Context);
+        var snap = app.actor.list.User.Context.EmptySnapshot();
         var result = await snap.Resumed(app.actor.list.User.Context);
         // Empty chain → NoFrameToResume; demonstrates recursion entry doesn't NRE.
         await Assert.That(result.Error!.Key).IsEqualTo("NoFrameToResume");

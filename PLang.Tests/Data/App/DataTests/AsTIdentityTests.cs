@@ -130,7 +130,7 @@ public class AsTIdentityTests
     public async Task ACopyOfAResult_HoldsItsSnapshot()
     {
         var context = _app.actor.list.User.Context;
-        var snapshot = new global::app.snapshot.@this(context);
+        var snapshot = context.EmptySnapshot();
         var source = new global::app.data.@this("asked", "x", context: context) { Snapshot = snapshot };
 
         await Assert.That(source.Copy().Snapshot).IsSameReferenceAs(snapshot);

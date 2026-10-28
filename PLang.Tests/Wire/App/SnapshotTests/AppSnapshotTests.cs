@@ -12,18 +12,18 @@ public class AppSnapshotTests
         await app.actor.list.System.Context.Variable.Set("y", 2);
         var snap = (await app.Snapshot(app.actor.list.User.Context).Saved());
 
-        await Assert.That(snap.Entries.Get("mode", snap.Context)).IsNull();
-        await Assert.That(snap.Holds("property")).IsFalse();                  // nothing added: an empty node is left out
-        await Assert.That(snap.Holds("Code")).IsTrue();
-        await Assert.That(snap.Holds(SnapshotPathExtensions.UserVariable)).IsTrue();
-        await Assert.That(snap.Holds("actor.list.System.Context.Variable")).IsTrue();   // both actors' contexts are saved
-        await Assert.That(snap.Holds(SnapshotPathExtensions.UserCall)).IsFalse();       // nothing running: no call to save
+        await Assert.That(await snap.Holds("app.mode")).IsFalse();
+        await Assert.That(await snap.Holds("app.property")).IsFalse();                  // nothing added: an empty list says nothing
+        await Assert.That(await snap.Holds("app.code")).IsTrue();
+        await Assert.That(await snap.Holds(SnapshotPathExtensions.UserVariable)).IsTrue();
+        await Assert.That(await snap.Holds("app.actor.list.system.context.variable.row")).IsTrue();   // both actors' contexts are saved
+        await Assert.That(await snap.Holds(SnapshotPathExtensions.UserCall + ".current")).IsFalse();       // nothing running: no call to save
     }
 
     [Test]
     public async Task App_Snapshot_InsideATask_IsRefused()
     {
-        // a task's context is no member of anything the walk reaches: its variables and frames would be missing
+        // a task's context is no member of anything the app writes: its variables and frames would be missing
         var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var user = app.actor.list.User;
         using var task = user.Context.Child(user, CancellationToken.None);
@@ -57,9 +57,9 @@ public class AppSnapshotTests
         var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var snap = (await app.Snapshot(app.actor.list.User.Context).Saved());
 
-        // a member that is no part, or a concept whose list is no part (goals, tests, errors, …), leaves no node
+        // a member the snapshot view doesn't show (goals, tests, errors, …) is never written
         foreach (var name in new[] { "goal", "module", "type", "test", "error", "variable", "shortcut", "store", "filesystem", "Cache", "parent", "Build" })
-            await Assert.That(snap.Holds(name)).IsFalse();
+            await Assert.That(await snap.Holds("app." + name)).IsFalse();
     }
 
     [Test]
@@ -72,6 +72,6 @@ public class AppSnapshotTests
         await dst.Restore(snap, dst.actor.list.User.Context);
 
         await Assert.That(dst.Cache).IsTypeOf<global::app.module.cache.Memory>();
-        await Assert.That(snap.Holds("Cache")).IsFalse();
+        await Assert.That(await snap.Holds("app.cache")).IsFalse();
     }
 }

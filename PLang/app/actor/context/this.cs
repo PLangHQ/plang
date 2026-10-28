@@ -11,10 +11,10 @@ namespace app.actor.context;
 
 /// <summary>
 /// Request-level context for a single PLang execution.
-/// Created per request/goal execution and contains execution-specific state. Takes part in a snapshot as what holds its
-/// variables and its call stack, with nothing of its own.
+/// Created per request/goal execution and contains execution-specific state. In a snapshot it writes its variables and
+/// its calls, and is the context they read back in.
 /// </summary>
-public sealed class @this : IDisposable, global::app.snapshot.ISnapshot
+public sealed class @this : IDisposable
 {
     private readonly ConcurrentDictionary<string, object> _data = new(StringComparer.OrdinalIgnoreCase);
     private bool _disposed;
@@ -39,12 +39,14 @@ public sealed class @this : IDisposable, global::app.snapshot.ISnapshot
     /// <summary>
     /// Variables for this execution.
     /// </summary>
+    [global::app.Snapshot]
     public Variables Variable { get; }
 
     /// <summary>
     /// This context's calls — <c>%!call%</c>: the chain of frames running in it, each holding its own variables. Each
     /// context has its own (a task's child context too); a cross-actor call is a separate chain.
     /// </summary>
+    [global::app.Snapshot]
     public global::app.call.list.@this call { get; }
 
     /// <summary>
@@ -152,12 +154,6 @@ public sealed class @this : IDisposable, global::app.snapshot.ISnapshot
         // a frame's values are the app's types
         call = new(app.type.list, () => Setting);
     }
-
-    // A context holds its parts (its calls, its variables): it answers in itself, so the walk stores and starts them in it.
-    data.@this global::app.snapshot.ISnapshot.Store(global::app.snapshot.@this snapshot, @this context) => Ok();
-
-    System.Threading.Tasks.Task<data.@this> global::app.snapshot.ISnapshot.Start(global::app.snapshot.@this snapshot, @this context)
-        => System.Threading.Tasks.Task.FromResult(Ok());
 
     // --- Value births ---
     // A Data is born FROM this context — never constructed context-less and stamped

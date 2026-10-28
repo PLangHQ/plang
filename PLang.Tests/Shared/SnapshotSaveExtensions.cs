@@ -6,6 +6,10 @@ namespace PLang.Tests;
 /// </summary>
 public static class SnapshotSaveExtensions
 {
+    /// <summary>A snapshot that holds nothing, as one read back from <c>{}</c>, born in <paramref name="context"/>.</summary>
+    public static global::app.snapshot.@this EmptySnapshot(this global::app.actor.context.@this context)
+        => new(new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)]), context);
+
     /// <summary>The snapshot <paramref name="saved"/> holds — the bytes the app took, opened, as a resume opens them; a
     /// refused save throws its error (a test of the refusal asks the Data).</summary>
     public static async Task<global::app.snapshot.@this> Saved(this Task<global::app.data.@this<global::app.snapshot.@this>> saved)
@@ -33,12 +37,25 @@ public static class SnapshotSaveExtensions
         return await (await context.Action(parallel ? "snapshot.resume(Snapshot=%resumed%, Parallel=true)" : "snapshot.resume(Snapshot=%resumed%)")).Start(context);
     }
 
-    /// <summary>Starts <paramref name="app"/> and every part under it from <paramref name="snapshot"/>; a part that
-    /// can't come back throws its error.</summary>
+    /// <summary>Reads <paramref name="snapshot"/> onto <paramref name="app"/>, each object reading itself back, then takes
+    /// in again the code the run took in — what a resume does before the run goes on; what can't come back throws its
+    /// error.</summary>
     public static async Task Restore(this global::app.@this app, global::app.snapshot.@this snapshot,
         global::app.actor.context.@this context)
     {
         var started = await snapshot.Start(app, context);
         if (!started.Success) throw new global::app.error.AppException(started.Error!);
+    }
+
+    /// <summary>What reading <paramref name="snapshot"/> onto <paramref name="app"/> answers, as a resume reads it before
+    /// the run goes on: each object reading itself back, then the code the run took in taken in again.</summary>
+    public static async Task<global::app.data.@this> Start(this global::app.snapshot.@this snapshot, global::app.@this app,
+        global::app.actor.context.@this context)
+    {
+        var started = await snapshot.Read(app, context);
+        if (!started.Success) return started;
+        // the frames a resume enters before the run goes on
+        foreach (var actor in app.actor.list.Items()) await actor.Context.call.Take();
+        return await app.Code.Take(context);
     }
 }

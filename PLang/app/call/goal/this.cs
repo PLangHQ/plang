@@ -19,7 +19,7 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
         : base(record, type, stack, context) => Goal = Kept<global::app.goal.@this>(record, "goal", context);
 
     /// <summary>The goal it runs.</summary>
-    [Store, Out, Debug]
+    [Store, Out, Debug, global::app.Snapshot]
     public override global::app.goal.@this? Goal { get; }
 
 

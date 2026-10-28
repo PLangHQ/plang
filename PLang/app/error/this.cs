@@ -59,7 +59,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     [global::app.LlmBuilder]
     public string Message { get; }
     [global::app.LlmBuilder]
-    public string Key { get; }
+    public new string Key { get; }
     /// <summary>The outcome's code and its reason — <c>%!error.status%</c>, <c>%!error.status.code%</c>.</summary>
     [global::app.LlmBuilder]
     public global::app.type.item.status.@this Status { get; }
@@ -148,9 +148,9 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>
     /// PLang surface <c>%!error.callback%</c> resolves through here (a member that asks only its asker,
     /// <paramref name="context"/>; the run it takes is this error's own). The first ask takes
-    /// <c>app.Snapshot(this)</c> on the App the error's own <see cref="Context"/> belongs to — the THROW-TIME snapshot:
-    /// CallStack from this error's <see cref="CallFrames"/> (the live stack has unwound past the failing action by handler
-    /// time) and variables via <c>SnapshotAt(this)</c> — as the bytes the app takes it as, its node (which a resume goes on
+    /// <c>app.Snapshot(this)</c> on the App the error's own <see cref="Context"/> belongs to — the run as it stands when
+    /// the handler takes it, its call standing where the error happened (<see cref="CallFrames"/>: the live stack has
+    /// unwound past the failing action by handler time) — as the bytes the app takes it as, its node (which a resume goes on
     /// from, <see cref="app.snapshot.@this.Resume"/>, as an ask's does) those bytes opened. Taken once per Error — asking
     /// twice answers the same Data. An error with no context holds no run — it wasn't raised inside one, or it came back
     /// from a stored state (which keeps its key, message, status and causes, not its run): there is nothing to resume, so

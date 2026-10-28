@@ -30,7 +30,7 @@ public class CycleDetectionTests : System.IAsyncDisposable
     {
         var context = app.actor.list.User.Context;
         var stack = TestCalls.Stack(app, TestCalls.Settings(), maxDepth: 1);
-        using var scope = stack.DiffScope(context.Variable);
+        (await stack.Setting()).Diff = new global::app.call.setting.diff.@this(new global::app.type.@this(typeof(global::app.call.setting.diff.@this))) { Enabled = true };
         await using var a = stack.Push(MakeAction(context, "A"), await stack.Setting(), context.Variable);
 
         var setting = await stack.Setting();

@@ -216,7 +216,7 @@ public class SignedSnapshotTests
         var context = app.actor.list.User.Context;
 
         // every snapshot the app takes is signed: one that isn't was made some other way
-        var result = await Resume(new global::app.data.@this("snap", new global::app.snapshot.@this(context), context: context), context);
+        var result = await Resume(new global::app.data.@this("snap", context.EmptySnapshot(), context: context), context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("SnapshotUnsigned");

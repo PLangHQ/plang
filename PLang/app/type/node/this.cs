@@ -1,10 +1,9 @@
 namespace app.type.node;
 
-/// <summary>What every node is — the type <c>node</c>, plang's own: no step names it as a type. A node takes part in a
-/// snapshot as what holds its concept's parts (<c>app.actor</c>'s list), with nothing of its own; a node whose list is
-/// no part leaves nothing.</summary>
+/// <summary>What every node is — the type <c>node</c>, plang's own: no step names it as a type. In a snapshot a node is
+/// its list (<c>app.actor</c>'s actors), with nothing of its own.</summary>
 [global::app.Attributes.PlangType("node")]
-public abstract class @this : global::app.type.item.@this, global::app.snapshot.ISnapshot
+public abstract class @this : global::app.type.item.@this
 {
     public static bool Internal => true;
 
@@ -50,6 +49,7 @@ public class @this<T, L> : @this
 
     /// <summary>The X's loaded so far — the list class T names, with its own work. Made on first
     /// read, once; a concept whose list belongs to the asker has none here (its <c>List</c> says so).</summary>
+    [global::app.Snapshot]
     public L list => System.Threading.Volatile.Read(ref _made) ? _list!
         : System.Threading.LazyInitializer.EnsureInitialized(ref _list, ref _made, ref _gate, () => T.List(_app))!;
 

@@ -20,14 +20,16 @@ public sealed partial class @this
         try { app = new global::app.@this(context.App.filesystem.root.Absolute, context.Actor); }
         catch (global::app.error.AppException refused) { return context.Error(refused.Error); }
         var run = context.Actor.Role.In(app.actor.list).Context;
-        var started = await Start(app, run);
+        // each object reads itself back, then the code the run took in is taken in again: a DLL's load can wait
+        var started = await Read(app, run);
+        if (started.Success) started = await app.Code.Take(run);
         if (!started.Success)
         {
             await app.DisposeAsync();
             return started.Copy(context);
         }
         // a snapshot that held no call has no goal to run as a task: going on answers that there is no frame
-        if (parallel == null || !await parallel.ToBooleanAsync() || run.call.Root?.Goal is not { } goal)
+        if (parallel == null || !await parallel.ToBooleanAsync() || run.call.Resumed?.Goal is not { } goal)
             return await On(app, run, context);
         return context.Ok(context.Actor.Task.Start(goal, async token =>
         {

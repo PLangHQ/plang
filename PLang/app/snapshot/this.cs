@@ -1,12 +1,13 @@
 namespace app.snapshot;
 
 /// <summary>
-/// A plain container of plang values: its <see cref="Entries"/> are a dict of Data, and a part's node
-/// is an entry whose value is itself a snapshot — one structure, so a reader walks it without asking
-/// what kind of member it is looking at. Each <see cref="ISnapshot"/> part writes its own node and
-/// reads it back through the entries' typed asks when it starts. The shape is the app's member tree. A template comes
-/// back only from bytes the gate trusts (<see cref="global::app.type.item.source"/>), so a template inside a container
-/// comes back literal: the bytes' origin is not known below the snapshot's reader.
+/// A run's state: the app written in the snapshot view, and read back the same way. Taken, it holds the app, its one
+/// member: the root is where the app lives, so it is written whole there, each object writing its own tagged members
+/// (an actor under the app's actors, its context, its variables and its calls), and anything that points at an object
+/// writes what finds it (<see cref="global::app.type.item.@this.Key"/>). Read back, it holds what the app wrote, until a
+/// resume reads it onto the app it goes on in, each object reading itself back. A template comes back only from bytes the
+/// gate trusts (<see cref="global::app.type.item.source"/>), so a template inside it comes back literal: the bytes' origin
+/// is not known below the snapshot's reader.
 /// </summary>
 [global::app.Attributes.PlangType("snapshot")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IView<@this>
@@ -14,100 +15,81 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>A snapshot is written and read in the snapshot view: a run's state at rest.</summary>
     public static global::app.View View => global::app.View.Snapshot;
 
-    /// <summary>
-    /// The actor context this snapshot tree is born in. The snapshot renders its entries
-    /// as self-describing Data (its leaf serializer builds them), so it must carry the
-    /// context to born them — born-with-context, never construct-then-stamp. Sub-sections
-    /// inherit it. Read-back (<see cref="Create"/>) borns in the data binding's context.
-    /// </summary>
+    /// <summary>The actor context this snapshot is born in: what it holds answers as it.</summary>
     public global::app.actor.context.@this Context { get; }
 
-    /// <summary>The entries on this node as plang VALUES — the node they are, not a raw bag.
-    /// An <c>object?</c> bag forces a central type-switch downstream to decide what each entry is;
-    /// that switch was this snapshot's leaf-serializer, and its reflection fallback walked whatever
-    /// it was handed, including live graph nodes with back-references. Typed here at the write door,
-    /// every entry writes itself and there is nothing for a switch to do. Restore reads through the
-    /// entry's own typed ask.</summary>
-    public global::app.type.item.dict.@this Entries { get; }
+    // What the app wrote, as it was read back; null for one taken from a live app.
+    private readonly global::app.type.item.dict.@this? _written;
 
-    /// <summary>A snapshot born in <paramref name="context"/>, holding the app's snapshot type — the name a reader
-    /// dispatches on when a section comes back.</summary>
-    public @this(global::app.actor.context.@this context) : base(context.App.type.list[typeof(@this)])
+    /// <summary>The app whose run this is, taken in <paramref name="context"/>.</summary>
+    internal @this(global::app.@this app, global::app.actor.context.@this context) : base(context.App.type.list[typeof(@this)])
     {
         Context = context;
-        Entries = new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)]);
+        _app = app;
     }
 
-    /// <summary>The stored Data as <paramref name="context"/> holds it — the one door a part takes stored Data into live
-    /// memory by: each entry cloned, so the run never shares a value with the snapshot, and born again in the context the
-    /// part was handed, so it answers as the actor whose memory it goes into, never as whoever read the text. What is
-    /// still unread (a value through text) opens in that context too.</summary>
-    internal IEnumerable<global::app.data.@this> In(global::app.actor.context.@this context)
+    // The app taken; null for one read back.
+    private readonly global::app.@this? _app;
+
+    /// <summary>What a snapshot's text held (<paramref name="written"/>), read back in <paramref name="context"/>.</summary>
+    internal @this(global::app.type.item.dict.@this written, global::app.actor.context.@this context) : base(context.App.type.list[typeof(@this)])
     {
-        foreach (var entry in Entries.Entries(context)) yield return entry.Clone().Copy(context);
+        Context = context;
+        _written = written;
     }
 
-    /// <summary>The entry at <paramref name="key"/> as <paramref name="context"/> holds it (<see cref="In(actor.context.@this)"/>);
-    /// null when none is stored.</summary>
-    internal global::app.data.@this? In(string key, global::app.actor.context.@this context)
-        => Entries.Get(key, context)?.Clone().Copy(context);
-
-    /// <summary>A copy holds a copy of each entry, born in the same context: the context is where the snapshot lives, not
-    /// part of what it holds, so it is never copied (a deep copy of it would copy the app).</summary>
-    protected internal override global::app.type.item.@this Clone()
+    /// <summary>Reads what the app wrote onto <paramref name="into"/>, the app the run goes on in: each object it holds
+    /// reads itself back (<see cref="global::app.type.item.kind.reflection.@this"/>'s read onto a host). What can't come
+    /// back is the answer, its error whole.</summary>
+    internal async System.Threading.Tasks.Task<global::app.data.@this> Read(global::app.@this into, global::app.actor.context.@this context)
     {
-        var copy = new @this(Context);
-        foreach (var entry in Entries.Entries(Context)) copy.Entries.Set(entry.Clone());
-        return copy;
-    }
-
-    /// <summary>A snapshot that holds nothing is empty, as a collection is: the walk and <see cref="Write"/> leave it out.</summary>
-    public override bool IsTruthy() => Entries.IsTruthy();
-
-    /// <summary>A collection entry, written only when it holds something — the mirror of <see cref="Read{T}"/>, which
-    /// reads an absent entry as empty. Empty is the one test the walk leaves an empty part out by.</summary>
-    internal void Write(string key, global::app.type.item.@this collection)
-    {
-        if (collection.IsTruthy()) Entries.Set(new global::app.data.@this(key, collection, context: Context));
-    }
-
-    /// <summary>The rows a list entry holds, as <paramref name="context"/> holds them — the entry taken in through the
-    /// same door as <see cref="In"/>, each row then read through its own typed ask, so nothing lowers to CLR. An absent
-    /// entry is empty, the same answer a written empty list gives. A row that doesn't read is the answer, its own error
-    /// whole; one that reads as nothing without saying why is answered as <c>SnapshotRowUnread</c>, naming the key.</summary>
-    internal async System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.list.@this<T>>> Read<T>(string key,
-        global::app.actor.context.@this context)
-        where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-    {
-        var rows = new global::app.type.item.list.@this<T>(context.App.type.list[typeof(global::app.type.item.list.@this<T>)]);
-        if (In(key, context) is { } entry)
+        // a snapshot that holds nothing leaves the app as it is
+        if (_written?.Get("app", context) is not { } held) return context.Ok();
+        // what the app wrote names locations (a frame's goal): each is loaded into the app the run goes on in first, so
+        // the read that follows finds what it names held. One opened and edited (a navigation) is written again first.
+        if ((held.Peek() as global::app.type.item.wire.@this ?? await global::app.type.item.wire.@this.Of(held.Peek()!, View, context))
+            is { Raw: string raw })
         {
-            if (await entry.Value<global::app.type.item.list.@this>() is not { } stored) return Unread(entry);
-            foreach (var row in stored.Items(context))
-            {
-                if (await row.Value<T>() is not { } value) return Unread(row);
-                rows.Add(value);
-            }
+            var loaded = await View.Load(into.type.list[typeof(global::app.@this)], raw, context);
+            if (!loaded.Success) return loaded;
         }
-        return context.Ok(rows);
-
-        global::app.data.@this<global::app.type.item.list.@this<T>> Unread(global::app.data.@this read)
-            => global::app.data.@this<global::app.type.item.list.@this<T>>.FromError(read.Error ?? new global::app.error.@this(
-                $"the snapshot's '{key}' holds a row that reads as no {(global::app.type.item.@this.NameOf(typeof(T)))}",
-                "SnapshotRowUnread", 400), context);
+        try
+        {
+            var dict = context.App.type.list[typeof(global::app.type.item.dict.@this)];
+            if ((held.Peek() as global::app.type.item.dict.@this ?? View.Make(dict, held.Peek(), context)) is not global::app.type.item.dict.@this written)
+                return context.Error(new global::app.error.@this(
+                    $"the snapshot's app reads as a {held.Peek()?.Type.Name ?? "nothing"}, not what an app writes", "SnapshotRowUnread", 400));
+            ((global::app.type.item.kind.reflection.@this)context.App.type.list["item"].kind["*"]!).Read(written, into, context, View);
+            return context.Ok();
+        }
+        catch (global::app.error.AppException refused) { return context.Error(refused.Error); }
     }
 
-    /// <summary>The snapshot writes ITSELF: an object of its entries. One loop, because there is
-    /// one kind of member — a subtree is an entry whose value is a snapshot, so it writes itself
-    /// like every other value. This node shape is the only structural thing the snapshot owns;
-    /// below it, composition.</summary>
+    /// <summary>A copy of a read snapshot holds a copy of what it read, born in the same context; a taken one holds the
+    /// app, which is never copied.</summary>
+    protected internal override global::app.type.item.@this Clone()
+        => _written is { } written ? new @this((global::app.type.item.dict.@this)written.Clone(), Context) : this;
+
+    /// <summary>A snapshot that holds nothing is empty.</summary>
+    public override bool IsTruthy() => _app != null || _written?.IsTruthy() == true;
+
+    /// <summary>A snapshot writes what it holds: the app whole, under <c>app</c> — the root is where the app lives — or
+    /// what the app wrote, as it was read.</summary>
     protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
-        foreach (var entry in Entries.Entries(Context))
+        if (_written is { } written)
+            // each as it was read: what the app wrote, its bytes relayed as they are while nothing changed them
+            foreach (var entry in written.Rows(Context))
+            {
+                writer.Name(entry.Name);
+                if (entry.Peek() is { } value) await value.Output(writer);
+                else writer.Null();
+            }
+        else
         {
-            writer.Name(entry.Name);
-            await entry.Output(writer);
+            writer.Name("app");
+            await _app!.Members(writer);
         }
         writer.EndObject();
     }

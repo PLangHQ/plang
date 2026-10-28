@@ -1,79 +1,70 @@
-using Registration = app.module.code.registration.@this;
-using Default = app.module.code.@default.@this;
-
 namespace app.module.code;
 
-public sealed partial class @this : ISnapshot
+public sealed partial class @this
 {
-    // The stored shapes are plang VALUES, each with its own reader:
-    //   app/module/code/dll               — a DLL the run took in, by the door it came through (loaded, added)
-    //   app/module/code/registration      — a provider registered in-process
-    //   app/module/code/default           — the provider a kind's default is set to
-    // A provider's kind is written by its plang name (kind.@this), never its C# type: the name survives a version bump.
+    // What a snapshot keeps of this registry is its own layer, never the provider instances; built-in registrations stay
+    // out, a fresh app's registry holds them. A provider's kind is written by its plang name, never its C# type: the name
+    // survives a version bump. Read back, the layer is held until the run goes on in this app (Take): taking a DLL in
+    // again is asynchronous, and a default can name a provider only a DLL brings.
+    private global::app.type.item.list.@this? _dllSaved;
+    private global::app.type.item.dict.@this? _providerSaved;
+    private global::app.type.item.dict.@this? _defaultSaved;
 
-    /// <summary>
-    /// Writes the registry layer (NOT the provider instances themselves):
-    ///  - every DLL the run took in, in order, each by the door it came through (what came in with it: its providers,
-    ///    its types, its modules);
-    ///  - the providers registered in-process (no DLL brought them), by kind and name;
-    ///  - each kind's default (<c>default</c>), where it differs from the one the kind was born with.
-    /// Built-in registrations stay out: a fresh app's registry holds them.
-    /// </summary>
-    data.@this ISnapshot.Store(global::app.snapshot.@this snapshot, actor.context.@this context)
+    /// <summary>Every DLL the run took in, in order, each by the door it came through (what came in with it: its
+    /// providers, its types, its modules).</summary>
+    [global::app.Snapshot]
+    public global::app.type.item.list.@this dll
     {
-        var registrations = new List<global::app.type.item.@this>();
-        var defaults = new List<global::app.type.item.@this>();
-        var types = context.App.type.list;
-        // what was made so far: a shipped provider nothing asked for is neither registered nor chosen, and a registry
-        // never used holds neither
-        var table = System.Threading.Volatile.Read(ref _table);
+        get => new(_dll, Context.App.type.list[typeof(global::app.type.item.list.@this)]);
+        private set => _dllSaved = value;
+    }
 
-        if (table != null)
+    /// <summary>The providers registered in-process (no DLL brought them), each kind's by name.</summary>
+    [global::app.Snapshot]
+    public global::app.type.item.dict.@this provider
+    {
+        get
         {
-            foreach (var (type, dict) in table.Providers)
+            var types = Context.App.type.list;
+            var kinds = new global::app.type.item.dict.@this(types[typeof(global::app.type.item.dict.@this)]);
+            if (System.Threading.Volatile.Read(ref _table) is not { } table) return kinds;
+            foreach (var (type, providers) in table.Providers)
             {
-                var providerKind = new kind.@this(type).Value;
-                table.Defaults.TryGetValue(type, out var @default);
-
-                // a provider a DLL brought remembers the DLL (its Source), which is stored as the DLL
-                foreach (var (name, provider) in dict)
-                {
-                    if (!provider.IsBuiltIn && provider.Source == null)
-                        registrations.Add(new Registration(types[typeof(Registration)])
-                        {
-                            Kind = providerKind,
-                            Provider = name,
-                        });
-                }
-
-                // Compare current default to the built-in default this kind was *born* with
-                // (tracked as the built-ins are registered, so SetDefault can't erase the evidence).
-                // If they differ, the user changed the selection — write the kind's default so Start
-                // sets it again over the built-ins a fresh app's registry holds.
-                // No built-in for the kind → write it unconditionally so the chosen default survives.
-                table.BuiltIn.TryGetValue(type, out var builtIn);
-                if (@default != null
-                    && (builtIn == null
-                        || !string.Equals(@default, builtIn, StringComparison.OrdinalIgnoreCase)))
-                {
-                    defaults.Add(new Default(types[typeof(Default)])
-                    {
-                        Kind = providerKind,
-                        Provider = @default,
-                    });
-                }
+                var names = providers.Where(named => !named.Value.IsBuiltIn && named.Value.Source == null)
+                    .Select(named => (global::app.type.item.@this)new global::app.type.item.text.@this(named.Key, types[typeof(global::app.type.item.text.@this)]))
+                    .ToList();
+                if (names.Count > 0) kinds.Set(new kind.@this(type).Value, new global::app.type.item.list.@this(names, types[typeof(global::app.type.item.list.@this)]));
             }
+            return kinds;
         }
+        private set => _providerSaved = value;
+    }
 
-        var list = types[typeof(global::app.type.item.list.@this)];
-        snapshot.Write("dll", new global::app.type.item.list.@this(_dll, list));
-        snapshot.Write("registration", new global::app.type.item.list.@this(registrations, list));
-        snapshot.Write("default", new global::app.type.item.list.@this(defaults, list));
-        return context.Ok();
+    /// <summary>Each kind's default where the run chose one: one that differs from the default the kind was born with
+    /// (tracked as the built-ins are registered, so SetDefault can't erase the evidence), and, for a kind with no
+    /// built-in, always.</summary>
+    [global::app.Snapshot]
+    public global::app.type.item.dict.@this @default
+    {
+        get
+        {
+            var types = Context.App.type.list;
+            var chosen = new global::app.type.item.dict.@this(types[typeof(global::app.type.item.dict.@this)]);
+            if (System.Threading.Volatile.Read(ref _table) is not { } table) return chosen;
+            foreach (var (type, name) in table.Defaults)
+            {
+                table.BuiltIn.TryGetValue(type, out var builtIn);
+                if (builtIn == null || !string.Equals(name, builtIn, StringComparison.OrdinalIgnoreCase))
+                    chosen.Set(new kind.@this(type).Value, name);
+            }
+            return chosen;
+        }
+        private set => _defaultSaved = value;
     }
 
     /// <summary>
-    /// Three steps, each failure answered (no fallback to the system defaults):
+    /// The layer a snapshot held taken in again, as the run goes on in this app — three steps, each failure answered (no
+    /// fallback to the system defaults):
     ///   1) Each DLL the run took in is taken in again, in order, through <see cref="Load"/> (the Execute gate, its plang
     ///      types joined to the app's) and the door it first came through (<see cref="dll.@this"/>).
     ///   2) A provider registered in-process has nothing to be made again from: where this app holds it already (the
@@ -81,19 +72,17 @@ public sealed partial class @this : ISnapshot
     ///   3) Set each kind's default again — the named provider must be registered.
     /// A fresh app's registry holds the built-ins, so they are present.
     /// </summary>
-    async System.Threading.Tasks.Task<data.@this> ISnapshot.Start(global::app.snapshot.@this snapshot, actor.context.@this context)
+    internal async System.Threading.Tasks.Task<data.@this> Take(actor.context.@this context)
     {
-        // a record that doesn't read is the answer
-        var dll = await snapshot.Read<dll.@this>("dll", context);
-        if (await dll.Value() is not { } dlls) return dll;
-        var registration = await snapshot.Read<Registration>("registration", context);
-        if (await registration.Value() is not { } registrations) return registration;
-        var @default = await snapshot.Read<Default>("default", context);
-        if (await @default.Value() is not { } defaults) return @default;
+        var (dlls, providers, defaults) = (_dllSaved, _providerSaved, _defaultSaved);
+        (_dllSaved, _providerSaved, _defaultSaved) = (null, null, null);
 
-        // Step 1 — the DLLs the run took in
-        foreach (var record in dlls.Items())
+        // Step 1 — the DLLs the run took in; a record that doesn't read is the answer
+        foreach (var row in dlls?.Items(context) ?? [])
         {
+            if (await row.Value<dll.@this>() is not { } record)
+                return row.Error != null ? row : context.Error(new global::app.error.@this(
+                    "the snapshot's 'dll' holds a row that reads as no code.dll", "SnapshotRowUnread", 400));
             var made = await record.Start(this, context);
             if (!made.Success)
             {
@@ -105,23 +94,27 @@ public sealed partial class @this : ISnapshot
 
         // Step 2 — providers registered in-process: no DLL brings one back, so the run goes on only where it is already
         // registered (the same host, which registered it again)
-        foreach (var inProcess in registrations.Items())
+        foreach (var named in providers?.Rows(context) ?? [])
         {
-            var named = new data.@this("kind", inProcess.Kind, context: context);
-            if (await named.Value<global::app.type.item.choice.@this<kind.@this>>() is not { } providerKind) return named;
-            if (List(providerKind.Value.Interface).Any(provider => provider.Name == inProcess.Provider)) continue;
-            return context.Error(new global::app.error.@this(
-                $"Provider '{inProcess.Provider}' for {inProcess.Kind} was registered in-process: no DLL brought it, so it can't come back.",
-                "ProviderInProcess", 500));
+            var kind = new data.@this("kind", named.Name, context: context);
+            if (await kind.Value<global::app.type.item.choice.@this<kind.@this>>() is not { } providerKind) return kind;
+            if (await named.Value<global::app.type.item.list.@this>() is not { } names) return named;
+            foreach (var name in names.Items(context))
+            {
+                var provider = (await name.Value())?.ToString();
+                if (List(providerKind.Value.Interface).Any(registered => registered.Name == provider)) continue;
+                return context.Error(new global::app.error.@this(
+                    $"Provider '{provider}' for {named.Name} was registered in-process: no DLL brought it, so it can't come back.",
+                    "ProviderInProcess", 500));
+            }
         }
 
         // Step 3 — each kind's default
-        foreach (var record in defaults.Items())
+        foreach (var chosen in defaults?.Rows(context) ?? [])
         {
-            var named = new data.@this("kind", record.Kind, context: context);
-            if (await named.Value<global::app.type.item.choice.@this<kind.@this>>() is not { } providerKind) return named;
-
-            var result = SetDefault(providerKind.Value.Interface, record.Provider);
+            var kind = new data.@this("kind", chosen.Name, context: context);
+            if (await kind.Value<global::app.type.item.choice.@this<kind.@this>>() is not { } providerKind) return kind;
+            var result = SetDefault(providerKind.Value.Interface, (await chosen.Value())?.ToString());
             if (!result.Success) return result;
         }
         return context.Ok();

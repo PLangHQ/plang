@@ -27,7 +27,7 @@ public class DataSnapshotTests : System.IAsyncDisposable
 
     [Test] public async Task DataSnapshot_RoundTripsThrough_OkConstructor()
     {
-        var snap = new global::app.snapshot.@this(app.actor.list.User.Context);
+        var snap = app.actor.list.User.Context.EmptySnapshot();
         var d = app.Ok("v");
         d.Snapshot = snap;
         await Assert.That(d.Snapshot).IsSameReferenceAs(snap);
@@ -37,7 +37,7 @@ public class DataSnapshotTests : System.IAsyncDisposable
     {
         var d = new global::app.data.@this<global::app.type.item.text.@this>("", "x", context: app.actor.list.User.Context);
         await Assert.That(d.Snapshot).IsNull();
-        d.Snapshot = new global::app.snapshot.@this(app.actor.list.User.Context);
+        d.Snapshot = app.actor.list.User.Context.EmptySnapshot();
         await Assert.That(d.Snapshot).IsNotNull();
     }
 
@@ -47,7 +47,7 @@ public class DataSnapshotTests : System.IAsyncDisposable
         // MUST attach a Snapshot. Producers respect this; here we assert the
         // invariant holds for the Ask-carrying Data shape (after the producer
         // call sites in 2a.4 wire the Snapshot capture).
-        var snap = new global::app.snapshot.@this(app.actor.list.User.Context);
+        var snap = app.actor.list.User.Context.EmptySnapshot();
         var data = new global::app.data.@this<Ask>("", new Ask(app.actor.list.User.Context.App.type.list[typeof(global::app.module.output.Ask)]), context: app.actor.list.User.Context) { Snapshot = snap };
         await Assert.That(data.Snapshot).IsNotNull();
     }

@@ -21,7 +21,7 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
         : base(record, type, stack, context) => Action = Kept<global::app.goal.step.action.@this>(record, "action", context);
 
     /// <summary>The action it runs; its step and goal are the action's.</summary>
-    [Store, Out, Debug]
+    [Store, Out, Debug, global::app.Snapshot]
     public override global::app.goal.step.action.@this? Action { get; }
 
 

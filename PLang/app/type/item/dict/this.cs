@@ -132,7 +132,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     internal int CountRaw => _value.Count;
 
     /// <summary>The dict's key (<c>%dict!key%</c>): read alone its first key, <c>.list</c> every key.</summary>
-    public key.@this Key(global::app.actor.context.@this context) => new(this, context.App.type.list[typeof(key.@this)]);
+    public new key.@this Key(global::app.actor.context.@this context) => new(this, context.App.type.list[typeof(key.@this)]);
 
     /// <summary>A dict's own facts, read with <c>!</c>: <c>key</c>.</summary>
     internal override System.Threading.Tasks.ValueTask<Data?> Fact(string key, Data parent)

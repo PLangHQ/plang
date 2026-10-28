@@ -44,10 +44,14 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         finally { _writing.Value = false; }
     }
 
+    /// <summary>What finds the app: its name, as <paramref name="context"/>'s settings have it.</summary>
+    internal override async System.Threading.Tasks.ValueTask<global::app.type.item.@this?> Key(global::app.actor.context.@this context)
+        => await Name(context);
+
     /// <summary>What a program adds to the app (<c>%!app.property["home"]%</c>, <c>%!app.home%</c>) — kept for the app's
     /// life, and in its snapshot.</summary>
-    [Store, global::app.LlmBuilder]
-    public global::app.type.item.property.list.@this property { get; }
+    [Store, global::app.Snapshot, global::app.LlmBuilder]
+    public global::app.type.item.property.list.@this property { get; private set; }
 
     /// <summary>The one root: a copy of the app is the app.</summary>
     protected internal override global::app.type.item.@this Clone() => this;
@@ -167,6 +171,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// Type-keyed provider registry for pluggable module implementations.
     /// Modules define provider interfaces, register defaults, PLang developers override via DLL.
     /// </summary>
+    [global::app.Snapshot]
     public AppCode Code { get; }
 
     /// <summary>
@@ -269,7 +274,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// The app's actors — <c>%!app.actor%</c>, the one the asker acts as: its <c>list</c> is the app's two actors,
     /// System and User; <c>Get(name)</c> is one as a result, <c>current</c> the one the asker acts as.
     /// </summary>
-    [global::app.LlmBuilder, global::app.Out]
+    [global::app.LlmBuilder, global::app.Out, global::app.Snapshot]
     public global::app.type.node.current.@this<global::app.actor.@this, global::app.actor.list.@this> actor { get; }
 
     // The types a step and an action start through, and a channel writes, reads and asks through — the type

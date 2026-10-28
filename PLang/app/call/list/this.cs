@@ -86,13 +86,6 @@ public sealed partial class @this : global::app.type.item.@this
     [global::app.LlmBuilder]
     public System.Threading.Tasks.ValueTask<setting.@this> Setting() => _settings().Get<setting.@this>();
 
-    // An open diff scope (DiffScope) turns Diff on for as long as it's open, whatever the setting says.
-    private int _diffScopes;
-
-    /// <summary>Whether a push captures diffs under <paramref name="setting"/>: an open diff scope says yes whatever
-    /// the setting says.</summary>
-    internal bool IsDiffing(setting.@this setting) => Volatile.Read(ref _diffScopes) > 0 || setting.Diff.Enabled.Value;
-
     /// <summary>
     /// Every error observed this run at every frame (handled or unhandled). Survives Pop. Made when first asked — at
     /// the first observed error — the first made kept.
@@ -104,10 +97,17 @@ public sealed partial class @this : global::app.type.item.@this
     private global::app.error.list.@this? _audit;
 
     /// <summary>
-    /// The current Call in this async context. Null when no Push has happened on this branch.
+    /// The current Call in this async context. Null when no Push has happened on this branch. In a snapshot it is
+    /// where the run stopped, and it writes its callers; read back, it is held, made with its callers, until the run
+    /// goes on from it (<see cref="Resume"/>), which enters them in its own flow: a current set inside the read would be
+    /// undone when the read returns.
     /// </summary>
-    [global::app.LlmBuilder]
-    public call.@this? Current => _current.Value;
+    [global::app.LlmBuilder, global::app.Snapshot]
+    public call.@this? Current
+    {
+        get => _current.Value;
+        private set => _resumed = value;
+    }
 
     /// <summary>The goal in play on this branch (<c>%!goal%</c>) — the current frame's; null before any frame is
     /// pushed. The stack is where it already lives, so nothing stores it a second time.</summary>

@@ -140,6 +140,10 @@ public abstract class View
     {
         if (slot == null) return null;
         var kind = type.kind.IsEmpty ? null : type.kind.Name;
+        // a slot still unread (its text) that reads as a value of the type is that value
+        if (slot is global::app.type.item.source unread && unread.Type.ClrType is { } written && type.ClrType is { } clr
+            && clr.IsAssignableFrom(written) && unread.Read(context) is { } opened && clr.IsInstanceOfType(opened))
+            return opened;
         if (Registered(type, kind, context) is { } reader)
             return slot.Read(reader, kind, context, this) as global::app.type.item.@this;
         // a birth that declines says why, as a read that can't make it does
@@ -158,6 +162,12 @@ public abstract class View
     /// (<c>item.Output</c>): by default the value writes itself, its own look for the writer.</summary>
     internal virtual System.Threading.Tasks.ValueTask Output(global::app.type.item.@this value, global::app.type.format.IWriter writer)
         => writer.Write(value);
+
+    /// <summary><paramref name="value"/> written as <paramref name="member"/>'s, by the value's walk over its host's tagged
+    /// members: by default as it writes anywhere.</summary>
+    internal virtual System.Threading.Tasks.ValueTask Member(global::app.type.item.kind.reflection.Tagged.Entry member,
+        global::app.type.item.@this value, global::app.type.format.IWriter writer)
+        => value.Output(writer);
 
     private protected bool Is<TAttribute>(System.Reflection.PropertyInfo property) where TAttribute : System.Attribute
         => property.IsDefined(typeof(TAttribute), inherit: false);
@@ -200,19 +210,42 @@ public abstract class View
     // run asks again rather than going on with a fake value
     private sealed class snapshot : store
     {
-        // a type found elsewhere (it tags what finds it, [Snapshot]) shows only that; any other shows what store keeps,
-        // never a secret
+        // a type that chooses what this view shows of it ([Snapshot]) shows only that; any other shows what store
+        // keeps, never a secret
         internal override bool Shows(System.Reflection.PropertyInfo property, bool tagged)
-            => Found(property.ReflectedType!) ? Is<SnapshotAttribute>(property)
+            => Chooses(property.ReflectedType!) ? Is<SnapshotAttribute>(property)
                 : !Is<SensitiveAttribute>(property) && base.Shows(property, tagged);
 
-        // a value found elsewhere writes what finds it, whatever its own look; any other writes itself
-        internal override System.Threading.Tasks.ValueTask Output(global::app.type.item.@this value, global::app.type.format.IWriter writer)
-            => Found(value.GetType()) ? value.Members(writer) : writer.Write(value);
+        // a value that something finds (an actor, the app) points where it is met: its key; any other is written whole
+        internal override async System.Threading.Tasks.ValueTask Output(global::app.type.item.@this value, global::app.type.format.IWriter writer)
+        {
+            if (await value.Key(writer.Context) is { } key) await key.Output(writer);
+            else await Whole(value, writer);
+        }
 
-        // a value found elsewhere is read from its key, which may name a location (a goal's): each location a key
-        // names is loaded by its owner's type first, so the key's own read finds what it names without waiting. A
-        // record that is not one (a frame) holds its found members the same way.
+        // a [Snapshot] member is where its value lives: the value is written whole there, never its key; one made back
+        // from its record (no reader of its own finds it) whose class isn't the member's type carries its type, as a
+        // list's row does, so it reads back as what it is (a frame below its caller)
+        internal override async System.Threading.Tasks.ValueTask Member(global::app.type.item.kind.reflection.Tagged.Entry member,
+            global::app.type.item.@this value, global::app.type.format.IWriter writer)
+        {
+            var declared = System.Nullable.GetUnderlyingType(member.Property.PropertyType) ?? member.Property.PropertyType;
+            if (!Is<SnapshotAttribute>(member.Property)) await value.Output(writer);
+            else if (declared != value.GetType() && typeof(global::app.type.item.@this).IsAssignableFrom(declared)
+                     && declared.IsInstanceOfType(value) && Chooses(declared)
+                     && Registered(writer.Context.App.type.list[declared], null, writer.Context) == null)
+                await new global::app.data.@this("", value, context: writer.Context).Output(writer);
+            else
+                await Whole(value, writer);
+        }
+
+        // a value whose type chooses what this view shows writes those members, whatever its own look; any other
+        // writes itself
+        private System.Threading.Tasks.ValueTask Whole(global::app.type.item.@this value, global::app.type.format.IWriter writer)
+            => Chooses(value.GetType()) ? value.Members(writer) : writer.Write(value);
+
+        // a value whose members this view shows may hold a key that names a location (a goal's): each location is
+        // loaded by its owner's type first, so the key's own read finds what it names without waiting.
         internal override async System.Threading.Tasks.Task<global::app.data.@this> Load(global::app.type.@this type, string raw,
             global::app.actor.context.@this context)
         {
@@ -221,9 +254,10 @@ public abstract class View
             return await Load(clr, key.RootElement, context);
         }
 
-        // the walk over a saved record of `clr`, as it is written (nothing is read before it is loaded): a member found
-        // elsewhere in turn (a step's goal) by its declared type, a location loaded by the type that owns it — the goal
-        // list holds what it loaded, so a location named twice is read once — and any other member by what it says it is
+        // the walk over a saved record of `clr`, as it is written (nothing is read before it is loaded): a member whose
+        // type chooses what this view shows, in turn (a step's goal), by its declared type, a location loaded by the type
+        // that owns it — the goal list holds what it loaded, so a location named twice is read once — and any other
+        // member by what it says it is
         private async System.Threading.Tasks.Task<global::app.data.@this> Load(System.Type clr, System.Text.Json.JsonElement key,
             global::app.actor.context.@this context)
         {
@@ -233,8 +267,10 @@ public abstract class View
             {
                 if (!key.TryGetProperty(entry.WireName, out var member)) continue;
                 var declared = System.Nullable.GetUnderlyingType(entry.Property.PropertyType) ?? entry.Property.PropertyType;
-                var loaded = Found(declared) ? await Load(declared, member, context)
-                    : Found(clr) && typeof(global::app.type.item.path.@this).IsAssignableFrom(declared)
+                // a member written with its own type (a frame below its caller's) is walked by what it says it is
+                var loaded = Row(member, context) != null ? await Walk(member, context)
+                    : Chooses(declared) ? await Load(declared, member, context)
+                    : Chooses(clr) && typeof(global::app.type.item.path.@this).IsAssignableFrom(declared)
                       && member.ValueKind == System.Text.Json.JsonValueKind.String
                         ? await types[clr].Load(global::app.type.item.path.@this.Resolve(member.GetString()!, context), context.App)
                         : await Walk(member, context);
@@ -244,19 +280,20 @@ public abstract class View
         }
 
         // a saved value by what it says it is: a Data row (the json serializer's own read, its value left unread) by its
-        // type — a found one loaded as its key, any other walked into — and any other object or array walked into
+        // type — one whose type chooses what this view shows loaded as its members, any other walked into — and any
+        // other object or array walked into
         private async System.Threading.Tasks.Task<global::app.data.@this> Walk(System.Text.Json.JsonElement element,
             global::app.actor.context.@this context)
         {
             switch (element.ValueKind)
             {
                 case System.Text.Json.JsonValueKind.Object:
-                    if (new global::app.type.item.serializer.json(context).Typed(System.Text.Encoding.UTF8.GetBytes(element.GetRawText()),
-                            new global::app.type.reader.ReadContext(context) { View = this }) is { } row)
+                    if (Row(element, context) is { } row)
                     {
-                        if (row.Peek() is not global::app.type.item.source { Raw: string written }) return context.Ok();
+                        // only a row whose value is still its json can name a location; a text's characters are no json
+                        if (row.Peek() is not global::app.type.item.wire.@this { Raw: string written }) return context.Ok();
                         using var value = System.Text.Json.JsonDocument.Parse(written);
-                        return row.Type?.ClrType is { } clr && Found(clr)
+                        return row.Type?.ClrType is { } clr && Chooses(clr)
                             ? await Load(clr, value.RootElement, context)
                             : await Walk(value.RootElement, context);
                     }
@@ -272,10 +309,16 @@ public abstract class View
             }
         }
 
-        // Whether a type tags what finds it: read once per type.
-        private readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, bool> _found = new();
-        private bool Found(System.Type type)
-            => _found.GetOrAdd(type, t => t.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+        // The Data row a saved object is (the json serializer's own read, its value left unread); null for one that isn't.
+        private global::app.data.@this? Row(System.Text.Json.JsonElement element, global::app.actor.context.@this context)
+            => element.ValueKind != System.Text.Json.JsonValueKind.Object ? null
+                : new global::app.type.item.serializer.json(context).Typed(System.Text.Encoding.UTF8.GetBytes(element.GetRawText()),
+                    new global::app.type.reader.ReadContext(context) { View = this });
+
+        // Whether a type chooses what this view shows of it (any [Snapshot] member): read once per type.
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, bool> _chooses = new();
+        private bool Chooses(System.Type type)
+            => _chooses.GetOrAdd(type, t => t.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
                 .Any(Is<SnapshotAttribute>));
 
         internal override void Sensitive(string characters, global::app.type.format.IWriter writer) => writer.Null();
@@ -416,9 +459,9 @@ public abstract class View
 [AttributeUsage(AttributeTargets.Property)]
 public sealed class StoreAttribute : Attribute { }
 
-/// <summary>Marks what a value is found by (a goal's name, its .pr and hash; a file's path): in a snapshot, a value whose
-/// type tags any writes those members alone, and comes back as what they find — a value found elsewhere (the program,
-/// the disk) is never saved whole.</summary>
+/// <summary>Marks what the snapshot view shows of a value: a type that tags any member is written in a snapshot by those
+/// members alone, and read back from them — a goal by its name, its .pr and hash, which find it again; the app by its
+/// properties, its code and its actors. A type that tags none shows what the store keeps, never a secret.</summary>
 [AttributeUsage(AttributeTargets.Property)]
 public sealed class SnapshotAttribute : Attribute { }
 

@@ -42,7 +42,7 @@ public class VariablesSnapshotTests : System.IAsyncDisposable
         vars.Set("!myInfra", "infra");    // !-prefixed — skipped
 
         var snap = (await src.Snapshot(src.actor.list.User.Context).Saved());
-        var captured = snap.Node(SnapshotPathExtensions.UserVariable).Entries.Entries(snap.Context).ToList();   // each captured variable is its own entry
+        var captured = (await snap.Node(SnapshotPathExtensions.UserVariable)).Rows(snap.Context).ToList();   // each captured variable is its own entry
 
         var names = captured.Select(d => d.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         await Assert.That(names.Contains("user")).IsTrue();

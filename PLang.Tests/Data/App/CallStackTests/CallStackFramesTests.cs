@@ -20,7 +20,7 @@ public class CallStackFramesTests
     private static global::app.@this App() => new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
 
     [Test]
-    public async Task TheStack_IsWrittenAsItsFrames_NoTreeNoCurrentNoIds()
+    public async Task TheStack_IsWrittenAsTheFrameItStoppedIn_WithItsCallers_NoTreeNoIds()
     {
         await using var src = App();
         var (_, _, a1) = MakeFrame(src, "Outer");
@@ -31,8 +31,9 @@ public class CallStackFramesTests
         await using var inner = context.call.Push(a2, await context.call.Setting());
         var text = await src.Snapshot(context).Saved().Text(context);
 
-        await Assert.That(text).Contains("\"frames\"");
-        foreach (var gone in new[] { "\"root\"", "\"children\"", "\"current\"", outer.Id.ToString()!, inner.Id.ToString()! })
+        await Assert.That(text).Contains("\"current\"");
+        await Assert.That(text).Contains("\"caller\"");
+        foreach (var gone in new[] { "\"root\"", "\"children\"", "\"frames\"", outer.Id.ToString()!, inner.Id.ToString()! })
             await Assert.That(text).DoesNotContain(gone);
     }
 

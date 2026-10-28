@@ -1,43 +1,38 @@
 namespace PLang.Tests;
 
 /// <summary>
-/// A part's node in a snapshot, by its place: the member path from the app (<c>Code</c>,
-/// <c>actor.list.User.Context.Variable</c>), each step a node the walk named for the member that holds it.
+/// What an object wrote in a snapshot, by its place: the member path from the snapshot (<c>app.code</c>,
+/// <c>app.actor.list.user.context.variable.row</c>), each step the name the object wrote it under.
 /// </summary>
 public static class SnapshotPathExtensions
 {
     /// <summary>The user's variables, as a run on the user's context saves them.</summary>
-    public const string UserVariable = "actor.list.User.Context.Variable";
+    public const string UserVariable = "app.actor.list.user.context.variable.row";
 
     /// <summary>The user's call stack, as a run on the user's context saves it.</summary>
-    public const string UserCall = "actor.list.User.Context.call";
+    public const string UserCall = "app.actor.list.user.context.call";
 
-    /// <summary>The node at <paramref name="path"/>, made along the way where it is missing (a test writing a part's
-    /// node by hand).</summary>
-    public static global::app.snapshot.@this Node(this global::app.snapshot.@this snapshot, string path)
+    /// <summary>What was written at <paramref name="path"/>, read through the snapshot's own navigation; null when
+    /// nothing was.</summary>
+    public static async Task<global::app.data.@this?> At(this global::app.snapshot.@this snapshot, string path)
     {
+        var at = new global::app.data.@this("snapshot", snapshot, context: snapshot.Context);
         foreach (var name in path.Split('.'))
         {
-            if (snapshot.Entries.Get(name, snapshot.Context)?.Peek() is global::app.snapshot.@this node)
-            {
-                snapshot = node;
-                continue;
-            }
-            var made = new global::app.snapshot.@this(snapshot.Context);
-            snapshot.Entries.Set(new global::app.data.@this(name, made, context: snapshot.Context));
-            snapshot = made;
+            if (await at.Value() is not { } value) return null;
+            at = await value.Get(at, name);
+            if (!at.Success || !at.IsInitialized) return null;
         }
-        return snapshot;
+        return at;
     }
 
-    /// <summary>Whether a node was saved at <paramref name="path"/>.</summary>
-    public static bool Holds(this global::app.snapshot.@this snapshot, string path)
-    {
-        foreach (var name in path.Split('.'))
-        {
-            if (snapshot.Entries.Get(name, snapshot.Context)?.Peek() is not global::app.snapshot.@this node) return false;
-            snapshot = node;
-        }
-        return true;
-    }
+    /// <summary>Whether anything was written at <paramref name="path"/>.</summary>
+    public static async Task<bool> Holds(this global::app.snapshot.@this snapshot, string path)
+        => await snapshot.At(path) is not null;
+
+    /// <summary>What was written at <paramref name="path"/>, as the dict it reads as.</summary>
+    public static async Task<global::app.type.item.dict.@this> Node(this global::app.snapshot.@this snapshot, string path)
+        => await (await snapshot.At(path) ?? throw new System.InvalidOperationException($"nothing was written at {path}"))
+            .Value<global::app.type.item.dict.@this>()
+           ?? throw new System.InvalidOperationException($"what was written at {path} is no dict");
 }

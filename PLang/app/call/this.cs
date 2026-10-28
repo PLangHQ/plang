@@ -22,12 +22,13 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     protected internal override global::app.type.item.@this Clone() => this;
 
     // The frame is written by its tags: in a trace (Out, Debug) its id, depth, when, whether its error was handled,
-    // its errors and the changes it saw; kept (Store) its element (the goal, step or action it runs, which a snapshot
-    // writes as what finds it), its variables, what a program added, its tags, the event running in it and the error
-    // in play. Its caller and children are where it sits, never written.
+    // its errors and the changes it saw; kept (Store) its element (the goal, step or action it runs), its variables,
+    // what a program added, its tags, the event running in it and the error in play. In a snapshot (Snapshot) its
+    // element, its variables, what a program added, its tags, the error in play and its caller, so a frame writes the
+    // chain it stands in; the event running in it is the app's answer, never saved. Its children are never written.
 
     /// <summary>What a program adds to the call (<c>%!call.scope.retries%</c>) — kept as long as the call lives.</summary>
-    [Store, global::app.LlmBuilder]
+    [Store, global::app.Snapshot, global::app.LlmBuilder]
     public global::app.type.item.property.list.@this property { get; private set; }
 
     private Stopwatch? _stopwatch;
@@ -77,7 +78,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// Sync parent in this execution chain — whatever AsyncLocal.Current was at Push time.
     /// Walk this for the "stack trace" view.
     /// </summary>
-    [global::app.LlmBuilder]
+    [global::app.LlmBuilder, global::app.Snapshot]
     public @this? Caller { get; }
 
     /// <summary>
@@ -101,7 +102,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <c>%!error%</c>". Null when this frame never failed, or failed and was recovered.
     /// <see cref="global::app.call.list.@this.Error"/> walks <see cref="Caller"/> asking each frame this. Kept, it comes
     /// back as the error this frame observed.</summary>
-    [Store]
+    [Store, global::app.Snapshot]
     public global::app.error.@this? Error
     {
         get => _handled ? null : Errors.Newest;
@@ -146,7 +147,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// Free-form tags written through <see cref="Tag"/> — a plang dict, read as any dict
     /// (<c>%!callStack.Current.Caller.Tags.foo%</c>). Always allocated, so no lazy-init race.
     /// </summary>
-    [Store, Out, Debug, global::app.LlmBuilder]
+    [Store, Out, Debug, global::app.Snapshot, global::app.LlmBuilder]
     public global::app.type.item.dict.@this Tags { get; private set; }
 
     // Parallel branches tag one caller's frame; the frame serializes the merge into its dict.
@@ -170,15 +171,28 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// (<see cref="goal.@this"/>) answers yes.</summary>
     internal virtual bool IsGoal => false;
 
-    /// <summary>A frame come back from a snapshot, made, not entered: born under <paramref name="stack"/>'s current
-    /// frame, its caller, which is entered already, and its kept members read onto it as the snapshot wrote them — its
-    /// variables (the names it is born with), the error in play, the event running in it, its tags and what a program
-    /// added. Its element its own kind reads (<see cref="Kept{T}"/>). The stack enters it.</summary>
+    /// <summary>A frame come back from a snapshot, made, not entered: born under its caller as the snapshot wrote it,
+    /// made first (none written: under <paramref name="stack"/>'s current frame), and its kept members read onto it as
+    /// the snapshot wrote them — its variables (the names it is born with), the error in play, its tags and what a program
+    /// added. Its element its own kind reads (<see cref="Kept{T}"/>). The stack enters it when the run goes on.</summary>
     private protected @this(global::app.type.item.dict.@this record, global::app.type.@this type, global::app.call.list.@this stack,
         global::app.actor.context.@this context)
-        : this(null, type, stack.Current, stack.Current, stack, null)
+        : this(record, type, Saved(record, stack, context), stack, context) { }
+
+    // A saved frame made under caller, the frame it goes back to when it ends: it is entered under it.
+    private @this(global::app.type.item.dict.@this record, global::app.type.@this type, @this? caller, global::app.call.list.@this stack,
+        global::app.actor.context.@this context)
+        : this(null, type, caller, caller, stack, null)
         => ((global::app.type.item.kind.reflection.@this)context.App.type.list["item"].kind["*"]!)
             .Read(record, this, context, global::app.View.Snapshot);
+
+    // The caller a saved frame's record holds, made as its own kind; none written: the stack's current frame.
+    private static @this? Saved(global::app.type.item.dict.@this record, global::app.call.list.@this stack, global::app.actor.context.@this context)
+        => record.Get("caller", context) is { } caller
+            ? global::app.View.Snapshot.Make(caller.Type ?? context.App.type.list[typeof(@this)], caller.Peek(), context) as @this
+              ?? throw new global::app.error.DeclinedException(new global::app.error.@this(
+                  "a saved frame's caller reads as no frame", "FrameKeyIncomplete", 400))
+            : stack.Current;
 
     /// <summary>The element a stored frame's <paramref name="record"/> keeps under <paramref name="name"/> — a goal, a
     /// step, an action — read in the snapshot view: the live one its key finds. A key that finds none, or a record that
@@ -237,7 +251,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             _stopwatch = Stopwatch.StartNew();
         }
 
-        if (_stack.IsDiffing(setting) && _store != null)
+        if (setting.Diff.Enabled.Value && _store != null)
         {
             Diffs = new diff.@this();
             _deep = setting.Diff.Deep.Value;
@@ -274,7 +288,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>This frame's own variables, each the Data whole under its name (<c>%!call.scope.parameter.order%</c>) —
     /// the list itself, so what is written through it is the frame's. Kept, they come back as names it is born with,
     /// as a goal call's parameters are: a write to one lands here again.</summary>
-    [Store, global::app.LlmBuilder]
+    [Store, global::app.Snapshot, global::app.LlmBuilder]
     public global::app.type.item.property.list.@this Parameter
     {
         get => _parameter;
@@ -312,26 +326,13 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>
     /// A change of <paramref name="store"/>: when it is the store this frame captures, the diff lands here —
-    /// <paramref name="name"/> held <paramref name="before"/>, null when it was new, so reverse-apply unwinds
-    /// the create. Parallel branches sharing the store record concurrently; Diffs owns its lock.
+    /// <paramref name="name"/> held <paramref name="before"/>, null when it was new. Parallel branches sharing the
+    /// store record concurrently; Diffs owns its lock.
     /// </summary>
     internal void Record(Variables store, string name, object? before)
     {
         if (ReferenceEquals(store, _store))
             Diffs?.Add(new Diff(name, before, _deep));
-    }
-
-    /// <summary>The changes this frame and every frame under it captured later than <paramref name="t"/>, each frame
-    /// once (<paramref name="seen"/>).</summary>
-    internal IEnumerable<Diff> Since(DateTimeOffset t, HashSet<@this> seen)
-    {
-        // a frame's own diffs once (one already yielded is in seen); the frames under it still walked
-        if (seen.Add(this) && Diffs is { } diffs)
-            foreach (var diff in diffs.Since(t))
-                yield return diff;
-        foreach (var child in Children)
-            foreach (var diff in child.Since(t, seen))
-                yield return diff;
     }
 
     /// <summary>
