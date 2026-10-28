@@ -27,6 +27,19 @@ A teaching edit re-runs the decider fixtures and the page goldens (CLAUDE.md, "T
 
 Docs that say "binding" (`apps.md`, `build-checks.md`, `architecture.md`, `building_plang_tests.md`, `execution-flow.md`) go to the docs bot.
 
+## `app.event` by path (snapshot 244)
+
+Ingi: "that is the path, app.event.goal.start.before". On snapshot, `%!app.event%` answers this app's events (all of them, Ingi: "lets just start with all the events"). This branch adds reaching one by path, each segment a member of the one before:
+
+```
+- before each goal, call Log      →  app.event.goal.start.before
+- before goal Process, call Log   →  app.event.goal["/Process"].start.before
+- after each file.read, call X    →  app.event.module.file.read.start.after
+```
+
+- on.event's `Event` examples change from `%!app.type.goal.on.start%` to `%!app.event.goal.start%` (teaching, re-pins).
+- The app's list moves from `event/on/list/` to `event/list/`, following the convention that `app.X` is typed `X.list.@this`.
+
 ## Older problems that go with it (snapshot 230, items 7 and 8)
 
 - **The base is also the C# handler kind** (`binding/this.cs:37`, `_handler!`, two constructors). The C# handler (debug's, the test runner's, mocks) becomes its own kind beside `call` and `clause`, and the base keeps only what every action shares.
