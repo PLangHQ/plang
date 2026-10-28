@@ -11,7 +11,7 @@ public class SnapshotEditLaunderProbeTests
         var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-launder-" + System.Guid.NewGuid().ToString("N")[..8]),
             global::PLang.Tests.Parent.Actor);
         app.test.list.Open(app.actor.list.User);
-        app.Code.Register(new global::PLang.Tests.Shared.TestIdentity { IsBuiltIn = true });
+        app.Code.Register<global::app.module.identity.code.IIdentity>(new global::PLang.Tests.Shared.TestIdentity { IsBuiltIn = true });
         app.Code.SetDefault<global::app.module.identity.code.IIdentity>("test-identity");
         return app;
     }
@@ -124,7 +124,7 @@ public class SnapshotEditLaunderProbeTests
     // G (was): the other road — tampered snapshot TEXT (unsigned, from outside) is saved to a .plang by the app (Wire signs a Data
     // that has no signature), read back, and resumed. Does the egress signing make outside bytes the app's own?
     [Test]
-    public async Task G_TamperedTextSavedAsPlang_ThenReadAndResumed()
+    public async Task G_TamperedTextSavedAsPlangByTheApp_IsTheAppsOwn_ByDesign()
     {
         await using var app = App();
         var context = app.actor.list.User.Context;
@@ -139,7 +139,8 @@ public class SnapshotEditLaunderProbeTests
 
         var note = result.Success ? (await (await result.Get("note")).Value())?.ToString() : "REFUSED:" + result.Error!.Key;
         await TestContext.Current!.OutputWriter.WriteLineAsync($"G text.has original={text.Contains("original")} read.Success={read.Success} signed={read.Signature != null} resume.Success={result.Success} note={note}");
-        await Assert.That(note).IsNotEqualTo("EDITED!!");
+        // accepted Low (snapshot 287): the app's own program signed outside bytes, so it vouches for them
+        await Assert.That(note).IsEqualTo("EDITED!!");
     }
 
     // I: Ingi's ruling (snapshot 287): an edit is resumed only after the program signs it again, explicitly (`sign %snap%`).
