@@ -12,12 +12,17 @@ pre { background: #f3f4f6; padding: 12px; border-radius: 4px; overflow-x: auto; 
 <div class="error">
   <h1>Internal Error</h1>
   <p>{{ error.Message }}</p>
-  {{ if error.CallFrames.size > 0 }}
+  {{ if error.call }}
   <div class="stack">
     <h3>Call Stack</h3>
     <ul>
-    {{ for frame in error.CallFrames }}
+    {{ calls = error.call.list }}
+    {{ for frame in calls }}
+    {{ if calls.size > 13 && for.index >= 10 && for.index < calls.size - 3 }}
+    {{ if for.index == 10 }}<li>…</li>{{ end }}
+    {{ else }}
       <li>{{ frame.Action.Step.Goal.Name }} - {{ frame.Action.Step.Goal.Path }}:{{ frame.Action.Step.Line.Number }}</li>
+    {{ end }}
     {{ end }}
     </ul>
   </div>

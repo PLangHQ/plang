@@ -554,7 +554,7 @@ public class SnapshotWireTests
     public async Task ThrowTimeSnapshot_EditSurvivesResume()
     {
         // The ONE difference from the passing edit-resume tests: the snapshot comes
-        // from (await app.Snapshot(error).Saved()) (the call standing at error.CallFrames), the
+        // from (await app.Snapshot(error).Saved()) (the call standing at error.call), the
         // path Error.Callback uses in the .test.goal — not (await app.Snapshot(app.actor.list.User.Context).Saved()) (live).
         var app = new global::app.@this(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-tt-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing().TestIdentity();
@@ -571,8 +571,7 @@ public class SnapshotWireTests
         await using (var step = context.call.Push(goal.Step[1], await context.call.Setting()))
         await using (var call = context.call.Push(goal.Step[1].Code[0], await context.call.Setting(), context.Variable))
         {
-            var err = new ServiceError("boom", goal.Step[1],
-                context.call.Current!.Chain);
+            var err = new ServiceError("boom", goal.Step[1], context.call.Current);
             json = await app.Snapshot(err, app.actor.list.User.Context).Saved().Text(app.actor.list.User.Context);   // throw-time overload
         }
 

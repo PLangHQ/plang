@@ -13,7 +13,7 @@ public class SnapshotChainTests : System.IAsyncDisposable
         var stack = TestCalls.Stack(app, TestCalls.Settings());
         await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"), await stack.Setting());
         await using var inner = stack.Push(MakeAction(app.actor.list.User.Context, "Inner"), await stack.Setting());
-        var chain = inner.Chain;
+        var chain = inner.list;
         await Assert.That(chain[0]).IsEqualTo(inner);
     }
 
@@ -24,7 +24,7 @@ public class SnapshotChainTests : System.IAsyncDisposable
         await using var a = stack.Push(MakeAction(app.actor.list.User.Context, "A"), await stack.Setting());
         await using var b = stack.Push(MakeAction(app.actor.list.User.Context, "B"), await stack.Setting());
         await using var c = stack.Push(MakeAction(app.actor.list.User.Context, "C"), await stack.Setting());
-        var chain = c.Chain;
+        var chain = c.list;
         await Assert.That(chain.Count).IsEqualTo(3);
         await Assert.That(chain[0]).IsEqualTo(c);
         await Assert.That(chain[1]).IsEqualTo(b);
@@ -36,7 +36,7 @@ public class SnapshotChainTests : System.IAsyncDisposable
     {
         var stack = TestCalls.Stack(app, TestCalls.Settings());
         await using var only = stack.Push(MakeAction(app.actor.list.User.Context, "A"), await stack.Setting());
-        var chain = only.Chain;
+        var chain = only.list;
         await Assert.That(chain.Count).IsEqualTo(1);
         await Assert.That(chain[0]).IsEqualTo(only);
     }
@@ -46,7 +46,7 @@ public class SnapshotChainTests : System.IAsyncDisposable
     {
         var stack = TestCalls.Stack(app, TestCalls.Settings());
         await using var a = stack.Push(MakeAction(app.actor.list.User.Context, "A"), await stack.Setting());
-        var chain = a.Chain;
+        var chain = a.list;
         await Assert.That(ReferenceEquals(chain[0], a)).IsTrue();
     }
 
@@ -59,7 +59,7 @@ public class SnapshotChainTests : System.IAsyncDisposable
         await errored.DisposeAsync();
         await using var recovery = stack.Push(MakeAction(app.actor.list.User.Context, "Recovery"), await stack.Setting());
 
-        var chain = recovery.Chain;
+        var chain = recovery.list;
         await Assert.That(chain.Contains(errored)).IsFalse();
     }
 }

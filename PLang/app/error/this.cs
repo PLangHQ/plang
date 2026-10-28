@@ -115,8 +115,8 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
 
     /// <summary>The error writes itself, in every view — its flat wire shape: what it is (id, message, key, status,
     /// when, its fix and links) and the errors that caused it, each written through the writer's kind. What kind of
-    /// error it is, its key says. The live back-references that can't round-trip (Exception, Step, Goal, CallFrames)
-    /// are dropped — the snapshot's CallStack section carries the chain. Its reader (<c>error/serializer/Reader</c>)
+    /// error it is, its key says. The live back-references that can't round-trip (Exception, Step, Goal, call)
+    /// are dropped — the snapshot's <c>call.current</c> carries the chain. Its reader (<c>error/serializer/Reader</c>)
     /// reads it back.</summary>
     protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
@@ -149,7 +149,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// PLang surface <c>%!error.callback%</c> resolves through here (a member that asks only its asker,
     /// <paramref name="context"/>; the run it takes is this error's own). The first ask takes
     /// <c>app.Snapshot(this)</c> on the App the error's own <see cref="Context"/> belongs to — the run as it stands when
-    /// the handler takes it, its call standing where the error happened (<see cref="CallFrames"/>: the live stack has
+    /// the handler takes it, its call standing where the error happened (<see cref="call"/>: the live stack has
     /// unwound past the failing action by handler time) — as the bytes the app takes it as, its node (which a resume goes on
     /// from, <see cref="app.snapshot.@this.Resume"/>, as an ask's does) those bytes opened. Taken once per Error — asking
     /// twice answers the same Data. An error with no context holds no run — it wasn't raised inside one, or it came back
@@ -175,15 +175,21 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
             return taken;
         }
     }
-    public Action? Action { get; set; }
+    /// <summary>The action it happened in: its call's; an error with no call (a build's, a validation's) holds its own.</summary>
+    public Action? Action { get => call?.Action ?? _action; set => _action = value; }
+    private Action? _action;
+    /// <summary>The step it happened in: its call's; an error with no call holds its own.</summary>
     [global::app.LlmBuilder]
-    public Step? Step { get; set; }
-    /// <summary>The goal it happened in: its step's; an error about a goal itself (no step) holds the goal it names.</summary>
+    public Step? Step { get => call?.Step ?? _step; set => _step = value; }
+    private Step? _step;
+    /// <summary>The goal it happened in: its call's, else its step's; an error about a goal itself (no call, no step)
+    /// holds the goal it names.</summary>
     [global::app.LlmBuilder]
-    public Goal? Goal { get => Step?.Goal ?? _goal; set => _goal = value; }
+    public Goal? Goal { get => call?.Goal ?? _step?.Goal ?? _goal; set => _goal = value; }
     private Goal? _goal;
+    /// <summary>The call it happened in; its callers are the call's own (<c>call.list</c>).</summary>
     [global::app.LlmBuilder]
-    public IReadOnlyList<Call> CallFrames { get; set; } = Array.Empty<Call>();
+    public Call? call { get; set; }
     /// <summary>The variables as they were when the error happened — each variable's Data whole,
     /// keyed by name (<c>%!error.Variables.foo%</c>). Captured by the frame that records the error, when the
     /// error keeps them (<see cref="Keeps"/>); null otherwise (variables can hold secrets).</summary>
@@ -204,13 +210,12 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     [System.Text.Json.Serialization.JsonIgnore]
     public actor.context.@this? Context { get; set; }
 
-    /// <summary>This error placed where <paramref name="frame"/> observed it, in <paramref name="context"/>: the chain it
-    /// happened in, its step and context unless it already holds them, and the variables as they are when it keeps
+    /// <summary>This error placed where <paramref name="frame"/> observed it, in <paramref name="context"/>: the call it
+    /// happened in (its step, goal and callers are the call's) and its context unless it already holds them, and the variables as they are when it keeps
     /// them. Where an error happened is known only where it is observed, so it is placed there.</summary>
     internal void At(Call frame, actor.context.@this context)
     {
-        if (CallFrames.Count == 0) CallFrames = frame.Chain;
-        Step ??= frame.Step;
+        call ??= frame;
         Context ??= context;
         if (Variables == null && Keeps(context)) Variables = context.Variable.Snapshot();
     }
@@ -231,8 +236,8 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// Read-back ctor — reconstructs an Error from the wire with its original
     /// <see cref="Id"/> and <see cref="CreatedUtc"/> preserved (both are otherwise
     /// set only at first construction). The live back-references (Step, Goal,
-    /// CallFrames, Exception) are intentionally NOT restored: the CallStack
-    /// section already carries the frame chain, and a live Exception / Goal
+    /// call, Exception) are intentionally NOT restored: the snapshot's
+    /// <c>call.current</c> already carries the chain, and a live Exception / Goal
     /// object graph cannot round-trip.
     /// </summary>
     private @this(string id, string message, string key, global::app.type.item.status.@this status, DateTime createdUtc)
@@ -265,24 +270,22 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         => Step = step;
 
     /// <summary>
-    /// Creates an error with a step and explicit Call chain snapshot.
+    /// Creates an error with a step and the call it happened in.
     /// </summary>
-    public @this(string message, Step? step, IReadOnlyList<Call> callFrames, string key = "Error", global::app.type.item.status.@this? status = null)
+    public @this(string message, Step? step, Call? call, string key = "Error", global::app.type.item.status.@this? status = null)
         : this(message, step, key, status)
     {
-        CallFrames = callFrames;
+        this.call = call;
     }
 
     /// <summary>
-    /// Creates an error from an execution context. Captures step, goal, and Call chain automatically.
+    /// Creates an error from an execution context: the call it happened in, whose step, goal and callers it reads.
     /// </summary>
     public @this(string message, actor.context.@this context, string key = "Error", global::app.type.item.status.@this? status = null)
         : this(message, context.call.Step, key, status)
     {
-        // in a goal's own frame there is no step: the goal is the one in play
-        Goal = context.call.Goal;
         Context = context;
-        CallFrames = context.call.Current?.Chain ?? (IReadOnlyList<Call>)Array.Empty<Call>();
+        call = context.call.Current;
     }
 
     /// <summary>

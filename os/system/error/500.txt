@@ -42,14 +42,25 @@ Variables:
     %{{ variable[0] }}% = {{ variable[1] }}
 {%- endfor %}
 {%- endif %}
-{%- if error.CallFrames.size > 0 %}
+{%- if error.call %}
 
 Call stack:
-{%- comment %} Consecutive frames on the same goal, module and step fold into one line with ×N
-    (recursion); a frame that holds errors never folds, so the failing frame stays visible. {% endcomment %}
+{%- comment %} The nearest 10 calls, then … and the first 3 when there are more than 13. Consecutive frames on
+    the same goal, module and step fold into one line with ×N (recursion); a frame that holds errors never folds, so
+    the failing frame stays visible. {% endcomment %}
+{%- assign calls = error.call.list %}
+{%- assign first = calls.size | minus: 3 %}
 {%- assign previous = "" %}
 {%- assign count = 0 %}
-{%- for frame in error.CallFrames %}
+{%- for frame in calls %}
+{%- if calls.size > 13 and forloop.index0 >= 10 and forloop.index0 < first %}
+{%- if forloop.index0 == 10 %}
+    {{ name }}{% if count > 1 %} ×{{ count }}{% endif %} - {{ where }}
+    …
+{%- assign previous = "" %}
+{%- endif %}
+{%- continue %}
+{%- endif %}
 {%- capture key %}{{ frame.Action.Step.Goal.Path }}|{{ frame.Action.Module.Name }}|{{ frame.Action.Step.Index }}{% endcapture %}
 {%- if key == previous and frame.Errors.size == 0 %}
 {%- assign count = count | plus: 1 %}

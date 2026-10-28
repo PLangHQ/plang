@@ -244,7 +244,7 @@ public sealed partial class @this : global::app.type.item.@this
         {
             Step = step,
             Goal = goal,
-            CallFrames = Current?.Chain ?? Array.Empty<call.@this>(),
+            call = Current,
             Exception = ex,
         };
         Audit.Add(error);

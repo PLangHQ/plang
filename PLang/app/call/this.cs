@@ -369,16 +369,17 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>
     /// This frame and its callers, outward: <c>[this, Caller, …, the root]</c> — the frames as they are, not copies,
-    /// taken as they stand when asked (an error keeps the chain it failed in). <c>[0]</c> is this frame;
-    /// <c>- foreach %!call.current.chain%, call …</c> walks it from plang.
+    /// taken as they stand when asked (an error's call reaches the callers it failed in). <c>[0]</c> is this frame;
+    /// <c>- foreach %!call.current.list%, call …</c> walks it from plang.
     /// </summary>
-    public IReadOnlyList<@this> Chain
+    [global::app.LlmBuilder]
+    public IReadOnlyList<@this> list
     {
         get
         {
-            var chain = new List<@this>();
-            for (var frame = this; frame != null; frame = frame.Caller) chain.Add(frame);
-            return chain;
+            var calls = new List<@this>();
+            for (var frame = this; frame != null; frame = frame.Caller) calls.Add(frame);
+            return calls;
         }
     }
 

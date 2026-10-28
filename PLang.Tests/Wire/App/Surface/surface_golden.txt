@@ -136,7 +136,6 @@ class app.call.step.this : app.call.this, app.type.item.ICreate<app.call.step.th
 
 class app.call.this : app.type.item.this, System.IAsyncDisposable, app.type.item.ICreate<app.call.this>, app.type.item.property.IOwner
   Caller : app.call.this { get; } [LlmBuilder, Snapshot]
-  Chain : System.Collections.Generic.IReadOnlyList<app.call.this> { get; }
   Children : app.call.child.list.this { get; }
   CompletedAt : app.type.item.datetime.this { get; }
   Depth : app.type.item.number.this { get; } [Debug, LlmBuilder, Out]
@@ -159,6 +158,7 @@ class app.call.this : app.type.item.this, System.IAsyncDisposable, app.type.item
   Tag(app.type.item.dict.this tags, app.actor.context.this context) : System.Void
   Tags : app.type.item.dict.this { get; } [Debug, LlmBuilder, Out, Snapshot, Store]
   TryGet(System.String name, app.data.this& value) : System.Boolean
+  list : System.Collections.Generic.IReadOnlyList<app.call.this> { get; } [LlmBuilder]
   override IsLeaf : System.Boolean { get; }
   override ToString() : System.String
   property : app.type.item.property.list.this { get; } [LlmBuilder, Snapshot, Store]
@@ -3430,6 +3430,7 @@ type app.call
   .diffs : list<clr>
   .tags : dict
   .parameter : app.type.item.property.list
+  .list : list<app.call>
   .depth : number
 
 type app.call.action
@@ -3442,6 +3443,7 @@ type app.call.action
   .diffs : list<clr>
   .tags : dict
   .parameter : app.type.item.property.list
+  .list : list<app.call>
   .depth : number
 
 type app.call.binding
@@ -3454,6 +3456,7 @@ type app.call.binding
   .diffs : list<clr>
   .tags : dict
   .parameter : app.type.item.property.list
+  .list : list<app.call>
   .depth : number
 
 type app.call.composed
@@ -3466,6 +3469,7 @@ type app.call.composed
   .diffs : list<clr>
   .tags : dict
   .parameter : app.type.item.property.list
+  .list : list<app.call>
   .depth : number
 
 type app.call.goal
@@ -3478,6 +3482,7 @@ type app.call.goal
   .diffs : list<clr>
   .tags : dict
   .parameter : app.type.item.property.list
+  .list : list<app.call>
   .depth : number
 
 type app.call.isolated
@@ -3490,6 +3495,7 @@ type app.call.isolated
   .diffs : list<clr>
   .tags : dict
   .parameter : app.type.item.property.list
+  .list : list<app.call>
   .depth : number
 
 type app.call.list
@@ -3514,6 +3520,7 @@ type app.call.step
   .diffs : list<clr>
   .tags : dict
   .parameter : app.type.item.property.list
+  .list : list<app.call>
   .depth : number
 
 type app.channel.list
@@ -3752,7 +3759,7 @@ type error
   .callback : snapshot
   .step : step
   .goal : goal
-  .callFrames : list<app.call>
+  .call : app.call
   .variables : dict
 
 type event

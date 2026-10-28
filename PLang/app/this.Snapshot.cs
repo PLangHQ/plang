@@ -41,7 +41,7 @@ public sealed partial class @this
     /// </summary>
     public async System.Threading.Tasks.Task<data.@this<snapshot.@this>> Snapshot(global::app.error.@this error, actor.context.@this context)
     {
-        if (error.CallFrames.Count > 0) context.call.Stand(error.CallFrames[0]);
+        if (error.call is { } call) context.call.Stand(call);
         return await Snapshot(context);
     }
 }

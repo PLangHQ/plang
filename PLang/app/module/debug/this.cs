@@ -242,7 +242,7 @@ public sealed class @this
         if (callStack?.Current != null)
         {
             sb.AppendLine("  Call Stack:");
-            foreach (var call in callStack.Current.Chain)
+            foreach (var call in callStack.Current.list)
                 sb.AppendLine($"    at {call}");
         }
 

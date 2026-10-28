@@ -55,7 +55,7 @@ public sealed partial class @this
 
     /// <summary>The outermost frame of the run a snapshot held, as it was read back: what a resume run on its own is a
     /// task of. Null when it held no call.</summary>
-    internal call.@this? Resumed => _resumed?.Chain[^1];
+    internal call.@this? Resumed => _resumed?.list[^1];
 
     /// <summary>The frames a snapshot held taken in as this stack's, from the root to the frame the run stopped in, under
     /// this stack's setting, read once: entered under the frame the root was read under, as any call's are, held until
@@ -65,7 +65,8 @@ public sealed partial class @this
         // a frame entered has begun under a setting
         if (_resumed is not { } stopped || stopped.Setting != null) return;
         var setting = await Setting();
-        for (var at = stopped.Chain.Count - 1; at >= 0; at--) Enter(stopped.Chain[at], setting);
+        var calls = stopped.list;
+        for (var at = calls.Count - 1; at >= 0; at--) Enter(calls[at], setting);
     }
 
     /// <summary>
@@ -85,7 +86,7 @@ public sealed partial class @this
             return context.Error(new ServiceError("there is no frame to go on from: the snapshot held no call", "NoFrameToResume", 400));
         _resumed = null;
         // the frame the restored tree went under: the root's caller, as it was read
-        var under = current.Chain[^1].Caller;
+        var under = current.list[^1].Caller;
         // made current in this flow: entering them in an awaited take is undone when it returns
         _current.Value = current;
 

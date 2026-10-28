@@ -15,8 +15,8 @@ public class ServiceError : Error
     public ServiceError(string message, Step step, string key = "ServiceError", global::app.type.item.status.@this? status = null)
         : base(message, step, key, status) { }
 
-    public ServiceError(string message, Step step, IReadOnlyList<Call> callFrames, string key = "ServiceError", global::app.type.item.status.@this? status = null)
-        : base(message, step, callFrames, key, status) { }
+    public ServiceError(string message, Step step, Call? call, string key = "ServiceError", global::app.type.item.status.@this? status = null)
+        : base(message, step, call, key, status) { }
 
     public ServiceError(string message, actor.context.@this context, string key = "ServiceError", global::app.type.item.status.@this? status = null)
         : base(message, context, key, status) { }

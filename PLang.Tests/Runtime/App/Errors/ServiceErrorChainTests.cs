@@ -9,38 +9,25 @@ public class ServiceErrorChainTests : System.IAsyncDisposable
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [Test]
-    public async Task ServiceError_CallFrames_TypedAsReadOnlyListOfCall()
-    {
-        var stack = TestCalls.Stack(app, TestCalls.Settings());
-        await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"), await stack.Setting());
-        var chain = call.Chain;
-        var sv = new ServiceError("crash", call.Action.Step!, chain);
-        IReadOnlyList<global::app.call.@this> typed = sv.CallFrames;
-        await Assert.That(typed).IsNotNull();
-    }
-
-    [Test]
-    public async Task ServiceError_ChainIndexZero_IsFailingCall()
+    public async Task ServiceError_HoldsTheCallItFailedIn()
     {
         var stack = TestCalls.Stack(app, TestCalls.Settings());
         await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"), await stack.Setting());
         await using var failing = stack.Push(MakeAction(app.actor.list.User.Context, "Failing"), await stack.Setting());
-        var chain = failing.Chain;
-        var sv = new ServiceError("crash", failing.Action.Step!, chain);
-        await Assert.That(sv.CallFrames[0]).IsEqualTo(failing);
+        var sv = new ServiceError("crash", failing.Action.Step!, failing);
+        await Assert.That(sv.call).IsEqualTo(failing);
     }
 
     [Test]
-    public async Task ServiceError_ChainWalksCallerToRoot()
+    public async Task ServiceError_ItsCallsChainReachesTheRoot()
     {
         var stack = TestCalls.Stack(app, TestCalls.Settings());
         await using var root = stack.Push(MakeAction(app.actor.list.User.Context, "Root"), await stack.Setting());
         await using var middle = stack.Push(MakeAction(app.actor.list.User.Context, "Middle"), await stack.Setting());
         await using var leaf = stack.Push(MakeAction(app.actor.list.User.Context, "Leaf"), await stack.Setting());
-        var chain = leaf.Chain;
-        var sv = new ServiceError("crash", leaf.Action.Step!, chain);
-        await Assert.That(sv.CallFrames.Count).IsEqualTo(3);
-        await Assert.That(sv.CallFrames[2]).IsEqualTo(root);
+        var sv = new ServiceError("crash", leaf.Action.Step!, leaf);
+        await Assert.That(sv.call!.list.Count).IsEqualTo(3);
+        await Assert.That(sv.call!.list[2]).IsEqualTo(root);
     }
 
     [Test]
