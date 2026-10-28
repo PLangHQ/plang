@@ -98,6 +98,32 @@
         "health": "C#: Wire 615/616 (the carried ASensitiveMember red), Data green, Runtime 1 pre-existing (ReadmeIsACopyOfStartMd); plang: 1 pre-existing (BareLiteralJudgedByForm), the three ask tests stale as ruled",
         "notes": "1b-1d, View.Snapshot, loops, tasks with Ingi"
       }
+    },
+    {
+      "id": "3c5e8f21-6a47-4d09-9b12-5e7a1c4d8f30",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-28T09:30:00Z",
+      "timestamp_end": "2026-10-28T10:15:00Z",
+      "intent": "Review and bench 35c1b3377 (the snapshot is one write)",
+      "before": { "assumptions": "decisions 183-200 are ruled; bytes columns are load-proof", "risk": "load 9-14 voids times" },
+      "plan": ".bot/snapshot/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": ["Tools/Bench/record.md"],
+          "type": "review",
+          "category": "test",
+          "confidence": "medium",
+          "context": "bench row at load 9: sub birth +6 KB (band 5), rest under base, memory flat, sweep 0 red, ptest 307/0 after rebuild"
+        },
+        {
+          "paths": [".bot/snapshot/codeanalyzer/review.md"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "findings P2-1, P3-1, P3-2, P5-1, P7-1, P7-2, P9-1, P9-2; no mutation run"
+        }
+      ],
+      "after": { "status": "review written", "health": "fail (structure)", "notes": "coder next" }
     }
   ]
 }
