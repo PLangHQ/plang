@@ -70,6 +70,10 @@ The one list of work after runtime2's merges (Ingi, 2026-10-29: "yes merge into 
 
 - **The cost of calling an action** (Ingi, 2026-10-29: "it would be interesting to analyze if we can speed that up … I dont think specifically shortcut, but just general when calling an action, but good to have focus"): queued for plang-codeanalyzer after its event-action review. Focus: a `%!goal%` read, ~0.2 ms against ~0.03 ms for a value in memory (`shortcut/this.code.md`). Also a step of one action, and a `call X` to a goal of one step. Each broken down by piece, with ranked ideas. Written up at `.bot/event-action/codeanalyzer/call-cost.md`. Ingi: "tricks such as code generator, aop, etc. is acceptable" (compile-time emission, weaving, work kept in the .pr), still one door.
 
+### Read once, pass on
+
+- **`actor.list.Use` reads the actor's name twice** (`actor/list/this.cs:39`; plang-coder at event-action 64, the same shape it fixed in `variable.set`): `named.Given() is null` reads the name to ask "none named?" and drops it, then `named.Use(...)` reads it again. Cheap for a choice, but it is a dropped answer: keep what `Given()` answered and use it.
+
 ### Lazy (OBP pattern 11)
 
 - **The shortcut list is read at the app's start** (`app/this.cs:535–537`, found 2026-10-29 explaining shortcuts to Ingi): Launch reads every shortcut before anything runs, so a name clash (an app `/shortcut/x.goal` taking a system name) stops the start. That is work at start; the first `%!x%` read is the asker. Also `shortcut/this.cs:20` decides `IsSystem` from `path.ToString()`, while `this.code.md` says it asks its goal (`Goal.IsSystem`).
