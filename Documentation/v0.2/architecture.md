@@ -489,21 +489,21 @@ When an error goal is called, the error is passed as `%!error%` parameter to the
 
 ## Snapshot / Restore
 
-Subsystems that need to round-trip across a suspend implement `app.snapshot.ISnapshotted` — the type system is the bucket assignment. Each implementer captures into its own subtree of a `Snapshot.@this` and reconstructs from that subtree on Restore; references across subsystems are by name, never by pointer. `app.Snapshot()` walks every `ISnapshotted` property; `app.Restore(s, ctx)` walks `s.SectionNames` and dispatches each name to the right subsystem's `Restore`. Section presence is the gate — missing sections stay missing on the receiving side, which is what lets narrow wire shapes (e.g. CallStack + Variables only) round-trip cleanly.
+What round-trips across a suspend is what is tagged `[Snapshot]`: the app is written in the snapshot view (`View.Snapshot`), each object writing its own tagged members, and read back onto the app the run goes on in, each object reading itself. See `snapshots.md`. A value that something finds (an actor, the app, an event, a goal) is written as what finds it, so references across objects are by name, never by pointer. `app.Snapshot(context)` takes the app once and signs it; a resume reads the bytes back onto a sub app.
 
-Subsystems that don't implement `ISnapshotted` (Modules, Goals, Channels, Cache, FileSystem) are reconstructed at App build instead. There's no third bucket and no per-call opt-in.
+What nothing tags (modules, goals, channels, the cache, the filesystem) is made again from the app's own files when an app is born. There's no third bucket and no per-call opt-in.
 
-See `snapshots.md` for the per-subsystem subtrees and the referent-integrity discipline.
+See `snapshots.md` for what takes part, the call stack's frames and the resume.
 
 ---
 
 ## Callbacks
 
-A callback is a typed record (`ICallback`) that captures "where this run was paused, what state survives the pause, and how to land back here". Two implementations in v1: `AskCallback` (slim — Position + ActorName + developer-named Variables, used by `output.ask`) and `ErrorCallback` (full Snapshot — for the error-retry issuer).
+A callback is a signed snapshot (`snapshots.md`): where this run was paused and how to land back there. A pending `output.ask` carries one (`module/output/ask.cs`), and an error's `%!error.callback%` holds the run as it stood where the error happened (`error/this.cs:150`).
 
-The public verb is `- run %callback%` (`callback.run`). It implements a strict seal-then-verify gate: `EnsureSigned` first (in-process Data signs locally; wire Data without Context is rejected), then `signing.verify`, then dispatch into the typed callback's `Run`. In-process and wire paths are indistinguishable to the gate — absence of signature is rejection, never trust.
+The public verb is `- start %callback%` (`callback.start`, `module/callback/start.cs`). It goes on through the one resume door, `snapshot.resume`, so a callback is checked as every resume is: unsigned (`SnapshotUnsigned`), changed since it was signed (`SnapshotSignatureInvalid`) or another app's (`SnapshotNotTheApps`), it is refused before anything is restored.
 
-`AskCallback` resumes by binding the answer under the sentinel `%!ask.answer%` and re-dispatching the original `output.ask` action. `ErrorCallback` resumes by reconstructing a fresh App from the snapshot and dispatching from `BottomFrame`. CLR exceptions out of `cb.Run` are wrapped as typed `Data.FromError` (no raw exceptions leak through the public entry).
+A pending ask resumes by pre-binding the answer under the sentinel `%!ask.answer%` and re-running the goal, so the second call to `output.ask` answers with it. An error's callback goes on from where the error happened, in a sub app.
 
 The wire serializer is `application/plang` — a single, merged serializer composed over `Json` with `Wire` + `Transport.ForOutbound` + `Sensitive.Strip` modifiers (the historical `application/plang+data` variant was merged on `data-serialize-cleanup`; the `Wire` class itself was named `WireJsonConverter` before `data-normalize`). Signing is **converter-driven**: `Wire.Write` fires `data.EnsureSigned()` sign-if-missing on every Data it walks, so any Data egressing through any channel auto-seals. Forwarding preserves provenance — Alice's inner signature rides intact under Bob's outer signature.
 

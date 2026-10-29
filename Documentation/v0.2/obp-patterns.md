@@ -84,8 +84,25 @@ Each pattern comes from a real case: a design that was proposed, reversed, and s
 
 **Case:** a frame's born names are held in `_variables` and `_arguments`; one private birth method serves the constructor and the read.
 
+## 11. Something must be ready before it's used
+
+**Shape:** lazy. Whoever needs it asks, and the first ask loads it. A thing is either not loaded yet or loaded; once loaded it's never asked again, and anything added later joins only what's already loaded (an unloaded one gets it when it loads). Nothing is prepared at a moment: not at start, not when something is bound, not at birth.
+
+**Tells:** "at start, load…", "when it's born, make…", "when X is bound, put it into Y's list" (making Y's list before Y ever ran); a launch step or a constructor that fills something for later; "this caller is sync (or early), so it can't load" — an exception to the first ask is still eager.
+
+**Case:** event-action (2026-10-29). Proposed and reversed, in order: an event pushed into an item's lists when it's bound (lists made before the item ran); system events loaded at the root app's launch, then at a sub app's birth; a value's birth that "never triggers the load" because it's sync. Settled: an item's lists load on its first run with every event that applies (pull), and an `on.event` step adds its event only to lists already loaded (push); an actor's events, system events included, load on their first ask or add, whoever asks — a value's birth too, through the same door. Ingi: "everything is lazy, when the first goal runs, it will ask for all the events, if the events have never been loaded, it tries to load them … an uninitialized list must always load everything before adding."
+
+## 12. A question several members answer
+
+**Shape:** one question, one member, on the element the question is about. It answers for itself; kinds that answer differently override it. Pick the element by asking "who knows this?": the thing that holds the fact.
+
+**Tells:** two or more members answering the same question (`Has`, `For`, `Is`, `ReferenceEquals` side by side); a special method only one caller uses; `is X` inside the answer about the item it's handed; a second accessor beside a door (`Held` beside `On`); an outsider placing things where the element should be asked.
+
+**Case:** event-action (2026-10-29), "does this event run for this item?". Proposed and reversed: `Has`, `For`, `Is` and `ReferenceEquals` all answering it (Ingi: "all answering the same question??"); a pattern answering with `item is goal` inside; a module pushing its events into its actions (`Parts`). Settled: the thing an event is bound on answers, `@event.Item.Has(item)` (a type: its items; a module: its actions; one goal: itself); a goal answers whether a pattern names it, `Is(pattern)`, because a goal owns its path (Ingi: "who should own the responsibility?"); a type, a pattern and a module answer `IsMany`.
+
 ## How to practise
 
 - **Name the pattern first.** Every proposal and review opens with the pattern it follows or the smell it risks.
+- **Two questions before any proposal or ruling goes out** (patterns 11 and 12): *who asks for each new piece, and when?* — it must be "its first asker loads it", never "it's prepared at X"; and *who answers each question?* — it must be the element the question is about, through one member. Run them on a bot's shape before ruling on it too: a bot's convenient exception is still an exception.
 - **Drills.** Take a past decision from a branch's log, hide the answer, solve it by pattern, then compare with what was settled. A miss becomes a new row here.
 - **Reviews are practice.** Each finding in a review names its pattern by number.
