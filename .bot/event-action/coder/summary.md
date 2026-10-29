@@ -1,7 +1,18 @@
 # coder — event-action
 
 ## Version
-v3: stage 5 (rulings 53–59). v2 was stages 2–4; v1 stage 1 (ec64ee712, 2c7b8f78d).
+v3: stages 5–8 built and accepted (rulings 53–86); in review (codeanalyzer from 5d0ac4382, then tester, security, auditor, docs). v2 was stages 2–4; v1 stage 1 (ec64ee712, 2c7b8f78d).
+
+## Stages 6–8 and the fixes since stage 5 (latest first)
+- Stage 8 (86d90db97): a call finds its goal in the app its caller goal is. `goal.App` is born in the goal reader (the reading app's for a .pr in its own folder, its system/ copy too; none for one in the os's folder, judged by location); `goal.Find(name, asker)` = `(App ?? asker.App).goal.list.Find(name, this)`, asked by goal.Select and the call event. Proofs: `PLang.Tests/Runtime/App/Goals/CallFindsItsAppTests.cs`.
+- Stage 7 (1f615b6c6): goal.Start runs its steps through `frame.Leave` (Enter, goal.Leave, Elsewhere gone); `call.goal.Leave` counts a return's levels down; `app.parent.goal` is its own kind of goal whose Start sends the call up the link with its parameters. 84 (18507e237): a goal pattern is rooted as a plang path (`api/*` in the binding goal's folder).
+- Stage 6 (b8551ff48, b8db6b8f0): on.event's `Sub: inherit | none`; the event answers `IsInheritable`; the origin answers only the inheritable; a saved call event keeps `sub`.
+- 73/77 (0562aa0ab, 6eae47d9c, a044fe4fa): one store for a variable's events (`Moments(variable)`, debug's watch through `Add(event)`); the type list keeps each class's lookup answer (a lookup by class was 13 KB each time); `variable.Select(key)` makes `%!app.variable["count"]%` the variable whether or not it is set; Cover asks the answer's variables (`variable.Names`).
+- 66–75: the codeanalyzer's and tester's findings (lazy-load cost, the load claimed without a lock and all-or-nothing on failure, on's one answer, set.cs's one read value, equality asked of the value itself, path.Relative's system folder first).
+- Examples to formal (63/65, a3942896b): 202 of 239 action examples in formal's untyped form.
+
+## Next
+- Wait for the review line's findings.
 
 ## What this is
 What runs when something happens is an **event**, held by the **actor** that bound it. Before, every start walked an item's "levels" (type, module, catalog action, itself) and asked two sources at each. Now each goal, step and catalog action has a list per actor, loaded on its first run with every event that applies, and an event bound later joins the lists already loaded. The thing an event is bound on answers which items it runs for (`Has`).
