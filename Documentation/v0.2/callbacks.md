@@ -66,6 +66,6 @@ and fails closed without an actor context (`wire-serialization.md`, "`Wire.Read`
 
 ## See also
 
-- `Documentation/v0.2/snapshots.md` — snapshots, the walk, resume.
+- `Documentation/v0.2/snapshots.md` — snapshots, what takes part, resume.
 - `PLang/app/module/callback/start.cs` — `start %callback%`.
 - `PLang/app/data/Wire.cs` — the converter that walks the wire shape and fires sign-if-missing on every Data.

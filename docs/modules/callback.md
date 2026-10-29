@@ -1,21 +1,19 @@
 # Callback Module
 
-Run a callback envelope — verify it, then dispatch into whatever the callback was paused at.
+Go on with the run a callback holds.
 
-A *callback* is PLang's way of representing "where this run paused, what survives the pause, and how to resume". They're produced by actions that suspend ([`output.ask`](output.md#ask)) or by error-recovery flows. They ride between processes (or to/from a file, or across an HTTP boundary) as signed `Data` envelopes — no callback ever dispatches without first being verified.
-
-In most goals you don't run callbacks yourself; the channel layer does it for you when an answer comes back from a paused ask. You'll write `- run %callback%` when you're consuming a callback envelope from somewhere external (a file, a queue, an HTTP body).
+A *callback* is a signed snapshot of where a run paused (`Documentation/v0.2/snapshots.md`). An error's `%!error.callback%` holds the run as it stood where the error happened, and a pending [`output.ask`](output.md#ask) carries one. In most goals you don't start callbacks yourself; the channel does it when an answer comes back from a paused ask. You write `- start %callback%` when you hold a callback from elsewhere.
 
 ## Actions
 
-### run
+### start
 
-Verify the callback's signature, then dispatch it.
+Go on with the run the callback holds, through `snapshot.resume`, so a callback is checked as every resume is.
 
 ```plang
-/ Read a serialised callback envelope, run it
-- read 'pending-callback.pdata' into %callback%
-- run %callback%, write to %result%
+/ Read a kept callback, go on with its run
+- read file 'pending-callback.plang', write to %callback%
+- start %callback%, write to %result%
 - write out 'Resumed: %result%'
 ```
 
@@ -23,45 +21,26 @@ Verify the callback's signature, then dispatch it.
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| Callback | Data | yes | The callback envelope to run. The wrapped value must be a callback record |
+| Callback | Data | yes | The signed snapshot a callback holds |
 
-**Returns:** the `Data` produced by the resumed action — same as if the original suspending action had returned it directly.
+**Returns:** what the resumed run answers.
 
-#### What `run` actually does
-
-1. Confirms the wrapped value is a callback record (else: `TypeError`).
-2. Seals the envelope (`EnsureSigned`). In-process callbacks sign locally; envelopes that arrived from the wire already carry their signature; if neither path applies, the call is rejected.
-3. Verifies the signature via `signing.verify`. Tampered or unsigned envelopes never reach dispatch.
-4. Dispatches into the callback's own `Run`.
-
-If anything goes wrong, you get a typed error back as `Data` — never a raw exception. The error keys you'll see:
+If anything goes wrong, you get a typed error back as `Data` — never a raw exception. The error keys you'll see are the resume's:
 
 | Error key | Meaning |
 |---|---|
-| `MissingCallbackSignature` | Envelope had no signature and no way to sign locally |
-| `CallbackSignatureMismatch` | Signature didn't verify (tamper or wrong identity) |
-| `CallbackGoalNotFound` | The goal the callback wants to resume into doesn't exist in the live App |
-| `CallbackGoalHashMismatch` | The goal exists but its source has changed since the callback was issued |
-| `CallbackDispatchError` | Anything else that went wrong during dispatch |
+| `SnapshotUnsigned` (403) | The callback has no signature |
+| `SnapshotSignatureInvalid` (403) | It was changed after it was signed |
+| `SnapshotNotTheApps` (403) | It was signed by an identity that is none of this app's |
+| `NoSnapshot` (400) | The value holds no snapshot |
+| `StepNotFound` / `ActionNotFound` (404) | The saved place is past the end of the goal's step or the step's action |
+| `CallbackActionMismatch` (409) | An action read back from its saved key finds another action at its place (`goal/step/action/serializer/Snapshot.cs`) |
 
-The signature check is unconditional — there is no "unsigned in-process" path. This is by design: in-process and wire callbacks are indistinguishable to the security boundary.
+The signature check is unconditional: there is no "unsigned in-process" path.
 
-## What kinds of callbacks exist?
-
-Two in v1:
-
-- **Ask callback** — produced by `- ask user '…', vars: …`. Slim shape: position + actor + named surviving variables. Resumes by binding the answer and re-dispatching the original ask. See [output.ask](output.md#ask).
-- **Error callback** — produced by error-recovery flows. Carries a snapshot of the App tree (CallStack + Variables) so the resumed run can land at the bottom frame and continue.
-
-Both ride the same `application/plang+data` envelope and the same `callback.run` gate. New callback types may be added; the gate is the one place to extend security checks.
-
-## Limits
-
-- `Ask` callback envelopes are capped at 1 MB on the wire.
-- `Error` callback envelopes are capped at 4 MB on the wire (they carry a snapshot, so they're bigger).
-- Properties marked `[Sensitive]` on the wrapped value are stripped before serialisation — the envelope never carries them off the host.
+A goal changed since the callback was made is resumed at its saved place; when another action stands there, a warning says so and the run goes on.
 
 ## See also
 
 - [output](output.md) — `ask` is the main producer of callbacks.
-- [signing](signing.md) — the signing/verify pipeline `callback.run` uses.
+- `Documentation/v0.2/snapshots.md` — what a snapshot holds and how a resume goes on.
