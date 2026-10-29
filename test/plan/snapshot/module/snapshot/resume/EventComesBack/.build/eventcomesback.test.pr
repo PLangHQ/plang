@@ -4,9 +4,61 @@
   "step": [
     {
       "index": 0,
-      "text": "before each goal, call Log",
+      "text": "delete file 'workspace/resumed.marker', on error 'NotFound' ignore",
       "line": {
         "number": 7,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "delete",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "workspace/resumed.marker"
+            }
+          ],
+          "default": [
+            {
+              "name": "recursive",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Key",
+              "type": {
+                "name": "text"
+              },
+              "value": "NotFound"
+            },
+            {
+              "name": "Ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "before each goal, call Log",
+      "line": {
+        "number": 8,
         "indent": 0
       },
       "code": [
@@ -86,10 +138,10 @@
       ]
     },
     {
-      "index": 1,
+      "index": 2,
       "text": "call Work",
       "line": {
-        "number": 8,
+        "number": 9,
         "indent": 0
       },
       "code": [
@@ -109,10 +161,10 @@
       ]
     },
     {
-      "index": 2,
+      "index": 3,
       "text": "if file 'workspace/resumed.marker' exists",
       "line": {
-        "number": 9,
+        "number": 10,
         "indent": 0
       },
       "code": [
@@ -154,10 +206,10 @@
           ],
           "child": [
             {
-              "index": 3,
+              "index": 4,
               "text": "end goal",
               "line": {
-                "number": 10,
+                "number": 11,
                 "indent": 1
               },
               "code": [
@@ -188,10 +240,10 @@
       ]
     },
     {
-      "index": 4,
+      "index": 5,
       "text": "write \"here\" to file 'workspace/resumed.marker'",
       "line": {
-        "number": 11,
+        "number": 12,
         "indent": 0
       },
       "code": [
@@ -218,10 +270,10 @@
       ]
     },
     {
-      "index": 5,
+      "index": 6,
       "text": "read file 'workspace/run.plang', write to %snapshot%",
       "line": {
-        "number": 12,
+        "number": 13,
         "indent": 0
       },
       "code": [
@@ -301,10 +353,10 @@
       ]
     },
     {
-      "index": 6,
+      "index": 7,
       "text": "resume %snapshot%",
       "line": {
-        "number": 13,
+        "number": 14,
         "indent": 0
       },
       "code": [
@@ -341,10 +393,10 @@
       ]
     },
     {
-      "index": 7,
+      "index": 8,
       "text": "read file 'workspace/seen.txt', write to %seen%",
       "line": {
-        "number": 14,
+        "number": 15,
         "indent": 0
       },
       "code": [
@@ -423,10 +475,10 @@
       ]
     },
     {
-      "index": 8,
+      "index": 9,
       "text": "assert %seen% equals \"Work\"",
       "line": {
-        "number": 15,
+        "number": 16,
         "indent": 0
       },
       "code": [
@@ -464,10 +516,10 @@
       ]
     },
     {
-      "index": 9,
+      "index": 10,
       "text": "delete file 'workspace/run.plang'",
       "line": {
-        "number": 16,
+        "number": 17,
         "indent": 0
       },
       "code": [
@@ -496,10 +548,10 @@
       ]
     },
     {
-      "index": 10,
+      "index": 11,
       "text": "delete file 'workspace/resumed.marker'",
       "line": {
-        "number": 17,
+        "number": 18,
         "indent": 0
       },
       "code": [
@@ -528,10 +580,10 @@
       ]
     },
     {
-      "index": 11,
+      "index": 12,
       "text": "delete file 'workspace/seen.txt'",
       "line": {
-        "number": 18,
+        "number": 19,
         "indent": 0
       },
       "code": [
@@ -569,7 +621,7 @@
           "index": 0,
           "text": "set %worked% = \"yes\"",
           "line": {
-            "number": 22,
+            "number": 23,
             "indent": 0
           },
           "code": [
@@ -626,7 +678,7 @@
           "index": 0,
           "text": "save snapshot, write to %run%",
           "line": {
-            "number": 26,
+            "number": 27,
             "indent": 0
           },
           "code": [
@@ -691,7 +743,7 @@
           "index": 1,
           "text": "save %run% to file 'workspace/run.plang'",
           "line": {
-            "number": 27,
+            "number": 28,
             "indent": 0
           },
           "code": [
@@ -732,7 +784,7 @@
           "index": 2,
           "text": "if file 'workspace/resumed.marker' exists",
           "line": {
-            "number": 28,
+            "number": 29,
             "indent": 0
           },
           "code": [
@@ -777,7 +829,7 @@
                   "index": 3,
                   "text": "write \"%!event!item.name%\" to file 'workspace/seen.txt'",
                   "line": {
-                    "number": 29,
+                    "number": 30,
                     "indent": 1
                   },
                   "code": [
@@ -837,5 +889,5 @@
   ],
   "visibility": "Public",
   "file": "EventComesBack.test.goal",
-  "hash": "0e43438d054a424987b6361e2788bec03c8144760d6e3d4da630324b34daaa69"
+  "hash": "0bab515886949712bd4ea16f44097d386b639a6d267a8a14ad9df36ca2599f90"
 }
