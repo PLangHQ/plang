@@ -80,6 +80,14 @@ The one list of work after runtime2's merges (Ingi, 2026-10-29: "yes merge into 
   - archive.unpack's Value from a literal path writes `{"held": …}`: a value writing its insides, and `held` is a banned word (archive/unpack:5).
   - variable.set's `list<path>` Type (variable/set:29).
 
+### Branch `tostring-sweep` (Ingi, 2026-10-29: "yeah backlog for sweep branch")
+
+A value opened into its text with `ToString()`, where the value should answer. Counted 2026-10-29 in production C#: 387 calls in 157 files (335 bare `.ToString()`), and 66 types override it. Interpolation (`$"{value}"`) isn't counted.
+- Fine, left: StringBuilder/writer results (~37), formatting at a real boundary (`Guid.ToString("N")`, dates `"O"`, numbers with `InvariantCulture`, ~30), and error messages and logs (~15).
+- **First, compares and keys (~23):** a value's text compared or used as a key, where the value has its own `Equals`/`Is`. The same fix as event-action 72. E.g. `goal/step/action/keep/this.cs:17`, `goal/step/pick/question/this.cs:72`, `goal/step/pick/list/this.cs:242,616`, `goal/list/setting/this.cs:36`, `type/item/note/this.cs:53`. The untouched-file sites listed under "The value answers its own equality" below go in this branch.
+- **Then, logic (~250):** a value opened into text to decide something, read one by one (some are leaves where the text is the answer), folder by folder: `type/item` (95), `module/http` (22), `goal/step` (18), `module/llm` (17), then the rest.
+- The signature-identity compares (`type/item/setting/this.cs:139`, `module/identity/setting/this.cs:26`) and the sandbox's path regex (`module/terminal/code/Sandbox.cs:92`) go to security first.
+
 ### The value answers its own equality (Ingi, 2026-10-29: "check other places for this wrong pattern")
 
 Equality asked from outside, as strings, where the value has its own `Equals` (event-action 71–72 fixed the files that branch touched). Files no branch has touched yet:
