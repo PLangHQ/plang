@@ -90,6 +90,7 @@ Equality asked from outside, as strings, where the value has its own `Equals` (e
 - `goal/list/setting/this.cs:36`: a choice compared by `ToString()` on both sides.
 - `type/item/note/this.cs:53`, `module/code/this.Snapshot.cs:104`, `serializer/Snapshot.cs:27`: a name's text compared outside its owner.
 - `goal/step/pick/list/this.cs:242`, `module/build/code/Default.cs:263`: the builder comparing step text; check whether they are values or the step's own text.
+- **`path.RootComparison` is a static** (`type/item/path/this.cs:32`; Ingi, 2026-10-29: "no static"). The OS's case rule is read from outside by `goal/pattern/this.cs:20` and `type/item/permission/this.cs:110` (each hands it to a Glob). Whose fact it is (the path's, or the file system's, `app.filesystem`) is the question; then the matchers ask that owner's instance.
 
 ### Read once, pass on
 
