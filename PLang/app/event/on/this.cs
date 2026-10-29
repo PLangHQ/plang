@@ -93,7 +93,13 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
 
     /// <summary>The moment named <paramref name="name"/> an event is added to: made with sides that take events the first
     /// time. A name that is no moment is refused (<see cref="NoEvent"/>), thrown: no event is added for it.</summary>
-    internal @this Add(string name) => this[name] is null ? throw new global::app.error.AppException(NoEvent(name)) : Made(name);
+    internal @this Add(string name) => this[name] switch
+    {
+        null => throw new global::app.error.AppException(NoEvent(name)),
+        // nothing added to it yet: the class's shared one stands in, so this item's is made
+        empty => Made(name),
+        var moment => moment,
+    };
 
     // The moment named name, a moment's name: the start itself, else made the first time with sides that take events.
     private protected @this Made(string name)

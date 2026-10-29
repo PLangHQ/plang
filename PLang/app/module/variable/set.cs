@@ -144,7 +144,7 @@ public partial class Set : IContext, IScope, IKeep
         // The value as the step gave it, read once, here: a reference the Data it names, unread (a whole variable that
         // holds nothing is nothing to assign: VariableNotFound); any other value itself, unopened. What it gives is what
         // flows on.
-        var given = Value.IsVariable && await Value.Given() is { } named ? named : Value;
+        var given = Value.IsVariable && await Value.Given() is { } binding ? binding : Value;
         if (!given.Success) return given;
 
         // An omitted `as` clause is an EMPTY slot, not C# null — it holds the null item, which is not truthy. With no type,
@@ -267,9 +267,9 @@ public partial class Set : IContext, IScope, IKeep
             }
         }
 
-        // The converted value already carries its type — held in a Data directly (no reflective Data<T> mint). keepAsIs
-        // keeps the value's own richer type.
-        var typedData = new data.@this(name, converted, keepAsIs ? null : type, context: Context);
+        // The converted value already carries its type — held in a Data directly (no reflective Data<T> mint), made under
+        // the variable's own name, so it is written as made. keepAsIs keeps the value's own richer type.
+        var typedData = new data.@this(name.Code.Root.Name, converted, keepAsIs ? null : type, context: Context);
 
         // Strict kind for a reference fundamental rides WITH the value to its load seam: a strict kind is validated when
         // the bytes materialize, and a mismatch throws. An already-loaded value (read-lift, raw bytes in hand) validates
@@ -289,7 +289,7 @@ public partial class Set : IContext, IScope, IKeep
         }
 
         CopyProperties(given, typedData);
-        return await name.Set(Binding(name, typedData), Context);
+        return await name.Set(typedData, Context);
     }
 
     /// <summary>
