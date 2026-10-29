@@ -1,5 +1,5 @@
 Step text: `list files in docs/ recursive, write to %files%`
-Properties: `{"Path": "docs/", "Recursive": true}`
+Formal: `file.list(Path: path = "docs/", Recursive: bool = true)`
 
 Step text: `list files in %folder%`
-Properties: `{"Path": "%folder%"}` — `Recursive` is absent because the step does not ask for it.
+Formal: `file.list(Path: path = %folder%)` — `Recursive` is absent because the step does not ask for it.

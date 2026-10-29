@@ -1,5 +1,5 @@
 Step text: `assert %key% is not null`
-Properties: `{"Value": "%key%"}`
+Formal: `assert.isNotNull(Value: item = %key%)`
 
 Step text: `assert %!app.actor["system"]% is not null`
-Properties: `{"Value": "%!app.actor[\"system\"]%"}`
+Formal: `assert.isNotNull(Value: item = %!app.actor["system"]%)`

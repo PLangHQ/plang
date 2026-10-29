@@ -1,5 +1,5 @@
 Step text: `assert %done% is false`
-Properties: `{"Value": "%done%"}`
+Formal: `assert.isFalse(Value: item = %done%)`
 
 Step text: `assert %enabled% is false, "off by default"`
-Properties: `{"Value": "%enabled%", "Message": "off by default"}`
+Formal: `assert.isFalse(Value: item = %enabled%, Message: text = "off by default")`

@@ -1,5 +1,5 @@
 Step text: `get identity 'alice', write to %identity%`
-Properties: `{"Name": "alice"}`
+Formal: `identity.get(Name: text = "alice")`
 
 Step text: `get my identity, write to %me%`
-Properties: `{}` — the default identity, no Name; this is get, never export.
+Formal: `identity.get()` — the default identity, no Name; this is get, never export.

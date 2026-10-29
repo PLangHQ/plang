@@ -1,5 +1,5 @@
 Step text: `save snapshot, write to %snapshot%`
-Properties: `{}`
+Formal: `snapshot.save()`
 
 Step text: `take a snapshot of the run, write to %saved%`
-Properties: `{}`
+Formal: `snapshot.save()`

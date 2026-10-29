@@ -1,5 +1,5 @@
 Step text: `skip action and set "overridden" as result`
-Properties: `{"Value": "overridden"}`
+Formal: `on.cancel(Value: text = "overridden")`
 
 Step text: `cancel it, value = %mockResponse%`
-Properties: `{"Value": "%mockResponse%"}`
+Formal: `on.cancel(Value: item = %mockResponse%)`

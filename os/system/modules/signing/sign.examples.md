@@ -1,8 +1,8 @@
 Step text: `sign %payload%, write to %signed%`
-Properties: `{"Data": "%payload%"}`
+Formal: `signing.sign(Data: item = %payload%)`
 
 Step text: `sign %data% with contracts ['C1']`
-Properties: `{"Data": "%data%", "Contracts": ["C1"]}`
+Formal: `signing.sign(Data: item = %data%, Contracts: list = ["C1"])`
 
 Step text: `sign %doc%, expires in 5 minutes, write to %signed%`
-Properties: `{"Data": "%doc%", "Expires": "PT5M"}`
+Formal: `signing.sign(Data: item = %doc%, Expires: duration = "PT5M")`

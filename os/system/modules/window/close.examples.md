@@ -1,5 +1,5 @@
 Step text: `close %window%`
-Properties: `{"Window": "%window%"}`
+Formal: `window.close(Window: item = %window%)`
 
 Step text: `close window %event.id% in %browser%`
-Properties: `{"Window": "%event.id%", "Browser": "%browser%"}`
+Formal: `window.close(Window: item = %event.id%, Browser: browser = %browser%)`

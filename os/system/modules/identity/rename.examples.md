@@ -1,2 +1,2 @@
 Step text: `rename identity 'alice' to 'alice-prod'`
-Properties: `{"Name": "alice", "NewName": "alice-prod"}`
+Formal: `identity.rename(Name: text = "alice", NewName: text = "alice-prod")`

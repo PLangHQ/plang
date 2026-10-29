@@ -1,2 +1,2 @@
 Step text: `unarchive identity 'alice'`
-Properties: `{"Name": "alice"}`
+Formal: `identity.unarchive(Name: text = "alice")`

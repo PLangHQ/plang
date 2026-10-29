@@ -1,5 +1,5 @@
 Step text: `assert %count% is less than 10`
-Properties: `{"A": "%count%", "B": 10}`
+Formal: `assert.lessThan(A: item = %count%, B: number = 10)`
 
 Step text: `assert %elapsed% is less than %budget%, "within budget"`
-Properties: `{"A": "%elapsed%", "B": "%budget%", "Message": "within budget"}`
+Formal: `assert.lessThan(A: item = %elapsed%, B: item = %budget%, Message: text = "within budget")`

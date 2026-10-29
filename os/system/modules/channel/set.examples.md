@@ -1,11 +1,11 @@
 Step text: `set output channel as MyGoal`
-Properties: `{"Name": "output", "Goal": {"module": "goal", "name": "call", "property": [{"name": "Name", "value": "MyGoal"}]}}`
+Formal: `channel.set(Name: text = "output", Goal: action = goal.call(Name: goal = "MyGoal"))`
 
 Step text: `set error channel as ErrorHandler`
-Properties: `{"Name": "error", "Goal": {"module": "goal", "name": "call", "property": [{"name": "Name", "value": "ErrorHandler"}]}}`
+Formal: `channel.set(Name: text = "error", Goal: action = goal.call(Name: goal = "ErrorHandler"))`
 
 Step text: `set channel "builder" call BuilderChannel`
-Properties: `{"Name": "builder", "Goal": {"module": "goal", "name": "call", "property": [{"name": "Name", "value": "BuilderChannel"}]}}` — the channel name is the quoted literal; the goal is the one named after `call`.
+Formal: `channel.set(Name: text = "builder", Goal: action = goal.call(Name: goal = "BuilderChannel"))` — the channel name is the quoted literal; the goal is the one named after `call`.
 
 The channel name (output, error, input, or any custom literal) is always a bare string, never a
 %variable%. `Goal` is the `goal.call` action whose goal backs the channel — the same shape as any

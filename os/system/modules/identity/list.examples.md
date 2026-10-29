@@ -1,5 +1,5 @@
 Step text: `get identities, write to %identities%`
-Properties: `{}`
+Formal: `identity.list()`
 
 Step text: `list identities, write to %ids%`
-Properties: `{}`
+Formal: `identity.list()`

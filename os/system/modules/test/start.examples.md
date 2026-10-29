@@ -1,2 +1,2 @@
 Step text: `run tests %tests%, write to %results%`
-Properties: `{"Tests": "%tests%"}`
+Formal: `test.start(Tests: list<test> = %tests%)`

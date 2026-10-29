@@ -1,5 +1,5 @@
 Step text: `create identity 'alice', set as default`
-Properties: `{"Name": "alice", "Default": true}`
+Formal: `identity.create(Name: text = "alice", Default: bool = true)`
 
 Step text: `create identity 'bob'`
-Properties: `{"Name": "bob"}`
+Formal: `identity.create(Name: text = "bob")`
