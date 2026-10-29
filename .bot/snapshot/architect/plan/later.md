@@ -15,6 +15,8 @@ Each item was raised on snapshot and held by Ingi or by me, with the decision th
 - **`IsBound` in the doors that ask before making:** variable set/remove (`variable/list/this.cs`) and type creation (`type/this.cs:275`) still ask "is anything bound?" before they make what they would hand a binding. (254, 272)
 - **The per-step parse in debug's `Variables(sb…)`:** it goes with `module-list-type`. (231, 233)
 - **The bare-row rule's five type literals** (`View.Record`, snapshot view): no existing door answers "the type a bare token reads back as", so the literals stay until a type can say it. (324, 325)
+- **`data.Held()` gets a name** (`data/this.cs:711`, locked `data` surface). It's the value door as a question reads it: `==`, `is <type>` and truthiness (`Operator.cs:166, 208, 210`, `data/this.cs:701`). It differs from `Value()` only on a miss: an unset `%x%` answers null where `Value()` fails with VariableNotFound, and a Data that already failed isn't read again. `Content()` is taken (`content.Content(context)`, a file's raw bytes, `type/item/content/this.cs:110`), so a name is still to be found. (343, 348)
+- **DynamicData's constructor parameter `declared` → `type`** (`data/this.cs:964`, a creative name for a type). (343, 348)
 - **A frame's place handed in at push:** the action frame finds its `index` lazily, on the first ask from a snapshot or resume. Handing it in at birth needs a parameter on `action.Start` and `call.list.Push`, the locked call surface. (325)
 
 ## The auditor's deferred minors (snapshot 341, `.bot/snapshot/auditor/final.md`)
