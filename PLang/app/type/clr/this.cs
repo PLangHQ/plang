@@ -36,7 +36,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// renders its HOST (via <see cref="Host"/>), not its own kind. Reflecting it would
     /// pull the generic JSON serializer into the kind token's context-dependent accessors.</remarks>
     [System.Text.Json.Serialization.JsonIgnore]
-    public global::app.type.kind.@this Kind { get; }
+    public global::app.type.kind.@this Kind => Type.kind;
 
     /// <summary>A producer may stamp a <paramref name="kind"/> when it knows the host's format;
     /// otherwise the kind system resolves it from the host's CLR type at birth, through the
@@ -65,7 +65,6 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
             throw new System.InvalidOperationException(
                 "A Data may not be carried in a clr — nested Data is not a supported shape. "
                 + "Return the inner value via its own factory, never wrap a Data.");
-        Kind = kind;
     }
 
     /// <summary>In memory now = the carrier itself (a closed box, like every other item whose
@@ -115,10 +114,10 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
 
     /// <summary>The format→type read door — the carrier hands its <see cref="Kind"/> its own content,
     /// the declared type's reader, and the element kind. The kind bridges the format (json → a json
-    /// reader); the type reads its own structure, with the reader's context.</summary>
+    /// reader); the type reads its own structure, with the reader's context, in the read's view.</summary>
     internal override object? Read(global::app.type.reader.ITypeReader reader, string? kind,
-                                   global::app.actor.context.@this context)
-        => Kind.Read(Value, reader, kind, context);
+                                   global::app.actor.context.@this context, global::app.View view)
+        => Kind.Read(Value, reader, kind, new global::app.type.reader.ReadContext(context) { View = view });
 
     /// <summary>The child-write door — the carrier routes to its <see cref="Kind"/> (the * kind
     /// reflects a settable property, the list kind writes an index). The kind returns the value

@@ -172,7 +172,7 @@ public class FileHandlerTests : IDisposable
             Make.Step("read s3 file",
                 Make.Action(context, "file", "read", ("path", "s3://bucket/key")))));
 
-        var result = await _app.Start(goal, context);
+        var result = await goal.Start(context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("SchemeNotRegistered");
@@ -549,7 +549,7 @@ public class FileHandlerTests : IDisposable
             Make.Step("write exists result",
                 Make.Action(context, "output", "write", ("Data", "%fileResult.Exists%")))));
 
-        var goalResult = await _app.Start(goal, context);
+        var goalResult = await goal.Start(context);
 
         await goalResult.IsSuccess();
 
@@ -586,7 +586,7 @@ public class FileHandlerTests : IDisposable
             Make.Step("write exists result",
                 Make.Action(context, "output", "write", ("Data", "%fileResult.Exists%")))));
 
-        var goalResult = await _app.Start(goal, context);
+        var goalResult = await goal.Start(context);
 
         await goalResult.IsSuccess();
 

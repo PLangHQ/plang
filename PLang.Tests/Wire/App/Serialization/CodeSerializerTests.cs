@@ -65,7 +65,7 @@ public class CodeSerializerTests
 
     [Test] public async Task Code_PlangFormat_WritesSource()
     {
-        var w = new CaptureWriter(app.type.list["wire"].kind["plang"]!, app.actor.list.System.Context);
+        var w = new CaptureWriter(app.type.list.Plang, app.actor.list.System.Context);
         await (new code("print(1)", "python", app.type.list[typeof(code)])).Output(w);
         await Assert.That(w.Last).IsEqualTo("print(1)");
     }

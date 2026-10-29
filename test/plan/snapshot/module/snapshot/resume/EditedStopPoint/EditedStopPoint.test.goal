@@ -1,0 +1,33 @@
+/ Where a run goes on is two numbers in its snapshot, each its frame's own: the step's place in its goal and the action's
+/ place in its step. Plan saves the run at its step 1; the program moves the stop point to step 3, action 0, signs the
+/ snapshot again (it vouches for its own edit), and resumes it: the run goes on at step 3, so step 2 never runs (%b%
+/ keeps the value it had when the run was saved) and step 3 does. The resumed run goes on through this goal too, from
+/ the step after `call Plan`: the marker sends it to Resumed, which writes what it saw and ends it.
+Start
+- delete file 'workspace/resumed.marker', on error 'NotFound' ignore
+- set %b% = "before"
+- set %c% = "before"
+- call Plan
+- if file 'workspace/resumed.marker' exists
+    - call Resumed
+    - end goal
+- write "here" to file 'workspace/resumed.marker'
+- set %run.app.actor.list.user.context.call.current.caller.index% = 3
+- set %run.app.actor.list.user.context.call.current.index% = 0
+- sign %run%, write to %run%
+- resume %run%
+- read file 'workspace/seen.txt', write to %seen%
+- assert %seen% equals "before c ran"
+- delete file 'workspace/resumed.marker'
+- delete file 'workspace/seen.txt'
+
+/ The run that is saved at its step 1 and moved to its step 3.
+Plan
+- set %a% = "a ran"
+- save snapshot, write to %run%
+- set %b% = "b ran"
+- set %c% = "c ran"
+
+/ The resumed run's end: what it saw, written where the asker reads it.
+Resumed
+- write "%b% %c%" to file 'workspace/seen.txt'

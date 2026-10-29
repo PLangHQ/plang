@@ -11,11 +11,11 @@ namespace app.module;
 /// </summary>
 [global::app.Attributes.PlangType("module")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
-    global::app.type.item.IMatch<@this>, global::app.type.item.ILoad<@this>
+    global::app.type.item.IMatch<@this>, global::app.type.item.ILoad<@this>, global::app.type.item.property.IOwner
 {
-    // what a program adds to the module — kept as long as the module is registered
-    private readonly global::app.type.item.kept.list.@this _kept = new();
-    internal override global::app.type.item.kept.list.@this Kept => _kept;
+    /// <summary>What a program adds to the module — kept as long as the module is registered.</summary>
+    [Store, global::app.LlmBuilder]
+    public global::app.type.item.property.list.@this property { get; }
 
     /// <summary>A module is registered from its actions' classes, never made from a value.</summary>
     public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
@@ -42,7 +42,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private readonly object? _registering;
 
     /// <summary>The module name — "file", "variable", "list"; empty for the app's module.</summary>
-    [Debug, Out, LlmBuilder]
+    [Debug, Out, LlmBuilder, Snapshot]
     public string Name { get; }
 
     /// <summary>The module IS its name in text — so a site composing the qualified form
@@ -65,6 +65,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         _app = app;
         _modules = new global::app.type.item.list.@this<@this>(app.type.list[typeof(global::app.type.item.list.@this<@this>)]);
         _registering = new object();
+        property = new(app.type.list[typeof(global::app.type.item.property.list.@this)]);
         Discover(typeof(@this).Assembly);
     }
 
@@ -78,12 +79,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         _modules = new global::app.type.item.list.@this<@this>(app.type.list[typeof(global::app.type.item.list.@this<@this>)]);
         _modules.Add(under._modules!);
         _registering = new object();
+        property = new(app.type.list[typeof(global::app.type.item.property.list.@this)]);
     }
 
     internal @this(string name, @this root) : base(root.Type)
     {
         Name = name;
         _root = root;
+        property = new(root.property.Type);
     }
 
     /// <summary>Whether this registry, a layer, holds modules of its own — a module this layer made.</summary>

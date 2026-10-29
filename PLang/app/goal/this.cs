@@ -29,14 +29,14 @@ public sealed partial class @this
     // Read-time scalars are `internal set`, not `init`: the reader constructs the goal SHELL first
     // (so its steps and sub-goals can be born holding it) and fills these as they arrive off the
     // stream. Immutable to everything outside the assembly.
-    [Store, Out, LlmBuilder, Debug, Default]
+    [Store, Out, LlmBuilder, Debug, Default, Snapshot]
     public string Name { get; internal set; } = "";
 
     /// <summary>The goal's description: the comment lines written above its name.</summary>
     [Store, Out, LlmBuilder, Debug, Default]
     public string? Comment { get; internal set; }
 
-    /// <summary>A goal, born holding its type and its step, child and tag lists from <paramref name="types"/>, the
+    /// <summary>A goal, born holding its type and its step, child, tag and property lists from <paramref name="types"/>, the
     /// app's type list (read at birth, never kept).</summary>
     public @this(global::app.type.list.@this types) : base(types[typeof(@this)])
     {
@@ -44,6 +44,7 @@ public sealed partial class @this
         Child = new(this, types[typeof(child.@this)]);
         Tag = new(types[typeof(global::app.goal.tag.list.@this)]);
         Warning = new(types);
+        property = new(types[typeof(global::app.type.item.property.list.@this)]);
     }
 
     private global::app.goal.step.list.@this _step;
@@ -53,12 +54,39 @@ public sealed partial class @this
         // A plain slot. Every step in it was born knowing this goal — the reader constructs the
         // goal shell first and hands it down, so there is nothing to repair on read.
         get => _step;
-        set => _step = value;
+        internal set => _step = value;
+    }
+
+    /// <summary>The step this goal numbered <paramref name="index"/> — its own, or one in a body under them (the goal
+    /// numbers its steps in written order, a body's numbered on from the step that holds it); null when none is. Its
+    /// <see cref="Step"/> list's indexer is positional, the place in that list.</summary>
+    public global::app.goal.step.@this? this[int index] => Numbered(_step, index);
+
+    // The step numbered index in steps, or in a body under one of them.
+    private global::app.goal.step.@this? Numbered(global::app.goal.step.list.@this steps, int index)
+    {
+        foreach (var step in steps.Items())
+        {
+            if (step.Index == index) return step;
+            foreach (var action in step.Code.Items())
+                if (Numbered(action.Child, index) is { } child) return child;
+        }
+        return null;
     }
 
     /// <summary>The goals written after this one in its file; each knows this goal as its parent.</summary>
     [Store, Out, LlmBuilder, Debug, Default]
     public child.@this Child { get; }
+
+    /// <summary>The goal of <paramref name="name"/> in this goal's file, from here down: this goal, else one of its
+    /// children at any depth; null when none is.</summary>
+    internal @this? Named(string name)
+    {
+        if (string.Equals(Name, name, StringComparison.OrdinalIgnoreCase)) return this;
+        foreach (var child in Child.Items())
+            if (child.Named(name) is { } named) return named;
+        return null;
+    }
 
     /// <summary>A file's first goal is public; the goals under it are private to it.</summary>
     [Store, Out, LlmBuilder, Debug, Default]
@@ -88,29 +116,24 @@ public sealed partial class @this
     /// there with the call's arguments, and what comes back is its result. Null for a goal of this app — its steps run.</summary>
     internal global::app.parent.@this? Elsewhere { get; init; }
 
-    /// <summary>The goal's .goal file — where its .pr is found. A sub-goal is in its parent's file.</summary>
-    [Debug, LlmBuilder]
+    /// <summary>The goal's .goal file — where its .pr is found. A sub-goal is in its parent's file. In a snapshot it is
+    /// part of what finds the goal: the goal list loads it from there.</summary>
+    [Debug, LlmBuilder, Snapshot]
     public global::app.type.item.path.@this? Path
     {
         get => Parent?.Path ?? _path;
-        set
-        {
-            _path = value;
-            // the .pr it is built to, worked out where its file is given
-            _pr = value is global::app.type.item.path.file.@this { Absolute.Length: > 0 } source ? source.Pr : null;
-        }
+        internal set => _path = value;
     }
     private global::app.type.item.path.@this? _path;
-    private global::app.type.item.path.@this? _pr;
 
     /// <summary>The folder holding this goal's source .goal file — what a relative path in it resolves against.
     /// Null for a goal with no Path.</summary>
     public global::app.type.item.path.@this? Folder => Path?.Parent;
 
-    /// <summary>The .pr this goal is built to (its file's <c>Pr</c>), worked out where its Path is set; a sub-goal's is its
-    /// parent's; none without a Path.</summary>
+    /// <summary>The .pr this goal is built to: its file's own (<c>Pr</c>), so a sub-goal's is its parent's; none without a
+    /// file.</summary>
     [Debug]
-    public global::app.type.item.path.@this? PrPath => Parent?.PrPath ?? _pr;
+    public global::app.type.item.path.@this? Pr => Path is global::app.type.item.path.file.@this { Absolute.Length: > 0 } file ? file.Pr : null;
 
     [Store, Out, Debug]
     public string? Hash
@@ -144,7 +167,7 @@ public sealed partial class @this
     private string? _hash;
 
     [Store, Out, Debug]
-    public string? BuilderVersion { get; set; }
+    public string? BuilderVersion { get; internal set; }
 
     /// <summary>A setup goal — named Setup, or in the app's <c>/setup/</c>: it runs only through setup.</summary>
     [Debug]
@@ -174,36 +197,13 @@ public sealed partial class @this
     public global::app.goal.tag.list.@this Tag { get; init; }
 
 
-    /// <summary>
-    /// Folder path of this goal, derived from Path.
-    /// Starts with / (relative to app root, not OS root).
-    /// E.g., \Cache\Start.goal → /Cache/, \Start.goal → /
-    /// </summary>
-    [JsonIgnore]
-    [LlmIgnore]
-    public global::app.type.item.path.@this? FolderPath
-    {
-        get => Path?.Parent;
-    }
-
     [LlmIgnore]
     [JsonIgnore]
-    public @this? Parent { get; set; }
+    public @this? Parent { get; internal set; }
 
     [Debug]
     [LlmBuilder]
     public global::app.warning.list.@this Warning { get; init; }
-
-    [Debug, Default]
-    public string FullPath
-    {
-        get
-        {
-            if (Parent == null)
-                return Name;
-            return $"{Parent.FullPath}/{Name}";
-        }
-    }
 
     /// <summary>The goal's app-absolute address — the name a call anywhere in the app reaches it by:
     /// its .goal path without the extension (<c>/system/builder/EmitBuildEvent</c>); a sub-goal is its
@@ -224,27 +224,6 @@ public sealed partial class @this
     /// or null when the call keeps the name it was written with: a goal in the caller's own file (a child, or
     /// the file's root) stays bare, it wins by rule and can't be shadowed.</summary>
     public string? Reference(@this? caller) => Equals(Path, caller?.Path) ? null : Address;
-
-    public string ToText()
-    {
-        var lines = new List<string>();
-
-        if (!string.IsNullOrEmpty(Comment))
-            lines.Add($"/ {Comment}");
-
-        lines.Add(Name);
-
-        foreach (var step in Step.Items())
-        {
-            if (!string.IsNullOrEmpty(step.Comment))
-                lines.Add($"/ {step.Comment}");
-
-            var prefix = new string(' ', step.Line.Indent) + "- ";
-            lines.Add(prefix + step.Text);
-        }
-
-        return string.Join("\n", lines);
-    }
 
     /// <summary>
     /// Merges LLM-derived fields from an existing built goal onto this freshly-parsed goal.
@@ -346,7 +325,7 @@ public sealed partial class @this
 
     /// <summary>
     /// The goal <paramref name="source"/> (a <c>.goal</c>) is built to, loaded as <paramref name="app"/> itself from
-    /// its .pr (<see cref="PrPath"/>): the one already held from there, else read through its <c>on.load</c> — what is bound
+    /// its .pr (<see cref="Pr"/>): the one already held from there, else read through its <c>on.load</c> — what is bound
     /// before a goal loads is the goal type's, handed the .pr (there is no goal yet), and a failure or a Handled
     /// answer is the load's answer with nothing read; the path reads itself into a goal, the app's goals hold it,
     /// and what is bound after it runs across the goal's levels, handed the goal. A setup goal is refused — it runs
@@ -354,37 +333,6 @@ public sealed partial class @this
     /// </summary>
     // A goal by its location, as item's ILoad door asks it: the app's goals load it.
     public static Task<data.@this> Load(global::app.type.item.path.@this source, global::app.@this app) => app.goal.list.Load(source);
-
-    /// <summary>What the goal knows of the .pr it was read from; a goal not read from a file has none.</summary>
-    internal stamp Stamp { get; set; } = new stamp.none();
-
-    /// <summary>A goal's .pr as the goal was read from it — each kind says whether the file is still as it was.</summary>
-    internal abstract record stamp
-    {
-        internal abstract Task<bool> IsFresh(actor.context.@this context);
-
-        /// <summary>Not read from a file: the goal is as it is.</summary>
-        internal sealed record none : stamp
-        {
-            internal override Task<bool> IsFresh(actor.context.@this context) => Task.FromResult(true);
-        }
-
-        /// <summary>Read from a file whose stat failed: what it held is unknown, so it is read again.</summary>
-        internal sealed record unknown : stamp
-        {
-            internal override Task<bool> IsFresh(actor.context.@this context) => Task.FromResult(false);
-        }
-
-        /// <summary>Read from <paramref name="Pr"/> with <paramref name="Stat"/>: still as it was while its stat is the same.</summary>
-        internal sealed record stat(global::app.type.item.path.@this Pr, global::app.type.item.path.@this.StatInfo Stat) : stamp
-        {
-            internal override async Task<bool> IsFresh(actor.context.@this context)
-                => await Pr.Stat(context) is { Success: true } now && await now.Value() is { } info && info.Same(Stat);
-        }
-    }
-
-    /// <summary>Whether the .pr this goal was read from is as it was then.</summary>
-    internal Task<bool> IsFresh(actor.context.@this context) => Stamp.IsFresh(context);
 
     /// <summary>A goal starts through the goal type's events, then its own. A goal of plang's own (<see cref="IsSystem"/>)
     /// is none of the app's goals, so it starts through its own events alone: "each goal" never hears it, a binding on
@@ -449,7 +397,13 @@ public sealed partial class @this
     private async Task<data.@this> Enter(actor.context.@this context)
     {
         if (Elsewhere is { } app) return await app.Run(Name, context);
-        var result = await Step.Start(context);
+        return Leave(await Step.Start(context));
+    }
+
+    /// <summary>The answer as it leaves this goal: a return made in it ends here (a return of more levels goes on, one
+    /// fewer). A goal started and a goal's frame gone on from a snapshot leave the same way.</summary>
+    internal data.@this Leave(data.@this result)
+    {
         if (result.Returned)
         {
             result.ReturnDepth--;
@@ -460,21 +414,8 @@ public sealed partial class @this
     }
 
     /// <summary>
-    /// Visits every action in every step (ignoring Steps' disabled-skip iterator).
-    /// Moves the "foreach step, foreach action" skeleton onto Goal so handlers can
-    /// query the shape of a built goal without reaching through its children.
-    /// </summary>
-    public void ForEachAction(System.Action<Step, global::app.goal.step.action.@this> visitor)
-    {
-        foreach (var step in Step.Items())
-            foreach (var action in step.Code.Items())
-                visitor(step, action);
-    }
-
-    /// <summary>
     /// Parses .goal file text into a list of Child.
     /// The first goal holds the Path; the rest are its sub-goals, in its file. First goal is Public, rest are Private.
-    /// Inverse of ToText().
     ///
     /// Stays <c>static</c>: relocating this onto <c>path</c>
     /// (<c>path.ReadAsGoal</c>) or <c>text</c> (<c>text.AsGoal</c>) would put a
@@ -494,7 +435,7 @@ public sealed partial class @this
         var lines = text.Split('\n');
         var goals = new List<@this>();
         var goal = (@this?)null;
-        // The step being read: continuation lines rebuild it, and it is added to its goal's steps at each boundary
+        // The step being read: it takes its continuation lines, and is added to its goal's steps at each boundary
         // (next step / blank / goal / EOF).
         var step = (Step?)null;
         // the comment lines read since the last step or goal, the comment of whichever comes next
@@ -583,9 +524,9 @@ public sealed partial class @this
                 // Finalize the previous step before starting this one (continuations are done).
                 if (step != null) goal.Step.Add(step);
 
-                // The step's text is canonical at birth: every line trimmed at both ends (its \r gone),
-                // continuation lines joined by \n — nothing inside a line changes. Readers compare and
-                // print it as is (goal.Merge's `==`, the prompts), never trimming it again.
+                // The step's text is canonical: every line trimmed at both ends (its \r gone), continuation lines
+                // joined by \n — nothing inside a line changes. Readers compare and print it as is (goal.Merge's
+                // `==`, the prompts), never trimming it again.
                 step = new Step(context.App.type.list)
                 {
                     Goal = goal,   // birth fact — the parser holds the goal, so it hands it over
@@ -600,31 +541,12 @@ public sealed partial class @this
                 continue;
             }
 
-            // Continuation line
-            if (step != null && raw.Length > 0 && raw[0] == ' ')
+            // A step goes on over its next line: an indented one as it is, or one escaped by a \ at its start, the
+            // backslash dropped
+            var indented = raw.Length > 0 && raw[0] == ' ';
+            if (step != null && (indented || trimmed.StartsWith("\\")))
             {
-                step = new Step(context.App.type.list)
-                {
-                    Goal = step.Goal,
-                    Index = step.Index,
-                    Text = step.Text + "\n" + trimmed.TrimEnd(),
-                    Line = step.Line,
-                    Comment = step.Comment
-                };
-                continue;
-            }
-
-            // Escape character — \ at start of line continues previous step text, the backslash dropped
-            if (step != null && trimmed.StartsWith("\\"))
-            {
-                step = new Step(context.App.type.list)
-                {
-                    Goal = step.Goal,
-                    Index = step.Index,
-                    Text = step.Text + "\n" + trimmed[1..].TrimEnd(),
-                    Line = step.Line,
-                    Comment = step.Comment
-                };
+                step.Text += "\n" + (indented ? trimmed : trimmed[1..]).TrimEnd();
                 continue;
             }
 

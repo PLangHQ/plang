@@ -116,15 +116,14 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
     // and dispatches), handing it the element kind. Verify:false — ingested content is unsigned, like
     // every nested/ingest read.
     public override object? Read(object obj, global::app.type.reader.ITypeReader reader, string? kind,
-                                 global::app.actor.context.@this context)
+                                 global::app.type.reader.ReadContext ctx)
     {
         try
         {
             var utf8 = new Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(((JsonElement)obj).GetRawText()));
             utf8.Read();
             var stream = new global::app.type.item.kind.json.Reader(utf8);
-            return reader.Read(ref stream, kind,
-                new global::app.type.reader.ReadContext(context, Verify: false));
+            return reader.Read(ref stream, kind, ctx with { Verify = false });
         }
         catch (JsonException shape) { throw Unread(shape, kind ?? reader.GetType().Name); }
     }

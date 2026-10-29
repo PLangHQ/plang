@@ -13,7 +13,7 @@ public sealed partial class @this
     // A step is an item (this.Item.cs), written and read through its [Store] props.
 
 
-    [Store, Out, LlmBuilder, Debug, Default]
+    [Store, Out, LlmBuilder, Debug, Default, Snapshot]
     public int Index { get; internal set; }
 
     [Store, Out, LlmBuilder, Debug, Default]
@@ -30,7 +30,7 @@ public sealed partial class @this
     /// @hint (PriorText != Text). Transient — not serialized to .pr.
     /// </summary>
     [JsonIgnore]
-    public string? PriorText { get; set; }
+    public string? PriorText { get; internal set; }
 
     /// <summary>The step is cached: its text is the prior build's, word for word, and it holds that
     /// build's code (goal.Merge). A cached step is not asked again — not of the decider, not of the
@@ -59,12 +59,13 @@ public sealed partial class @this
     [Store, Out, LlmBuilder, Debug, Default]
     public string? Comment { get; internal set; }
 
-    /// <summary>A step, born holding its type and its code list from <paramref name="types"/>, the app's type list
+    /// <summary>A step, born holding its type and its code and property lists from <paramref name="types"/>, the app's type list
     /// (read at birth, never kept).</summary>
     public @this(global::app.type.list.@this types) : base(types[typeof(@this)])
     {
         _code = new(types[typeof(global::app.goal.step.action.list.@this)]);
         Warning = new(types);
+        property = new(types[typeof(global::app.type.item.property.list.@this)]);
     }
 
     private global::app.goal.step.action.list.@this _code;
@@ -75,7 +76,7 @@ public sealed partial class @this
         // A plain slot. Every action in it was born knowing this step — the reader constructs the
         // step shell first and hands it down, so there is nothing to repair on read.
         get => _code;
-        set => _code = value;
+        internal set => _code = value;
     }
 
     private global::app.goal.step.pick.list.@this? _pick;
@@ -97,7 +98,7 @@ public sealed partial class @this
 
     /// <summary>Tag set by enrichResponse: "known" (prior text matched), "hint" (text changed, prior available), or "new".</summary>
     [Store, Out, Debug, Default]
-    public string? Source { get; set; }
+    public string? Source { get; internal set; }
 
     [Store, Out, Debug]
     public global::app.warning.list.@this Warning { get; private set; }
@@ -111,8 +112,14 @@ public sealed partial class @this
     /// <summary>The goal this step belongs to — a BIRTH FACT. The reader constructs the goal shell
     /// first and hands it to each step at construction, so this is set once and never reassigned.
     /// <c>init</c> is the enforcement: there is no stamping it in afterwards, and no repair getter.</summary>
-    [JsonIgnore, LlmBuilder]
+    [JsonIgnore, LlmBuilder, Snapshot]
     public global::app.goal.@this Goal { get; init; } = null!;
+
+    /// <summary>The list that holds this step — its goal's steps, or the body of the action it sits in: the list says
+    /// so as it takes the step in (a step read from a .pr is born holding it).</summary>
+    [JsonIgnore]
+    public global::app.goal.step.list.@this List { get; internal set; } = null!;
+
     /// <summary>A step starts through the step type's events, then its own. A step of one of plang's own goals
     /// (<see cref="global::app.goal.@this.IsSystem"/>) is none of the app's, so it starts through its own events alone;
     /// a step composed with no goal is the app's.</summary>
@@ -143,23 +150,9 @@ public sealed partial class @this
         await using var _frame = frame;
 
         var answer = await on.start.Before(this, context);
-        data.@this result;
-        if (answer is { Success: false } or { Handled: true }) result = answer;
-        else
-        {
-            try
-            {
-                result = await Code.Start(context);   // action.list owns the chain loop + fire
-            }
-            // a program's error that travelled as an exception is the step's answer, whole
-            catch (global::app.error.AppException ex) { result = context.Error(ex.Error); }
-            catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException or OperationCanceledException))
-            {
-                result = context.Error(global::app.error.@this.FromException(ex));
-            }
-        }
-        result = await on.start.After(this, result, context);
-        return result;
+        // action.list owns the chain loop, its fire, and a program's error that travels as an exception
+        var result = answer is { Success: false } or { Handled: true } ? answer : await Code.Start(context);
+        return await on.start.After(this, result, context);
     }
 
 

@@ -65,7 +65,8 @@ public sealed class @this : global::app.type.kind.@this<global::app.test.@this>
                             break;
                         // A test that could not load is an error, never quietly skipped.
                         case Status.Stale:
-                            sb.AppendLine($"      <error message=\"could not load\">{SecurityElement.Escape(test.StatusReason?.Clr<string>() ?? "stale")}</error>");
+                            sb.AppendLine($"      <error message=\"could not load\">{SecurityElement.Escape(
+                                (test.StatusReason?.Clr<string>() ?? "stale") + (test.Error is { } why ? ": " + why.Message : ""))}</error>");
                             break;
                         case Status.Skipped:
                             sb.AppendLine($"      <skipped>{SecurityElement.Escape(test.StatusReason?.Clr<string>() ?? test.Status.ToString())}</skipped>");

@@ -34,7 +34,7 @@ public class AskAnswerTests
 
     // `ask ""` — the question is empty so no output channel is needed; the answer is what the input gives.
     private static async Task<global::app.data.@this> Asked(global::app.actor.context.@this ctx)
-        => await new global::app.goal.step.action.@this(new ask(ctx)
+        => await new global::app.goal.step.action.composed.@this(new ask(ctx)
             { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "", context: ctx) }, ctx).Start(ctx);
 
     [Test] public async Task ConsoleAsk_WritesTheTextItself()
@@ -103,12 +103,12 @@ public class AskAnswerTests
         var ctx = app.actor.list.User.Context;
         var input = Console(app, "never read\n");
         var given = ctx.Text("from the binding");
-        app.actor.list.User.on.Bind(input, "ask", global::app.@event.When.before, (_, _, c) =>
+        app.@event.Add(input).Add("ask")[global::app.@event.When.before].Add(side => new global::app.@event.binding.@this(side, (_, _, c) =>
         {
             global::app.data.@this answered = c.Ok(given);
             answered.Handled = true;
             return Task.FromResult(answered);
-        }, global::app.@event.binding.Scope.actor);
+        }, app.actor.list.User, global::app.@event.binding.Scope.actor, global::app.@event.binding.@this.Always));
 
         var asked = await Asked(ctx);
         await asked.IsSuccess();

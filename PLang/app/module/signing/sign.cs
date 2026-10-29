@@ -19,12 +19,11 @@ public partial class sign : IContext
     /// Wire form is ISO 8601 (e.g. <c>"PT5M"</c>) via the global TimeSpan converter.</summary>
     public partial data.@this<global::app.type.item.duration.@this>? Expires { get; init; }
 
-    /// <summary>
-    /// Whether the data is being signed for the Store view (true) or transport/Out (false).
-    /// The hash is taken in this view so it matches the wire bytes the verifier re-hashes —
-    /// the serializer sets it from the view sign-if-missing fires in. Default false (Out).
-    /// </summary>
-    public partial data.@this<global::app.type.item.@bool.@this>? StoreView { get; init; }
+    /// <summary>The view the data is hashed in, so it matches the bytes the verifier re-hashes — handed whole by C# that
+    /// knows it (the serializer's sign-if-missing, the view it writes in; a snapshot, its own); no step gives it. None:
+    /// the view the data's own type is written in (a snapshot's), as its signature re-hashes it, else what crosses to
+    /// others (Out).</summary>
+    internal global::app.View? View { get; init; }
 
     [Code]
     public partial ISigning Signer { get; }

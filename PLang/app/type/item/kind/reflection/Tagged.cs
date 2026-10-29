@@ -15,19 +15,19 @@ public static class Tagged
     // through an STJ read.
     public readonly record struct Entry(PropertyInfo Property, bool Masked, string WireName);
 
-    private static readonly ConcurrentDictionary<(System.Type Type, global::app.View Mode), IReadOnlyList<Entry>> _cache = new();
+    private static readonly ConcurrentDictionary<(System.Type Type, global::app.View View), IReadOnlyList<Entry>> _cache = new();
 
     /// <summary>
     /// Returns the property entries that ship on the wire for <paramref name="type"/>
-    /// in <paramref name="mode"/>. Cached. The returned list is immutable —
+    /// in <paramref name="view"/>. Cached. The returned list is immutable —
     /// the same reference is handed back to every caller for the same key.
     /// </summary>
-    public static IReadOnlyList<Entry> PropertiesFor(System.Type type, global::app.View mode)
-        => _cache.GetOrAdd((type, mode), key => Compute(key.Type, key.Mode));
+    public static IReadOnlyList<Entry> PropertiesFor(System.Type type, global::app.View view)
+        => _cache.GetOrAdd((type, view), key => Compute(key.Type, key.View));
 
     private static IReadOnlyList<Entry> Compute(System.Type type, global::app.View view)
     {
-        var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        var props = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
         var entries = new List<Entry>(props.Length);
 
         // A type with no Out/Store/Sensitive/Masked tag anywhere is transparent: every public property ships (nested
@@ -40,13 +40,21 @@ public static class Tagged
             // Indexed properties (this[int] etc.) have no name shape on the wire.
             if (prop.GetIndexParameters().Length > 0) continue;
             if (!prop.CanRead) continue;
+            // a member plang can't see shows only where the view's own tag is on it: a transparent type ships its
+            // public members alone
+            if (prop.GetMethod is not { IsPublic: true } && !tagged) continue;
             // the view says which members show, and which of those hide their value
             if (!view.Shows(prop, tagged)) continue;
             // [JsonPropertyName] wins (STJ honors it), else camelCase — so an Output-written shape
             // matches what an STJ read expects, key for key.
             var wireName = prop.GetCustomAttribute<System.Text.Json.Serialization.JsonPropertyNameAttribute>()?.Name
                 ?? System.Text.Json.JsonNamingPolicy.CamelCase.ConvertName(prop.Name);
-            entries.Add(new Entry(prop, view.Masks(prop), wireName));
+            // the member as the class that declares it has it: a base's private setter is no setter seen from the
+            // subclass, and every read onto a host sets through this entry
+            var member = prop.DeclaringType is { } owner && owner != type
+                ? owner.GetProperty(prop.Name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly) ?? prop
+                : prop;
+            entries.Add(new Entry(member, view.Masks(prop), wireName));
         }
 
         // Materialize as an array — fixed-size, no overhead vs List<T>'s

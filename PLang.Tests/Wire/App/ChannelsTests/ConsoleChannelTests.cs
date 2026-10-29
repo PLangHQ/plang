@@ -121,7 +121,7 @@ public class ConsoleChannelTests
         {
             Question = new global::app.data.@this<global::app.type.item.text.@this>("question", "what is your name?", context: context),
         };
-        var answer = await new global::app.goal.step.action.@this(ask, context).Start(context);
+        var answer = await new global::app.goal.step.action.composed.@this(ask, context).Start(context);
 
         await answer.IsSuccess();
         await Assert.That((await answer.Value())?.ToString()).IsEqualTo("Ada");

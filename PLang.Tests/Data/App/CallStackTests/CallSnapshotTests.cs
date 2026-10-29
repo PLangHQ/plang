@@ -22,85 +22,100 @@ public class CallSnapshotTests : System.IAsyncDisposable
         return (app, action);
     }
 
+    // A goal in dst like the one saved: its one step's text and action as given.
+    private static (Goal goal, Step step, ActionEntity action) Build(global::app.@this dst, string goalName, string stepText,
+        string module = "test", string actionName = "test")
+    {
+        var goal = new Goal(dst.type.list) { Name = goalName, Path = global::app.type.item.path.@this.Resolve($"/{goalName}.goal", dst.actor.list.User.Context) };
+        var step = new Step(dst.type.list) { Index = 0, Text = stepText, Goal = goal };
+        var action = new ActionEntity(dst.type.list) { Module = dst.actor.list.User.Context.App.Module(module), Name = actionName, Step = step };
+        step.Code.Add(action);
+        goal.Step.Add(step);
+        dst.goal.list.Add(goal);
+        return (goal, step, action);
+    }
+
+    // A frame as the snapshot writes it: its tagged members, its element as the key that finds it.
+    private static async Task<System.Text.Json.Nodes.JsonObject> Written(global::app.call.@this frame, global::app.actor.context.@this context)
+        => System.Text.Json.Nodes.JsonNode.Parse((string)(await global::app.type.item.wire.@this.Of(frame, global::app.View.Snapshot, context)).Raw)!.AsObject();
+
+    // The frame a restored run stopped in: the last frame down from the root.
+    private static global::app.call.@this Stopped(global::app.call.@this frame)
+        => frame.Children.LastOrDefault() is { } child ? Stopped(child) : frame;
+
+    // A step's frame writes its place in its goal, never its step: the step is found from the place, under its goal's
+    // frame, which writes its goal as the key that finds it — its name and .goal, never the goal written out, and no hash:
+    // a goal changed since the save is the goal as it is now.
     [Test]
-    public async Task Call_Capture_EmitsGoalStub_PrPathPlusHash_NotFullGoal()
+    public async Task Call_Store_WritesItsPlace_UnderItsGoalsKey_NotTheWholeGoal()
     {
         var (app, action) = BuildLiveAction("StubGoal");
         var stack = app.actor.list.User.Context.call;
-        await using var call = stack.Push(action, await stack.Setting());
+        await using var running1 = stack.Push(action.Step!.Goal!, await stack.Setting());
+        await using var step = stack.Push(action.Step!, await stack.Setting());
 
-        var snap = new Snapshot(app.actor.list.User.Context);
-        call.Capture(snap);
+        var json = await Written(step, app.actor.list.User.Context);
 
-        await Assert.That(await snap.Text("goalPrPath")).IsEqualTo(action.Step!.Goal!.PrPath?.ToString());
-        await Assert.That(await snap.Text("goalHash")).IsEqualTo(action.Step.Goal.Hash);
-        // Wire shape is the stub triple — no full goal serialised.
-        await Assert.That(snap.Has("goal")).IsFalse();
-        await Assert.That(snap.Has("steps")).IsFalse();
+        await Assert.That(json["index"]!.GetValue<int>()).IsEqualTo(0);
+        await Assert.That(json.ContainsKey("step")).IsFalse();
+        var goal = json["caller"]!["value"]!["goal"]!;
+        await Assert.That(goal["name"]!.GetValue<string>()).IsEqualTo("StubGoal");
+        await Assert.That(goal.AsObject().ContainsKey("hash")).IsFalse();
+        await Assert.That(json.ToJsonString()).DoesNotContain("test step");
     }
 
-    // A frame's captured position is written exactly so — its facts ride as the plain tokens they always have,
-    // whatever their plang faces are.
+    // An action's frame is written as what it keeps: its place in its step and what stood there, under its caller (its
+    // step's frame) — never the action's key (its step is its caller's), an id or its children.
     [Test]
-    public async Task Call_Capture_WritesItsExactShape()
+    public async Task Call_Capture_WritesOnlyWhatItKeeps()
     {
         var (app, action) = BuildLiveAction("G", "a step");
-        app.Compact();
         var user = app.actor.list.User.Context;
-        await using var call = app.actor.list.User.Context.call.Push(action, await app.actor.list.User.Context.call.Setting());
-        var snap = new Snapshot(user);
-        call.Capture(snap);
+        await using var running2 = user.call.Push(action.Step!.Goal!, await user.call.Setting());
+        await using var step = user.call.Push(action.Step!, await user.call.Setting());
+        await using var call = user.call.Push(action, await user.call.Setting());
 
-        using var ms = new MemoryStream();
-        await user.Format("application/json").Encode(ms, user.Ok(snap), user);
-        var json = System.Text.Encoding.UTF8.GetString(ms.ToArray()).Replace(call.Id.ToString()!, "ID");
+        var json = await Written(call, user);
 
-        await Assert.That(json).IsEqualTo(
-            "{\"goalName\":\"G\",\"goalPrPath\":\"/.build/g.pr\",\"goalHash\":\"" + action.Step!.Goal!.Hash
-            + "\",\"stepIndex\":0,\"actionIndex\":0,\"actionModule\":\"test\",\"actionName\":\"test\",\"id\":\"ID\"}");
+        foreach (var member in new[] { "index", "module", "name", "caller" })
+            await Assert.That(json.ContainsKey(member)).IsTrue();
+        foreach (var member in new[] { "action", "id", "goal", "step", "handled", "children", "current" })
+            await Assert.That(json.ContainsKey(member)).IsFalse();
     }
 
+    // The two numbers that say where a run stands: the step's index (its frame) and the action's (its frame), each once.
     [Test]
-    public async Task Call_Capture_IncludesStepIndexAndActionIndex()
+    public async Task Call_Capture_IncludesItsStepAndActionIndex()
     {
         var (app, action) = BuildLiveAction("PosGoal");
         var stack = app.actor.list.User.Context.call;
+        await using var running3 = stack.Push(action.Step!.Goal!, await stack.Setting());
+        await using var step = stack.Push(action.Step!, await stack.Setting());
         await using var call = stack.Push(action, await stack.Setting());
 
-        var snap = new Snapshot(app.actor.list.User.Context);
-        call.Capture(snap);
-
-        await Assert.That(await snap.Int("stepIndex")).IsEqualTo(0);
-        await Assert.That(await snap.Int("actionIndex")).IsEqualTo(0);
+        await Assert.That((await Written(call, app.actor.list.User.Context))["index"]!.GetValue<int>()).IsEqualTo(0);
+        await Assert.That((await Written(step, app.actor.list.User.Context))["index"]!.GetValue<int>()).IsEqualTo(0);
     }
 
     [Test]
     public async Task Call_Restore_ResolvesGoalStubAgainstLiveRegistry()
     {
         var (src, action) = BuildLiveAction("ResolveGoal");
-        await using (var call = src.actor.list.User.Context.call.Push(action, await src.actor.list.User.Context.call.Setting()))
+        var stack = src.actor.list.User.Context.call;
+        await using (stack.Push(action.Step!.Goal!, await stack.Setting()))
+        await using (stack.Push(action.Step!, await stack.Setting()))
+        await using (stack.Push(action, await stack.Setting()))
         {
-            var snap = src.Snapshot(src.actor.list.User.Context);
+            var snap = (await src.Snapshot(src.actor.list.User.Context).Saved());
 
-            // Build a fresh app with the *same* goal registered.
             var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
-            var dstGoal = new Goal(dst.type.list)
-            {
-                Name = "ResolveGoal",
-                Path = global::app.type.item.path.@this.Resolve("/ResolveGoal.goal", app.actor.list.User.Context)
-            };
-            var dstStep = new Step(dst.type.list) { Index = 0, Text = action.Step!.Text, Goal = dstGoal };
-            var dstAction = new ActionEntity(dst.type.list) { Module = app.actor.list.User.Context.App.Module("test"), Name = "test", Step = dstStep };
-            dstStep.Code.Add(dstAction);
-            dstGoal.Step.Add(dstStep);
-            dst.goal.list.Add(dstGoal);
+            var (dstGoal, _, dstAction) = Build(dst, "ResolveGoal", action.Step!.Text);
 
             await dst.Restore(snap, dst.actor.list.User.Context);
 
-            var bottom = dst.actor.list.User.Context.call.BottomFrame;
-            await Assert.That(bottom).IsNotNull();
-            await Assert.That(bottom!.Goal.PrPath).IsEqualTo(dstGoal.PrPath);
-            await Assert.That(bottom.Action).IsSameReferenceAs(dstAction);
+            var frame = Stopped(dst.actor.list.User.Context.call.Root!);
+            await Assert.That(frame.Goal).IsSameReferenceAs(dstGoal);
+            await Assert.That(frame.Action).IsSameReferenceAs(dstAction);
         }
     }
 
@@ -108,72 +123,153 @@ public class CallSnapshotTests : System.IAsyncDisposable
     public async Task Call_Restore_HardErrors_OnGoalNotFound()
     {
         var (src, action) = BuildLiveAction("DisappearingGoal");
-        await using (var call = src.actor.list.User.Context.call.Push(action, await src.actor.list.User.Context.call.Setting()))
+        var stack = src.actor.list.User.Context.call;
+        await using (stack.Push(action.Step!.Goal!, await stack.Setting()))
+        await using (stack.Push(action.Step!, await stack.Setting()))
+        await using (stack.Push(action, await stack.Setting()))
         {
-            var snap = src.Snapshot(src.actor.list.User.Context);
+            var snap = (await src.Snapshot(src.actor.list.User.Context).Saved());
             // Restore on a fresh App that never had this goal registered.
             var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
 
-            await Assert.ThrowsAsync<CallbackGoalNotFound>(async () =>
-            {
-                await dst.Restore(snap, dst.actor.list.User.Context);
-                await Task.CompletedTask;
-            });
+            var started = await snap.Start(dst, dst.actor.list.User.Context);
+            await Assert.That(started.Success).IsFalse();
+            // the goal list's own answer, whole: its key names a .goal this app never built
+            await Assert.That(started.Error!.Key).IsEqualTo("GoalNotBuilt");
         }
     }
 
+    // A goal changed since the save (its step's text, so its hash) is the goal as it is now: the run comes back standing
+    // at its saved place in it.
     [Test]
-    public async Task Call_Restore_HardErrors_OnHashMismatch_RaisesCallbackGoalHashMismatch()
+    public async Task Call_Restore_AGoalChangedSinceTheSave_StandsAtItsPlaceInIt()
     {
         var (src, action) = BuildLiveAction("HashGoal", "original step text");
-        await using (var call = src.actor.list.User.Context.call.Push(action, await src.actor.list.User.Context.call.Setting()))
+        var stack = src.actor.list.User.Context.call;
+        await using (stack.Push(action.Step!.Goal!, await stack.Setting()))
+        await using (stack.Push(action.Step!, await stack.Setting()))
+        await using (stack.Push(action, await stack.Setting()))
         {
-            var snap = src.Snapshot(src.actor.list.User.Context);
+            var snap = (await src.Snapshot(src.actor.list.User.Context).Saved());
 
-            // Fresh App with the same path but different hash (different step prose).
             var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
-            var dstGoal = new Goal(dst.type.list) { Name = "HashGoal", Path = global::app.type.item.path.@this.Resolve("/HashGoal.goal", app.actor.list.User.Context) };
-            var dstStep = new Step(dst.type.list) { Index = 0, Text = "DIFFERENT step text", Goal = dstGoal };
-            var dstAction = new ActionEntity(dst.type.list) { Module = app.actor.list.User.Context.App.Module("test"), Name = "test", Step = dstStep };
-            dstStep.Code.Add(dstAction);
-            dstGoal.Step.Add(dstStep);
-            dst.goal.list.Add(dstGoal);
+            var (_, _, dstAction) = Build(dst, "HashGoal", "DIFFERENT step text");
 
-            var mismatch = await Assert.ThrowsAsync<CallbackGoalHashMismatch>(async () =>
-            {
-                await dst.Restore(snap, dst.actor.list.User.Context);
-                await Task.CompletedTask;
-            });
-            // a keyed program error: the resume's result carries CallbackGoalHashMismatch, not ServiceError
-            await Assert.That(mismatch!.Error.Key).IsEqualTo("CallbackGoalHashMismatch");
+            await dst.Restore(snap, dst.actor.list.User.Context);
+
+            await Assert.That(Stopped(dst.actor.list.User.Context.call.Root!).Action).IsSameReferenceAs(dstAction);
         }
     }
 
+    // Another action standing at the saved place (the goal rebuilt, or the place edited): the run goes on there, and
+    // says so on the error channel, naming the action saved and the one there now.
     [Test]
-    public async Task Call_Restore_HardErrors_WhenTheActionAtThePositionChanged()
+    public async Task Call_Resume_AnotherActionAtThePlace_GoesOnThere_AndSaysSo()
     {
-        // Same step text (so the goal hash matches) compiled to a different action: the position now
-        // points at another action, which only the captured module/name can tell.
         var (src, action) = BuildLiveAction("RecompiledGoal", "same step text");
-        await using (var call = src.actor.list.User.Context.call.Push(action, await src.actor.list.User.Context.call.Setting()))
+        var stack = src.actor.list.User.Context.call;
+        await using (stack.Push(action.Step!.Goal!, await stack.Setting()))
+        await using (stack.Push(action.Step!, await stack.Setting()))
+        await using (stack.Push(action, await stack.Setting()))
         {
-            var snap = src.Snapshot(src.actor.list.User.Context);
+            var snap = (await src.Snapshot(src.actor.list.User.Context).Saved());
 
             var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
-            var dstGoal = new Goal(dst.type.list) { Name = "RecompiledGoal", Path = global::app.type.item.path.@this.Resolve("/RecompiledGoal.goal", app.actor.list.User.Context) };
-            var dstStep = new Step(dst.type.list) { Index = 0, Text = "same step text", Goal = dstGoal };
-            var dstAction = new ActionEntity(dst.type.list) { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set", Step = dstStep };
-            dstStep.Code.Add(dstAction);
-            dstGoal.Step.Add(dstStep);
-            dst.goal.list.Add(dstGoal);
+            var (_, _, dstAction) = Build(dst, "RecompiledGoal", "same step text", "variable", "set");
+            var error = new System.IO.MemoryStream();
+            dst.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(dst.actor.list.User.Channel,
+                global::app.channel.list.@this.Error, error, global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = "text/plain", Framed = true });
+            var into = dst.actor.list.User.Context;
+            await dst.Restore(snap, into);
+            await Assert.That(Stopped(into.call.Root!).Action).IsSameReferenceAs(dstAction);
 
-            var thrown = await Assert.ThrowsAsync<CallbackActionMismatch>(async () =>
-            {
-                await dst.Restore(snap, dst.actor.list.User.Context);
-                await Task.CompletedTask;
-            });
-            await Assert.That(thrown!.Message).Contains("test.test");
-            await Assert.That(thrown.Message).Contains("variable.set");
+            await into.call.Resume(into);
+
+            var said = System.Text.Encoding.UTF8.GetString(error.ToArray());
+            await Assert.That(said).Contains("'RecompiledGoal' step 0, action 0");
+            await Assert.That(said).Contains("variable.set");
+            await Assert.That(said).Contains("test.test");
+        }
+    }
+
+    // A goal with lines as its steps (each line one or more actions, split by " ; "), held by app.
+    private static async Task<Goal> Program(global::app.@this app, string name, params string[] lines)
+    {
+        var context = app.actor.list.User.Context;
+        var goal = new Goal(app.type.list) { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", context) };
+        for (var index = 0; index < lines.Length; index++)
+        {
+            var step = new Step(app.type.list) { Goal = goal, Index = index, Text = lines[index] };
+            foreach (var call in lines[index].Split(" ; ")) step.Code.Add((await context.Action(call)).In(step));
+            goal.Step.Add(step);
+        }
+        app.goal.list.Add(goal);
+        return goal;
+    }
+
+    // A step inserted where the run stopped (the goal rebuilt since the save): the run goes on at its saved place, now
+    // the new step — said on the error channel — then the step it stopped in, now after it; the steps before are not run
+    // again.
+    [Test]
+    public async Task Call_Resume_AStepInsertedWhereTheRunStopped_RunsIt_ThenTheStepItStoppedIn()
+    {
+        var (src, _) = BuildLiveAction("Unused");
+        var goal = await Program(src, "Order", "variable.set(Name=%a%, Value=\"0\")", "variable.set(Name=%b%, Value=\"1\")",
+            "goal.return(Data={\"a\": %a%, \"b\": %b%, \"c\": %c%})");
+        var context = src.actor.list.User.Context;
+        foreach (var name in new[] { "a", "b", "c" }) await context.Variable.Set(name, "before");
+        global::app.snapshot.@this snap;
+        await using (context.call.Push(goal.Step[1].Goal!, await context.call.Setting()))
+        await using (context.call.Push(goal.Step[1], await context.call.Setting()))
+        await using (context.call.Push(goal.Step[1].Code[0], await context.call.Setting(), context.Variable))
+            snap = await src.Snapshot(context).Saved();
+
+        var dst = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
+        await Program(dst, "Order", "variable.set(Name=%a%, Value=\"0\")",
+            "math.add(A=1, B=2) ; variable.set(Name=%c%, Value=%!data%)",
+            "variable.set(Name=%b%, Value=\"1\")",
+            "goal.return(Data={\"a\": %a%, \"b\": %b%, \"c\": %c%})");
+        var error = new System.IO.MemoryStream();
+        dst.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(dst.actor.list.User.Channel,
+            global::app.channel.list.@this.Error, error, global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = "text/plain", Framed = true });
+        var into = dst.actor.list.User.Context;
+        await dst.Restore(snap, into);
+
+        var result = await into.call.Resume(into);
+
+        await result.IsSuccess();
+        async Task<string?> Saw(string name) => (await (await result.Get(name)).Value())?.ToString();
+        await Assert.That(await Saw("a")).IsEqualTo("before");
+        // the action at the place ran (its answer is %c%), not only the rest of its step
+        await Assert.That(await Saw("c")).IsEqualTo("3");
+        await Assert.That(await Saw("b")).IsEqualTo("1");
+        var said = System.Text.Encoding.UTF8.GetString(error.ToArray());
+        await Assert.That(said).Contains("'Order' step 1, action 0");
+        await Assert.That(said).Contains("math.add");
+        await Assert.That(said).Contains("variable.set");
+    }
+
+    // A saved action's place past its step's end is refused, naming how many actions the step holds.
+    [Test]
+    public async Task Call_Restore_AnActionPastItsStepsEnd_IsRefused_NamingTheCount()
+    {
+        var (src, action) = BuildLiveAction("ShortGoal");
+        var extra = new ActionEntity(src.type.list) { Module = src.actor.list.User.Context.App.Module("test"), Name = "test", Step = action.Step };
+        action.Step!.Code.Add(extra);
+        var stack = src.actor.list.User.Context.call;
+        await using (stack.Push(action.Step!.Goal!, await stack.Setting()))
+        await using (stack.Push(action.Step!, await stack.Setting()))
+        await using (stack.Push(extra, await stack.Setting()))
+        {
+            var snap = (await src.Snapshot(src.actor.list.User.Context).Saved());
+
+            var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
+            Build(dst, "ShortGoal", action.Step.Text);
+
+            var started = await snap.Start(dst, dst.actor.list.User.Context);
+            await Assert.That(started.Success).IsFalse();
+            await Assert.That(started.Error!.Key).IsEqualTo("ActionNotFound");
+            await Assert.That(started.Error.Message).Contains("(1 actions)");
         }
     }
 
@@ -181,21 +277,15 @@ public class CallSnapshotTests : System.IAsyncDisposable
     public async Task Call_Restore_DoesNotMutateLiveGoal()
     {
         var (src, action) = BuildLiveAction("PureGoal");
-        await using (var call = src.actor.list.User.Context.call.Push(action, await src.actor.list.User.Context.call.Setting()))
+        var stack = src.actor.list.User.Context.call;
+        await using (stack.Push(action.Step!.Goal!, await stack.Setting()))
+        await using (stack.Push(action.Step!, await stack.Setting()))
+        await using (stack.Push(action, await stack.Setting()))
         {
-            var snap = src.Snapshot(src.actor.list.User.Context);
+            var snap = (await src.Snapshot(src.actor.list.User.Context).Saved());
 
             var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
-            var dstGoal = new Goal(dst.type.list) { Name = "PureGoal", Path = global::app.type.item.path.@this.Resolve("/PureGoal.goal", app.actor.list.User.Context) };
-            var dstStep = new Step(dst.type.list) { Index = 0, Text = action.Step!.Text, Goal = dstGoal };
-            var dstAction = new ActionEntity(dst.type.list) { Module = app.actor.list.User.Context.App.Module("test"), Name = "test", Step = dstStep };
-            dstStep.Code.Add(dstAction);
-            dstGoal.Step.Add(dstStep);
-            dst.goal.list.Add(dstGoal);
-
-            var goalBefore = dstGoal;
-            var stepBefore = dstStep;
-            var actionBefore = dstAction;
+            var (goalBefore, stepBefore, actionBefore) = Build(dst, "PureGoal", action.Step!.Text);
 
             await dst.Restore(snap, dst.actor.list.User.Context);
 
@@ -207,31 +297,18 @@ public class CallSnapshotTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task Call_Restore_HashErrorIsTypedNotBoolean()
-    {
-        // The restore path raises a typed exception — there is no boolean Success / Failure
-        // bubbling up. Restore returns a bare Task: it carries no result, so a failure has
-        // nowhere to hide except a throw. The call stack restores ITSELF (an instance member).
-        var restoreMethod = typeof(global::app.call.list.@this).GetMethod("Restore",
-            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-        await Assert.That(restoreMethod).IsNotNull();
-        await Assert.That(restoreMethod!.ReturnType).IsEqualTo(typeof(Task));
-    }
-
-    [Test]
     public async Task Call_Capture_OmitsTimingTier_AndInFlightNetworkState()
     {
         var (app, action) = BuildLiveAction("DropGoal");
         (await app.actor.list.User.Context.call.Setting()).Timing = true;
         await using var call = app.actor.list.User.Context.call.Push(action, await app.actor.list.User.Context.call.Setting());
 
-        var snap = new Snapshot(app.actor.list.User.Context);
-        call.Capture(snap);
+        var json = await Written(call, app.actor.list.User.Context);
 
         // Drop bucket: timing tier and any in-flight network state never reach the snapshot.
-        await Assert.That(snap.Has("startedAt")).IsFalse();
-        await Assert.That(snap.Has("completedAt")).IsFalse();
-        await Assert.That(snap.Has("duration")).IsFalse();
-        await Assert.That(snap.Has("inFlight")).IsFalse();
+        await Assert.That(json.ContainsKey("startedAt")).IsFalse();
+        await Assert.That(json.ContainsKey("completedAt")).IsFalse();
+        await Assert.That(json.ContainsKey("duration")).IsFalse();
+        await Assert.That(json.ContainsKey("inFlight")).IsFalse();
     }
 }

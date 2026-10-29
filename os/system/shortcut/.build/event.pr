@@ -1,0 +1,58 @@
+{
+  "name": "Event",
+  "comment": "%!event% — the event in play where its asker is",
+  "step": [
+    {
+      "index": 0,
+      "text": "return %!app.event.current%",
+      "line": {
+        "number": 3,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "return",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.event.current%",
+              "variable": [
+                {
+                  "text": "%!app.event.current%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "event"
+                    },
+                    {
+                      "property": "current"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "depth",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "visibility": "Public",
+  "file": "event.goal",
+  "hash": "c746c4d9fd7a92105bf069dde7026bc835d508ee5f47e138bbfaf6769442fa1b"
+}

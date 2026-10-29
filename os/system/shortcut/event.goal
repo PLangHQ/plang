@@ -1,0 +1,3 @@
+/ %!event% — the event in play where its asker is
+Event
+- return %!app.event.current%

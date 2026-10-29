@@ -141,7 +141,7 @@ public class LoadVarsTests
     // a peer's Data and a stored one come through.
     private static async Task<global::app.data.@this> Wire(global::app.actor.context.@this ctx, string row)
     {
-        var read = await ctx.App.type.list["wire"].kind["plang"]!.Decode(System.Text.Encoding.UTF8.GetBytes(row), ctx,
+        var read = await ctx.App.type.list.Plang.Decode(System.Text.Encoding.UTF8.GetBytes(row), ctx,
             view: global::app.View.Store);
         await read.IsSuccess();
         return read;

@@ -6,18 +6,23 @@ using app.module.identity.code;
 namespace app.actor;
 
 /// <summary>
-/// Represents an actor in the system with its own context and IO channels.
+/// Represents an actor in the system with its own context and IO channels. In a snapshot it is written whole where it
+/// lives, the app's actors (its property and its context), and anywhere else by its name.
 /// </summary>
 [global::app.Attributes.PlangType("actor")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IAsyncDisposable,
     global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>, global::app.type.item.ILoad<@this>,
-    global::app.type.item.IList<@this, global::app.actor.list.@this>, global::app.origin.@this
+    global::app.type.item.IList<@this, global::app.actor.list.@this>, global::app.origin.@this,
+    global::app.type.item.property.IOwner
 {
+    /// <summary>An actor is live — its context, its channels, its tasks: a copy of it is it.</summary>
+    protected internal override global::app.type.item.@this Clone() => this;
+
     private readonly CancellationTokenSource _cts;
 
-    // what a program adds to the actor — kept as long as the actor lives
-    private readonly global::app.type.item.kept.list.@this _kept = new();
-    internal override global::app.type.item.kept.list.@this Kept => _kept;
+    /// <summary>What a program adds to the actor — kept as long as the actor lives, and in a snapshot.</summary>
+    [Store, global::app.Snapshot, global::app.LlmBuilder]
+    public global::app.type.item.property.list.@this property { get; private set; }
 
     /// <summary>A key names this actor by its name — <c>system</c>, <c>user</c>; case is not the program's to get right.</summary>
     public ValueTask<@this?> Match(string key)
@@ -56,16 +61,15 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         return default;
     }
 
+    /// <summary>What finds an actor: its name, which its role goes by in every app.</summary>
+    internal override System.Threading.Tasks.ValueTask<global::app.type.item.@this?> Key(global::app.actor.context.@this context)
+        => new(new global::app.type.item.text.@this(Name, context.App.type.list[typeof(global::app.type.item.text.@this)]));
+
     /// <summary>
     /// The PLang execution context owned by this actor.
     /// </summary>
-    [global::app.LlmBuilder]
+    [global::app.LlmBuilder, global::app.Snapshot]
     public context.@this Context { get; }
-
-    /// <summary>The bindings this actor made while a program ran, on the items each is on — every run-time binding,
-    /// whatever its scope, whichever of its contexts bound it; an event reads the holds of every actor of the asker's
-    /// app, and the binding decides whether it fires. Let go with the actor.</summary>
-    internal global::app.@event.on.list.@this on { get; }
 
     /// <summary>
     /// Per-actor permission view — signed grants on paths, keyed by verb
@@ -132,8 +136,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         : base(app.type.list[typeof(@this)])
     {
         Role = role;
-        on = new(this);
         App = app;
+        property = new(app.type.list[typeof(global::app.type.item.property.list.@this)]);
         _system = system;
         _cts = parentToken == default
             ? new CancellationTokenSource()
@@ -195,6 +199,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     global::app.module.@this global::app.origin.@this.Module(global::app.@this app) => App.module;
 
+    global::app.module.code.@this? global::app.origin.@this.Code => App.Code;
+
+    global::app.@event.on.list.@this? global::app.origin.@this.@event => App.@event;
+
+    int global::app.origin.@this.Depth => App.Depth + 1;
+
     // its app's goals are the sub app's while the sub app holds no code of its own (a goal is bound to its modules and
     // types when it is read, so a goal its app reads reaches only its app's) and shares its folder (a .pr is then the same
     // file in both)
@@ -226,7 +236,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         _cts.Cancel();
         _cts.Dispose();
-        on.Clear();
         Context.Dispose();
         await _channels.DisposeAsync();
         // the settings' store, when this actor's settings are the chain's root that made it

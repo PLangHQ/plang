@@ -64,7 +64,7 @@ public class GetJsonResponseParsesToPlangDictTests
             Url = (global::app.type.item.text.@this)"https://api.example.com/users/1",
             Unsigned = (global::app.type.item.@bool.@this)true,
         };
-        var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
+        var result = await new global::app.goal.step.action.composed.@this(action, Ctx).Start(Ctx);
 
         await result.IsSuccess();
         // A use opens the courier-rested json (805): navigation parses once, .name reads "Alice" through

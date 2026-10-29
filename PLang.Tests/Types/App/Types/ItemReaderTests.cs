@@ -58,19 +58,19 @@ public class ItemReaderTests : System.IAsyncDisposable
         await Assert.That(answer.Error!.Key).IsEqualTo("NotTokens");
     }
 
-    // an entry still encoded (a .pr's lazy slice) can't be read without the context that decodes it: the write answers
-    // that as its error, never a .NET exception
-    [Test] public async Task ADictHoldingAnUnreadSlice_IntoARecordMember_AnswersWireUndecoded()
+    // an entry still encoded (a .pr's lazy slice) is read as the value it decodes to, in the read's context: the write
+    // answers what the same dict decoded answers
+    [Test] public async Task ADictHoldingAnUnreadSlice_IntoARecordMember_ReadsTheSliceAsItsValue()
     {
         var owner = Box();
         var slice = Ctx.App.type.list[new global::app.type.@this("dict"), Ctx].Make("{\"inner\": 1}",
-            (global::app.type.item.wire.kind.plang.@this)Ctx.App.type.list["wire"].kind["plang"]!);
+            Ctx.App.type.list.Plang, global::app.View.Out);
         var nested = global::app.type.item.@this.Create(new Dictionary<string, object?> { ["token"] = 500L, ["extra"] = slice }, Ctx);
 
         var answer = await owner.Set("limit", false, nested, Ctx);
 
         await answer.IsFailure();
-        await Assert.That(answer.Error!.Key).IsEqualTo("WireUndecoded");
+        await Assert.That(answer.Error!.Key).IsEqualTo("NotTokens");
     }
 
     // a member that can't be written answers why, never a throw
@@ -79,7 +79,7 @@ public class ItemReaderTests : System.IAsyncDisposable
         var answer = await Box().Set("label", false, new global::app.type.item.text.@this("x", _app.type.list["text"]), Ctx);
 
         await answer.IsFailure();
-        await Assert.That(answer.Error!.Key).IsEqualTo("OwnMember");
+        await Assert.That(answer.Error!.Key).IsEqualTo("ReadOnly");
     }
 
     // a list of a record type holds that type: each element read by the element type's reader, Record when it has none
@@ -103,7 +103,7 @@ public class ItemReaderTests : System.IAsyncDisposable
     {
         var reader = _app.type.list.Reader.Reader("limit", null, Ctx);
 
-        var viaTokens = Dict().Read(reader, null, Ctx) as Limit;
+        var viaTokens = Dict().Read(reader, null, Ctx, global::app.View.Out) as Limit;
 
         var bytes = System.Text.Encoding.UTF8.GetBytes("{\"token\":500,\"tool\":3}");
         var utf8 = new System.Text.Json.Utf8JsonReader(bytes);

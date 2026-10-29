@@ -21,12 +21,12 @@ public class NameSlotDefaultTests
                 {
                     var where = $"{module.Name}.{name}.{slot.Name}";
                     checkedSlots.Add(where);
-                    var (handler, error) = await new PrAction(app.type.list) { Module = module, Name = name, Synthetic = false }.Bind(context);
+                    var (handler, error) = await new PrAction(app.type.list) { Module = module, Name = name }.Bind(context);
                     if (handler == null) { failed.Add($"{where}: {error?.Message}"); continue; }
-                    var held = (global::app.data.@this<global::app.type.item.variable.@this>?)handler.GetType().GetProperty(slot.Name)!.GetValue(handler);
-                    var variable = held == null ? null : await held.Value();
-                    if (held is not { Success: true } || variable?.Name != slot.Default?.ToString())
-                        failed.Add($"{where}: {held?.Error?.Message ?? variable?.Name ?? "nothing"}");
+                    var data = (global::app.data.@this<global::app.type.item.variable.@this>?)handler.GetType().GetProperty(slot.Name)!.GetValue(handler);
+                    var variable = data == null ? null : await data.Value();
+                    if (data is not { Success: true } || variable?.Name != slot.Default?.ToString())
+                        failed.Add($"{where}: {data?.Error?.Message ?? variable?.Name ?? "nothing"}");
                 }
             }
 
@@ -43,7 +43,7 @@ public class NameSlotDefaultTests
         var loop = app.module.list.Items().First(m => m.Name == "loop");
         async Task<global::app.type.item.variable.@this?> Item(bool frozen)
         {
-            var action = new PrAction(app.type.list) { Module = loop, Name = "foreach", Synthetic = false };
+            var action = new PrAction(app.type.list) { Module = loop, Name = "foreach" };
             if (frozen)
             {
                 action.Freeze(context);

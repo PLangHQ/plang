@@ -19,7 +19,7 @@ public class ViewWriteTests : System.IAsyncDisposable
     private async Task<string> Written(global::app.data.@this data, global::app.View view, string format)
     {
         using var stream = new System.IO.MemoryStream();
-        var kind = format == "plang" ? _app.type.list["wire"].kind["plang"]! : _app.type.list["item"].kind["json"]!;
+        var kind = format == "plang" ? _app.type.list.Plang : _app.type.list["item"].kind["json"]!;
         await (await kind.Encode(stream, data, Ctx, view)).IsSuccess();
         return System.Text.Encoding.UTF8.GetString(stream.ToArray());
     }

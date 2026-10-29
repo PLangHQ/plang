@@ -30,6 +30,11 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         Scope = scope;
     }
 
+    /// <summary>A binding taken in from <paramref name="binding"/> on <paramref name="list"/>, for
+    /// <paramref name="actor"/>: its scope and the items it fires for are <paramref name="binding"/>'s.</summary>
+    private protected @this(list.@this list, @this binding, global::app.actor.@this actor)
+        : this(list, actor, binding.Scope, binding._filter) { }
+
     /// <summary>What it does when its event fires for <paramref name="item"/>: its handler, on the result as it
     /// stands. A kind of binding that is its own handler overrides it.</summary>
     private protected virtual System.Threading.Tasks.Task<global::app.data.@this> Handle(global::app.type.item.@this item,
@@ -41,6 +46,14 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
 
     /// <summary>Whose it is: the actor's, or the app's.</summary>
     public Scope Scope { get; }
+
+    /// <summary>Whether a snapshot keeps it: a binding a program made, which it can make again from what it wrote. A C#
+    /// binding (a handler, a mock) is not: its maker binds it again.</summary>
+    internal virtual bool IsSaved => false;
+
+    /// <summary>The <c>on.event</c> action that made it — a program's binding is numbered by it (its goal, step and
+    /// index). A C# binding has none.</summary>
+    internal virtual global::app.goal.step.action.@this? action => null;
 
     /// <summary>Whether it fires for <paramref name="item"/> while <paramref name="context"/>'s actor runs: its
     /// scope takes the actor, and its filter the item.</summary>
@@ -58,6 +71,6 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         finally { context.ExitEvent(this); }
     }
 
-    /// <summary>Takes it off its event: it fires no more.</summary>
-    public void Remove() => _list.Remove(this);
+    /// <summary>Takes it off its event: it fires no more. A kind of binding that isn't its holder's to take off refuses.</summary>
+    public virtual void Remove() => _list.Remove(this);
 }

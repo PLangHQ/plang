@@ -94,7 +94,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             if (parent.Parent is not { } bearer)
                 return parent.Context.Error(new global::app.error.@this(
                     "a signature's identity is read off the Data it signs (%x!signature.identity%)", "SignatureInvalid", 400));
-            var verified = await new global::app.goal.step.action.@this(
+            var verified = await new global::app.goal.step.action.composed.@this(
                 new global::app.module.signing.verify(parent.Context) { Data = bearer }, parent.Context).Start(parent.Context);
             if (!verified.Success) return verified;
         }
@@ -103,6 +103,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>The signing identity (public-key name).</summary>
     public text Identity { get; }
+
+    /// <summary>The view the value is re-hashed in to verify it: the one its own type is written in (a snapshot's), else
+    /// the one its origin says — plang's own store's, else the wire's.</summary>
+    internal global::app.View Hashed
+        => Value.Type?.View ?? (Origin.Value == global::app.type.item.signature.Origin.Stored ? global::app.View.Store : global::app.View.Out);
 
     /// <summary>Contracts asserted by this signature (e.g. <c>["C0"]</c>).</summary>
     public global::app.type.item.list.@this? Contracts { get; }

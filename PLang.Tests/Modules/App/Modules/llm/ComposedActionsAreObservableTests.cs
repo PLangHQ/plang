@@ -8,7 +8,7 @@ namespace PLang.Tests.App.Modules.llm;
 public class ComposedActionsAreObservableTests
 {
     private static void Watch(global::app.@this app, string module, string action, List<string> seen)
-        => app.actor.list.System.on.Bind(app.type.list["action"], "start", global::app.@event.When.before, (item, _, ctx) =>
+        => app.@event.Add(app.type.list["action"]).Add("start")[global::app.@event.When.before].Add(side => new global::app.@event.binding.@this(side, (item, _, ctx) =>
         {
             if (item is global::app.goal.step.action.@this started && started.Module.Name == module && started.Name == action)
             {
@@ -16,7 +16,7 @@ public class ComposedActionsAreObservableTests
                 return Task.FromResult(ctx.Error(new global::app.error.@this("stopped by the watcher", "Watched", 400)));
             }
             return Task.FromResult(ctx.Ok());
-        }, global::app.@event.binding.Scope.app);
+        }, app.actor.list.System, global::app.@event.binding.Scope.app, global::app.@event.binding.@this.Always));
 
     // llm's call to the model goes through http.request as an action: a before-binding there sees it.
     [Test] public async Task LlmsHttpCall_IsSeenByABindingOnHttpRequest()
@@ -31,7 +31,7 @@ public class ComposedActionsAreObservableTests
         {
             Message = new List<LlmMessage> { new LlmMessage { Role = "user", Content = "composed " + Guid.NewGuid() } }.ToListData<LlmMessage>(ctx),
         };
-        _ = await new global::app.goal.step.action.@this(query, ctx).Start(ctx);
+        _ = await new global::app.goal.step.action.composed.@this(query, ctx).Start(ctx);
 
         await Assert.That(seen).Contains("http.request");
     }

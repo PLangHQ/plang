@@ -109,7 +109,7 @@ public class TagActionTests
         app.goal.list.Add(goal);
 
         var context = app.actor.list.User.Context;
-        var result = await app.Start(goal, context);
+        var result = await goal.Start(context);
 
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("read"))?.ToString()).IsEqualTo("checkout");

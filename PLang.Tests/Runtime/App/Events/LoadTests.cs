@@ -33,8 +33,8 @@ public class LoadTests
     {
         await using var app = new global::app.@this(Fixtures(), global::PLang.Tests.Parent.Actor).Testing();
         var handed = new List<global::app.type.item.@this>();
-        app.actor.list.System.on.Bind(app.goal.type, "load", When.before, (item, _, ctx) => { handed.Add(item); return Task.FromResult(ctx.Ok()); }, Scope.app);
-        app.actor.list.System.on.Bind(app.goal.type, "load", When.after, (item, _, ctx) => { handed.Add(item); return Task.FromResult(ctx.Ok()); }, Scope.app);
+        app.@event.Add(app.goal.type).Add("load")[When.before].Add(side => new global::app.@event.binding.@this(side, (item, _, ctx) => { handed.Add(item); return Task.FromResult(ctx.Ok()); }, app.actor.list.System, Scope.app, global::app.@event.binding.@this.Always));
+        app.@event.Add(app.goal.type).Add("load")[When.after].Add(side => new global::app.@event.binding.@this(side, (item, _, ctx) => { handed.Add(item); return Task.FromResult(ctx.Ok()); }, app.actor.list.System, Scope.app, global::app.@event.binding.@this.Always));
 
         var loaded = await app.goal.Load(Pr);
 
@@ -48,8 +48,7 @@ public class LoadTests
     [Test] public async Task AFailingBeforeLoad_IsTheAnswer_AndNothingIsRead()
     {
         await using var app = new global::app.@this(Fixtures(), global::PLang.Tests.Parent.Actor).Testing();
-        app.actor.list.System.on.Bind(app.goal.type, "load", When.before,
-            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Refused", 400))), Scope.app);
+        app.@event.Add(app.goal.type).Add("load")[When.before].Add(side => new global::app.@event.binding.@this(side, (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Refused", 400))), app.actor.list.System, Scope.app, global::app.@event.binding.@this.Always));
 
         var loaded = await app.goal.Load(Pr);
 
@@ -61,12 +60,12 @@ public class LoadTests
     [Test] public async Task ACancellingBeforeLoad_IsTheAnswer_AndNothingIsRead()
     {
         await using var app = new global::app.@this(Fixtures(), global::PLang.Tests.Parent.Actor).Testing();
-        app.actor.list.System.on.Bind(app.goal.type, "load", When.before, (_, _, ctx) =>
+        app.@event.Add(app.goal.type).Add("load")[When.before].Add(side => new global::app.@event.binding.@this(side, (_, _, ctx) =>
         {
             var instead = ctx.Ok("instead");
             instead.Handled = true;
             return Task.FromResult(instead);
-        }, Scope.app);
+        }, app.actor.list.System, Scope.app, global::app.@event.binding.@this.Always));
 
         var loaded = await app.goal.Load(Pr);
 
@@ -77,8 +76,7 @@ public class LoadTests
     [Test] public async Task AFailingAfterLoad_IsTheAnswer()
     {
         await using var app = new global::app.@this(Fixtures(), global::PLang.Tests.Parent.Actor).Testing();
-        app.actor.list.System.on.Bind(app.goal.type, "load", When.after,
-            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Broke", 400))), Scope.app);
+        app.@event.Add(app.goal.type).Add("load")[When.after].Add(side => new global::app.@event.binding.@this(side, (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Broke", 400))), app.actor.list.System, Scope.app, global::app.@event.binding.@this.Always));
 
         var loaded = await app.goal.Load(Pr);
 
@@ -90,7 +88,7 @@ public class LoadTests
     {
         await using var app = new global::app.@this(Fixtures(), global::PLang.Tests.Parent.Actor).Testing();
         var loads = 0;
-        app.actor.list.System.on.Bind(app.goal.type, "load", When.after, (_, _, ctx) => { loads++; return Task.FromResult(ctx.Ok()); }, Scope.app);
+        app.@event.Add(app.goal.type).Add("load")[When.after].Add(side => new global::app.@event.binding.@this(side, (_, _, ctx) => { loads++; return Task.FromResult(ctx.Ok()); }, app.actor.list.System, Scope.app, global::app.@event.binding.@this.Always));
 
         await (await app.goal.Load(Pr)).IsSuccess();
         await (await app.goal.Load(Pr)).IsSuccess();

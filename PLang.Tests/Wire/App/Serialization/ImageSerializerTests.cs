@@ -48,7 +48,7 @@ public class ImageSerializerTests
         {
             app.type.list["text"].kind,
             app.type.list["item"].kind["json"]!,
-            app.type.list["wire"].kind["plang"]!,
+            app.type.list.Plang,
             app.type.list["list"].kind["formal"]!,
         };
         foreach (var kind in kinds)

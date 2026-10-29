@@ -1,0 +1,30 @@
+/ A run saved inside a bound call keeps %!event%: Log is bound before each goal, so it runs before Work starts, saves the
+/ run there and keeps it in workspace/run.plang. Resumed, the run goes on from that save inside Log and reads
+/ %!event!item.name% right after it — no goal starts in between — so it names the goal the saved event fired for. The
+/ marker, written after the save and never in the snapshot, says the run is the resumed one; the resumed run then goes on
+/ through this goal and ends at the marker.
+Start
+- delete file 'workspace/resumed.marker', on error 'NotFound' ignore
+- before each goal, call Log
+- call Work
+- if file 'workspace/resumed.marker' exists
+    - end goal
+- write "here" to file 'workspace/resumed.marker'
+- read file 'workspace/run.plang', write to %snapshot%
+- resume %snapshot%
+- read file 'workspace/seen.txt', write to %seen%
+- assert %seen% equals "Work"
+- delete file 'workspace/run.plang'
+- delete file 'workspace/resumed.marker'
+- delete file 'workspace/seen.txt'
+
+/ The goal the event fires for.
+Work
+- set %worked% = "yes"
+
+/ The bound call: saves the run while it runs; resumed, it writes what the event fired for.
+Log
+- save snapshot, write to %run%
+- save %run% to file 'workspace/run.plang'
+- if file 'workspace/resumed.marker' exists
+    - write "%!event!item.name%" to file 'workspace/seen.txt'

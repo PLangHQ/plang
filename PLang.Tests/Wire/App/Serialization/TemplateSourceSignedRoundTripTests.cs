@@ -21,7 +21,7 @@ public class TemplateSourceSignedRoundTripTests
                 app.type.list.Stamp("text/plain", ctx), context: ctx));
             // the Data a step's `Value=%original%` slot holds: a source, the template %original%
             var slot = (await ctx.Action("archive.pack(Value=%original%)")).Property["Value"]!.Data(ctx);
-            var plang = app.type.list["wire"].kind["plang"]!;
+            var plang = app.type.list.Plang;
 
             using var wire = new System.IO.MemoryStream();
             await (await plang.Encode(wire, slot, ctx)).IsSuccess();

@@ -158,4 +158,36 @@ public class ErrorShowTests : System.IAsyncDisposable
         await Assert.That(text).Contains("Start ×3 - /Start.goal:3");
         await Assert.That(text.Split('\n').Count(l => l.Trim() == "Start - /Start.goal:3")).IsEqualTo(1);
     }
+
+    // A run 20 calls deep shows the nearest 10, then …, then the first 3.
+    [Test]
+    public async Task Show_A500_TwentyDeep_ShowsTheNearestTenAndTheFirstThree()
+    {
+        var context = _app.actor.list.User.Context;
+        var built = Make.Goal(context, "Start", "/Start.goal", Enumerable.Range(1, 20).Select(line =>
+            Make.Step($"step {line}", Make.Action(context, "variable", "set", Make.Param(context, "Name", "x", "variable"), ("Value", line)))).ToArray());
+        for (var at = 0; at < 20; at++) built.Step[at].Line = new() { Number = at + 1 };
+        var goal = await RealGoalLoad.ViaChannel(_app, built);
+        var calls = new List<global::app.call.@this>();
+        var error = new global::app.error.@this("too deep", goal.Step[19], "Deep", 500);
+        try
+        {
+            for (var at = 0; at < 20; at++)
+                calls.Add(context.call.Push(goal.Step[at].Code[0], await context.call.Setting(), context.Variable));
+            calls[^1].Record(error, context);
+        }
+        finally
+        {
+            for (var at = calls.Count - 1; at >= 0; at--) await calls[at].DisposeAsync();
+        }
+
+        var text = await Show(error);
+
+        var stack = text[(text.IndexOf("Call stack:") + "Call stack:".Length)..].Split('\n')
+            .Select(line => line.Trim()).Where(line => line.Length > 0).ToList();
+        var expected = Enumerable.Range(11, 10).Reverse().Select(line => $"Start - /Start.goal:{line}")
+            .Append("…")
+            .Concat(new[] { 3, 2, 1 }.Select(line => $"Start - /Start.goal:{line}"));
+        await Assert.That(string.Join("\n", stack)).IsEqualTo(string.Join("\n", expected));
+    }
 }

@@ -48,7 +48,7 @@ public class OnEventTests
         var binding = await Bind("%!app.type.goal.on.start%", "before", "Log");
 
         // held on the binding actor's context, never on the type entry
-        var before = _app.actor.list.User.on[_app.type.list["goal"]].start.before;
+        var before = _app.@event.Add(_app.type.list["goal"]).Add("start").before;
         await Assert.That(before.Count).IsEqualTo(1);
         await Assert.That(_app.type.list["goal"].on.start.before.Count).IsEqualTo(0);
         await Assert.That(before[0]).IsSameReferenceAs(binding);
@@ -121,12 +121,12 @@ public class OnEventTests
         // file.read nothing is bound on answers the shared empty events; the binding is held for it alone
         await Bind("%!app.module.file.read.on.start%", "before", "Log");
 
-        var held = _app.actor.list.User.on;
-        await Assert.That(held[_app.Module("file")["read"]!].start.before.Count).IsEqualTo(1);
-        await Assert.That(held[_app.Module("file")["save"]!].start.before.Count).IsEqualTo(0);
-        await Assert.That(held[_app.Module("file")].start.before.Count).IsEqualTo(0);
-        await Assert.That(held[_app.type.list["action"]].start.before.Count).IsEqualTo(0);
-        await Assert.That(held[_app.Module("output")["write"]!].start.before.Count).IsEqualTo(0);
+        var events = _app.@event;
+        await Assert.That(events[_app.Module("file")["read"]!]?.start.before.Count).IsEqualTo(1);
+        await Assert.That(events[_app.Module("file")["save"]!]?.start.before.Count ?? 0).IsEqualTo(0);
+        await Assert.That(events[_app.Module("file")]?.start.before.Count ?? 0).IsEqualTo(0);
+        await Assert.That(events[_app.type.list["action"]]?.start.before.Count ?? 0).IsEqualTo(0);
+        await Assert.That(events[_app.Module("output")["write"]!]?.start.before.Count ?? 0).IsEqualTo(0);
         await Assert.That(_app.Module("file")["read"]!.on.start.before.Count).IsEqualTo(0).Because("the item keeps nothing");
     }
 
@@ -309,7 +309,7 @@ public class OnEventTests
         }.Start();
 
         await unbound.IsSuccess();
-        await Assert.That(_app.actor.list.User.on[_app.type.list["goal"]].start.before.Count).IsEqualTo(0);
+        await Assert.That(_app.@event.Add(_app.type.list["goal"]).Add("start").before.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -344,5 +344,27 @@ public class OnEventTests
 
         await cancelled.IsSuccess();
         await Assert.That(cancelled.Handled).IsTrue();
+    }
+
+    // A bound call is the call as it was written, whole: the actor it names runs it, and one written to run on its own
+    // does — the binding finds only the goal it names, and takes nothing else away.
+    [Test]
+    public async Task ABoundCall_KeepsItsActor_AndRunsOnItsOwn_AsItWasWritten()
+    {
+        // what Log saw is kept on the app, where a task's run writes as any run does
+        Goal("Log",
+            Make.Step("sleep 300ms", Make.Action(Ctx, "timer", "sleep", ("Duration", "300ms"))),
+            Keep("!app.who", "%!app.actor.current.name%"));
+        var run = Goal("Run", Keep("ran", "yes"));
+        await (await Make.Action(Ctx, "on", "event", ("Event", "%!app.type.goal.on.start%"), ("When", "before"),
+            ("Action", Make.Action(Ctx, "goal", "call", ("Name", "Log"), ("Actor", "system"), ("Parallel", true)))).Start(Ctx)).IsSuccess();
+
+        await (await run.Start(Ctx)).IsSuccess();
+
+        // on its own: the run went on without waiting for Log, which hasn't written yet
+        await Assert.That(_app.property["who"]).IsNull();
+        for (var waited = 0; _app.property["who"] == null && waited < 50; waited++) await Task.Delay(100);
+        // as its actor: Log ran as the system actor
+        await Assert.That((await _app.property["who"]!.Value())?.ToString()).IsEqualTo("System");
     }
 }

@@ -1,24 +1,20 @@
-using app.error;
-
 namespace app.module.callback;
 
 /// <summary>
-/// PLang's <c>- start %callback%</c> verb. Data is verified by construction (the wire deserialiser
-/// enforces this before producing a Data at all), so no explicit verify call here. If the Data
-/// carries a Snapshot, delegate to <c>Snapshot.Resume(context)</c>; otherwise raise a clear error.
+/// PLang's <c>- start %callback%</c> verb: goes on with the run a callback holds (an error's <c>%!error.callback%</c>)
+/// through the one resume door, <c>snapshot.resume</c>, so a callback is checked as every resume is: unsigned, changed
+/// since it was signed, or another app's, it is refused before anything is restored.
 /// </summary>
 [Action("start", Cacheable = false)]
 public partial class start : IContext
 {
-    /// <summary>The callback Data to start. Must carry a Snapshot.</summary>
+    /// <summary>The callback to start: the signed snapshot a callback holds.</summary>
     [IsNotNull]
     public partial data.@this Callback { get; init; }
 
-    public async Task<data.@this> Start()
-    {
-        if (Callback.Snapshot == null)
-            return Context.Error(new ServiceError(
-                "Resume invoked on Data without a Snapshot", "NoSnapshot", 400));
-        return (await Callback.Snapshot.Resume(Context));
-    }
+    public Task<data.@this> Start()
+        => new global::app.goal.step.action.composed.@this(new global::app.module.snapshot.resume(Context)
+        {
+            Snapshot = global::app.data.@this<global::app.snapshot.@this>.From(Callback),
+        }, Context).Start(Context);
 }

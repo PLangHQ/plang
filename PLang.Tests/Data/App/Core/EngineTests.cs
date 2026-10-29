@@ -299,7 +299,7 @@ public class EngineTests : System.IAsyncDisposable
         var goal = new Goal(engine.type.list) { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", app.actor.list.User.Context) };
         engine.goal.list.Add(goal);
         var context = engine.actor.list.User.Context;
-        await engine.Start(goal, context);
+        await goal.Start(context);
 
         // Goal is restored after execution, but during execution context.Goal was set.
         // After RunAsync completes, Goal is restored to previous (null for root) and
@@ -315,7 +315,7 @@ public class EngineTests : System.IAsyncDisposable
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
-        await engine.Start(goal, context);
+        await goal.Start(context);
 
         // After completion, AsyncLocal Current is restored to its pre-Push value (null).
         await Assert.That(context.call!.Current).IsNull();
@@ -332,7 +332,7 @@ public class EngineTests : System.IAsyncDisposable
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
-        var result = await engine.Start(goal, context);
+        var result = await goal.Start(context);
 
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("test"))).IsEqualTo("hello");
@@ -494,7 +494,7 @@ public class EngineTests : System.IAsyncDisposable
                 Make.Action(app.actor.list.User.Context, "variable", "set", Make.Param(app.actor.list.User.Context, "Name", "test", "variable"), ("Value", "hello")))));
         engine.goal.list.Add(goal);
 
-        var result = await engine.Start(goal, engine.actor.list.System.Context);
+        var result = await goal.Start(engine.actor.list.System.Context);
 
         await result.IsSuccess();
         await Assert.That((await engine.actor.list.System.Context.Variable.GetValue("test"))).IsEqualTo("hello");

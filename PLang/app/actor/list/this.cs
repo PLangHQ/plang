@@ -4,7 +4,7 @@ namespace app.actor.list;
 /// The app's actors — a list of the two, System and User, reached at <c>app.actor.list</c>; one is picked
 /// by name through the type (<c>app.actor.Get("user")</c>). System and User are its well-known members —
 /// the same instances, not a second store. Owns their lifecycle: System is the cancellation root, User
-/// links to its token, both dispose here.
+/// links to its token, both dispose here. In a snapshot it is where the two live, so it writes each whole.
 /// </summary>
 public sealed class @this : global::app.type.item.list.@this<actor.@this>, IAsyncDisposable
 {
@@ -17,10 +17,14 @@ public sealed class @this : global::app.type.item.list.@this<actor.@this>, IAsyn
         Add(User);
     }
 
-    /// <summary>The system actor — the root of the cancellation hierarchy.</summary>
+    /// <summary>The system actor — the root of the cancellation hierarchy. It lives here, so a snapshot writes it whole
+    /// here; anywhere else it is its name.</summary>
+    [global::app.Snapshot]
     public actor.@this System { get; }
 
-    /// <summary>The user actor, for end-user operations. Linked to System's cancellation token.</summary>
+    /// <summary>The user actor, for end-user operations. Linked to System's cancellation token. It lives here, as the
+    /// system actor does.</summary>
+    [global::app.Snapshot]
     public actor.@this User { get; }
 
     /// <summary>The actor <paramref name="name"/> names — the closed set's own members.</summary>

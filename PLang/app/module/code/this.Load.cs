@@ -1,9 +1,14 @@
+using System.Collections.Concurrent;
 using app.error;
 
 namespace app.module.code;
 
 public sealed partial class @this
 {
+    // Every DLL this run took in, in order, each remembered by the door it came through (dll.loaded: Register; dll.added:
+    // Add). A snapshot takes each in again the same way.
+    private readonly ConcurrentQueue<dll.@this> _dll = new();
+
     /// <summary>
     /// The assembly at <paramref name="path"/> loaded into the app — through the path's Execute gate (a Read
     /// grant on the folder is no permission to run code from it; a missing file is the path's NotFound) — its
@@ -46,6 +51,19 @@ public sealed partial class @this
                 if (Register(iface, instance) is { Success: false } refused) return refused;
             registered.Add(instance);
         }
+        _dll.Enqueue(new dll.loaded.@this(context.App.type.list[typeof(dll.loaded.@this)]) { Source = source });
         return context.Ok(registered);
+    }
+
+    /// <summary>
+    /// The modules <paramref name="assembly"/> brings, joined to the app's (its actions found under
+    /// <paramref name="namespace"/>, else everywhere in it), remembered with the DLL they came from
+    /// (<paramref name="source"/>) so a snapshot loads it again. How many actions it brought.
+    /// </summary>
+    public int Add(System.Reflection.Assembly assembly, string? @namespace, global::app.type.item.path.@this source)
+    {
+        var count = Context.App.module.Discover(assembly, @namespace);
+        _dll.Enqueue(new dll.added.@this(Context.App.type.list[typeof(dll.added.@this)]) { Source = source, Namespace = @namespace });
+        return count;
     }
 }

@@ -196,8 +196,7 @@ public class SubAppFullPassProbeTests : System.IAsyncDisposable
         await (await Work(cousin)).IsSuccess();
         await (await Work(maker)).IsSuccess();
         await Assert.That(maker.type.list["step"].on.start.before.Count).IsEqualTo(0);
-        foreach (var a in maker.actor.list.Items())
-            await Assert.That(a.on.Of(maker.type.list["step"])?.start.before.Count ?? 0).IsEqualTo(0);
+        await Assert.That(maker.@event[maker.type.list["step"]]?.start.before.Count ?? 0).IsEqualTo(0);
     }
 
     // an actor-scoped binding of the sub's System never fires for the maker's or the sub's User

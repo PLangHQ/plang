@@ -32,7 +32,7 @@ public class StartGoalTests
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
-        var result = await engine.Start(goal, context);
+        var result = await goal.Start(context);
 
         await result.IsSuccess();
 
@@ -64,7 +64,7 @@ public class StartGoalTests
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
-        var result = await engine.Start(goal, context);
+        var result = await goal.Start(context);
 
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("result"))).IsEqualTo("Hello");
@@ -85,7 +85,7 @@ public class StartGoalTests
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
-        var result = await engine.Start(goal, context);
+        var result = await goal.Start(context);
 
         await result.IsSuccess();
         await Assert.That(capture.Text).Contains("Hello World!");
@@ -104,7 +104,7 @@ public class StartGoalTests
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
-        var result = await engine.Start(goal, context);
+        var result = await goal.Start(context);
 
         await result.IsSuccess();
         await Assert.That(capture.Text).Contains("no variables here");
@@ -126,7 +126,7 @@ public class StartGoalTests
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
-        var result = await engine.Start(goal, context);
+        var result = await goal.Start(context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("VariableNotFound");
@@ -146,7 +146,7 @@ public class StartGoalTests
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
-        var result = await engine.Start(goal, context);
+        var result = await goal.Start(context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("VariableNotFound");
@@ -171,7 +171,7 @@ public class StartGoalTests
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
-        var result = await engine.Start(goal, context);
+        var result = await goal.Start(context);
 
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("greeting"))).IsEqualTo("hello");
@@ -197,7 +197,7 @@ public class StartGoalTests
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
-        var result = await engine.Start(goal, context);
+        var result = await goal.Start(context);
 
         await result.IsSuccess();
         // "long" from parameters, not "string" from defaults
@@ -217,7 +217,7 @@ public class StartGoalTests
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
-        var result = await engine.Start(goal, context);
+        var result = await goal.Start(context);
 
         await result.IsSuccess();
         // Type is derived from value ("y" is a string), not from defaults or [Default] attribute

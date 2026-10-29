@@ -7,7 +7,7 @@ namespace app.@event.binding.list;
 /// </summary>
 public sealed class before : @this
 {
-    /// <summary>An own event's list: it takes bindings.</summary>
+    /// <summary>An item's event's list: it takes bindings.</summary>
     internal before() : base(open: true) { }
 
     private before(bool open) : base(open) { }

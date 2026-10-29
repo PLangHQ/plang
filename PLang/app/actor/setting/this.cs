@@ -269,14 +269,17 @@ public sealed class @this : IDisposable
         {
             if (_actor!.Address(row.Name) is not { } address) continue;
             var value = await row.Value();
-            // A row that could NOT be read — an older-shape row no reader takes — is kept WITH its error, never
-            // silently skipped: its read named the key and how to fix it (delete it and set it again). It is
-            // said on the debug channel now, and held so a read of that setting answers the error (loud), not
-            // a silent default. A row that read to nothing (a null value) is simply absent.
+            // A row that could NOT be read — an older-shape row no reader takes, a signature that can't be checked —
+            // is kept WITH why, never silently skipped: held as an error naming the row and how to fix it (delete it
+            // and set it again), its read's own error whole as the cause. It is said on the debug channel now, and a
+            // read of that setting answers it (loud), not a silent default. A row that read to nothing (a null value)
+            // is simply absent.
             if (!row.Success)
             {
                 await (_context.App.Debug?.Write($"settings: '{address}' could not be read — {row.Error?.Message}") ?? Task.CompletedTask);
-                rows[address] = row;
+                rows[address] = _context.Error(new global::app.error.@this(
+                    $"setting '{address}' could not be read — delete it and set it again", "SettingsUnreadable", 400)
+                    { list = row.Error is { } why ? [why] : [] });
             }
             // An actor's own row is its owner's code's, saved signed: one without its signature was written below plang,
             // and is refused — held with why, so a read of that setting is loud, never a grant nobody asked for

@@ -16,15 +16,13 @@ public class DeclaredEventsTests : System.IAsyncDisposable
     {
         var window = new Window();
         global::app.data.@this? heard = null;
-        _app.actor.list.User.on.Bind(window, "closed", global::app.@event.When.after,
-            (_, data, _) => { heard = data; return System.Threading.Tasks.Task.FromResult(data); },
-            global::app.@event.binding.Scope.actor);
+        _app.@event.Add(window).Add("closed")[global::app.@event.When.after].Add(side => new global::app.@event.binding.@this(side, (_, data, _) => { heard = data; return System.Threading.Tasks.Task.FromResult(data); }, _app.actor.list.User, global::app.@event.binding.Scope.actor, global::app.@event.binding.@this.Always));
 
-        await _app.actor.list.User.on[window]["closed"]!.After(window, Ctx.Ok((global::app.type.item.text.@this)"{\"window\":\"closed\",\"id\":3}"), Ctx);
+        await _app.@event.Add(window).Add("closed").After(window, Ctx.Ok((global::app.type.item.text.@this)"{\"window\":\"closed\",\"id\":3}"), Ctx);
 
         await Assert.That(heard).IsNotNull();
-        await Assert.That(_app.actor.list.User.on[window].Names).Contains("closed");
-        await Assert.That(_app.actor.list.User.on[window].Names).Contains("create");
+        await Assert.That(_app.@event.Add(window).Names).Contains("closed");
+        await Assert.That(_app.@event.Add(window).Names).Contains("create");
     }
 
     // nothing bound on a window yet: its declared events are still there to raise, shared and closed to bindings
@@ -42,13 +40,13 @@ public class DeclaredEventsTests : System.IAsyncDisposable
     [Test] public async Task TheWindowListsEvents_AreReachedByName_AnIndexIsAWindow()
     {
         var list = new global::app.module.window.type.window.list.@this(null!);
-        var held = new global::app.data.@this("windows", list, context: Ctx);
+        var windows = new global::app.data.@this("windows", list, context: Ctx);
 
-        var closed = await held.Get("on.closed");
+        var closed = await windows.Get("on.closed");
         await closed.IsSuccess();
-        var desktop = await held.Get("[0]");
+        var desktop = await windows.Get("[0]");
         await desktop.IsSuccess();   // [0], the desktop: an index is a window
-        var none = await held.Get("[7]");
+        var none = await windows.Get("[7]");
         await Assert.That((await none.Value())?.IsNull ?? true).IsTrue();   // no window 7: nothing (not found)
     }
 
@@ -61,8 +59,8 @@ public class DeclaredEventsTests : System.IAsyncDisposable
         await Assert.That(text.on["closed"]).IsNull();
         await Assert.That(window.on["click"]).IsNull();
 
-        var held = new global::app.data.@this("w", window, context: Ctx);
-        var refused = await (await held.Get("on")).Get("click");
+        var data = new global::app.data.@this("w", window, context: Ctx);
+        var refused = await (await data.Get("on")).Get("click");
         await refused.IsFailure();
         await Assert.That(refused.Error!.Key).IsEqualTo("EventNotFound");
         await Assert.That(refused.Error.Message).Contains("closed");

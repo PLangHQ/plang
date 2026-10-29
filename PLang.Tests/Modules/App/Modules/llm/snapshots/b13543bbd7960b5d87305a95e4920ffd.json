@@ -1,0 +1,45 @@
+{
+  "id": "chatcmpl-EdIFeJA8CqyiKQt6oxzlD6FTeaR1w",
+  "object": "chat.completion",
+  "created": 1793033658,
+  "model": "gpt-5.4-nano-2026-03-17",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "call_dK6o6JxTQE6dHxIi6XL9xwoe",
+            "type": "function",
+            "function": {
+              "name": "GetWeather",
+              "arguments": "{\"city\":\"London\"}"
+            }
+          }
+        ],
+        "refusal": null,
+        "annotations": []
+      },
+      "finish_reason": "tool_calls"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 142,
+    "completion_tokens": 17,
+    "total_tokens": 159,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "service_tier": "default",
+  "system_fingerprint": null
+}

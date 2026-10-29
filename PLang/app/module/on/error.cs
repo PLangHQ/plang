@@ -47,8 +47,8 @@ public partial class OnError : IContext, IClause, IAction
         return null;
     }
 
-    public void Bind(Action clause, Action action, global::app.@event.on.own on)
-        => on.Bind("error", global::app.@event.When.before, side => new global::app.@event.binding.clause.@this(
+    public void Bind(Action clause, Action action, global::app.@event.on.@this on)
+        => on.Add("error").before.Add(side => new global::app.@event.binding.clause.@this(
             side, clause, action, (handler, a, failed, context) => ((OnError)handler).Catch(a, failed, context)));
 
     /// <summary>This clause's answer to <paramref name="action"/>'s failure: the failure itself, handed back, when
@@ -77,7 +77,7 @@ public partial class OnError : IContext, IClause, IAction
             global::app.data.@this? recoveryResult = null;
             if (hasRecovery)
             {
-                recoveryResult = await Recover(recovery!, context);
+                recoveryResult = await recovery!.Start(context);
                 if (!recoveryResult.Success) Chain(failed.Error!, recoveryResult.Error!);
             }
             var retryResult = await Retry(action, context);
@@ -98,7 +98,7 @@ public partial class OnError : IContext, IClause, IAction
             if (retryResult?.Success == true) return retryResult;
             if (hasRecovery)
             {
-                var recoveryResult = await Recover(recovery!, context);
+                var recoveryResult = await recovery!.Start(context);
                 if (recoveryResult.Success)
                 {
                     if (erroredCall != null) erroredCall.Handled = true;
@@ -128,20 +128,6 @@ public partial class OnError : IContext, IClause, IAction
     private void Chain(global::app.error.@this original, global::app.error.@this recovery)
     {
         if (!ReferenceEquals(original, recovery)) original.list.Add(recovery);
-    }
-
-    /// <summary>
-    /// Runs this clause's recovery under a diff-capture scope, so handler-time mutations land on the
-    /// CallStack's diff stream and <c>Variables.SnapshotAt</c> can project back to throw-time state.
-    /// <c>%!error%</c> needs nothing here — the error is on the frame we are standing in, and
-    /// <c>CallStack.Error</c> reads it there.
-    /// </summary>
-    private async Task<global::app.data.@this> Recover(global::app.goal.step.action.list.@this recovery, actor.context.@this context)
-    {
-        using (context.call.DiffScope(context.Variable))
-        {
-            return await recovery.Start(context);
-        }
     }
 
     /// <summary>

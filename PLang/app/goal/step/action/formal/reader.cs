@@ -74,7 +74,7 @@ public sealed class Reader
         public string? Json;                                   // a scalar: "text", 5, true, null, "%x%"
         public global::app.goal.step.action.@this? Action;     // an action held as a value
         public List<Literal>? Items;                           // [ … ]
-        public List<(string Key, string? Type, Literal Value)>? Entries;   // { … }
+        public List<(string Key, string? Type, Literal Value)>? Dict;      // { … }
         public bool IsVariable;                                // written bare: %x%
         public System.Text.Json.JsonValueKind Kind;            // of a scalar
     }
@@ -138,16 +138,31 @@ public sealed class Reader
             _pos += s.Length;
         }
 
-        private string? Match(string pattern)
+        // The tokens a line is read by, each anchored where the cursor stands (\G), made once.
+        private static readonly System.Text.RegularExpressions.Regex Name = new(@"\G[A-Za-z_][A-Za-z0-9_]*");
+        private static readonly System.Text.RegularExpressions.Regex BareKey = new(@"\G[A-Za-z_][\w-]*");
+        private static readonly System.Text.RegularExpressions.Regex ActionHead = new(@"\G[A-Za-z_]\w*\.[A-Za-z_]\w*\s*\(");
+        private static readonly System.Text.RegularExpressions.Regex TypeWord = new(@"\G\w+(?:<\w+>)?");
+        private static readonly System.Text.RegularExpressions.Regex Symbol = new(@"\G[=!<>]+");
+        private static readonly System.Text.RegularExpressions.Regex Word = new(@"\G[A-Za-z_]\w*(?![\w.(])");
+        private static readonly System.Text.RegularExpressions.Regex TextWord = new(@"\G[A-Za-z_]\w*(?![\w.(%])");
+        private static readonly System.Text.RegularExpressions.Regex Span = new(@"\G-?(?:P[0-9A-Za-z.]+|\d+(?:\.\d+)?(?:ms|s|m|h|d))(?![\w.(%])");
+        private static readonly System.Text.RegularExpressions.Regex Quoted = new(@"\G""(?:[^""\\]|\\.)*""");
+        private static readonly System.Text.RegularExpressions.Regex Number = new(@"\G-?\d+(?:\.\d+)?(?![\w.])");
+        private static readonly System.Text.RegularExpressions.Regex Bare = new(@"\G[A-Za-z_/][\w./-]*");
+        private static readonly System.Text.RegularExpressions.Regex Constant = new(@"\G(?:true|false|null)\b");
+        private static readonly System.Text.RegularExpressions.Regex EntryType = new(@"\G(\w+(?:<\w+>)?)\s*(\?=|=)");
+
+        private string? Match(System.Text.RegularExpressions.Regex token)
         {
             Space();
-            var m = new System.Text.RegularExpressions.Regex(@"\G(?:" + pattern + ")").Match(_text, _pos);
+            var m = token.Match(_text, _pos);
             return m.Success ? m.Value : null;
         }
 
         private string Ident()
         {
-            var name = Match(@"[A-Za-z_][A-Za-z0-9_]*");
+            var name = Match(Name);
             if (name == null) Fail("expected a name");
             _pos += name!.Length;
             return name;
@@ -157,13 +172,13 @@ public sealed class Reader
         // `X-Probe: "x"`). A key holding anything else is written quoted.
         private string Key()
         {
-            var key = Match(@"[A-Za-z_][\w-]*");
+            var key = Match(BareKey);
             if (key == null) Fail("expected a key");
             _pos += key!.Length;
             return key;
         }
 
-        private bool AtAction() => Match(@"[A-Za-z_]\w*\.[A-Za-z_]\w*\s*\(") != null;
+        private bool AtAction() => Match(ActionHead) != null;
 
         // ---------------------------------------------------------------- actions
 
@@ -288,7 +303,7 @@ public sealed class Reader
             Take(":");
             Space();
             var at = _pos;
-            var type = Match(@"\w+(?:<\w+>)?");
+            var type = Match(TypeWord);
             if (type == null) Fail("expected a type after `:`");
             _pos += type!.Length;
             if (slot != null && slot != "item" && type != slot) Fail($"`{prop}` is {slot}, not {type}", at);
@@ -309,34 +324,34 @@ public sealed class Reader
             var frozen = Peek("?=");
             var options = property.Type.Values;
             // a choice's symbol option may stand bare right after its `=`: Operator=== is Operator="=="
-            var afterEquals = new System.Text.RegularExpressions.Regex(@"\G[=!<>]+").Match(_text, System.Math.Min(_pos + (frozen ? 2 : 1), _text.Length)).Value;
+            var afterEquals = Symbol.Match(_text, System.Math.Min(_pos + (frozen ? 2 : 1), _text.Length)).Value;
             if (Peek("==") && !(options is { Count: > 0 } && options.Contains(afterEquals)))
                 Fail($"one `=` gives a value: {prop}=\"==\"");
             Take(frozen ? "?=" : "=");
             Space();
             var at = _pos;
             Literal value;
-            if (options is { Count: > 0 } && Match(@"[=!<>]+") is { } symbol)
+            if (options is { Count: > 0 } && Match(Symbol) is { } symbol)
             {
                 // a symbol option, bare: a name out of the same closed set, written with no quotes
                 if (!options.Contains(symbol)) Fail($"`{prop}` is one of {string.Join(", ", options)}; `{symbol}` is not", at);
                 _pos += symbol.Length;
                 value = Scalar(System.Text.Json.JsonSerializer.Serialize(symbol), System.Text.Json.JsonValueKind.String);
             }
-            else if (options is { Count: > 0 } && Match(@"[A-Za-z_]\w*(?![\w.(])") is { } word && word is not ("true" or "false" or "null"))
+            else if (options is { Count: > 0 } && Match(Word) is { } word && word is not ("true" or "false" or "null"))
             {
                 // a choice's option may stand bare: it is a name out of a closed set
                 if (!options.Contains(word)) Fail($"`{prop}` is one of {string.Join(", ", options)}; `{word}` is not", at);
                 _pos += word.Length;
                 value = Scalar(System.Text.Json.JsonSerializer.Serialize(word), System.Text.Json.JsonValueKind.String);
             }
-            else if (property.Type.Name == "text" && Match(@"[A-Za-z_]\w*(?![\w.(%])") is { } text && text is not ("true" or "false" or "null"))
+            else if (property.Type.Name == "text" && Match(TextWord) is { } text && text is not ("true" or "false" or "null"))
             {
                 // a single unquoted word in a text property is that text
                 _pos += text.Length;
                 value = Scalar(System.Text.Json.JsonSerializer.Serialize(text), System.Text.Json.JsonValueKind.String);
             }
-            else if (property.Type.Name == "duration" && Match(@"-?(?:P[0-9A-Za-z.]+|\d+(?:\.\d+)?(?:ms|s|m|h|d))(?![\w.(%])") is { } span
+            else if (property.Type.Name == "duration" && Match(Span) is { } span
                      && global::app.type.item.duration.@this.Resolve(span, _context) != null)
             {
                 // a duration reads its own literal bare, as a choice reads its option: After=5s is After="5s",
@@ -374,7 +389,7 @@ public sealed class Reader
             // their names. Any other slot is what the step wrote: a list of objects stays a list of objects
             var holdsRecords = property.Member?.IsDefined(typeof(global::app.Attributes.RecordsAttribute), inherit: false) == true;
             if (value.Action != null) born = value.Action;
-            else if (holdsRecords && value.Items is { } records && records.All(r => r.Entries is [_]))
+            else if (holdsRecords && value.Items is { } records && records.All(r => r.Dict is [_]))
                 born = Born(type, await Arguments(records), marks: false);
             else if (holdsRecords && !value.IsVariable)
             { Fail($"`{prop}` takes a list of arguments, each a record: {prop}=[{{name: type = value}}, {{other: type = %x%}}]", at); return default; }
@@ -433,7 +448,7 @@ public sealed class Reader
         {
             if (v.Action != null) return "action";
             if (v.Items != null) return "list";
-            if (v.Entries != null) return "dict";
+            if (v.Dict != null) return "dict";
             if (v.IsVariable) return "item";
             return v.Kind switch
             {
@@ -461,7 +476,7 @@ public sealed class Reader
         private async System.Threading.Tasks.Task<string> Arguments(List<Literal> records)
         {
             var rows = new List<string>();
-            foreach (var e in records.Select(r => r.Entries![0]))
+            foreach (var e in records.Select(r => r.Dict![0]))
             {
                 var json = Json(e.Value);
                 var variables = Variables(json).DistinctBy(x => x.Text).ToList();
@@ -494,8 +509,8 @@ public sealed class Reader
             if (v.Json != null) return v.Json;
             if (v.Items != null) return "[" + string.Join(",", v.Items.Select(Json)) + "]";
             // an object's entries keep their type: a typed one is the row a dict writes for it, its type and its value
-            if (v.Entries != null)
-                return "{" + string.Join(",", v.Entries.Select(e => System.Text.Json.JsonSerializer.Serialize(e.Key) + ":"
+            if (v.Dict != null)
+                return "{" + string.Join(",", v.Dict.Select(e => System.Text.Json.JsonSerializer.Serialize(e.Key) + ":"
                     + (e.Type is { } type ? Typed(type, e.Value) : Json(e.Value)))) + "}";
             Fail("an action can't be a value here");
             return "";
@@ -519,7 +534,7 @@ public sealed class Reader
             var c = _text[_pos];
             if (c == '"')
             {
-                var s = Match(@"""(?:[^""\\]|\\.)*""");
+                var s = Match(Quoted);
                 if (s == null) Fail("a text is not closed");
                 _pos += s!.Length;
                 return Scalar(s, System.Text.Json.JsonValueKind.String);
@@ -547,11 +562,11 @@ public sealed class Reader
             if (c == '{')
             {
                 _pos++;
-                var entries = new List<(string, string?, Literal)>();
+                var dict = new List<(string, string?, Literal)>();
                 while (!Peek("}"))
                 {
                     if (AtEnd) Fail("a dict is not closed: expected `}`");
-                    if (entries.Count > 0) Take(",");
+                    if (dict.Count > 0) Take(",");
                     Space();
                     string key;
                     if (_pos < _text.Length && _text[_pos] == '"')
@@ -564,24 +579,32 @@ public sealed class Reader
                     Space();
                     // `key: type = value` is a typed argument row
                     string? type = null;
-                    var typed = new System.Text.RegularExpressions.Regex(@"\G(\w+(?:<\w+>)?)\s*(\?=|=)").Match(_text, _pos);
+                    var typed = EntryType.Match(_text, _pos);
                     if (typed.Success && typed.Groups[1].Value is not ("true" or "false" or "null"))
                     {
                         type = typed.Groups[1].Value;
                         _pos += typed.Length;
                     }
-                    entries.Add((key, type, await Value()));
+                    dict.Add((key, type, await Value()));
                 }
                 Take("}");
-                return new Literal { Entries = entries };
+                return new Literal { Dict = dict };
             }
-            if (Match(@"-?\d+(?:\.\d+)?(?![\w.])") is { } number)
+            if (Match(Number) is { } number)
             {
                 _pos += number.Length;
                 return Scalar(number, System.Text.Json.JsonValueKind.Number);
             }
-            foreach (var (word, kind) in new[] { ("true", System.Text.Json.JsonValueKind.True), ("false", System.Text.Json.JsonValueKind.False), ("null", System.Text.Json.JsonValueKind.Null) })
-                if (Match(word + @"\b") != null) { _pos += word.Length; return Scalar(word, kind); }
+            if (Match(Constant) is { } word)
+            {
+                _pos += word.Length;
+                return Scalar(word, word switch
+                {
+                    "true" => System.Text.Json.JsonValueKind.True,
+                    "false" => System.Text.Json.JsonValueKind.False,
+                    _ => System.Text.Json.JsonValueKind.Null,
+                });
+            }
             if (AtAction())
             {
                 // an action held as a value stands alone: a modifier there has no action before it
@@ -589,7 +612,7 @@ public sealed class Reader
                 Attach(actions, await Action());
                 return new Literal { Action = actions[0] };
             }
-            if (Match(@"[A-Za-z_/][\w./-]*") is { } bare) Fail($"a text must be in quotes: write \"{bare}\", not {bare}");
+            if (Match(Bare) is { } bare) Fail($"a text must be in quotes: write \"{bare}\", not {bare}");
             if (_text[_pos] == '?') Fail("a `?` is still there: fill it with the value the step gives");
             Fail("expected a value: \"text\", a number, true, false, null, %variable%, [list], {dict} or an action");
             return null!;

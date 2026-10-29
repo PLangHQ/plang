@@ -21,6 +21,11 @@ low load beside a slow row means "run it again").
 How far two runs at the same load differ, from the runs on `fast-apps` (stage 3b, stage 5, three rounds each, 8 cpus,
 load 1–3). A difference inside the band is noise; outside it is a change worth a look.
 
+**Tiered PGO (2026-10-28):** with the runtime's default, the same binary gave a root request of 3566 or 3790 KB, run to
+run (22 ms or 55 ms beside it); with `DOTNET_TieredPGO=0` or `DOTNET_TieredCompilation=0` it gave 3829 KB every time. The
+extra bytes are the runtime's instrumentation, not the code. `run.sh` sets `DOTNET_TieredPGO=0` from here on; rows before
+it may sit in either mode (root request 3555–3841), so compare a row before it only by its birth columns.
+
 | Number | Band (two runs, load < 3) | From |
 |---|---|---|
 | Sub app birth, ms | ±0.02 ms (0.14–0.16) | 6 Release rounds |
@@ -51,6 +56,20 @@ per birth + dispose; a request app is born, a goal loaded and run, disposed, × 
 | Date | Branch | Commit | Load | Sub birth | Root birth | Sub request | Root request | Held, sub (MB) | Held, root (MB) | `plang --test` | C# sweep | Build, clean | Build, incr. |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 <!-- rows -->
+| 2026-10-29 | snapshot | c1e1a9248 (snapshot-d4c2abe81) | 33.41 | 0.40 ms, 99 KB | 33.00 ms, 2353 KB | 3.61 ms, 496 KB | 56.76 ms, 3814 KB | 1.6 → 2.0 → 2.0 → 2.0 | 0.1 → 1.9 → 2.6 → 1.9 | - | - | - | - |
+| 2026-10-28 | snapshot | 59762dfb1 (snapshot-fa88b00f8) | 8.53 | 0.14 ms, 99 KB | 13.38 ms, 2347 KB | 1.44 ms, 496 KB | 19.65 ms, 3844 KB | 1.6 → 2.0 → 2.0 → 2.0 | 0.1 → 1.9 → 1.9 → 1.9 | - | - | - | - |
+| 2026-10-28 | snapshot | abe3a45f3 (snapshot-1268c81f7) | 3.23 | 0.13 ms, 99 KB | 13.70 ms, 2352 KB | 1.40 ms, 539 KB | 19.21 ms, 3885 KB | 1.6 → 2.0 → 2.0 → 2.0 | 0.1 → 1.9 → 1.9 → 1.9 | 4.0 s (301 pass, 0 fail) | 60.7 s (red: none) | - | - |
+| 2026-10-28 | snapshot | 7ed837a05 (snapshot-fdc1270f2-birth) | 3.05 | 0.14 ms, 99 KB | 14.42 ms, 2336 KB | - | - | - | - | - | - | - | - |
+| 2026-10-28 | snapshot | 92a556872 (snapshot-0cd33f185-request) | 13.59 | - | - | 2.21 ms, 518 KB | 31.90 ms, 3813 KB | 1.6 → 2.0 → 2.0 → 2.0 | 0.1 → 1.9 → 1.9 → 2.6 | - | - | - | - |
+| 2026-10-28 | snapshot | 0cd33f185 (snapshot-0cd33f185) | 2.74 | 0.15 ms, 99 KB | 20.43 ms, 2332 KB | 1.99 ms, 518 KB | 20.50 ms, 3828 KB | 1.6 → 2.0 → 2.0 → 2.0 | 0.1 → 1.9 → 1.9 → 1.9 | 5.1 s (300 pass, 1 fail) | 77.1 s (red: none) | - | - |
+| 2026-10-28 |  | 6fa2f5d87 (snapshot-6fa2f5d87-birth) | 2.77 | 0.15 ms, 100 KB | 19.68 ms, 2310 KB | - | - | - | - | - | - | - | - |
+| 2026-10-28 |  | 4da6a1e58 (snapshot-4da6a1e58-birth) | 2.93 | 0.17 ms, 115 KB | 19.03 ms, 2309 KB | - | - | - | - | - | - | - | - |
+| 2026-10-28 | snapshot | 1314cd233 (snapshot-1314cd233-birth) | 2.34 | 0.15 ms, 115 KB | 18.73 ms, 2309 KB | - | - | - | - | - | - | - | - |
+| 2026-10-28 | snapshot | ab239e127 (snapshot-quiet-HEAD) | 2.61 | 0.15 ms, 115 KB | 18.89 ms, 2309 KB | 1.95 ms, 537 KB | 23.13 ms, 3555 KB | 1.6 → 2.0 → 2.0 → 2.0 → 1.8 | 0.1 → 1.9 → 1.9 → 1.9 → 1.1 | 4.7 s (301 pass, 0 fail) | 43.2 s (red: none) | - | - |
+| 2026-10-28 | snapshot | 35c1b3377 (snapshot-35c1b3377) | 9.08 | 0.15 ms, 115 KB | 19.74 ms, 2308 KB | 2.68 ms, 537 KB | 19.25 ms, 3563 KB | 1.6 → 2.0 → 2.0 → 2.0 → 1.8 | 0.1 → 1.9 → 1.9 → 1.9 → 1.1 | 5.0 s (299 pass, 2 fail: a binary not yet rebuilt for the tip; rebuilt, 307 pass, 0 fail) | 115.4 s (red: none; load 9–14, time void) | - | - |
+| 2026-10-27 | snapshot-7c-wip | 23d61537b (snapshot-recheck) | 2.70 | 0.16 ms, 107 KB | 19.00 ms, 2312 KB | 2.03 ms, 529 KB | 20.25 ms, 3785 KB | 1.6 → 2.0 → 2.0 → 2.0 | 0.1 → 1.9 → 1.9 → 1.9 | 4.8 s (298 pass, 2 fail) | 73.0 s (red: Wire,Runtime) | - | - |
+| 2026-10-27 | snapshot-7c-wip | d119e797f (snapshot-7c-wip-calm) | 2.88 | 0.16 ms, 110 KB | 22.52 ms, 2493 KB | 2.11 ms, 578 KB | 22.65 ms, 4076 KB | 1.7 → 2.1 → 2.1 → 2.1 | 0.1 → 2.0 → 2.0 → 2.0 | 6.9 s (298 pass, 3 fail) | 51.5 s (red: Wire,Data,Runtime) | - | - |
+| 2026-10-27 | snapshot-7c-wip | d119e797f (snapshot-7c-wip) | 9.46 | 0.16 ms, 110 KB | 28.16 ms, 2495 KB | 2.65 ms, 583 KB | 22.31 ms, 4083 KB | 1.7 → 2.1 → 2.1 → 2.1 → 1.9 | 0.1 → 2.0 → 2.0 → 2.0 → 1.1 | 4.8 s (298 pass, 2 fail) | 110.1 s (red: Wire,Data,Runtime) | - | - |
 | 2026-10-26 | windows | 149256d61 (windows-tip) | 2.91 | 0.14 ms, 109 KB | 18.93 ms, 2392 KB | 1.84 ms, 543 KB | 17.92 ms, 3839 KB | 1.6 → 2.1 → 2.1 → 2.1 | 0.1 → 1.9 → 1.9 → 1.9 | 4.5 s (298 pass, 1 fail) | 41.8 s (red: Wire) | - | - |
 | 2026-10-25 | decider-key | 8786cc08d (decider-key-tip2) | 2.97 | - | - | - | - | - | - | - | 40.6 s (red: Wire) | - | - |
 | 2026-10-25 | decider-key | 8786cc08d (decider-key-tip) | 2.85 | - | - | - | - | - | - | 4.5 s (297 pass, 1 fail) | 68.9 s (red: Wire) | - | - |
@@ -78,3 +97,5 @@ tool rows; the first tool row below the stage rows is the calibration.
 Stage 0 and stage 5 are from `.bot/fast-apps/tester/baseline.md` (three rounds each, a range where the rounds differ;
 built by the earlier bench in `.bot/fast-apps/tester/bench/`). Their build columns were not measured. Rows from
 `Tools/Bench/run.sh` give one number per column, not a range.
+| 2026-10-27 |  | d72538402 (base-d72538402) | 2.47 | 0.16 ms, 109 KB | 23.88 ms, 2387 KB | 2.15 ms, 542 KB | 21.81 ms, 3841 KB | 1.6 → 2.1 → 2.1 → 2.1 | 0.1 → 1.9 → 1.9 → 1.9 | - | - | - | - |
+| 2026-10-28 | snapshot | 6e9db97b4 (snapshot-6e9db97b4-request) | 2.76 | - | - | 1.94 ms, 519 KB | 19.49 ms, 3829 KB | 1.6 → 2.0 → 2.0 → 2.0 | 0.1 → 1.9 → 1.9 → 1.9 | - | - | - | - |

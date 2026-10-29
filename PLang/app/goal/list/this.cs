@@ -49,7 +49,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         if (source is not global::app.type.item.path.file.@this file)
             return context.Error(new global::app.error.@this($"{source}: a goal is built from a .goal file, which this isn't", "GoalNotAFile", 400));
         var pr = file.Pr;
-        var loaded = await Fresh(pr, context) is { } held ? context.Ok(held)
+        var loaded = await Fresh(pr, context) is { } goal ? context.Ok(goal)
             : await Inherited(source, context) ?? await Unbuilt(pr, source, context) ?? await Read(pr, context);
         if (loaded.Success && await loaded.Value() is goal.@this { IsSetup: true })
             return context.Error(new global::app.error.@this($"{pr}: a setup goal runs only through setup.", "SetupGoal", 400));
@@ -65,7 +65,36 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     // The goal held from `pr` while its .pr is as it was read; null when none is held, or the file changed since —
     // then it is read again.
     private async Task<goal.@this?> Fresh(global::app.type.item.path.@this pr, actor.context.@this context)
-        => this[pr] is { } held && await held.IsFresh(context) ? held : null;
+        => this[pr] is { } goal && _stamp.TryGetValue(goal, out var stamp) && await stamp.IsFresh(context) ? goal : null;
+
+    // What this list knows of the .pr each goal it holds was read from, kept with the goal: whether it is still the one
+    // to answer is the list's question, as the list is what holds it.
+    private readonly System.Runtime.CompilerServices.ConditionalWeakTable<goal.@this, stamp> _stamp = new();
+
+    /// <summary>A goal's .pr as this list read the goal from it — each kind says whether the file is still as it was.</summary>
+    private abstract record stamp
+    {
+        internal abstract Task<bool> IsFresh(actor.context.@this context);
+
+        /// <summary>Not read from a file (added as it is, or held by the app's origin): the goal is as it is.</summary>
+        internal sealed record none : stamp
+        {
+            internal override Task<bool> IsFresh(actor.context.@this context) => Task.FromResult(true);
+        }
+
+        /// <summary>Read from a file whose stat failed: what it held is unknown, so it is read again.</summary>
+        internal sealed record unknown : stamp
+        {
+            internal override Task<bool> IsFresh(actor.context.@this context) => Task.FromResult(false);
+        }
+
+        /// <summary>Read from <paramref name="Pr"/> with <paramref name="Stat"/>: still as it was while its stat is the same.</summary>
+        internal sealed record stat(global::app.type.item.path.@this Pr, global::app.type.item.path.@this.StatInfo Stat) : stamp
+        {
+            internal override async Task<bool> IsFresh(actor.context.@this context)
+                => await Pr.Stat(context) is { Success: true } now && await now.Value() is { } info && info.Same(Stat);
+        }
+    }
 
     // The goal at `source` as the app's origin loads it, as itself — held by this app too and loaded here through this
     // app's own on.load; null when the origin gives none. A goal never goes up from a sub app: the parent reads it, so
@@ -86,7 +115,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         if (_reading.TryAdd(pr, ours.Task) is false && _reading.TryGetValue(pr, out var inFlight)) return await inFlight;
         try
         {
-            var answer = await Fresh(pr, context) is { } held ? context.Ok(held) : await Decode(pr, context);
+            var answer = await Fresh(pr, context) is { } goal ? context.Ok(goal) : await Decode(pr, context);
             ours.SetResult(answer);
             return answer;
         }
@@ -120,9 +149,8 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
                     $"Failed to parse goal file: {pr} — read produced {content.GetType().Name}, not a goal"));
 
             // the stamp holds the .pr the goal itself has
-            goal.Stamp = stat.Success && await stat.Value() is { } info && goal.PrPath is { } path
-                ? new goal.@this.stamp.stat(path, info) : new goal.@this.stamp.unknown();
-            Add(goal);
+            Add(goal, stat.Success && await stat.Value() is { } info && goal.Pr is { } path
+                ? new stamp.stat(path, info) : new stamp.unknown());
             return await goal.on.load.After(goal, read, context);
         }
         // a refused .pr names itself — its reader was born knowing the file
@@ -135,23 +163,27 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     /// <summary>
     /// Adds a goal read from its <c>.pr</c>; the goal held from the same <c>.pr</c> gives way.
     /// </summary>
-    public void Add(goal.@this goal)
+    public void Add(goal.@this goal) => Add(goal, new stamp.none());
+
+    // Adds `goal`, kept with what this list knows of the .pr it was read from.
+    private void Add(goal.@this goal, stamp stamp)
     {
-        if (goal.PrPath is not { } pr)
-            throw new ArgumentException($"Goal '{goal.Name}' must have a Path set. PrPath is derived from Path and is required for keying.");
+        if (goal.Pr is not { } pr)
+            throw new ArgumentException($"Goal '{goal.Name}' must have a Path set. Its .pr is derived from Path and is required for keying.");
         lock (_gate)
         {
             // the goal held from the same .pr, found in one look, gives way — its row, by reference
-            if (this[pr] is { } held)
+            if (this[pr] is { } replaced)
             {
                 var at = 0;
                 foreach (var each in Items())
                 {
-                    if (ReferenceEquals(each, held)) { RemoveAt(at); break; }
+                    if (ReferenceEquals(each, replaced)) { RemoveAt(at); break; }
                     at++;
                 }
             }
             base.Add((global::app.type.item.@this)goal);
+            _stamp.AddOrUpdate(goal, stamp);
             _app = _system = null;
         }
     }
@@ -180,20 +212,26 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         if (Chain(caller).FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) is { } near)
             return context.Ok(near);
 
-        if (Goal(name) is { } match) return context.Ok(match);
+        // a name is the goal beside its caller before any other of that name: one already read there, then one there on
+        // disk; only then one read anywhere, then the app root's
+        var folder = caller?.Folder;
+        // the goals a name may be: every one read, newest first, but a setup goal — made once for the whole find
+        var goals = Items().Where(g => !g.IsSetup).Reverse().ToList();
+        if (folder != null && Goal(name, goals.Where(g => Equals(g.Folder, folder)).ToList()) is { } beside) return context.Ok(beside);
 
         var source = name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase) ? name : name + ".goal";
-        if (!source.StartsWith('/') && !source.StartsWith('\\') && caller?.Folder is { } folder)
+        if (!source.StartsWith('/') && !source.StartsWith('\\') && folder != null)
         {
             // a bare name looks in the caller's own folder only; a slash-qualified one walks up to the root's
             var walks = source.Contains('/') || source.Contains('\\');
             for (var at = folder; at.Raw is not ("/" or "\\" or "." or ""); at = at.Parent)
             {
-                var beside = await Open(at.Combine(source).Raw);
-                if (beside.IsInitialized) return beside;
+                var found = await Open(at.Combine(source).Raw);
+                if (found.IsInitialized) return found;
                 if (!walks) break;
             }
         }
+        if (Goal(name, goals) is { } match) return context.Ok(match);
         return await Open("/" + source.TrimStart('/', '\\'));
 
         // opens the goal the .goal at `raw` is built to, resolved as written (the app's /system/ first); its name is
@@ -244,29 +282,29 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         }
     }
 
-    // The goal already read that a call's name writes: its name (the last read wins — sub-goals in
-    // different files may share one), its .goal or .pr path in any of the forms a call writes, or a
-    // slash-qualified name whose folder is part of it (BuildGoal/Start is Start in a BuildGoal folder).
-    // A setup goal runs only through setup, never by a call.
-    private goal.@this? Goal(string name)
+    // The goal already read, of goals (newest first, no setup goal: one runs only through setup, never by a call), that
+    // a call's name writes: an address (a name that starts with /) by its .goal or .pr path exactly; any other by its name
+    // (the last read wins — sub-goals in different files may share one), its path in any of the forms a call writes, or,
+    // slash-qualified, a name whose folder is part of it (BuildGoal/Start is Start in a BuildGoal folder).
+    private goal.@this? Goal(string name, List<goal.@this> goals)
     {
         if (name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase)) name = name[..^5];
-        var goals = Items().Where(g => !g.IsSetup).Reverse().ToList();
+        var isAddress = name.StartsWith('/') || name.StartsWith('\\');
 
-        if (goals.FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) is { } named)
+        if (!isAddress && goals.FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) is { } named)
             return named;
 
         var leaf = name.TrimStart('/', '\\').Replace('\\', '/');
         bool Written(string? canonical) => canonical != null
-            && (canonical.Equals(leaf, StringComparison.OrdinalIgnoreCase)
-                || canonical.Equals(leaf + ".goal", StringComparison.OrdinalIgnoreCase)
-                || canonical.Equals("/" + leaf, StringComparison.OrdinalIgnoreCase)
-                || canonical.Equals("/" + leaf + ".goal", StringComparison.OrdinalIgnoreCase));
+            && (canonical.Equals("/" + leaf, StringComparison.OrdinalIgnoreCase)
+                || canonical.Equals("/" + leaf + ".goal", StringComparison.OrdinalIgnoreCase)
+                || (!isAddress && (canonical.Equals(leaf, StringComparison.OrdinalIgnoreCase)
+                    || canonical.Equals(leaf + ".goal", StringComparison.OrdinalIgnoreCase))));
         if (goals.FirstOrDefault(g => Written(g.Path?.ToString().Replace('\\', '/'))
-                                     || Written(g.PrPath?.ToString().Replace('\\', '/'))) is { } byPath)
+                                     || Written(g.Pr?.ToString().Replace('\\', '/'))) is { } byPath)
             return byPath;
 
-        if (name.Contains('/') || name.Contains('\\'))
+        if (!isAddress && (name.Contains('/') || name.Contains('\\')))
         {
             var qualified = "/" + leaf;
             var leafName = qualified[(qualified.LastIndexOf('/') + 1)..];
@@ -347,5 +385,5 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     // A goal is found by its .pr. It is a fact of the goal by the time the list holds it: its Path is set as it is
     // made (the reader, a build) and a sub-goal, whose .pr is its parent's, is never a row; nothing changes a held
     // goal's Path or Parent.
-    private protected override object? Key(object? row) => (row as goal.@this)?.PrPath;
+    private protected override object? Key(object? row) => (row as goal.@this)?.Pr;
 }

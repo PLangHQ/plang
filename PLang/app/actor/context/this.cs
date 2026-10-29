@@ -11,7 +11,8 @@ namespace app.actor.context;
 
 /// <summary>
 /// Request-level context for a single PLang execution.
-/// Created per request/goal execution and contains execution-specific state.
+/// Created per request/goal execution and contains execution-specific state. In a snapshot it writes its variables and
+/// its calls, and is the context they read back in.
 /// </summary>
 public sealed class @this : IDisposable
 {
@@ -38,12 +39,14 @@ public sealed class @this : IDisposable
     /// <summary>
     /// Variables for this execution.
     /// </summary>
+    [global::app.Snapshot]
     public Variables Variable { get; }
 
     /// <summary>
     /// This context's calls — <c>%!call%</c>: the chain of frames running in it, each holding its own variables. Each
     /// context has its own (a task's child context too); a cross-actor call is a separate chain.
     /// </summary>
+    [global::app.Snapshot]
     public global::app.call.list.@this call { get; }
 
     /// <summary>
@@ -133,7 +136,7 @@ public sealed class @this : IDisposable
     /// </summary>
     public global::app.type.item.path.file.filesystem.@this Filesystem { get; }
 
-    public @this(app.@this app, ActorType owner, Variables? variables = null, @this? parent = null, CancellationToken? parentToken = null,
+    public @this(app.@this app, ActorType owner, @this? parent = null, CancellationToken? parentToken = null,
         global::app.type.item.path.file.filesystem.@this? filesystem = null)
     {
         Id = Guid.NewGuid().ToString("N")[..12];
@@ -141,20 +144,15 @@ public sealed class @this : IDisposable
         Trace = new(app.type.list);
         Actor = owner;
         Filesystem = filesystem ?? parent?.Filesystem ?? app.filesystem;
-        Variable = variables ?? new Variables(this);
+        // its memory is born with it, in it
+        Variable = new Variables(this);
         Parent = parent;
         CreatedAt = DateTime.UtcNow;
         var linkTo = parentToken ?? parent?.CancellationToken ?? app.ShutdownToken;
         _cts = CancellationTokenSource.CreateLinkedTokenSource(linkTo);
 
-        // Stamp context on Variables (propagates to all existing Data)
-        Variable.Context = this;
         // a frame's values are the app's types
         call = new(app.type.list, () => Setting);
-
-        // %!app% and %!context% are the memory's system variables, under it: the goal, step, error, test and channels in
-        // play are the app's shortcuts (/system/shortcut/: %!goal%, %!step%, %!error%, %!test%, %!channel%), each
-        // reading its asker's place through the app.
     }
 
     // --- Value births ---

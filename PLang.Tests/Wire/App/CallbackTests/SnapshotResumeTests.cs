@@ -6,13 +6,13 @@ using ActionEntity = global::app.goal.step.action.@this;
 
 namespace PLang.Tests.App.CallbackTests;
 
-/// Stage 2a — Batch 5 (C# half): `Data.Snapshot.Resume(context)` recursive cross-
+/// Stage 2a — Batch 5 (C# half): `Data.Snapshot.Resumed(context)` recursive cross-
 /// goal continuation; `callback.start` is the resume entry and requires Snapshot.
 public class SnapshotResumeTests
 {
     private static global::app.@this NewApp() =>
         new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-sr-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
+            "plang-sr-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing().TestIdentity();
 
     // A step is born knowing its goal, and the goal is born knowing the step.
     // A value as a formal line writes it: a %variable% bare, anything else a JSON literal.
@@ -29,35 +29,41 @@ public class SnapshotResumeTests
         return step;
     }
 
-    [Test] public async Task CallbackRun_NullSnapshot_ReturnsNoSnapshotError()
+    // A callback goes on through the one resume door, so it is checked as every resume is: one nobody signed is refused.
+    [Test] public async Task CallbackRun_Unsigned_IsRefused()
     {
         var app = NewApp();
-        var data = app.Ok("v"); // Snapshot = null
-        var handler = new start(app.actor.list.User.Context) { Callback = data };
+        var context = app.actor.list.User.Context;
+        var unsigned = new global::app.data.@this("callback", context.EmptySnapshot(), context: context);
+        var handler = new start(context) { Callback = unsigned };
         var result = await handler.Start();
         await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("NoSnapshot");
+        await Assert.That(result.Error!.Key).IsEqualTo("SnapshotUnsigned");
     }
 
-    [Test] public async Task CallbackRun_WithSnapshot_DelegatesToSnapshotResume()
+    // A signed callback goes on through the resume door: an empty snapshot holds no frame to go on from.
+    [Test] public async Task CallbackRun_Signed_GoesOnThroughTheResumeDoor()
     {
         var app = NewApp();
-        var data = app.Ok("v");
-        data.Snapshot = new global::app.snapshot.@this(app.actor.list.User.Context); // empty snapshot
-        var handler = new start(app.actor.list.User.Context) { Callback = data };
+        var context = app.actor.list.User.Context;
+        var (signer, _) = app.Code.Get<global::app.module.signing.code.ISigning>();
+        var signed = await signer!.SignAsync(new global::app.module.signing.sign(context)
+        {
+            Data = new global::app.data.@this("callback", context.EmptySnapshot(), context: context),
+            View = global::app.View.Snapshot,
+        });
+        var handler = new start(context) { Callback = signed };
         var result = await handler.Start();
-        // Empty snapshot → no CallStack section → RestoredChain null → NoPosition.
-        // Confirms delegation reached Resume (we don't get NoSnapshot).
-        await Assert.That(result.Error!.Key).IsEqualTo("NoPosition");
+        await Assert.That(result.Error!.Key).IsEqualTo("NoFrameToResume");
     }
 
-    [Test] public async Task SnapshotResume_EmptyChainAfterRestore_ReturnsNoPositionError()
+    [Test] public async Task SnapshotResume_EmptyChainAfterRestore_ReturnsNoFrameToResumeError()
     {
         var app = NewApp();
-        var snap = new global::app.snapshot.@this(app.actor.list.User.Context);
-        var result = await snap.Resume(app.actor.list.User.Context);
+        var snap = app.actor.list.User.Context.EmptySnapshot();
+        var result = await snap.Resumed(app.actor.list.User.Context);
         await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("NoPosition");
+        await Assert.That(result.Error!.Key).IsEqualTo("NoFrameToResume");
     }
 
     [Test] public async Task SnapshotResume_SingleGoal_ReentersAtSuspendedPosition()
@@ -69,42 +75,71 @@ public class SnapshotResumeTests
         var goal = new Goal(app.type.list) { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
         await SetStep(context, goal, 0, "s0", "first");
         var step1 = await SetStep(context, goal, 1, "s1", "second");
+        // the run's last step answers what it saw: its memory is its own app's
+        var answer = new Step(app.type.list) { Goal = goal, Index = 2, Text = "return {s0, s1}" };
+        answer.Code.Add((await context.Action("goal.return(Data={\"s0\": %s0%, \"s1\": %s1%})")).In(answer));
+        goal.Step.Add(answer);
         app.goal.list.Add(goal);
+        // seeded before the save: a step that never runs again leaves it so
+        await context.Variable.Set("s0", "never");
 
-        // Push the action of step1 so the snapshot captures (stepIdx=1, actionIdx=0).
+        // Push step1 and its action so the snapshot captures (stepIdx=1, actionIdx=0).
+        await using (context.call.Push(goal, await context.call.Setting()))
+        await using (var step = context.call.Push(step1, await context.call.Setting()))
         await using (var call = context.call.Push(step1.Code[0], await context.call.Setting(), context.Variable))
         {
-            var snap = app.Snapshot(app.actor.list.User.Context);
-            // Pop the call frame before Resume so Restore doesn't conflict.
+            var snap = (await app.Snapshot(app.actor.list.User.Context).Saved());
             await call.DisposeAsync();
+            await step.DisposeAsync();
 
-            var result = await snap.Resume(context);
+            var result = await snap.Resumed(context);
             await result.IsSuccess();
             // Step 1 ran on resume; step 0 should NOT have run (we resumed mid-goal).
-            await Assert.That((await context.Variable.GetValue("s1"))).IsEqualTo("second");
-            await Assert.That((await context.Variable.Get("s0")).IsInitialized).IsFalse();
+            await Assert.That((await (await result.Get("s1")).Value())?.ToString()).IsEqualTo("second");
+            await Assert.That((await (await result.Get("s0")).Value())?.ToString()).IsEqualTo("never");
         }
     }
 
-    [Test] public async Task SnapshotResume_NestedChain_UnwindsToParentAfterSubGoalCompletes()
+    // A goal of the steps given, each line one step's actions split by " ; " (a "call X" line a goal call), held by the app.
+    private static async Task<Goal> Program(global::app.@this app, string name, params string[] lines)
     {
-        // Cross-goal end-to-end is pinned by 2a.8's
-        // test/Callback/StatelessCrossGoalResumes .test.goal fixture. Here we
-        // just pin the API contract: ResumeChain handles >1 frame without
-        // throwing on the recursive walk.
-        var app = NewApp();
-        var snap = new global::app.snapshot.@this(app.actor.list.User.Context);
-        var result = await snap.Resume(app.actor.list.User.Context);
-        // Empty chain → NoPosition; demonstrates recursion entry doesn't NRE.
-        await Assert.That(result.Error!.Key).IsEqualTo("NoPosition");
+        var context = app.actor.list.User.Context;
+        var goal = new Goal(app.type.list) { Name = name, Path = global::app.type.item.path.@this.Resolve("/" + name + ".goal", context) };
+        for (var index = 0; index < lines.Length; index++)
+        {
+            var step = new Step(app.type.list) { Goal = goal, Index = index, Text = lines[index] };
+            foreach (var call in lines[index].Split(" ; "))
+                step.Code.Add((call.StartsWith("call ") ? global::PLang.Tests.Shared.Make.Call(context, call[5..]) : await context.Action(call)).In(step));
+            goal.Step.Add(step);
+        }
+        app.goal.list.Add(goal);
+        return goal;
     }
 
-    [Test] public async Task ResumeChain_MultiActionStep_ContinuesAtActionIndexPlusOne()
+    // A run saved inside a goal it called, from a step with actions after the call: the resume finishes the called goal,
+    // then goes on with the rest of the calling step exactly once — never the call again, never skipping what follows it.
+    [Test] public async Task SnapshotResume_InsideACall_FinishesIt_ThenTheRestOfTheCallingStep_Once()
     {
-        // Pinned by Goal.Resume contract (GoalRunFromTests). ResumeChain's
-        // parent-frame branch calls Goal.Resume(context, stepIdx, ActionIndex+1) —
-        // the +1 mirrors what GoalRunFrom's tests already pin. End-to-end
-        // exercised by 2a.8's cross-goal .test.goal fixture.
-        await Assert.That(true).IsTrue();
+        var app = NewApp();
+        var context = app.actor.list.User.Context;
+        await Program(app, "Sub",
+            "math.add(A=%n%, B=1) ; variable.set(Name=%n%, Value=%!data%)",
+            "snapshot.save() ; variable.set(Name=%snap%, Value=%!data%)");
+        var g = await Program(app, "G",
+            "call Sub ; math.add(A=%m%, B=1) ; variable.set(Name=%m%, Value=%!data%)",
+            "goal.return(Data={\"n\": %n%, \"m\": %m%})");
+        await context.Variable.Set("n", 0);
+        await context.Variable.Set("m", 0);
+        await (await g.Start(context)).IsSuccess();
+        var snap = await (await context.Variable.Get("snap")).Value() as global::app.snapshot.@this;
+        await Assert.That(snap).IsNotNull();
+
+        var result = await snap!.Resumed(context);
+
+        await result.IsSuccess();
+        // the call isn't run again: Sub's first step counted once, before the save
+        await Assert.That((await (await result.Get("n")).Value())?.ToString()).IsEqualTo("1");
+        // what follows the call in its step ran, once
+        await Assert.That((await (await result.Get("m")).Value())?.ToString()).IsEqualTo("1");
     }
 }

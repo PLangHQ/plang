@@ -16,11 +16,12 @@ public partial class OnTimeout : IContext, IClause
 
     public Task<global::app.data.@this> Start() => Task.FromResult(Context.Ok());
 
-    public void Bind(global::app.goal.step.action.@this clause, global::app.goal.step.action.@this action, global::app.@event.on.own on)
+    public void Bind(global::app.goal.step.action.@this clause, global::app.goal.step.action.@this action, global::app.@event.on.@this on)
     {
-        on.Bind("start", global::app.@event.When.before, side => new global::app.@event.binding.clause.@this(
+        var start = on.Add("start");
+        start.before.Add(side => new global::app.@event.binding.clause.@this(
             side, clause, action, (handler, _, result, context) => ((OnTimeout)handler).Begin(result, context)));
-        on.Bind("start", global::app.@event.When.after, side => new global::app.@event.binding.clause.@this(
+        start.after.Add(side => new global::app.@event.binding.clause.@this(
             side, clause, action, (handler, _, result, context) => ((OnTimeout)handler).End(result, context)));
     }
 

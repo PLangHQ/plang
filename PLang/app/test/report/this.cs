@@ -110,15 +110,19 @@ public sealed class @this
 
         static string Counted(int count) => count == 1 ? "1 test" : $"{count} tests";
         var problems = new List<string>();
-        foreach (var group in tests.Where(t => t.Status == Status.Stale)
-                     .GroupBy(t => t.StatusReason?.ToString() ?? "unknown reason"))
+        var stale = tests.Where(t => t.Status == Status.Stale).ToList();
+        foreach (var group in stale.GroupBy(t => t.StatusReason?.ToString() ?? "unknown reason"))
             problems.Add($"{Counted(group.Count())} could not load: {group.Key.TrimEnd('.')}");
         if (tests.Count(t => t.Status == Status.Ready) is > 0 and var idle)
             problems.Add($"{Counted(idle)} did not run");
         if (tests.Count(t => t.Status is Status.Fail or Status.Timeout) is > 0 and var failed)
             problems.Add($"{Counted(failed)} failed");
 
+        // each test that could not load says why, whole, as a cause
         return problems.Count == 0 ? null
-            : new Error(string.Join("; ", problems) + ".", "TestRunFailed", 400);
+            : new Error(string.Join("; ", problems) + ".", "TestRunFailed", 400)
+            {
+                list = stale.Where(t => t.Error != null).Select(t => t.Error!).ToList(),
+            };
     }
 }

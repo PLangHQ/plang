@@ -95,12 +95,12 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
         }
         catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
         {
-            data.Fail(new global::app.error.@this(ex.Message, "PathConstructionFailed", 400));
+            data.Fail(new global::app.error.@this($"'{raw}' can't be made a path", "PathConstructionFailed", 400)
+                { list = [global::app.error.@this.FromException(ex)] });
             return null;
         }
     }
 
-    /// <summary>Source generator convention — auto-wraps string parameters.</summary>
     /// <summary>
     /// Source generator convention — auto-wraps string parameters. The raw path's scheme is one
     /// of path's kinds, which builds the right subclass (file → FilePath, http → HttpPath, ...).
@@ -210,7 +210,10 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// Owned by the path + the type registry.
     /// </summary>
     public global::app.type.@this Kind(actor.context.@this context) =>
-        context.App?.type.list.Extension(Extension.ToString(), context) ?? global::app.type.@this.Null;
+        context.App?.type.list is { } types ? Kind(types) : global::app.type.@this.Null;
+
+    /// <summary>The type entity this location's extension names, among <paramref name="types"/>.</summary>
+    internal global::app.type.@this Kind(global::app.type.list.@this types) => types.Extension(Extension.ToString());
 
     // --- Live filesystem state ---
     //
@@ -231,12 +234,8 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     // comparisons, not display.
     public override string ToString() => _location;
 
-    /// <summary>
-    /// The type owns its wire shape and reads its own private fields — the typed location.
-    /// The resolved <see cref="Absolute"/> stays off the wire (it leaks the install root and
-    /// is gated behind Authorize).
-    /// </summary>
-    /// <summary>A path writes its own form — its location — in every view.</summary>
+    /// <summary>A path writes its own form — its location — in every view; the resolved <see cref="Absolute"/> stays
+    /// off the wire (it leaks the install root and is gated behind Authorize).</summary>
     protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.String(ToString());

@@ -1,0 +1,90 @@
+{
+  "branch": "snapshot-7c-wip",
+  "sessions": [
+    {
+      "id": "db109c2c-ac70-45bd-803f-b1788150add4",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-27T15:44:02Z",
+      "timestamp_end": "2026-10-27T15:44:02Z",
+      "intent": "Full OBP review of snapshot-7c-wip",
+      "before": {
+        "assumptions": "diff reviews missed new-beside-old",
+        "risk": "large surface"
+      },
+      "plan": ".bot/snapshot-7c-wip/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/snapshot-7c-wip/codeanalyzer/review.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "36 findings; V-marked ones re-read, others traced by readers"
+        }
+      ],
+      "after": {
+        "status": "review written",
+        "health": "fail",
+        "notes": "architect rules"
+      }
+    },
+    {
+      "id": "5b0f3d7e-6c1a-4f52-9a77-2e84c1d3a9b1",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-27T18:30:00Z",
+      "timestamp_end": "2026-10-27T19:30:00Z",
+      "intent": "Re-check snapshot-7c-wip at 23d61537b against the 36 findings, with the bench bytes",
+      "before": {
+        "assumptions": "the coder worked through the list; rulings 123-151",
+        "risk": "a new member beside an old one slipped in with the fixes"
+      },
+      "plan": ".bot/snapshot-7c-wip/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/snapshot-7c-wip/codeanalyzer/review2.md",
+            "Tools/Bench/record.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "item 1 still open (re-read by me); N1 View.Reader/Make; small dead and stale items; bench bytes under base"
+        }
+      ],
+      "after": {
+        "status": "review2 written",
+        "health": "fail",
+        "notes": "coder next; Ingi's list unchanged"
+      }
+    },
+    {
+      "id": "c4e7a1b2-93d5-4f0e-8a16-5d2b7e9c0f34",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-27T20:10:00Z",
+      "timestamp_end": "2026-10-27T20:50:00Z",
+      "intent": "Narrow third check of snapshot-7c-wip against 153's items and every file touched since 23d61537b",
+      "before": {
+        "assumptions": "the coder fixed item 1, N1-N4 and the small list",
+        "risk": "a fix adds its own smell"
+      },
+      "plan": ".bot/snapshot-7c-wip/codeanalyzer/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/snapshot-7c-wip/codeanalyzer/review3.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "all 153 items fixed; S1 view name x3 in signature; no bench (hot-path files only lose code)"
+        }
+      ],
+      "after": {
+        "status": "review3 written",
+        "health": "fail (one small item)",
+        "notes": "coder next for S1 unless the architect rules it"
+      }
+    }
+  ]
+}

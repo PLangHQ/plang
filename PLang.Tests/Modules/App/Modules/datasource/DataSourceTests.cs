@@ -137,6 +137,33 @@ public class DataSourceTests
         await Assert.That(items.Count).IsEqualTo(2);
     }
 
+    // A row that doesn't read is one of the table's rows still: answered under its key holding why, never dropped, so
+    // whoever reads it (a setting) says so instead of reading a default.
+    [Test]
+    public async Task GetAll_ARowThatDoesNotRead_IsAnsweredWithWhy()
+    {
+        using var ds = await CreateDataSource();
+        await ds.Set("settings", "Key1", new Data("Key1", "Value1", context: _app.actor.list.System.Context!));
+        await ds.Set("settings", "Key2", new Data("Key2", "Value2", context: _app.actor.list.System.Context!));
+        var file = global::app.type.item.path.@this.Resolve("/.db/test.sqlite", _app.actor.list.System.Context!).Absolute;
+        using (var connection = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={file}"))
+        {
+            connection.Open();
+            using var write = connection.CreateCommand();
+            write.CommandText = "UPDATE [settings] SET data = '{not json' WHERE key = 'Key2'";
+            write.ExecuteNonQuery();
+        }
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+
+        var result = await ds.GetAll<global::app.type.item.@this>("settings");
+
+        await result.IsSuccess();
+        var rows = (await result.Value<global::app.type.item.list.@this>())!.Items(_app.actor.list.User.Context).ToList();
+        await Assert.That(rows.Count).IsEqualTo(2);
+        var unread = rows.Single(row => row.Name == "Key2");
+        await unread.IsFailure();
+    }
+
     [Test]
     public async Task Tables_ReturnsTableNames()
     {

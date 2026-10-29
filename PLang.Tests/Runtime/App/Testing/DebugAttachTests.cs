@@ -57,7 +57,7 @@ public class DebugAttachTests
         var start = await Goal("Start", "goal.call(Name=\"Inner\")", "variable.set(Name=%a%, Value=1)");
         await Debugging(new() { ["goal"] = "Start" });
 
-        await _app.Start(start, _app.actor.list.User.Context);
+        await start.Start(_app.actor.list.User.Context);
 
         var shown = Shown();
         await Assert.That(shown).Contains("Step [0] of Start");
@@ -77,7 +77,7 @@ public class DebugAttachTests
         _app.goal.list.Add(sys);
         await Debugging(new() { ["goal"] = "/system/Sys" });
 
-        await _app.Start(sys, ctx);
+        await sys.Start(ctx);
 
         await Assert.That(Shown()).Contains("Step [0] of Sys");
     }
@@ -89,7 +89,7 @@ public class DebugAttachTests
         var start = await Goal("Start", "variable.set(Name=%z%, Value=0)", "goal.call(Name=\"Inner\")", "variable.set(Name=%a%, Value=1)");
         await Debugging(new() { ["goal"] = "Start", ["step"] = 1 });
 
-        await _app.Start(start, _app.actor.list.User.Context);
+        await start.Start(_app.actor.list.User.Context);
 
         var shown = Shown();
         await Assert.That(shown).Contains("Step [1] of Start");
@@ -107,7 +107,7 @@ public class DebugAttachTests
         var start = await Goal("Start", "variable.set(Name=%z%, Value=0)", "goal.call(Name=\"Inner\")");
         await Debugging(new() { ["step"] = 1 });
 
-        await _app.Start(start, _app.actor.list.User.Context);
+        await start.Start(_app.actor.list.User.Context);
 
         var shown = Shown();
         await Assert.That(shown).Contains("Step [1] of Start");
@@ -125,10 +125,10 @@ public class DebugAttachTests
         var start = await Goal("Start", "goal.call(Name=\"Inner\")");
         await Debugging(new() { ["goal"] = "Start" });
 
-        await _app.Start(beside, _app.actor.list.User.Context);
+        await beside.Start(_app.actor.list.User.Context);
         await Assert.That(Shown()).DoesNotContain("of Inner");
 
-        await _app.Start(start, _app.actor.list.User.Context);
+        await start.Start(_app.actor.list.User.Context);
         await Assert.That(Shown()).Contains("Step [0] of Inner");
         await Assert.That(Shown()).DoesNotContain("of Beside");
     }
@@ -144,7 +144,7 @@ public class DebugAttachTests
         await _app.actor.list.User.Context.Variable.Set("again", true);
         await Debugging(new() { ["goal"] = "Rec" });
 
-        await _app.Start(rec, _app.actor.list.User.Context);
+        await rec.Start(_app.actor.list.User.Context);
 
         await Assert.That(Count(Shown(), "DEBUG [BEFORE]: Step [0] of Leaf")).IsEqualTo(2);
     }

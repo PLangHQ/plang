@@ -1,13 +1,14 @@
 {
   "name": "Start",
+  "comment": "snapshot: a run's exact state, saved to a file or a store and gone on with later, even after its program changed or\nthe program moved where it goes on. This goal is the plan's index and its proof: each comment a behaviour we want,\nand the step under it runs the plang test that proves it; a behaviour proved only in C# names its test. The text is\nstart.md.",
   "step": [
     {
       "index": 0,
-      "text": "call goal Stage1",
+      "text": "call Save",
       "line": {
-        "number": 4
+        "number": 6,
+        "indent": 0
       },
-      "comment": "snapshot: every item serializes itself through its own wire; a resume snapshot and an app snapshot. Each stage\nis a goal; each behaviour a comment with the test that proves it. The coder rewrites each test in plang that compiles.",
       "code": [
         {
           "module": "goal",
@@ -18,7 +19,7 @@
               "type": {
                 "name": "goal"
               },
-              "value": "Stage1"
+              "value": "Save"
             }
           ]
         }
@@ -26,9 +27,10 @@
     },
     {
       "index": 1,
-      "text": "call goal Stage2",
+      "text": "call Resume",
       "line": {
-        "number": 5
+        "number": 7,
+        "indent": 0
       },
       "code": [
         {
@@ -40,7 +42,7 @@
               "type": {
                 "name": "goal"
               },
-              "value": "Stage2"
+              "value": "Resume"
             }
           ]
         }
@@ -48,9 +50,10 @@
     },
     {
       "index": 2,
-      "text": "call goal Stage3",
+      "text": "call Edit",
       "line": {
-        "number": 6
+        "number": 8,
+        "indent": 0
       },
       "code": [
         {
@@ -62,29 +65,7 @@
               "type": {
                 "name": "goal"
               },
-              "value": "Stage3"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "index": 3,
-      "text": "call goal Stage4",
-      "line": {
-        "number": 7
-      },
-      "code": [
-        {
-          "module": "goal",
-          "name": "call",
-          "property": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "goal"
-              },
-              "value": "Stage4"
+              "value": "Edit"
             }
           ]
         }
@@ -93,15 +74,16 @@
   ],
   "child": [
     {
-      "name": "Stage1",
+      "name": "Save",
       "step": [
         {
           "index": 0,
-          "text": "call goal /snapshot/SectionsAreTheItemsOwn",
+          "text": "call /plan/snapshot/module/snapshot/save/SavesTheRun",
           "line": {
-            "number": 12
+            "number": 13,
+            "indent": 0
           },
-          "comment": "One door.\nA snapshot holds a section for each item that marks members for it, under the item's own path, and none for an item that marks none",
+          "comment": "save snapshot answers the run's state as a value: its variables and its call stack, the frame it runs in by its goal's\npath, kept in a .plang file signed and read back",
           "code": [
             {
               "module": "goal",
@@ -112,75 +94,27 @@
                   "type": {
                     "name": "goal"
                   },
-                  "value": "/snapshot/SectionsAreTheItemsOwn"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "index": 1,
-          "text": "call goal /snapshot/WriteReadRoundTrip",
-          "line": {
-            "number": 14
-          },
-          "comment": "A snapshot written to text and read back holds the same entries (its own wire, no other serializer)",
-          "code": [
-            {
-              "module": "goal",
-              "name": "call",
-              "property": [
-                {
-                  "name": "Name",
-                  "type": {
-                    "name": "goal"
-                  },
-                  "value": "/snapshot/WriteReadRoundTrip"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "index": 2,
-          "text": "call goal /snapshot/AlwaysFreshNotCaptured",
-          "line": {
-            "number": 16
-          },
-          "comment": "An always-fresh value (Now) and a ! name are not captured",
-          "code": [
-            {
-              "module": "goal",
-              "name": "call",
-              "property": [
-                {
-                  "name": "Name",
-                  "type": {
-                    "name": "goal"
-                  },
-                  "value": "/snapshot/AlwaysFreshNotCaptured"
+                  "value": "/plan/snapshot/module/snapshot/save/SavesTheRun"
                 }
               ]
             }
           ]
         }
       ],
-      "child": [],
       "visibility": "Private",
-      "path": "/plan/snapshot/start.goal",
-      "prPath": "/plan/snapshot/.build/start.pr",
-      "hash": "453a050adb7ddae0bdda5c670437757fcc6ab2348aada77069101f3645d7a52b"
+      "hash": "8a5bbf84b82240a6da82ea05e4f689726c0b3d260b1e834d92851aa47443945e"
     },
     {
-      "name": "Stage2",
+      "name": "Resume",
       "step": [
         {
           "index": 0,
-          "text": "call goal /snapshot/resume/ResumeAtFailedStep",
+          "text": "call /plan/snapshot/module/snapshot/resume/FreshAppGoesOn",
           "line": {
-            "number": 21
+            "number": 21,
+            "indent": 0
           },
-          "comment": "The resume snapshot.\nA run that fails at step 3 is saved, written to disk, read back in a fresh app and resumed: it re-enters step 3 with the variables it had",
+          "comment": "a run saved inside a goal it called, kept in a file and resumed, goes on from its save in an app of its own: the\ncalled goal finishes, its caller goes on after the call, and nothing before the save runs again",
           "code": [
             {
               "module": "goal",
@@ -191,7 +125,7 @@
                   "type": {
                     "name": "goal"
                   },
-                  "value": "/snapshot/resume/ResumeAtFailedStep"
+                  "value": "/plan/snapshot/module/snapshot/resume/FreshAppGoesOn"
                 }
               ]
             }
@@ -199,11 +133,12 @@
         },
         {
           "index": 1,
-          "text": "call goal /snapshot/resume/RebuiltGoalRefuses",
+          "text": "call /plan/snapshot/module/snapshot/resume/EventComesBack",
           "line": {
-            "number": 23
+            "number": 25,
+            "indent": 0
           },
-          "comment": "A resume whose goal was rebuilt since (another hash) fails as CallbackGoalHashMismatch",
+          "comment": "a call saved mid-step is finished, then the rest of its step runs once — never the call again — C# test\nSnapshotResumeTests (SnapshotResume_InsideACall_FinishesIt_ThenTheRestOfTheCallingStep_Once)\na run saved inside a bound call keeps %!event%: resumed, it reads what the event fired for",
           "code": [
             {
               "module": "goal",
@@ -214,7 +149,7 @@
                   "type": {
                     "name": "goal"
                   },
-                  "value": "/snapshot/resume/RebuiltGoalRefuses"
+                  "value": "/plan/snapshot/module/snapshot/resume/EventComesBack"
                 }
               ]
             }
@@ -222,11 +157,12 @@
         },
         {
           "index": 2,
-          "text": "call goal /snapshot/resume/VariablesAtTheThrow",
+          "text": "call /plan/snapshot/module/snapshot/resume/ResumeTakesInTheBinding",
           "line": {
-            "number": 25
+            "number": 31,
+            "indent": 0
           },
-          "comment": "The variables restored are the ones at the throw, not ones written by the error handler after it",
+          "comment": "a goal changed since the save is the goal as it is now: the run goes on at its saved place, and another action\nstanding there is said on the error channel — C# tests CallSnapshotTests\n(Call_Resume_AStepInsertedWhereTheRunStopped_RunsIt_ThenTheStepItStoppedIn, Call_Resume_AnotherActionAtThePlace_GoesOnThere_AndSaysSo)\na resume's app is a sub app of the resuming actor: a binding the resuming app made, which the snapshot never held,\nfires in the resumed run",
           "code": [
             {
               "module": "goal",
@@ -237,52 +173,27 @@
                   "type": {
                     "name": "goal"
                   },
-                  "value": "/snapshot/resume/VariablesAtTheThrow"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "index": 3,
-          "text": "call goal /snapshot/resume/NestedChainResumes",
-          "line": {
-            "number": 27
-          },
-          "comment": "A nested call chain resumes inside the sub-goal, then continues after the call in the parent",
-          "code": [
-            {
-              "module": "goal",
-              "name": "call",
-              "property": [
-                {
-                  "name": "Name",
-                  "type": {
-                    "name": "goal"
-                  },
-                  "value": "/snapshot/resume/NestedChainResumes"
+                  "value": "/plan/snapshot/module/snapshot/resume/ResumeTakesInTheBinding"
                 }
               ]
             }
           ]
         }
       ],
-      "child": [],
       "visibility": "Private",
-      "path": "/plan/snapshot/start.goal",
-      "prPath": "/plan/snapshot/.build/start.pr",
-      "hash": "728484857c9e6551e0d1a11d28a56c9e4d307daaa98760d6f8e9eb3f15ecd6b3"
+      "hash": "96c43ea03b5c80ebf262e3bd8f46b256de5a7411246df8064b6b7373565d6eea"
     },
     {
-      "name": "Stage3",
+      "name": "Edit",
       "step": [
         {
           "index": 0,
-          "text": "call goal /snapshot/app/ChildSharesParent",
+          "text": "call /plan/snapshot/module/snapshot/resume/EditedStopPoint",
           "line": {
-            "number": 32
+            "number": 38,
+            "indent": 0
           },
-          "comment": "The app snapshot and children.\nA child app sees the parent's goals and types without loading them again",
+          "comment": "where a run goes on is two numbers, each its frame's own: a program moves them, signs the snapshot again, and the run\ngoes on there",
           "code": [
             {
               "module": "goal",
@@ -293,7 +204,7 @@
                   "type": {
                     "name": "goal"
                   },
-                  "value": "/snapshot/app/ChildSharesParent"
+                  "value": "/plan/snapshot/module/snapshot/resume/EditedStopPoint"
                 }
               ]
             }
@@ -301,11 +212,12 @@
         },
         {
           "index": 1,
-          "text": "call goal /snapshot/app/ChildChangeStaysInChild",
+          "text": "call /plan/snapshot/module/snapshot/resume/EditLeavesTheProgram",
           "line": {
-            "number": 34
+            "number": 41,
+            "indent": 0
           },
-          "comment": "A module added in a child is not in the parent or a sibling",
+          "comment": "an edit changes the snapshot alone: the program that runs keeps its steps' places, and a step's own place is no\nprogram's to write",
           "code": [
             {
               "module": "goal",
@@ -316,124 +228,18 @@
                   "type": {
                     "name": "goal"
                   },
-                  "value": "/snapshot/app/ChildChangeStaysInChild"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "index": 2,
-          "text": "call goal /snapshot/app/ResetDropsChildChanges",
-          "line": {
-            "number": 36
-          },
-          "comment": "A dirty child reset matches the parent again",
-          "code": [
-            {
-              "module": "goal",
-              "name": "call",
-              "property": [
-                {
-                  "name": "Name",
-                  "type": {
-                    "name": "goal"
-                  },
-                  "value": "/snapshot/app/ResetDropsChildChanges"
+                  "value": "/plan/snapshot/module/snapshot/resume/EditLeavesTheProgram"
                 }
               ]
             }
           ]
         }
       ],
-      "child": [],
       "visibility": "Private",
-      "path": "/plan/snapshot/start.goal",
-      "prPath": "/plan/snapshot/.build/start.pr",
-      "hash": "b2cf40b199e925f45e1a93a4180ba1a5d02d80a18ea338e2f797decb65381f6c"
-    },
-    {
-      "name": "Stage4",
-      "step": [
-        {
-          "index": 0,
-          "text": "call goal /snapshot/callback/StatelessAskResumes",
-          "line": {
-            "number": 41
-          },
-          "comment": "The callback.\nA stateless ask's callback carries only the variables the ask gave and its signed position; resumed, the goal continues after the ask",
-          "code": [
-            {
-              "module": "goal",
-              "name": "call",
-              "property": [
-                {
-                  "name": "Name",
-                  "type": {
-                    "name": "goal"
-                  },
-                  "value": "/snapshot/callback/StatelessAskResumes"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "index": 1,
-          "text": "call goal /snapshot/callback/TamperedOrExpiredRefused",
-          "line": {
-            "number": 43
-          },
-          "comment": "A stateless callback with its position changed, or past its expiry, is refused",
-          "code": [
-            {
-              "module": "goal",
-              "name": "call",
-              "property": [
-                {
-                  "name": "Name",
-                  "type": {
-                    "name": "goal"
-                  },
-                  "value": "/snapshot/callback/TamperedOrExpiredRefused"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "index": 2,
-          "text": "call goal /snapshot/callback/DurableCarriesAll",
-          "line": {
-            "number": 45
-          },
-          "comment": "A durable resume after an error carries every user variable",
-          "code": [
-            {
-              "module": "goal",
-              "name": "call",
-              "property": [
-                {
-                  "name": "Name",
-                  "type": {
-                    "name": "goal"
-                  },
-                  "value": "/snapshot/callback/DurableCarriesAll"
-                }
-              ]
-            }
-          ]
-        }
-      ],
-      "child": [],
-      "visibility": "Private",
-      "path": "/plan/snapshot/start.goal",
-      "prPath": "/plan/snapshot/.build/start.pr",
-      "hash": "e48bcfc7126da4f226ca260a68767784dc9d9aa73f99c91d20cf4159b74311c4"
+      "hash": "4ba1c7706029c3defdab61617bb7feb6d78c827a016e80d30589ed4c1f01b8c2"
     }
   ],
   "visibility": "Public",
-  "path": "/plan/snapshot/start.goal",
-  "prPath": "/plan/snapshot/.build/start.pr",
-  "hash": "79343c913bd6d3ed61d55649e2a6d1d8b5082e6c27428ebbf9e71f2e2676841a"
+  "file": "start.goal",
+  "hash": "b3faf8b9b4348e4c7fd19f5586671f7825f20ced77f36e89afeb3525221dde8c"
 }

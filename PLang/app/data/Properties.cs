@@ -71,8 +71,8 @@ public sealed class Properties : IEnumerable<KeyValuePair<string, object?>>
                 // double), held as the raw CLR scalar the bag holds, as it holds a bool or a string
                 global::app.type.format.TokenKind.Number => ((global::app.type.item.number.@this)reader.Number()).BoxedValue,
                 global::app.type.format.TokenKind.String => reader.String(),
-                global::app.type.format.TokenKind.Object => ctx.Context.App.type.list.Reader.Reader("dict", null, ctx.Context).Read(ref reader, null, ctx),
-                _ => ctx.Context.App.type.list.Reader.Reader("list", null, ctx.Context).Read(ref reader, null, ctx),
+                global::app.type.format.TokenKind.Object => ctx.View.Reader(ctx.Context.App.type.list["dict"], null, ctx.Context).Read(ref reader, null, ctx),
+                _ => ctx.View.Reader(ctx.Context.App.type.list["list"], null, ctx.Context).Read(ref reader, null, ctx),
             };
         }
         reader.EndObject();

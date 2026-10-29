@@ -81,7 +81,17 @@ public partial class @this
     /// </summary>
     [JsonIgnore]
     [LlmIgnore]
-    public global::app.type.item.signature.@this? Signature { get; private init; }
+    public global::app.type.item.signature.@this? Signature { get => _signature; private protected init => _signature = value; }
+    private global::app.type.item.signature.@this? _signature;
+
+    /// <summary>This binding takes what its content's read came with, as its value is taken: the layer the read was
+    /// verified in, its properties and what a program added to it. Asked only by content opening (the read and its
+    /// layer arrive together); a read that came with nothing leaves the binding as it is.</summary>
+    internal void Carry(@this read)
+    {
+        if (read.Signature is { } signature) _signature = signature;
+        if (read.Carried is { } carried) Attachment = carried;
+    }
 
     /// <summary>Where this Data sits under its parents (<c>config.items[0]</c>) — its navigation's own bookkeeping,
     /// never a plang fact: <c>!path</c> is a reference's location.</summary>
@@ -135,14 +145,12 @@ public partial class @this
     /// </list></summary>
     public virtual async System.Threading.Tasks.ValueTask<@this> Settle()
     {
-        if (!HasVariable || _error != null || Signature != null) return this;
+        if (!HasVariable || Error != null || Signature != null) return this;
         @this answer;
         if (!IsVariable) answer = await Rendered();
         else if (await Follow(Context) is { IsInitialized: true } named) answer = named.Copy(Name, named._context);
         else answer = await Missed();
-        answer.Handled = Handled;
-        answer.Returned = Returned;
-        answer.ReturnDepth = ReturnDepth;
+        answer.Take(this);
         return answer;
     }
 
@@ -214,16 +222,17 @@ public partial class @this
     [Out, Store]
     public virtual Properties Properties { get => Attachment.Properties; set => Attachment.Properties = value; }
 
-    /// <summary>The members a program added to this variable's value that the value can't hold itself
+    /// <summary>The properties a program added to this variable's value that the value can't hold itself
     /// (<c>set %name.lang% = "is"</c> on a text) — read with a dot after the value's own members, never with
     /// <c>!</c>, which reads <see cref="Properties"/>. They ride with the value: across the wire and in the store.</summary>
     [JsonIgnore]
     [LlmIgnore]
     [Out, Store]
-    internal global::app.type.item.kept.list.@this Kept { get => Attachment.Kept; set => Attachment.Kept = value; }
+    internal global::app.type.item.property.list.@this Property
+        => Attachment.Property(_context.App.type.list[typeof(global::app.type.item.property.list.@this)]);
 
-    /// <summary>Whether a program added any member to this value — asked without making the list.</summary>
-    internal bool HasKept => Carried?.HasKept ?? false;
+    /// <summary>Whether a program added any property to this value — asked without making the list.</summary>
+    internal bool HasProperty => Carried?.HasProperty ?? false;
 
     /// <summary>Whether this value carries any property — asked without making the bag.</summary>
     internal bool HasProperties => Carried?.HasProperties ?? false;
@@ -628,20 +637,13 @@ public partial class @this
     /// </summary>
     internal @this<T> As<T>(T? answer) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
-        var clone = new @this<T>(Name, default, null, Parent, _context)
-        {
-            Returned = Returned,
-            ReturnDepth = ReturnDepth,
-            Attachment = Attachment,
-        };
+        // the same binding: what it carries is shared, and its result (the signature it arrived in too: verify
+        // re-hashes what it holds) is the typed view's
+        var clone = new @this<T>(Name, default, null, Parent, _context) { Attachment = Attachment };
+        clone.Take(this);
         clone._item = answer ?? Empty;
-        // A declined ask lands its reason on this binding (asking.Fail) and
-        // answers null — carry that failure onto the typed view the caller holds.
-        if (answer == null && _error != null)
-        {
-            clone.Fail(_error);
-            clone.IsInitialized = false;
-        }
+        // A declined ask lands its reason on this binding (asking.Fail) and answers null: the typed view holds no value
+        if (answer == null && Error != null) clone.IsInitialized = false;
         return clone;
     }
 
@@ -659,17 +661,10 @@ public partial class @this
     // The typed face over this binding's value, born under the given context.
     private @this<T> Face<T>(actor.context.@this? context) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
-        var view = new @this<T>(Name, default, null, Parent, context)
-        {
-            Returned = Returned,
-            ReturnDepth = ReturnDepth,
-            Attachment = Attachment,
-            IsInitialized = IsInitialized,
-            // the same binding: the signature it arrived in is the face's too
-            Signature = Signature,
-        };
+        // the same binding: what it carries is shared, and its result (the signature it arrived in too) is the face's
+        var view = new @this<T>(Name, default, null, Parent, context) { Attachment = Attachment, IsInitialized = IsInitialized };
+        view.Take(this);
         view._item = _item;
-        if (_error != null) view.Fail(_error);
         return view;
     }
 
@@ -746,15 +741,9 @@ public partial class @this
     private protected virtual @this Copy(string name, actor.context.@this? context,
         global::app.type.item.signature.@this? signature = null)
     {
-        return new @this(name, _item, context: context)
-        {
-            Error = Error,
-            Handled = Handled,
-            Returned = Returned,
-            ReturnDepth = ReturnDepth,
-            Attachment = Carried?.Copy(),
-            Signature = signature ?? Signature,
-        };
+        var copy = new @this(name, _item, context: context) { Attachment = Carried?.Copy(), Signature = signature };
+        copy.Take(this);
+        return copy;
     }
 
     /// <summary>
@@ -763,14 +752,9 @@ public partial class @this
     /// </summary>
     public virtual @this Clone()
     {
-        return new @this(Name, _item.Clone(), context: _context)
-        {
-            Error = Error,
-            Handled = Handled,
-            Returned = Returned,
-            ReturnDepth = ReturnDepth,
-            Attachment = Carried?.Copy(),
-        };
+        var clone = new @this(Name, _item.Clone(), context: _context) { Attachment = Carried?.Copy() };
+        clone.Take(this);
+        return clone;
     }
 
     public override string ToString() =>
@@ -931,10 +915,8 @@ public class @this<T> : @this
         // source was born with, never null (a null here would make the held value
         // context-less). Constructed value-less so the ctor runs no Build/Create;
         // the instance is then held AS-IS below.
-        var copy = new @this<T>(source.Name, context: source.Context)
-        {
-            Error = source.Error,
-        };
+        var copy = new @this<T>(source.Name, context: source.Context) { Attachment = source.Attachment };
+        copy.Take(source);
         // Hold the source's instance whole — no re-Build. A re-Build would re-resolve
         // a %ref%/variable value (breaking variable.set's store-as-is) and would
         // re-run type work on an already-built value. This also carries the
@@ -944,11 +926,6 @@ public class @this<T> : @this
             copy.SetValueDirect(source.Item);
         // a miss retyped is still a miss, never a present null
         copy.IsInitialized = source.IsInitialized;
-        copy.Handled = source.Handled;
-        copy.Returned = source.Returned;
-        copy.ReturnDepth = source.ReturnDepth;
-        copy.Attachment = source.Attachment;
-        copy.Snapshot = source.Snapshot;
         return copy;
     }
 

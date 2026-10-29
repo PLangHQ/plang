@@ -98,22 +98,15 @@ public class VariablesSnapshotTests
         await Assert.That(captured.Count).IsEqualTo(3);
     }
 
-    // Nested scope via Save/Restore: outer sets %x%=1, inner sets %x%=2 and snapshots —
-    // snapshot shows %x%=2 (inner wins, flat-dict mechanics). Architect's "innermost wins"
-    // is trivially satisfied because only one value per name exists at any time.
+    // A name set twice snapshots as its most recent write: one value per name exists at any time.
     [Test]
     public async Task Snapshot_AfterInnerScopeSet_ReflectsMostRecentWrite()
     {
         var vars = _app.actor.list.User.Context.Variable;
         vars.Set("x", 1);
-        var saved = vars.Save();
-        try
-        {
-            vars.Set("x", 2);
-            var snapshot = vars.Snapshot();
-            await Assert.That(snapshot.Held("x")?.ToString()).IsEqualTo("2");
-        }
-        finally { vars.Restore(saved); }
+        vars.Set("x", 2);
+        var snapshot = vars.Snapshot();
+        await Assert.That(snapshot.Held("x")?.ToString()).IsEqualTo("2");
     }
 
     // Backing is ConcurrentDictionary; Snapshot iteration must not throw while another

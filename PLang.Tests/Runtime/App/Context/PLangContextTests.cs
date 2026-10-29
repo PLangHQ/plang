@@ -41,18 +41,6 @@ public class PLangContextTests
     }
 
     [Test]
-    public async Task Constructor_AcceptsCustomVariables()
-    {
-        await using var engine = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
-        var variables = new Variables(engine.actor.list.User.Context);
-        variables.Set("test", "value");
-
-        using var context = new global::app.actor.context.@this(engine, engine.actor.list.User, variables);
-
-        await Assert.That(context.Variable).IsEqualTo(variables);
-    }
-
-    [Test]
     public async Task Constructor_WithParent_SetsParent()
     {
         await using var engine = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();

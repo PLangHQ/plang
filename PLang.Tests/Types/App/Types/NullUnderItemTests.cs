@@ -19,10 +19,10 @@ public class NullUnderItemTests
         await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
 
-        var held = app.type.list["path"].Make(null, ctx);
+        var value = app.type.list["path"].Make(null, ctx);
 
-        await Assert.That(held.IsNull).IsTrue();
-        await Assert.That(held.Type.Name).IsEqualTo("path");
+        await Assert.That(value.IsNull).IsTrue();
+        await Assert.That(value.Type.Name).IsEqualTo("path");
     }
 
     // Through the .pr: `variable.set(Name=%x%, Value=null)` built and read back, its Value row {type: item, value: null}.
@@ -38,7 +38,7 @@ public class NullUnderItemTests
         var goal = await RealGoalLoad.ViaChannel(app, Make.Goal(ctx, "Start",
             Make.Step(line, ((global::app.goal.step.action.list.@this)read.Peek()!).Items().ToArray())));
 
-        await (await app.Start(goal, ctx)).IsSuccess();
+        await (await goal.Start(ctx)).IsSuccess();
 
         var name = await new global::app.type.item.variable.@this("x!type.name", app.type.list).Start(ctx);
         await Assert.That((await name.Value())?.ToString()).IsEqualTo("null");

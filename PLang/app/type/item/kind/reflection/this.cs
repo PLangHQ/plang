@@ -30,7 +30,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
         var member = Method(obj.GetType(), key, m => System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute))
             && m.ReturnType != typeof(void)
             && m.GetParameters() is [{ ParameterType: var p }] && p == typeof(global::app.actor.context.@this));
-        return member == null ? (false, null) : (true, member.Invoke(obj, [ctx]));
+        return member == null ? (false, null) : (true, member.Invoke(obj, System.Reflection.BindingFlags.DoNotWrapExceptions, null, [ctx], null));
     }
 
     /// <summary>The property <paramref name="key"/> names on <paramref name="class"/>, its case ignored, among those
@@ -86,21 +86,22 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
 
     // Write a child onto a host by reflection — the mirror of Descend: find the property, let the
     // value lower itself to the property's type (value.Clr(PropertyType) — a clr(json) builds the
-    // host shape there), set it in place. Returns the host carried as a clr.
+    // host shape there), set it in place. Returns the host carried as a clr. Only a public setter is a
+    // program's to write: an internal one sets a birth fact (a step's place in its goal), which plang never writes.
     public override global::System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(
         object host, string key, bool isIndex, object? value, global::app.actor.context.@this ctx)
     {
         var prop = Reflect(host.GetType(), key);
-        if (prop == null || !prop.CanWrite)
+        if (prop?.SetMethod is not { IsPublic: true })
             throw new global::app.error.AppException(new global::app.error.@this(
                 $"'{host.GetType().Name}' has no writable property '{key}'", "NoAddedMember", 404));
         if (value is global::app.type.item.@this iv && !prop.PropertyType.IsInstanceOfType(value))
             value = iv.Clr(prop.PropertyType);
-        prop.SetValue(host, value);
+        prop.SetValue(host, value, System.Reflection.BindingFlags.DoNotWrapExceptions, null, null, null);
         return new(new global::app.type.clr.@this(host, ctx));
     }
 
-    // The inverse of item's tagged write: build a host CLR object by reflecting its [Store] props and pulling
+    // The inverse of item's tagged write: build a host CLR object by reflecting the props its read's view shows, pulling
     // each off the format-agnostic reader (wire order drives, unknown names skip, missing names
     // keep the property default). A collection host (List<action>) reads as an
     // array of its element; List<Data> props hand their bytes to the @schema:data reader
@@ -116,39 +117,39 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
         // IS that list; a read-only domain wrapper (action.list, step.list — IReadOnlyList<T>, no
         // parameterless ctor) takes the sequence through its ctor; a mutable ICollection<T> fills
         // via Add. The target owns HOW it holds the sequence — reflection just supplies it.
-        var element = ElementTypeOf(target);
+        var element = Element(target);
         if (element != null)
         {
             var listType = typeof(global::System.Collections.Generic.List<>).MakeGenericType(element);
             var inner = (global::System.Collections.IList)global::System.Activator.CreateInstance(listType)!;
             reader.BeginArray();
-            while (reader.NextElement()) inner.Add(ReadValue(ref reader, element, ctx));
+            while (reader.NextElement()) inner.Add(Value(ref reader, element, ctx));
             reader.EndArray();
 
             if (target.IsInstanceOfType(inner)) return inner;   // List<T> / IList<T> / IReadOnlyList<T> target — the list IS it
             var seqCtor = target.GetConstructor(new[] { typeof(global::System.Collections.Generic.IReadOnlyList<>).MakeGenericType(element) })
                        ?? target.GetConstructor(new[] { typeof(global::System.Collections.Generic.IEnumerable<>).MakeGenericType(element) })
                        ?? target.GetConstructor(new[] { listType });
-            if (seqCtor != null) return seqCtor.Invoke(new object[] { inner });
+            if (seqCtor != null) return seqCtor.Invoke(System.Reflection.BindingFlags.DoNotWrapExceptions, null, new object[] { inner }, null);
 
             var coll = global::System.Activator.CreateInstance(target)!;   // mutable collection with a parameterless ctor
             var add = typeof(global::System.Collections.Generic.ICollection<>).MakeGenericType(element).GetMethod("Add")!;
-            foreach (var el in inner) add.Invoke(coll, new[] { el });
+            foreach (var el in inner) add.Invoke(coll, System.Reflection.BindingFlags.DoNotWrapExceptions, null, new[] { el }, null);
             return coll;
         }
 
-        // Object host — its [Store] props, matched to wire names (the same selector Output writes).
+        // Object host — the props the read's view shows, matched to wire names (the same selector Output writes).
         var host = global::System.Activator.CreateInstance(target)!;
         var byName = new global::System.Collections.Generic.Dictionary<string, global::System.Reflection.PropertyInfo>(
             global::System.StringComparer.OrdinalIgnoreCase);
-        foreach (var entry in Tagged.PropertiesFor(target, global::app.View.Store))
+        foreach (var entry in Tagged.PropertiesFor(target, ctx.View))
             byName[entry.WireName] = entry.Property;
 
         reader.BeginObject();
         while (reader.NextName(out var name))
         {
             if (byName.TryGetValue(name, out var prop) && prop.CanWrite)
-                prop.SetValue(host, ReadValue(ref reader, prop.PropertyType, ctx));
+                prop.SetValue(host, Value(ref reader, prop.PropertyType, ctx), System.Reflection.BindingFlags.DoNotWrapExceptions, null, null, null);
             else
                 reader.Skip();
         }
@@ -174,32 +175,71 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
     /// holds a plang value (a datetime) is made by its own type, as <paramref name="context"/>'s types have it.
     /// </summary>
     public object Read(global::app.type.item.dict.@this slots, object host, global::app.actor.context.@this? context)
+        => Read(slots, host, context, global::app.View.Store);
+
+    /// <summary>The same read in <paramref name="view"/>: the members that view shows are written, each plang member
+    /// made as that view makes it (<see cref="global::app.View.Make"/>: a goal in the snapshot from its key) — a slot
+    /// written with a type of its own (a value whose class isn't the member's) made as that type. A member the host was
+    /// born holding (no setter, its value live) reads what it wrote into that value, in turn and in the order declared; a
+    /// host that is a context is the context what it holds reads in.</summary>
+    internal object Read(global::app.type.item.dict.@this slots, object host, global::app.actor.context.@this? context,
+        global::app.View view)
     {
         var target = host.GetType();
+        context = host as global::app.actor.context.@this ?? context;
         // Index the dict's keys by name, case-insensitive — matching the IReader Read's key
         // policy (a hand-built plang dict's keys aren't guaranteed to match the wire-name casing).
         var byName = new global::System.Collections.Generic.Dictionary<string, string>(
             global::System.StringComparer.OrdinalIgnoreCase);
         foreach (var key in slots.KeyNames) byName[key] = key;
 
-        // Every value is made before any is written, so a slot that can't be read leaves the host as it was.
-        var read = new global::System.Collections.Generic.List<(global::System.Reflection.PropertyInfo, object?)>();
-        foreach (var entry in Tagged.PropertiesFor(target, global::app.View.Store))
+        // Every value is made before any is written, so a slot that can't be read leaves the host as it was; what a
+        // member the host was born holding wrote reads into it after.
+        var values = new global::System.Collections.Generic.List<(global::System.Reflection.PropertyInfo, object?)>();
+        var hosts = new global::System.Collections.Generic.List<(object, global::app.type.item.dict.@this)>();
+        foreach (var entry in Tagged.PropertiesFor(target, view))
         {
-            if (!entry.Property.CanWrite || !byName.TryGetValue(entry.WireName, out var key)) continue;
-            var type = entry.Property.PropertyType;
-            // A plang member is made by its type, through the type door; any other entry lowers ITSELF to the
-            // property's CLR type — at the exit door, no context.
-            read.Add((entry.Property, context != null && typeof(global::app.type.item.@this).IsAssignableFrom(type)
-                ? context.App.type.list[type].Make(slots.Get(key, context)?.Peek(), context)
+            var member = entry.Property;
+            if (!byName.TryGetValue(entry.WireName, out var key)) continue;
+            var type = member.PropertyType;
+            var slot = context != null ? slots.Get(key, context) : null;
+            if (!member.CanWrite)
+            {
+                // a value made as its own type (a frame's caller) is made by its owner, never read into
+                if (slot != null && (slot.Type == null || slot.Type.ClrType == typeof(global::app.type.item.dict.@this))
+                    && member.GetValue(host) is { } value
+                    && Made(slot, context!.App.type.list[typeof(global::app.type.item.dict.@this)], context, view) is global::app.type.item.dict.@this dict)
+                    hosts.Add((value, dict));
+                continue;
+            }
+            // A plang member is made as the view makes its type; a Data member is the row whole, as it was written (its
+            // value and properties read when they are read); any other entry lowers ITSELF to the property's CLR type —
+            // at the exit door, no context.
+            values.Add((member, context != null && typeof(global::app.type.item.@this).IsAssignableFrom(type)
+                ? slot != null ? Made(slot, context.App.type.list[type], context, view) : null
+                : context != null && type == typeof(global::app.data.@this) ? slot
                 : slots.Clr(key, type)));
         }
-        foreach (var (property, value) in read) property.SetValue(host, value);
+        foreach (var (property, value) in values)
+            property.SetValue(host, value, System.Reflection.BindingFlags.DoNotWrapExceptions, null, null, null);
+        foreach (var (value, dict) in hosts) Read(dict, value, context, view);
         return host;
     }
 
+    // What a slot holds, made as the member's type, or as its own when it was written with one below the member's: a
+    // value already of that type is itself, any other (one still unread) is made as the view makes it.
+    private static global::app.type.item.@this? Made(global::app.data.@this slot, global::app.type.@this type,
+        global::app.actor.context.@this context, global::app.View view)
+    {
+        if (slot.Type is { ClrType: { } clr } && type.ClrType is { } member && clr != member && member.IsAssignableFrom(clr))
+            type = slot.Type;
+        return slot.Peek() is { } value && type.ClrType?.IsInstanceOfType(value) == true
+            ? value
+            : view.Make(type, slot.Peek(), context);
+    }
+
     // Read one value AS its declared CLR type off the reader.
-    private object? ReadValue<TReader>(ref TReader reader, global::System.Type type,
+    private object? Value<TReader>(ref TReader reader, global::System.Type type,
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
@@ -215,38 +255,28 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
                 ? global::System.Enum.ToObject(t, reader.Long())
                 : global::System.Enum.Parse(t, reader.String(), ignoreCase: true);
 
-        // A path rides as its string form — the perimeter crossing (path.Resolve once).
-        if (t == typeof(global::app.type.item.path.@this))
-            return global::app.type.item.path.@this.Resolve(reader.String(), ctx.Context);
-
-        // A choice<T> builds itself through the type system's OWN door — the choice entity (registered
-        // under its closed-set name, choice/list.cs) resolves the concrete choice<T> and parses the
-        // symbol. Never reflect-construct it as an object host below (no parameterless ctor).
-        if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(global::app.type.item.choice.@this<>))
+        // A plang member (a path, a choice, any value) is read by its type's reader in the read's view, as View.Make
+        // reads one from a record — never reflect-constructed as a host below.
+        if (typeof(global::app.type.item.@this).IsAssignableFrom(t))
         {
             var entity = ctx.Context.App.type.list[t];
-            // The symbol rides as a string; a numeric ordinal (an enum member written by value) becomes
-            // its member first. choice.Create takes either the member or the symbol.
-            object member = reader.Peek() == global::app.type.format.TokenKind.Number
-                ? global::System.Enum.ToObject(t.GetGenericArguments()[0], reader.Long())
-                : reader.String();
-            return entity.Make(member,
-                new global::app.data.@this("", new global::app.type.item.@null.@this(entity), context: ctx.Context));
+            var kind = entity.kind.IsEmpty ? null : entity.kind.Name;
+            return ctx.View.Reader(entity, kind, ctx.Context).Read(ref reader, kind, ctx);
         }
 
         // List<Data> (Parameters / Defaults) — each element a {name,type,value} through the
         // @schema:data reader over its own verbatim bytes (sign-identical to the byte path).
-        if (IsListOfData(t)) return ReadDataList(ref reader, t, ctx);
+        if (IsListOfData(t)) return Rows(ref reader, t, ctx);
 
         // A nested object/collection host → recurse the same walk.
-        if (ElementTypeOf(t) != null || t.IsClass) return Read(ref reader, t, ctx);
+        if (Element(t) != null || t.IsClass) return Read(ref reader, t, ctx);
 
         // Scalar fallback: raw slot lowered to the target.
         var raw = new global::app.type.item.serializer.json(ctx.Context).Entry(ref reader, ctx);
         return raw is global::app.type.item.@this iv ? iv.Clr(t) : raw;
     }
 
-    private object? ReadDataList<TReader>(ref TReader reader,
+    private object? Rows<TReader>(ref TReader reader,
         global::System.Type listType, global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
@@ -272,7 +302,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
     // The element type of a collection host — a mutable IList<T>, or a read-only domain wrapper
     // (IReadOnlyList<T>/ICollection<T>: action.list, step.list). Not string, not List<Data>, and
     // never a plang item.@this (those own their own conversion, never reflect-as-collection).
-    private global::System.Type? ElementTypeOf(global::System.Type t)
+    private global::System.Type? Element(global::System.Type t)
     {
         if (t == typeof(string) || IsListOfData(t)) return null;
         if (typeof(global::app.type.item.@this).IsAssignableFrom(t)) return null;

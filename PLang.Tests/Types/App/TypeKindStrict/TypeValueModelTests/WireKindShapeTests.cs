@@ -49,7 +49,8 @@ public class WireKindShapeTests : System.IAsyncDisposable
     {
         var d = new global::app.data.@this("x", "data", new global::app.type.@this("image", "gif"), context: app.actor.list.User.Context);
         var json = ToJson(d);
-        var roundTripped = FromJson(json);
+        // read back through the wire door its write pairs with: a store read re-hashes in the store's view
+        var roundTripped = app.actor.list.User.Context.Format("application/plang").Deserialize(json, app.actor.list.User.Context);
         await Assert.That(roundTripped.Type.Name).IsEqualTo("image");
         await Assert.That(roundTripped.Type.kind.Name).IsEqualTo("gif");
         await Assert.That(roundTripped.Type.Strict).IsFalse();

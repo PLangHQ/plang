@@ -9,7 +9,7 @@ namespace PLang.Tests;
 public static class ActionIn
 {
     private static readonly string[] Rows =
-        { "Module", "Name", "Synthetic", "Property", "Default", "Child", "Seed" };
+        { "Module", "Name", "Property", "Default", "Child", "Seed" };
 
     public static global::app.goal.step.action.@this In(this global::app.goal.step.action.@this action,
         global::app.goal.step.@this step)

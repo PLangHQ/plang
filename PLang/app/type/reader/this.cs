@@ -44,14 +44,15 @@ public abstract class @this
     //     (CSV parse, base64, JSON-of-a-string). A token reader buys nothing here.
     // A type may answer both — its wire value streams via Typed, its content form
     // (a file's bytes materialising through source.Value) decodes via Of.
-    private readonly ConcurrentDictionary<(string Type, string Kind), ITypeReader> _runtimeTyped = new();
+    // A token reader is keyed by the view it reads for too: null for every view.
+    private readonly ConcurrentDictionary<(string Type, string Kind, View? View), ITypeReader> _runtimeTyped = new();
 
     // The readers an assembly ships under its serializer folders, from the code's facts: each token reader the code
     // made (the token-stream table), each whole-payload decode as it is. Readers that ship none hold an empty one.
     private protected sealed class shipped
     {
         internal readonly Dictionary<(string Type, string Kind), Read> Payloads = new();
-        internal readonly Dictionary<(string Type, string Kind), ITypeReader> Tokens = new();
+        internal readonly Dictionary<(string Type, string Kind, View? View), ITypeReader> Tokens = new();
 
         internal shipped() { }
 
@@ -61,7 +62,7 @@ public abstract class @this
             {
                 var library = code[assembly];
                 foreach (var (type, reader) in library.Tokens)
-                    Tokens[(type, reader.Kind)] = reader;
+                    Tokens[(type, reader.Kind, reader.View)] = reader;
                 foreach (var (type, kind, read) in library.Payloads)
                     Payloads[(type, kind)] = read;
             }
@@ -85,28 +86,29 @@ public abstract class @this
     public Read? Of(string typeName, string? kind) => Payload(typeName, kind);
 
     /// <summary>
-    /// Returns the <see cref="ITypeReader"/> registered for
-    /// <paramref name="typeName"/> + <paramref name="kind"/> — the format-agnostic
-    /// pull reader. Same precedence as <see cref="Of"/>: runtime-exact →
-    /// generated-exact → runtime-"*" → generated-"*". Null when the type has not
-    /// been converted to a typed reader yet (the caller falls back to <see cref="Of"/>).
+    /// The format-agnostic pull reader registered for <paramref name="typeName"/> + <paramref name="kind"/> that reads
+    /// for <paramref name="view"/> alone (null: the one that reads in every view). Same precedence as <see cref="Of"/>:
+    /// runtime-exact → generated-exact → runtime-"*" → generated-"*". Null when none is registered.
     /// </summary>
-    public ITypeReader? Typed(string typeName, string? kind) => Token(typeName, kind);
+    internal ITypeReader? Typed(string typeName, string? kind, View? view) => Token(typeName, kind, view);
 
     // The whole-payload decode these readers hold for the type and kind, in the precedence Of names.
-    private protected virtual Read? Payload(string typeName, string? kind) => Find(_runtime, Shipped.Payloads, typeName, kind);
+    private protected virtual Read? Payload(string typeName, string? kind)
+        => Find(_runtime, Shipped.Payloads, k => (typeName, k), kind);
 
-    // The token reader these readers hold for the type and kind, in the precedence Typed names.
-    private protected virtual ITypeReader? Token(string typeName, string? kind) => Find(_runtimeTyped, Shipped.Tokens, typeName, kind);
+    // The token reader these readers hold for the type, kind and view, in the precedence Typed names.
+    private protected virtual ITypeReader? Token(string typeName, string? kind, View? view)
+        => Find(_runtimeTyped, Shipped.Tokens, k => (typeName, k, view), kind);
 
-    // The entry for the type and kind, in the one precedence both tables are read by: runtime-exact → shipped-exact →
-    // runtime-"*" → shipped-"*".
-    private T? Find<T>(ConcurrentDictionary<(string Type, string Kind), T> runtime, Dictionary<(string Type, string Kind), T> shipped,
-        string typeName, string? kind) where T : class
+    // The entry under the key a kind makes, in the one precedence both tables are read by: runtime-exact →
+    // shipped-exact → runtime-"*" → shipped-"*".
+    private T? Find<TKey, T>(ConcurrentDictionary<TKey, T> runtime, Dictionary<TKey, T> shipped,
+        Func<string, TKey> key, string? kind) where TKey : notnull where T : class
     {
-        var k = string.IsNullOrEmpty(kind) ? AnyKind : kind!;
-        return runtime.GetValueOrDefault((typeName, k)) ?? shipped.GetValueOrDefault((typeName, k))
-            ?? runtime.GetValueOrDefault((typeName, AnyKind)) ?? shipped.GetValueOrDefault((typeName, AnyKind));
+        var exact = key(string.IsNullOrEmpty(kind) ? AnyKind : kind!);
+        var any = key(AnyKind);
+        return runtime.GetValueOrDefault(exact) ?? shipped.GetValueOrDefault(exact)
+            ?? runtime.GetValueOrDefault(any) ?? shipped.GetValueOrDefault(any);
     }
 
     /// <summary>
@@ -119,20 +121,28 @@ public abstract class @this
     /// </summary>
     public ITypeReader Reader(string typeName, string? kind, actor.context.@this context)
     {
-        if (string.Equals(typeName, "binary", System.StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(kind)
-            && context.App.type.list["binary"].kind[kind!] == null)
-        {
-            // Bytes stamped with a kind binary doesn't hold (a stamp written before the format was its
-            // type's): narrow by the kind as an extension (a format's name is its extension — png, json,
-            // md, csv), never an app-wide search by bare name. Narrow ONLY when the kind's type can read
-            // it; otherwise the bytes ride as binary.
-            var inner = context.App.type.list.Extension(kind!, context).Name;
-            if (!string.Equals(inner, "binary", System.StringComparison.OrdinalIgnoreCase)
-                && Typed(inner, kind) is not null) typeName = inner;
-        }
         // A type that ships no reader of its own reads its stored value as a record and makes itself from it
         // (the item owns how it's made) — the settings classes read this way.
-        return Typed(typeName, kind) ?? new Record(typeName);
+        var name = Narrowed(typeName, kind, context);
+        return Typed(name, kind, null) ?? new Record(name);
+    }
+
+    /// <summary>The reader <paramref name="typeName"/>/<paramref name="kind"/> registers — binary content narrowed to
+    /// the type its kind names first; null when the type registers none.</summary>
+    internal ITypeReader? Registered(string typeName, string? kind, actor.context.@this context)
+        => Typed(Narrowed(typeName, kind, context), kind, null);
+
+    // Bytes stamped with a kind binary doesn't hold (a stamp written before the format was its type's) are the type the
+    // kind names as an extension (a format's name is its extension — png, json, md, csv), never an app-wide search by
+    // bare name — ONLY when that type can read them; otherwise the bytes ride as binary.
+    private string Narrowed(string typeName, string? kind, actor.context.@this context)
+    {
+        if (!string.Equals(typeName, "binary", System.StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(kind)
+            || context.App.type.list["binary"].kind[kind!] != null)
+            return typeName;
+        var inner = context.App.type.list.Extension(kind!, context).Name;
+        return !string.Equals(inner, "binary", System.StringComparison.OrdinalIgnoreCase) && Typed(inner, kind, null) is not null
+            ? inner : typeName;
     }
 
 
@@ -173,7 +183,7 @@ public abstract class @this
     public void Register(string typeName, string kind, ITypeReader reader)
     {
         if (string.IsNullOrWhiteSpace(typeName) || string.IsNullOrWhiteSpace(kind) || reader == null) return;
-        _runtimeTyped[(typeName, kind)] = reader;
+        _runtimeTyped[(typeName, kind, reader.View)] = reader;
     }
 
 

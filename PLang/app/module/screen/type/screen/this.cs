@@ -108,7 +108,8 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
         var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
         utf8.Read();
         var reader = new global::app.type.item.kind.json.Reader(utf8, bytes);
-        return context.App.type.list.Reader.Typed(type, null)!.Read(ref reader, null, new global::app.type.reader.ReadContext(context));
+        var read = new global::app.type.reader.ReadContext(context);
+        return read.View.Reader(context.App.type.list[type], null, context).Read(ref reader, null, read);
     }
 
     public override string ToString() => $"screen '{_title}' {_width}x{_height}{(IsClosed ? ", closed" : "")}";

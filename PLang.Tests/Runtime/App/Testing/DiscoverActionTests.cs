@@ -148,8 +148,9 @@ public class DiscoverActionTests
         var test = (await Discover()).Single();
 
         await Assert.That(test.Status).IsEqualTo(global::app.test.Status.Stale);
-        await Assert.That(test.StatusReason?.ToString()).Contains(reason);
-        await Assert.That(test.StatusReason?.ToString()).Contains("built by an older builder. Rebuild the goal.");
+        await Assert.That(test.StatusReason?.ToString()).IsEqualTo("the .pr didn't read");
+        await Assert.That(test.Error?.Message).Contains(reason);
+        await Assert.That(test.Error?.Message).Contains("built by an older builder. Rebuild the goal.");
     }
 
     // Walks the tree of *.test.goal files under the target path; every match surfaces
@@ -181,8 +182,8 @@ public class DiscoverActionTests
         var test = (await Discover()).Single();
 
         await Assert.That(test.Status).IsEqualTo(global::app.test.Status.Stale);
-        await Assert.That(test.StatusReason?.ToString()).StartsWith("rebuild needed: ");
-        await Assert.That(test.StatusReason?.ToString()).Contains("json");
+        await Assert.That(test.StatusReason?.ToString()).IsEqualTo("rebuild needed");
+        await Assert.That(test.Error?.Message).Contains("json");
     }
 
     // A root that is a test file is that one test (`plang --test sub/Bar.test.goal`).

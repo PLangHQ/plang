@@ -481,7 +481,7 @@ public sealed class Default : IHttp
 
         // Read in the transport's own view — the sender signed what it sent in Out. A parse failure is a
         // keyed Error (PlangDeserializeError), not a throw.
-        var read = await context.App.type.list["wire"].kind["plang"]!.Decode(Encoding.UTF8.GetBytes(body), context);
+        var read = await context.App.type.list.Plang.Decode(Encoding.UTF8.GetBytes(body), context);
         BuildProperties(read, request, response);
         return read;
     }
@@ -743,7 +743,7 @@ public sealed class Default : IHttp
             // Each NDJSON line is a whole Data in plang's own format, its signature verified. What the read
             // answers is that chunk's answer — the Data sent, the failure it carries, or why it couldn't be
             // read or trusted — so the callback's on error sees every one.
-            var data = await context.App.type.list["wire"].kind["plang"]!.Decode(Encoding.UTF8.GetBytes(line), context, ct: ct);
+            var data = await context.App.type.list.Plang.Decode(Encoding.UTF8.GetBytes(line), context, ct: ct);
             await RunCallbackAsync(onStream, data, null, "chunk", app, context, ct);
         }
     }

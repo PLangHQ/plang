@@ -1,0 +1,29 @@
+/ A resume goes on in a sub app of the resuming actor, and a sub app takes in its maker's bindings at birth: a binding
+/ this app made after the save — so the snapshot holds none — fires in the resumed run. Plan saves the run; this goal
+/ then binds Log before each goal and resumes. The resumed run goes on through this goal too, from the step after
+/ `call Plan`: the marker sends it to Resumed, and Log, taken in from this app, runs before Resumed starts and notes it.
+Start
+- delete file 'workspace/resumed.marker', on error 'NotFound' ignore
+- call Plan
+- if file 'workspace/resumed.marker' exists
+    - call Resumed
+    - end goal
+- write "here" to file 'workspace/resumed.marker'
+- before each goal, call Log
+- resume %run%
+- read file 'workspace/seen.txt', write to %seen%
+- assert %seen% equals "Resumed"
+- delete file 'workspace/resumed.marker'
+- delete file 'workspace/seen.txt'
+
+/ The run that is saved, with no binding made yet.
+Plan
+- save snapshot, write to %run%
+
+/ The bound call: notes the goal that is starting.
+Log
+- set %logged% = %!event!item.name%
+
+/ The resumed run's end: what Log noted, written where the asker reads it.
+Resumed
+- write "%logged%" to file 'workspace/seen.txt'

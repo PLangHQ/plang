@@ -29,12 +29,16 @@ class app.OutAttribute : System.Attribute
 class app.SensitiveAttribute : System.Attribute
   ctor()
 
+class app.SnapshotAttribute : System.Attribute
+  ctor()
+
 class app.StoreAttribute : System.Attribute
   ctor()
 
 abstract class app.View
   static readonly Debug : app.View
   static readonly Out : app.View
+  static readonly Snapshot : app.View
   static readonly Store : app.View
 
 enum app.Wiring
@@ -42,22 +46,20 @@ enum app.Wiring
   static const none : app.Wiring
 
 class app.call.Diff : System.IEquatable<app.call.Diff>
-  At : System.DateTimeOffset { get; init; }
-  Before : System.Object { get; init; }
-  Name : System.String { get; init; }
-  ctor(System.String Name, System.Object Before, System.DateTimeOffset At)
+  At : System.DateTimeOffset { get; } [Debug, Out]
+  Before : System.Object { get; }
+  Name : System.String { get; } [Debug, Out]
 
-class app.call.Position : System.IEquatable<app.call.Position>
-  Action : app.goal.step.action.this { get; init; }
-  ActionIndex : System.Int32 { get; init; }
-  Goal : app.goal.this { get; init; }
-  Id : System.String { get; init; }
-  StepIndex : System.Int32 { get; init; }
-  ctor(app.goal.step.action.this Action, app.goal.this Goal, System.Int32 StepIndex, System.Int32 ActionIndex, System.String Id)
+class app.call.action.this : app.call.this, app.type.item.ICreate<app.call.action.this>
+  index : System.Int32 { get; set; } [LlmBuilder, Snapshot]
+  override Action : app.goal.step.action.this { get; } [Debug, Out, Store]
+  static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.action.this
+  static Internal : System.Boolean { get; }
 
-class app.call.binding.this : app.call.this
+class app.call.binding.this : app.call.this, app.type.item.ICreate<app.call.binding.this>
   override Goal : app.goal.this { get; }
   override Step : app.goal.step.this { get; }
+  static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.binding.this
 
 class app.call.child.list.this : System.Collections.Generic.IEnumerable<app.call.this>, System.Collections.Generic.IReadOnlyCollection<app.call.this>, System.Collections.Generic.IReadOnlyList<app.call.this>, System.Collections.IEnumerable
   Add(app.call.this child) : System.Void
@@ -66,6 +68,11 @@ class app.call.child.list.this : System.Collections.Generic.IEnumerable<app.call
   Item[System.Int32] : app.call.this { get; }
   Remove(app.call.this child) : System.Void
 
+class app.call.composed.this : app.call.this, app.type.item.ICreate<app.call.composed.this>
+  override Action : app.goal.step.action.this { get; } [Debug, Out]
+  static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.composed.this
+  static Internal : System.Boolean { get; }
+
 class app.call.diff.this : System.Collections.Generic.IEnumerable<app.call.Diff>, System.Collections.Generic.IReadOnlyCollection<app.call.Diff>, System.Collections.Generic.IReadOnlyList<app.call.Diff>, System.Collections.IEnumerable
   Add(app.call.Diff diff) : System.Void
   Count : System.Int32 { get; }
@@ -73,40 +80,35 @@ class app.call.diff.this : System.Collections.Generic.IEnumerable<app.call.Diff>
   Item[System.Int32] : app.call.Diff { get; }
   ctor()
 
-class app.call.isolated.this : app.call.binding.this
+class app.call.goal.this : app.call.this, app.type.item.ICreate<app.call.goal.this>
+  override Goal : app.goal.this { get; } [Debug, Out, Snapshot, Store]
+  static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.goal.this
+  static Internal : System.Boolean { get; }
 
-class app.call.list.this : app.type.item.this, app.snapshot.ISnapshot
-  At(System.Collections.Generic.IReadOnlyList<app.call.this> chainBottomFirst) : app.snapshot.ISnapshot
+class app.call.isolated.this : app.call.binding.this, app.type.item.ICreate<app.call.isolated.this>
+  static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.isolated.this
+
+class app.call.list.this : app.type.item.this
   Audit : app.error.list.this { get; } [LlmBuilder]
-  BottomFrame : app.call.Position { get; }
-  Capture(app.snapshot.this s) : System.Void
-  Current : app.call.this { get; } [LlmBuilder]
-  Diff() : System.Threading.Tasks.ValueTask<app.type.item.bool.this>
-  DiffScope(app.type.item.variable.list.this variables) : System.IDisposable
+  Compose(app.goal.step.action.this action, app.call.setting.this setting, app.type.item.variable.list.this variables = …) : app.call.this
+  Current : app.call.this { get; } [LlmBuilder, Snapshot]
   Error : app.error.this { get; }
   Event : app.data.this { get; }
-  EventsSince(System.DateTimeOffset t) : System.Collections.Generic.IEnumerable<app.call.Diff>
   Goal : app.goal.this { get; }
-  History() : System.Threading.Tasks.ValueTask<app.type.item.bool.this>
-  Isolate(System.Collections.Generic.IEnumerable<app.data.this> names, app.call.setting.this setting, app.goal.step.action.this held = …, app.call.this caller = …) : app.call.this
+  Isolate(System.Collections.Generic.IEnumerable<app.data.this> names, app.call.setting.this setting, app.goal.step.action.this call = …, app.call.this caller = …) : app.call.this
   MaxDepth : System.Int32 { get; init; }
   Overflow(app.error.CallStackOverflowException ex, app.goal.this goal, app.goal.step.this step) : app.error.this
-  Push(System.Collections.Generic.IEnumerable<app.data.this> names, app.call.setting.this setting, app.goal.step.action.this held = …) : app.call.this
+  Push(System.Collections.Generic.IEnumerable<app.data.this> names, app.call.setting.this setting, app.goal.step.action.this call = …) : app.call.this
   Push(app.goal.step.action.this action, app.call.setting.this setting, app.type.item.variable.list.this variables = …) : app.call.this
   Push(app.goal.step.this step, app.call.setting.this setting) : app.call.this
   Push(app.goal.this goal, app.call.setting.this setting, System.Collections.Generic.IEnumerable<app.data.this> names = …) : app.call.this
-  Restore(app.snapshot.this s, app.actor.context.this context) : System.Threading.Tasks.Task
-  RestoredChain : System.Collections.Generic.IReadOnlyList<app.call.Position> { get; }
   Root : app.call.this { get; }
   Scope : app.call.this { get; } [LlmBuilder]
-  Section : System.String { get; }
   Setting() : System.Threading.Tasks.ValueTask<app.call.setting.this> [LlmBuilder]
   Step : app.goal.step.this { get; }
-  Tags() : System.Threading.Tasks.ValueTask<app.type.item.bool.this>
-  Timing() : System.Threading.Tasks.ValueTask<app.type.item.bool.this>
-  Variables : app.type.item.variable.list.this { get; }
   ctor(app.type.list.this types, System.Func<app.actor.setting.this> settings)
   override IsLeaf : System.Boolean { get; }
+  protected override Clone() : app.type.item.this
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
 
 class app.call.setting.diff.this : app.type.item.setting.this
@@ -128,37 +130,43 @@ class app.call.setting.this : app.type.item.setting.this
   ctor(app.type.this type)
   static Internal : System.Boolean { get; }
 
-class app.call.this : app.type.item.this, System.IAsyncDisposable
-  Action : app.goal.step.action.this { get; } [LlmBuilder]
-  Caller : app.call.this { get; } [LlmBuilder]
-  Chain : System.Collections.Generic.IReadOnlyList<app.call.this> { get; }
+class app.call.step.this : app.call.this, app.type.item.ICreate<app.call.step.this>
+  index : System.Int32 { get; set; } [LlmBuilder, Snapshot]
+  override Step : app.goal.step.this { get; } [Debug, Out, Store]
+  static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.step.this
+  static Internal : System.Boolean { get; }
+
+class app.call.this : app.type.item.this, System.IAsyncDisposable, app.type.item.ICreate<app.call.this>, app.type.item.property.IOwner
+  Caller : app.call.this { get; } [LlmBuilder, Snapshot]
   Children : app.call.child.list.this { get; }
   CompletedAt : app.type.item.datetime.this { get; }
-  Depth : app.type.item.number.this { get; } [LlmBuilder]
-  Diffs : app.call.diff.this { get; } [LlmBuilder]
+  Depth : app.type.item.number.this { get; } [Debug, LlmBuilder, Out]
+  Diffs : app.call.diff.this { get; } [Debug, LlmBuilder, Out]
   DisposeAsync() : System.Threading.Tasks.ValueTask
-  Duration(app.actor.context.this context) : app.type.item.duration.this
-  Error : app.error.this { get; }
-  Errors : app.error.list.this { get; } [LlmBuilder]
-  Event : app.data.this { get; }
+  Duration : app.type.item.duration.this { get; } [Debug, Out]
+  Error : app.error.this { get; } [Snapshot, Store]
+  Errors : app.error.list.this { get; } [Debug, LlmBuilder, Out]
+  Event : app.data.this { get; } [Debug, Snapshot, Store]
   GetItem<T>() : T
-  Handled : app.type.item.bool.this { get; set; }
+  Handled : app.type.item.bool.this { get; set; } [Debug, Out]
   Holds(System.String name) : System.Boolean
-  Id : app.type.item.text.this { get; }
-  Index : app.type.item.number.this { get; }
-  IsResumable : app.type.item.bool.this { get; }
-  Position : app.call.Position { get; }
+  Id : app.type.item.text.this { get; } [Debug, Out]
+  Parameter : app.type.item.property.list.this { get; } [LlmBuilder, Snapshot, Store]
   Record(app.error.this error, app.actor.context.this context) : System.Void
   Set(System.String name, app.data.this value) : System.Void
   SetItem<T>(T value) : System.Void
-  StartedAt : app.type.item.datetime.this { get; }
+  StartedAt : app.type.item.datetime.this { get; } [Debug, Out]
   Supplies(app.goal.step.action.this call, System.String name) : System.Boolean
   Tag(app.type.item.dict.this tags, app.actor.context.this context) : System.Void
-  Tags : app.type.item.dict.this { get; } [LlmBuilder]
+  Tags : app.type.item.dict.this { get; } [Debug, LlmBuilder, Out, Snapshot, Store]
   TryGet(System.String name, app.data.this& value) : System.Boolean
+  list : System.Collections.Generic.IReadOnlyList<app.call.this> { get; } [LlmBuilder]
   override IsLeaf : System.Boolean { get; }
   override ToString() : System.String
-  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
+  property : app.type.item.property.list.this { get; } [LlmBuilder, Snapshot, Store]
+  protected override Clone() : app.type.item.this
+  static Create(System.Object raw, app.type.this type, app.data.this data) : app.call.this
+  virtual Action : app.goal.step.action.this { get; } [LlmBuilder]
   virtual Goal : app.goal.this { get; } [LlmBuilder]
   virtual Step : app.goal.step.this { get; } [LlmBuilder]
 
@@ -492,8 +500,12 @@ enum app.event.binding.Scope [Choice, PlangType]
   static const app : app.event.binding.Scope
 
 class app.event.binding.action.this : app.event.binding.this
+  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
 
 class app.event.binding.clause.this : app.event.binding.this
+
+class app.event.binding.inherited.this : app.event.binding.this
+  override Remove() : System.Void
 
 class app.event.binding.list.after : app.event.binding.list.this
 
@@ -507,8 +519,8 @@ abstract class app.event.binding.list.this : System.Collections.Generic.IEnumera
 
 class app.event.binding.this : app.type.item.this, app.type.item.ICreate<app.event.binding.this>
   Actor : app.actor.this { get; }
-  Remove() : System.Void
   Scope : app.event.binding.Scope { get; }
+  virtual Remove() : System.Void
 
 class app.event.on.ask : app.event.this
 
@@ -516,27 +528,21 @@ class app.event.on.create : app.event.this
 
 class app.event.on.declared : app.event.this
 
+class app.event.on.empty : app.event.on.this
+  override Item[System.String] : app.event.this { get; }
+
 class app.event.on.error : app.event.this
   Catch(app.type.item.this item, app.data.this failed, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
 
 class app.event.on.hit : app.event.this
 
+class app.event.on.list.this : app.type.item.this
+  current(app.actor.context.this context) : app.data.this [LlmBuilder]
+  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
+
 class app.event.on.load : app.event.this
 
 class app.event.on.miss : app.event.this
-
-class app.event.on.own : app.event.on.this
-  Bind<T>(System.String event, app.event.When when, System.Func<app.event.binding.list.this, T> make) : T
-  override Item[System.String] : app.event.this { get; }
-  override ask : app.event.on.ask { get; }
-  override create : app.event.on.create { get; }
-  override error : app.event.on.error { get; }
-  override load : app.event.on.load { get; }
-  override read : app.event.on.read { get; }
-  override remove : app.event.on.remove { get; }
-  override set : app.event.on.set { get; }
-  override start : app.event.on.start { get; }
-  override write : app.event.on.write { get; }
 
 class app.event.on.read : app.event.this
 
@@ -546,27 +552,35 @@ class app.event.on.set : app.event.this
 
 class app.event.on.start : app.event.this
 
-class app.event.on.this : app.type.item.this
+class app.event.on.this : app.type.item.this, app.type.item.ICreate<app.event.on.this>
   Names : System.Collections.Generic.IEnumerable<System.String> { get; }
   NoEvent(System.String name) : app.error.this
+  ask : app.event.on.ask { get; }
+  create : app.event.on.create { get; }
+  error : app.event.on.error { get; }
+  load : app.event.on.load { get; }
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
-  static readonly Empty : app.event.on.this
+  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
+  read : app.event.on.read { get; }
+  remove : app.event.on.remove { get; }
+  set : app.event.on.set { get; }
+  start : app.event.on.start { get; }
+  static Create(System.Object raw, app.type.this type, app.data.this data) : app.event.on.this
   virtual Item[System.String] : app.event.this { get; }
-  virtual ask : app.event.on.ask { get; }
-  virtual create : app.event.on.create { get; }
-  virtual error : app.event.on.error { get; }
-  virtual load : app.event.on.load { get; }
-  virtual read : app.event.on.read { get; }
-  virtual remove : app.event.on.remove { get; }
-  virtual set : app.event.on.set { get; }
-  virtual start : app.event.on.start { get; }
-  virtual write : app.event.on.write { get; }
+  write : app.event.on.write { get; }
 
 class app.event.on.write : app.event.this
 
 class app.event.serializer.Reader : app.type.reader.ITypeReader
   Kind : System.String { get; }
   Read<TReader>(TReader& reader, System.String kind, app.type.reader.ReadContext ctx) : app.type.item.this
+  ctor()
+
+class app.event.serializer.Snapshot : app.type.reader.ITypeReader
+  Kind : System.String { get; }
+  Read<TReader>(TReader& reader, System.String kind, app.type.reader.ReadContext ctx) : app.type.item.this
+  Reads(app.type.format.TokenKind token) : System.Boolean
+  View : app.View { get; }
   ctor()
 
 abstract class app.event.this : app.type.item.this, app.type.item.ICreate<app.event.this> [PlangType]
@@ -578,6 +592,7 @@ abstract class app.event.this : app.type.item.this, app.type.item.ICreate<app.ev
   before : app.event.binding.list.before { get; }
   override ToString() : System.String
   protected override Type : app.type.this { get; }
+  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
 
 class app.module.ActionAttribute : System.Attribute
   Cacheable : System.Boolean { get; set; }
@@ -609,7 +624,7 @@ interface app.module.IClass
   virtual Validate() : System.Threading.Tasks.Task<app.error.this>
 
 interface app.module.IClause
-  abstract Bind(app.goal.step.action.this clause, app.goal.step.action.this action, app.event.on.own on) : System.Void
+  abstract Bind(app.goal.step.action.this clause, app.goal.step.action.this action, app.event.on.this on) : System.Void
 
 interface app.module.ICodeGenerated
   abstract Start() : System.Threading.Tasks.Task<app.data.this>
@@ -619,9 +634,6 @@ interface app.module.ICodeGenerated
 
 interface app.module.IContext
   abstract Context : app.actor.context.this { get; set; }
-
-static class app.module.IContextSnapshotExtensions
-  static Snapshot(app.module.IContext handler) : app.snapshot.this
 
 interface app.module.IKeep
 
@@ -936,7 +948,7 @@ class app.module.list.query : app.module.IClass, app.module.ICodeGenerated, app.
   protected Data(System.Object value, app.type.this type) : app.data.this
   protected Error(app.error.this error) : app.data.this
 
-class app.module.this : app.type.item.this, app.type.item.ICreate<app.module.this>, app.type.item.ILoad<app.module.this>, app.type.item.IMatch<app.module.this> [PlangType]
+class app.module.this : app.type.item.this, app.type.item.ICreate<app.module.this>, app.type.item.ILoad<app.module.this>, app.type.item.IMatch<app.module.this>, app.type.item.property.IOwner [PlangType]
   Action : app.type.item.list.this { get; } [LlmBuilder]
   Description : app.type.item.file.this { get; } [LlmBuilder]
   Discover(System.Reflection.Assembly assembly, System.String baseNamespace = …) : System.Int32
@@ -944,7 +956,7 @@ class app.module.this : app.type.item.this, app.type.item.ICreate<app.module.thi
   Guide : app.type.item.file.this { get; } [LlmBuilder]
   Item[System.String] : app.goal.step.action.this { get; }
   Match(System.String key) : System.Threading.Tasks.ValueTask<app.module.this>
-  Name : System.String { get; } [Debug, LlmBuilder, Out]
+  Name : System.String { get; } [Debug, LlmBuilder, Out, Snapshot]
   Notes : app.type.item.file.this { get; } [LlmBuilder]
   Register(System.String module, System.String actionName, System.Type type) : System.Void
   Remove(app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this<app.type.item.bool.this>>
@@ -953,13 +965,14 @@ class app.module.this : app.type.item.this, app.type.item.ICreate<app.module.thi
   override Get(app.data.this parent, System.String key, System.Boolean isIndex) : System.Threading.Tasks.ValueTask<app.data.this>
   override IsLeaf : System.Boolean { get; }
   override ToString() : System.String
+  property : app.type.item.property.list.this { get; } [LlmBuilder, Store]
   protected override Setting(app.data.this parent) : System.Threading.Tasks.ValueTask<app.data.this>
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.module.this
 
-class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnapshot, app.type.item.setting.ISetting<app.setting.this>
-  Build : app.module.build.this { get; set; } [LlmBuilder]
+class app.this : app.type.item.this, System.IAsyncDisposable, app.type.item.property.IOwner, app.type.item.setting.ISetting<app.setting.this>
+  Build : app.module.build.this { get; } [LlmBuilder]
   Cache : app.module.cache.ICache { get; }
-  Code : app.module.code.this { get; }
+  Code : app.module.code.this { get; } [Snapshot]
   Created : app.type.item.datetime.this { get; } [LlmBuilder, Out, Store]
   Debug : app.module.debug.this { get; set; }
   DisposeAsync() : System.Threading.Tasks.ValueTask
@@ -970,32 +983,28 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnap
   Mode : app.type.item.choice.this<app.Mode> { get; }
   Name(app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.item.text.this> [LlmBuilder]
   RequestShutdown() : System.Void
-  Restore(app.snapshot.this s, app.actor.context.this context) : System.Threading.Tasks.Task
-  ResumeFromWire(System.String json, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
   Save() : System.Threading.Tasks.Task<app.data.this>
   Services : app.service.list.this { get; }
   ShutdownToken : System.Threading.CancellationToken { get; }
-  Snapshot(app.actor.context.this context) : app.snapshot.this
-  Snapshot(app.error.this error, app.actor.context.this context) : app.snapshot.this
-  SnapshotFromWire(System.String json, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.snapshot.this>>
-  SnapshotToWire(app.snapshot.this s) : System.Threading.Tasks.Task<System.String>
+  Snapshot(app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.snapshot.this>>
+  Snapshot(app.error.this error, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.snapshot.this>>
   Start() : System.Threading.Tasks.Task<app.data.this>
-  Start(app.goal.this goal, app.actor.context.this context, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   StartedAt : app.type.item.datetime.this { get; } [LlmBuilder]
   Updated : app.type.item.datetime.this { get; } [LlmBuilder, Out, Store]
   Uptime : app.type.item.duration.this { get; } [LlmBuilder]
   Version : System.String { get; } [Out, Store]
-  actor : app.type.node.current.this<app.actor.this, app.actor.list.this> { get; } [LlmBuilder, Out]
+  actor : app.type.node.current.this<app.actor.this, app.actor.list.this> { get; } [LlmBuilder, Out, Snapshot]
   call(app.actor.context.this context) : app.call.list.this [LlmBuilder]
   ctor(System.String absolutePath, System.String environment = …, app.Wiring wiring = …)
   data(app.actor.context.this context) : app.data.this [LlmBuilder]
   error : app.type.node.current.this<app.error.this, app.error.list.this> { get; } [LlmBuilder, Out]
-  event(app.actor.context.this context) : app.data.this [LlmBuilder]
+  event : app.event.on.list.this { get; } [LlmBuilder, Snapshot]
   filesystem : app.type.item.path.file.filesystem.this { get; } [LlmBuilder]
   goal : app.type.node.current.this<app.goal.this, app.goal.list.this> { get; } [LlmBuilder, Out]
   module : app.module.this { get; } [LlmBuilder, Out]
   override IsLeaf : System.Boolean { get; }
   parent : app.parent.this { get; } [LlmBuilder, Out]
+  property : app.type.item.property.list.this { get; } [LlmBuilder, Snapshot, Store]
   protected override Clone() : app.type.item.this
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   shortcut : app.type.node.this<app.shortcut.this, app.shortcut.list.this> { get; } [Out]
@@ -1367,8 +1376,9 @@ abstract class app.type.item.content.this : app.type.item.this [PlangType]
   Content(app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.binary.this>>
   ContentText() : System.String
   IsLoaded : System.Boolean { get; }
-  Path : app.type.item.path.this { get; } [LlmBuilder, Out, Store]
+  Path : app.type.item.path.this { get; } [LlmBuilder, Out, Snapshot, Store]
   ctor(System.Type clr, app.type.item.path.this path, app.actor.context.this context, app.type.item.template.kind.this template)
+  ctor(System.Type clr, app.type.item.path.this path, app.type.list.this types, app.type.item.template.kind.this template)
   override Cacheable : System.Boolean { get; }
   override Open(app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.error.this>
   override ToString() : System.String
@@ -1489,6 +1499,7 @@ class app.type.item.dict.this : app.type.item.this, app.type.item.ICreate<app.ty
   override Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
   override Variable : System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> { get; }
   override Where(app.type.item.text.this field, app.data.Operator op, app.data.this value, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
+  protected override Clone() : app.type.item.this
   protected override Fields : System.Collections.Generic.IEnumerable<System.String> { get; }
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
@@ -1500,7 +1511,7 @@ class app.type.item.directory.this : app.type.item.this, app.type.item.ICreate<a
   Contains(System.String needle, app.actor.context.this context) : System.Threading.Tasks.Task<System.Boolean>
   List(app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.list.this<app.type.item.path.this>>>
   Listed : app.type.item.list.this<app.type.item.path.this> { get; }
-  Path : app.type.item.path.this { get; } [LlmBuilder, Out, Store]
+  Path : app.type.item.path.this { get; } [LlmBuilder, Out, Snapshot, Store]
   ctor(app.type.item.path.this path, app.type.this type)
   override AsBooleanAsync(app.actor.context.this context) : System.Threading.Tasks.Task<System.Boolean>
   override Contains(app.data.this needle) : System.Threading.Tasks.ValueTask<System.Boolean>
@@ -1741,13 +1752,6 @@ abstract class app.type.item.input.this : app.type.item.this, app.type.item.ICre
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.type.item.input.this
   static Shape : System.String { get; }
 
-class app.type.item.kept.list.this : app.snapshot.ISnapshot
-  Capture(app.snapshot.this s) : System.Void
-  Item[System.String] : app.data.this { get; }
-  Restore(app.snapshot.this s, app.actor.context.this context) : System.Threading.Tasks.Task
-  Section : System.String { get; }
-  ctor()
-
 class app.type.item.kind.dict.this : app.type.kind.this<app.type.item.this>
   ctor(app.type.this owner)
   override ClrForm : System.Type { get; }
@@ -1846,7 +1850,7 @@ class app.type.item.kind.json.this : app.type.kind.this<app.type.item.this>, app
   override Mime : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   override Open(System.String characters, app.actor.context.this context) : app.data.this
   override Parse(System.Object raw, app.actor.context.this ctx) : app.type.item.this
-  override Read(System.Object obj, app.type.reader.ITypeReader reader, System.String kind, app.actor.context.this context) : System.Object
+  override Read(System.Object obj, app.type.reader.ITypeReader reader, System.String kind, app.type.reader.ReadContext ctx) : System.Object
   override Report : System.String { get; }
 
 class app.type.item.kind.jsonl.Writer : System.IAsyncDisposable, app.type.format.IWriter
@@ -1899,7 +1903,7 @@ class app.type.item.kind.list.this : app.type.kind.this<app.type.item.this>
   protected override OwnInternal : System.Nullable<System.Boolean> { get; }
 
 static class app.type.item.kind.reflection.Tagged
-  static PropertiesFor(System.Type type, app.View mode) : System.Collections.Generic.IReadOnlyList<app.type.item.kind.reflection.Tagged+Entry>
+  static PropertiesFor(System.Type type, app.View view) : System.Collections.Generic.IReadOnlyList<app.type.item.kind.reflection.Tagged+Entry>
 
 struct app.type.item.kind.reflection.Tagged+Entry : System.IEquatable<app.type.item.kind.reflection.Tagged+Entry>
   Masked : System.Boolean { get; init; }
@@ -1986,6 +1990,7 @@ class app.type.item.list.this : app.type.item.this, app.type.item.ICreate<app.ty
   override Variable : System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> { get; }
   override Where(app.type.item.text.this field, app.data.Operator op, app.data.this value, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
   protected Slots() : System.Collections.Generic.IEnumerable<System.Object>
+  protected override Clone() : app.type.item.this
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   protected override Write(app.type.item.kind.jsonl.Writer writer) : System.Threading.Tasks.ValueTask
@@ -2464,6 +2469,24 @@ class app.type.item.permission.this : app.type.item.this, app.type.item.ICreate<
   static Offer : System.Collections.Generic.IReadOnlyList<app.type.item.this> { get; }
   static Request(app.actor.this actor, System.String path, app.type.item.permission.Verb verb, app.type.item.permission.Match match = …) : app.type.item.permission.this
   static Shape : System.String { get; }
+
+interface app.type.item.property.IOwner
+  abstract property : app.type.item.property.list.this { get; }
+
+class app.type.item.property.list.this : app.type.item.this, app.type.item.ICreate<app.type.item.property.list.this>
+  Item[System.String] : app.data.this { get; }
+  ctor(app.type.this type)
+  override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
+  override Get(app.data.this parent, System.String key, System.Boolean isIndex) : System.Threading.Tasks.ValueTask<app.data.this>
+  override IsLeaf : System.Boolean { get; }
+  override IsSequence : System.Boolean { get; }
+  override IsTruthy() : System.Boolean
+  protected override Clone() : app.type.item.this
+  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
+  static Create(System.Object raw) : app.type.item.property.list.this
+  static Create(System.Object raw, app.type.this type, app.data.this data) : app.type.item.property.list.this
+  static Internal : System.Boolean { get; }
+  static Read(app.type.item.kind.json.Reader& json, app.type.reader.ReadContext ctx) : app.type.item.property.list.this
 
 class app.type.item.prose.this : app.type.item.this
   Or(app.type.item.prose.this other) : app.type.item.prose.this
@@ -2960,34 +2983,25 @@ class app.type.item.variable.code.this : app.type.item.list.bare.this<app.type.i
   Set(System.Object value, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
   Start(app.actor.context.this context, app.data.this from = …) : System.Threading.Tasks.ValueTask<app.data.this>
 
-class app.type.item.variable.list.this : app.snapshot.ISnapshot
-  Capture(app.snapshot.this s) : System.Void
+class app.type.item.variable.list.this
   Clear() : System.Void
-  Clone() : app.type.item.variable.list.this
   Contains(System.String name) : System.Boolean
   Ensure(System.String name, System.Func<System.Threading.Tasks.ValueTask<app.data.this>> value) : System.Threading.Tasks.ValueTask<app.data.this>
   Get(System.String name) : System.Threading.Tasks.ValueTask<app.data.this>
   Get<T>(System.String name) : System.Threading.Tasks.ValueTask<app.data.this<T>>
   GetAll() : System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<System.String, app.data.this>>
-  GetChangedSince(System.DateTime since) : System.Collections.Generic.Dictionary<System.String, System.String>
-  GetNames() : System.Collections.Generic.IEnumerable<System.String>
   Own(System.String name) : System.Threading.Tasks.ValueTask<app.data.this>
   Peek(System.String name) : app.data.this
   Remove(System.String name) : System.Threading.Tasks.ValueTask<app.data.this>
   Replace(System.String name, app.data.this expected, app.type.item.this value) : System.Threading.Tasks.ValueTask<app.data.this>
-  Restore(System.Collections.Generic.HashSet<System.String> snapshot) : System.Void
-  Restore(app.snapshot.this s, app.actor.context.this context) : System.Threading.Tasks.Task
-  Save() : System.Collections.Generic.HashSet<System.String>
-  Section : System.String { get; }
   Set(System.String name, System.Object value) : System.Threading.Tasks.ValueTask<app.data.this>
   Set(app.data.this value) : System.Threading.Tasks.ValueTask<app.data.this>
   Snapshot() : app.type.item.dict.this
-  SnapshotAt(app.error.this error) : app.type.item.variable.list.this
   Supplies(app.goal.step.action.this call, System.String name) : System.Boolean
-  ToDictionary(System.Boolean includeSystem = …) : System.Collections.Generic.Dictionary<System.String, System.Object>
   Value(System.String name) : System.Threading.Tasks.ValueTask<app.type.item.this>
   ctor(app.actor.context.this context)
   list : app.type.item.list.this<app.type.item.variable.this> { get; }
+  row : app.type.item.dict.this { get; } [Snapshot]
 
 class app.type.item.variable.parser.this
   Error : System.Collections.Generic.IReadOnlyList<app.error.this> { get; }
@@ -3077,15 +3091,16 @@ class app.type.item.wire.kind.plang.this : app.type.kind.this<app.type.item.wire
   override Mime : System.Collections.Generic.IReadOnlyList<System.String> { get; }
 
 class app.type.item.wire.template : app.type.item.wire.this
-  ctor(System.String slice, app.type.this type, app.type.item.wire.kind.plang.this reader, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable, System.Boolean built = …)
+  ctor(System.String slice, app.type.this type, app.type.item.wire.kind.plang.this reader, app.View view, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable, System.Boolean built = …)
 
 class app.type.item.wire.this : app.type.item.source [PlangType]
-  ctor(System.String slice, app.type.this type, app.type.item.wire.kind.plang.this reader, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable = …, System.Boolean built = …)
+  ctor(System.String slice, app.type.this type, app.type.item.wire.kind.plang.this reader, app.View view, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable = …, System.Boolean built = …)
   override RawText : System.String { get; }
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   protected override Write(app.type.item.kind.json.Writer writer) : System.Threading.Tasks.ValueTask
   protected override Write(app.type.item.wire.kind.plang.Writer writer) : System.Threading.Tasks.ValueTask
   static Internal : System.Boolean { get; }
+  static Of(app.type.item.this value, app.View view, app.actor.context.this context) : System.Threading.Tasks.Task<app.type.item.wire.this>
 
 class app.type.kind.empty.this : app.type.kind.this
   ctor(app.type.this owner, app.type.kind.this format = …)
@@ -3157,7 +3172,7 @@ class app.type.kind.this : app.type.this
   virtual Of(System.Type type) : System.Type
   virtual Open(System.String characters, app.actor.context.this context) : app.data.this
   virtual Parse(System.Object raw, app.actor.context.this ctx) : app.type.item.this
-  virtual Read(System.Object obj, app.type.reader.ITypeReader reader, System.String kind, app.actor.context.this context) : System.Object
+  virtual Read(System.Object obj, app.type.reader.ITypeReader reader, System.String kind, app.type.reader.ReadContext ctx) : System.Object
   virtual Report : System.String { get; }
   virtual Set(System.Object host, System.String key, System.Boolean isIndex, System.Object value, app.actor.context.this ctx) : System.Threading.Tasks.ValueTask<app.type.item.this>
   virtual View : app.View { get; }
@@ -3218,7 +3233,7 @@ class app.type.node.this<T, L> : app.type.node.this
   Get(System.String key, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this<T>>
   Load(System.String location) : System.Threading.Tasks.Task<app.data.this>
   ctor(app.this app)
-  list : L { get; }
+  list : L { get; } [Snapshot]
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
   override Get(app.data.this parent, System.String key, System.Boolean isIndex) : System.Threading.Tasks.ValueTask<app.data.this>
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
@@ -3265,6 +3280,7 @@ interface app.type.reader.ITypeReader
   abstract Read<TReader>(TReader& reader, System.String kind, app.type.reader.ReadContext ctx) : app.type.item.this
   virtual IsEager : System.Boolean { get; }
   virtual Reads(app.type.format.TokenKind token) : System.Boolean
+  virtual View : app.View { get; }
 
 class app.type.reader.ReadContext : System.IEquatable<app.type.reader.ReadContext>
   Context : app.actor.context.this { get; init; }
@@ -3284,7 +3300,6 @@ abstract class app.type.reader.this
   Register(System.String typeName, System.String kind, app.type.reader.ITypeReader reader) : System.Void
   Register(System.String typeName, System.String kind, app.type.reader.this+Read read) : System.Void
   TypeOf(System.String kind) : System.String
-  Typed(System.String typeName, System.String kind) : app.type.reader.ITypeReader
   static const AnyKind : System.String
 
 class app.type.reader.this+Read : System.MulticastDelegate
@@ -3379,12 +3394,14 @@ type action
   .guide : file
 
 type actor
+  .property : app.type.item.property.list
   .name : text
   .context : clr
   .channel : app.channel.list
   .task : app.task.list
 
 type app
+  .property : app.type.item.property.list
   .name : text
   .created : datetime
   .updated : datetime
@@ -3392,7 +3409,7 @@ type app
   .call : app.call.list
   .trace : app.actor.context.trace
   .data : item
-  .event : item
+  .event : app.event.on.list
   .startedAt : datetime
   .uptime : duration
   .module : module
@@ -3413,6 +3430,7 @@ type app.actor.context.trace
 type app.actor.permission.setting
 
 type app.call
+  .property : app.type.item.property.list
   .goal : goal
   .step : step
   .action : action
@@ -3420,26 +3438,74 @@ type app.call
   .errors : list<error>
   .diffs : list<clr>
   .tags : dict
+  .parameter : app.type.item.property.list
+  .list : list<app.call>
+  .depth : number
+
+type app.call.action
+  .action : action
+  .index : number
+  .property : app.type.item.property.list
+  .goal : goal
+  .step : step
+  .caller : app.call
+  .errors : list<error>
+  .diffs : list<clr>
+  .tags : dict
+  .parameter : app.type.item.property.list
+  .list : list<app.call>
   .depth : number
 
 type app.call.binding
   .goal : goal
   .step : step
+  .property : app.type.item.property.list
   .action : action
   .caller : app.call
   .errors : list<error>
   .diffs : list<clr>
   .tags : dict
+  .parameter : app.type.item.property.list
+  .list : list<app.call>
   .depth : number
 
-type app.call.isolated
+type app.call.composed
+  .action : action
+  .property : app.type.item.property.list
   .goal : goal
+  .step : step
+  .caller : app.call
+  .errors : list<error>
+  .diffs : list<clr>
+  .tags : dict
+  .parameter : app.type.item.property.list
+  .list : list<app.call>
+  .depth : number
+
+type app.call.goal
+  .goal : goal
+  .property : app.type.item.property.list
   .step : step
   .action : action
   .caller : app.call
   .errors : list<error>
   .diffs : list<clr>
   .tags : dict
+  .parameter : app.type.item.property.list
+  .list : list<app.call>
+  .depth : number
+
+type app.call.isolated
+  .goal : goal
+  .step : step
+  .property : app.type.item.property.list
+  .action : action
+  .caller : app.call
+  .errors : list<error>
+  .diffs : list<clr>
+  .tags : dict
+  .parameter : app.type.item.property.list
+  .list : list<app.call>
   .depth : number
 
 type app.call.list
@@ -3453,6 +3519,20 @@ type app.call.setting
 type app.call.setting.diff
 
 type app.call.setting.frame
+
+type app.call.step
+  .step : step
+  .index : number
+  .property : app.type.item.property.list
+  .goal : goal
+  .action : action
+  .caller : app.call
+  .errors : list<error>
+  .diffs : list<clr>
+  .tags : dict
+  .parameter : app.type.item.property.list
+  .list : list<app.call>
+  .depth : number
 
 type app.channel.list
 
@@ -3496,9 +3576,25 @@ type app.event.binding.action
 
 type app.event.binding.clause
 
+type app.event.binding.inherited
+
 type app.event.on
 
+type app.event.on.list
+  .current : item
+
 type app.goal.list.setting
+
+type app.goal.step.action.composed
+  .module : module
+  .name : text
+  .property : list<clr>
+  .step : step
+  .return : type
+  .description : file
+  .note : app.type.item.note
+  .examples : file
+  .guide : file
 
 type app.module.archive.setting
 
@@ -3507,10 +3603,6 @@ type app.module.browser.type.cdp
 type app.module.browser.type.cdp.session
 
 type app.module.build.setting
-
-type app.module.code.defaultoverride
-
-type app.module.code.registration
 
 type app.module.debug.setting
 
@@ -3567,6 +3659,8 @@ type app.type.item.note.line
   .say : text
   .builder : text
 
+type app.type.item.property.list
+
 type app.type.item.prose
 
 type app.type.item.setting.action
@@ -3615,6 +3709,12 @@ type clipboard
 type clr
 
 type code
+
+type code.dll
+
+type code.dll.added
+
+type code.dll.loaded
 
 type content
   .path : path
@@ -3675,7 +3775,7 @@ type error
   .callback : snapshot
   .step : step
   .goal : goal
-  .callFrames : list<app.call>
+  .call : app.call
   .variables : dict
 
 type event
@@ -3699,6 +3799,7 @@ type goal
   .warning : list<warning>
   .cache : goal
   .isCached : bool
+  .property : app.type.item.property.list
 
 type guid
 
@@ -3766,6 +3867,7 @@ type message
 type modifier
 
 type module
+  .property : app.type.item.property.list
   .name : text
   .list : list<module>
   .action : list
@@ -3847,6 +3949,7 @@ type step
   .pick : clr
   .intent : text
   .goal : goal
+  .property : app.type.item.property.list
   .typed : list<clr>
   .setting : list<setting>
   .hasKey : bool
@@ -3883,6 +3986,8 @@ type time
   .hour : number
 
 type timing
+
+type tool.call
 
 type type
 
@@ -4437,7 +4542,6 @@ action signing.sign
   Data : item
   Contracts : list
   Expires : duration
-  StoreView : bool
 
 action signing.verify
   Data : item
@@ -4445,6 +4549,9 @@ action signing.verify
 
 action snapshot.resume
   Snapshot : snapshot required
+  Parallel : parallel
+
+action snapshot.save
 
 action task.cancel
   Task : task required

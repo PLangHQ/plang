@@ -1,62 +1,50 @@
 namespace app;
 
-public sealed partial class @this : global::app.snapshot.ISnapshot
+public sealed partial class @this
 {
-    /// <summary>The App's snapshot owners, in restore order — providers first, since a later owner may
-    /// consume them. Each names its own section; adding an owner is adding it here.</summary>
-    private IEnumerable<global::app.snapshot.ISnapshot> Snapshotted(
-        global::app.snapshot.ISnapshot variables, global::app.snapshot.ISnapshot callStack)
-        => [Code, variables, _kept, this, callStack];
-
     /// <summary>
-    /// The App's state as a snapshot: each owner captures its own section. Only owners implementing
-    /// <see cref="global::app.snapshot.ISnapshot"/> participate — the rest (Modules, Goals, Channels,
-    /// Cache, Events, Settings, Types, Config, Filesystem, …) reconstruct on build.
+    /// The run's state as a snapshot: the app written in the snapshot view, each object writing its own tagged members,
+    /// taken once and answered as those bytes, so the run going on never changes what was taken, and whatever carries it
+    /// (a save, an ask's pending state, an error's callback, a file) carries exactly them. It is born signed by the app's
+    /// own identity: a resume goes on only from a snapshot this app signed, so one taken here is never told from one read
+    /// in by anything but its signature. A save inside a task is refused: a task's context is no member of anything the
+    /// app writes, so its variables and its frames would be missing from what was saved; so is one while a task runs, whose
+    /// frames go on in the task's own stack, which nothing would run again.
     /// </summary>
-    public snapshot.@this Snapshot(actor.context.@this context)
-        => Capture(context, Snapshotted(context.Variable, context.call));
-
-    /// <summary>
-    /// Throw-time snapshot for an error callback. By the time an error reaches its handler the live
-    /// CallStack has unwound past the failing action, so the variables and the call stack are taken
-    /// as they stood at the throw (<see cref="global::app.type.item.variable.list.@this.SnapshotAt"/>, the chain
-    /// the error carried). Everything else is unchanged across handling, so it captures live.
-    /// </summary>
-    public snapshot.@this Snapshot(global::app.error.@this error, actor.context.@this context)
-        => Capture(context, Snapshotted(context.Variable.SnapshotAt(error), context.call.At(error.CallFrames)));
-
-    private snapshot.@this Capture(actor.context.@this context, IEnumerable<global::app.snapshot.ISnapshot> owners)
+    public async System.Threading.Tasks.Task<data.@this<snapshot.@this>> Snapshot(actor.context.@this context)
     {
-        var s = new snapshot.@this(context);
-        foreach (var owner in owners) owner.Capture(s.Section(owner.Section));
-        return s;
+        if (!ReferenceEquals(context, context.Actor.Context))
+            return global::app.data.@this<snapshot.@this>.FromError(new global::app.error.@this(
+                "a snapshot is saved from the run's own context, not from inside a task: a task's variables and frames are reached by nothing a snapshot saves",
+                "SnapshotInTask", 400), context);
+        foreach (var actor in this.actor.list.Items())
+            if (actor.Context.call.Unsaved is { } error) return global::app.data.@this<snapshot.@this>.FromError(error, context);
+        // a value the snapshot can't keep (a binding it can't make again, an object with no snapshot face) refuses the save
+        global::app.data.@this wire;
+        try { wire = context.Ok(await global::app.type.item.wire.@this.Of(new snapshot.@this(this, context), global::app.View.Snapshot, context)); }
+        catch (global::app.error.AppException ex) { return global::app.data.@this<snapshot.@this>.FromError(ex.Error, context); }
+
+        // signed through the signer itself, so the view it names (the snapshot's, which no step gives) is the one it hashes in
+        var (signer, missing) = Code.Get<global::app.module.signing.code.ISigning>();
+        if (signer == null) return global::app.data.@this<snapshot.@this>.FromError(missing!, context);
+        var signed = await signer.SignAsync(new global::app.module.signing.sign(context) { Data = wire, View = global::app.View.Snapshot });
+        // a snapshot is never unsigned: a sign that failed says why, whole; one that answered with no signature is the
+        // signer's fault, named so
+        if (!signed.Success) return global::app.data.@this<snapshot.@this>.From(signed);
+        if (signed.Signature == null)
+            return global::app.data.@this<snapshot.@this>.FromError(new global::app.error.@this(
+                "the signer answered the snapshot with no signature", "SignerGaveNoSignature", 500), context);
+        return global::app.data.@this<snapshot.@this>.From(signed);
     }
 
     /// <summary>
-    /// Restores each captured section into its owner on this App, in <see cref="Snapshotted"/>
-    /// order. Hard-errors propagate (e.g. <see cref="Providers.ProviderRestoreException"/>): the App
-    /// is left partially restored and the caller treats the failure as a referent-integrity violation.
+    /// <paramref name="error"/>'s callback: the run as it stands when its handler takes it, going on from where the error
+    /// happened. For this one write the call stands in the error's frame, with its callers (by the time a handler asks,
+    /// the frames the error happened in have ended); the variables are as they are now.
     /// </summary>
-    public async System.Threading.Tasks.Task Restore(snapshot.@this s, actor.context.@this context)
+    public async System.Threading.Tasks.Task<data.@this<snapshot.@this>> Snapshot(global::app.error.@this error, actor.context.@this context)
     {
-        foreach (var owner in Snapshotted(context.Variable, context.call))
-            if (s.HasSection(owner.Section))
-                await owner.Restore(s.Section(owner.Section), context);
-    }
-
-    // The App as its own owner: its section carries its Mode.
-    string global::app.snapshot.ISnapshot.Section => "App";
-
-    void global::app.snapshot.ISnapshot.Capture(snapshot.@this s)
-        => s.Write("mode", Mode);
-
-    async System.Threading.Tasks.Task global::app.snapshot.ISnapshot.Restore(snapshot.@this s, actor.context.@this context)
-    {
-        var entry = s.Entries.Get("mode", context);
-        if (entry == null) return;
-        var mode = (await entry.Value<global::app.type.item.choice.@this<global::app.Mode>>())!.Value;
-        Build = mode == global::app.Mode.Build ? new global::app.module.build.@this(context) : null;
-        if (mode == global::app.Mode.Test && test.list.Session == null) await test.list.Open();
-        else if (mode != global::app.Mode.Test) await test.list.Close();
+        if (error.call is { } call) context.call.Stand(call);
+        return await Snapshot(context);
     }
 }

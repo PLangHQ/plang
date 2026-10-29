@@ -25,14 +25,32 @@ public class @this : global::app.type.item.source
 
     // The format that sliced this raw — an object reference, never a format name. Held since birth; the
     // read reaches it directly.
-    private readonly kind.plang.@this _reader;
+    private readonly kind.plang.@this _kind;
+
+    // What the bytes were written for: the view the slice is read in when it is first touched.
+    private readonly global::app.View _view;
 
     // An encoded slice is never parsed for its variables: the build's own holds what its row lists, any other
     // holds none (the source decides).
-    public @this(string slice, global::app.type.@this type, kind.plang.@this reader,
+    public @this(string slice, global::app.type.@this type, kind.plang.@this reader, global::app.View view,
         IReadOnlyList<global::app.type.item.variable.@this>? variable = null, bool built = false)
         : base(slice, type, variable ?? [], built: built)
-        => _reader = reader ?? throw new System.ArgumentNullException(nameof(reader));
+    {
+        _kind = reader ?? throw new System.ArgumentNullException(nameof(reader));
+        _view = view;
+    }
+
+    /// <summary>A wire born from <paramref name="value"/> written in <paramref name="view"/>, through plang's own format:
+    /// the value as it stood, held as those bytes under its own type, so whatever carries it later carries exactly
+    /// them. Its asker is <paramref name="context"/>.</summary>
+    public static async System.Threading.Tasks.Task<@this> Of(global::app.type.item.@this value, global::app.View view,
+        global::app.actor.context.@this context)
+    {
+        using var bytes = new System.IO.MemoryStream();
+        await using (var utf8 = new System.Text.Json.Utf8JsonWriter(bytes))
+            await value.Output(new kind.plang.Writer(utf8, view, context));
+        return new(System.Text.Encoding.UTF8.GetString(bytes.ToArray()), value.Type, context.App.type.list.Plang, view);
+    }
 
     /// <summary>The text as written: a string slice is the text it holds (unquoted, as a source's is); any other
     /// slice is its raw form.</summary>
@@ -43,10 +61,14 @@ public class @this : global::app.type.item.source
     // A slice is no text: decoded, its parts render themselves (a %ref% leaf is the value it names).
     private protected override global::app.type.item.text.@this? Text(global::app.actor.context.@this context) => null;
 
-    // The slice's own read keeps whose bytes they are: a row nested in the build's slice (a goal call's
-    // parameters) is the build's too.
-    private protected override global::app.type.item.@this Read(actor.context.@this context)
-        => _reader.Read(this, new global::app.type.reader.ReadContext(context, Type.Template, Variable: Variable, IsBuilt: IsBuilt));
+    // The slice's own read keeps whose bytes they are, and what they were written for: a row nested in the build's
+    // slice (a goal call's parameters) is the build's too, and one in a snapshot is read as a snapshot's.
+    internal override global::app.type.item.@this Read(actor.context.@this context)
+        => _kind.Read(this, new global::app.type.reader.ReadContext(context, Type.Template, Variable: Variable, IsBuilt: IsBuilt) { View = _view });
+
+    // What the slice's view needs loaded before it is read (a goal's .pr, in a snapshot).
+    private protected override System.Threading.Tasks.Task<global::app.data.@this> Load(actor.context.@this context)
+        => _view.Load(Type, (string)Raw, context);
 
     // The decoded value, with the caller's context: the kind owns the decode (one Parse, the same
     // value Value() materializes to); a kind that declines (csv, png) falls to the type reader.
@@ -83,10 +105,10 @@ public class @this : global::app.type.item.source
 
     // Read as another type, an undecoded wire is what it decodes to, read as tokens.
     internal override object? Read(global::app.type.reader.ITypeReader reader, string? kind,
-                                   global::app.actor.context.@this context)
-        => Decoded(context).Read(reader, kind, context);
+                                   global::app.actor.context.@this context, global::app.View view)
+        => Decoded(context).Read(reader, kind, context, view);
 
     // Re-declared, the slice is what its new declaration makes of it — a template only when marked one.
     internal override global::app.type.item.source Declared(global::app.type.@this type)
-        => type.Make((string)Raw, _reader, Variable, IsBuilt);
+        => type.Make((string)Raw, _kind, _view, Variable, IsBuilt);
 }

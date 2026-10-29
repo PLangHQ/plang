@@ -35,7 +35,7 @@ public sealed class Live : IAnswer
             OnStream = action.OnStream,
             StreamAs = streamed ? new data.@this<global::app.type.item.choice.@this<StreamFormat>>("", StreamFormat.SSE, context: context) : default
         };
-        return await new global::app.goal.step.action.@this(send, context).Start(context);
+        return await new global::app.goal.step.action.composed.@this(send, context).Start(context);
     }
 
     /// <summary>OpenAI keeps nothing of a run.</summary>

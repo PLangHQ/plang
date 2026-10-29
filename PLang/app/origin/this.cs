@@ -25,12 +25,23 @@ internal interface @this
     /// stores in memory.</summary>
     bool Testing { get; }
 
+    /// <summary>How deep the app is nested: the code's app is the first (0); an actor's, one under its own app.</summary>
+    int Depth { get; }
+
     /// <summary>The types the app's type list is a layer over: the code's own; an actor's app's.</summary>
     global::app.type.list.@this type { get; }
 
     /// <summary>The actions the registry of <paramref name="app"/> is a layer over: the code's own, born with
     /// <paramref name="app"/>, which answers for them; an actor's app's.</summary>
     global::app.module.@this Module(global::app.@this app);
+
+    /// <summary>The code providers the app's registry is a layer over: the code, none (its registry is the bottom); an
+    /// actor's app's, so a provider its app holds — one registered in-process too — is found in the sub app.</summary>
+    global::app.module.code.@this? Code { get; }
+
+    /// <summary>The events the app is born holding the bindings of: the code, none; an actor's app's, each of its
+    /// bindings taken in by the sub app as its own.</summary>
+    global::app.@event.on.list.@this? @event { get; }
 
     /// <summary>The goal at <paramref name="source"/> as <paramref name="app"/> takes it from what it is made from —
     /// the code has none; an actor's app's, while <paramref name="app"/> holds no code of its own and shares its folder.

@@ -69,9 +69,7 @@ public class GoalCallResolutionTests
         await WritePr(".build/target.pr", "Target");
         var ctx = _app.actor.list.User.Context;
         var births = new List<string>();
-        _app.actor.list.User.on.Bind(_app.type.list["goal"], "create", global::app.@event.When.after,
-            (_, data, c) => { births.Add(data.Type.Name); return Task.FromResult(data); },
-            global::app.@event.binding.Scope.actor);
+        _app.@event.Add(_app.type.list["goal"]).Add("create")[global::app.@event.When.after].Add(side => new global::app.@event.binding.@this(side, (_, data, c) => { births.Add(data.Type.Name); return Task.FromResult(data); }, _app.actor.list.User, global::app.@event.binding.Scope.actor, global::app.@event.binding.@this.Always));
 
         var slot = new global::app.data.@this("", ctx.Text("Target"), context: ctx).As<PLangGoal>();
         var selected = await slot.Value();

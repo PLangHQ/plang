@@ -27,7 +27,7 @@ public class DataSnapshotTests : System.IAsyncDisposable
 
     [Test] public async Task DataSnapshot_RoundTripsThrough_OkConstructor()
     {
-        var snap = new global::app.snapshot.@this(app.actor.list.User.Context);
+        var snap = app.actor.list.User.Context.EmptySnapshot();
         var d = app.Ok("v");
         d.Snapshot = snap;
         await Assert.That(d.Snapshot).IsSameReferenceAs(snap);
@@ -37,30 +37,8 @@ public class DataSnapshotTests : System.IAsyncDisposable
     {
         var d = new global::app.data.@this<global::app.type.item.text.@this>("", "x", context: app.actor.list.User.Context);
         await Assert.That(d.Snapshot).IsNull();
-        d.Snapshot = new global::app.snapshot.@this(app.actor.list.User.Context);
+        d.Snapshot = app.actor.list.User.Context.EmptySnapshot();
         await Assert.That(d.Snapshot).IsNotNull();
-    }
-
-    [Test] public async Task ActionSnapshotHelper_ReturnsNonNull()
-    {
-        var app = NewApp();
-        var handler = new ask(app.actor.list.User.Context);
-        var snap = handler.Snapshot();
-        await Assert.That(snap).IsNotNull();
-    }
-
-    [Test] public async Task ActionSnapshotHelper_MatchesContextAppSnapshot()
-    {
-        var app = NewApp();
-        var handler = new ask(app.actor.list.User.Context);
-        var viaHandler = handler.Snapshot();
-        var viaApp = app.Snapshot(app.actor.list.User.Context);
-        // Both factories build a fresh full snapshot — same shape (App tree),
-        // distinct instances. The contract is "Snapshot() on a handler is the
-        // same call as Context.App.Snapshot()" — proved by walking the same
-        // CallStack frames (here, zero frames for both).
-        await Assert.That(viaHandler).IsNotNull();
-        await Assert.That(viaApp).IsNotNull();
     }
 
     [Test] public async Task ExitTypedData_MustCarry_NonNullSnapshot_Invariant()
@@ -69,7 +47,7 @@ public class DataSnapshotTests : System.IAsyncDisposable
         // MUST attach a Snapshot. Producers respect this; here we assert the
         // invariant holds for the Ask-carrying Data shape (after the producer
         // call sites in 2a.4 wire the Snapshot capture).
-        var snap = new global::app.snapshot.@this(app.actor.list.User.Context);
+        var snap = app.actor.list.User.Context.EmptySnapshot();
         var data = new global::app.data.@this<Ask>("", new Ask(app.actor.list.User.Context.App.type.list[typeof(global::app.module.output.Ask)]), context: app.actor.list.User.Context) { Snapshot = snap };
         await Assert.That(data.Snapshot).IsNotNull();
     }

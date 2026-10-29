@@ -16,7 +16,8 @@ namespace app;
 /// Executes goals and manages the execution lifecycle.
 /// Self-contained: owns all app-level state (environment, culture, shutdown, key-value store).
 /// </summary>
-public sealed partial class @this : global::app.type.item.@this, IAsyncDisposable, global::app.type.item.setting.ISetting<global::app.setting.@this>
+public sealed partial class @this : global::app.type.item.@this, IAsyncDisposable, global::app.type.item.setting.ISetting<global::app.setting.@this>,
+    global::app.type.item.property.IOwner
 {
     /// <summary>A structure — it writes what it holds (<see cref="Output"/>).</summary>
     public override bool IsLeaf => false;
@@ -43,9 +44,14 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         finally { _writing.Value = false; }
     }
 
-    // what a program adds to the app (%!app.home%) — kept for the app's life, and in its snapshot
-    private readonly global::app.type.item.kept.list.@this _kept = new();
-    internal override global::app.type.item.kept.list.@this Kept => _kept;
+    /// <summary>What finds the app: its name, as <paramref name="context"/>'s settings have it.</summary>
+    internal override async System.Threading.Tasks.ValueTask<global::app.type.item.@this?> Key(global::app.actor.context.@this context)
+        => await Name(context);
+
+    /// <summary>What a program adds to the app (<c>%!app.property["home"]%</c>, <c>%!app.home%</c>) — kept for the app's
+    /// life, and in its snapshot.</summary>
+    [Store, global::app.Snapshot, global::app.LlmBuilder]
+    public global::app.type.item.property.list.@this property { get; private set; }
 
     /// <summary>The one root: a copy of the app is the app.</summary>
     protected internal override global::app.type.item.@this Clone() => this;
@@ -59,6 +65,15 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <summary>Whether the app holds code of its own: its layers hold types or modules it loaded.</summary>
     internal bool HasCode => type.list.HasOwn || module.HasOwn;
     private bool _disposed;
+
+    /// <summary>How deep the app is nested, as its origin answers at its birth: the code's app is 0, a sub app one
+    /// under its maker's. A sub app deeper than <see cref="MaxDepth"/> is refused before anything of it is made.</summary>
+    internal int Depth { get; }
+
+    /// <summary>The deepest a sub app is made: a test's app and a resume or two are real nesting; past this a
+    /// program is making apps without end (a run that resumes itself), refused before the thread's stack gives out in
+    /// the walks down the makers — near 380 apps on an 8 MB stack, so near 47 on Windows' 1 MB main thread.</summary>
+    internal const int MaxDepth = 16;
 
     private global::app.service.list.@this? _services;
 
@@ -119,12 +134,10 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     [global::app.LlmBuilder]
     public global::app.data.@this? data(global::app.actor.context.@this context) => context.Variable.Peek("!data");
 
-    /// <summary>The event in play for <paramref name="context"/> — <c>%!app.event%</c> answers as its asker: the running
-    /// bound call's Data, its value the event, its properties what it fired for (<c>%!app.event!item%</c>) and the
-    /// result so far (<c>%!app.event!result%</c>). Unset outside one.</summary>
-    [global::app.LlmBuilder]
-    public global::app.data.@this @event(global::app.actor.context.@this context)
-        => context.call.Event ?? context.NotFound("event");
+    /// <summary>This app's events — <c>%!app.event%</c>: what was bound on each item while its programs ran, its maker's
+    /// taken in at its birth. A snapshot keeps the bindings this app made.</summary>
+    [global::app.LlmBuilder, global::app.Snapshot]
+    public global::app.@event.on.list.@this @event { get; }
 
     /// <summary>
     /// When the app was started.
@@ -156,6 +169,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// Type-keyed provider registry for pluggable module implementations.
     /// Modules define provider interfaces, register defaults, PLang developers override via DLL.
     /// </summary>
+    [global::app.Snapshot]
     public AppCode Code { get; }
 
     /// <summary>
@@ -231,7 +245,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// When present, actors use in-memory datasources.
     /// </summary>
     [global::app.LlmBuilder]
-    public global::app.module.build.@this? Build { get; set; }
+    public global::app.module.build.@this? Build { get; internal set; }
 
     /// <summary>What this App is doing — derived from what it holds: building when it has a Build,
     /// testing while its test session is open or while the app that made it is testing, otherwise running. Not a stored field, so there is no
@@ -258,7 +272,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// The app's actors — <c>%!app.actor%</c>, the one the asker acts as: its <c>list</c> is the app's two actors,
     /// System and User; <c>Get(name)</c> is one as a result, <c>current</c> the one the asker acts as.
     /// </summary>
-    [global::app.LlmBuilder, global::app.Out]
+    [global::app.LlmBuilder, global::app.Out, global::app.Snapshot]
     public global::app.type.node.current.@this<global::app.actor.@this, global::app.actor.list.@this> actor { get; }
 
     // The types a step and an action start through, and a channel writes, reads and asks through — the type
@@ -308,6 +322,11 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     private @this(string absolutePath, global::app.origin.@this origin, string? environment)
     {
         this.origin = origin;
+        Depth = origin.Depth;
+        if (Depth > MaxDepth)
+            throw new global::app.error.AppException(new global::app.error.@this(
+                $"an app is nested {Depth} deep, past the {MaxDepth} an app may be: a program is making apps without end (a run that resumes itself goes on in an app under the one it resumed in)",
+                "AppTooDeep", 508));
         // the app's disk, holding the app's folder as what / is — first, as its origin answers it: a folder a sub app
         // may not be made in is refused before anything of the app is made
         filesystem = origin.Filesystem(absolutePath);
@@ -321,6 +340,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // layer over the types the origin answers.
         type = new(this);
         parent = new(type.list[typeof(global::app.parent.@this)]);
+        property = new(type.list[typeof(global::app.type.item.property.list.@this)]);
 
         StartedAt = new(DateTimeOffset.UtcNow, type.list[typeof(global::app.type.item.datetime.@this)]);
         Created = StartedAt;
@@ -333,7 +353,10 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // Debug/Build are born on their flag (--debug/--build), not at
         // startup — null = off. Presence is the enable signal (no IsEnabled).
         // the code providers, the built-ins registered at the registry's first use
-        Code = new AppCode(actor.list.System.Context);
+        // a sub app's, a layer over its maker's
+        Code = new AppCode(actor.list.System.Context, origin.Code);
+        // this app's events, born holding its maker's bindings, each taken in as its own
+        @event = new(this, origin.@event);
         // the actions, a layer of its own over the ones the origin answers
         module = new(this, origin.Module(this));
         goal = new(this);
@@ -412,7 +435,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // app.pr is the app's identity, not a goal: its raw content. Its value would go through the .pr
         // format's goal reader, which refuses a file that isn't a goal.
         var bytes = await prPath.Bytes(context);
-        if (!bytes.Success) return Unreadable(bytes.Error?.Message);
+        if (!bytes.Success) return Unreadable(bytes.Error);
         var raw = (await bytes.Value())?.Clr<byte[]>();
         if (raw is not { Length: > 0 } || raw.All(b => b is (byte)' ' or (byte)'\n' or (byte)'\r' or (byte)'\t'))
             return context.Ok();
@@ -422,20 +445,21 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
             // app.pr rests as an {item, json} source; reading the identity is a USE, so it opens through
             // the use door — json parses the bytes into the dict the app's [Store] face reads back from.
             if (await decoded.Open() is not global::app.type.item.dict.@this identity || !decoded.Success)
-                return Unreadable(decoded.Error?.Message ?? "not a json object");
+                return Unreadable(decoded.Error ?? new global::app.error.@this("it holds no json object", "NotAnObject", 400));
             ((global::app.type.item.kind.reflection.@this)type.list["item"].kind["*"]!).Read(identity, this, context);
             _stored = true;
             return context.Ok();
         }
         // an identity value its type declines (text that isn't a datetime) is an app.pr that isn't the identity
-        catch (global::app.error.DeclinedException declined) { return Unreadable(declined.Error.Message); }
+        catch (global::app.error.DeclinedException declined) { return Unreadable(declined.Error); }
         catch (Exception ex) when (ex is JsonException or FormatException or InvalidCastException or InvalidOperationException)
         {
-            return Unreadable(ex.Message);
+            return Unreadable(global::app.error.@this.FromException(ex));
         }
 
-        data.@this Unreadable(string? why) => context.Error(new global::app.error.@this(
-            $"{prPath} is not the app's identity: {why}", "AppIdentityUnreadable", 400));
+        // app.pr is not the identity: said as such, why whole as its cause
+        data.@this Unreadable(global::app.error.@this? cause) => context.Error(new global::app.error.@this(
+            $"{prPath} is not the app's identity", "AppIdentityUnreadable", 400) { list = cause is null ? [] : [cause] });
     }
 
     // The identity is in .build/app.pr: read from it at startup, or written there since.
@@ -543,14 +567,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         var answer = await on.start.Before(this, user);
         var result = answer is { Success: false } or { Handled: true } ? answer : await goal.Start(user);
         return await on.start.After(this, result, user);
-    }
-
-    /// <summary>
-    /// Starts a goal already in memory, under <paramref name="context"/>.
-    /// </summary>
-    public async Task<data.@this> Start(Goal goal, actor.context.@this context, CancellationToken ct = default)
-    {
-        return await goal.Start(context);
     }
 
     public async ValueTask DisposeAsync()

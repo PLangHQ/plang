@@ -10,6 +10,8 @@ namespace app;
 ///         <c>[Masked]</c> as <c>****</c>; a value used (rendered, resolved).</item>
 ///   <item><b>Debug</b> — a dump: every member, sensitive and masked ones as <c>****</c>; a value as written beside the
 ///         value it resolves to, with its type, or <c>not set</c>.</item>
+///   <item><b>Snapshot</b> — a run's state at rest: what Store keeps, with <c>[Sensitive]</c> members left out and a
+///         sensitive value written as null.</item>
 /// </list>
 /// A type with no Out/Store/Sensitive/Masked tag anywhere is transparent: every public member shows in Store and Out.
 /// </summary>
@@ -24,6 +26,9 @@ public abstract class View
     /// <summary>A dump.</summary>
     public static readonly View Debug = new debug();
 
+    /// <summary>A run's state at rest.</summary>
+    public static readonly View Snapshot = new snapshot();
+
     private View() { }
 
     /// <summary>Whether <paramref name="property"/> shows, on a type that is tag-aware (<paramref name="tagged"/>) or not.</summary>
@@ -32,12 +37,12 @@ public abstract class View
     /// <summary>Whether a shown <paramref name="property"/> writes <c>****</c> in place of its value.</summary>
     internal abstract bool Masks(System.Reflection.PropertyInfo property);
 
-    /// <summary>Characters nobody should see (a key, a password), as this view shows them: <c>****</c>.</summary>
-    internal virtual string Sensitive(string characters) => "****";
+    /// <summary>Characters nobody should see (a key, a password), written as this view shows them: <c>****</c>.</summary>
+    internal virtual void Sensitive(string characters, global::app.type.format.IWriter writer) => writer.String("****");
 
-    /// <summary>The name <paramref name="record"/> shows under in this view, or none: a Data's name is plang's own store's
+    /// <summary>The name <paramref name="data"/> shows under in this view, or none: a Data's name is plang's own store's
     /// (a server's binding label is not API surface).</summary>
-    internal virtual string? Name(global::app.data.@this record) => null;
+    internal virtual string? Name(global::app.data.@this data) => null;
 
     /// <summary>Whether <paramref name="type"/> declares what it shows in this view: any wire tag, or (in a dump) a
     /// <c>[Debug]</c> member.</summary>
@@ -67,6 +72,12 @@ public abstract class View
             await Template(data, writer, layer);
             return;
         }
+        await Record(data, writer, layer);
+    }
+
+    /// <summary>A Data that holds no variables, in this view: its record around its value (its error, when it failed).</summary>
+    private protected virtual async System.Threading.Tasks.ValueTask Record(global::app.data.@this data, global::app.type.format.IWriter writer, bool layer)
+    {
         await writer.BeginRecord(data, layer);
         await ((global::app.type.item.@this?)data.Error ?? data.Peek()).Output(writer);
         await writer.EndRecord(data);
@@ -108,11 +119,62 @@ public abstract class View
         return answer;
     }
 
-    /// <summary>Whether <paramref name="type"/> carries any wire tag (Out, Store, Sensitive, Masked): a deliberate host
-    /// whose members are a contract. A type with none is transparent.</summary>
+    /// <summary>Whether <paramref name="type"/> carries any wire tag (Out, Store, Snapshot, Sensitive, Masked): a
+    /// deliberate host whose members are a contract. A type with none is transparent. A tagged member counts whether
+    /// plang can see it or not.</summary>
     internal bool Tagged(System.Type type)
-        => type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-            .Any(p => Is<OutAttribute>(p) || Is<StoreAttribute>(p) || Is<SensitiveAttribute>(p) || Is<MaskedAttribute>(p));
+        => type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            .Any(p => Is<OutAttribute>(p) || Is<StoreAttribute>(p) || Is<SnapshotAttribute>(p) || Is<SensitiveAttribute>(p) || Is<MaskedAttribute>(p));
+
+    /// <summary>The reader a value of <paramref name="type"/> (its kind <paramref name="kind"/>) is read by in this view:
+    /// the one it registers (<see cref="Registered"/>), else as a record its type makes itself from.</summary>
+    internal global::app.type.reader.ITypeReader Reader(global::app.type.@this type, string? kind,
+        global::app.actor.context.@this context)
+        => Registered(type, kind, context) ?? context.App.type.list.Reader.Reader(type.Name, kind, context);
+
+    // The reader a value of `type` registers in this view: this view's (a goal's in the snapshot, from its key), else
+    // its own; none when it registers neither.
+    private global::app.type.reader.ITypeReader? Registered(global::app.type.@this type, string? kind,
+        global::app.actor.context.@this context)
+        => context.App.type.list.Reader.Typed(type.Name, kind, this) ?? context.App.type.list.Reader.Registered(type.Name, kind, context);
+
+    /// <summary>A member of <paramref name="type"/> made from <paramref name="slot"/>, the value a record holds for it, in
+    /// this view: a type that registers a reader (this view's, as a goal in the snapshot reads from its key, or its own,
+    /// as an error does) is read by it, as a <c>.pr</c> slot is read; a type that registers none is born from the slot
+    /// by its own birth (a record's properties from what they wrote). A record with no value for it gives none.</summary>
+    internal global::app.type.item.@this? Make(global::app.type.@this type, global::app.type.item.@this? slot,
+        global::app.actor.context.@this context)
+    {
+        if (slot == null) return null;
+        var kind = type.kind.IsEmpty ? null : type.kind.Name;
+        // a slot still unread (its text) that reads as a value of the type is that value
+        if (slot is global::app.type.item.source source && type.ClrType is { } clr
+            && clr.IsAssignableFrom(source.Type.ClrType) && source.Read(context) is { } value && clr.IsInstanceOfType(value))
+            return value;
+        if (Registered(type, kind, context) is { } reader)
+            return slot.Read(reader, kind, context, this) as global::app.type.item.@this;
+        // a birth that declines says why, as a read that can't make it does
+        var data = new global::app.data.@this("", context: context);
+        return type.Make(slot, data) ?? throw new global::app.error.AppException(data.Error
+            ?? new global::app.error.@this($"a {type.Name} is not made from a {slot.Type.Name}", "CreateItemDeclined", 400));
+    }
+
+    /// <summary>What a value of <paramref name="type"/>, as <paramref name="raw"/> holds it, needs loaded before it is
+    /// read in this view — the async half a sync reader can't do. By default nothing.</summary>
+    internal virtual System.Threading.Tasks.Task<global::app.data.@this> Load(global::app.type.@this type, string raw,
+        global::app.actor.context.@this context)
+        => System.Threading.Tasks.Task.FromResult(context.Ok());
+
+    /// <summary><paramref name="value"/> written in this view — every value's write comes through here
+    /// (<c>item.Output</c>): by default the value writes itself, its own look for the writer.</summary>
+    internal virtual System.Threading.Tasks.ValueTask Output(global::app.type.item.@this value, global::app.type.format.IWriter writer)
+        => writer.Write(value);
+
+    /// <summary><paramref name="value"/> written as <paramref name="member"/>'s, by the value's walk over its host's tagged
+    /// members: by default as it writes anywhere.</summary>
+    internal virtual System.Threading.Tasks.ValueTask Member(global::app.type.item.kind.reflection.Tagged.Entry member,
+        global::app.type.item.@this value, global::app.type.format.IWriter writer)
+        => value.Output(writer);
 
     private protected bool Is<TAttribute>(System.Reflection.PropertyInfo property) where TAttribute : System.Attribute
         => property.IsDefined(typeof(TAttribute), inherit: false);
@@ -122,7 +184,7 @@ public abstract class View
     private protected bool IsIgnored(System.Reflection.PropertyInfo property)
         => Is<System.Text.Json.Serialization.JsonIgnoreAttribute>(property) && !Is<OutAttribute>(property) && !Is<StoreAttribute>(property);
 
-    private sealed class store : View
+    private class store : View
     {
         internal override bool Shows(System.Reflection.PropertyInfo property, bool tagged)
             => !IsIgnored(property) && (!tagged || Is<StoreAttribute>(property));
@@ -130,9 +192,9 @@ public abstract class View
         // nothing is hidden from plang's own store
         internal override bool Masks(System.Reflection.PropertyInfo property) => false;
 
-        internal override string Sensitive(string characters) => characters;
+        internal override void Sensitive(string characters, global::app.type.format.IWriter writer) => writer.String(characters);
 
-        internal override string? Name(global::app.data.@this record) => record.Name;
+        internal override string? Name(global::app.data.@this data) => data.Name;
 
         private protected override System.Threading.Tasks.ValueTask Template(global::app.type.item.@this value, global::app.type.format.IWriter writer)
             => value.Output(writer);   // the value as written: a template's text, a reference's name, as the step gave them
@@ -151,6 +213,141 @@ public abstract class View
         public override string ToString() => "Store";
     }
 
+    // what store keeps, but never a secret: a [Sensitive] member is left out and a sensitive value is null, so a resumed
+    // run asks again rather than going on with a fake value
+    private sealed class snapshot : store
+    {
+        // a type that chooses what this view shows of it ([Snapshot]) shows only that; any other shows what store
+        // keeps, never a secret
+        internal override bool Shows(System.Reflection.PropertyInfo property, bool tagged)
+            => Chooses(property.ReflectedType!) ? Is<SnapshotAttribute>(property)
+                : !Is<SensitiveAttribute>(property) && base.Shows(property, tagged);
+
+        // a value that something finds (an actor, the app) points where it is met: its key; any other is written whole
+        internal override async System.Threading.Tasks.ValueTask Output(global::app.type.item.@this value, global::app.type.format.IWriter writer)
+        {
+            if (await value.Key(writer.Context) is { } key) await key.Output(writer);
+            else await Whole(value, writer);
+        }
+
+        // a row whose token already says its type — text a string, a number, a bool, a dict an object, a list an array —
+        // is that token alone, read back as the same value; one that says more than its token (a kind, a template,
+        // properties, a signature, an error, a typed null) and the signed layer keep their record
+        // — whatever holds it (the value itself, or the value as it was written, unread)
+        private protected override System.Threading.Tasks.ValueTask Record(global::app.data.@this data, global::app.type.format.IWriter writer, bool layer)
+            => !layer && data.Error == null && data.Signature == null && !data.HasProperty && !data.HasProperties
+               && data.Type is { Template: null, Name: "text" or "number" or "bool" or "dict" or "list" } type && type.kind.IsEmpty
+               && data.Peek() is { IsNull: false } value && value.Type.Name == type.Name && value.Type.kind.IsEmpty
+                ? value.Output(writer)
+                : base.Record(data, writer, layer);
+
+        // a [Snapshot] member is where its value lives: the value is written whole there, never its key; one whose class
+        // isn't the member's type carries its type, as a list's row does, so it reads back as what it is (a frame below
+        // its caller) — unless the type's own reader makes what it is from what it wrote (an action from its key, a path
+        // from its location). A CLR member (a step's index) holds a value lifted to plang, of no class of its own.
+        internal override async System.Threading.Tasks.ValueTask Member(global::app.type.item.kind.reflection.Tagged.Entry member,
+            global::app.type.item.@this value, global::app.type.format.IWriter writer)
+        {
+            var type = System.Nullable.GetUnderlyingType(member.Property.PropertyType) ?? member.Property.PropertyType;
+            if (!Is<SnapshotAttribute>(member.Property)) await value.Output(writer);
+            else if (type != value.GetType() && type.IsInstanceOfType(value)
+                     && Registered(writer.Context.App.type.list[type], null, writer.Context) == null)
+                await new global::app.data.@this("", value, context: writer.Context).Output(writer);
+            else
+                await Whole(value, writer);
+        }
+
+        // a value whose type chooses what this view shows writes those members, whatever its own look; any other
+        // writes itself
+        private System.Threading.Tasks.ValueTask Whole(global::app.type.item.@this value, global::app.type.format.IWriter writer)
+            => Chooses(value.GetType()) ? value.Members(writer) : writer.Write(value);
+
+        // a value whose members this view shows may hold a key that names a location (a goal's): each location is
+        // loaded by its owner's type first, so the key's own read finds what it names without waiting.
+        internal override async System.Threading.Tasks.Task<global::app.data.@this> Load(global::app.type.@this type, string raw,
+            global::app.actor.context.@this context)
+        {
+            if (type.ClrType is not { } clr) return await base.Load(type, raw, context);
+            using var key = System.Text.Json.JsonDocument.Parse(raw);
+            return await Load(clr, key.RootElement, context);
+        }
+
+        // the walk over a saved record of `clr`, as it is written (nothing is read before it is loaded): a member whose
+        // type chooses what this view shows, in turn (a step's goal), by its declared type, a location loaded by the type
+        // that owns it — the goal list holds what it loaded, so a location named twice is read once — and any other
+        // member by what it says it is
+        private async System.Threading.Tasks.Task<global::app.data.@this> Load(System.Type clr, System.Text.Json.JsonElement key,
+            global::app.actor.context.@this context)
+        {
+            if (key.ValueKind != System.Text.Json.JsonValueKind.Object) return context.Ok();
+            var types = context.App.type.list;
+            foreach (var entry in global::app.type.item.kind.reflection.Tagged.PropertiesFor(clr, this))
+            {
+                if (!key.TryGetProperty(entry.WireName, out var member)) continue;
+                var type = System.Nullable.GetUnderlyingType(entry.Property.PropertyType) ?? entry.Property.PropertyType;
+                // a member written with its own type (a frame below its caller's) is walked by what it says it is
+                var loaded = Row(member, context) != null ? await Walk(member, context)
+                    : Chooses(type) ? await Load(type, member, context)
+                    : Chooses(clr) && typeof(global::app.type.item.path.@this).IsAssignableFrom(type)
+                      && member.ValueKind == System.Text.Json.JsonValueKind.String
+                        ? await types[clr].Load(global::app.type.item.path.@this.Resolve(member.GetString()!, context), context.App)
+                        : await Walk(member, context);
+                if (!loaded.Success) return loaded;
+            }
+            return context.Ok();
+        }
+
+        // a saved value by what it says it is: a Data row (the json serializer's own read, its value left unread) by its
+        // type — one whose type chooses what this view shows loaded as its members, any other walked into — and any
+        // other object or array walked into
+        private async System.Threading.Tasks.Task<global::app.data.@this> Walk(System.Text.Json.JsonElement element,
+            global::app.actor.context.@this context)
+        {
+            switch (element.ValueKind)
+            {
+                case System.Text.Json.JsonValueKind.Object:
+                    if (Row(element, context) is { } row)
+                    {
+                        // only a row whose value is still its json can name a location; a text's characters are no json
+                        if (row.Peek() is not global::app.type.item.wire.@this { Raw: string written }) return context.Ok();
+                        using var value = System.Text.Json.JsonDocument.Parse(written);
+                        return row.Type?.ClrType is { } clr && Chooses(clr)
+                            ? await Load(clr, value.RootElement, context)
+                            : await Walk(value.RootElement, context);
+                    }
+                    foreach (var member in element.EnumerateObject())
+                        if (await Walk(member.Value, context) is { Success: false } failed) return failed;
+                    return context.Ok();
+                case System.Text.Json.JsonValueKind.Array:
+                    foreach (var item in element.EnumerateArray())
+                        if (await Walk(item, context) is { Success: false } failed) return failed;
+                    return context.Ok();
+                default:
+                    return context.Ok();
+            }
+        }
+
+        // The Data row a saved object is (the json serializer's own read, its value left unread); null for one that isn't.
+        private global::app.data.@this? Row(System.Text.Json.JsonElement element, global::app.actor.context.@this context)
+            => element.ValueKind != System.Text.Json.JsonValueKind.Object ? null
+                : new global::app.type.item.serializer.json(context).Typed(System.Text.Encoding.UTF8.GetBytes(element.GetRawText()),
+                    new global::app.type.reader.ReadContext(context) { View = this });
+
+        // Whether a type chooses what this view shows of it (any [Snapshot] member): read once per type.
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, bool> _chooses = new();
+        private bool Chooses(System.Type type)
+            => _chooses.GetOrAdd(type, t => t.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .Any(Is<SnapshotAttribute>));
+
+        internal override void Sensitive(string characters, global::app.type.format.IWriter writer) => writer.Null();
+
+        // a Data is named by where it is held (an entry's key): the name a reader gives it after (the variable it is read
+        // into) is no part of what was signed
+        internal override string? Name(global::app.data.@this data) => null;
+
+        public override string ToString() => "Snapshot";
+    }
+
     private sealed class @out : View
     {
         // a sensitive member never leaves
@@ -163,12 +360,12 @@ public abstract class View
         // How deep a write of values that name each other has gone, on this flow: using one can cycle (a=%b%, b=%a%), and
         // the cycle fails typed, not by stack overflow.
         private readonly System.Threading.AsyncLocal<int> _depth = new();
-        private const int MaxDepth = 50;
+        private const int Deepest = 50;
 
         // used: a reference writes the Data it names, a template its render — each opened, as writing out is a use
         private protected override async System.Threading.Tasks.ValueTask Template(global::app.data.@this data, global::app.type.format.IWriter writer, bool layer)
         {
-            if (_depth.Value++ > MaxDepth)
+            if (_depth.Value++ > Deepest)
             {
                 _depth.Value = 0;
                 throw new global::app.error.AppException($"self-referential variable '{data.Name}' on output", "OutputSelfReference", 500);
@@ -186,11 +383,11 @@ public abstract class View
         private protected override async System.Threading.Tasks.ValueTask Template(global::app.type.item.@this value, global::app.type.format.IWriter writer)
             => await (await Open(await Settle(new global::app.data.@this("", value, context: writer.Context)))).Output(writer);
 
-        // opens what the record holds (a reference's content); a value that fails to open is the write's error
-        private async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Open(global::app.data.@this record)
+        // opens what the Data holds (a reference's content); a value that fails to open is the write's error
+        private async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Open(global::app.data.@this data)
         {
-            var value = await record.Value();
-            if (!record.Success) throw new global::app.error.AppException(record.Error!);
+            var value = await data.Value();
+            if (!data.Success) throw new global::app.error.AppException(data.Error!);
             return value;
         }
 
@@ -210,7 +407,7 @@ public abstract class View
             => Is<SensitiveAttribute>(property) || Is<MaskedAttribute>(property);
 
         internal override bool Declares(System.Type type)
-            => Tagged(type) || type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            => Tagged(type) || type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
                 .Any(Is<DebugAttribute>);
 
         // a dump never throws: what declares nothing is written by its name, never walked
@@ -279,6 +476,12 @@ public abstract class View
 
 [AttributeUsage(AttributeTargets.Property)]
 public sealed class StoreAttribute : Attribute { }
+
+/// <summary>Marks what the snapshot view shows of a value: a type that tags any member is written in a snapshot by those
+/// members alone, and read back from them — a goal by its name, its .pr and hash, which find it again; the app by its
+/// properties, its code and its actors. A type that tags none shows what the store keeps, never a secret.</summary>
+[AttributeUsage(AttributeTargets.Property)]
+public sealed class SnapshotAttribute : Attribute { }
 
 /// <summary>Catalog visibility for the builder LLM. On a method it marks a member that needs the
 /// asker's context (one <c>actor.context.@this</c> parameter) — listed as a field like a property, and read

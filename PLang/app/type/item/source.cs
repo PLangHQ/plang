@@ -109,7 +109,7 @@ public class source : @this
         // Text content decodes to its text face: a text-kinded raw (json — its kind answers IsText), or a
         // plain text whose own kind hasn't loaded its format yet (the empty kind reads IsText false until then,
         // so the type name is the floor that keeps a plain text's bytes decoding).
-        if (_value is byte[] b && (Type.kind.IsText || Type.Name.ToLowerInvariant() is "text"))
+        if (_value is byte[] b && (Type.kind.IsText || Type.Name is "text"))
         {
             try { return new System.Text.UTF8Encoding(false, throwOnInvalidBytes: true).GetString(b); }
             catch (System.Text.DecoderFallbackException) { return b; }
@@ -220,6 +220,13 @@ public class source : @this
                 value.history.Add(this);
                 return await value.Value(data);
             }
+            // what the read needs loaded first (a goal's .pr, in a snapshot), so the type's reader finds it held
+            var answer = await Load(asking);
+            if (!answer.Success)
+            {
+                data.Fail(answer.Error!);
+                return data.Empty;
+            }
             var item = Read(asking);
             if (ReferenceEquals(item, this)) return this;
             // Container round-trip guard: a value DECLARED a container (dict/list) that
@@ -298,14 +305,18 @@ public class source : @this
     /// bytes). A structured value never rides here — it is a <see cref="wire.@this"/>, whose
     /// override reads through its held serializer. (source.Value owns the try/catch + the
     /// binding-named failure story.)</summary>
-    private protected virtual global::app.type.item.@this Read(actor.context.@this context)
+    internal virtual global::app.type.item.@this Read(actor.context.@this context)
     {
         var kind = Type.kind.IsEmpty ? null : Type.kind.Name;
-        var typeReader = context.App.type.list.Reader.Reader(Type.Name, kind, context);
+        var ctx = new global::app.type.reader.ReadContext(context, Type.Template, Variable: _variable, Origin: _origin, IsBuilt: IsBuilt);
         var reader = new global::app.type.format.value.Reader(_value);
-        return typeReader.Read(ref reader, kind,
-            new global::app.type.reader.ReadContext(context, Type.Template, Variable: _variable, Origin: _origin, IsBuilt: IsBuilt));
+        return ctx.View.Reader(Type, kind, context).Read(ref reader, kind, ctx);
     }
+
+    /// <summary>What the raw needs loaded before it is read, in the view it was written for; a plain source's content
+    /// needs nothing (a wire's slice is read in its view, which may: a goal's <c>.pr</c> in a snapshot).</summary>
+    private protected virtual System.Threading.Tasks.Task<global::app.data.@this> Load(actor.context.@this context)
+        => System.Threading.Tasks.Task.FromResult(context.Ok());
 
     /// <summary>Re-birth under a new declaration — the source owns its own re-typing (kills the
     /// type entity reaching into a source's raw/format). The wire override carries its captured

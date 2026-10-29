@@ -26,7 +26,7 @@ public class IfHandlerTests : IDisposable
     private async Task<Data> RunStep(string text, params Action[] actions)
     {
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(_app.actor.list.User.Context, "G", Make.Step(text, actions)));
-        return await _app.Start(goal, _app.actor.list.User.Context);
+        return await goal.Start(_app.actor.list.User.Context);
     }
 
     public void Dispose()

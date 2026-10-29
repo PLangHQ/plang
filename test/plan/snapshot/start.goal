@@ -1,45 +1,44 @@
+/ snapshot: a run's exact state, saved to a file or a store and gone on with later, even after its program changed or
+/ the program moved where it goes on. This goal is the plan's index and its proof: each comment a behaviour we want,
+/ and the step under it runs the plang test that proves it; a behaviour proved only in C# names its test. The text is
+/ start.md.
 Start
-/ snapshot: every item serializes itself through its own wire; a resume snapshot and an app snapshot. Each stage
-/ is a goal; each behaviour a comment with the test that proves it. The coder rewrites each test in plang that compiles.
-- call goal Stage1
-- call goal Stage2
-- call goal Stage3
-- call goal Stage4
+- call Save
+- call Resume
+- call Edit
 
-Stage1
-/ One door.
-/ A snapshot holds a section for each item that marks members for it, under the item's own path, and none for an item that marks none
-- call goal /snapshot/SectionsAreTheItemsOwn
-/ A snapshot written to text and read back holds the same entries (its own wire, no other serializer)
-- call goal /snapshot/WriteReadRoundTrip
-/ An always-fresh value (Now) and a ! name are not captured
-- call goal /snapshot/AlwaysFreshNotCaptured
+Save
+/ save snapshot answers the run's state as a value: its variables and its call stack, the frame it runs in by its goal's
+/ path, kept in a .plang file signed and read back
+- call /plan/snapshot/module/snapshot/save/SavesTheRun
+/ a plain value is saved as its token, one whose token can't say its type keeps it — C# test SignedSnapshotTests
+/ (ASavedRow_SaysItsType_OnlyWhereItsTokenCant); a [Sensitive] value is never saved — C# test SignedSnapshotTests
+/ (ASensitiveLeaf_ComesBackNull)
 
-Stage2
-/ The resume snapshot.
-/ A run that fails at step 3 is saved, written to disk, read back in a fresh app and resumed: it re-enters step 3 with the variables it had
-- call goal /snapshot/resume/ResumeAtFailedStep
-/ A resume whose goal was rebuilt since (another hash) fails as CallbackGoalHashMismatch
-- call goal /snapshot/resume/RebuiltGoalRefuses
-/ The variables restored are the ones at the throw, not ones written by the error handler after it
-- call goal /snapshot/resume/VariablesAtTheThrow
-/ A nested call chain resumes inside the sub-goal, then continues after the call in the parent
-- call goal /snapshot/resume/NestedChainResumes
+Resume
+/ a run saved inside a goal it called, kept in a file and resumed, goes on from its save in an app of its own: the
+/ called goal finishes, its caller goes on after the call, and nothing before the save runs again
+- call /plan/snapshot/module/snapshot/resume/FreshAppGoesOn
+/ a call saved mid-step is finished, then the rest of its step runs once — never the call again — C# test
+/ SnapshotResumeTests (SnapshotResume_InsideACall_FinishesIt_ThenTheRestOfTheCallingStep_Once)
+/ a run saved inside a bound call keeps %!event%: resumed, it reads what the event fired for
+- call /plan/snapshot/module/snapshot/resume/EventComesBack
+/ a goal changed since the save is the goal as it is now: the run goes on at its saved place, and another action
+/ standing there is said on the error channel — C# tests CallSnapshotTests
+/ (Call_Resume_AStepInsertedWhereTheRunStopped_RunsIt_ThenTheStepItStoppedIn, Call_Resume_AnotherActionAtThePlace_GoesOnThere_AndSaysSo)
+/ a resume's app is a sub app of the resuming actor: a binding the resuming app made, which the snapshot never held,
+/ fires in the resumed run
+- call /plan/snapshot/module/snapshot/resume/ResumeTakesInTheBinding
+/ a sub app's save holds only what it bound itself — C# test SavedBindingsTests (ASubAppsSave_HoldsItsBindingsOnly)
+/ a resume goes on only from a snapshot one of this app's identities signed, as it is — C# test SignedSnapshotTests
 
-Stage3
-/ The app snapshot and children.
-/ A child app sees the parent's goals and types without loading them again
-- call goal /snapshot/app/ChildSharesParent
-/ A module added in a child is not in the parent or a sibling
-- call goal /snapshot/app/ChildChangeStaysInChild
-/ A dirty child reset matches the parent again
-- call goal /snapshot/app/ResetDropsChildChanges
-
-Stage4
-/ The callback.
-/ A stateless ask's callback carries only the variables the ask gave and its signed position; resumed, the goal continues after the ask
-- call goal /snapshot/callback/StatelessAskResumes
-/ A stateless callback with its position changed, or past its expiry, is refused
-- call goal /snapshot/callback/TamperedOrExpiredRefused
-/ A durable resume after an error carries every user variable
-- call goal /snapshot/callback/DurableCarriesAll
+Edit
+/ where a run goes on is two numbers, each its frame's own: a program moves them, signs the snapshot again, and the run
+/ goes on there
+- call /plan/snapshot/module/snapshot/resume/EditedStopPoint
+/ an edit changes the snapshot alone: the program that runs keeps its steps' places, and a step's own place is no
+/ program's to write
+- call /plan/snapshot/module/snapshot/resume/EditLeavesTheProgram
+/ an edit no one signed again is refused — C# test SignedSnapshotTests (AnEditedSnapshot_NotSignedAgain_IsRefused); an
+/ edited snapshot kept again is the saved bytes plus the edit — C# test SignedSnapshotTests
+/ (AnEditedSnapshot_KeptAgain_IsTheSavedBytes_PlusTheEdit)

@@ -19,38 +19,23 @@ public class Default : IBuilder
 
     public async Task<data.@this> Goals(goals action)
     {
-
-        var app = action.Context.App;
         var context = action.Context;
         var searchPathValue = (await action.Path.Value())?.ToString();
         var searchPath = string.IsNullOrWhiteSpace(searchPathValue) ? "." : searchPathValue!;
 
-        // builder.goals.Path is project-root-relative ("the directory the user is
-        // building"), not goal-relative. The runtime auto-seeds %path% to the
-        // app root before Build.goal runs, so by the time we get here
-        // (await action.Path.Value()) is typically already the absolute cwd. For the literal
-        // "/" / "." / empty cases (no auto-seed), fall back to the app's root.
-        // For any other input that doesn't start with the root or with
-        // "/", treat as a sibling-relative subpath under the root.
-        var rootDir = app.filesystem.root.Absolute;
-        string rootRelative;
-        if (searchPath == "." || searchPath == "/" || searchPath == "\\")
-            rootRelative = rootDir;
-        else if (searchPath.StartsWith(rootDir, path.RootComparison))
-            rootRelative = searchPath;  // already absolute under root — pass through
-        else if (searchPath.StartsWith('/') || searchPath.StartsWith('\\'))
-            rootRelative = searchPath;  // PLang-rooted, ValidatePath will anchor
-        else
-            // Lift to path verbs — Resolve handles normalization, no
-            // System.IO.Path arithmetic needed.
-            rootRelative = global::app.type.item.path.@this.Resolve(searchPath, context).Absolute;
+        // The folder the build looks in: the app's root for "." or "/" (an unset %path%), else the path the step names,
+        // which resolves itself (an absolute one under the root, a plang-rooted one, one relative to the root).
+        var folder = path.Resolve(searchPath is "." or "\\" ? "/" : searchPath, context);
 
-        var listResult = await path.Resolve(rootRelative, context).List("*.goal", true, context);
+        var listResult = await folder.List("*.goal", true, context);
         if (!listResult.Success)
             return listResult;
 
-        var files = (await listResult.Value()).Clr<List<path>>();
-        if (files == null || files.Count == 0)
+        var files = new List<path>();
+        if (await listResult.Value() is global::app.type.item.list.@this listed)
+            foreach (var row in listed.Items(context))
+                if (await row.Value() is path file) files.Add(file);
+        if (files.Count == 0)
             return context.Ok(new global::app.type.item.list.@this<Goal>(context.App.type.list[typeof(global::app.type.item.list.@this<Goal>)]));
 
         // Filter by build's files setting if set (--build.setting.files=[...], %!build.setting.files%)
@@ -65,7 +50,7 @@ public class Default : IBuilder
         var filters = new List<path>();
         foreach (var row in (await context.Setting.Get<global::app.module.build.setting.@this>()).Files.Items(context))
             if ((await row.Value())?.ToString() is { Length: > 0 } entry)
-                filters.Add(path.Resolve(entry.StartsWith('/') || entry.StartsWith('\\') ? entry : "/" + entry, context));
+                filters.Add(path.Resolve("/" + entry.TrimStart('/', '\\'), context));
 
         if (filters.Count > 0)
         {
@@ -86,7 +71,7 @@ public class Default : IBuilder
             files = ordered;
             if (files.Count == 0)
                 return context.Error(new global::app.error.@this(
-                    $"no goal matched {string.Join(", ", filters.Select(f => $"'{f.Raw}'"))} under {rootRelative}",
+                    $"no goal matched {string.Join(", ", filters.Select(f => $"'{f.Raw}'"))} under {folder}",
                     "NoGoalMatched", 404));
         }
 
@@ -114,7 +99,7 @@ public class Default : IBuilder
             // each step's prior code (→ step.IsCached skips the step). cache:skip means no cached answer of any
             // kind, so a fresh source rebuilds in full — skip the merge entirely and the goal is built anew.
             if ((await context.Setting.Get<global::app.module.build.setting.@this>()).Cache.Value == global::app.module.cache.type.cache.use)
-                await MergePrData(goal, context);
+                await Merge(goal, context);
             allGoals.Add(goal);
         }
 
@@ -173,6 +158,7 @@ public class Default : IBuilder
             // A step the build could not fix has no code, so no gate to fold a block into — and it is already broken,
             // so that is not a second mistake. It is kept as it is, with the steps under it, which stay in the goal
             // with their code; the goal is saved broken and will not start.
+            // each step the fold places is held by the list it places it in, which tells it so
             if (step.Error != null) { top.Add(step); i++; continue; }
             var block = flat.Body(i);   // the steps indented under it — the list answers
             int j = i + 1 + block.CountRaw;
@@ -197,14 +183,12 @@ public class Default : IBuilder
 
     public async Task<data.@this> GoalsSave(goalsSave action)
     {
-
-        var app = action.Context.App;
         var context = action.Context;
         var goal = (await action.Goal.Value())!;
 
-        var prPath = goal.PrPath;
-        if (prPath == null)
-            return context.Error(new global::app.error.ActionError("Goal has no Path set, cannot derive PrPath", "NoPrPath", 400));
+        var pr = goal.Pr;
+        if (pr == null)
+            return context.Error(new global::app.error.ActionError("Goal has no Path set, cannot derive its .pr", "NoPrPath", 400));
 
         // Final safety net before persisting: the goal judges itself. Refusing to write the .pr is
         // preferable to saving a half-built artifact the runtime can't execute.
@@ -212,7 +196,7 @@ public class Default : IBuilder
 
         // The goal is saved to its .pr; the file's format (goal's own) writes it — symmetric with the goal
         // reader's bare read.
-        var saveResult = await prPath.Save(context.Ok(goal), context);
+        var saveResult = await pr.Save(context.Ok(goal), context);
 
         var elapsed = _buildTimer.Elapsed;
         await context.Actor.Channel[global::app.channel.list.@this.Output].WriteText(
@@ -240,16 +224,17 @@ public class Default : IBuilder
         // never changes its input, so `sort %people% by age` with no destination must write the answer back to
         // %people%. Inserted here, AFTER Read, so Cover's "is it listed?" check (which refuses the writer's own
         // variable.set) doesn't apply. A literal input has no name to write back to — refused, so FixSteps retries.
-        if (await WriteBack(goal, context) is { } wbRefusal)
-            return context.Error(wbRefusal);
+        if (await Route(goal, context) is { } refused)
+            return context.Error(refused);
 
         return context.Ok(true);
     }
 
-    // Give the deterministic write-back to a destination-less result-only action. The write-back target is
-    // the action's [Input] property's variable (its List, %people%), read from the catalog element — a built
-    // action's own properties don't carry IsInput (the formal reader builds Name/Type/Value only).
-    private async Task<global::app.error.@this?> WriteBack(
+    // Routes each destination-less result-only action's answer back to its input: a variable.set inserted right after
+    // it, to the action's [Input] property's variable (its List, %people%), read from the catalog element — a built
+    // action's own properties don't carry IsInput (the formal reader builds Name/Type/Value only). Answers why when an
+    // input has no name to write back to.
+    private async Task<global::app.error.@this?> Route(
         global::app.goal.@this goal, global::app.actor.context.@this context)
     {
         var modules = context.App.module.list;
@@ -314,20 +299,10 @@ public class Default : IBuilder
 
     // --- App ---
 
-    public async Task<data.@this> Load(load action)
-    {
+    // the app loads its identity from app.pr at Start(), so the builder answers it as it is
+    public Task<data.@this> Load(load action) => Task.FromResult(action.Context.Ok(action.Context.App));
 
-        var app = action.Context.App;
-        // App loads its identity from app.pr at Start() — just return it
-        return action.Context.Ok(app);
-    }
-
-    public async Task<data.@this> AppSave(appSave action)
-    {
-
-        return await action.Context.App.Save();
-    }
-
+    public Task<data.@this> AppSave(appSave action) => action.Context.App.Save();
 
     // --- Private helpers ---
 
@@ -335,12 +310,12 @@ public class Default : IBuilder
     /// Merges existing .pr data into a goal. A corrupt .pr is a build diagnostic about the goal —
     /// it rebuilds from its source, and the warning hangs on the goal.
     /// </summary>
-    private static async Task MergePrData(Goal goal, actor.context.@this context)
+    private static async Task Merge(Goal goal, actor.context.@this context)
     {
-        var prPath = goal.PrPath;
-        if (prPath == null) return;
+        var pr = goal.Pr;
+        if (pr == null) return;
 
-        var readResult = await prPath.Read(context);
+        var readResult = await pr.Read(context);
         if (!readResult.Success) return;
 
         // File provider auto-deserializes .pr files into a single Goal. A .pr left
@@ -360,7 +335,7 @@ public class Default : IBuilder
             goal.Warning.Add(new global::app.warning.@this(context.App.type.list)
             {
                 Key = "CorruptPrFile",
-                Message = $"Failed to deserialize .pr file at {prPath}: {ex.Message}"
+                Message = $"Failed to deserialize .pr file at {pr}: {ex.Message}"
             });
             return;
         }
@@ -370,7 +345,7 @@ public class Default : IBuilder
             goal.Warning.Add(new global::app.warning.@this(context.App.type.list)
             {
                 Key = "CorruptPrFile",
-                Message = $"Failed to parse .pr file at {prPath}"
+                Message = $"Failed to parse .pr file at {pr}"
             });
             return;
         }

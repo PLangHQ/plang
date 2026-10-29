@@ -6,7 +6,9 @@ namespace app.goal.step.list;
 
 /// <summary>
 /// The step NODE — a goal's steps (<c>goal.Step</c>) or a control-flow action's branch body
-/// (<c>action.Child</c>), a plang list value (<c>list&lt;step&gt;</c>) so a reader returns it directly.
+/// (<c>action.Child</c>), a plang list value (<c>list&lt;step&gt;</c>) so a reader returns it directly. Its indexer is
+/// positional, a step's place in this list; a step's own <c>Index</c> is its goal's numbering, which the goal answers
+/// (<c>goal[index]</c>).
 /// PROGRAM STRUCTURE: born context-free (the graph is shared across concurrent runs), it stores no
 /// context — <see cref="Start"/> takes the ASK's. Owns its sequence-run (Rule 5 — the collection owns its
 /// iteration). Twin of <see cref="app.goal.step.action.list.@this"/>.
@@ -18,7 +20,20 @@ public sealed class @this : global::app.type.item.list.bare.@this<Step>
     public @this(global::app.type.@this type) : base(new List<object?>(), type) { }
     public @this(global::app.type.item.list.@this source, global::app.type.@this type) : base(source, type) { }
 
-    /// <summary>Clone/render keep this concrete node type, context-free.</summary>
+    // A view over steps another list holds: they are read through it, never taken into it.
+    private @this(List<object?> steps, global::app.type.@this type) : base(steps, type) { }
+
+    /// <summary>A step taken into this list is held by it, and says so (<see cref="global::app.goal.step.@this.List"/>):
+    /// wherever it is added from (the reader, the parse, the build's fold), a step knows the list it goes on in.</summary>
+    protected override void Admit(object? slot)
+    {
+        if ((slot is data.@this row ? row.Peek() : slot) is Step step) step.List = this;
+    }
+
+    protected override void Admit(global::app.type.item.list.@this other)
+    {
+        foreach (var slot in other.Slots()) Admit(slot);
+    }
 
     /// <summary>Starts the steps in sequence. A return / exit propagates up (ShouldExit folds Returned).
     /// No indent skip-state — a fired control-flow action starts its own Child, so nesting is structural.
@@ -28,6 +43,26 @@ public sealed class @this : global::app.type.item.list.bare.@this<Step>
     {
         data.@this result = context.Ok();
         for (int i = 0; i < Count; i++)
+        {
+            if (context.CancellationToken.IsCancellationRequested)
+                return context.Error(new global::app.error.@this("Operation was cancelled", "Cancelled", 499));
+            result = await this[i].Start(context);
+            if (result.ShouldExit()) break;
+        }
+        return result;
+    }
+
+    /// <summary>What follows <paramref name="step"/>, one of these, run in sequence from the one after it, as
+    /// <see cref="Start"/> runs them (a step knows the list that holds it: <see cref="global::app.goal.step.@this.List"/>).
+    /// What <paramref name="step"/> answered, <paramref name="result"/>, is the answer when nothing follows it, as a
+    /// list's last step's answer is the list's.</summary>
+    internal async System.Threading.Tasks.Task<data.@this> Rest(Step step, actor.context.@this context, data.@this result)
+    {
+        var position = -1;
+        for (int i = 0; i < Count && position < 0; i++)
+            if (ReferenceEquals(this[i], step)) position = i;
+        if (position < 0) return result;
+        for (int i = position + 1; i < Count; i++)
         {
             if (context.CancellationToken.IsCancellationRequested)
                 return context.Error(new global::app.error.@this("Operation was cancelled", "Cancelled", 499));
@@ -54,14 +89,16 @@ public sealed class @this : global::app.type.item.list.bare.@this<Step>
 
     /// <summary>The steps indented under the step at <paramref name="index"/> — the consecutive steps
     /// after it written deeper than it: its body as the author laid it out (the parser records each
-    /// step's indent). Empty when nothing is indented under it.</summary>
+    /// step's indent). Empty when nothing is indented under it. A view: the steps stay this list's.</summary>
     public @this Body(int index)
     {
-        var body = new @this(Type);
-        if (index < 0 || index >= CountRaw) return body;
-        var indent = this[index].Line.Indent;
-        for (int j = index + 1; j < CountRaw && this[j].Line.Indent > indent; j++) body.Add(this[j]);
-        return body;
+        var steps = new List<object?>();
+        if (index >= 0 && index < CountRaw)
+        {
+            var indent = this[index].Line.Indent;
+            for (int j = index + 1; j < CountRaw && this[j].Line.Indent > indent; j++) steps.Add(this[j]);
+        }
+        return new @this(steps, Type);
     }
 
     // A step's line in the answer: `[i]` at the start of a line.

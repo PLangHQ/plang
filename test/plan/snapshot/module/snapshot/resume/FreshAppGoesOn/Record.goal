@@ -1,0 +1,9 @@
+/ The run FreshAppGoesOn.test.goal resumes: Record calls Sub, Sub saves the run, and Record keeps the snapshot in
+/ workspace/run.plang (a .plang file holds it signed, as the save signed it). %count% is set by the test before it calls
+/ Record, never here: a Record or Sub run twice counts on from the saved count, so it shows.
+Record
+- set %where% = 'workspace/run.plang'
+- set %name% = "Alice"
+- call Sub city="Reykjavik"
+- set %unwound% = "yes"
+- save %run% to file %where%

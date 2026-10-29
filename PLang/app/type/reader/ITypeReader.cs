@@ -26,6 +26,13 @@ public interface ITypeReader
     string Kind { get; }
 
     /// <summary>
+    /// The view this reader reads for (a goal's key under <see cref="global::app.View.Snapshot"/>), or null when it reads
+    /// in every view. A view's reader answers in that view; every other read takes the type's own — the (type, kind,
+    /// view) registry key.
+    /// </summary>
+    global::app.View? View => null;
+
+    /// <summary>
     /// True when this type's values are STRUCTURE sitting in the stream rather than content to
     /// fetch later — read me off the stream where I am found, never slice me into a lazy wire.
     /// <para>Laziness is the default and deliberate (store raw, type on first touch), and it is

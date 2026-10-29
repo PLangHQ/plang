@@ -154,24 +154,6 @@ public class DiffCaptureTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task Diff_TheFrameHistory_RollsASnapshotBack()
-    {
-        var stack = Stack();
-        var vars = _app.actor.list.User.Context.Variable;
-        await vars.Set("x", 1);
-        await vars.Set("y", "kept");
-
-        await using var call = stack.Push(MakeAction(_app.actor.list.User.Context, "A"), await stack.Setting(), vars);
-        var error = new global::app.error.ServiceError("boom", "TestErr", 400);
-        await vars.Set("x", 2);
-        await vars.Set("z", "new");
-
-        var projection = vars.SnapshotAt(error);
-        await Assert.That((await (await projection.Get("x")).Value())?.ToString()).IsEqualTo("1");
-        await Assert.That((await (await projection.Get("y")).Value())?.ToString()).IsEqualTo("kept");
-    }
-
-    [Test]
     public async Task Diff_DiffModeOverLargeListDoesNotOom()
     {
         // The OOM risk under Diff:true (no diff.deep) is cloning a large collection

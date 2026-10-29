@@ -23,36 +23,40 @@ public sealed class @this : global::app.type.item.list.bare.@this<Action>, globa
     public @this(global::app.type.@this type) : base(new List<object?>(), type) { }
     public @this(global::app.type.item.list.@this source, global::app.type.@this type) : base(source, type) { }
 
-    /// <summary>Clone/render keep this concrete node type, context-free.</summary>
-
-    /// <summary>Starts the chain: setup / non-condition actions dispatch in order; a condition evaluates,
-    /// and if truthy starts its <c>Child</c> branch and stops (the rest of the chain — elseif/else — is
-    /// skipped). An ordinary action has an empty Child so never enters. Context is the ASK's, handed to
-    /// each action's own Start. The node iterates ITSELF (the typed positional face), never a harvested
-    /// element list.</summary>
-    public async System.Threading.Tasks.Task<data.@this> Start(actor.context.@this context)
+    /// <summary>Starts the chain from <paramref name="from"/> (0: the whole chain; a resume, where the run stopped or
+    /// after it): setup / non-condition actions take their turn in order (a clause leaves the chain's result as it
+    /// stands); a condition evaluates, and if truthy starts its <c>Child</c> branch and stops (the rest of the chain —
+    /// elseif/else — is skipped). An ordinary action has an empty Child so never enters. Context is the ASK's, handed to
+    /// each action's own Start. A program's error that travels as an exception is the chain's answer, whole. The node
+    /// iterates ITSELF (the typed positional face), never a harvested element list. A resume after an action hands in
+    /// that action's <paramref name="result"/>, the chain's result as it stood, so the actions after it read it as they
+    /// would have; with nothing left to start, it is the chain's answer.</summary>
+    public async System.Threading.Tasks.Task<data.@this> Start(actor.context.@this context, int from = 0, data.@this? result = null)
     {
-        data.@this result = context.Ok();
-        for (int i = 0; i < Count; i++)
+        result ??= context.Ok();
+        try
         {
-            var action = this[i];
-            context.CancellationToken.ThrowIfCancellationRequested();
-            result = await action.Follow(result, context);
-            if (result.ShouldExit() || result.Handled) break;         // return/exit, or a legit event-handled stop
-            if (action.IsCondition && await result.ToBooleanAsync())
+            for (int i = from; i < CountRaw; i++)
             {
-                result = await action.Child.Start(context);           // gate fired → start the branch body
-                break;                                                // branch taken → skip the rest of the chain
+                var action = this[i];
+                context.CancellationToken.ThrowIfCancellationRequested();
+                result = await action.Follow(result, context);
+                if (result.ShouldExit() || result.Handled) break;         // return/exit, or a legit event-handled stop
+                if (action.IsCondition && await result.ToBooleanAsync())
+                {
+                    result = await action.Child.Start(context);           // gate fired → start the branch body
+                    break;                                                // branch taken → skip the rest of the chain
+                }
             }
+        }
+        catch (global::app.error.AppException ex) { result = context.Error(ex.Error); }
+        catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException or System.OperationCanceledException))
+        {
+            result = context.Error(global::app.error.@this.FromException(ex));
         }
         return result;
     }
 
-    /// <summary>What is wrong with this chain, or null when nothing is. The node iterates ITSELF and
-    /// each action judges itself, the same shape as <see cref="Start"/>; the causes of every element
-    /// gather into one error for the chain.
-    /// <para>An EMPTY chain is the list's own verdict, not a pass: a step maps to at least one
-    /// action, and the list is the only thing that can see there is nothing to judge.</para></summary>
     /// <summary>The actions this code runs as its own (<c>module.action</c>): top level with its clauses, a
     /// condition's body — not an action held as a value, nor a clause's recovery.</summary>
     public IEnumerable<string> Own
@@ -81,6 +85,11 @@ public sealed class @this : global::app.type.item.list.bare.@this<Action>, globa
         }
     }
 
+    /// <summary>What is wrong with this chain, or null when nothing is. The node iterates ITSELF and
+    /// each action judges itself, the same shape as <see cref="Start"/>; the causes of every element
+    /// gather into one error for the chain.
+    /// <para>An EMPTY chain is the list's own verdict, not a pass: a step maps to at least one
+    /// action, and the list is the only thing that can see there is nothing to judge.</para></summary>
     public async System.Threading.Tasks.Task<global::app.error.@this?> Validate(actor.context.@this context)
     {
         if (Count == 0)
@@ -211,7 +220,7 @@ public sealed class @this : global::app.type.item.list.bare.@this<Action>, globa
     /// chain ran), or -1 when absent.</summary>
     public int IndexOf(Action a)
     {
-        for (int i = 0; i < Count; i++)
+        for (int i = 0; i < CountRaw; i++)
             if (ReferenceEquals(this[i], a)) return i;
         return -1;
     }

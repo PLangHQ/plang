@@ -49,7 +49,7 @@ public class VerifyActionTests
             Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.item.list.@this>("", global::PLang.Tests.Shared.Make.List(contracts, Ctx), context: Ctx),
             Expires = expires.HasValue ? Ctx.Ok<global::app.type.item.duration.@this>((global::app.type.item.duration.@this)expires.Value) : null,
         };
-        return await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
+        return await new global::app.goal.step.action.composed.@this(action, Ctx).Start(Ctx);
     }
 
     private async Task<Data> VerifyHelper(Data signedData, List<string>? contracts = null,
@@ -58,7 +58,7 @@ public class VerifyActionTests
         var action = new verify(Ctx) { Data = signedData,
             Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.item.list.@this>("", global::PLang.Tests.Shared.Make.List(contracts, Ctx), context: Ctx),
         };
-        return await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
+        return await new global::app.goal.step.action.composed.@this(action, Ctx).Start(Ctx);
     }
 
     // A signature's contracts cross as bare strings, in their slot of the layer: ["C0"], never Data records.
@@ -314,11 +314,11 @@ public class VerifyActionTests
     [Test]
     public async Task AStoredSignedValue_BoundUnderAnotherName_Verifies()
     {
-        var signed = await Program("signing", "sign", ("Data", new Dictionary<string, object?> { ["total"] = 5L }), ("StoreView", true));
-        await signed.IsSuccess();
+        // the store's write signs it, in the store's view
+        var value = new Data("row", global::app.type.item.@this.Create(new Dictionary<string, object?> { ["total"] = 5L }, Ctx), context: Ctx);
         var plang = _app.type.list.Mime("application/plang");
         using var store = new System.IO.MemoryStream();
-        await (await plang.Encode(store, signed, Ctx, global::app.View.Store)).IsSuccess();
+        await (await plang.Encode(store, value, Ctx, global::app.View.Store)).IsSuccess();
         var read = await plang.Decode(store.ToArray(), Ctx, global::app.View.Store);
         await read.IsSuccess();
         await Ctx.Variable.Set("row", read);
@@ -456,7 +456,7 @@ public class VerifyActionTests
     {
         var data = new Data("", "hello", context: Ctx);
         data.Properties.Set("note", "signed");
-        var signed = await new global::app.goal.step.action.@this(new sign(Ctx) { Data = data }, Ctx).Start(Ctx);
+        var signed = await new global::app.goal.step.action.composed.@this(new sign(Ctx) { Data = data }, Ctx).Start(Ctx);
         await signed.IsSuccess();
         var l = Layer(signed);
         var changed = new Data("", l.Value.Peek(), context: Ctx);

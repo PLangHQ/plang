@@ -51,6 +51,11 @@ public sealed class Identity : global::app.type.item.@this, global::app.type.ite
     /// </summary>
     public override string ToString() => PublicKey;
 
+    /// <summary>Whether this identity made <paramref name="signature"/>: the key it names is this one's, exactly (a key's
+    /// case is part of it, so never the case-blind text compare).</summary>
+    internal bool Made(global::app.type.item.signature.@this signature)
+        => string.Equals(PublicKey, signature.Identity.Clr<string>(), System.StringComparison.Ordinal);
+
     /// <summary>This identity as a step may hold it: every member but its private key, which stays in its owner's
     /// setting (signing reads it there; <c>identity.export</c> refuses until critical actions hand it out).</summary>
     internal Identity Public() => new(Name, Type)

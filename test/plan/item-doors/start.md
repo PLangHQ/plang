@@ -177,7 +177,7 @@ public async ValueTask<bool> IsDefault(item.@this? value, actor.context.@this co
 - a thing that lives on (app, call, actor, module, goal, step) keeps it in `Kept` (`item/this.cs:213–221`, `:286`);
 - any other value throws (`:224`). That throw goes.
 
-The only refusal left is writing over a member of its own that can't be written (today's `OwnMember`). Where an added member lives for a plain value, and how, is open.
+The only refusal left is writing over a member of its own that can't be written (`ReadOnly`). Where an added member lives for a plain value, and how, is open.
 
 Reflection stays only where `property` is built from a C# class (`property/this.cs:21`). It's locked: `item`'s `Get`/`Set`, and `property`'s `Read`, `Write` and `IsDefault`.
 

@@ -65,6 +65,7 @@ public sealed class @this : screen.@this
         var display = new Wayland(new code.Size(width, height), "is", socket.Absolute, output,
             font == null ? null : (await font.Value())?.RawBytes, note => notes.Writer.TryWrite(note));
         var screen = new @this(title, width, height, display, folder.Absolute);
+        screen._closing += () => notes.Writer.TryComplete();
         screen.Told(context);
         screen.Watched(context);
         display.Start();
@@ -88,7 +89,12 @@ public sealed class @this : screen.@this
     // display's next event
     private void Told(global::app.actor.context.@this context)
     {
+        // an event that couldn't be handed on is said, its cause whole
+        Task Undelivered(JsonObject e, Exception ex) => context.Actor.Channel.Report(context.Error(new ServiceError(
+            $"The screen could not hand on {e.ToJsonString()}", "ScreenEventFailed") { list = [global::app.error.@this.FromException(ex)] }));
+
         var told = System.Threading.Channels.Channel.CreateUnbounded<JsonObject>();
+        _closing += () => told.Writer.TryComplete();
         _ = Task.Run(async () =>
         {
             await foreach (var e in told.Reader.ReadAllAsync())
@@ -103,14 +109,14 @@ public sealed class @this : screen.@this
                 }
                 catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
                 {
-                    await context.Actor.Channel.Report(context.Error(new ServiceError(
-                        $"The screen could not hand on {e.ToJsonString()}: {ex.Message}", "ScreenEventFailed") { Exception = ex }));
+                    await Undelivered(e, ex);
                 }
             }
         });
         // and to what draws onto the display (a browser pairing its windows with their pages), in order, on a pump of
         // its own: it waits on its program (DevTools), and must never wait behind a goal, nor a goal behind it
         var followed = System.Threading.Channels.Channel.CreateUnbounded<JsonObject>();
+        _closing += () => followed.Writer.TryComplete();
         _ = Task.Run(async () =>
         {
             await foreach (var e in followed.Reader.ReadAllAsync())
@@ -121,8 +127,7 @@ public sealed class @this : screen.@this
                     try { await one(e, context); }
                     catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
                     {
-                        await context.Actor.Channel.Report(context.Error(new ServiceError(
-                            $"The screen could not hand on {e.ToJsonString()}: {ex.Message}", "ScreenEventFailed") { Exception = ex }));
+                        await Undelivered(e, ex);
                     }
                 }
             }
@@ -145,6 +150,7 @@ public sealed class @this : screen.@this
     {
         Wayland.Watching = context.App.Debug != null;
         var watched = System.Threading.Channels.Channel.CreateUnbounded<string>();
+        _closing += () => watched.Writer.TryComplete();
         Wayland.Noted = note => watched.Writer.TryWrite(note);
         _ = Task.Run(async () =>
         {
@@ -197,7 +203,7 @@ public sealed class @this : screen.@this
         if (e["url"] is not JsonObject url)
             e["url"] = url = new JsonObject { ["path"] = e["url"]?.DeepClone() };
         var origin = url["origin"] as JsonObject ?? new JsonObject();
-        origin["pr"] = stack.Goal?.PrPath?.ToString();
+        origin["pr"] = stack.Goal?.Pr?.ToString();
         origin["goal"] = stack.Goal?.Name;
         origin["step"] = new JsonObject { ["index"] = step.Index, ["text"] = step.Text };
         url["origin"] = origin;
@@ -310,5 +316,13 @@ public sealed class @this : screen.@this
         catch (JsonException) { return null; }
     }
 
-    internal override void Close() => Wayland.Stop();
+    // What ends this screen's pumps (its notes, its told and followed events, what it watches): each loop ends when its
+    // channel is completed.
+    private System.Action? _closing;
+
+    internal override void Close()
+    {
+        Wayland.Stop();
+        _closing?.Invoke();
+    }
 }

@@ -105,7 +105,7 @@ public class OsTrustTests : IDisposable
     public async Task AUserGoal_StartingAProgram_Asks()
     {
         var user = await Goal("/User.goal", Make.Step("start it", Start(Program)));
-        var ran = await _app.Start(user, Context);
+        var ran = await user.Start(Context);
         await Assert.That(ran.Success).IsFalse().Because("a user goal is asked, and the answer was no");
         await Assert.That(ran.Error!.Key).IsEqualTo("PermissionDenied");
     }
@@ -114,7 +114,7 @@ public class OsTrustTests : IDisposable
     public async Task AnOsGoal_StartingAProgramItNames_StartsItUnasked()
     {
         var os = await OsGoal("Os.goal", Make.Step("start it", Start(Program)));
-        var ran = await _app.Start(os, Context);
+        var ran = await os.Start(Context);
         await ran.IsSuccess();
         await Assert.That(await Context.Actor!.Permission.Find(global::app.type.item.path.file.@this.Resolve(Program, Context),
             global::app.type.item.permission.Verb.execute)).IsNull().Because("nothing is stored: the trust is the goal's origin, not a grant");
@@ -125,7 +125,7 @@ public class OsTrustTests : IDisposable
     {
         await Context.Variable.Set("program", new global::app.data.@this("program", Program, context: Context));
         var os = await OsGoal("Run.goal", Make.Step("start what it was given", Start("%program%")));
-        var ran = await _app.Start(os, Context);
+        var ran = await os.Start(Context);
         await Assert.That(ran.Success).IsFalse().Because("a program the caller gave is the caller's to answer for");
         await Assert.That(ran.Error!.Key).IsEqualTo("PermissionDenied");
     }
@@ -138,7 +138,7 @@ public class OsTrustTests : IDisposable
     public async Task AnOsGoal_NamingTheAppsRootAnchor_StartsUnasked_WithTheRealRoot()
     {
         var os = await OsGoal("Anchor.goal", Make.Step("echo the root", Echo("%!app.filesystem.root%")));
-        var ran = await _app.Start(os, Context);
+        var ran = await os.Start(Context);
         await ran.IsSuccess();
         await Assert.That((await ran.Value())?.ToString()?.TrimEnd('/')).IsEqualTo(_root.TrimEnd('/'));
     }
@@ -148,7 +148,7 @@ public class OsTrustTests : IDisposable
     public async Task AnOsGoal_ArgumentHoldingTheRootInItsText_GetsTheOsLocation()
     {
         var os = await OsGoal("AnchorText.goal", Make.Step("echo the browser folder", Echo("--user-data-dir=%!app.filesystem.root%/.browser")));
-        var ran = await _app.Start(os, Context);
+        var ran = await os.Start(Context);
         await ran.IsSuccess();
         await Assert.That((await ran.Value())?.ToString()?.Trim()).IsEqualTo("--user-data-dir=" + _root.TrimEnd('/') + "/.browser");
     }
@@ -162,11 +162,11 @@ public class OsTrustTests : IDisposable
             Make.Step("point the root elsewhere", Make.Action(Context, "variable", "set",
                 Make.Param(Context, "Name", "!app.filesystem.root", "variable"), ("Value", "/"))),
             Make.Step("call the os goal", Make.Action(Context, "goal", "call", ("Name", Os("Anchored")))));
-        var ran = await _app.Start(user, Context);
+        var ran = await user.Start(Context);
         await Assert.That(ran.Success).IsFalse().Because("the app's filesystem's folder can't be set over");
         await Assert.That(ran.Error!.Key).IsEqualTo("CannotSetChild");
         // and after the try, the os goal still starts with the real root, unasked
-        var after = await _app.Start(os, Context);
+        var after = await os.Start(Context);
         await after.IsSuccess();
         await Assert.That((await after.Value())?.ToString()?.TrimEnd('/')).IsEqualTo(_root.TrimEnd('/'));
     }
@@ -176,7 +176,7 @@ public class OsTrustTests : IDisposable
     {
         await Context.Variable.Set("dir", new global::app.data.@this("dir", _root, context: Context));
         var os = await OsGoal("Plain.goal", Make.Step("echo a variable", Echo("%dir%")));
-        var ran = await _app.Start(os, Context);
+        var ran = await os.Start(Context);
         await Assert.That(ran.Success).IsFalse().Because("a plain variable is the caller's");
         await Assert.That(ran.Error!.Key).IsEqualTo("PermissionDenied");
     }
@@ -198,7 +198,7 @@ public class OsTrustTests : IDisposable
         var user = await Goal("/SetsMark.goal",
             Make.Step("set the setting", SetMark()),
             Make.Step("call the os goal", Make.Action(Context, "goal", "call", ("Name", "/system/trust/Env"))));
-        var ran = await _app.Start(user, Context);
+        var ran = await user.Start(Context);
         await Assert.That(ran.Success).IsFalse().Because("an option a setting gives is the actor's choice: asked, and the answer was no");
         await Assert.That(ran.Error!.Key).IsEqualTo("PermissionDenied");
     }
@@ -213,7 +213,7 @@ public class OsTrustTests : IDisposable
         var user = await Goal("/SetsMarkToo.goal",
             Make.Step("set the setting", SetMark()),
             Make.Step("call the os goal", Make.Action(Context, "goal", "call", ("Name", "/system/trust/OwnEnv"))));
-        var ran = await _app.Start(user, Context);
+        var ran = await user.Start(Context);
         await ran.IsSuccess();
         await Assert.That((await ran.Value())?.ToString()?.Trim()).IsEqualTo("clean")
             .Because("what starts unasked takes nothing of the actor's settings that changes what runs");
@@ -224,7 +224,7 @@ public class OsTrustTests : IDisposable
     {
         Context.Actor!.Channel.Register(new CannedAnswerChannel(Context.Actor!.Channel, "a"));
         var user = await Goal("/OwnEnv.goal", Make.Step("set the setting", SetMark()), Make.Step("show the environment", Env()));
-        var ran = await _app.Start(user, Context);
+        var ran = await user.Start(Context);
         await ran.IsSuccess();
         await Assert.That((await ran.Value())?.ToString()?.Trim()).IsEqualTo("marked");
     }
@@ -253,7 +253,7 @@ public class OsTrustTests : IDisposable
         var user = await Goal("/SetsEcho.goal",
             Make.Step("set echo", SetEcho()),
             Make.Step("call the os goal", Make.Action(Context, "goal", "call", ("Name", "/system/trust/Says"))));
-        var ran = await _app.Start(user, Context);
+        var ran = await user.Start(Context);
         await ran.IsSuccess();
         await Assert.That(System.Text.Encoding.UTF8.GetString(captured.ToArray())).DoesNotContain("trusted-word")
             .Because("a trusted start reads the terminal's defaults, none of the actor's settings");
@@ -265,7 +265,7 @@ public class OsTrustTests : IDisposable
         var captured = CaptureOutput();
         Context.Actor!.Channel.Register(new CannedAnswerChannel(Context.Actor!.Channel, "a"));
         var user = await Goal("/OwnEcho.goal", Make.Step("set echo", SetEcho()), Make.Step("say it", Say("own-word")));
-        var ran = await _app.Start(user, Context);
+        var ran = await user.Start(Context);
         await ran.IsSuccess();
         await Assert.That(System.Text.Encoding.UTF8.GetString(captured.ToArray())).Contains("own-word");
     }
@@ -288,7 +288,7 @@ public class OsTrustTests : IDisposable
         var secret = "PLANG_TEST_" + Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
         Context.Actor!.Channel.Register(new CannedAnswerChannel(Context.Actor!.Channel, "a"));
         System.Environment.SetEnvironmentVariable(secret, "s");
-        try { return await _app.Start(await Goal("/Env" + Guid.NewGuid().ToString("N")[..6] + ".goal", steps(secret)), Context); }
+        try { return await (await Goal("/Env" + Guid.NewGuid().ToString("N")[..6] + ".goal", steps(secret))).Start(Context); }
         finally { System.Environment.SetEnvironmentVariable(secret, null); }
     }
 
@@ -325,7 +325,7 @@ public class OsTrustTests : IDisposable
         var user = await Goal("/SetsMarkClean.goal",
             Make.Step("set the setting", SetMark()),
             Make.Step("call the os goal", Make.Action(Context, "goal", "call", ("Name", "/system/trust/Clean"))));
-        var ran = await _app.Start(user, Context);
+        var ran = await user.Start(Context);
         await ran.IsSuccess();
         await Assert.That((await ran.Value())?.ToString()?.Trim()).IsEqualTo("clean");
     }
@@ -336,7 +336,7 @@ public class OsTrustTests : IDisposable
         await Context.Variable.Set("names", new global::app.data.@this("names", new List<object?> { "HOME" }, context: Context));
         var os = await OsGoal("KeepsHanded.goal", Make.Step("keep what it was given", Make.Action(Context, "terminal", "start",
             ("App", "//bin/true"), ("Clean", true), ("Keep", "%names%"))));
-        var ran = await _app.Start(os, Context);
+        var ran = await os.Start(Context);
         await Assert.That(ran.Success).IsFalse().Because("names the caller gave are the caller's");
         await Assert.That(ran.Error!.Key).IsEqualTo("PermissionDenied");
     }
@@ -347,7 +347,7 @@ public class OsTrustTests : IDisposable
         await Goal("/Callback.goal", Make.Step("start it", Start(Program)));
         var os = await OsGoal("Calls.goal",
             Make.Step("call the user's goal", Make.Action(Context, "goal", "call", ("Name", "/Callback"))));
-        var ran = await _app.Start(os, Context);
+        var ran = await os.Start(Context);
         await Assert.That(ran.Success).IsFalse().Because("the step asking is the user's goal's, whoever called it");
         await Assert.That(ran.Error!.Key).IsEqualTo("PermissionDenied");
     }

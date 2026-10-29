@@ -58,9 +58,9 @@ public interface IWriter
     /// </summary>
     void Bytes(byte[] value, global::app.type.kind.@this kind);
 
-    /// <summary>Characters nobody should see (a key, a password), as the writer's view shows them: <c>****</c>, and whole
-    /// in plang's own store.</summary>
-    void Sensitive(string characters) => String(View.Sensitive(characters));
+    /// <summary>Characters nobody should see (a key, a password), as the writer's view writes them: <c>****</c>, whole in
+    /// plang's own store, null in a snapshot.</summary>
+    void Sensitive(string characters) => View.Sensitive(characters, this);
 
     /// <summary>A variable, named as itself — <paramref name="name"/> without its % signs. Default: the
     /// text <c>%name%</c> as a string; a writer with a bare variable form (formal) writes that.</summary>

@@ -78,8 +78,23 @@ public sealed class @this : global::app.type.item.note.IAbout
     public string? Owner { get; init; }
 
     // The C# member this one is, when it was read off a class — the property, or a method that asks only its
-    // asker. The one place a member is reflected: it reads and writes itself through it.
-    internal System.Reflection.MemberInfo? Member { get; init; }
+    // asker. The one place a member is reflected: it reads and writes itself through it. Born knowing whether a
+    // program may set it: a public setter that isn't init, kept; any other (a birth fact, a shared object's slot) none.
+    internal System.Reflection.MemberInfo? Member
+    {
+        get => _member;
+        init
+        {
+            _member = value;
+            _set = value is PropertyInfo { SetMethod: { IsPublic: true } setter }
+                   && !setter.ReturnParameter.GetRequiredCustomModifiers().Contains(typeof(System.Runtime.CompilerServices.IsExternalInit))
+                ? setter : null;
+        }
+    }
+    private readonly System.Reflection.MemberInfo? _member;
+
+    // The setter a program may use; none when this member is read-only to a program.
+    private readonly MethodInfo? _set;
 
     /// <summary>This member's answer on <paramref name="owner"/>, as its child of <paramref name="parent"/>: what the
     /// member holds (a Data whole; what an asynchronous one completes with), made by the kind of what it is. A member
@@ -111,22 +126,25 @@ public sealed class @this : global::app.type.item.note.IAbout
     }
 
     /// <summary>Writes <paramref name="value"/> as this member of <paramref name="owner"/>: read as this member's type by
-    /// that type's reader (its own, else as a record its Create makes), then set. A member that can't be written, or a
-    /// value that doesn't read as its type, answers why.</summary>
+    /// that type's reader (its own, else as a record its Create makes), then set through the setter it was born with. A
+    /// member born with none — a birth fact (a step's place in its goal), a slot of an object apps share (a goal's steps) —
+    /// is read-only, and says so, as does a value that doesn't read as its type. The value is the running program's, so it
+    /// is read in the view a run's values live in: Out.</summary>
     public async System.Threading.Tasks.ValueTask<global::app.data.@this> Write(global::app.type.item.@this owner,
         object? value, global::app.actor.context.@this context)
     {
-        if (Member is not PropertyInfo { CanWrite: true } slot)
+        if (_set is not { } set || Member is not PropertyInfo slot)
             return context.Error(new global::app.error.@this(
-                $"{Name} is {owner.Type.Name}'s own — it can't be written", "OwnMember", 400));
+                $"'{owner.Type.Name}.{Name}' is read-only", "ReadOnly", 400));
         var item = value is global::app.data.@this data ? await data.Value() : value as global::app.type.item.@this;
         object? member = item ?? value;
         if (item != null && !slot.PropertyType.IsInstanceOfType(item))
         {
             try
             {
-                var read = item.Read(context.App.type.list.Reader.Reader(Type.Name, null, context),
-                    Type.kind.IsEmpty ? null : Type.kind.Name, context);
+                var view = global::app.View.Out;
+                var read = item.Read(view.Reader(Type, null, context),
+                    Type.kind.IsEmpty ? null : Type.kind.Name, context, view);
                 // a typed list member (list<action>) holds the rows the list reader read, as its own type
                 if (read is global::app.type.item.list.@this rows && !slot.PropertyType.IsInstanceOfType(rows)
                     && typeof(global::app.type.item.list.@this).IsAssignableFrom(slot.PropertyType))
@@ -137,7 +155,7 @@ public sealed class @this : global::app.type.item.note.IAbout
             }
             catch (global::app.error.AppException refused) { return context.Error(refused.Error); }
         }
-        slot.SetValue(owner, member);
+        set.Invoke(owner, BindingFlags.DoNotWrapExceptions, null, [member], null);
         return context.Ok(owner);
     }
 

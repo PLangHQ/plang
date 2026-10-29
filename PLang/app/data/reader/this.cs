@@ -40,7 +40,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
         string name = "";
         global::app.type.@this? typeRef = null;
         Properties? properties = null;
-        global::app.type.item.kept.list.@this? members = null;
+        global::app.type.item.property.list.@this? property = null;
         // The value slot — a lazy source (content or wire) or an eagerly-read item (goal.call);
         // a source IS an item, so one local carries every arm. Its bytes are held until the row
         // closes: the "variable" list written after it is what the value is born with.
@@ -67,7 +67,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                             + $"\"{reader.String()}\" (value slot '{(string.IsNullOrEmpty(name) ? "(unnamed)" : name)}').");
                     typeRef = reader.Null()
                         ? null
-                        : ctx.Context.App.type.list.Reader.Reader("type", null, ctx.Context)
+                        : ctx.View.Reader(ctx.Context.App.type.list["type"], null, ctx.Context)
                               .Read(ref reader, null, ctx)
                           as global::app.type.@this;
                     break;
@@ -89,12 +89,9 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                 case "properties":
                     properties = Properties.Read(ref reader, ctx);
                     break;
-                case "kept":
-                    // the members a program added to the value, each the Data it was given
-                    members = new global::app.type.item.kept.list.@this();
-                    reader.BeginObject();
-                    while (reader.NextName(out var member)) members.Add(member, Read(ref reader, ctx));
-                    reader.EndObject();
+                case "property":
+                    // the properties a program added to the value: the list reads itself
+                    property = global::app.type.item.property.list.@this.Read(ref reader, ctx);
                     break;
                 default:
                     reader.Skip();
@@ -123,8 +120,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
             var d = value is global::app.error.@this received
                 ? new Data(name, context: context) { Error = received }
                 : new Data(name, value, context: context);
-            if (properties != null) d.Properties = properties;
-            if (members != null) d.Kept = members;
+            if (properties != null || property != null) d.Attachment = new(properties, property);
             return d;
         }
         // No value slot — a typed absence under its declared type (the absence the type's own
@@ -132,8 +128,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
         var typedNull = typeRef is { IsNull: false }
             ? new Data(name, new global::app.type.item.@null.@this(typeRef), context: context)
             : new Data(name, (object?)null, context: context);
-        if (properties != null) typedNull.Properties = properties;
-        if (members != null) typedNull.Kept = members;
+        if (properties != null || property != null) typedNull.Attachment = new(properties, property);
         return typedNull;
     }
 }

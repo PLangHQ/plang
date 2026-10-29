@@ -37,12 +37,12 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
             // signing goes out with the layer it holds and is refused where it arrives, never re-signed here.
             if (context.Actor != null && data.Signature == null)
             {
-                var signed = await new global::app.goal.step.action.@this(
-                    new global::app.module.signing.sign(context) { Data = data,
-                        // Hash in the view being written, so the verifier (re-hashing the wire-reconstructed bag in
-                        // the same view) gets matching bytes.
-                        StoreView = new global::app.data.@this<global::app.type.item.@bool.@this>("", view == global::app.View.Store, context: context) },
-                    context).Start(context);
+                // signed through the signer itself, so the view it names — the one being written, handed whole — is the
+                // one it hashes in: the verifier, re-hashing the wire-reconstructed bag in the same view, gets matching
+                // bytes (a step's run carries only what a step can give, and no step gives a view)
+                var (signer, missing) = context.App.Code.Get<global::app.module.signing.code.ISigning>();
+                if (signer == null) return context.Error(missing!);
+                var signed = await signer.SignAsync(new global::app.module.signing.sign(context) { Data = data, View = view });
                 // A Data that should cross signed and couldn't be is the write's failure — never sent unsigned. A failed
                 // result signs as itself, so what tells is the signature it holds.
                 if (signed.Signature == null) return signed;
@@ -89,7 +89,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
             // so a Data this answers holds only a signer it verified.
             if (read.Signature != null)
             {
-                var verified = await new global::app.goal.step.action.@this(
+                var verified = await new global::app.goal.step.action.composed.@this(
                     new global::app.module.signing.verify(context) { Data = read }, context).Start(context);
                 if (!verified.Success)
                     return context.Error(verified.Error ?? new global::app.error.ServiceError(
@@ -124,7 +124,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
     {
         var type = source.Type;
         var kind = type.kind.IsEmpty ? null : type.kind.Name;
-        var typeReader = ctx.Context.App.type.list.Reader.Reader(type.Name, kind, ctx.Context);
+        var typeReader = ctx.View.Reader(type, kind, ctx.Context);
         byte[] bytes = source.Raw as byte[] ?? System.Text.Encoding.UTF8.GetBytes(source.Raw.ToString() ?? "");
         var utf8 = new Utf8JsonReader(bytes);
         utf8.Read();

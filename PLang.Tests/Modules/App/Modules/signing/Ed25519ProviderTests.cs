@@ -60,18 +60,6 @@ public class Ed25519ProviderTests : System.IAsyncDisposable
         }
     }
 
-    // A signature made before keys were written URL-safe carries its key in standard base64 — it still verifies.
-    [Test]
-    public async Task Verify_AKeyWrittenInStandardBase64_StillVerifies()
-    {
-        var kp = _provider.GenerateKeyPair().keys!;
-        var standard = Convert.ToBase64String(System.Buffers.Text.Base64Url.DecodeFromChars(kp.PublicKey));
-        var unsigned = Unsigned(standard);
-        var signed = unsigned.Signed(_provider.Sign(unsigned, app.actor.list.User.Context.Text(kp.PrivateKey)));
-
-        await Assert.That(_provider.Verify(signed).Value).IsTrue();
-    }
-
     [Test]
     public async Task GenerateKeyPair_PublicKeyIs32Bytes()
     {
@@ -200,11 +188,38 @@ public class Ed25519ProviderTests : System.IAsyncDisposable
         await Assert.That(_provider.Verify(tampered).Value).IsFalse();
     }
 
+    // An identity's key is URL-safe from birth: a signature over the key in standard base64 (+ / =) is no signer's, so it
+    // fails to decode — so the signature does not verify.
     [Test]
-    public async Task Verify_InvalidBase64PublicKey_Throws()
+    public async Task Verify_ASignatureOverAStandardBase64Key_IsRefused()
+    {
+        // a key whose standard form has a + or / in it: one the URL-safe alphabet can't read
+        var kp = _provider.GenerateKeyPair().keys!;
+        while (!kp.PublicKey.Contains('-') && !kp.PublicKey.Contains('_')) kp = _provider.GenerateKeyPair().keys!;
+        var standard = kp.PublicKey.Replace('-', '+').Replace('_', '/').PadRight((kp.PublicKey.Length + 3) / 4 * 4, '=');
+        var unsigned = Unsigned(standard);
+        var signed = unsigned.Signed(_provider.Sign(unsigned, app.actor.list.User.Context.Text(kp.PrivateKey)));
+
+        await Assert.That(_provider.Verify(signed).Value).IsFalse();
+    }
+
+    // Padding doesn't change a key's bytes, but a padded key is not the form the identity wrote: verify answers as Made does.
+    [Test]
+    public async Task Verify_ASignatureOverAPaddedKey_IsRefused()
+    {
+        var kp = _provider.GenerateKeyPair().keys!;
+        var padded = kp.PublicKey.PadRight((kp.PublicKey.Length + 3) / 4 * 4, '=');
+        var unsigned = Unsigned(padded);
+        var signed = unsigned.Signed(_provider.Sign(unsigned, app.actor.list.User.Context.Text(kp.PrivateKey)));
+
+        await Assert.That(_provider.Verify(signed).Value).IsFalse();
+    }
+
+    [Test]
+    public async Task Verify_AnUnreadablePublicKey_IsRefused()
     {
         var signed = Unsigned("not-valid-base64!!!").Signed(new global::app.type.item.binary.@this(new byte[64], app.type.list[typeof(global::app.type.item.binary.@this)]));
-        await Assert.That(() => _provider.Verify(signed)).Throws<FormatException>();
+        await Assert.That(_provider.Verify(signed).Value).IsFalse();
     }
 
     #endregion

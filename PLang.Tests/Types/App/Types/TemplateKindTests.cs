@@ -28,9 +28,9 @@ public class TemplateKindTests
         var row = "{\"name\":\"x\",\"type\":{\"name\":\"text\",\"template\":\"fluid\"},\"value\":\"hi %name%\"}";
 
         // the read answers the refusal — a decode never throws what the bytes' own value refused
-        var refused = await ctx.App.type.list["wire"].kind["plang"]!.Decode(
+        var refused = await ctx.App.type.list.Plang.Decode(
             System.Text.Encoding.UTF8.GetBytes(row), ctx, view: global::app.View.Store);
-        var plang = await ctx.App.type.list["wire"].kind["plang"]!.Decode(System.Text.Encoding.UTF8.GetBytes(row.Replace("fluid", "plang")), ctx,
+        var plang = await ctx.App.type.list.Plang.Decode(System.Text.Encoding.UTF8.GetBytes(row.Replace("fluid", "plang")), ctx,
             view: global::app.View.Store);
 
         await refused.IsFailure();
@@ -52,7 +52,7 @@ public class TemplateKindTests
             """;
 
         var goal = await RealGoalLoad.Read(app, pr);
-        await ctx.Variable.Set("snap", new global::app.data.@this("snap", app.Snapshot(ctx), context: ctx));
+        await ctx.Variable.Set("snap", new global::app.data.@this("snap", (await app.Snapshot(ctx).Saved()), context: ctx));
         var snapshot = await goal.Step[0].Code[0].Property["Snapshot"]!.Data(ctx).Value();
 
         await Assert.That(snapshot is global::app.snapshot.@this).IsTrue();
@@ -75,16 +75,16 @@ public class TemplateKindTests
     {
         await using var app = new global::app.@this("/tmp/tplkind-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
-        var plang = ctx.App.type.list["wire"].kind["plang"]!;
+        var plang = ctx.App.type.list.Plang;
         var error = "{\"name\":\"e\",\"type\":{\"name\":\"error\",\"template\":\"plang\"},\"value\":\"%err%\","
             + "\"variable\":[{\"text\":\"%err%\",\"code\":[{\"variable\":\"err\"}]}]}";
         var snapshot = "{\"name\":\"s\",\"type\":{\"name\":\"snapshot\"},\"value\":{}}";
 
-        var held = await plang.Decode(System.Text.Encoding.UTF8.GetBytes(error), ctx, view: global::app.View.Store);
+        var decoded = await plang.Decode(System.Text.Encoding.UTF8.GetBytes(error), ctx, view: global::app.View.Store);
         var read = await plang.Decode(System.Text.Encoding.UTF8.GetBytes(snapshot), ctx, view: global::app.View.Store);
 
-        await held.IsSuccess();
-        await Assert.That(held.Peek() is global::app.type.item.source).IsTrue();
+        await decoded.IsSuccess();
+        await Assert.That(decoded.Peek() is global::app.type.item.source).IsTrue();
         await Assert.That(read.Peek() is global::app.snapshot.@this).IsTrue();
     }
 

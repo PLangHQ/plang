@@ -32,7 +32,7 @@ public partial class @this
     private IReadOnlyDictionary<string, data.@this> _variables
         => (IReadOnlyDictionary<string, data.@this>?)System.Threading.Volatile.Read(ref _rows)
            ?? System.Collections.Immutable.ImmutableDictionary<string, data.@this>.Empty;
-    private actor.context.@this _context;
+    private readonly actor.context.@this _context;
 
     /// <summary>How deep a chain of references this flow is resolving (a variable holding a variable…) —
     /// the variable's read counts it, and a chain past its limit is a cycle.</summary>
@@ -52,24 +52,17 @@ public partial class @this
     }
 
     [JsonIgnore]
-    internal actor.context.@this Context
-    {
-        get => _context;
-        set => _context = value;
-    }
+    internal actor.context.@this Context => _context;
 
-    /// <summary>
-    /// Production ctor — born from the owning context. Every Variables in a running
-    /// App belongs to exactly one context, passed in here.
-    /// </summary>
     // The memory a name its frames and this memory hold nothing for is read from: a task's context, whose calls
     // continue its caller's (its root frame's caller is the frame its caller was in), reads its caller's, live. None
     // for every other memory.
     private @this? Outer => _context.call.Root?.Caller != null ? _context.Parent?.Variable : null;
 
+    /// <summary>A memory born in its context, the one it belongs to.</summary>
     public @this(actor.context.@this context)
     {
-        Context = context;
+        _context = context;
         _system = new system(this);
     }
 
@@ -197,9 +190,9 @@ public partial class @this
 
     // What is bound before `name` changes to `value` (the variable type's event `event`): null to go on — nothing bound,
     // or nothing refused — else a failure or a Handled answer, which is the write's answer. The variable is made only
-    // when something is bound on the variable type, its own or in an actor's hold.
+    // when something is bound on the variable type, its own or in the app's events.
     private System.Threading.Tasks.ValueTask<data.@this?> Before(string @event, string name, object? value)
-        => type is { } variable && variable.IsBoundBefore(@event, _context)
+        => type is { } variable && variable.IsBoundAt(@event, global::app.@event.When.before, _context)
             ? Before(variable.on[@event]!, name, value as data.@this ?? new data.@this(name, value, context: _context)) : default;
 
     private async System.Threading.Tasks.ValueTask<data.@this?> Before(global::app.@event.@this @event, string name, data.@this about)
@@ -213,7 +206,7 @@ public partial class @this
     private System.Threading.Tasks.ValueTask<data.@this> After(string name, object? before, data.@this stored)
     {
         _context.call.Record(this, name, before);
-        return type is { } variable && variable.IsBoundAfter("set", _context) ? variable.on.set.After(Named(name), stored, _context) : new(stored);
+        return type is { } variable && variable.IsBoundAt("set", global::app.@event.When.after, _context) ? variable.on.set.After(Named(name), stored, _context) : new(stored);
     }
 
     // The variable named `name`, as its events are handed it.
@@ -357,22 +350,7 @@ public partial class @this
         if (!_variables.TryGetValue(name, out var binding)) return _context.NotFound(name);
         if (await Before("remove", name, binding) is { } refused) return refused;
         if (!Rows.TryRemove(name, out var removed)) return _context.NotFound(name);
-        return type is { } variable && variable.IsBoundAfter("remove", _context) ? await variable.on.remove.After(Named(name), removed, _context) : removed;
-    }
-
-    /// <summary>
-    /// Returns variables that changed since the given time. Uses Data.Updated timestamp.
-    /// </summary>
-    public Dictionary<string, string> GetChangedSince(DateTime since)
-    {
-        var result = new Dictionary<string, string>();
-        foreach (var (name, data) in _variables)
-        {
-            if (IsSystem(name)) continue; // skip system variables
-            if (data.Updated > since)
-                result[name] = data.Peek()?.ToString() ?? "(null)";
-        }
-        return result;
+        return type is { } variable && variable.IsBoundAt("remove", global::app.@event.When.after, _context) ? await variable.on.remove.After(Named(name), removed, _context) : removed;
     }
 
     /// <summary>The variables this memory holds, as a list — <c>%!app.variable.list%</c>: one variable per
@@ -396,14 +374,6 @@ public partial class @this
             return variables;
         }
     }
-
-    /// <summary>
-    /// Gets all variable names.
-    /// </summary>
-    public IEnumerable<string> GetNames()
-        // this memory's own, then the system's under it that no own name shadows
-        => _variables.Keys.Where(k => !IsSystem(k))
-            .Concat(_system.Names.Where(name => !IsSystem(name) && !_variables.ContainsKey(name)));
 
     /// <summary>
     /// Gets all variables ordered by last update.
@@ -437,58 +407,6 @@ public partial class @this
         {
             Rows.TryRemove(key, out _);
         }
-    }
-
-    /// <summary>
-    /// Creates a deep clone of this Variables instance.
-    /// Values are deep-cloned so mutations in the clone do not affect the original.
-    /// </summary>
-    public @this Clone()
-    {
-        var clone = new @this(_context);
-        foreach (var kvp in _variables)
-        {
-            // System context vars (! prefix) — skip, they're per-execution
-            if (IsSystem(kvp.Key)) continue;
-
-            clone.Rows[kvp.Key] = kvp.Value.Clone();
-        }
-        clone.Context = Context;
-        return clone;
-    }
-
-    /// <summary>
-    /// Saves a snapshot of current variable keys for later restore.
-    /// </summary>
-    public HashSet<string> Save() => new HashSet<string>(_variables.Keys, StringComparer.OrdinalIgnoreCase);
-
-    /// <summary>
-    /// Restores to a saved snapshot: removes any variables added after the snapshot.
-    /// </summary>
-    public void Restore(HashSet<string> snapshot)
-    {
-        foreach (var key in _variables.Keys)
-        {
-            if (!snapshot.Contains(key))
-                Rows.TryRemove(key, out _);
-        }
-    }
-
-    /// <summary>
-    /// Converts Variables to a dictionary (for serialization/debugging).
-    /// </summary>
-    public Dictionary<string, object?> ToDictionary(bool includeSystem = false)
-    {
-        var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-        foreach (var kvp in _variables)
-        {
-            if (!includeSystem && IsSystem(kvp.Key))
-                continue;
-            dict[kvp.Key] = kvp.Value.Peek();
-        }
-        foreach (var (name, system) in _system.All)
-            if (includeSystem || !IsSystem(name)) dict.TryAdd(name, system.Peek());
-        return dict;
     }
 
     /// <summary>

@@ -44,6 +44,30 @@ public sealed class @this : global::app.type.item.setting.module.@this
     /// it is created, changed or deleted. <c>--debug.setting.variables=["trace","goal"]</c></summary>
     [Out, Store] public global::app.type.item.list.@this<global::app.type.item.text.@this> Variables { get; set; }
 
+    /// <summary>Each watched variable watched while <paramref name="actor"/> runs: after it is set and after it is
+    /// removed, <paramref name="debug"/> prints it. Each name is read as the variable it names, once; nothing watched
+    /// binds nothing.</summary>
+    internal void Watch(global::app.actor.@this actor, global::app.module.debug.@this debug)
+    {
+        // the variable type's events, taken once, at the first name watched
+        global::app.@event.on.@this? events = null;
+        foreach (var name in Variables.Items(actor.Context))
+        {
+            if (new global::app.type.item.variable.parser.@this(name.Peek()?.ToString() ?? "", actor.App.type.list).Whole is not { } watched)
+                continue;
+            bool Is(global::app.type.item.@this item, global::app.actor.context.@this _)
+                => item is global::app.type.item.variable.@this variable
+                   && string.Equals(variable.Name, watched.Name, System.StringComparison.OrdinalIgnoreCase);
+            events ??= actor.App.@event.Add(actor.App.variable.type);
+            events.Add("set").after.Add(side => new global::app.@event.binding.@this(side,
+                (item, result, context) => debug.Set((global::app.type.item.variable.@this)item, result, context),
+                actor, global::app.@event.binding.Scope.actor, Is));
+            events.Add("remove").after.Add(side => new global::app.@event.binding.@this(side,
+                (item, _, context) => debug.Remove((global::app.type.item.variable.@this)item, context),
+                actor, global::app.@event.binding.Scope.actor, Is));
+        }
+    }
+
     /// <summary>How long a line runs before it is cut (<c>length.max</c>, default 500).</summary>
     [Out, Store] public length.@this Length { get; set; }
 

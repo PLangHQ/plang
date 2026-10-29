@@ -99,6 +99,15 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return new @this(entries, Type);
     }
 
+    /// <summary>A clone of each entry, each through its own Clone: a Data stays in its own context, never a copy of it
+    /// (the base's structural copy would copy the context, and with it the app).</summary>
+    protected internal override global::app.type.item.@this Clone()
+    {
+        var entries = new Dictionary<string, object?>(_value.Comparer);
+        foreach (var (key, slot) in _value) entries[key] = Cloned(slot);
+        return new @this(entries, Type);
+    }
+
     // Type-on-read: hand back the entry under `key` as a FRESH Data born with the asker's
     // context, wrapping the raw slot into its natural type on each read — never cached back, so
     // the backing stays pristine (an aliased source keeps the same instance for the CLR exit
@@ -115,7 +124,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return new Data(key, global::app.type.item.@this.Create(raw, context), context: context);
     }
 
-    /// <summary>Number of entries.</summary>
     /// <summary>Entry count as the PLang <c>number</c> (the public surface
     /// answers in PLang values).</summary>
     [LlmBuilder] public global::app.type.item.number.@this Count => _value.Count;
@@ -124,7 +132,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     internal int CountRaw => _value.Count;
 
     /// <summary>The dict's key (<c>%dict!key%</c>): read alone its first key, <c>.list</c> every key.</summary>
-    public key.@this Key(global::app.actor.context.@this context) => new(this, context.App.type.list[typeof(key.@this)]);
+    public new key.@this Key(global::app.actor.context.@this context) => new(this, context.App.type.list[typeof(key.@this)]);
 
     /// <summary>A dict's own facts, read with <c>!</c>: <c>key</c>.</summary>
     internal override System.Threading.Tasks.ValueTask<Data?> Fact(string key, Data parent)
@@ -139,11 +147,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// context-free faces (a writer's tokens) that read the slot itself.</summary>
     internal object? Stored(string key) => _value[key];
 
-    /// <summary>The entries in insertion order, one pass, each handed out as the caller reaches it —
-    /// a raw slot as a new Data born with <paramref name="context"/>, a stored Data by reference.</summary>
     /// <summary>A dict's named rows are its entries, each under its key.</summary>
     public override IEnumerable<Data> Rows(actor.context.@this context) => Entries(context);
 
+    /// <summary>The entries in insertion order, one pass, each handed out as the caller reaches it —
+    /// a raw slot as a new Data born with <paramref name="context"/>, a stored Data by reference.</summary>
     public IEnumerable<Data> Entries(actor.context.@this context)
     {
         foreach (var k in _value.Keys) yield return Slot(k, context);
@@ -415,12 +423,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             })
             .DistinctBy(v => v.Text).ToList();
 
-    /// <summary>
-    /// THE door — a stamped container renders its entries, each through its
-    /// own door (door recursion; string re-scanning never happens). An entry
-    /// whose ref is unset keeps its literal form — the builder's preservation
-    /// rule for partially-bound structures.
-    /// </summary>
     /// <summary>A container is never final — an entry may be non-final (a template,
     /// a nested container), so a read must go through the entry's OWN door. The dict
     /// itself is already its real shape: <c>Value()</c> returns <c>this</c> (the base),

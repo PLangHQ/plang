@@ -43,10 +43,10 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.goal.step.action.@this Made()
             => action ??= module == null || actionName == null
                 ? throw new global::app.error.PrFormatOutdatedException("an action's module and name come first", ctx.Origin)
-                // Provenance at birth: an action READ is authored, not injected — so it is non-synthetic. A name
-                // the module doesn't carry still reads (validation names it), as a plain action.
+                // An action read is its module's program action, in its step; a name the module doesn't carry still
+                // reads (validation names it), as a plain action.
                 : module[actionName]?.Program(_step)
-                  ?? new global::app.goal.step.action.@this(ctx.Context.App.type.list) { Module = module, Name = actionName, Step = _step, Synthetic = false };
+                  ?? new global::app.goal.step.action.@this(ctx.Context.App.type.list) { Module = module, Name = actionName, Step = _step };
 
         reader.BeginObject();
         while (reader.NextName(out var name))
@@ -85,7 +85,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "child":
                     // chain self-feeds: a child step's goal is this action's step's goal
                     var childSteps = new global::app.goal.step.list.@this(ctx.Context.App.type.list[typeof(global::app.goal.step.list.@this)]);
-                    var stepReader = new global::app.goal.step.serializer.Reader(_step.Goal);
+                    var stepReader = new global::app.goal.step.serializer.Reader(_step.Goal, childSteps);
                     reader.BeginArray();
                     while (reader.NextElement())
                         if (stepReader.Read(ref reader, null, ctx) is global::app.goal.step.@this child)
@@ -127,7 +127,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             {
                 case "name": name = row.Null() ? "" : row.String(); break;
                 case "type":
-                    type = row.Null() ? null : ctx.Context.App.type.list.Reader.Reader("type", null, ctx.Context)
+                    type = row.Null() ? null : ctx.View.Reader(ctx.Context.App.type.list["type"], null, ctx.Context)
                         .Read(ref row, null, ctx) as global::app.type.@this;
                     break;
                 case "value":

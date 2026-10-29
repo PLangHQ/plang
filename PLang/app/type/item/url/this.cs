@@ -25,6 +25,9 @@ public sealed class @this : global::app.type.item.content.@this, global::app.typ
     {
         @this self => self,
         global::app.type.item.path.@this path => new @this(path, data.Context, (type ?? data.Type).Template),
+        // what finds it, as a snapshot keeps it: unread again
+        global::app.type.item.dict.@this found when found.Get<global::app.type.item.text.@this>("path", data.Context) is { } at
+            => new @this(global::app.type.item.path.@this.Resolve(at.ToString(), data.Context), data.Context, (type ?? data.Type).Template),
         _ => null,
     };
 

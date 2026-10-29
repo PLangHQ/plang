@@ -1,177 +1,122 @@
-using System.Reflection;
-using app.error;
-using Registration = app.module.code.registration.@this;
-using DefaultOverride = app.module.code.defaultoverride.@this;
-
 namespace app.module.code;
 
-public sealed partial class @this : ISnapshot
+public sealed partial class @this
 {
-    // The two captured shapes are plang VALUES, each with its own reader:
-    //   app/module/code/registration      — one runtime registration
-    //   app/module/code/defaultoverride    — one default-selection override
-    // They were CLR records read back by reflection, which could not construct them (positional,
-    // no parameterless way in) and would have had to birth them blank and fill them afterwards.
+    // What a snapshot keeps of this registry is its own layer, never the provider instances; built-in registrations stay
+    // out, a fresh app's registry holds them. A provider's kind is written by its plang name, never its C# type: the name
+    // survives a version bump. Read back, the layer is held until the run goes on in this app (Take): taking a DLL in
+    // again is asynchronous, and a default can name a provider only a DLL brings.
+    private (global::app.type.item.list.@this? dll, global::app.type.item.dict.@this? provider, global::app.type.item.dict.@this? @default) _layer;
 
-    /// <summary>The providers' section.</summary>
-    public string Section => "Providers";
-
-    /// <summary>
-    /// Captures the registry layer (NOT the provider instances themselves):
-    ///  - non-built-in registrations as (typeName, providerName, source) tuples
-    ///  - default-selection overrides where the current default differs from the
-    ///    built-in default for that interface type
-    /// Built-in registrations stay out of the snapshot — a fresh App's registry holds
-    /// them on the fresh side.
-    /// </summary>
-    public void Capture(global::app.snapshot.@this s)
+    /// <summary>Every DLL the run took in, in order, each by the door it came through (what came in with it: its
+    /// providers, its types, its modules).</summary>
+    [global::app.Snapshot]
+    public global::app.type.item.list.@this dll
     {
-        var registrations = new List<Registration>();
-        var overrides = new List<DefaultOverride>();
-        var types = s.Context.App.type.list;
-        // what was made so far: a shipped provider nothing asked for is neither registered nor chosen, and a registry
-        // never used holds neither
-        var table = System.Threading.Volatile.Read(ref _table);
+        get => new(_dll, Context.App.type.list[typeof(global::app.type.item.list.@this)]);
+        private set => _layer.dll = value;
+    }
 
-        if (table != null)
+    /// <summary>The providers registered in-process (no DLL brought them), each kind's by name.</summary>
+    [global::app.Snapshot]
+    public global::app.type.item.dict.@this provider
+    {
+        get
         {
-            foreach (var (type, dict) in table.Providers)
+            var types = Context.App.type.list;
+            var kinds = new global::app.type.item.dict.@this(types[typeof(global::app.type.item.dict.@this)]);
+            if (_table is not { } table) return kinds;
+            foreach (var (type, providers) in table.Providers)
             {
-                table.Defaults.TryGetValue(type, out var currentDefaultName);
-
-                foreach (var (name, provider) in dict)
-                {
-                    if (!provider.IsBuiltIn)
-                        registrations.Add(new Registration(types[typeof(Registration)])
-                        {
-                            TypeName = type.AssemblyQualifiedName ?? type.FullName!,
-                            ProviderName = name,
-                            Source = provider.Source,
-                        });
-                }
-
-                // Compare current default to the built-in default this type was *born* with
-                // (tracked as the built-ins are registered, so SetDefault can't erase the evidence).
-                // If they differ, the user changed the selection — emit an override so Restore
-                // re-applies it over the built-ins a fresh App's registry holds.
-                // No built-in for the type → emit unconditionally so the chosen default survives.
-                table.BuiltIn.TryGetValue(type, out var bornDefault);
-                if (currentDefaultName != null
-                    && (bornDefault == null
-                        || !string.Equals(currentDefaultName, bornDefault, StringComparison.OrdinalIgnoreCase)))
-                {
-                    overrides.Add(new DefaultOverride(types[typeof(DefaultOverride)])
-                    {
-                        TypeName = type.AssemblyQualifiedName ?? type.FullName!,
-                        ProviderName = currentDefaultName,
-                    });
-                }
+                var names = providers.Where(named => !named.Value.IsBuiltIn && named.Value.Source == null)
+                    .Select(named => (global::app.type.item.@this)new global::app.type.item.text.@this(named.Key, types[typeof(global::app.type.item.text.@this)]))
+                    .ToList();
+                if (names.Count > 0) kinds.Set(new kind.@this(type).Value, new global::app.type.item.list.@this(names, types[typeof(global::app.type.item.list.@this)]));
             }
+            return kinds;
         }
+        private set => _layer.provider = value;
+    }
 
-        s.Write("registrations", registrations);
-        s.Write("defaultOverrides", overrides);
+    /// <summary>Each kind's default where the run chose one: one that differs from the default the kind was born with
+    /// (tracked as the built-ins are registered, so SetDefault can't erase the evidence), and, for a kind with no
+    /// built-in, always.</summary>
+    [global::app.Snapshot]
+    public global::app.type.item.dict.@this @default
+    {
+        get
+        {
+            var types = Context.App.type.list;
+            var chosen = new global::app.type.item.dict.@this(types[typeof(global::app.type.item.dict.@this)]);
+            if (_table is not { } table) return chosen;
+            foreach (var (type, name) in table.Defaults)
+            {
+                table.BuiltIn.TryGetValue(type, out var builtIn);
+                if (builtIn == null || !string.Equals(name, builtIn, StringComparison.OrdinalIgnoreCase))
+                    chosen.Set(new kind.@this(type).Value, name);
+            }
+            return chosen;
+        }
+        private set => _layer.@default = value;
     }
 
     /// <summary>
-    /// Two-step restore:
-    ///   1) Replay non-built-in registrations — load source DLLs (hard error on failure),
-    ///      register the provider instances against each ICode-derived interface they implement.
-    ///   2) Apply default-selection overrides — hard error if the named provider isn't registered.
-    /// A fresh App's registry holds the built-ins, so they are present.
+    /// The layer a snapshot held taken in again, as the run goes on in this app — three steps, each failure answered (no
+    /// fallback to the system defaults):
+    ///   1) Each DLL the run took in is taken in again, in order, through <see cref="Load"/> (the Execute gate, its plang
+    ///      types joined to the app's) and the door it first came through (<see cref="dll.@this"/>).
+    ///   2) A provider registered in-process has nothing to be made again from: where this app holds it already (the
+    ///      host registered it again) it is there; anywhere else it answers that it can't come back.
+    ///   3) Set each kind's default again — the named provider must be registered.
+    /// A fresh app's registry holds the built-ins, so they are present.
     /// </summary>
-    public async System.Threading.Tasks.Task Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
+    internal async System.Threading.Tasks.Task<data.@this> Take(actor.context.@this context)
     {
-        var providers = this;
+        var (dlls, providers, defaults) = _layer;
+        _layer = default;
 
-        var registrations = await s.Read<Registration>("registrations");
-        var overrides = await s.Read<DefaultOverride>("defaultOverrides");
-
-        // Step 1 — registrations
-        foreach (var reg in registrations)
+        // Step 1 — the DLLs the run took in; a record that doesn't read is the answer
+        foreach (var row in dlls?.Items(context) ?? [])
         {
-            var providerType = System.Type.GetType(reg.TypeName);
-            if (providerType == null)
-                throw new ProviderRestoreException(
-                    $"Provider interface type '{reg.TypeName}' could not be resolved — referent integrity failure during Providers.Restore.");
-
-            // If this registration came from a DLL (source non-null), the DLL must be loadable.
-            // If source is null (an in-process registration on the original App), the fresh App
-            // can't synthesize the instance from nothing — that's also a hard error.
-            if (reg.Source == null)
-                throw new ProviderRestoreException(
-                    $"Provider '{reg.ProviderName}' for {providerType.Name} has no Source — in-process registrations cannot be restored without a loadable origin.");
-
-            Assembly assembly;
-            try
+            if (await row.Value<dll.@this>() is not { } record)
+                return row.Error != null ? row : context.Error(new global::app.error.@this(
+                    "the snapshot's 'dll' holds a row that reads as no code.dll", "SnapshotRowUnread", 400));
+            var made = await record.Start(this, context);
+            if (!made.Success)
             {
-                // Restore is sync — sync-wait on path.LoadAssemblyAsync.
-                // AuthGate fires; for snapshot-restore the original Source was
-                // already gated at first load. reg.Source is an OS-absolute path;
-                // prefix with "/" so path.Resolve's ValidatePath treats it as
-                // OS-rooted (// convention on Linux) instead of anchoring against
-                // the new App's root.
-                var sourceForResolve = reg.Source.StartsWith("/") ? "/" + reg.Source : reg.Source;
-                var dllPath = global::app.type.item.path.@this.Resolve(sourceForResolve, context);
-                var loadResult = dllPath.LoadAssemblyAsync(context).GetAwaiter().GetResult();
-                if (!loadResult.Success)
-                    throw new System.IO.FileNotFoundException(
-                        loadResult.Error?.Message ?? "Provider source DLL not loadable.");
-                assembly = loadResult.Peek()!.Clr<System.Reflection.Assembly>()!;
+                var error = new global::app.error.@this($"the DLL '{record.Source}' the run took in failed to load again.", "DllNotLoaded", 500);
+                error.list.Add(made.Error!);
+                return context.Error(error);
             }
-            catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
-            {
-                throw new ProviderRestoreException(
-                    $"Provider '{reg.ProviderName}' source '{reg.Source}' failed to load: {ex.Message}", ex);
-            }
-
-            // The provider among the DLL's classes that implement the captured interface, by the name it answers to:
-            // each made once through its parameterless constructor (the contract provider/load enforces), the one
-            // with the captured name kept. Mirrors provider/load.cs.
-            var instance = assembly.GetExportedTypes()
-                .Where(t => providerType.IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
-                .Select(t => (ICode)Activator.CreateInstance(t)!)
-                .FirstOrDefault(provider => provider.Name == reg.ProviderName);
-
-            if (instance == null)
-                throw new ProviderRestoreException(
-                    $"Provider '{reg.ProviderName}' implementing {providerType.Name} not found in '{reg.Source}'.");
-
-            instance.Source = reg.Source;
-
-            // Register against every ICode-derived interface the type implements
-            // (matches provider/load.cs behaviour).
-            var interfaces = instance.GetType().GetInterfaces()
-                .Where(i => typeof(ICode).IsAssignableFrom(i) && i != typeof(ICode))
-                .ToList();
-            foreach (var iface in interfaces)
-                providers.Register(iface, instance);
         }
 
-        // Step 2 — default-selection overrides
-        foreach (var ov in overrides)
+        // Step 2 — providers registered in-process: no DLL brings one back, so the run goes on only where it is already
+        // registered (the same host, which registered it again)
+        foreach (var named in providers?.Rows(context) ?? [])
         {
-            var providerType = System.Type.GetType(ov.TypeName);
-            if (providerType == null)
-                throw new ProviderRestoreException(
-                    $"Default-selection override for unknown type '{ov.TypeName}' — referent integrity failure.");
-
-            var result = providers.SetDefault(providerType, ov.ProviderName);
-            if (!result.Success)
-                throw new ProviderRestoreException(
-                    $"Cannot set default '{ov.ProviderName}' for {providerType.Name}: {result.Error?.Message ?? "not registered"}.");
+            var kind = new data.@this("kind", named.Name, context: context);
+            if (await kind.Value<global::app.type.item.choice.@this<kind.@this>>() is not { } choice) return kind;
+            if (await named.Value<global::app.type.item.list.@this>() is not { } names) return named;
+            foreach (var name in names.Items(context))
+            {
+                // a provider is a C# object named by a string: the registry's key is where the name lowers
+                if (await name.Value<global::app.type.item.text.@this>() is not { } provider) return name;
+                if (List(choice.Value.Interface).Any(registered => registered.Name == provider.ToString())) continue;
+                return context.Error(new global::app.error.@this(
+                    $"Provider '{provider}' for {named.Name} was registered in-process: no DLL brought it, so it can't come back.",
+                    "ProviderInProcess", 500));
+            }
         }
+
+        // Step 3 — each kind's default
+        foreach (var chosen in defaults?.Rows(context) ?? [])
+        {
+            var kind = new data.@this("kind", chosen.Name, context: context);
+            if (await kind.Value<global::app.type.item.choice.@this<kind.@this>>() is not { } choice) return kind;
+            if (await chosen.Value<global::app.type.item.text.@this>() is not { } provider) return chosen;
+            var result = SetDefault(choice.Value.Interface, provider.ToString());
+            if (!result.Success) return result;
+        }
+        return context.Ok();
     }
-
-}
-
-/// <summary>
-/// Hard referent-integrity error raised when Providers.Restore can't resolve a
-/// captured registration (missing source DLL, missing impl type, unresolvable
-/// default-selection name). Always a hard fail — no silent fallback to system defaults.
-/// </summary>
-public sealed class ProviderRestoreException : global::app.error.AppException
-{
-    public ProviderRestoreException(string message) : base(message, "ProviderRestore", 500) { }
-    public ProviderRestoreException(string message, Exception inner) : base(message, inner, "ProviderRestore", 500) { }
 }

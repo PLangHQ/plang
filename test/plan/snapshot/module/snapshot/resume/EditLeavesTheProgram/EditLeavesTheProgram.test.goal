@@ -1,0 +1,23 @@
+/ An edit of a snapshot changes the snapshot alone, never the program that is running: the stop point moved in the
+/ snapshot is the frame's own number, and the goal's own steps keep their places. Plan is saved at its step 2, the
+/ snapshot's stop point is moved to step 3, and Plan, called again, still reads its step 1 as 1.
+/ A step's own place is no program's to write: set through the frame's step, it is refused (read-only).
+Start
+- call Plan
+- assert %place% equals 1
+- set %run.app.actor.list.user.context.call.current.caller.index% = 3
+- set %place% = 0
+- call Plan
+- assert %place% equals 1
+- set %run.app.actor.list.user.context.call.current.caller.step.index% = 3, on error call Refused
+- assert %refused% equals "ReadOnly"
+
+/ The goal the run is saved in: its step 1 notes where it stands, its step 2 saves the run.
+Plan
+- set %a% = "a ran"
+- set %place% = %!step.index%
+- save snapshot, write to %run%
+
+/ The refusal of writing a step's own place.
+Refused
+- set %refused% = %!error.key%

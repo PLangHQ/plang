@@ -58,10 +58,11 @@ public interface ICreate<TSelf> where TSelf : @this, ICreate<TSelf>
         // The pure core builds it — the type owns its own arms (CLR/item coercions in one switch).
         if (TSelf.Create(raw) is { } value) return value;
 
-        // A dict/list deserializes ITSELF to a record / domain item (step, …). Only a
-        // container reaches this — a genuine deserialize failure surfaces (it throws).
+        // A dict/list deserializes ITSELF to a record / domain item (step, …), in the binding's context, so a plang
+        // member is made by its own type. Only a container reaches this — a genuine deserialize failure surfaces (it
+        // throws).
         if (raw is global::app.type.item.dict.@this or global::app.type.item.list.@this
-            && ((@this)raw).Clr(typeof(TSelf)) is TSelf rec) return rec;
+            && ((@this)raw).Clr(typeof(TSelf), data.Context) is TSelf rec) return rec;
 
         data.Fail(new global::app.error.@this(
             $"%{data.Name}% holds a {(raw as @this)?.Type.Name ?? raw?.GetType().Name} — '{@this.NameOf(typeof(TSelf))}' cannot be created from it.",

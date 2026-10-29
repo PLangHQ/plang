@@ -91,8 +91,10 @@ public sealed class signature : ISchemaReader
                 $"a signature's hash is of a kind there is none of: '{hashAlgo}'", "SignatureInvalid", 400));
 
         // A signature read live off the wire is good for the signing setting's window after it was made; one read
-        // from plang's own store keeps only what its signer signed, and covers the value's stored form.
-        var stored = ctx.View == global::app.View.Store;
+        // from plang's own store keeps only what its signer signed, and covers the value's stored form. A value whose
+        // own type is written in a view of its own (a snapshot, its type inside the signed hash) is at rest wherever it
+        // is carried; any other is judged by where it is read.
+        var stored = ctx.View == global::app.View.Store || inner.Type?.View != null;
         var datetime = context.App.type.list[typeof(global::app.type.item.datetime.@this)];
         var layer = new global::app.type.item.signature.@this(
             context.App.type.list[new global::app.type.@this("signature", algorithm.ToString()), context],
@@ -117,7 +119,7 @@ public sealed class signature : ISchemaReader
         if (ctx.DeferVerify) return peeled;
 
         var verifyAction = new global::app.module.signing.verify(context) { Data = peeled };
-        var verifyResult = new global::app.goal.step.action.@this(verifyAction, context)
+        var verifyResult = new global::app.goal.step.action.composed.@this(verifyAction, context)
             .Start(context)
             .GetAwaiter().GetResult();
         if (!verifyResult.Success)

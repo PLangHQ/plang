@@ -26,7 +26,7 @@ public class @this : global::app.goal.step.action.@this
 
     /// <summary>A program action of this keep's kind, in <paramref name="step"/>.</summary>
     internal override global::app.goal.step.action.@this Program(global::app.goal.step.@this? step)
-        => new @this(Module.App.type.list) { Module = Module, Name = Name, Step = step, Synthetic = false };
+        => new @this(Module.App.type.list) { Module = Module, Name = Name, Step = step };
 
     /// <summary>A keep takes its place once the line knows whether a value is produced: after the producers,
     /// keeping their value, or where it stands.</summary>

@@ -167,6 +167,15 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         return Holding(rows);
     }
 
+    /// <summary>A clone of each row, each through its own Clone: a Data stays in its own context, never a copy of it (the
+    /// base's structural copy would copy the context, and with it the app), as a list of its own kind.</summary>
+    protected internal override global::app.type.item.@this Clone()
+    {
+        List<object?> rows;
+        lock (_gate) rows = _items.Select(slot => slot is Chunk chunk ? new Chunk((@this)chunk.List.Clone()) : Cloned(slot)).ToList();
+        return Holding(rows);
+    }
+
     /// <summary>A list of this one's kind holding <paramref name="rows"/> — a plain list keeps its element kind; a typed
     /// list (<c>list&lt;T&gt;</c>) answers its own. A list that is a program's node (its steps, its actions) is itself:
     /// a program is shared, never copied.</summary>

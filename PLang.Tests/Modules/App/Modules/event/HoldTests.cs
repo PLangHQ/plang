@@ -74,8 +74,8 @@ public class HoldTests
         await using var app = Child(parent, "/parent/app");
         var ctx = app.actor.list.User.Context;
         var binding = await Bind(ctx, "%!app.type.step.on.start%", Make.Call(ctx, "Log"), "app");
-        var held = app.actor.list.User.on[app.type.list["step"]];
-        await Assert.That(held.start.before.Count).IsEqualTo(1);
+        var events = app.@event.Add(app.type.list["step"]);
+        await Assert.That(events.start.before.Count).IsEqualTo(1);
 
         var unbound = await new global::app.module.on.OnUnbind(ctx)
         {
@@ -83,7 +83,7 @@ public class HoldTests
         }.Start();
 
         await unbound.IsSuccess();
-        await Assert.That(held.start.before.Count).IsEqualTo(0);
+        await Assert.That(events.start.before.Count).IsEqualTo(0);
         await (await Run(app)).IsSuccess();
     }
 

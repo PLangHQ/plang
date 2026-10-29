@@ -23,6 +23,10 @@ public sealed class TestIdentity : global::app.module.identity.code.IIdentity
     // one keypair for every test (generating one is the slow part); each app gets its identity holding that app's type
     private static readonly (string PublicKey, string PrivateKey) _keys = Keys();
 
+    /// <summary>The one identity's public key: who the no-crypto signer signs as, so an app holding this identity takes
+    /// what it signed as its own (a resume's check).</summary>
+    public static string PublicKey => _keys.PublicKey;
+
     private static (string, string) Keys()
     {
         var (kp, _) = new global::app.module.signing.code.Ed25519().GenerateKeyPair();

@@ -210,7 +210,6 @@ public sealed partial class @this
                 var ns = type.Namespace;
                 var head = ns[..ns.LastIndexOf(".serializer", StringComparison.Ordinal)];
                 var lastDot = head.LastIndexOf('.');
-                if (lastDot < 0) continue;
                 var typeName = global::app.type.item.@this.NameOf(assembly, head) ?? words.GetValueOrDefault(head)
                     ?? head[(lastDot + 1)..].TrimStart('@');
 

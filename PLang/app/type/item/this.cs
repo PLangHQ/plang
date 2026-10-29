@@ -192,34 +192,36 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// a <c>clr</c> host routes to its kind. Returns the (possibly REPLACED) value — a kind may
     /// materialize an immutable host into a new one; the caller rebinds when the instance differs.
     /// <para>The DEFAULT writes one of the value's own members — the ones its type lists — and the member
-    /// writes itself (read as its type, then set): Ok, or why it couldn't. A thing that lives on keeps a member
-    /// a program adds beside its own. Containers (<c>dict</c>/<c>list</c>) override with key/index writes.</para>
+    /// writes itself (read as its type, then set): Ok, or why it couldn't. A thing that lives on keeps a name it
+    /// doesn't list as its property (<see cref="property.IOwner"/>). Containers (<c>dict</c>/<c>list</c>) override
+    /// with key/index writes.</para>
     /// (Distinct from <see cref="Output"/>, which serializes.)
     /// </summary>
     public virtual async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(string key, bool isIndex, object? value,
         global::app.actor.context.@this context)
     {
         if (!isIndex && Listed(key, context) is { } member) return await member.Write(this, value, context);
-        if (!isIndex && Kept is { } list)
+        if (!isIndex && this is property.IOwner owner)
         {
-            list.Add(key, value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context));
+            owner.property.Add(key, value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context));
             return context.Ok(this);
         }
-        // A plain value holds no member a program adds, and says so: a variable's own binding keeps it beside the value
-        // (its Kept), read with a dot and never with `!`.
+        // A plain value holds no property a program adds, and says so: a variable's own binding keeps it beside the value
+        // (its property), read with a dot and never with `!`.
         return context.Error(new global::app.error.@this(
             $"a {Type.Name} can't hold an added member yet ('{key}'); a dict can", "NoAddedMember", 404));
     }
 
     /// <summary>
     /// The item navigates itself to a child by <paramref name="key"/>: its own members first, then its events
-    /// (<c>on</c>), its settings, then a member a program added to it; <c>NotFound</c> when none answers. Types that
+    /// (<c>on</c>), its settings, then a property a program added to it; <c>NotFound</c> when none answers. Types that
     /// navigate differently override: <c>dict</c>/<c>list</c> by key or index, a reference opens its own door first
     /// and navigates what it holds.
     /// </summary>
     public virtual async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key)
-        => await Member(parent, key) ?? On(parent, key) ?? await Setting(parent, key) ?? Kept?[key] ?? parent.Context.NotFound(key);
+        => await Member(parent, key) ?? On(parent, key) ?? await Setting(parent, key)
+           ?? (this as property.IOwner)?.property[key] ?? parent.Context.NotFound(key);
 
     // This value's events when the key is `on` — the event door, read by name though no member lists it.
     private global::app.data.@this? On(global::app.data.@this parent, string key)
@@ -227,9 +229,6 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
             ? parent.Context.App.type.list.Kind(on.GetType()).Data(parent.Name, on, parent, parent.Context)
             : null;
 
-    /// <summary>The members this thing keeps beyond its own (<c>%!app.home%</c>), read after its own — a thing that
-    /// lives on (the app, a call, an actor, a module, a goal, a step) keeps a list; a plain value keeps none.</summary>
-    internal virtual global::app.type.item.kept.list.@this? Kept => null;
 
     /// <summary>The member of this value's own plang surface named <paramref name="key"/> — one its type lists (a list's
     /// <c>count</c>, <c>first</c>), read off the value: a property's value, or what a method answers when it asks for
@@ -324,6 +323,17 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         }
     }
 
+    // One slot of a container being cloned: each value through its own Clone, a Data through Data.Clone (born in its own
+    // context, never a copy of it), a raw container slot by slot; any other raw value is immutable and shared.
+    private protected object? Cloned(object? slot) => slot switch
+    {
+        global::app.data.@this data => data.Clone(),
+        @this item => item.Clone(),
+        IDictionary<string, object?> raw => raw.ToDictionary(entry => entry.Key, entry => Cloned(entry.Value), StringComparer.OrdinalIgnoreCase),
+        IList<object?> raw => raw.Select(Cloned).ToList(),
+        _ => slot,
+    };
+
     /// <summary>What this value becomes, written to a variable where <paramref name="previous"/> was — itself: a write
     /// replaces. A value that keeps what it replaces (a task keeps the tasks written before it) answers otherwise.
     /// The previous value is read only by a value that asks for it.</summary>
@@ -361,8 +371,8 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// This value's OWN type entity — the type that MADE it, handed in at birth (the app's list for an
     /// origin birth via <c>Make</c>, or forwarded from the value it came from). The single owner of its
     /// identity; provenance lives on the value's <see cref="list"/> history and is asked via <see cref="Is"/>.
-    /// <para>Only the root type and the type list are born without one. A value whose maker does not hand its type
-    /// yet answers the rebuild; that goes once every maker hands one.</para>
+    /// <para>Only the root type and the type list are born without one; a value born without one answers a type made
+    /// from its class.</para>
     /// </summary>
     private readonly global::app.type.@this? _type;
 
@@ -448,27 +458,25 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         return deep;
     }
 
-    private global::app.@event.on.@this? _on;
+    // its events: its class's shared ones, unless it was born with its own (an action, which a clause binds on)
+    private protected global::app.@event.on.@this? _on;
 
-    /// <summary>This value's events (<c>%x.on.start%</c>) — its class's shared empty ones (the core's, and its type's
-    /// declared ones) until something is bound on it. Not written with the value, and not taught as one of its properties.</summary>
+    /// <summary>This value's events (<c>%x.on.start%</c>) — its class's shared ones (the core's, and its type's declared
+    /// ones), closed to bindings, unless it was born with its own. Not written with the value, and not taught as one of
+    /// its properties.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
-    public global::app.@event.on.@this on => _on ??= global::app.@event.on.@this.Of(GetType());
+    public global::app.@event.on.@this on => _on ??= global::app.@event.on.empty.Of(GetType());
 
     /// <summary>The item whose events this one's fire through at <paramref name="depth"/>, outermost first — the
     /// general wrapping the specific, the last being the item itself; null past the last. An item on its own has
     /// one level, itself.</summary>
     protected internal virtual @this? Level(int depth, global::app.actor.context.@this context) => depth == 0 ? this : null;
 
-    /// <summary>Whether anything is bound before this item's event <paramref name="event"/>, at this item alone — on its
-    /// own events or in the hold of an actor of the asker's app: a door that would have to make what it hands a binding
-    /// asks first.</summary>
-    internal bool IsBoundBefore(string @event, global::app.actor.context.@this context)
-        => on[@event] is { } named && named.IsBoundBefore(this, context);
-
-    /// <summary>Whether anything is bound after this item's event <paramref name="event"/>, at this item alone.</summary>
-    internal bool IsBoundAfter(string @event, global::app.actor.context.@this context)
-        => on[@event] is { } named && named.IsBoundAfter(this, context);
+    /// <summary>Whether anything is bound on this item's event <paramref name="event"/>, on the side <paramref name="when"/>,
+    /// at this item alone — its own events or what the asker's app bound on it: a door that would have to make what it
+    /// hands a binding asks first.</summary>
+    internal bool IsBoundAt(string @event, global::app.@event.When when, global::app.actor.context.@this context)
+        => on[@event] is { } named && named.IsBoundAt(this, context, when);
 
     /// <summary>What is bound before this item's event <paramref name="event"/>, at this item alone, started on
     /// <paramref name="about"/> — something other than one of its own values (a load's .pr, before there is a goal);
@@ -476,18 +484,6 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     internal System.Threading.Tasks.ValueTask<global::app.data.@this?> Before(string @event, @this about,
         global::app.actor.context.@this context, global::app.data.@this result)
         => on[@event] is { } named ? named.BeforeAt(this, about, context, result) : default;
-
-    /// <summary>This value's own events, given to it by its first binding — what a clause its program's read attaches is
-    /// added to (<c>action.Take</c>). A binding made while a program runs is held by the context that binds it, never
-    /// here: an item can be every app's that shares it.</summary>
-    private protected global::app.@event.on.own Own()
-    {
-        if (_on is global::app.@event.on.own events) return events;
-        var shared = on;
-        events = new global::app.@event.on.own(shared.Declared);
-        return System.Threading.Interlocked.CompareExchange(ref _on, events, shared) is global::app.@event.on.own won
-            ? won : events;
-    }
 
     /// <summary>The variables this value holds, each once: a template's <c>%…%</c>, a container's
     /// entries', a variable itself. Read-only, born with the value; empty when none.</summary>
@@ -680,13 +676,14 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// uses: the value is read as tokens (a dict an object, a list an array, a leaf its token), so a dict
     /// handed to a record's slot is the record its own reader makes. <paramref name="kind"/> is the declared
     /// type's element kind (<c>list&lt;action&gt;</c> → <c>action</c>), so a list reader loops the element's
-    /// reader. A value that arrived in a format (a <c>clr</c> carrier holding json) bridges its format instead.
+    /// reader. It is read in <paramref name="view"/>, what the value was written for (a frame's member in the snapshot).
+    /// A value that arrived in a format (a <c>clr</c> carrier holding json) bridges its format instead.
     /// </summary>
     internal virtual object? Read(global::app.type.reader.ITypeReader reader, string? kind,
-                                  global::app.actor.context.@this context)
+                                  global::app.actor.context.@this context, global::app.View view)
     {
         var tokens = new global::app.type.format.item.Reader(this, context);
-        return reader.Read(ref tokens, kind, new global::app.type.reader.ReadContext(context));
+        return reader.Read(ref tokens, kind, new global::app.type.reader.ReadContext(context) { View = view });
     }
 
     /// <summary>
@@ -820,7 +817,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// file answers its contents and its name. Ok, or why it can't be packed.</summary>
     internal virtual async System.Threading.Tasks.Task<(global::app.data.@this result, string held, string? name)> Pack(
         global::app.data.@this self, System.IO.Stream into, actor.context.@this context)
-        => (await context.App.type.list["wire"].kind["plang"]!.Encode(into, self, context, ct: context.CancellationToken), "data", null);
+        => (await context.App.type.list.Plang.Encode(into, self, context, ct: context.CancellationToken), "data", null);
 
     /// <summary>
     /// This value as a diagnostic shows it — an assertion message, a test report line, a debug dump. A leaf
@@ -840,12 +837,19 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         return System.Text.Encoding.UTF8.GetString(stream.ToArray());
     }
 
+    /// <summary>What finds this value from any place but the one where it lives (an actor its name, the app its name), as
+    /// <paramref name="context"/> has it; null for a value that is just a value, written whole wherever it is. A snapshot
+    /// writes a value's key where it points at it, and reads it back through the app.</summary>
+    internal virtual System.Threading.Tasks.ValueTask<@this?> Key(global::app.actor.context.@this context) => new((@this?)null);
+
     /// <summary>
     /// The item writes ITSELF into <paramref name="writer"/>: the writer hands it back its own write for the writer's
     /// own class (a text writer the text look, a formal writer the formal look, any other the value's own write). A
-    /// value writing a member writes <c>member.Output(writer)</c>.
+    /// value writing a member writes <c>member.Output(writer)</c>. Every write comes through here, so the writer's view
+    /// is asked first (a snapshot writes a value whose type chooses what it shows by those members); any other view lets
+    /// it write itself.
     /// </summary>
-    public System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer) => writer.Write(this);
+    public System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer) => writer.View.Output(this, writer);
 
     /// <summary>
     /// The value's own write, in every format it has no look of its own for: what it is, through the writer's
@@ -857,7 +861,12 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// names it. A foreign type can't declare, so it shows all its members. Resolved lazily as it reaches each node;
     /// <c>await</c>s happen here, between the writer's synchronous buffer writes.
     /// </summary>
-    protected internal virtual async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+    protected internal virtual System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer) => Members(writer);
+
+    /// <summary>The value's tagged members as its view shows them — the structure's face <see cref="Write(global::app.type.format.IWriter)"/>
+    /// writes by default, and what a view writes for a value whatever its own look (a snapshot's, for a type that chooses
+    /// what it shows).</summary>
+    internal async System.Threading.Tasks.ValueTask Members(global::app.type.format.IWriter writer)
     {
         var host = Host;
         var type = host.GetType();
@@ -889,7 +898,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
             // an empty list says nothing, as a null says nothing
             if (member.IsSequence && !member.IsTruthy()) continue;
             writer.Name(entry.WireName);
-            await member.Output(writer);
+            await writer.View.Member(entry, member, writer);
         }
         writer.EndObject();
     }

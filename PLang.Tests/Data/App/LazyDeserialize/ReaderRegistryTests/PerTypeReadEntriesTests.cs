@@ -41,12 +41,12 @@ public class PerTypeReadEntriesTests
     [Test] public async Task Reader_Of_NumberInt_ReturnsTypedReader()
     {
         var r = new global::app.origin.code(global::app.Wiring.none).type.Reader;
-        await Assert.That(r.Typed("number", "int")).IsNotNull();
+        await Assert.That(r.Typed("number", "int", null)).IsNotNull();
     }
     [Test] public async Task Reader_Of_NumberBigInteger_ReturnsTypedReader()
     {
         var r = new global::app.origin.code(global::app.Wiring.none).type.Reader;
-        await Assert.That(r.Typed("number", "biginteger")).IsNotNull();
+        await Assert.That(r.Typed("number", "biginteger", null)).IsNotNull();
     }
     [Test] public async Task Reader_Of_ImagePng_ReturnsDelegate()
     {

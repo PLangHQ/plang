@@ -1,47 +1,51 @@
-using app.data;
-
 namespace app.snapshot;
 
 /// <summary>
-/// Resume — the only path the channel/host uses to reconstitute a suspended
-/// goal. Calls App.Restore to populate Variables/Errors/CallStack/etc., then
-/// walks the restored CallStack chain recursively so each nested goal in the
-/// chain re-enters at its captured (StepIndex, ActionIndex).
-///
-/// The recursion is acknowledged-clunky and tracked in todos.md for revisit;
-/// it works as designed: bottom frame re-runs the suspended action via
-/// Goal.RunFrom; parent frames push their call frame, recurse into the child,
-/// then continue from ActionIndex+1 (the action after the `call SubGoal`).
+/// Resume — goes on with the run this snapshot saved, in an app of its own: a sub app made by the asker's actor (layers
+/// over the asker's app), every part started into it, then the run going on in its actor of the asker's role, from the
+/// frame it stopped in, outward (<see cref="global::app.call.list.@this"/>'s resume). The asker's variables, settings
+/// and calls are never touched. What the run answers is the answer, taken whole into the asker's context; a run that
+/// fails answers its error, holding its callback, taken while its run still stood. The app ends when its run ends.
+/// Reached only through the resume action, which first checks the snapshot is this app's own.
 /// </summary>
 public sealed partial class @this
 {
-    public async Task<data.@this> Resume(actor.context.@this context)
+    /// <summary>Resumes this snapshot for <paramref name="context"/>: to its end, or, <paramref name="parallel"/>, as a
+    /// task of the asker's actor answered at once, its goal the restored run's outermost. What can't be restored is the
+    /// answer, before any task starts.</summary>
+    internal async Task<data.@this> Resume(actor.context.@this context, data.@this<global::app.type.item.parallel.@this>? parallel)
     {
-        await context.App.Restore(this, context);
-        var chain = context.call.RestoredChain;
-        if (chain == null || chain.Count == 0)
-            return context.Error(new global::app.error.ServiceError(
-                "Resume has no frames after Restore", "NoPosition", 400));
-        return await ResumeChain(chain, 0, context);
+        global::app.@this app;
+        // an app nested past the deepest one may be (a run that resumes itself without end) is refused at its making
+        try { app = new global::app.@this(context.App.filesystem.root.Absolute, context.Actor); }
+        catch (global::app.error.AppException refused) { return context.Error(refused.Error); }
+        var run = context.Actor.Role.In(app.actor.list).Context;
+        // each object reads itself back, then the code the run took in is taken in again: a DLL's load can wait
+        var started = await Read(app, run);
+        if (started.Success) started = await app.Code.Take(run);
+        if (!started.Success)
+        {
+            await app.DisposeAsync();
+            return started.Copy(context);
+        }
+        // a snapshot that held no call has no goal to run as a task: going on answers that there is no frame
+        if (parallel == null || !await parallel.ToBooleanAsync() || run.call.Resumed?.Goal is not { } goal)
+            return await On(app, run, context);
+        return context.Ok(context.Actor.Task.Start(goal, async token =>
+        {
+            await using var stops = token.Register(app.RequestShutdown);
+            return await On(app, run, context);
+        }));
     }
 
-    private static async Task<data.@this> ResumeChain(
-        IReadOnlyList<global::app.call.Position> chain, int idx, actor.context.@this context)
+    // The run goes on in app, as run's actor, to its end, and app ends with it.
+    private async Task<data.@this> On(global::app.@this app, actor.context.@this run, actor.context.@this context)
     {
-        var frame = chain[idx];
-
-        // Bottom: re-enter the goal at the suspended (StepIndex, ActionIndex).
-        if (idx == chain.Count - 1)
-            return await frame.Goal.Resume(context, frame.StepIndex, frame.ActionIndex);
-
-        // Parent: its action is a "call SubGoal" mid-flight. Push so children
-        // see it as caller, recurse into the sub-goal, then continue from
-        // ActionIndex+1 (the action after the call).
-        await using var callFrame = context.call.Push(frame.Action, await context.call.Setting(), context.Variable);
-
-        var subResult = await ResumeChain(chain, idx + 1, context);
-        if (subResult.ShouldExit()) return subResult;
-
-        return await frame.Goal.Resume(context, frame.StepIndex, frame.ActionIndex + 1);
+        await using (app)
+        {
+            var result = await run.call.Resume(run);
+            if (result.Error is { } error) await error.Callback(context);
+            return result.Copy(context);
+        }
     }
 }

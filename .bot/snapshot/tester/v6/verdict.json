@@ -1,0 +1,1 @@
+{"status": "pass", "summary": "third pass at c1e1a9248: C# 5647 green, plang 311/312 (1 skipped) in 10 of 10 runs (5 plan-folder, 5 full), ResumeTakesInTheBinding no longer flaky; all three Rest/Event mutants red; git status clean"}

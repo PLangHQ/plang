@@ -43,10 +43,16 @@ public sealed class Writer : IWriter
     public void Float(float value) => _writer.WriteNumberValue(value);
     public void Double(double value) => _writer.WriteNumberValue(value);
     public void String(string value) => _writer.WriteStringValue(value);
-    // Verbatim — raw json (object/number) rides inline, unquoted.
-    public void Raw(string value) => _writer.WriteRawValue(value);
-    public void DateTime(System.DateTime value) => _writer.WriteStringValue(value);
-    public void DateTimeOffset(System.DateTimeOffset value) => _writer.WriteStringValue(value);
+    // Verbatim — raw json (object/number) rides inline, unquoted; its own nesting counts where it lands.
+    public void Raw(string value)
+    {
+        Deeper(Nesting(value));
+        _writer.WriteRawValue(value);
+    }
+    // a datetime is its round-trip text, written as any text is (the encoder applies): the same characters as the text
+    // read back from it, so a signed datetime and that text hash alike
+    public void DateTime(System.DateTime value) => _writer.WriteStringValue(value.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
+    public void DateTimeOffset(System.DateTimeOffset value) => _writer.WriteStringValue(value.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
     public void TimeSpan(System.TimeSpan value) => _writer.WriteStringValue(value.ToString("c"));
     public void Guid(System.Guid value) => _writer.WriteStringValue(value);
     public void Enum(System.Enum value) => _writer.WriteStringValue(value.ToString());
@@ -58,10 +64,42 @@ public sealed class Writer : IWriter
         else _writer.WriteBase64StringValue(value);
     }
 
-    public void BeginArray(int count) => _writer.WriteStartArray();
+    public void BeginArray(int count)
+    {
+        Deeper();
+        _writer.WriteStartArray();
+    }
     public void EndArray() => _writer.WriteEndArray();
 
-    public void BeginObject() => _writer.WriteStartObject();
+    public void BeginObject()
+    {
+        Deeper();
+        _writer.WriteStartObject();
+    }
+
+    // As deep as plang's readers read (System.Text.Json's reader default): a reader recurses per level, so a value
+    // deeper than that is refused here, where it is written, never sent for a reader to fail on.
+    private const int Depth = 64;
+
+    // So many levels further in (one, for an object or array begun here), or why not.
+    private void Deeper(int levels = 1)
+    {
+        if (_writer.CurrentDepth + levels > Depth)
+            throw new global::app.error.AppException(new global::app.error.@this(
+                $"a value nested deeper than {Depth} levels can't be written: plang's readers read {Depth} levels", "ValueTooDeep", 400));
+    }
+
+    // How deep the objects and arrays in a json slice go, as json's own reader counts them.
+    private int Nesting(string json)
+    {
+        var reader = new System.Text.Json.Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(json),
+            new System.Text.Json.JsonReaderOptions { MaxDepth = int.MaxValue });
+        var deepest = 0;
+        while (reader.Read())
+            if (reader.TokenType is System.Text.Json.JsonTokenType.StartObject or System.Text.Json.JsonTokenType.StartArray)
+                deepest = System.Math.Max(deepest, reader.CurrentDepth + 1);
+        return deepest;
+    }
     public void Name(string name) => _writer.WritePropertyName(name);
     public void EndObject() => _writer.WriteEndObject();
 

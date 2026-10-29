@@ -21,7 +21,7 @@ public interface IKey
     async System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.text.@this>> Asked(global::app.actor.context.@this context)
     {
         if (Key.ToString().Length > 0) return context.Ok(Key);
-        var asked = await new global::app.goal.step.action.@this(new global::app.module.output.ask(context)
+        var asked = await new global::app.goal.step.action.composed.@this(new global::app.module.output.ask(context)
         {
             Question = Question,
             Sensitive = (global::app.type.item.@bool.@this)true,

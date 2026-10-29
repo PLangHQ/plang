@@ -16,7 +16,7 @@ public class NavigableFactsTests
         "app.this.call",
         "app.this.trace",
         "app.this.data",
-        "app.this.event",
+        "app.event.on.list.this.current",
         "app.type.item.path.this.Mime",
         // a list's element by position: read, nothing changed (random draws from the shared generator, no state of the list's)
         "app.type.item.list.this.First",
@@ -38,6 +38,8 @@ public class NavigableFactsTests
         "app.type.property.this.Notes",
         // the same file, its lines read for the asker: born per ask, nothing kept
         "app.type.property.this.Note",
+        // an error's callback: its run's state taken once, as the app takes it, and kept on the error — nothing else changed
+        "app.error.this.Callback",
         // gated reads: the asker is asked (an http path sends a HEAD); a refusal is the answer
         "app.type.item.path.this.Exists",
         "app.type.item.path.file.this.Exists",

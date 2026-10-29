@@ -103,6 +103,47 @@ public class ShortcutTests
         await Assert.That(_app.shortcut.list.Items().Single(s => s.Name == "here").IsSystem).IsTrue();
     }
 
+    // What a reference reads as, and the error it answered, if any.
+    private static async Task<(object? Value, string? Key)> Read(global::app.data.@this reference)
+    {
+        var settled = await reference.Settle();
+        return (settled.Success ? await settled.Value() : null, settled.Error?.Key);
+    }
+
+    // a shortcut is its file: one whose goal doesn't load answers that load's own error for its name alone — never the
+    // app's member of the same name — while every other shortcut answers as it is
+    [Test]
+    public async Task AShortcutThatDoesntLoad_AnswersItsError_AndTheOthersStillAnswer()
+    {
+        var folder = System.IO.Path.Combine(_root, "system", "shortcut");
+        System.IO.Directory.CreateDirectory(folder);
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(folder, "event.goal"), "Event\n- return %!app.event.current%\n");
+        await Shortcut("mine", "mine");
+
+        var unbuilt = await Read(Reference("%!event%"));
+        var other = await Read(Reference("%!mine%"));
+
+        await Assert.That(unbuilt.Key).IsEqualTo("GoalNotBuilt");
+        await Assert.That(other.Key).IsNull();
+        await Assert.That(other.Value?.ToString()).IsEqualTo("mine");
+    }
+
+    // nothing is kept of a failed read: once the goal is built, the next read reads it
+    [Test]
+    public async Task AShortcutThatDidntLoad_ReadsItsGoal_OnceItIsBuilt()
+    {
+        var folder = System.IO.Path.Combine(_root, "system", "shortcut");
+        System.IO.Directory.CreateDirectory(folder);
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(folder, "event.goal"), "Event\n");
+        await Assert.That((await Read(Reference("%!event%"))).Key).IsEqualTo("GoalNotBuilt");
+
+        await Shortcut("event", "built", folder: "system/shortcut");
+
+        var built = await Read(Reference("%!event%"));
+        await Assert.That(built.Key).IsNull();
+        await Assert.That(built.Value?.ToString()).IsEqualTo("built");
+    }
+
     // an app shortcut taking a system name is refused, saying how to override it
     [Test]
     public async Task AnAppShortcut_TakingASystemName_IsRefused_SayingHowToOverride()

@@ -31,11 +31,11 @@ public sealed class Property : Hop
         if (!IsBinding)
         {
             var read = await previous.Peek().Get(previous, Name);
-            // a member a program added to a variable's own value is kept beside it in its binding — read after the
+            // a property a program added to a variable's own value is kept beside it in its binding — read after the
             // value's own, there and wherever the binding's copy went (a list's row); never a `!` property: those are
             // the variable's, read with !
-            if ((!read.Success || !read.IsInitialized) && previous.HasKept && previous.Kept[Name] is { } property)
-                return new global::app.data.@this(Name, await property.Value(), parent: previous);
+            if ((!read.Success || !read.IsInitialized) && previous.HasProperty && previous.Property[Name] is { } added)
+                return new global::app.data.@this(Name, await added.Value(), parent: previous);
             return read;
         }
 

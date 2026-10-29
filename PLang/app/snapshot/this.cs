@@ -1,98 +1,87 @@
 namespace app.snapshot;
 
 /// <summary>
-/// A plain container of plang values: its <see cref="Entries"/> are a dict of Data, and a section is
-/// an entry whose value is itself a snapshot. Each <see cref="ISnapshot"/> owner writes its own
-/// section (<see cref="Write{T}"/>, or an entry set directly) and reads it back through the entries'
-/// typed asks on restore. The wire shape is the App tree.
+/// A run's state: the app written in the snapshot view, and read back the same way. Taken, it holds the app, its one
+/// member: the root is where the app lives, so it is written whole there, each object writing its own tagged members
+/// (an actor under the app's actors, its context, its variables and its calls), and anything that points at an object
+/// writes what finds it (<see cref="global::app.type.item.@this.Key"/>). Read back, it holds what the app wrote, until a
+/// resume reads it onto the app it goes on in, each object reading itself back. A template comes back only from bytes the
+/// gate trusts (<see cref="global::app.type.item.source"/>), so a template inside it comes back literal: the bytes' origin
+/// is not known below the snapshot's reader.
 /// </summary>
 [global::app.Attributes.PlangType("snapshot")]
-public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
+public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IView<@this>
 {
-    /// <summary>
-    /// The actor context this snapshot tree is born in. The snapshot renders its entries
-    /// as self-describing Data (its leaf serializer builds them), so it must carry the
-    /// context to born them — born-with-context, never construct-then-stamp. Sub-sections
-    /// inherit it. Read-back (<see cref="Create"/>) borns in the data binding's context.
-    /// </summary>
-    public global::app.actor.context.@this Context { get; internal set; }
+    /// <summary>A snapshot is written and read in the snapshot view: a run's state at rest.</summary>
+    public static global::app.View View => global::app.View.Snapshot;
 
-    /// <summary>The entries on this node as plang VALUES — the node they are, not a raw bag.
-    /// An <c>object?</c> bag forces a central type-switch downstream to decide what each entry is;
-    /// that switch was this snapshot's leaf-serializer, and its reflection fallback walked whatever
-    /// it was handed, including live graph nodes with back-references. Typed here at the write door,
-    /// every entry writes itself and there is nothing for a switch to do. Restore reads through the
-    /// entry's own typed ask.</summary>
-    public global::app.type.item.dict.@this Entries { get; }
+    /// <summary>The actor context this snapshot is born in: what it holds answers as it.</summary>
+    public global::app.actor.context.@this Context { get; }
 
-    /// <summary>A snapshot born in <paramref name="context"/>, holding the app's snapshot type — the name a reader
-    /// dispatches on when a section comes back.</summary>
-    public @this(global::app.actor.context.@this context) : base(context.App.type.list[typeof(@this)])
+    // The app: the live app when taken, what it wrote when read back (its bytes until a navigation opens them); null
+    // when the snapshot holds nothing.
+    private global::app.type.item.@this? _app;
+
+    /// <summary>A snapshot of <paramref name="app"/>, born in <paramref name="context"/>: the live app taken, or what an
+    /// app wrote, read back.</summary>
+    internal @this(global::app.type.item.@this? app, global::app.actor.context.@this context) : base(context.App.type.list[typeof(@this)])
     {
         Context = context;
-        Entries = new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)]);
+        _app = app;
     }
 
-    /// <summary>
-    /// Returns the named subsection, creating it if missing. Subsystems hand the
-    /// returned subtree to their nested ISnapshot children — each owns its scope.
-    /// <para>A section is an ENTRY whose value is a snapshot. It is not a second kind of thing
-    /// stored in a second place: the snapshot has one structure, a dict of Data, and a subtree is a
-    /// value in it like any other. That is what lets a reader walk the wire without asking what
-    /// kind of member it is looking at.</para>
-    /// </summary>
-    public @this Section(string name)
+    /// <summary>Reads what the app wrote onto <paramref name="app"/>, the app the run goes on in: each object it holds
+    /// reads itself back (<see cref="global::app.type.item.kind.reflection.@this"/>'s read onto a host). What can't come
+    /// back is the answer, its error whole.</summary>
+    internal async System.Threading.Tasks.Task<global::app.data.@this> Read(global::app.@this app, global::app.actor.context.@this context)
     {
-        if (Entries.Get(name, Context)?.Peek() is @this existing) return existing;
-        var created = new @this(Context);
-        Entries.Set(new global::app.data.@this(name, created, context: Context));
-        return created;
+        // a snapshot that holds nothing leaves the app as it is
+        if (_app is not { } value) return context.Ok();
+        // what the app wrote names locations (a frame's goal): each is loaded into the app the run goes on in first, so
+        // the read that follows finds what it names held. One opened and edited (a navigation) is written again first, and
+        // read back from what it wrote: each object made again from the structure as it is now, never the objects the
+        // navigation made (a frame born with the step its place named before the edit).
+        try
+        {
+            // the app's name, read now: what the snapshot names its app by is checked against it while the read can't wait
+            await app.Name(context);
+            var written = value as global::app.type.item.wire.@this ?? await global::app.type.item.wire.@this.Of(value, View, context);
+            if (written is { Raw: string raw })
+            {
+                var loaded = await View.Load(app.type.list[typeof(global::app.@this)], raw, context);
+                if (!loaded.Success) return loaded;
+            }
+            if (View.Make(context.App.type.list[typeof(global::app.type.item.dict.@this)], written, context) is not global::app.type.item.dict.@this dict)
+                return context.Error(new global::app.error.@this(
+                    $"the snapshot's app reads as a {value.Type.Name}, not what an app writes", "SnapshotRowUnread", 400));
+            ((global::app.type.item.kind.reflection.@this)context.App.type.list["item"].kind["*"]!).Read(dict, app, context, View);
+            return context.Ok();
+        }
+        catch (global::app.error.AppException ex) { return context.Error(ex.Error); }
     }
 
-    /// <summary>True if a section with this name was captured.</summary>
-    public bool HasSection(string name) => Entries.Get(name, Context)?.Peek() is @this;
+    /// <summary>A copy holds a copy of its app, born in the same context: a live app is its own copy.</summary>
+    protected internal override global::app.type.item.@this Clone() => new @this(_app?.Clone(), Context);
 
-    /// <summary>Names of all captured subsections, for App.Restore dispatch.</summary>
-    public IReadOnlyCollection<string> SectionNames
-        => Entries.Entries(Context).Where(e => e.Peek() is @this).Select(e => e.Name).ToList();
+    /// <summary>A snapshot that holds nothing is empty.</summary>
+    public override bool IsTruthy() => _app?.IsTruthy() == true;
 
-    /// <summary>The nested sub-sections on this node, by name — the entries that hold one.</summary>
-    public IReadOnlyDictionary<string, @this> Sections
-        => Entries.Entries(Context).Where(e => e.Peek() is @this)
-                  .ToDictionary(e => e.Name, e => (@this)e.Peek(), StringComparer.OrdinalIgnoreCase);
-
-    /// <summary>Writes an entry, born as a plang value in this snapshot's context — the same entity
-    /// door every other value birth goes through. Scalars lift (string→text, int→number,
-    /// List&lt;snapshot&gt;→list); anything the door cannot make a value of fails HERE, at the site
-    /// that wrote it, instead of surviving as a raw object for a serializer to guess at later.
-    /// Overwrites any prior value at the same key.</summary>
-    public void Write<T>(string key, T value)
-        => Entries.Set(new global::app.data.@this(
-            key, global::app.type.item.@this.Create(value, Context), context: Context));
-
-    /// <summary>The rows a list entry holds, each read through its own typed ask — the same door every value goes
-    /// through, so nothing lowers to CLR. An absent entry is empty, the same answer a written empty list gives.</summary>
-    internal async System.Threading.Tasks.Task<List<T>> Read<T>(string key)
-        where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-    {
-        var rows = new List<T>();
-        if (Entries.Get(key, Context) is not { } entry) return rows;
-        foreach (var row in (await entry.Value<global::app.type.item.list.@this>())!.Items(Context))
-            if (await row.Value<T>() is { } value) rows.Add(value);
-        return rows;
-    }
-
-    /// <summary>The snapshot writes ITSELF: an object of its entries. One loop, because there is
-    /// one kind of member — a subtree is an entry whose value is a snapshot, so it writes itself
-    /// like every other value. This node shape is the only structural thing the snapshot owns;
-    /// below it, composition.</summary>
+    /// <summary>A snapshot writes its app under <c>app</c>, whole — it is where the app lives, never its key — in the
+    /// snapshot's own view whatever view writes it: a writer in another view (a .plang file, the wire) takes the bytes
+    /// the snapshot's view writes. The app writes itself: a live app its members, what an app wrote as it was read its
+    /// bytes relayed, one opened and edited its rows as the snapshot writes them.</summary>
     protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
-        writer.BeginObject();
-        foreach (var entry in Entries.Entries(Context))
+        if (writer.View != View)
         {
-            writer.Name(entry.Name);
-            await entry.Output(writer);
+            await writer.Write(await global::app.type.item.wire.@this.Of(this, View, writer.Context));
+            return;
+        }
+        writer.BeginObject();
+        if (_app is { } app)
+        {
+            writer.Name("app");
+            await writer.Write(app);
         }
         writer.EndObject();
     }

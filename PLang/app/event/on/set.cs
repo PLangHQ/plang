@@ -4,5 +4,5 @@ namespace app.@event.on;
 /// stored; after it, the stored one.</summary>
 public sealed class set : global::app.@event.@this
 {
-    internal set(binding.list.before before, binding.list.after after) : base("set", before, after) { }
+    internal set(@this on, binding.list.before before, binding.list.after after) : base(on, "set", before, after) { }
 }

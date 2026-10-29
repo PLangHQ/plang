@@ -1,0 +1,29 @@
+/ A run saved inside Sub, kept in a .plang file (signed by this app) and read back, goes on from its save in an app of its
+/ own: Sub's next step reads the context's %name% and its frame's %city%, Record goes on after the call, and the step
+/ before the save doesn't run again (%count% comes back 1: it is set here, before the call, so a Sub or Record run twice
+/ would count on to 2). The resumed run goes on through this goal too, from the step after `call Record`: the marker,
+/ written after the save and never in the snapshot, sends it to Resumed, which writes what it saw and ends it. The
+/ asker's own variables are untouched by the resumed run.
+Start
+- delete file 'workspace/resumed.marker', on error 'NotFound' ignore
+- set %count% = 0
+- call Record
+- if file 'workspace/resumed.marker' exists
+    - call Resumed
+    - end goal
+- write "here" to file 'workspace/resumed.marker'
+- read file 'workspace/run.plang', write to %snapshot%
+- set %seen% = "not yet"
+- set %count% = 99
+- resume %snapshot%
+- assert %seen% equals "not yet"
+- assert %count% equals 99
+- read file 'workspace/seen.txt', write to %resumed%
+- assert %resumed% equals "Alice in Reykjavik 1 yes"
+- delete file 'workspace/run.plang'
+- delete file 'workspace/resumed.marker'
+- delete file 'workspace/seen.txt'
+
+/ The resumed run's end: what it saw, written where the asker reads it.
+Resumed
+- write "%seen% %count% %unwound%" to file 'workspace/seen.txt'

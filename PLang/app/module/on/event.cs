@@ -65,14 +65,17 @@ public partial class OnEvent : IContext
             return Context.Error<global::app.@event.binding.@this>(new global::app.error.@this(
                 $"on.event: '{path}' reaches nothing — the item isn't there to bind on", "EventUnreached", 404));
         if (reached.Peek() is not global::app.@event.@this named || reached.Parent?.Parent?.Peek() is not global::app.type.item.@this item)
-            return Context.Error<global::app.@event.binding.@this>(global::app.@event.on.@this.Empty.NoEvent(path));
+            return Context.Error<global::app.@event.binding.@this>(global::app.@event.on.empty.Of(typeof(global::app.type.item.@this)).NoEvent(path));
 
         // each carrier is opened through its door: the first that doesn't resolve (a %variable% holding nothing, a
-        // name that is none of the choice's) is the answer, and nothing is held for it
-        // held by the actor that binds, never on the item: it fires in this app alone and goes with it
-        var hold = Context.Actor!.on;
-        return data.@this<global::app.@event.binding.@this>.From(await When.Use(when => Scope.Use(scope => Action.Use(call =>
-            Task.FromResult<data.@this>(Context.Ok<global::app.@event.binding.@this>(hold.Bind(item, named.Name, when.Value,
-                (side, actor) => new global::app.@event.binding.action.@this(side, hold[item][named.Name]!, call, actor, scope.Value))))))));
+        // name that is none of the choice's) is the answer, and nothing is held for it. Added to this app's events, never
+        // on the item: it fires in this app (and the sub apps it makes after) and goes with it. The binding holds this
+        // action, whose Action it runs when the event fires, and the actor that bound it.
+        return data.@this<global::app.@event.binding.@this>.From(await When.Use(when => Scope.Use(scope => Action.Use(_ =>
+        {
+            var @event = Context.App.@event.Add(item).Add(named.Name);
+            return Task.FromResult<data.@this>(Context.Ok<global::app.@event.binding.@this>(@event[when.Value].Add(side =>
+                new global::app.@event.binding.action.@this(side, @event, __action!, Context.Actor!, scope.Value))));
+        }))));
     }
 }

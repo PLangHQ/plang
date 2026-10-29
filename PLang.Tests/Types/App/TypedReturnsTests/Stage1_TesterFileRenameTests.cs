@@ -29,7 +29,7 @@ public class Stage1_TesterFileRenameTests
     }
 
     // The contract names 9 test-relevant fields. Four live directly on the type
-    // (Goal, Status, StatusReason, Tags); the remaining five (PrPath,
+    // (Goal, Status, StatusReason, Tags); the remaining five (Pr,
     // EntryGoalName, Directory, GoalHash, BuilderVersion) live on Goal —
     // reachable via Test.Goal.X without duplication.
     [Test]
@@ -40,7 +40,7 @@ public class Stage1_TesterFileRenameTests
         var goalProps = typeof(Goal).GetProperties().Select(p => p.Name).ToHashSet();
 
         string[] onTest = { "Goal", "Status", "StatusReason", "Tags" };
-        string[] onGoal = { "PrPath", "Path", "Hash", "BuilderVersion" };
+        string[] onGoal = { "Pr", "Path", "Hash", "BuilderVersion" };
 
         foreach (var p in onTest)
             await Assert.That(testProps).Contains(p).Because($"Test.{p} must exist directly.");

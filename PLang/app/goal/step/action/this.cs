@@ -15,17 +15,21 @@ public partial class @this
     /// construction door sets it; reading it unset means the action was built outside a door,
     /// which is a bug, so it throws rather than answering a half-built identity. Carries [Debug]
     /// only — the wire form is written explicitly by <c>Output</c>.</summary>
-    [Debug, LlmBuilder]
+    [Debug, LlmBuilder, Snapshot]
     public global::app.module.@this Module
     {
         get => _module ?? throw new System.InvalidOperationException(
             $"action '{Name}' has no module — it was constructed outside a construction door.");
-        set => _module = value;
+        internal set => _module = value;
     }
 
-    [Store, LlmBuilder, Debug, Default]
-    [JsonPropertyName("action")]
-    public string Name { get; set; } = "";
+    [Store, LlmBuilder, Debug, Default, Snapshot]
+    public string Name { get; internal set; } = "";
+
+    /// <summary>Where this action stands in its step's code — what finds it there, beside its module and name. An action
+    /// of no step (a catalog element) has none, and is written without it.</summary>
+    [Snapshot]
+    public virtual int? Index => Step?.Code.IndexOf(this);
 
     /// <summary>The action's own name — "read". It never borrows the module's identity; a site that
     /// wants the qualified form composes the two objects (<c>$"{a.Module}.{a.Name}"</c>).</summary>
@@ -48,7 +52,7 @@ public partial class @this
     /// Both nesting forms land here: inline <c>if/elseif/else</c> (each condition action carries its body)
     /// and indented sub-step blocks (folded onto the gate action). A <c>step.list</c>, so it runs itself.</summary>
     [Store, Debug, Default]
-    public global::app.goal.step.list.@this Child { get; set; }
+    public global::app.goal.step.list.@this Child { get; internal set; }
 
     // `new`: this is the ACTION-cache flag (may this action's run result be
     // cached), a distinct concept from the item base's answer-keep rule —
@@ -60,17 +64,6 @@ public partial class @this
     /// program's action asks its module (<c>Module.Create</c>).</summary>
     [JsonIgnore]
     internal System.Type? Class { get; init; }
-
-    /// <summary>
-    /// True when this action was constructed inline in C# (default for
-    /// <c>new SomeAction { ... }</c>). False when materialized from a .pr
-    /// file. CallStack.Push stamps the Call frame; wire-serialize filters
-    /// synthetic frames out of the Snapshot (they can't be restored from PR
-    /// and are recreated naturally by the resumed execution). PR-load sites
-    /// override this to <c>false</c> when materializing the action from JSON.
-    /// </summary>
-    [JsonIgnore]
-    public bool Synthetic { get; set; } = true;
 
     /// <summary>
     /// A C#-composed action carrying provided params (via <c>app.Run</c>). Dispatch runs the
@@ -86,7 +79,11 @@ public partial class @this
 
     /// <summary>An action of a role of its own (a clause, a keep, a loop), born holding <paramref name="type"/>.</summary>
     protected @this(global::app.type.list.@this types, global::app.type.@this type) : base(type)
-        => Child = new(types[typeof(global::app.goal.step.list.@this)]);
+    {
+        Child = new(types[typeof(global::app.goal.step.list.@this)]);
+        // born with its own events: a clause its step reads after it binds on them
+        _on = new global::app.@event.on.@this(this);
+    }
 
     /// <summary>
     /// The action a C#-composed <paramref name="seed"/> is — an operation one owner composes from another's
@@ -95,9 +92,9 @@ public partial class @this
     /// catalog's — the element registration made for the seed's class; the seed's set parameters pass through,
     /// the unset resolve from setting and <c>[Default]</c>. Born knowing the step that invoked it: composed and
     /// started together, the calling frame is this invocation's provenance (null at the boot edge, before any
-    /// goal runs).
+    /// goal runs). Made as its own kind, <see cref="composed.@this"/>.
     /// </summary>
-    public @this(module.ICodeGenerated seed, actor.context.@this context) : this(context.App.type.list)
+    private protected @this(module.ICodeGenerated seed, actor.context.@this context) : this(context.App.type.list)
     {
         var catalog = context.App.module[seed.GetType()]
             ?? throw new System.InvalidOperationException($"no module holds the action {seed.GetType().Name}");
@@ -106,6 +103,11 @@ public partial class @this
         Seed = seed;
         Step = context.call.Step;
     }
+
+    /// <summary>The frame this action runs in, pushed on <paramref name="stack"/>: an action a step holds runs in an
+    /// action's frame, whose rest is the rest of its step's code.</summary>
+    internal virtual global::app.call.@this Frame(global::app.call.list.@this stack, global::app.call.setting.@this setting, Variables? variables)
+        => stack.Push(this, setting, variables);
 
     /// <summary>Whether this action holds its step's answer — what the actions before it produce (a <c>write to %x%</c>):
     /// a keep of <c>%!data%</c> does; no other action.</summary>
@@ -137,7 +139,7 @@ public partial class @this
     /// action exist outside any program and therefore have no step — a catalog element (a
     /// module-minted descriptor), and a synthetic action composed in C# (<c>new action(new sign{...}, context)</c>,
     /// the signing/verify/ask seam) when it starts before any goal runs.</summary>
-    [JsonIgnore, LlmBuilder]
+    [JsonIgnore, LlmBuilder, Snapshot]
     public Step? Step { get; init; }
 
     // Teaching prose (Description / Notes / Examples) is not stored on the action host — it lives
@@ -186,7 +188,7 @@ public partial class @this
         // the frame died between the failure and the recovery that had to see it.
         global::app.call.@this call;
         var setting = await context.call.Setting();
-        try { call = context.call.Push(this, setting, context.Variable); }
+        try { call = Frame(context.call, setting, context.Variable); }
         catch (global::app.error.CallStackOverflowException ex)
         {
             // The depth limit — trips at Push, before the frame is on the
@@ -241,7 +243,7 @@ public partial class @this
     /// <summary>A program action of this catalog element's kind, in <paramref name="step"/> — a clause when this
     /// one is (the role was decided when its module registered it).</summary>
     internal virtual @this Program(global::app.goal.step.@this? step)
-        => new(Module.App.type.list) { Module = Module, Name = Name, Step = step, Synthetic = false };
+        => new(Module.App.type.list) { Module = Module, Name = Name, Step = step };
 
     // A step's code is a walk of its actions, each answering its own part. A step action runs and anchors
     // what follows it; a clause (clause.@this) overrides each part.
@@ -253,7 +255,7 @@ public partial class @this
     /// <summary>Takes <paramref name="clause"/>, read after this action, on its own events — the one door to an item's
     /// own events: what the program binds when it is read stays on the item, and what is bound while it runs is held
     /// by the context that binds it.</summary>
-    internal void Take(global::app.module.IClause handler, clause.@this clause) => handler.Bind(clause, this, Own());
+    internal void Take(global::app.module.IClause handler, clause.@this clause) => handler.Bind(clause, this, on);
 
     /// <summary>Whether this action belongs to <paramref name="before"/>, the step action it follows (a clause does: it
     /// is that action's) — a step action is its own, so after a condition it stands beside it.</summary>

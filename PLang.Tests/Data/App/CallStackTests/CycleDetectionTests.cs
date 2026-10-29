@@ -30,7 +30,7 @@ public class CycleDetectionTests : System.IAsyncDisposable
     {
         var context = app.actor.list.User.Context;
         var stack = TestCalls.Stack(app, TestCalls.Settings(), maxDepth: 1);
-        using var scope = stack.DiffScope(context.Variable);
+        (await stack.Setting()).Diff = new global::app.call.setting.diff.@this(new global::app.type.@this(typeof(global::app.call.setting.diff.@this))) { Enabled = true };
         await using var a = stack.Push(MakeAction(context, "A"), await stack.Setting(), context.Variable);
 
         var setting = await stack.Setting();
@@ -119,9 +119,9 @@ public class CycleDetectionTests : System.IAsyncDisposable
         await using var build = stack.Push(MakeAction(app.actor.list.User.Context, "Build"), await stack.Setting());
         await using var emit = stack.Push(MakeAction(app.actor.list.User.Context, "EmitBuildEvent"), await stack.Setting());
 
-        await using var held = stack.Push(MakeAction(app.actor.list.User.Context, "Build"), await stack.Setting());
+        await using var frame = stack.Push(MakeAction(app.actor.list.User.Context, "Build"), await stack.Setting());
 
-        await Assert.That(held).IsNotNull();
+        await Assert.That(frame).IsNotNull();
     }
 
     [Test]

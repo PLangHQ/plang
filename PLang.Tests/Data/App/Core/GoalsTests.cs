@@ -44,7 +44,7 @@ public class GoalsTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task Add_SamePrPath_ReplacesGoal()
+    public async Task Add_SamePr_ReplacesGoal()
     {
         var goals = Goals();
         goals.Add(Named("Start", "/Start.goal", comment: "First"));

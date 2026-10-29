@@ -25,7 +25,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
 
     private void Bind(global::app.type.item.@this on, string @event, When when,
         System.Func<global::app.type.item.@this, Data, global::app.actor.context.@this, Task<Data>> handler)
-        => app.actor.list.User.on.Bind(on, @event, when, handler, Scope.actor);
+        => app.@event.Add(on).Add(@event)![when].Add(side => new global::app.@event.binding.@this(side, handler, app.actor.list.User, Scope.actor, global::app.@event.binding.@this.Always));
 
     [Test]
     public async Task AChannel_IsAnItem_WithItsOwnEvents()
@@ -237,8 +237,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
         var serviceLogger = StreamChannel.Memory(svc.Channels, "logger");
         svc.Channels.Register(serviceLogger);
         var hits = 0;
-        app.actor.list.User.on.Bind(app.type.list["channel"], "write", When.before,
-            (_, _, ctx) => { Interlocked.Increment(ref hits); return Task.FromResult(ctx.Ok()); }, Scope.app);
+        app.@event.Add(app.type.list["channel"]).Add("write")[When.before].Add(side => new global::app.@event.binding.@this(side, (_, _, ctx) => { Interlocked.Increment(ref hits); return Task.FromResult(ctx.Ok()); }, app.actor.list.User, Scope.app, global::app.@event.binding.@this.Always));
 
         await userLogger.WriteAsync(app.Ok("a"));
         await serviceLogger.WriteAsync(app.Ok("b"));
@@ -251,7 +250,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     {
         var ch = Registered("c");
         var fired = false;
-        app.actor.list.User.on.Bind(app.goal.type, "start", When.before, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); }, Scope.app);
+        app.@event.Add(app.goal.type).Add("start")[When.before].Add(side => new global::app.@event.binding.@this(side, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); }, app.actor.list.User, Scope.app, global::app.@event.binding.@this.Always));
 
         await ch.WriteAsync(app.Ok("x"));
 

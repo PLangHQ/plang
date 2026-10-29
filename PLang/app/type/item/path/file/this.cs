@@ -86,9 +86,11 @@ public sealed partial class @this : global::app.type.item.path.@this
         return context.Ok((await stat.Value())?.Size ?? global::app.type.item.size.@this.Create(0, context));
     }
 
-    /// <summary>The .pr this file, a <c>.goal</c>, is built to: <c>X.goal</c> → <c>.build/x.pr</c> beside it.</summary>
+    /// <summary>The .pr this file, a <c>.goal</c>, is built to: <c>X.goal</c> → <c>.build/x.pr</c> beside it. Worked out
+    /// once: a path doesn't change.</summary>
     internal global::app.type.item.path.@this Pr
-        => Parent.Combine(".build").Combine(Stem.ToString().ToLowerInvariant() + ".pr");
+        => _pr ??= Parent.Combine(".build").Combine(Stem.ToString().ToLowerInvariant() + ".pr");
+    private global::app.type.item.path.@this? _pr;
 
     /// <summary>
     /// FilePath-specific resolve: applies relative-path-to-goal-folder

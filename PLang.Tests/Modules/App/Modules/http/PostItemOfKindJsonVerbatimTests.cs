@@ -67,7 +67,7 @@ public class PostItemOfKindJsonVerbatimTests
             Body = body,
             Unsigned = (global::app.type.item.@bool.@this)true,
         };
-        var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
+        var result = await new global::app.goal.step.action.composed.@this(action, Ctx).Start(Ctx);
 
         await result.IsSuccess();
         await Assert.That(await _handler.LastRequest!.Content!.ReadAsStringAsync()).IsEqualTo(raw);

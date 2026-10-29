@@ -2,7 +2,7 @@ namespace app.@event.binding.list;
 
 /// <summary>
 /// The bindings of one side of an event (its <see cref="before"/>, or its <see cref="after"/>), in the order they
-/// were added. An own event's lists take bindings; the shared empty event's are closed, made so, and never hold
+/// were added. An item's event's lists take bindings; the shared empty event's are closed, made so, and never hold
 /// one. Starting it reads the list as it stands, so firing an event nothing is bound on costs one read. How the
 /// bindings' answers fold into the result is the side's own. Not an item of its own (a plang value named
 /// <c>list</c> would be a second type of that name); navigation reaches it as a sequence.
@@ -16,6 +16,16 @@ public abstract class @this : IReadOnlyList<binding.@this>
     private protected @this(bool open) => _open = open;
 
     public int Count => _bindings.Length;
+
+    /// <summary>Takes in <paramref name="maker"/>'s: each of its bindings, in order, as this side's own inherited binding —
+    /// run for <paramref name="app"/>'s actor in its role, never saved or taken off by the sub app.</summary>
+    internal void Inherit(@this maker, global::app.@this app)
+    {
+        foreach (var binding in maker._bindings) Add(side => new inherited.@this(side, binding, app));
+    }
+
+    /// <summary>Whether a snapshot keeps anything on this side: a binding a program made.</summary>
+    internal bool IsSaved => _bindings.Any(binding => binding.IsSaved);
 
     public binding.@this this[int index] => _bindings[index];
 
