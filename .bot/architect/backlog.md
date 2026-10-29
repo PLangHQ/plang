@@ -133,6 +133,12 @@ The one list of work after runtime2's merges (Ingi, 2026-10-29: "yes merge into 
 
 - A database module (2026-10-26: "3 future").
 - **System events that run but print nothing** (event-action 15, 2026-10-29: "event.setting.system.output = false … or am I extending to much now and we can just have it future feature?"): with `event.setting.system` on, a second setting keeps the system events' output quiet.
+- **`app.task.list`: every running task, with events and a look inside** (2026-10-29: "I want to add something as future feature, app.task.list, so everytime a goal runs with 'dont wait', the task is added … we should be able to set event on the add, both when it´s added and when done … reach into that task and ask it questions, get what has been written to the channel … maybe the task.list should be per context and app.task.list just groups all the actors together?").
+  - **What exists:** "don't wait" builds to `goal.call`'s `Parallel=true` (`call.notes.md:4`), which answers a `task` at once. Each actor already lists its running tasks and drops each one when it ends: `actor.Task`, `%!app.actor.current.task%` (`task/list/this.cs`). A task answers `Id`, `Ended`, `Goal`, `Wait`, `Cancel`.
+  - **New, 1:** `%!app.task.list%` reads every actor's running tasks through the actors' own lists. It is a view, nothing stored twice. The list stays per actor, not per context: the actor owns the cancellation the task is linked to.
+  - **New, 2, events:** a task is an item, so "added" and "done" are its start's before and after: `%!app.type.task.on.start%` for each task (after: `%!event!data%` is its result), and one task by its path. No new moment is needed. The task list's `Start` then goes through the event door, as a goal's does.
+  - **New, 3, the context:** a task answers what it runs in: its actor, its goal, and the frame that started it (`module/goal/call.cs:85`, `from`).
+  - **Open, what it wrote, and asking it:** a task is not a new app. It runs in a child context on the same actor (`module/goal/call.cs:94–99`), so it writes to its caller's channels. Reading what one task wrote, or asking it a question, needs the task to have channels of its own (written to its own buffer and passed on, or an input the task reads). That is the design question for when this is picked up.
 
 ## Very far backlog (never offered as next work)
 
