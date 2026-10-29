@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "86d90db97: bench clean (sub request 441 KB, root 3898, births in band, held flat); one narrow finding: 'which app finds a caller's goal' has two doors (goal.Find beside goal.list.Find(name, caller)), the same fork written twice in goal/this.Item.cs:94 and event/call/this.cs:72; plus lows" }

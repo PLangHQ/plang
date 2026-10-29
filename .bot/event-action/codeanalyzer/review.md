@@ -93,3 +93,58 @@ Verdict v2: **FAIL, narrow.** 2–7 are closed. The sub request is +28 KB over t
 - Sub-request band (+28 KB): explained by 69.
 
 Verdict: **PASS**, the tester next.
+
+---
+
+# Review v4 — 5d0ac4382..86d90db97 (stages 6–8, variable events on one store, the equality sweep)
+
+Patterns first: 12 (one answer), 11 (lazy), 3 (a choice on the element), 5 (a birth fact), and the new tell (a value answers equality). Every touched file read whole; the diff 29 files in `PLang/`.
+
+## Bench (`Tools/Bench/run.sh`, birth + request; load 7.2, bytes are load-independent)
+
+| | Sub birth | Root birth | Sub request | Root request | Held |
+|---|---|---|---|---|---|
+| runtime2 6703697fb (parent) | 99 KB | 2349 | 496 | 3840 | flat |
+| event-action 2d10af80f (my last) | 103 | 2366 | 524 | 4434 | flat |
+| **event-action 86d90db97** | **101** | **2267** | **441** | **3898** | flat (2.2 MB) |
+
+Everything is inside its band against the parent: sub birth +2 (±5), root birth −82 (below), sub request −55 (below), root request +58 (±120). Against my last row: the sub request −83 KB and the root request −536 KB. The type lookup keeping its answer (74, call-cost idea 2) and the variable events on one store (73) are what the rows show; the earlier +28 KB the architect ruled as explained (69) is gone. No bench finding. Times were measured at load 7.2 and are not compared.
+
+## Findings
+
+1. **Pattern 12 — the same fork written twice, and a second door for "which app finds a caller's goal". BLOCKING (narrow).**
+   - `goal/this.Item.cs:94–97` (`Select`): `asker.call.Goal is { } caller ? await caller.Find(name, asker) : await asker.App.goal.list.Find(name, null)`.
+   - `event/call/this.cs:72`: `action.Step?.Goal is { } binder ? await binder.Find(called, Actor.Context) : await Actor.App.goal.list.Find(called, null)`.
+   - The question ("a call from this goal finds its goal in which app?") is answered by `goal.Find(name, asker)` (`goal/this.cs:64`, `(App ?? asker.App).goal.list.Find(name, this)`) and, beside it, by `goal.list.Find(name, caller)` called directly at `module/goal/call.cs:47` (Build), `goal/step/action/this.Callee.cs:17`, `module/screen/.../display/this.cs:278`, `module/browser/.../this.cs:64`, `.../screen/this.cs:221`. The no-caller branch is the fork each site writes for itself.
+   - OBP form: one door. The caller-or-none ask lives once, on the goal as a static (`goal.Find(name, caller, asker)`: caller's app, else the asker's) or as the list's own overload taking the asker; the two runtime sites (`Select`, `event.call.Start`) call it and lose their ternary. For the five direct sites, either they move to it, or the architect rules they stay on purpose (build time and the os's `/system/…` goals, where the caller's app and the asker's are the same) and says so in the doc comment of the door.
+   - Fix is the coder's (code). Small: two sites collapse, five are decided.
+
+2. **Pattern 11 — the variable is made at every set, before anyone asked. Low–medium; tied to decision 73, so a note for the architect.**
+   - `type/item/variable/list/this.cs` `Named(name)` runs at every `Set`, `GetOrAdd`, `Replace` and `Remove`: a `parser.Whole` (a variable, its code, a hop) is made whether or not any event is bound. The old shape made it only when something was bound. The architect's figure is 720 B per parse; the bench shows the net is below the parent's, so this is not a cost finding today, it is a placement one: the first asker is `Moments(variable)`, and only the actor's events know whether anything is bound.
+   - Beside it, `event/list/this.cs:75–76` (`Moments`) scans every event per set (`foreach … Item.Equals(variable)`), where the removed `_named` dictionary answered in one lookup. With the system events alone it is a few compares; a program that binds many events pays it on every set. Ask by name first (the actor says "something is bound on a variable named x"), make the variable only for the answer yes. Not blocking.
+
+3. **Pattern 3 — a type-switch in the registry. Low.** `event/list/this.cs:128`, `Remove`: `@event.Item is variable.@this variable && …_on.TryRemove(variable…)`. Which item forgets its list when its last event goes is the item's choice (a virtual on `item` with the variable overriding, or the list dropping any item that has no event left, with no `is`).
+
+4. **Pattern 12 — `is X` inside an answer. Low.** `type/item/variable/this.cs` `Names`: `if (at.Peek() is @this reached) return reached.Equals(variable);` mid-walk; the word `Names` now answers four questions (`variable.Names(variable, context)`, `code.Variable.Names(context)`, `type.Names(string)`, `IAbout.Names(string)`). Leave the word, but the two variable ones answer "is this reference that variable" and "is this reference anything": the second is `Cover`'s check at `goal/step/this.Validate.cs:79` and could be asked of the reference (`v.Names(context)`) rather than through `v.Code.Root`.
+
+5. **Readability / stored twice. Low.** `goal/step/this.Validate.cs` `Cover` (boy scout, the file is touched): the answer is parsed twice (line 56 and line 78, once case-insensitive, once not), and the texts are kept beside the variables they came from (`said`/`answered` beside `stepped`/`answers`). Line 66 is an assignment inside a condition (`if (named = await a.Names(v, context)) break;`); an `AnyAsync`-shaped helper reads in one line. `Cover` is about 110 lines; not this branch's size, but it was touched.
+
+6. **Raw hand-off. Low.** `goal/pattern/this.cs:18`: `at.Combine(glob).Raw` is handed to `path.Resolve(rooted, context)` again — a path turned to text to be made a path. Take the combined path as it is. `goal/list/this.cs:358`: `seen.Add(source.Raw)` keeps the visited sources as raw strings beside `source.Equals(g.Path)` one expression later; a path set (path has its own equality) answers once.
+
+7. **Raw-form compares left (the new tell), in files this range touches. Low.** `type/list/Registry.cs:280`: `ReferenceEquals(taken.Owner, kind.Owner) && string.Equals(taken.Name, kind.Name, …)` — `kind` answers `Equals` (`kind/this.cs:370`, by name). Everything else the sweep touched is clean: `actor/this.cs:222–232` and `event/*` and `goal/list` use the type's own `Equals` now, `test/this.cs:189` uses `path.Equals`. Untouched-file hits (`type/this.cs:302,349`, `goal/step/action/serializer/Snapshot.cs:59`) are for another branch.
+
+8. **Readability. Low.** `goal/this.cs:241` `Reference`: a ternary inside a ternary (`(Path is { } path ? path.Equals(caller?.Path) : caller?.Path is null) ? null : Address`). Two lines with a local, or `Path.Equals` taking null. `event/call/this.cs` `Kept` is a creative name for "the Sub its record keeps" (`Sub(record, context)`).
+
+## Closed, with thanks
+
+- `Elsewhere` (a flag on goal that forked `Start`) is gone: `app.parent.goal` is a goal subclass that refuses nothing and sends the call up (pattern 3); `call.goal.Leave` owns the return fold, `goal.Start` asks the frame (`frame.Leave`). The fork is now an element.
+- `goal.App` is a birth fact, set by the reader from where the `.pr` lies (pattern 5), not searched at call time. Held memory is flat, so the goal's app link does not keep a disposed sub app alive.
+- `Sub`/`IsInheritable`: a choice on the event (pattern 3), saved and read back (`SavedBindingsTests` pins both).
+- The load that fails is let go (all or nothing, the next ask loads again).
+- `type/list` keeps a class's type per list with a version of the lists under it: correct invalidation (the counters only grow), and a sub app's cache is its own layer (nothing written to the shared list). It costs a walk over `Under` per lookup; fine.
+
+## Not done
+
+No mutations; the new `Interlocked.Increment`s in `Registry.cs` and the `_classes` cache were read, not deletion-tested. Probes of the set (3.5 KB) and parse (720 B) figures were not re-run: the request rows are the net.
+
+## Verdict v4: **FAIL (narrow)** — coder next, then back to me for a read of finding 1. Everything else is low and can go with it. If the architect rules the five direct `goal.list.Find(name, caller)` sites stay by design and the two runtime sites share one ask, this is a PASS.
