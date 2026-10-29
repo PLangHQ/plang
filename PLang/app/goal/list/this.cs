@@ -196,10 +196,13 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     /// may live in a sibling's), then from the app root. Each is resolved from its plang form, so a
     /// <c>/system/</c> goal is the app's own before the os's. An app-absolute name (<c>/system/builder/X</c>) skips
     /// the caller's folders. A miss (NotFound) when no goal answers to the name; a <c>.goal</c> with no <c>.pr</c>
-    /// answers <c>GoalNotBuilt</c>; one whose <c>.pr</c> doesn't load answers why.
+    /// answers <c>GoalNotBuilt</c>; one whose <c>.pr</c> doesn't load answers why. A caller that is another app's goal
+    /// (a maker's goal running in a sub app) is answered in its own app: a call finds its goal in the app its caller goal
+    /// is, never redirected by the app it runs in; a caller of no app (the os's, one made outside a list) here.
     /// </summary>
     public async Task<data.@this<goal.@this>> Find(string name, goal.@this? caller = null, CancellationToken cancellationToken = default)
     {
+        if (caller?.App is { } home && home != App) return await home.goal.list.Find(name, caller, cancellationToken);
         var context = App.actor.list.System.Context;
         if (string.IsNullOrEmpty(name)) return data.@this<goal.@this>.From(context.NotFound(name));
         // A name never climbs out of the folder it is written for: whoever writes the name (an input, an llm's

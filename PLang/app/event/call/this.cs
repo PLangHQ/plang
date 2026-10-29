@@ -28,7 +28,7 @@ public sealed class @this : global::app.@event.@this
     internal @this(global::app.type.item.@this item, string name, global::app.@event.When when,
         global::app.type.item.dict.@this record, global::app.actor.context.@this context)
         : this(item, name, when, Member<global::app.goal.step.action.@this>(record, "action", context),
-            Member<global::app.actor.@this>(record, "actor", context), Kept(record, context))
+            Member<global::app.actor.@this>(record, "actor", context), Sub(record, context))
     { }
 
     // whether a sub app takes it in, as the on.event step said
@@ -37,7 +37,7 @@ public sealed class @this : global::app.@event.@this
     internal override bool IsInheritable => _sub == global::app.@event.Sub.inherit;
 
     // the Sub a saved event's record keeps, read as the choice it is; none kept is the default, inherit
-    private static global::app.@event.Sub Kept(global::app.type.item.dict.@this record, global::app.actor.context.@this context)
+    private static global::app.@event.Sub Sub(global::app.type.item.dict.@this record, global::app.actor.context.@this context)
     {
         if (record.Get("sub", context) is not { } row) return global::app.@event.Sub.inherit;
         global::app.@event.Sub sub = global::app.type.item.choice.@this<global::app.@event.Sub>.Create(row.Peek()?.ToString(),
@@ -67,9 +67,7 @@ public sealed class @this : global::app.@event.@this
         // here, where the moment came, as its parameters are), never selected as a goal in the running context.
         var name = new global::app.data.@this("name", value, context: context);
         var called = (await name.Value())?.ToString() ?? "";
-        // the goal its step sits in finds it, as its own call would (in its own app); one of no app (the os's, one made
-        // outside a list) finds it in the app of the actor that bound it
-        var goal = action.Step?.Goal is { } binder ? await binder.Find(called, Actor.Context) : await Actor.App.goal.list.Find(called, null);
+        var goal = await Actor.App.goal.list.Find(called, action.Step?.Goal);
         if (!goal.Success) return goal;
         // the call as it was written, whole — every property its step gave it (its parameters, its actor, whether it runs
         // on its own) and what its build froze — with only the goal it names found here: the seed holds the name alone

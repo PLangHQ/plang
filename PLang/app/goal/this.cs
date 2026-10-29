@@ -57,12 +57,6 @@ public partial class @this
     /// it runs. None for the os's goals, which belong to no app, and a goal made outside a list.</summary>
     internal global::app.@this? App { get; }
 
-    /// <summary>The goal a call of <paramref name="name"/> from this goal reaches: found in this goal's app (a maker's goal
-    /// running in a sub app calls the maker's), else — an os goal, a goal made outside a list — in the asker's (its own
-    /// <c>system/</c> copy first, then the os's).</summary>
-    internal Task<data.@this<@this>> Find(string name, actor.context.@this asker)
-        => (App ?? asker.App).goal.list.Find(name, this);
-
     private global::app.goal.step.list.@this _step;
     [Store, Out, LlmBuilder, Debug, Default]
     public global::app.goal.step.list.@this Step
@@ -238,7 +232,11 @@ public partial class @this
     /// <summary>The name a call from <paramref name="caller"/> writes for this goal — its <see cref="Address"/>,
     /// or null when the call keeps the name it was written with: a goal in the caller's own file (a child, or
     /// the file's root) stays bare, it wins by rule and can't be shadowed.</summary>
-    public string? Reference(@this? caller) => (Path is { } path ? path.Equals(caller?.Path) : caller?.Path is null) ? null : Address;
+    public string? Reference(@this? caller)
+    {
+        if (Path is null) return caller?.Path is null ? null : Address;
+        return Path.Equals(caller?.Path) ? null : Address;
+    }
 
     /// <summary>
     /// Merges LLM-derived fields from an existing built goal onto this freshly-parsed goal.

@@ -71,6 +71,21 @@ public class ListTests
         await Assert.That((await _app.actor.list.User.@event.On(process))).IsSameReferenceAs(loaded);
     }
 
+    // the goal's own event unbound, its list is made again from what applies: its "each goal" event still runs
+    [Test] public async Task UnbindingAGoalsOwnEvent_LeavesItsEachGoalEventsRunning()
+    {
+        var process = Goal("/Process.goal");
+        var ran = new List<string>();
+        await Record(_app.type.list["goal"], global::app.@event.When.before, ran, "each");
+        var own = await Record(process, global::app.@event.When.before, ran, "own");
+        await (await process.Start(Ctx)).IsSuccess();
+
+        own.Remove();
+        await (await process.Start(Ctx)).IsSuccess();
+
+        await Assert.That(ran).IsEquivalentTo(new[] { "each", "own", "each" }, TUnit.Assertions.Enums.CollectionOrdering.Matching);
+    }
+
     [Test] public async Task APattern_RunsForEachGoalItNames_LoadedBeforeOrAfter_AndNoOther()
     {
         var orders = Goal("/api/Orders.goal");

@@ -49,33 +49,36 @@ public sealed partial class @this
         await Code.Output(writer);
         var answer = writer.ToString();
         var problems = new List<string>();
-        // a variable is the same one whatever its case, as the variable list compares names
-        var comparer = global::app.type.item.variable.list.@this.Comparer;
+        // the step's variables and the answer's, each once — a variable is the same one whatever its case, as variables
+        // compare
         var step = new global::app.type.item.variable.parser.@this(Text, context.App.type.list);
-        var stepped = step.Variable.DistinctBy(x => x.Text, comparer).ToList();
-        var answers = new global::app.type.item.variable.parser.@this(answer, context.App.type.list).Variable.DistinctBy(x => x.Text, comparer).ToList();
-        var said = stepped.Select(x => x.Text).ToList();
-        var answered = answers.Select(x => x.Text).ToList();
-        // each of the step's variables is named by one of the answer's — itself, or a path through the app's variables
-        // that selects it — else told as the step writes it, to be copied exactly, beside the answer's own when it wrote
-        // one the step's variables say was meant to be this one
+        var stepped = step.Variable.Distinct().ToList();
+        var answers = new global::app.type.item.variable.parser.@this(answer, context.App.type.list).Variable.Distinct().ToList();
+        // whether one of the answer's variables names v — v itself, or a path through the app's variables that selects it
+        async System.Threading.Tasks.Task<bool> Named(global::app.type.item.variable.@this v)
+        {
+            foreach (var a in answers)
+                if (await a.Names(v, context)) return true;
+            return false;
+        }
+        // each of the step's variables not named is told as the step writes it, to be copied exactly, beside the answer's
+        // own when it wrote one the step's variables say was meant to be this one
         foreach (var v in stepped)
         {
-            var named = false;
-            foreach (var a in answers)
-                if (named = await a.Names(v, context)) break;
-            if (named) continue;
-            problems.Add(answered.Where(a => !said.Contains(a, comparer)).FirstOrDefault(a => comparer.Equals(step.Nearest(a), v.Text)) is { } near
-                ? $"step {Index}: {v.Text} is in the step but not in your answer: the step writes `{v.Text}`; your answer has `{near}` — copy it exactly"
+            if (await Named(v)) continue;
+            // the parser answers which of the step's variables an answer's starts most like, as its text
+            problems.Add(answers.Where(a => !stepped.Contains(a))
+                    .FirstOrDefault(a => global::app.type.item.variable.list.@this.Comparer.Equals(step.Nearest(a.Text), v.Text)) is { } near
+                ? $"step {Index}: {v.Text} is in the step but not in your answer: the step writes `{v.Text}`; your answer has `{near.Text}` — copy it exactly"
                 : $"step {Index}: {v.Text} is in the step but not in your answer: copy it exactly");
         }
         // and the other way: a variable the answer names that the step's words don't is invented — a
         // system variable (%!data%, %!error%) excepted
-        foreach (var v in answered)
-            if (!v.StartsWith("%!") && !said.Contains(v, comparer)) problems.Add($"step {Index}: {v} isn't in the step — use only the step's variables");
+        foreach (var v in answers)
+            if (v.Code.Root.IsProgram && !stepped.Contains(v)) problems.Add($"step {Index}: {v.Text} isn't in the step — use only the step's variables");
         // a %!…% the answer names that names nothing — no binding, shortcut, app member or module (%!photo.png%) —
         // reads nothing at run
-        foreach (var v in new global::app.type.item.variable.parser.@this(answer,context.App.type.list).Variable.DistinctBy(x => x.Text))
+        foreach (var v in answers)
             if (!await v.Code.Root.Names(context))
                 problems.Add($"step {Index}: {v.Text} names nothing plang has — a %!…% reads one of its own: %!data% (the last answer), a shortcut (%!goal%, %!step%, %!error%), %!app…%, or a module's (%!llm.setting.cache%)");
         // a quoted literal is held by one of the answer's values — each asked, as it answers for itself (a separator

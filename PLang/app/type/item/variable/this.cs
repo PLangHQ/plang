@@ -114,7 +114,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         {
             at = await hop.Start(at, context);
             if (!at.Success || !at.IsInitialized) return false;
-            if (at.Peek() is @this reached) return reached.Equals(variable);
+            if (at.Peek().Equals(variable)) return true;
         }
         return false;
     }

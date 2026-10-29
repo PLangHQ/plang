@@ -277,7 +277,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             foreach (var key in kind.Mime.Concat(kind.Extension))
             {
                 if (seen.TryGetValue(key, out var taken)
-                    && !(ReferenceEquals(taken.Owner, kind.Owner) && string.Equals(taken.Name, kind.Name, StringComparison.OrdinalIgnoreCase)))
+                    && !(ReferenceEquals(taken.Owner, kind.Owner) && taken.Equals(kind)))
                     return Collision(key, taken, kind);
                 seen[key] = kind;
             }

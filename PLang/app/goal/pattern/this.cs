@@ -15,10 +15,11 @@ public sealed class @this : global::app.goal.@this
     internal @this(string glob, global::app.type.item.path.@this? folder, global::app.type.list.@this types,
         global::app.actor.context.@this context) : base(types)
     {
-        var rooted = glob.StartsWith('/') ? glob : folder is { } at ? at.Combine(glob).Raw : "/" + glob;
-        Name = rooted;
-        Path = global::app.type.item.path.@this.Resolve(rooted, context);
-        _glob = new(rooted, global::app.type.item.path.@this.RootComparison);
+        Path = !glob.StartsWith('/') && folder is { } at ? at.Combine(glob)
+            : global::app.type.item.path.@this.Resolve(glob.StartsWith('/') ? glob : "/" + glob, context);
+        // its name, and the glob the matcher reads, are the path as written
+        Name = Path.Raw;
+        _glob = new(Path.Raw, global::app.type.item.path.@this.RootComparison);
     }
 
     /// <summary>Whether <paramref name="address"/>, a goal's, is one this glob names.</summary>
