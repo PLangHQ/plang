@@ -7,6 +7,9 @@ Formal: `on.event(Event=%!app.variable["count"].on.set%, When="after", Action=go
 Step text: `before each goal call LogBefore`
 Formal: `on.event(Event=%!app.type.goal.on.start%, When="before", Action=goal.call(Name="LogBefore"))`
 
+Step text: `before each goal, call Audit, not in sub apps`
+Formal: `on.event(Event=%!app.type.goal.on.start%, When="before", Sub="none", Action=goal.call(Name="Audit"))` — the event stays in this app; its sub apps don't take it in.
+
 Step text: `before goal Process, call Prepare`
 Formal: `on.event(Event=%!app.goal["Process"].on.start%, When="before", Action=goal.call(Name="Prepare"))` — a goal the step names is `%!app.goal["Name"]%` (its bare name), not `%!app.type.goal%`, which is every goal.
 

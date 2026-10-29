@@ -10,6 +10,8 @@
 
 `When` is `before` or `after`.
 
+Sub — whether the app's sub apps take the event in: `inherit` (the default, left out) or `none` · say: `not in sub apps`, `only in this app`, `just here` · builder: → `Sub="none"`; left out when the step says nothing about sub apps.
+
 The called goal reads `%!event%` (the event), `%!event!item%` (what it fired for) and `%!event!data%` (the value so far, after it; a failure is `%!error%`). A call bound before an event can cancel it with `on.cancel`.
 
 `on input call X` — "input" with no channel, event or "before/after" — is `on.input` (listen to this app's input line by line), not this.
