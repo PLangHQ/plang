@@ -499,11 +499,11 @@ See `snapshots.md` for what takes part, the call stack's frames and the resume.
 
 ## Callbacks
 
-A callback is a typed record (`ICallback`) that captures "where this run was paused, what state survives the pause, and how to land back here". Two implementations in v1: `AskCallback` (slim — Position + ActorName + developer-named Variables, used by `output.ask`) and `ErrorCallback` (full Snapshot — for the error-retry issuer).
+A callback is a signed snapshot (`snapshots.md`): where this run was paused and how to land back there. A pending `output.ask` carries one (`module/output/ask.cs`), and an error's `%!error.callback%` holds the run as it stood where the error happened (`error/this.cs:150`).
 
-The public verb is `- run %callback%` (`callback.run`). It implements a strict seal-then-verify gate: `EnsureSigned` first (in-process Data signs locally; wire Data without Context is rejected), then `signing.verify`, then dispatch into the typed callback's `Run`. In-process and wire paths are indistinguishable to the gate — absence of signature is rejection, never trust.
+The public verb is `- start %callback%` (`callback.start`, `module/callback/start.cs`). It goes on through the one resume door, `snapshot.resume`, so a callback is checked as every resume is: unsigned (`SnapshotUnsigned`), changed since it was signed (`SnapshotSignatureInvalid`) or another app's (`SnapshotNotTheApps`), it is refused before anything is restored.
 
-`AskCallback` resumes by binding the answer under the sentinel `%!ask.answer%` and re-dispatching the original `output.ask` action. `ErrorCallback` resumes by reconstructing a fresh App from the snapshot and dispatching from `BottomFrame`. CLR exceptions out of `cb.Run` are wrapped as typed `Data.FromError` (no raw exceptions leak through the public entry).
+A pending ask resumes by pre-binding the answer under the sentinel `%!ask.answer%` and re-running the goal, so the second call to `output.ask` answers with it. An error's callback goes on from where the error happened, in a sub app.
 
 The wire serializer is `application/plang` — a single, merged serializer composed over `Json` with `Wire` + `Transport.ForOutbound` + `Sensitive.Strip` modifiers (the historical `application/plang+data` variant was merged on `data-serialize-cleanup`; the `Wire` class itself was named `WireJsonConverter` before `data-normalize`). Signing is **converter-driven**: `Wire.Write` fires `data.EnsureSigned()` sign-if-missing on every Data it walks, so any Data egressing through any channel auto-seals. Forwarding preserves provenance — Alice's inner signature rides intact under Bob's outer signature.
 
