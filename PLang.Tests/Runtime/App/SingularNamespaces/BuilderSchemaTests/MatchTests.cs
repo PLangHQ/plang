@@ -586,7 +586,7 @@ public class MatchTests
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains(
-            "the step has nothing indented below it, so what the step does when the condition holds goes inside the if's `{ }`");
+            "the if runs nothing: write what it runs in the step itself, or as a step indented below it (in formal, inside the if's `{ }`)");
         await Assert.That(result.Error.Message).Contains("condition.else isn't one of step 4's actions (condition.if, goal.call)");
     }
 

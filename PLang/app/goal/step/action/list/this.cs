@@ -148,7 +148,7 @@ public sealed class @this : global::app.type.item.list.bare.@this<Action>, globa
                 if (missing == null && (empty || (action.Child.Count == 0 && !below)))
                     missing = Broken(action, below
                         ? "`{ }` holds at least one action; a condition whose body is indented below it has no `{ }`."
-                        : $"the step has nothing indented below it, so what the step does when the condition holds goes inside the {action.Name}'s `{{ }}`.",
+                        : $"the {action.Name} runs nothing: write what it runs in the step itself, or as a step indented below it (in formal, inside the {action.Name}'s `{{ }}`).",
                         "BodyMissing");
                 condition = action;
                 continue;
