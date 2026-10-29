@@ -1,6 +1,12 @@
 Step text: `before each goal call LogBefore`
 Properties: `{"Event": "%!app.type.goal.on.start%", "When": "before", "Action": {"module": "goal", "name": "call", "property": [{"name": "Name", "value": "LogBefore"}]}}`
 
+Step text: `before goal Process, call Prepare`
+Properties: `{"Event": "%!app.goal[\"Process\"].on.start%", "When": "before", "Action": {"module": "goal", "name": "call", "property": [{"name": "Name", "value": "Prepare"}]}}` — a goal the step names is `%!app.goal["Name"]%` (its bare name), not `%!app.type.goal%`, which is every goal.
+
+Step text: `after action llm.query, call ShowCost`
+Properties: `{"Event": "%!app.module.llm.query.on.start%", "When": "after", "Action": {"module": "goal", "name": "call", "property": [{"name": "Name", "value": "ShowCost"}]}}` — an action the step names as module.action is `%!app.module.<module>.<action>%`, not `%!app.type.action%`, which is every action.
+
 Step text: `after step call TrackAfterStep`
 Properties: `{"Event": "%!app.type.step.on.start%", "When": "after", "Action": {"module": "goal", "name": "call", "property": [{"name": "Name", "value": "TrackAfterStep"}]}}`
 
