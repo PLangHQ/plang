@@ -12,7 +12,7 @@ internal sealed class @this
     internal @this(setting.@this setting)
     {
         _setting = setting;
-        _server = new(() => Held(new global::app.@this(setting.Root, wiring: global::app.Wiring.none).Testing()));
+        _server = new(() => Binding(new global::app.@this(setting.Root, wiring: global::app.Wiring.none).Testing()));
     }
 
     /// <summary>The server app a child is made by, made before the first count: what it holds is the process's, not the requests'.</summary>
@@ -31,7 +31,7 @@ internal sealed class @this
 
     // The maker holds the setting's bindings on its variable type's set and remove, a step's and an action's start; a sub
     // app is born taking them in.
-    private global::app.@this Held(global::app.@this maker)
+    private global::app.@this Binding(global::app.@this maker)
     {
         var items = new[] { (maker.variable.type, "set"), (maker.variable.type, "remove"), (maker.type.list["step"], "start"), (maker.type.list["action"], "start") };
         for (var i = 0; i < _setting.Maker; i++)
