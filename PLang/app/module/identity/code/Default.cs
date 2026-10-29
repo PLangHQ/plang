@@ -351,7 +351,9 @@ public sealed class Default : IIdentity
     // default (and make it) — inside the same flow it goes on at once, never waiting on the change it is part of.
     private readonly AsyncLocal<bool> _inside = new();
 
-    // change, one at a time: waits its turn, unless this flow already holds it.
+    // change, one at a time: waits its turn, unless this flow already holds it. What runs inside a change in the same
+    // flow goes through the gate unheld — so a key or signing provider, called from inside a change, must not start
+    // identity changes in parallel there: they would all be inside, none waiting on another.
     private async Task<T> Change<T>(Func<Task<T>> change)
     {
         if (_inside.Value) return await change();
