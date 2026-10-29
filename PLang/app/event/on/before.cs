@@ -45,16 +45,22 @@ public sealed class before : side
         return result;
     }
 
-    /// <summary>The failure <paramref name="failed"/> handed to each event in the order bound (an error's before): the
-    /// first that takes it answers — anything but the failure handed back (a retry's result, a recovery's, an ignore, or a
-    /// new failure) — and the rest never see it. Null when none takes it.</summary>
+    /// <summary>The failure <paramref name="failed"/> handed to each event in the order bound (an error's before) that
+    /// takes it — a failure raised while an event runs is offered only to its app's error events: the first answers —
+    /// anything but the failure handed back (a retry's result, a recovery's, an ignore, or a new failure) — and the rest
+    /// never see it. Null when none takes it. Once a before has answered a failure, it is the failure of the goal it was
+    /// before: a sub app's own error events on that goal can hide the denial from its caller, never run the goal past it
+    /// (a retry runs the check again, a recovery goal is checked too).</summary>
     internal async System.Threading.Tasks.ValueTask<global::app.data.@this?> Catch(global::app.type.item.@this item,
         global::app.data.@this failed, global::app.actor.context.@this context)
     {
         var events = Events;
         if (events.Length == 0) return null;
+        // an action's own clauses take every failure of their action; an actor's events only those their app's raised
+        var raised = on.list == null ? null : context.call.@event;
         foreach (var @event in await Running(events, context))
         {
+            if (!@event.Takes(raised)) continue;
             using var run = context.Enter(@event);
             if (run == null) continue;
             var answer = await @event.Start(item, failed, context);

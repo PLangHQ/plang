@@ -153,6 +153,10 @@ public sealed partial class @this : global::app.type.item.@this
         }
     }
 
+    /// <summary>The event whose bound call is running in this flow — what <see cref="Event"/> holds. Null outside any
+    /// such call.</summary>
+    internal global::app.@event.@this? @event => Event?.Peek() as global::app.@event.@this;
+
     /// <summary>
     /// First Call pushed in this run. Null until first Push.
     /// </summary>

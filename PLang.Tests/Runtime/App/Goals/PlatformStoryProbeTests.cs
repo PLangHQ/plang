@@ -92,7 +92,7 @@ public class PlatformStoryProbeTests
     }
 
     // 5. the same, but the platform's own list has read the upload's goal (a listing or build over its root, which holds the upload's folder)
-    [Test, Skip("backlog: a bare name's read-anywhere fallback reaches a goal under another app's root (event-action security F4)")]
+    [Test, Skip("backlog, Sub apps and their makers: a bare goal name falls through to any goal the app's list has read (F4)")]
     public async Task E_ANestedSameNamedGoal_ReadByThePlatformsOwnList_DoesNotAnswer()
     {
         var r = await Story("/system/platform/Meter.goal", "Record", ["/nested/Record.goal"], ["/Record.goal"], ["/uploaded/nested/Record"]);

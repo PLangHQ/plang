@@ -21,8 +21,8 @@ public sealed class @this : global::app.@event.@this
     // as its source answers: a sub app's own sub app takes it in as the sub app did
     internal override bool IsInheritable => _event.IsInheritable;
 
-    // as its source answers: it is the maker's app's event, so plang's own goals for it are the maker's, never this app's
-    internal override bool Skips(global::app.goal.@this goal) => _event.Skips(goal);
+    // as its source answers: it is the maker's app's event
+    internal override global::app.@this App => _event.App;
 
     // it runs the maker's: its call is found in the maker's app (the call event's own Start)
     internal override System.Threading.Tasks.Task<global::app.data.@this> Start(global::app.type.item.@this item,

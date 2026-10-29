@@ -41,12 +41,21 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     /// in its own app (on.event's <c>Sub=none</c>).</summary>
     internal virtual bool IsInheritable => true;
 
+    /// <summary>The app it belongs to: its actor's. A maker's event a sub app took in is its maker's app's.</summary>
+    internal virtual global::app.@this App => Actor.App;
+
     /// <summary>Whether it is left out inside <paramref name="goal"/> under <c>event.setting.goal</c> app: it is bound on
     /// many (a type, a pattern, a module) and the goal is one of plang's own for it — under <c>system/</c>, and the os's
     /// (of no app) or its own app's copy. A sub app's <c>system/</c> goals are its own code, never plang's for its
-    /// maker's events.</summary>
-    internal virtual bool Skips(global::app.goal.@this goal)
-        => Item.IsMany && goal.IsSystem && (goal.App is not { } app || app.Equals(Actor.App));
+    /// maker's events; a sub app's own events run inside the <c>system/</c> goals it takes from its maker (a request
+    /// app's), as those are its maker's app's.</summary>
+    internal bool Skips(global::app.goal.@this goal)
+        => Item.IsMany && goal.IsSystem && (goal.App is not { } app || app.Equals(App));
+
+    /// <summary>Whether it takes a failure <paramref name="raised"/> raised while it ran: one nothing raised, or one an
+    /// event of its own app raised — a maker's event's failure is for its maker's error events, never a sub app's
+    /// own.</summary>
+    internal bool Takes(global::app.@event.@this? raised) => raised is null || raised.App.Equals(App);
 
     /// <summary>The <c>on.event</c> action that made it — a program's event is numbered by it (its goal, step and
     /// index). A C# event has none.</summary>

@@ -28,13 +28,15 @@ public class SubOwnEventsProbeTests
         => (await (await app.goal.list.Find(name)).Value())!;
 
     // the sub app's own Start binds `bind` (an event path, a side) to its Swallow goal, then Work runs; returns (worked, work's error key)
-    private static async Task<(string? worked, string? error)> Run(string? subEvent, string? subWhen, bool asSystemEvent = false, string ownAt = "/Own.goal")
+    // checkOn: what the maker's Check is bound on (each goal by default)
+    private static async Task<(string? worked, string? error)> Run(string? subEvent, string? subWhen, bool asSystemEvent = false, string ownAt = "/Own.goal",
+        string checkOn = "%!app.type.goal.on.start%")
     {
         var root = Root();
         await using var platform = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
         await OnDisk(root, "/Check.goal", Make.Step("throw", Make.Action(Built, "error", "throw", ("Message", "denied by the platform"), ("Key", "Denied"))));
         await OnDisk(root, "/Start.goal", Make.Step("before each goal, call Check", Make.Action(Built, "on", "event",
-            ("Event", "%!app.type.goal.on.start%"), ("When", "before"), ("Action", Make.Call(Built, "/Check")))));
+            ("Event", checkOn), ("When", "before"), ("Action", Make.Call(Built, "/Check")))));
         await (await (await Load(platform, "/Start")).Start(platform.actor.list.User.Context)).IsSuccess();
 
         var uploaded = System.IO.Path.Combine(root, "uploaded");
@@ -82,11 +84,20 @@ public class SubOwnEventsProbeTests
 
     // what survives an ordering fix: the sub app's own goal under system/ (a plang goal, so "each goal" events are skipped under
     // event.setting.goal app, the maker's check too) binds the on error event AFTER the maker's events are in
-    [Test, Skip("a failure an inherited event raises is offered to the sub app's own on error events (event-action security F3)")]
-    public async Task B3_ASubsOwnSystemGoal_BindsAnOnErrorAfterTheMakersChecksJoined()
+    [Test] public async Task B3_ASubsOwnSystemGoal_BindsAnOnErrorAfterTheMakersChecksJoined()
     {
         var r = await Run("%!app.type.action.on.error%", "before", ownAt: "/system/Own.goal");
         await Show("B3 (own goal under system/, called by the sub)", r);
+        await Assert.That(r.worked).IsNull();
+    }
+
+    // a policy that denies only some goals: the maker checks the goals /Wor* names, so the sub app's own goal that binds
+    // `on error` each action runs, and the check's failure inside Work is its maker's, never the sub app's to take
+    [Test] public async Task B4_ASubsOwnOnErrorEvent_BoundByAGoalTheCheckLetsThrough_CannotTakeTheMakersChecksFailure()
+    {
+        var r = await Run("%!app.type.action.on.error%", "before", checkOn: "%!app.goal[\"/Wor*\"].on.start%");
+        await Show("B4 (a check on /Wor* only; the sub's on error bound by /Own)", r);
+        await Assert.That(r.error).IsEqualTo("Denied");
         await Assert.That(r.worked).IsNull();
     }
 
