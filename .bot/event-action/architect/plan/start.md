@@ -50,7 +50,7 @@ Start
 
 ## Open for Ingi before stage 2
 
-None. Decided: how a step names a pattern (37) and which side answers the question (39). The collision check (38) is done (40). Stage 2 waits for Ingi's green light.
+None. Decided: how a step names a pattern (37) and which side answers the question (39). The collision check (38) is done (40).
 
 ## Stages
 
