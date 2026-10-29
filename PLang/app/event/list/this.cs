@@ -117,9 +117,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
         }
     }
 
-    /// <summary>Takes <paramref name="event"/> off: out of the list and every list made it was in. A list it was in whose
-    /// item no remaining event is bound on is dropped, and made again on its next ask, from what applies then (a goal's
-    /// with its "each goal" events, a variable's as its type's).</summary>
+    /// <summary>Takes <paramref name="event"/> off: out of the list and every list made it was in. A list left with no
+    /// events is dropped, and made again on its next ask; one still holding events (a goal's "each goal" ones, a
+    /// variable's its type's) stays, so a run holding it sees what is bound later.</summary>
     internal void Remove(global::app.@event.@this @event)
     {
         lock (_gate)
@@ -129,7 +129,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
             {
                 if (!@event.Item.Has(item)) continue;
                 on.Remove(@event);
-                if (!_events.Any(left => left.Item.Equals(item))) _on.TryRemove(item, out _);
+                if (on.IsEmpty) _on.TryRemove(item, out _);
             }
         }
     }

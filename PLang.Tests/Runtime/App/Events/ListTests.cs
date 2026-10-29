@@ -86,6 +86,27 @@ public class ListTests
         await Assert.That(ran).IsEquivalentTo(new[] { "each", "own", "each" }, TUnit.Assertions.Enums.CollectionOrdering.Matching);
     }
 
+    // a list still holding events stays when one is unbound: a goal already running sees, at its after, an event bound
+    // during its run
+    [Test] public async Task AnEventBoundDuringARun_AfterAnUnbind_RunsAtThatRunsAfter()
+    {
+        var process = Goal("/Process.goal");
+        var ran = new List<string>();
+        var own = await Record(process, global::app.@event.When.before, ran, "own");
+        var user = _app.actor.list.User;
+        await user.@event.Add(new global::app.@event.code.@this(_app.type.list["goal"], "start", global::app.@event.When.before,
+            async (_, _, ctx) =>
+            {
+                own.Remove();
+                await Record(_app.type.list["goal"], global::app.@event.When.after, ran, "late");
+                return ctx.Ok();
+            }, user, global::app.@event.code.@this.Always));
+
+        await (await process.Start(Ctx)).IsSuccess();
+
+        await Assert.That(ran).IsEquivalentTo(new[] { "own", "late" }, TUnit.Assertions.Enums.CollectionOrdering.Matching);
+    }
+
     [Test] public async Task APattern_RunsForEachGoalItNames_LoadedBeforeOrAfter_AndNoOther()
     {
         var orders = Goal("/api/Orders.goal");
