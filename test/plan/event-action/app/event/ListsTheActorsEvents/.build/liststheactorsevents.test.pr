@@ -146,12 +146,6 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Unsure",
-          "message": "step 1 uses on.event, which the decider was not sure of (0.95)"
-        }
       ]
     },
     {

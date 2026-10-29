@@ -69,10 +69,10 @@
                 "name": "on",
                 "template": "plang"
               },
-              "value": "%!app.type.goal.on.start%",
+              "value": "%!app.type.step.on.start%",
               "variable": [
                 {
-                  "text": "%!app.type.goal.on.start%",
+                  "text": "%!app.type.step.on.start%",
                   "code": [
                     {
                       "variable": "!app"
@@ -81,7 +81,7 @@
                       "property": "type"
                     },
                     {
-                      "property": "goal"
+                      "property": "step"
                     },
                     {
                       "property": "on"
@@ -121,12 +121,6 @@
               }
             }
           ]
-        }
-      ],
-      "warning": [
-        {
-          "key": "Unsure",
-          "message": "step 1 uses on.event, which the decider was not sure of (0.87)"
         }
       ]
     },

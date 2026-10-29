@@ -92,19 +92,21 @@
                 "name": "on",
                 "template": "plang"
               },
-              "value": "%!app.type.goal.on.start%",
+              "value": "%!app.goal[\"Process\"].on.start%",
               "variable": [
                 {
-                  "text": "%!app.type.goal.on.start%",
+                  "text": "%!app.goal[\"Process\"].on.start%",
                   "code": [
                     {
                       "variable": "!app"
                     },
                     {
-                      "property": "type"
+                      "property": "goal"
                     },
                     {
-                      "property": "goal"
+                      "index": {
+                        "text": "Process"
+                      }
                     },
                     {
                       "property": "on"
