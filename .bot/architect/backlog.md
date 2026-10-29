@@ -68,7 +68,7 @@ The one list of work after runtime2's merges (Ingi, 2026-10-29: "yes merge into 
 
 ### Speed
 
-- **The cost of calling an action** (Ingi, 2026-10-29: "it would be interesting to analyze if we can speed that up … I dont think specifically shortcut, but just general when calling an action, but good to have focus"): queued for plang-codeanalyzer after its event-action review. Focus: a `%!goal%` read, ~0.2 ms against ~0.03 ms for a value in memory (`shortcut/this.code.md`). Also a step of one action, and a `call X` to a goal of one step. Each broken down by piece, with ranked ideas. Written up at `.bot/event-action/codeanalyzer/call-cost.md`.
+- **The cost of calling an action** (Ingi, 2026-10-29: "it would be interesting to analyze if we can speed that up … I dont think specifically shortcut, but just general when calling an action, but good to have focus"): queued for plang-codeanalyzer after its event-action review. Focus: a `%!goal%` read, ~0.2 ms against ~0.03 ms for a value in memory (`shortcut/this.code.md`). Also a step of one action, and a `call X` to a goal of one step. Each broken down by piece, with ranked ideas. Written up at `.bot/event-action/codeanalyzer/call-cost.md`. Ingi: "tricks such as code generator, aop, etc. is acceptable" (compile-time emission, weaving, work kept in the .pr), still one door.
 
 ### Lazy (OBP pattern 11)
 
