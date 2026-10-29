@@ -69,6 +69,16 @@ Stage7
 - call /plan/event-action/app/goal/ReturnTwoLevels
 / a parent app's goal call goes up the link with its parameters — C#
 
+Stage8
+/ a platform's event calls Meter, Meter calls Record: inside an uploaded sub app with its own Record.goal, the
+/ platform's Record runs — plang test
+/ /plan/event-action/app/goal/CallerAppFindsTheGoal
+- call /plan/event-action/app/goal/CallerAppFindsTheGoal
+/ an app's own system/…/Record.goal still replaces the os's for an os goal's call — plang test
+/ /plan/event-action/app/goal/AppOverridesOsGoal
+- call /plan/event-action/app/goal/AppOverridesOsGoal
+/ a sub app's own system/event/Hello.goal replaces only the inherited Hello — C#
+
 BoyScout
 / after on.unbind takes the last event off an item, %!app.event% no longer lists that item — C#
 / two events made by one on.event step both run after a resume — C#
