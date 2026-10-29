@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "stage 8 holds (A-D, F, G); two High open: a sub app's system/ goals skip the maker's each-goal events (F1), a sub app's own system/event files run before the maker's events join (F2); Medium: a sub's on-error event takes a failure raised in the maker's handler (F3)" }
