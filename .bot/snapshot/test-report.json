@@ -1,14 +1,14 @@
 {
  "tester": "tester",
  "branch": "snapshot",
- "timestamp": "2026-10-29T01:10:00Z",
+ "timestamp": "2026-10-29T12:00:00Z",
  "tested_version": "v6",
- "tested_commit": "18a3b5d51",
+ "tested_commit": "c1e1a9248",
  "compared_against": "origin/runtime2 b283811f6 (6 red Wire tests, 3 stale plang; all six reds green on snapshot)",
  "test_run": {
   "csharp": {
-   "total": 5641,
-   "passed": 5596,
+   "total": 5647,
+   "passed": 5602,
    "failed": 0,
    "skipped": 45
   },
@@ -17,7 +17,7 @@
    "passed": 311,
    "failed": 0,
    "skipped": 1,
-   "note": "ResumeTakesInTheBinding is flaky: 2 of 5 full runs red, 6 of 8 plan-folder runs red, 15 of 15 alone green"
+   "note": "10 of 10 runs green (5 plan folder, 5 full)"
   }
  },
  "coverage": {
@@ -46,7 +46,7 @@
    "issue": "Flaky: green alone (15/15), red in the plan folder in 6 of 8 clean runs (also with parallel=1), red in 2 of 5 full runs. Error: '%logged% is not set' - the binding made after the save did not fire in the resumed run. A failed run leaves workspace/resumed.marker, so every later run, even alone, fails the same way until it is deleted.",
    "impact": "A red plang name in the plan's own folder; the binding-taken-in-at-birth behaviour is not reliably proven, and a failure poisons its own re-runs.",
    "suggestion": "Find why the maker's binding is missing in the resumed sub app when other tests ran in the process (the architect's pending 'keep a binding once on resume' may be it); delete the marker at the top of Start so a failed run cannot poison the next.",
-   "status": "open"
+   "status": "fixed at c1e1a9248 (identity race fix); 0 of 10 runs red"
   },
   {
    "id": 1,
@@ -126,7 +126,7 @@
    "status": "ruled by the architect (287); baseline file still missing"
   }
  ],
- "verdict": "needs-fixes",
- "summary": "Second pass at 18a3b5d51. Findings 1-6 of the first pass are fixed: the call-re-run and rest-dropped mutants of Rest are now red (the new SnapshotResume_InsideACall test, FreshAppGoesOn, EditedStopPoint), the Event [Snapshot] mutant is red in EventComesBack and two C# tests, start.goal indexes what exists, four plang tests were added. C# 5641 green, no new red C# name. One open finding: ResumeTakesInTheBinding is flaky in the plan folder (6 of 8 runs red) and poisons its own re-runs with a left marker file. Changed-line coverage 1740 of 1908.",
- "pass": 2
+ "verdict": "approved",
+ "summary": "Third pass at c1e1a9248. C# 5647 green, plang 311/312 (1 skipped) in 10 of 10 runs; ResumeTakesInTheBinding is stable. The Rest (re-run, rest-dropped) and Event [Snapshot] mutants are all red. No red name, baseline file present. Approved.",
+ "pass": 3
 }
