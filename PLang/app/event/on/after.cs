@@ -31,6 +31,8 @@ public sealed class after : side
     {
         foreach (var @event in await Running(events, context))
         {
+            using var run = context.Enter(@event);
+            if (run == null) continue;
             var answer = await @event.Start(item, result, context);
             if (!answer.Success) result = answer;
         }

@@ -36,6 +36,9 @@ public sealed class before : side
         var result = about ?? context.Ok();
         foreach (var @event in events)
         {
+            // an event already running in this flow is passed by: what it starts has reached its moment again
+            using var run = context.Enter(@event);
+            if (run == null) continue;
             var answer = await @event.Start(item, result, context);
             if (!answer.Success || answer.Handled) return answer;
         }
@@ -52,6 +55,8 @@ public sealed class before : side
         if (events.Length == 0) return null;
         foreach (var @event in await Running(events, context))
         {
+            using var run = context.Enter(@event);
+            if (run == null) continue;
             var answer = await @event.Start(item, failed, context);
             if (answer != failed) return answer;
         }

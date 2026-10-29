@@ -25,8 +25,8 @@ public sealed class @this : global::app.@event.@this
         _fire = fire;
     }
 
-    internal override async Task<global::app.data.@this> Handle(global::app.type.item.@this item,
-        global::app.data.@this result, global::app.actor.context.@this context, global::app.@event.@this @event)
+    internal override async Task<global::app.data.@this> Start(global::app.type.item.@this item,
+        global::app.data.@this result, global::app.actor.context.@this context)
     {
         var (handler, error) = await _clause.Bind(context);
         if (error != null) return context.Error(error);

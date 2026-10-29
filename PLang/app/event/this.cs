@@ -41,21 +41,11 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     /// index). A C# event has none.</summary>
     internal virtual global::app.goal.step.action.@this? action => null;
 
-    /// <summary>Runs it for the item its moment came for, on the result as it stands, in the asker's context. An event
-    /// doesn't run inside its own run (what it starts may reach its moment again): there it answers a plain success.</summary>
-    internal async System.Threading.Tasks.Task<global::app.data.@this> Start(global::app.type.item.@this item,
-        global::app.data.@this result, global::app.actor.context.@this context)
-    {
-        if (!context.TryEnterEvent(this)) return context.Ok();
-        try { return await Handle(item, result, context, this); }
-        finally { context.ExitEvent(this); }
-    }
-
-    /// <summary>What it does when its moment comes for <paramref name="item"/>, on the result as it stands, as
-    /// <paramref name="event"/> — the event running here (itself, or the sub app's that took it in). Each kind has its
-    /// own.</summary>
-    internal abstract System.Threading.Tasks.Task<global::app.data.@this> Handle(global::app.type.item.@this item,
-        global::app.data.@this result, global::app.actor.context.@this context, @this @event);
+    /// <summary>Runs it for <paramref name="item"/>, the item its moment came for, on the result as it stands, in the
+    /// asker's context. Each kind runs its own way; whoever runs it enters it on the context first
+    /// (<see cref="global::app.actor.context.@this.Enter"/>), so it never runs inside its own run.</summary>
+    internal abstract System.Threading.Tasks.Task<global::app.data.@this> Start(global::app.type.item.@this item,
+        global::app.data.@this result, global::app.actor.context.@this context);
 
     /// <summary>What finds a program's event where it is pointed at (a running call's <c>%!event%</c>): the
     /// <c>on.event</c> action that made it and its place among that action's events in its actor's events —

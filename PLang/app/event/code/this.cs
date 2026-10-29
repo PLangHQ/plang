@@ -22,8 +22,8 @@ public sealed class @this : global::app.@event.@this
         _filter = filter;
     }
 
-    internal override System.Threading.Tasks.Task<global::app.data.@this> Handle(global::app.type.item.@this item,
-        global::app.data.@this result, global::app.actor.context.@this context, global::app.@event.@this @event)
+    internal override System.Threading.Tasks.Task<global::app.data.@this> Start(global::app.type.item.@this item,
+        global::app.data.@this result, global::app.actor.context.@this context)
     {
         if (!_filter(item, context)) return System.Threading.Tasks.Task.FromResult(result);
         return _handler(item, result, context);

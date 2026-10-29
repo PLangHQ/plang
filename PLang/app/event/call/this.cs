@@ -31,8 +31,8 @@ public sealed class @this : global::app.@event.@this
 
     internal override bool IsSaved => true;
 
-    internal override async Task<global::app.data.@this> Handle(global::app.type.item.@this item,
-        global::app.data.@this result, global::app.actor.context.@this context, global::app.@event.@this @event)
+    internal override async Task<global::app.data.@this> Start(global::app.type.item.@this item,
+        global::app.data.@this result, global::app.actor.context.@this context)
     {
         var data = action["action"]?.Data(context);
         if (data == null || await data.Value<global::app.goal.step.action.@this>() is not { } call)
@@ -57,7 +57,7 @@ public sealed class @this : global::app.@event.@this
         };
 
         // a property holds a value, never a Data — the value so far; a failed result is %!error%
-        var running = new global::app.data.@this("!event", @event, context: context);
+        var running = new global::app.data.@this("!event", this, context: context);
         running.Properties.Set("item", item);
         running.Properties.Set("data", result.Peek());
 

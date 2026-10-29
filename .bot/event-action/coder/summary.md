@@ -18,9 +18,13 @@ What runs when something happens is an **event**, held by the **actor** that bou
 - Teaching: event.notes gains the pattern line. Re-pinned: surface, pick (read: the walk/Scope gone, the setting, the kinds, the pattern type).
 - Tests: `Runtime/App/Events/ListTests.cs` (8), `Data/App/VariablesTests/VariableEventsTests.cs` (4, the tester's), the composed-in-a-system-goal pin, OnEventTests' named-vs-each pins; the event test files migrated to the actor's lists. 7 plang tests written under `test/plan/event-action/app/event/` (not built: the builder needs the decider key).
 
+## Stages 3 and 4 (after stage 2's review, 2bdcaab2f)
+- Stage 3 (ee67e2da5): `goal/step/action/this.cs` — an attempt is the actor's before events, the action's own clauses before (deadline, cache lookup), the dispatch, its clauses after (cache store); a retry is another attempt. Then its own on error, the actor's error events, the actor's after events last. Pins: `PLang.Tests/Modules/App/Modules/modifier/ClauseOrderTests.cs`, `CacheWrapTests.Wrap_CacheHit_StillRanTheAppsBeforeEvent…`.
+- Stage 4: `actor/context/this.cs` — `Enter(event)` answers the event's entry into the flow (dispose leaves), null when it already runs there; `TryEnterEvent`/`ExitEvent` gone. Each side enters each event and passes by one already running. Every kind's method is `Start`; `Handle` gone. An inherited event's `%!event%` is the maker's event (its key numbers it in the maker's list, which the sub app's inherited events mirror). Pin: `PLang.Tests/Runtime/App/Events/CodeEventsTests.cs`.
+
 ## Next
-- plang-builder: build the 7 new plang tests and rebuild the 12 on.event tests whose `.pr` froze a default for the removed `scope` (they're stale until rebuilt).
-- Stage 3: clauses in the list at their places (11).
+- plang-builder: rebuild BindOrder, LateEventJoins, ResumeTakesInTheBinding (wrong Event paths in their .pr) and build SystemGoalsLeftAlone, ListsTheActorsEvents, BindingStaysInItsTest.
+- Stage 5: system events (`event.setting.system`, `os/system/event/Hello.goal`).
 
 ## Code example
 ```csharp
