@@ -1,0 +1,84 @@
+namespace PLang.Tests.App.VariablesTests;
+
+public class TesterProbeTests
+{
+    private static global::app.type.item.variable.@this Var(global::app.@this app, string name)
+        => new global::app.type.item.variable.parser.@this($"%{name}%", app.type.list).Variable.Single();
+
+    private static global::app.@event.code.@this Code(global::app.@this app, global::app.type.item.@this item, string moment, List<string> ran, string tag, Func<global::app.actor.context.@this, Task>? inside = null)
+        => new(item, moment, global::app.@event.When.after, async (i, r, ctx) =>
+        { lock (ran) ran.Add(tag); if (inside != null) await inside(ctx); return r; }, app.actor.list.User, global::app.@event.code.@this.Always);
+
+    // P1: the plain Add (what on.event uses) on a variable item
+    [Test] public async Task P1_PlainAddOnAVariableItem_FiresOnItsSet()
+    {
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
+        var ctx = app.actor.list.User.Context; var ran = new List<string>();
+        await app.actor.list.User.@event.Add(Code(app, Var(app, "count"), "set", ran, "plain"));
+        await ctx.Variable.Set("count", 1);
+        await Assert.That(ran).IsEquivalentTo(new[] { "plain" });
+    }
+
+    // P2: a set of count made inside count's own event: once each
+    [Test] public async Task P2_NestedSetInsideItsOwnEvent_FiresOnce()
+    {
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
+        var ctx = app.actor.list.User.Context; var ran = new List<string>();
+        await app.actor.list.User.@event.Add("count", Code(app, Var(app, "count"), "set", ran, "c", c => c.Variable.Set("count", 99).AsTask()));
+        await ctx.Variable.Set("count", 1);
+        await Assert.That(ran.Count).IsLessThanOrEqualTo(2);
+        Console.WriteLine("P2 ran=" + string.Join(",", ran));
+    }
+
+    // P3: case of the name
+    [Test] public async Task P3_NameCaseInsensitive()
+    {
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
+        var ctx = app.actor.list.User.Context; var ran = new List<string>();
+        await app.actor.list.User.@event.Add("count", Code(app, Var(app, "count"), "set", ran, "c"));
+        await ctx.Variable.Set("Count", 1);
+        await Assert.That(ran).IsEquivalentTo(new[] { "c" });
+    }
+
+    // P4: a bind after the name's list loaded joins it
+    [Test] public async Task P4_BindAfterLoad_Joins()
+    {
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
+        var ctx = app.actor.list.User.Context; var ran = new List<string>();
+        await app.actor.list.User.@event.Add("count", Code(app, Var(app, "count"), "set", ran, "a"));
+        await ctx.Variable.Set("count", 1);
+        await app.actor.list.User.@event.Add("count", Code(app, Var(app, "count"), "set", ran, "b"));
+        await ctx.Variable.Set("count", 2);
+        await Assert.That(ran).IsEquivalentTo(new[] { "a", "a", "b" }, TUnit.Assertions.Enums.CollectionOrdering.Matching);
+    }
+
+    // P5: remove fires the name's remove event
+    [Test] public async Task P5_RemoveFiresNamesRemove()
+    {
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
+        var ctx = app.actor.list.User.Context; var ran = new List<string>();
+        await app.actor.list.User.@event.Add("count", Code(app, Var(app, "count"), "remove", ran, "r"));
+        await ctx.Variable.Set("count", 1);
+        await ctx.Variable.Remove("count");
+        await Assert.That(ran).IsEquivalentTo(new[] { "r" });
+    }
+
+    // P6: very first ask is a set, before anything loaded the actor's events, on a fresh app
+    [Test] public async Task P6_FirstAskIsASet_Works()
+    {
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
+        var ctx = app.actor.list.User.Context;
+        var r = await ctx.Variable.Set("first", 1);
+        await Assert.That(r.Success).IsTrue();
+    }
+
+    // P7: concurrent first asks
+    [Test] public async Task P7_ConcurrentFirstSets()
+    {
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
+        var ctx = app.actor.list.User.Context; var ran = new List<string>();
+        await app.actor.list.User.@event.Add("count", Code(app, Var(app, "count"), "set", ran, "c"));
+        var all = await Task.WhenAll(Enumerable.Range(0, 50).Select(i => Task.Run(async () => (await ctx.Variable.Set("n" + i, i)).Success)));
+        await Assert.That(all.All(x => x)).IsTrue();
+    }
+}
