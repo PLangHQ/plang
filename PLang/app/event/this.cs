@@ -30,10 +30,12 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
         : this(side, actor, @event.Scope, @event._filter) { }
 
     /// <summary>The moment it runs on: <c>start</c>, <c>load</c>, <c>error</c>, <c>create</c> …</summary>
+    [global::app.LlmBuilder]
     public string Name => _side.on.Name;
 
     /// <summary>Before the moment, or after it.</summary>
-    public When When => _side.When;
+    [global::app.LlmBuilder]
+    public global::app.type.item.choice.@this<When> When => _side.When;
 
     /// <summary>What it is bound on: a type (each goal), one goal, a catalog action, a module, a channel.</summary>
     public global::app.type.item.@this Item => _side.on.item!;

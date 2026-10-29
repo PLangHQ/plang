@@ -572,9 +572,9 @@ class app.event.serializer.Snapshot : app.type.reader.ITypeReader
 abstract class app.event.this : app.type.item.this, app.type.item.ICreate<app.event.this> [PlangType]
   Actor : app.actor.this { get; }
   Item : app.type.item.this { get; }
-  Name : System.String { get; }
+  Name : System.String { get; } [LlmBuilder]
   Scope : app.event.Scope { get; }
-  When : app.event.When { get; }
+  When : app.type.item.choice.this<app.event.When> { get; } [LlmBuilder]
   override ToString() : System.String
   protected override Clone() : app.type.item.this
   protected override Type : app.type.this { get; }
@@ -3557,12 +3557,20 @@ type app.channel.type.test
   .mime : text
 
 type app.event.call
+  .name : text
+  .when : choice<when>
 
 type app.event.clause
+  .name : text
+  .when : choice<when>
 
 type app.event.code
+  .name : text
+  .when : choice<when>
 
 type app.event.inherited
+  .name : text
+  .when : choice<when>
 
 type app.event.list
   .current : item
@@ -3763,6 +3771,8 @@ type error
   .variables : dict
 
 type event
+  .name : text
+  .when : choice<when>
 
 type exchange
 
