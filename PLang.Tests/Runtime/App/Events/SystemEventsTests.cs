@@ -70,7 +70,9 @@ public class SystemEventsTests
 
         await Start(app);
 
-        await Assert.That((await app.@event(user.Context)).Items()).IsEmpty();
+        // skip leaves the app's own files unrun: no call event of its own (its maker's, its system events among them,
+        // still come in as inherited)
+        await Assert.That((await app.@event(user.Context)).Items().OfType<global::app.@event.call.@this>()).IsEmpty();
         await Assert.That((await user.Context.Variable.Get("said")).IsInitialized).IsFalse();
     }
 

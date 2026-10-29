@@ -31,10 +31,10 @@ public class DiffCaptureTests : System.IAsyncDisposable
     {
         var stack = Stack();
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
-        vars.Set("name", "old");
+        await vars.Set("name", "old");
 
         await using var call = stack.Push(MakeAction(_app.actor.list.User.Context, "A"), await stack.Setting(), vars);
-        vars.Set("name", "new");
+        await vars.Set("name", "new");
 
         await Assert.That(call.Diffs).IsNotNull();
         await Assert.That(call.Diffs!.Count).IsEqualTo(1);
@@ -45,11 +45,11 @@ public class DiffCaptureTests : System.IAsyncDisposable
     {
         var stack = Stack();
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
-        vars.Set("name", "ingi");
+        await vars.Set("name", "ingi");
 
         await using var call = stack.Push(MakeAction(_app.actor.list.User.Context, "A"), await stack.Setting(), vars);
         var before = DateTimeOffset.UtcNow.AddMilliseconds(-10);
-        vars.Set("name", "olafur");
+        await vars.Set("name", "olafur");
 
         var diff = call.Diffs![0];
         await Assert.That(diff.Name).IsEqualTo("name");
@@ -63,10 +63,10 @@ public class DiffCaptureTests : System.IAsyncDisposable
         var stack = Stack();
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
         var list = new List<int> { 1, 2, 3 };
-        vars.Set("items", list);
+        await vars.Set("items", list);
 
         await using var call = stack.Push(MakeAction(_app.actor.list.User.Context, "A"), await stack.Setting(), vars);
-        vars.Set("items", new List<int> { 4, 5 });
+        await vars.Set("items", new List<int> { 4, 5 });
 
         var diff = call.Diffs![0];
         // Non-scalar Before is a summary string naming the plang type and item count.
@@ -80,10 +80,10 @@ public class DiffCaptureTests : System.IAsyncDisposable
         var stack = Stack(deep: true);
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
         var list = new List<int> { 1, 2, 3 };
-        vars.Set("items", list);
+        await vars.Set("items", list);
 
         await using var call = stack.Push(MakeAction(_app.actor.list.User.Context, "A"), await stack.Setting(), vars);
-        vars.Set("items", new List<int> { 4, 5 });
+        await vars.Set("items", new List<int> { 4, 5 });
 
         var diff = call.Diffs![0];
         // diff.deep captures a clone of the native value — a distinct list instance,
@@ -98,14 +98,14 @@ public class DiffCaptureTests : System.IAsyncDisposable
     {
         var stack = Stack();
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
-        vars.Set("x", 1);
+        await vars.Set("x", 1);
 
         var call = stack.Push(MakeAction(_app.actor.list.User.Context, "A"), await stack.Setting(), vars);
-        vars.Set("x", 2);
+        await vars.Set("x", 2);
         await call.DisposeAsync();
         // After Dispose, the handler is unsubscribed: subsequent Set must NOT append.
         var countAfterDispose = call.Diffs!.Count;
-        vars.Set("x", 3);
+        await vars.Set("x", 3);
         await Assert.That(call.Diffs!.Count).IsEqualTo(countAfterDispose);
     }
 
@@ -165,10 +165,10 @@ public class DiffCaptureTests : System.IAsyncDisposable
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
         // Seed with a large list — this is the 'before' the next Set captures.
         var big = new List<int>(Enumerable.Range(0, 100_000));
-        vars.Set("big", big);
+        await vars.Set("big", big);
 
         await using var call = stack.Push(MakeAction(_app.actor.list.User.Context, "A"), await stack.Setting(), vars);
-        vars.Set("big", new List<int> { 1, 2, 3 });
+        await vars.Set("big", new List<int> { 1, 2, 3 });
 
         var diff = call.Diffs![0];
         // The large Before is captured as a constant-space summary string naming the

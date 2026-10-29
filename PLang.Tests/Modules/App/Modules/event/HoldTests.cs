@@ -52,7 +52,7 @@ public class HoldTests
         }
 
         await Assert.That(child.IsAlive).IsFalse().Because("nothing the app bound keeps it after it is gone");
-        await Assert.That(parent.actor.list.User.@event.Items()).IsEmpty().Because("the parent's actors hold nothing it bound");
+        await Assert.That(parent.actor.list.User.@event.Bound()).IsEmpty().Because("the parent's actors hold nothing it bound");
     }
 
     [Test]

@@ -183,8 +183,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
                 Join(new inherited.@this(made, _actor.App));
     }
 
-    // Runs the system/event/ files as this actor, the folders the app's origin names in turn (the root: its own then the
-    // os's; a sub app: its own only), a file's name taken from the first that has it. Nothing runs under
+    // Runs the system/event/ files as this actor: their names from the folders the app's origin names (the root: its own
+    // then the os's; a sub app: its own only), each loaded at its plang path, /system/event/<name>, as the goal list
+    // finds it (the app's own copy first, else the os's), so it is one of plang's own goals. Nothing runs under
     // event.setting.system skip. A file that doesn't load is said on the error channel, and the next one loads. Answers
     // the names it ran: a sub app's own file replaces what its maker bound from the file of that name.
     private async System.Threading.Tasks.Task<HashSet<string>> Run(global::app.actor.context.@this context)
@@ -200,7 +201,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
             {
                 var name = file.Name.ToString();
                 if (!ran.Add(name)) continue;
-                var goal = await context.App.goal.list.Load(file);
+                var goal = await context.App.goal.list.Load(global::app.type.item.path.@this.Resolve("/system/event/" + name, context));
                 var started = goal.Success && await goal.Value() is global::app.goal.@this bound ? await bound.Start(context) : goal;
                 if (!started.Success && context.Actor!.Channel.Get(global::app.channel.list.@this.Error) is { } error)
                     await error.WriteText($"the system event {name} didn't load: {started.Error?.Message}");

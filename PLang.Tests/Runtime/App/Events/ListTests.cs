@@ -106,10 +106,12 @@ public class ListTests
         var system = await new global::app.type.item.variable.parser.@this("%!app.event.list%", _app.type.list).Variable.Single()
             .Start(_app.actor.list.System.Context);
 
-        var events = (await read.Value() as global::app.type.item.list.@this<global::app.@event.@this>)!.Items(Ctx).ToList();
+        // the system events (the os's Hello, taken in from the test parent) aside: what a program bound
+        bool Bound(global::app.data.@this row) => row.Peek() is global::app.@event.@this @event && !@event.IsSystem();
+        var events = (await read.Value() as global::app.type.item.list.@this<global::app.@event.@this>)!.Items(Ctx).Where(Bound).ToList();
         await Assert.That(events.Count).IsEqualTo(1);
         await Assert.That(events[0].Peek()).IsSameReferenceAs(bound);
-        await Assert.That((await system.Value() as global::app.type.item.list.@this<global::app.@event.@this>)!.Items(Ctx)).IsEmpty();
+        await Assert.That((await system.Value() as global::app.type.item.list.@this<global::app.@event.@this>)!.Items(Ctx).Where(Bound)).IsEmpty();
     }
 
     // Under event.setting.goal app (the default) a run inside one of plang's own goals runs no events: reading %!error%

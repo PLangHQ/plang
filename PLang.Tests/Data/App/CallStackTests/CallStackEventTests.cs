@@ -145,7 +145,7 @@ public class CallStackEventTests : System.IAsyncDisposable
 
         var running = Running(into.call.Root!);
         await Assert.That(running).IsNotNull();
-        var inherited = (await other.@event(into)).Items().OfType<global::app.@event.inherited.@this>().Single();
+        var inherited = (await other.@event(into)).Bound().OfType<global::app.@event.inherited.@this>().Single();
         await Assert.That(await running!.Event!.Value()).IsSameReferenceAs(inherited);
     }
 }

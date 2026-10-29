@@ -248,7 +248,7 @@ public class OnTests
 
         await Assert.That(ran).IsEmpty();
         await Assert.That(on.after.Count).IsEqualTo(0);
-        await Assert.That(context.Actor!.@event.Items()).IsEmpty();
+        await Assert.That(context.Actor!.@event.Bound()).IsEmpty();
     }
 
     [Test] public async Task AClone_IsANewValue_WithNothingBound()

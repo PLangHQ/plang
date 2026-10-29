@@ -17,10 +17,10 @@ public class HeldBindingTests
             ("Action", Make.Call(ctx, "Log"))).Start(ctx);
         await bound.IsSuccess();
 
-        await Assert.That(sibling.actor.list.User.@event.Items()).IsEmpty()
+        await Assert.That(sibling.actor.list.User.@event.Bound()).IsEmpty()
             .Because("a sibling's actor holds nothing another app bound");
         await binding.DisposeAsync();
-        await Assert.That(parent.actor.list.User.@event.Items()).IsEmpty()
+        await Assert.That(parent.actor.list.User.@event.Bound()).IsEmpty()
             .Because("nothing an app bound is left behind it on its parent");
         await sibling.DisposeAsync();
     }

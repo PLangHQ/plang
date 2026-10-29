@@ -236,7 +236,7 @@ public class SavedBindingsTests
         await using var fresh = App(root);
         await fresh.Restore(snapshot, fresh.actor.list.User.Context);
 
-        await Assert.That(fresh.actor.list.User.@event.Items()).IsEmpty();
+        await Assert.That(fresh.actor.list.User.@event.Bound()).IsEmpty();
     }
 
     [Test]

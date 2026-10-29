@@ -49,7 +49,7 @@ public class InheritedBindingsTests
         await Before(item, sub.actor.list.User.Context);
 
         await Assert.That(ran).IsEquivalentTo(new List<string> { "before", "before" });
-        await Assert.That(sub.actor.list.User.@event.Items().Count()).IsEqualTo(1);
+        await Assert.That(sub.actor.list.User.@event.Bound().Count()).IsEqualTo(1);
     }
 
     [Test]

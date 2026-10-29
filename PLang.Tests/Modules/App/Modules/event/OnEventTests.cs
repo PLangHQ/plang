@@ -249,7 +249,7 @@ public class OnEventTests
 
         await bound.IsFailure();
         await Assert.That(bound.Error!.Key).IsEqualTo("VariableNotFound");
-        await Assert.That(_app.actor.list.User.@event.Items()).IsEmpty();
+        await Assert.That(_app.actor.list.User.@event.Bound()).IsEmpty();
     }
 
     [Test]
@@ -339,7 +339,7 @@ public class OnEventTests
         }.Start();
 
         await unbound.IsSuccess();
-        await Assert.That(_app.actor.list.User.@event.Items()).IsEmpty();
+        await Assert.That(_app.actor.list.User.@event.Bound()).IsEmpty();
         await Assert.That((await _app.actor.list.User.@event.On(Goal("Some"))).before.Count).IsEqualTo(0);
     }
 
