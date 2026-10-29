@@ -24,8 +24,8 @@ public class ListTests
     }
 
     // The user's event on what's moment `start`, recording name when it runs.
-    private global::app.@event.@this Record(global::app.type.item.@this what, global::app.@event.When when, List<string> ran, string name)
-        => _app.actor.list.User.@event.Add(new global::app.@event.code.@this(what, "start", when,
+    private async Task<global::app.@event.@this> Record(global::app.type.item.@this what, global::app.@event.When when, List<string> ran, string name)
+        => await _app.actor.list.User.@event.Add(new global::app.@event.code.@this(what, "start", when,
             (_, _, ctx) => { lock (ran) ran.Add(name); return Task.FromResult(ctx.Ok()); }, _app.actor.list.User,
             global::app.@event.code.@this.Always));
 
@@ -33,10 +33,10 @@ public class ListTests
     {
         var process = Goal("/Process.goal");
         var ran = new List<string>();
-        Record(_app.type.list["goal"], global::app.@event.When.before, ran, "each before");
-        Record(process, global::app.@event.When.before, ran, "process before");
-        Record(_app.type.list["goal"], global::app.@event.When.after, ran, "each after");
-        Record(process, global::app.@event.When.after, ran, "process after");
+        await Record(_app.type.list["goal"], global::app.@event.When.before, ran, "each before");
+        await Record(process, global::app.@event.When.before, ran, "process before");
+        await Record(_app.type.list["goal"], global::app.@event.When.after, ran, "each after");
+        await Record(process, global::app.@event.When.after, ran, "process after");
 
         await (await process.Start(Ctx)).IsSuccess();
 
@@ -48,7 +48,7 @@ public class ListTests
     {
         var process = Goal("/Process.goal");
         var ran = new List<string>();
-        Record(_app.type.list["goal"], global::app.@event.When.before, ran, "user's");
+        await Record(_app.type.list["goal"], global::app.@event.When.before, ran, "user's");
 
         await (await process.Start(_app.actor.list.System.Context)).IsSuccess();
         await Assert.That(ran).IsEmpty();
@@ -62,13 +62,13 @@ public class ListTests
         var process = Goal("/Process.goal");
         var ran = new List<string>();
         await (await process.Start(Ctx)).IsSuccess();
-        var loaded = _app.actor.list.User.@event[process];
+        var loaded = (await _app.actor.list.User.@event.On(process));
 
-        Record(_app.type.list["goal"], global::app.@event.When.before, ran, "late");
+        await Record(_app.type.list["goal"], global::app.@event.When.before, ran, "late");
         await (await process.Start(Ctx)).IsSuccess();
 
         await Assert.That(ran).IsEquivalentTo(new[] { "late" });
-        await Assert.That(_app.actor.list.User.@event[process]).IsSameReferenceAs(loaded);
+        await Assert.That((await _app.actor.list.User.@event.On(process))).IsSameReferenceAs(loaded);
     }
 
     [Test] public async Task APattern_RunsForEachGoalItNames_LoadedBeforeOrAfter_AndNoOther()
@@ -78,7 +78,7 @@ public class ListTests
         var ran = new List<string>();
         var pattern = await (await _app.goal.list.Find("/api/*")).Value();
         await Assert.That(pattern).IsTypeOf<global::app.goal.pattern.@this>();
-        Record(pattern!, global::app.@event.When.before, ran, "api");
+        await Record(pattern!, global::app.@event.When.before, ran, "api");
         var later = Goal("/api/Users.goal");
 
         await (await orders.Start(Ctx)).IsSuccess();
@@ -92,16 +92,16 @@ public class ListTests
     [Test] public async Task AModulesEvent_RunsForEachOfItsActions_AndNoOtherModules()
     {
         var events = _app.actor.list.User.@event;
-        Record(_app.Module("http"), global::app.@event.When.before, new List<string>(), "http");
+        await Record(_app.Module("http"), global::app.@event.When.before, new List<string>(), "http");
 
-        await Assert.That(events[_app.Module("http")["request"]!].before.Count).IsEqualTo(1);
-        await Assert.That(events[_app.Module("http")["download"]!].before.Count).IsEqualTo(1);
-        await Assert.That(events[_app.Module("file")["read"]!].before.Count).IsEqualTo(0);
+        await Assert.That((await events.On(_app.Module("http")["request"]!)).before.Count).IsEqualTo(1);
+        await Assert.That((await events.On(_app.Module("http")["download"]!)).before.Count).IsEqualTo(1);
+        await Assert.That((await events.On(_app.Module("file")["read"]!)).before.Count).IsEqualTo(0);
     }
 
     [Test] public async Task AppEvent_ListsTheRunningActorsEvents()
     {
-        var bound = Record(_app.type.list["goal"], global::app.@event.When.before, new List<string>(), "x");
+        var bound = await Record(_app.type.list["goal"], global::app.@event.When.before, new List<string>(), "x");
         var read = await new global::app.type.item.variable.parser.@this("%!app.event.list%", _app.type.list).Variable.Single().Start(Ctx);
         var system = await new global::app.type.item.variable.parser.@this("%!app.event.list%", _app.type.list).Variable.Single()
             .Start(_app.actor.list.System.Context);
@@ -120,7 +120,7 @@ public class ListTests
         var run = Goal("/Run.goal");
         var system = Goal("/system/error/Show.goal");
         var ran = new List<string>();
-        Record(_app.type.list["goal"], global::app.@event.When.before, ran, "log");
+        await Record(_app.type.list["goal"], global::app.@event.When.before, ran, "log");
 
         await (await run.Start(Ctx)).IsSuccess();
         for (var i = 0; i < 1000; i++) await (await system.Start(Ctx)).IsSuccess();

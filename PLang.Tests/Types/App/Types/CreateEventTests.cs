@@ -11,14 +11,14 @@ public class CreateEventTests : System.IAsyncDisposable
 
     private global::app.actor.context.@this Ctx => app.actor.list.User.Context;
 
-    private global::app.@event.@this On(string type, global::app.@event.When when,
+    private async Task<global::app.@event.@this> On(string type, global::app.@event.When when,
         System.Func<global::app.data.@this, global::app.actor.context.@this, global::app.data.@this> handler)
-        => app.actor.list.User.@event.Add(new global::app.@event.code.@this(app.type.list[type], "create", when,
+        => await app.actor.list.User.@event.Add(new global::app.@event.code.@this(app.type.list[type], "create", when,
             (_, data, c) => System.Threading.Tasks.Task.FromResult(handler(data, c)), app.actor.list.User, global::app.@event.code.@this.Always));
 
     [Test] public async Task ABeforeThatRefuses_IsTheResult_NothingIsMade()
     {
-        On("text", global::app.@event.When.before, (_, c) => c.Error(new global::app.error.@this("not today", "Refused", 403)));
+        await On("text", global::app.@event.When.before, (_, c) => c.Error(new global::app.error.@this("not today", "Refused", 403)));
 
         var born = await app.type.list["text"].Create("hello", Ctx);
 
@@ -28,7 +28,7 @@ public class CreateEventTests : System.IAsyncDisposable
 
     [Test] public async Task ABeforeThatAnswers_IsTheResult()
     {
-        On("text", global::app.@event.When.before, (_, c) =>
+        await On("text", global::app.@event.When.before, (_, c) =>
         {
             var answer = c.Ok("instead");
             answer.Handled = true;
@@ -44,7 +44,7 @@ public class CreateEventTests : System.IAsyncDisposable
     [Test] public async Task AnAfter_IsHandedTheMadeValue()
     {
         object? seen = null;
-        On("text", global::app.@event.When.after, (data, _) => { seen = data.Peek(); return data; });
+        await On("text", global::app.@event.When.after, (data, _) => { seen = data.Peek(); return data; });
 
         var born = await app.type.list["text"].Create("hello", Ctx, "greeting");
 
@@ -57,7 +57,7 @@ public class CreateEventTests : System.IAsyncDisposable
     [Test] public async Task NothingBound_TheValueIsMade_NothingFires()
     {
         var number = app.type.list["number"];
-        await Assert.That(Ctx.Actor!.@event[number].create.IsBound).IsFalse();
+        await Assert.That((await Ctx.Actor!.@event.On(number)).create.IsBound).IsFalse();
 
         var born = await number.Create(5, Ctx);
 
@@ -65,11 +65,27 @@ public class CreateEventTests : System.IAsyncDisposable
         await Assert.That((await born.Value())?.ToString()).IsEqualTo("5");
     }
 
+    // once the actor's events are loaded, a birth with nothing bound answers at once, nothing awaited: the bytes are the
+    // value's and its Data's alone (1,968 a number on this machine)
+    [Test] public async Task NothingBound_ABirthAfterTheLoad_AnswersAtOnce_AllocatingOnlyTheValue()
+    {
+        var number = app.type.list["number"];
+        await number.Create(5, Ctx);
+
+        var birth = number.Create(5, Ctx);
+        var from = System.GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 20; i++) _ = number.Create(5, Ctx);
+        var bytes = (System.GC.GetAllocatedBytesForCurrentThread() - from) / 20;
+
+        await Assert.That(birth.IsCompletedSuccessfully).IsTrue();
+        await Assert.That(bytes).IsLessThanOrEqualTo(2048L);
+    }
+
     [Test] public async Task ABirthThatRetypes_FiresOnce()
     {
         // a text leaf born as a number re-types inside the build — the event is the birth's, once
         var fired = 0;
-        On("number", global::app.@event.When.before, (data, _) => { fired++; return data; });
+        await On("number", global::app.@event.When.before, (data, _) => { fired++; return data; });
 
         var born = await app.type.list["number"].Create(Ctx.Text("42"), Ctx);
 
@@ -83,7 +99,7 @@ public class CreateEventTests : System.IAsyncDisposable
         System.IO.Directory.CreateDirectory(app.filesystem.root.Absolute);
         await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(app.filesystem.root.Absolute, "born.txt"), "x");
         object? seen = null;
-        On("file", global::app.@event.When.after, (data, _) => { seen = data.Peek(); return data; });
+        await On("file", global::app.@event.When.after, (data, _) => { seen = data.Peek(); return data; });
 
         var landed = await global::app.type.item.path.@this.Resolve("born.txt", Ctx).Read(Ctx);
 
@@ -97,7 +113,7 @@ public class CreateEventTests : System.IAsyncDisposable
         System.IO.Directory.CreateDirectory(app.filesystem.root.Absolute);
         await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(app.filesystem.root.Absolute, "once.txt"), "x");
         var births = new System.Collections.Generic.List<string>();
-        On("file", global::app.@event.When.after, (data, _) => { births.Add(System.Environment.StackTrace); return data; });
+        await On("file", global::app.@event.When.after, (data, _) => { births.Add(System.Environment.StackTrace); return data; });
 
         var landed = await global::app.type.item.path.@this.Resolve("once.txt", Ctx).Read(Ctx);
         await Ctx.Variable.Set("!data", landed);
@@ -156,7 +172,7 @@ public class CreateEventTests : System.IAsyncDisposable
     [Test] public async Task DecodedContent_IsABirth_ThroughItsTypesCreate()
     {
         object? seen = null;
-        On("text", global::app.@event.When.after, (data, _) => { seen = data.Peek(); return data; });
+        await On("text", global::app.@event.When.after, (data, _) => { seen = data.Peek(); return data; });
 
         var decoded = await Ctx.Format("text/plain").Decode(System.Text.Encoding.UTF8.GetBytes("from a file"), Ctx, "content");
 

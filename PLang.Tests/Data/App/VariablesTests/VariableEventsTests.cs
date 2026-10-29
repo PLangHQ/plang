@@ -6,11 +6,11 @@ namespace PLang.Tests.App.VariablesTests;
 public class VariableEventsTests
 {
     // The user's event after `name` is set, counting its runs.
-    private static global::app.@event.@this Watch(global::app.@this app, string name, List<string> ran)
+    private static async Task<global::app.@event.@this> Watch(global::app.@this app, string name, List<string> ran)
     {
         var user = app.actor.list.User;
         var variable = new global::app.type.item.variable.parser.@this($"%{name}%", app.type.list).Variable.Single();
-        return user.@event.Add(name, new global::app.@event.code.@this(variable, "set", global::app.@event.When.after,
+        return await user.@event.Add(name, new global::app.@event.code.@this(variable, "set", global::app.@event.When.after,
             (item, result, ctx) => { lock (ran) ran.Add(((global::app.type.item.variable.@this)item).Name); return Task.FromResult(result); },
             user, global::app.@event.code.@this.Always));
     }
@@ -30,7 +30,7 @@ public class VariableEventsTests
         var context = app.actor.list.User.Context;
         var nothing = await SetBytes(context, "plain");
 
-        Watch(app, "count", new List<string>());
+        await Watch(app, "count", new List<string>());
         var watched = await SetBytes(context, "other");
 
         // the tester measured a miss at 34,363 bytes a set beside 5,009 with nothing bound; a few hundred bytes of noise
@@ -44,7 +44,7 @@ public class VariableEventsTests
         {
             await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
             var context = app.actor.list.User.Context;
-            if (bound) Watch(app, "count", new List<string>());
+            if (bound) await Watch(app, "count", new List<string>());
             var before = GC.GetTotalMemory(true);
             for (var i = 0; i < 10_000; i++) await context.Variable.Set($"name{i}", i);
             return GC.GetTotalMemory(true) - before;
@@ -65,7 +65,7 @@ public class VariableEventsTests
         var context = app.actor.list.User.Context;
         var ran = new List<string>();
         await context.Variable.Set("count", 1);
-        Watch(app, "count", ran);
+        await Watch(app, "count", ran);
 
         await context.Variable.Set("count", 2);
         await context.Variable.Set("other", 3);
@@ -78,14 +78,37 @@ public class VariableEventsTests
         await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         var events = app.actor.list.User.@event;
-        var first = Watch(app, "count", new List<string>());
-        var second = Watch(app, "count", new List<string>());
+        var first = await Watch(app, "count", new List<string>());
+        var second = await Watch(app, "count", new List<string>());
         await context.Variable.Set("count", 1);
-        await Assert.That(events["count"]).IsNotNull();
+        var type = await events.On(app.variable.type);
+        await Assert.That(await events.On("count")).IsNotSameReferenceAs(type);
 
         first.Remove();
-        await Assert.That(events["count"]).IsNotNull();
+        await Assert.That(await events.On("count")).IsNotSameReferenceAs(type);
         second.Remove();
-        await Assert.That(events["count"]).IsNull();
+        await Assert.That(await events.On("count")).IsSameReferenceAs(type);
+    }
+
+    // The user's event after any variable is set, recording `name` and the variable it ran for.
+    private static Task Typed(global::app.@this app, List<string> ran, string name)
+        => app.actor.list.User.@event.Add(new global::app.@event.code.@this(app.variable.type, "set", global::app.@event.When.after,
+            (item, result, ctx) => { lock (ran) ran.Add($"{name} {((global::app.type.item.variable.@this)item).Name}"); return Task.FromResult(result); },
+            app.actor.list.User, global::app.@event.code.@this.Always)).AsTask();
+
+    [Test] public async Task ASetOfAName_RunsWhatItsEventsAnswer_TheTypesAlone_OrTheTypesAndItsOwn_InTheOrderBound()
+    {
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        var ran = new List<string>();
+        await Typed(app, ran, "type");
+        await Watch(app, "count", ran);
+        await Typed(app, ran, "later");
+
+        await context.Variable.Set("other", 1);
+        await context.Variable.Set("count", 2);
+
+        await Assert.That(ran).IsEquivalentTo(new[] { "type other", "later other", "type count", "count", "later count" },
+            TUnit.Assertions.Enums.CollectionOrdering.Matching);
     }
 }

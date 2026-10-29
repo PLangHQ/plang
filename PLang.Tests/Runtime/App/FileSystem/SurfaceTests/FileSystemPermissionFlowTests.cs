@@ -172,7 +172,7 @@ public class FileSystemPermissionFlowTests
         System.IO.File.WriteAllText(outside, "there");
         try
         {
-            context.Variable.Set("p", context.File(outside));
+            await context.Variable.Set("p", context.File(outside));
             var exists = await new global::app.type.item.variable.@this("p.Exists", context.App.type.list).Start(context);
             await Assert.That(exists.Success).IsFalse();
             await Assert.That(exists.Error).IsTypeOf<global::app.error.PermissionDenied>();

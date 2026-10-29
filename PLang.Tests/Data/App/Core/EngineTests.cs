@@ -100,8 +100,8 @@ public class EngineTests : System.IAsyncDisposable
     {
         await using var engine = new global::app.@this("/app").Testing();
 
-        engine.actor.list.User.Context.Variable.Set("key", "user-value");
-        engine.actor.list.System.Context.Variable.Set("key", "system-value");
+        await engine.actor.list.User.Context.Variable.Set("key", "user-value");
+        await engine.actor.list.System.Context.Variable.Set("key", "system-value");
 
         await Assert.That((await engine.actor.list.User.Context.Variable.GetValue("key"))).IsEqualTo("user-value");
         await Assert.That((await engine.actor.list.System.Context.Variable.GetValue("key"))).IsEqualTo("system-value");

@@ -16,7 +16,7 @@ public class FirstIdentityTests
 
             var gets = 0;
             foreach (var who in new[] { app.actor.list.User, app.actor.list.System })
-                who.@event.Add(new global::app.@event.code.@this(app.type.list["action"], "start", global::app.@event.When.before, (item, _, c) =>
+                await who.@event.Add(new global::app.@event.code.@this(app.type.list["action"], "start", global::app.@event.When.before, (item, _, c) =>
                 {
                     if (item is global::app.goal.step.action.@this { Name: "get" } a && a.Module.Name == "identity")
                         System.Threading.Interlocked.Increment(ref gets);

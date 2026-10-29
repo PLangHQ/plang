@@ -45,6 +45,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         {
             // the app's name, read now: what the snapshot names its app by is checked against it while the read can't wait
             await app.Name(context);
+            // each actor's events, loaded now: what the snapshot kept of them binds as it is read, after their system
+            // events and their maker's
+            foreach (var actor in app.actor.list.Items()) await actor.@event.Loaded();
             var written = value as global::app.type.item.wire.@this ?? await global::app.type.item.wire.@this.Of(value, View, context);
             if (written is { Raw: string raw })
             {

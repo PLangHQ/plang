@@ -204,7 +204,7 @@ public class FileHandlerTests : IDisposable
     public async Task Read_TemplateTrue_ResolvesVariableInContent()
     {
         System.IO.File.WriteAllText(TempPath("template.txt"), "Hello %name%, welcome");
-        _app.actor.list.User.Context.Variable.Set("name", "Ingi");
+        await _app.actor.list.User.Context.Variable.Set("name", "Ingi");
 
         var action = new Read(_app.actor.list.User.Context) { Path = MakePath("template.txt"),
             Template = new global::app.data.@this("Template", "plang", context: _app.actor.list.User.Context).As<global::app.type.item.choice.@this<global::app.type.item.template.kind.@this>>()
@@ -221,7 +221,7 @@ public class FileHandlerTests : IDisposable
         // Default value of Template is false (per [Default(false)]). Even
         // when %var% is set, the literal must come back unresolved.
         System.IO.File.WriteAllText(TempPath("literal.txt"), "Hello %name%, welcome");
-        _app.actor.list.User.Context.Variable.Set("name", "Ingi");
+        await _app.actor.list.User.Context.Variable.Set("name", "Ingi");
 
         var action = new Read(_app.actor.list.User.Context) { Path = MakePath("literal.txt")
         };
@@ -256,13 +256,13 @@ public class FileHandlerTests : IDisposable
     public async Task Read_TemplateTrue_RendersAtUse()
     {
         System.IO.File.WriteAllText(TempPath("late.txt"), "Hello %name%");
-        _app.actor.list.User.Context.Variable.Set("name", "before");
+        await _app.actor.list.User.Context.Variable.Set("name", "before");
 
         var action = new Read(_app.actor.list.User.Context) { Path = MakePath("late.txt"),
             Template = new global::app.data.@this("Template", "plang", context: _app.actor.list.User.Context).As<global::app.type.item.choice.@this<global::app.type.item.template.kind.@this>>()
         };
         var result = await action.Start();
-        _app.actor.list.User.Context.Variable.Set("name", "after");
+        await _app.actor.list.User.Context.Variable.Set("name", "after");
 
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello after");
     }

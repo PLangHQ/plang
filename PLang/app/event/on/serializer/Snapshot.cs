@@ -3,8 +3,7 @@ namespace app.@event.on.serializer;
 /// <summary>
 /// The events bound on one item, read in the snapshot view: the record they were written as
 /// (<c>{item, start: {before: [event]}}</c>) comes in, and each event is bound again on the reading actor's events
-/// (<see cref="list.@this.Read"/>); the item's moments come out. A record that doesn't read is refused, thrown to the
-/// read boundary.
+/// (<see cref="list.@this.Read"/>); the item's moments come out. A record that doesn't read is refused, thrown to the read boundary.
 /// </summary>
 public sealed class Snapshot : global::app.type.reader.ITypeReader
 {

@@ -196,7 +196,7 @@ public class LlmAnswersFileTests
         var test = await global::app.test.@this.From(goal, context);
         // the answer the run's step got: what the query wrote to %result%
         string? answered = null;
-        app.actor.list.User.@event.Add(new global::app.@event.code.@this(app.type.list["step"], "start", global::app.@event.When.after, async (_, _, ctx) =>
+        await app.actor.list.User.@event.Add(new global::app.@event.code.@this(app.type.list["step"], "start", global::app.@event.When.after, async (_, _, ctx) =>
         {
             if (await ctx.Variable.Get("result") is { IsInitialized: true } result) answered = (await result.Value())?.ToString();
             return ctx.Ok();

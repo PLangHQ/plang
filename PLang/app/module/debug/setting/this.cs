@@ -47,16 +47,16 @@ public sealed class @this : global::app.type.item.setting.module.@this
     /// <summary>Each watched variable watched while <paramref name="actor"/> runs: after it is set and after it is
     /// removed, <paramref name="debug"/> prints it. Each is bound on its name, read as the variable it names once; nothing
     /// watched binds nothing.</summary>
-    internal void Watch(global::app.actor.@this actor, global::app.module.debug.@this debug)
+    internal async System.Threading.Tasks.Task Watch(global::app.actor.@this actor, global::app.module.debug.@this debug)
     {
         foreach (var name in Variables.Items(actor.Context))
         {
             if (new global::app.type.item.variable.parser.@this(name.Peek()?.ToString() ?? "", actor.App.type.list).Whole is not { } watched)
                 continue;
-            actor.@event.Add(watched.Name, new global::app.@event.code.@this(watched, "set", global::app.@event.When.after,
+            await actor.@event.Add(watched.Name, new global::app.@event.code.@this(watched, "set", global::app.@event.When.after,
                 (item, result, context) => debug.Set((global::app.type.item.variable.@this)item, result, context),
                 actor, global::app.@event.code.@this.Always));
-            actor.@event.Add(watched.Name, new global::app.@event.code.@this(watched, "remove", global::app.@event.When.after,
+            await actor.@event.Add(watched.Name, new global::app.@event.code.@this(watched, "remove", global::app.@event.When.after,
                 (item, _, context) => debug.Remove((global::app.type.item.variable.@this)item, context),
                 actor, global::app.@event.code.@this.Always));
         }

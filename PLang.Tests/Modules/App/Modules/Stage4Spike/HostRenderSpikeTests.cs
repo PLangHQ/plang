@@ -79,7 +79,7 @@ public class HostRenderSpikeTests
     private static async Task<string> Render(global::app.@this app, string template, ItemList modules)
     {
         var ctx = app.actor.list.User.Context;
-        ctx.Variable.Set(new Data("modules", modules, context: ctx));
+        await ctx.Variable.Set(new Data("modules", modules, context: ctx));
         var action = new Render(ctx)
         {
             Template = (global::app.type.item.text.@this)template,
@@ -160,7 +160,7 @@ public class HostRenderSpikeTests
             .SelectMany(m => app.Module(m).ActionNames.Select(a => (global::app.goal.step.action.@this)app.Module(m)[a]!))
             .ToList();
         var actions = new ItemList(new List<object?>(subset.Cast<object?>()), app.type.list["list"]);
-        ctx.Variable.Set(new Data("actions", actions, context: ctx));
+        await ctx.Variable.Set(new Data("actions", actions, context: ctx));
 
         // where %actions% Name in ["read","set"]  — proves Get(field) over clr(action)
         // + the "in" operator, the exact mechanic behind `where %actions% Name in %planStep.actions%`.

@@ -1,5 +1,5 @@
-/ "after llm.query" is in llm.query's list, which every llm.query step runs: two steps ask the llm, and ShowCost runs
-/ after each.
+/ An event bound after llm.query sits on llm.query's own list: the two questions below both ask the llm, so ShowCost
+/ runs twice.
 Start
 - set %count% = 0
 - after action llm.query, call ShowCost

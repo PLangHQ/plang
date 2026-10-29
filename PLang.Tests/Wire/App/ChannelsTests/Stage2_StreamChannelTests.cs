@@ -341,7 +341,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
         var ch = StreamChannel.Memory(app.actor.list.User.Channel, "output");
         app.actor.list.User.Channel.Register(ch);
         string? seen = null;
-        app.actor.list.User.@event.Add(new global::app.@event.code.@this(ch, "write", global::app.@event.When.before, async (_, data, ctx) =>
+        await app.actor.list.User.@event.Add(new global::app.@event.code.@this(ch, "write", global::app.@event.When.before, async (_, data, ctx) =>
         {
             seen = (await data.Value())?.ToString();
             return ctx.Ok();

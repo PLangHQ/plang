@@ -72,7 +72,7 @@ public class PlangRuntimeTests : IDisposable
     {
         var step = new Step(_app.type.list) { Index = 0, Text = "test step" };
 
-        await Assert.That(_app.actor.list.User.@event[step].before.Count).IsEqualTo(0);
+        await Assert.That((await _app.actor.list.User.@event.On(step)).before.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -86,9 +86,9 @@ public class PlangRuntimeTests : IDisposable
 
         // held by the binding actor, in each step's list, never another actor's
         var step = new Step(_app.type.list) { Index = 0, Text = "test step" };
-        var before = _app.actor.list.User.@event[step].before;
+        var before = (await _app.actor.list.User.@event.On(step)).before;
         await Assert.That(before.Count).IsEqualTo(1);
-        await Assert.That(_app.actor.list.System.@event[step].before.Count).IsEqualTo(0);
+        await Assert.That((await _app.actor.list.System.@event.On(step)).before.Count).IsEqualTo(0);
         await Assert.That(before[0].Actor).IsSameReferenceAs(_app.actor.list.User);
     }
 

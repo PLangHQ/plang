@@ -15,15 +15,15 @@ public class OnTests
         => (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", key, 400)));
 
     // The user's event on item's moment, run by handler for every item.
-    private static global::app.@event.@this Bind(global::app.@this app, global::app.type.item.@this item, string name, global::app.@event.When when,
+    private static async Task<global::app.@event.@this> Bind(global::app.@this app, global::app.type.item.@this item, string name, global::app.@event.When when,
         System.Func<global::app.type.item.@this, global::app.data.@this, global::app.actor.context.@this, Task<global::app.data.@this>> handler)
-        => app.actor.list.User.@event.Add(new global::app.@event.code.@this(item, name, when, handler, app.actor.list.User, global::app.@event.code.@this.Always));
+        => await app.actor.list.User.@event.Add(new global::app.@event.code.@this(item, name, when, handler, app.actor.list.User, global::app.@event.code.@this.Always));
 
     [Test] public async Task AnItemNothingIsBoundOn_HasAnEmptyList_AndNoMomentOfAnUnknownName()
     {
         await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var item = Item(app.actor.list.User.Context);
-        var on = app.actor.list.User.@event[item];
+        var on = (await app.actor.list.User.@event.On(item));
         await Assert.That(on.before.Count).IsEqualTo(0);
         await Assert.That(on["nosuchevent"]).IsNull();
     }
@@ -34,12 +34,12 @@ public class OnTests
         var item = Item(app.actor.list.User.Context);
         var ran = new List<string>();
 
-        var on = app.actor.list.User.@event[item];
-        Bind(app, item, "start", global::app.@event.When.before, Record(ran, "one"));
+        var on = (await app.actor.list.User.@event.On(item));
+        await Bind(app, item, "start", global::app.@event.When.before, Record(ran, "one"));
 
-        await Assert.That(ReferenceEquals(app.actor.list.User.@event[item], on)).IsTrue();
+        await Assert.That(ReferenceEquals((await app.actor.list.User.@event.On(item)), on)).IsTrue();
         await Assert.That(on.before.Count).IsEqualTo(1);
-        await Assert.That(app.actor.list.User.@event[Item(app.actor.list.User.Context)].before.Count).IsEqualTo(0);
+        await Assert.That((await app.actor.list.User.@event.On(Item(app.actor.list.User.Context))).before.Count).IsEqualTo(0);
     }
 
     [Test] public async Task Start_RunsInTheOrderBound_AndAnswersWhatItWasHanded()
@@ -48,11 +48,11 @@ public class OnTests
         var context = app.actor.list.User.Context;
         var item = Item(context);
         var ran = new List<string>();
-        Bind(app, item, "start", global::app.@event.When.before, Record(ran, "first"));
-        Bind(app, item, "start", global::app.@event.When.before, Record(ran, "second"));
+        await Bind(app, item, "start", global::app.@event.When.before, Record(ran, "first"));
+        await Bind(app, item, "start", global::app.@event.When.before, Record(ran, "second"));
 
         var result = context.Ok("kept");
-        var answered = await context.Actor!.@event[item].before.Start(item, context, result);
+        var answered = await (await context.Actor!.@event.On(item)).before.Start(item, context, result);
 
         await Assert.That(ran).IsEquivalentTo(new[] { "first", "second" });
         await Assert.That(ReferenceEquals(answered, result)).IsTrue();
@@ -64,9 +64,9 @@ public class OnTests
         var context = app.actor.list.User.Context;
         var item = Item(context);
         var result = context.Ok("kept");
-        var answered = await context.Actor!.@event[item].after.Start(item, result, context);
+        var answered = await (await context.Actor!.@event.On(item)).after.Start(item, result, context);
         await Assert.That(ReferenceEquals(answered, result)).IsTrue();
-        await Assert.That(await context.Actor!.@event[item].before.Start(item, context)).IsNull();
+        await Assert.That(await (await context.Actor!.@event.On(item)).before.Start(item, context)).IsNull();
     }
 
     [Test] public async Task AFailingBeforeEvent_IsTheResult_AndStopsTheRest()
@@ -75,10 +75,10 @@ public class OnTests
         var context = app.actor.list.User.Context;
         var item = Item(context);
         var ran = new List<string>();
-        Bind(app, item, "start", global::app.@event.When.before, Fail("Refused"));
-        Bind(app, item, "start", global::app.@event.When.before, Record(ran, "after the failure"));
+        await Bind(app, item, "start", global::app.@event.When.before, Fail("Refused"));
+        await Bind(app, item, "start", global::app.@event.When.before, Record(ran, "after the failure"));
 
-        var answered = (await context.Actor!.@event[item].before.Start(item, context))!;
+        var answered = (await (await context.Actor!.@event.On(item)).before.Start(item, context))!;
 
         await answered.IsFailure();
         await Assert.That(answered.Error!.Key).IsEqualTo("Refused");
@@ -91,15 +91,15 @@ public class OnTests
         var context = app.actor.list.User.Context;
         var item = Item(context);
         var ran = new List<string>();
-        Bind(app, item, "start", global::app.@event.When.before, (_, _, ctx) =>
+        await Bind(app, item, "start", global::app.@event.When.before, (_, _, ctx) =>
         {
             var instead = ctx.Ok("instead");
             instead.Handled = true;
             return Task.FromResult(instead);
         });
-        Bind(app, item, "start", global::app.@event.When.before, Record(ran, "after the cancel"));
+        await Bind(app, item, "start", global::app.@event.When.before, Record(ran, "after the cancel"));
 
-        var answered = (await context.Actor!.@event[item].before.Start(item, context))!;
+        var answered = (await (await context.Actor!.@event.On(item)).before.Start(item, context))!;
 
         await Assert.That(answered.Handled).IsTrue();
         await Assert.That((await answered.Value())?.ToString()).IsEqualTo("instead");
@@ -112,10 +112,10 @@ public class OnTests
         var context = app.actor.list.User.Context;
         var item = Item(context);
         global::app.data.@this? seen = null;
-        Bind(app, item, "start", global::app.@event.When.after, Fail("Broke"));
-        Bind(app, item, "start", global::app.@event.When.after, (_, result, ctx) => { seen = result; return Task.FromResult(ctx.Ok()); });
+        await Bind(app, item, "start", global::app.@event.When.after, Fail("Broke"));
+        await Bind(app, item, "start", global::app.@event.When.after, (_, result, ctx) => { seen = result; return Task.FromResult(ctx.Ok()); });
 
-        var answered = await context.Actor!.@event[item].after.Start(item, context.Ok("ran"), context);
+        var answered = await (await context.Actor!.@event.On(item)).after.Start(item, context.Ok("ran"), context);
 
         await answered.IsFailure();
         await Assert.That(answered.Error!.Key).IsEqualTo("Broke");
@@ -129,16 +129,16 @@ public class OnTests
         var context = app.actor.list.User.Context;
         var item = Item(context);
         var ran = new List<string>();
-        Bind(app, item, "start", global::app.@event.When.after, (_, _, ctx) =>
+        await Bind(app, item, "start", global::app.@event.When.after, (_, _, ctx) =>
         {
             var instead = ctx.Ok("instead");
             instead.Handled = true;
             return Task.FromResult(instead);
         });
-        Bind(app, item, "start", global::app.@event.When.after, Record(ran, "still runs"));
+        await Bind(app, item, "start", global::app.@event.When.after, Record(ran, "still runs"));
 
         var result = context.Ok("ran");
-        var answered = await context.Actor!.@event[item].after.Start(item, result, context);
+        var answered = await (await context.Actor!.@event.On(item)).after.Start(item, result, context);
 
         await Assert.That(ReferenceEquals(answered, result)).IsTrue();
         await Assert.That(ran).IsEquivalentTo(new[] { "still runs" });
@@ -150,14 +150,14 @@ public class OnTests
         var context = app.actor.list.User.Context;
         var item = Item(context);
         var calls = 0;
-        Bind(app, item, "start", global::app.@event.When.before, (_, _, ctx) =>
+        await Bind(app, item, "start", global::app.@event.When.before, (_, _, ctx) =>
         {
             if (++calls == 1) throw new InvalidOperationException("first call fails");
             return Task.FromResult(ctx.Ok());
         });
 
-        await Assert.That(async () => await context.Actor!.@event[item].before.Start(item, context)).Throws<InvalidOperationException>();
-        await (await context.Actor!.@event[item].before.Start(item, context))!.IsSuccess();
+        await Assert.That(async () => await (await context.Actor!.@event.On(item)).before.Start(item, context)).Throws<InvalidOperationException>();
+        await (await (await context.Actor!.@event.On(item)).before.Start(item, context))!.IsSuccess();
         await Assert.That(calls).IsEqualTo(2);
     }
 
@@ -167,13 +167,13 @@ public class OnTests
         var context = app.actor.list.User.Context;
         var item = Item(context);
         var times = 0;
-        Bind(app, item, "start", global::app.@event.When.before, async (fired, result, ctx) =>
+        await Bind(app, item, "start", global::app.@event.When.before, async (fired, result, ctx) =>
         {
             times++;
-            return await ctx.Actor!.@event[fired].before.Start(fired, ctx, result) ?? result;   // starts its own moment again
+            return await (await ctx.Actor!.@event.On(fired)).before.Start(fired, ctx, result) ?? result;   // starts its own moment again
         });
 
-        await context.Actor!.@event[item].before.Start(item, context);
+        await (await context.Actor!.@event.On(item)).before.Start(item, context);
 
         await Assert.That(times).IsEqualTo(1);
     }
@@ -186,15 +186,15 @@ public class OnTests
         var context = app.actor.list.User.Context;
         var item = Item(context);
         var inner = 0;
-        Bind(app, item, "error", global::app.@event.When.before, async (fired, failed, ctx) =>
+        await Bind(app, item, "error", global::app.@event.When.before, async (fired, failed, ctx) =>
         {
             // its own moment again, inside its run: it is passed by, and the failure stands
             inner++;
-            return await ctx.Actor!.@event[fired]["error"]!.before.Catch(fired, ctx.Error(new global::app.error.@this("inner", "Inner", 400)), ctx)
+            return await (await ctx.Actor!.@event.On(fired))["error"]!.before.Catch(fired, ctx.Error(new global::app.error.@this("inner", "Inner", 400)), ctx)
                 ?? ctx.Error(new global::app.error.@this("inner", "Inner", 400));
         });
 
-        var answer = await context.Actor!.@event[item]["error"]!.before.Catch(item, context.Error(new global::app.error.@this("outer", "Outer", 400)), context);
+        var answer = await (await context.Actor!.@event.On(item))["error"]!.before.Catch(item, context.Error(new global::app.error.@this("outer", "Outer", 400)), context);
 
         await Assert.That(inner).IsEqualTo(1);
         await answer!.IsFailure();
@@ -206,14 +206,14 @@ public class OnTests
         await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var item = Item(app.actor.list.User.Context);
         var ran = new List<string>();
-        Bind(app, item, "set", global::app.@event.When.after, Record(ran, "user's"));
+        await Bind(app, item, "set", global::app.@event.When.after, Record(ran, "user's"));
 
         var system = app.actor.list.System.Context;
-        await system.Actor!.@event[item]["set"]!.after.Start(item, system.Ok(), system);
+        await (await system.Actor!.@event.On(item))["set"]!.after.Start(item, system.Ok(), system);
         await Assert.That(ran).IsEmpty();
 
         var user = app.actor.list.User.Context;
-        await user.Actor!.@event[item]["set"]!.after.Start(item, user.Ok(), user);
+        await (await user.Actor!.@event.On(item))["set"]!.after.Start(item, user.Ok(), user);
         await Assert.That(ran).IsEquivalentTo(new[] { "user's" });
     }
 
@@ -224,10 +224,10 @@ public class OnTests
         var type = Item(context);
         var wanted = Item(context);
         var ran = new List<string>();
-        app.actor.list.User.@event.Add(new global::app.@event.code.@this(type, "create", global::app.@event.When.after, Record(ran, "fired"),
+        await app.actor.list.User.@event.Add(new global::app.@event.code.@this(type, "create", global::app.@event.When.after, Record(ran, "fired"),
             app.actor.list.User, (fired, _) => fired == wanted));
 
-        var create = context.Actor!.@event[type]["create"]!;
+        var create = (await context.Actor!.@event.On(type))["create"]!;
         await create.after.Start(Item(context), context.Ok(), context);
         await Assert.That(ran).IsEmpty();
         await create.after.Start(wanted, context.Ok(), context);
@@ -240,8 +240,8 @@ public class OnTests
         var context = app.actor.list.User.Context;
         var item = Item(context);
         var ran = new List<string>();
-        var @event = Bind(app, item, "start", global::app.@event.When.after, Record(ran, "fired"));
-        var on = context.Actor!.@event[item];
+        var @event = await Bind(app, item, "start", global::app.@event.When.after, Record(ran, "fired"));
+        var on = (await context.Actor!.@event.On(item));
 
         @event.Remove();
         await on.after.Start(item, context.Ok(), context);
@@ -256,13 +256,13 @@ public class OnTests
         await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         var item = Item(context);
-        item.Set("a", false, 1, context);
-        Bind(app, item, "start", global::app.@event.When.after, Record(new List<string>(), "x"));
+        await item.Set("a", false, 1, context);
+        await Bind(app, item, "start", global::app.@event.When.after, Record(new List<string>(), "x"));
 
         var copy = item.Clone();
 
-        await Assert.That(context.Actor!.@event[copy].after.Count).IsEqualTo(0);
-        await Assert.That(context.Actor!.@event[item].after.Count).IsEqualTo(1);
+        await Assert.That((await context.Actor!.@event.On(copy)).after.Count).IsEqualTo(0);
+        await Assert.That((await context.Actor!.@event.On(item)).after.Count).IsEqualTo(1);
     }
 
     // `on` stays off the wire: a value with an event bound writes the same bytes as one without.
@@ -271,10 +271,10 @@ public class OnTests
         await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         var plain = context.Dict();
-        plain.Set("a", false, 1, context);
+        await plain.Set("a", false, 1, context);
         var bound = context.Dict();
-        bound.Set("a", false, 1, context);
-        Bind(app, bound, "start", global::app.@event.When.after, Record(new List<string>(), "x"));
+        await bound.Set("a", false, 1, context);
+        await Bind(app, bound, "start", global::app.@event.When.after, Record(new List<string>(), "x"));
 
         foreach (var view in new[] { global::app.View.Out, global::app.View.Store })
             await Assert.That(await Written(bound, view, context)).IsEqualTo(await Written(plain, view, context));

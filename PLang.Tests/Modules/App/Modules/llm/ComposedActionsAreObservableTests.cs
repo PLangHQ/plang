@@ -7,8 +7,8 @@ namespace PLang.Tests.App.Modules.llm;
 // output.ask) runs as an action, so a binding on the action's start sees it — the mock a program puts there.
 public class ComposedActionsAreObservableTests
 {
-    private static void Watch(global::app.@this app, string module, string action, List<string> seen)
-        => app.actor.list.System.@event.Add(new global::app.@event.code.@this(app.type.list["action"], "start", global::app.@event.When.before, (item, _, ctx) =>
+    private static async Task Watch(global::app.@this app, string module, string action, List<string> seen)
+        => await app.actor.list.System.@event.Add(new global::app.@event.code.@this(app.type.list["action"], "start", global::app.@event.When.before, (item, _, ctx) =>
         {
             if (item is global::app.goal.step.action.@this started && started.Module.Name == module && started.Name == action)
             {
@@ -25,7 +25,7 @@ public class ComposedActionsAreObservableTests
         LlmTestHelper.SetupMockHttp(app);
         var ctx = app.actor.list.System.Context;
         var seen = new List<string>();
-        Watch(app, "http", "request", seen);
+        await Watch(app, "http", "request", seen);
 
         var query = new query(ctx)
         {
@@ -44,7 +44,7 @@ public class ComposedActionsAreObservableTests
         LlmTestHelper.SetupMockHttp(app);
         var ctx = app.actor.list.System.Context;
         var seen = new List<string>();
-        Watch(app, "http", "request", seen);
+        await Watch(app, "http", "request", seen);
         var builder = Make.Goal(ctx, "Build", "/system/builder/Build.goal");
 
         var query = new query(ctx)
@@ -64,7 +64,7 @@ public class ComposedActionsAreObservableTests
         await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var seen = new List<string>();
-        Watch(app, "output", "ask", seen);
+        await Watch(app, "output", "ask", seen);
         var input = new Asked(ctx.Actor!.Channel, ctx);
         app.actor.list.User.Channel.Register(input);
         var request = global::app.type.item.permission.@this.Request(ctx.Actor!, "/elsewhere", global::app.type.item.permission.Verb.write);

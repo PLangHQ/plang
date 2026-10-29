@@ -42,10 +42,13 @@ public class HoldTests
         await using var parent = new global::app.@this("/parent").Testing();
 
         var child = await Bound(parent);
-        for (var i = 0; i < 3 && child.IsAlive; i++)
+        // the child's events load through file reads, whose continuations ran on pool threads: those let go of what
+        // they ran in a moment, so a collection is tried for a while; a real hold keeps it alive throughout
+        for (var i = 0; i < 40 && child.IsAlive; i++)
         {
             System.GC.Collect();
             System.GC.WaitForPendingFinalizers();
+            await Task.Delay(50);
         }
 
         await Assert.That(child.IsAlive).IsFalse().Because("nothing the app bound keeps it after it is gone");
@@ -72,7 +75,7 @@ public class HoldTests
         await using var app = Child(parent, "/parent/app");
         var ctx = app.actor.list.User.Context;
         var binding = await Bind(ctx, "%!app.type.step.on.start%", Make.Call(ctx, "Log"));
-        var events = app.actor.list.User.@event[app.type.list["step"]];
+        var events = (await app.actor.list.User.@event.On(app.type.list["step"]));
         await Assert.That(events.start.before.Count).IsEqualTo(1);
 
         var unbound = await new global::app.module.on.OnUnbind(ctx)

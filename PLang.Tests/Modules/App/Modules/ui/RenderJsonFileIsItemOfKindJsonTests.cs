@@ -39,7 +39,7 @@ public class RenderJsonFileIsItemOfKindJsonTests : IDisposable
     {
         WriteTemplateFile("request.json", "{\"deep\": \"{{ model }}\"}");
         var context = _app.actor.list.User.Context;
-        context.Variable.Set(new Data("model", "m-1", context: context));
+        await context.Variable.Set(new Data("model", "m-1", context: context));
 
         var file = await _provider.Render(new Render(context) { Template = (global::app.type.item.text.@this)"request.json", IsFile = (global::app.type.item.@bool.@this)true });
         var inline = await _provider.Render(new Render(context) { Template = (global::app.type.item.text.@this)"{\"deep\": \"{{ model }}\"}", IsFile = (global::app.type.item.@bool.@this)false });

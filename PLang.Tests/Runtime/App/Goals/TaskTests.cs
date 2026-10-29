@@ -75,7 +75,7 @@ public class TaskTests
                 Make.Action(ctx, "goal", "call", ("Name", "Slow"), ("Parallel", true))));
             System.IO.File.WriteAllText(System.IO.Path.Combine(root, "Start.goal"), "Start\n- call Slow in parallel\n");
             System.IO.File.WriteAllText(System.IO.Path.Combine(root, ".build", "start.pr"), await ctx.Pr(start));
-            app.actor.list.System.Context.Variable.Set("goalFile", "Start.goal");
+            await app.actor.list.System.Context.Variable.Set("goalFile", "Start.goal");
             var clock = System.Diagnostics.Stopwatch.StartNew();
 
             await (await app.Start()).IsSuccess();

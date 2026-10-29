@@ -27,13 +27,13 @@ public class SecurityFixTests
 
         // An event whose run throws the first time
         var callCount = 0;
-        _app.actor.list.User.@event.Add(new global::app.@event.code.@this(_app.type.list["step"], "start", global::app.@event.When.before, (_, result, _) =>
+        await _app.actor.list.User.@event.Add(new global::app.@event.code.@this(_app.type.list["step"], "start", global::app.@event.When.before, (_, result, _) =>
         {
             callCount++;
             if (callCount == 1) throw new InvalidOperationException("first call fails");
             return Task.FromResult(result);
         }, _app.actor.list.User, global::app.@event.code.@this.Always));
-        var before = context.Actor!.@event[step].before;
+        var before = (await context.Actor!.@event.On(step)).before;
 
         try { await before.Start(step, context); }
         catch (InvalidOperationException) { }

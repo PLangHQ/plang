@@ -71,7 +71,7 @@ public class ListNestingTests : System.IAsyncDisposable
     {
         var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "listnest-" + System.Guid.NewGuid().ToString("N")[..6]), global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
-        ctx.Variable.Set("l", Parsed("[[1,2],3]"));
+        await ctx.Variable.Set("l", Parsed("[[1,2],3]"));
 
         var result = await new global::app.goal.step.action.composed.@this(new global::app.module.list.Flatten(ctx)
         {
@@ -89,7 +89,7 @@ public class ListNestingTests : System.IAsyncDisposable
     {
         var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "listnest-" + System.Guid.NewGuid().ToString("N")[..6]), global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
-        ctx.Variable.Set("l", Parsed("[[1,[2,[3]]],4]"));
+        await ctx.Variable.Set("l", Parsed("[[1,[2,[3]]],4]"));
 
         var result = await new global::app.goal.step.action.composed.@this(new global::app.module.list.Flatten(ctx)
         {

@@ -34,9 +34,9 @@ public class VariablesSnapshotTests
     public async Task Snapshot_UserVariables_AllIncludedInDictionary()
     {
         var vars = _app.actor.list.User.Context.Variable;
-        vars.Set("foo", 1);
-        vars.Set("bar", "x");
-        vars.Set("baz", new List<int> { 1, 2, 3 });
+        await vars.Set("foo", 1);
+        await vars.Set("bar", "x");
+        await vars.Set("baz", new List<int> { 1, 2, 3 });
 
         var snapshot = vars.Snapshot();
         await Assert.That(snapshot!.Has("foo")).IsTrue();
@@ -65,7 +65,7 @@ public class VariablesSnapshotTests
     public async Task Snapshot_NullValuedVariable_PresentAsNull_NotAbsent()
     {
         var vars = _app.actor.list.User.Context.Variable;
-        vars.Set("maybe", null);
+        await vars.Set("maybe", null);
 
         var snapshot = vars.Snapshot();
         await Assert.That(snapshot!.Has("maybe")).IsTrue();
@@ -89,7 +89,7 @@ public class VariablesSnapshotTests
     {
         var vars = _app.actor.list.User.Context.Variable;
         var list = new List<int> { 1, 2 };
-        vars.Set("items", list);
+        await vars.Set("items", list);
 
         var snapshot = vars.Snapshot();
         list.Add(3); // mutate after snapshot
@@ -103,8 +103,8 @@ public class VariablesSnapshotTests
     public async Task Snapshot_AfterInnerScopeSet_ReflectsMostRecentWrite()
     {
         var vars = _app.actor.list.User.Context.Variable;
-        vars.Set("x", 1);
-        vars.Set("x", 2);
+        await vars.Set("x", 1);
+        await vars.Set("x", 2);
         var snapshot = vars.Snapshot();
         await Assert.That(snapshot.Held("x")?.ToString()).IsEqualTo("2");
     }
@@ -115,14 +115,14 @@ public class VariablesSnapshotTests
     public async Task Snapshot_DuringConcurrentWrite_DoesNotThrow()
     {
         var vars = _app.actor.list.User.Context.Variable;
-        for (int i = 0; i < 100; i++) vars.Set($"k{i}", i);
+        for (int i = 0; i < 100; i++) await vars.Set($"k{i}", i);
 
         using var stop = new CancellationTokenSource();
-        var writer = Task.Run(() =>
+        var writer = Task.Run(async () =>
         {
             var r = new Random(42);
             while (!stop.IsCancellationRequested)
-                vars.Set($"k{r.Next(0, 100)}", r.Next());
+                await vars.Set($"k{r.Next(0, 100)}", r.Next());
         });
 
         // Iterate many times — would throw InvalidOperationException if enumerator wasn't snapshot-style.

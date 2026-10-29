@@ -490,10 +490,6 @@ class app.data.this<T> : app.data.this
   static FromError(app.error.this error, app.actor.context.this context) : app.data.this<T>
   static Uninitialized(System.String name, app.actor.context.this context) : app.data.this<T>
 
-enum app.event.Scope [Choice, PlangType]
-  static const actor : app.event.Scope
-  static const app : app.event.Scope
-
 enum app.event.When [Choice, PlangType]
   static const after : app.event.When
   static const before : app.event.When
@@ -570,8 +566,13 @@ enum app.event.setting.Goal [Choice, PlangType]
   static const all : app.event.setting.Goal
   static const app : app.event.setting.Goal
 
+enum app.event.setting.System [Choice, PlangType]
+  static const load : app.event.setting.System
+  static const skip : app.event.setting.System
+
 class app.event.setting.this : app.type.item.setting.this
   Goal : app.type.item.choice.this<app.event.setting.Goal> { get; set; } [Out, Store]
+  System : app.type.item.choice.this<app.event.setting.System> { get; set; } [Out, Store]
   ctor(app.type.this type)
   static Internal : System.Boolean { get; }
 
@@ -988,7 +989,7 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.type.item.prop
   ctor(System.String absolutePath, System.String environment = …, app.Wiring wiring = …)
   data(app.actor.context.this context) : app.data.this [LlmBuilder]
   error : app.type.node.current.this<app.error.this, app.error.list.this> { get; } [LlmBuilder, Out]
-  event(app.actor.context.this context) : app.event.list.this [LlmBuilder]
+  event(app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.event.list.this> [LlmBuilder]
   filesystem : app.type.item.path.file.filesystem.this { get; } [LlmBuilder]
   goal : app.type.node.current.this<app.goal.this, app.goal.list.this> { get; } [LlmBuilder, Out]
   module : app.module.this { get; } [LlmBuilder, Out]

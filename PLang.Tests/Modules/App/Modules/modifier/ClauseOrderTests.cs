@@ -27,8 +27,8 @@ public class ClauseOrderTests
         => global::PLang.Tests.Shared.Make.Action(Ctx, "on", name, parameters);
 
     // The user's event on error.throw's moment, recording what it ran on.
-    private void Record(string moment, global::app.@event.When when, List<string> ran, string name)
-        => _app.actor.list.User.@event.Add(new global::app.@event.code.@this(_app.Module("error")["throw"]!, moment, when,
+    private async Task Record(string moment, global::app.@event.When when, List<string> ran, string name)
+        => await _app.actor.list.User.@event.Add(new global::app.@event.code.@this(_app.Module("error")["throw"]!, moment, when,
             (_, result, ctx) => { ran.Add($"{name} {(result.Success ? "ok" : result.Error!.Key)}"); return Task.FromResult(result); },
             _app.actor.list.User, global::app.@event.code.@this.Always));
 
@@ -48,7 +48,7 @@ public class ClauseOrderTests
     public async Task TheStepsOwnOnError_TakesTheFailure_BeforeTheActorsErrorEventSeesIt()
     {
         var ran = new List<string>();
-        Record("error", global::app.@event.When.before, ran, "actor's error");
+        await Record("error", global::app.@event.When.before, ran, "actor's error");
         var action = Throwing(Clause("error", ("ignore", true)));
 
         var result = await action.Start(Ctx);
@@ -61,7 +61,7 @@ public class ClauseOrderTests
     public async Task TheActorsAfter_RunsLast_OnWhatOnErrorAnswered()
     {
         var ran = new List<string>();
-        Record("start", global::app.@event.When.after, ran, "after");
+        await Record("start", global::app.@event.When.after, ran, "after");
         var action = Throwing(Clause("error", ("ignore", true)));
 
         var result = await action.Start(Ctx);

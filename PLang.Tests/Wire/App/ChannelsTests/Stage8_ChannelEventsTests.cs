@@ -22,15 +22,15 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
         return ch;
     }
 
-    private void Bind(global::app.type.item.@this on, string @event, When when,
+    private async Task Bind(global::app.type.item.@this on, string @event, When when,
         System.Func<global::app.type.item.@this, Data, global::app.actor.context.@this, Task<Data>> handler)
-        => app.actor.list.User.@event.Add(new global::app.@event.code.@this(on, @event, when, handler, app.actor.list.User, global::app.@event.code.@this.Always));
+        => await app.actor.list.User.@event.Add(new global::app.@event.code.@this(on, @event, when, handler, app.actor.list.User, global::app.@event.code.@this.Always));
 
     [Test]
     public async Task AChannel_IsAnItem_WithItsOwnEvents()
     {
         var ch = StreamChannel.Memory(app.actor.list.User.Channel, "c");
-        await Assert.That(app.actor.list.User.@event[ch].write.before.Count).IsEqualTo(0);
+        await Assert.That((await app.actor.list.User.@event.On(ch)).write.before.Count).IsEqualTo(0);
         await Assert.That(ReferenceEquals(ch.Clone(), ch)).IsTrue();
         await Assert.That(app.type.list["channel"].Namespace).IsEqualTo("app.channel");
         // a stream channel is a kind of channel: {channel, stream}
@@ -43,7 +43,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     {
         var ch = Registered("logger");
         Data? captured = null;
-        Bind(ch, "write", When.before, (_, data, ctx) => { captured = data; return Task.FromResult(ctx.Ok()); });
+        await Bind(ch, "write", When.before, (_, data, ctx) => { captured = data; return Task.FromResult(ctx.Ok()); });
 
         await ch.WriteAsync(app.Ok("hello"));
 
@@ -55,8 +55,8 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     {
         var ch = Registered("c");
         Data? after = null;
-        Bind(ch, "write", When.before, (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Refused", 400))));
-        Bind(ch, "write", When.after, (_, result, ctx) => { after = result; return Task.FromResult(ctx.Ok()); });
+        await Bind(ch, "write", When.before, (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Refused", 400))));
+        await Bind(ch, "write", When.after, (_, result, ctx) => { after = result; return Task.FromResult(ctx.Ok()); });
 
         var result = await ch.WriteAsync(app.Ok("hi"));
 
@@ -69,7 +69,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     public async Task ABeforeWriteThatThrows_Propagates_NoChannelCatch()
     {
         var ch = Registered("c");
-        Bind(ch, "write", When.before, (_, _, _) => throw new InvalidOperationException("nope"));
+        await Bind(ch, "write", When.before, (_, _, _) => throw new InvalidOperationException("nope"));
 
         await Assert.That(async () => await ch.WriteAsync(app.Ok("hi"))).Throws<InvalidOperationException>();
     }
@@ -79,7 +79,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     {
         var ch = Registered("c");
         var fired = false;
-        Bind(ch, "write", When.after, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); });
+        await Bind(ch, "write", When.after, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); });
 
         var result = await ch.WriteAsync(app.Ok("hi"));
 
@@ -93,7 +93,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
         var ch = new ThrowOnWriteChannel(app.actor.list.User.Channel, "c", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
         Data? received = null;
-        Bind(ch, "write", When.after, (_, result, ctx) => { received = result; return Task.FromResult(ctx.Ok()); });
+        await Bind(ch, "write", When.after, (_, result, ctx) => { received = result; return Task.FromResult(ctx.Ok()); });
 
         var result = await ch.WriteAsync(app.Ok("hi"));
 
@@ -106,7 +106,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     public async Task AFailingAfterWrite_IsTheResult()
     {
         var ch = Registered("c");
-        Bind(ch, "write", When.after, (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("after", "Broke", 400))));
+        await Bind(ch, "write", When.after, (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("after", "Broke", 400))));
 
         var result = await ch.WriteAsync(app.Ok("hi"));
 
@@ -119,7 +119,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     {
         var ch = Registered("c");
         var hits = 0;
-        Bind(ch, "write", When.before, async (_, _, ctx) =>
+        await Bind(ch, "write", When.before, async (_, _, ctx) =>
         {
             hits++;
             await ch.WriteAsync(app.Ok("inner"));
@@ -138,7 +138,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
         var hits = 0;
         var entered = new TaskCompletionSource();
         var release = new TaskCompletionSource();
-        Bind(ch, "write", When.before, async (_, _, ctx) =>
+        await Bind(ch, "write", When.before, async (_, _, ctx) =>
         {
             if (Interlocked.Increment(ref hits) == 2) entered.TrySetResult();
             await Task.WhenAny(release.Task, Task.Delay(2000));
@@ -159,9 +159,9 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     {
         var ch = Registered("c");
         var order = new List<string>();
-        Bind(ch, "write", When.before, (_, _, ctx) => { order.Add("A"); return Task.FromResult(ctx.Ok()); });
-        Bind(ch, "write", When.before, (_, _, ctx) => { order.Add("B"); return Task.FromResult(ctx.Ok()); });
-        Bind(ch, "write", When.before, (_, _, ctx) => { order.Add("C"); return Task.FromResult(ctx.Ok()); });
+        await Bind(ch, "write", When.before, (_, _, ctx) => { order.Add("A"); return Task.FromResult(ctx.Ok()); });
+        await Bind(ch, "write", When.before, (_, _, ctx) => { order.Add("B"); return Task.FromResult(ctx.Ok()); });
+        await Bind(ch, "write", When.before, (_, _, ctx) => { order.Add("C"); return Task.FromResult(ctx.Ok()); });
 
         await ch.WriteAsync(app.Ok("x"));
 
@@ -175,7 +175,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
         var ch = new StreamChannel(app.actor.list.User.Channel, "i", ms, ChannelDirection.Bidirectional, ownsStream: false) { Mime = "text/plain" };
         app.actor.list.User.Channel.Register(ch);
         Data? received = null;
-        Bind(ch, "ask", When.after, (_, result, ctx) => { received = result; return Task.FromResult(ctx.Ok()); });
+        await Bind(ch, "ask", When.after, (_, result, ctx) => { received = result; return Task.FromResult(ctx.Ok()); });
 
         var result = await ch.AskAsync(new global::app.module.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "", context: app.actor.list.User.Context) });
 
@@ -221,7 +221,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
         var ch = new MessageProbeChannel(app.actor.list.User.Channel, "m", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
         var fired = false;
-        Bind(ch, "ask", When.after, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); });
+        await Bind(ch, "ask", When.after, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); });
 
         await ch.AskAsync(new global::app.module.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "q?", context: app.actor.list.User.Context) });
 
@@ -238,7 +238,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
         var serviceLogger = StreamChannel.Memory(svc.Channels, "logger");
         svc.Channels.Register(serviceLogger);
         var hits = 0;
-        app.actor.list.User.@event.Add(new global::app.@event.code.@this(app.type.list["channel"], "write", global::app.@event.When.before, (_, _, ctx) => { Interlocked.Increment(ref hits); return Task.FromResult(ctx.Ok()); }, app.actor.list.User, global::app.@event.code.@this.Always));
+        await app.actor.list.User.@event.Add(new global::app.@event.code.@this(app.type.list["channel"], "write", global::app.@event.When.before, (_, _, ctx) => { Interlocked.Increment(ref hits); return Task.FromResult(ctx.Ok()); }, app.actor.list.User, global::app.@event.code.@this.Always));
 
         await userLogger.WriteAsync(app.Ok("a"));
         await serviceLogger.WriteAsync(app.Ok("b"));
@@ -252,7 +252,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     {
         var ch = Registered("c");
         var fired = false;
-        app.actor.list.User.@event.Add(new global::app.@event.code.@this(app.goal.type, "start", global::app.@event.When.before, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); }, app.actor.list.User, global::app.@event.code.@this.Always));
+        await app.actor.list.User.@event.Add(new global::app.@event.code.@this(app.goal.type, "start", global::app.@event.When.before, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); }, app.actor.list.User, global::app.@event.code.@this.Always));
 
         await ch.WriteAsync(app.Ok("x"));
 

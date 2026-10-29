@@ -65,11 +65,10 @@ public partial class OnEvent : IContext
         // name that is none of the choice's) is the answer, and nothing is held for it. Bound on this actor's events,
         // never on the item: it runs while this actor runs (and in the sub apps it makes after) and goes with it. The
         // event holds this action, whose Action it runs when its moment comes, and the actor that bound it.
-        return data.@this<global::app.@event.@this>.From(await When.Use(when => Action.Use(_ =>
+        return data.@this<global::app.@event.@this>.From(await When.Use(when => Action.Use(async _ =>
         {
-            var @event = new global::app.@event.call.@this(item, moment.Name, when.Value, __action!, Context.Actor!);
-            Context.Actor!.@event.Add(@event);
-            return Task.FromResult<data.@this>(Context.Ok<global::app.@event.@this>(@event));
+            var @event = await Context.Actor!.@event.Add(new global::app.@event.call.@this(item, moment.Name, when.Value, __action!, Context.Actor!));
+            return (data.@this)Context.Ok<global::app.@event.@this>(@event);
         })));
     }
 }

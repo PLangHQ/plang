@@ -35,8 +35,8 @@ public class StartTests
         return (goal, step, set);
     }
 
-    private void Record(global::app.type.item.@this level, When when, List<string> ran, string name)
-        => _bound.Add(_app.actor.list.User.@event.Add(new global::app.@event.code.@this(level, "start", when,
+    private async Task Record(global::app.type.item.@this level, When when, List<string> ran, string name)
+        => _bound.Add(await _app.actor.list.User.@event.Add(new global::app.@event.code.@this(level, "start", when,
             (_, _, ctx) => { ran.Add(name); return Task.FromResult(ctx.Ok()); }, _app.actor.list.User, global::app.@event.code.@this.Always)));
 
     private async Task<bool> IsSet(string name)
@@ -52,11 +52,11 @@ public class StartTests
         };
         foreach (var (on, name) in bound)
         {
-            Record(on, When.before, ran, name + " before");
-            Record(on, When.after, ran, name + " after");
+            await Record(on, When.before, ran, name + " before");
+            await Record(on, When.after, ran, name + " after");
         }
         // an action's list is its catalog action's: an event on one program action is in no list
-        Record(set, When.before, ran, "own before");
+        await Record(set, When.before, ran, "own before");
 
         await (await step.Start(_app.actor.list.User.Context)).IsSuccess();
 
@@ -74,8 +74,8 @@ public class StartTests
         var set = new global::app.goal.step.action.@this(_app.type.list) { Module = _app.Module("variable"), Name = "set" };
         var context = _app.actor.list.User.Context;
         var result = context.Ok();
-        var steps = context.Actor!.@event[step];
-        var sets = context.Actor!.@event[set];
+        var steps = (await context.Actor!.@event.On(step));
+        var sets = (await context.Actor!.@event.On(set));
         // once first: the JIT and the statics
         await steps.before.Start(step, context);
         await steps.after.Start(step, result, context);
@@ -83,10 +83,10 @@ public class StartTests
         await sets.after.Start(set, result, context);
 
         var from = GC.GetAllocatedBytesForCurrentThread();
-        var stepAnswer = await context.Actor!.@event[step].before.Start(step, context);
-        var stepResult = await context.Actor!.@event[step].after.Start(step, result, context);
-        var setAnswer = await context.Actor!.@event[set].before.Start(set, context);
-        var setResult = await context.Actor!.@event[set].after.Start(set, result, context);
+        var stepAnswer = await (await context.Actor!.@event.On(step)).before.Start(step, context);
+        var stepResult = await (await context.Actor!.@event.On(step)).after.Start(step, result, context);
+        var setAnswer = await (await context.Actor!.@event.On(set)).before.Start(set, context);
+        var setResult = await (await context.Actor!.@event.On(set)).after.Start(set, result, context);
         var allocated = GC.GetAllocatedBytesForCurrentThread() - from;
 
         await Assert.That(allocated).IsEqualTo(0L);
@@ -99,14 +99,14 @@ public class StartTests
     {
         var (goal, step, _) = Program();
         var ran = new List<string>();
-        Record(_app.type.list["goal"], When.before, ran, "goal type before");
-        Record(goal, When.before, ran, "goal before");
-        Record(_app.type.list["step"], When.before, ran, "step type before");
-        Record(step, When.before, ran, "step before");
-        Record(step, When.after, ran, "step after");
-        Record(_app.type.list["step"], When.after, ran, "step type after");
-        Record(goal, When.after, ran, "goal after");
-        Record(_app.type.list["goal"], When.after, ran, "goal type after");
+        await Record(_app.type.list["goal"], When.before, ran, "goal type before");
+        await Record(goal, When.before, ran, "goal before");
+        await Record(_app.type.list["step"], When.before, ran, "step type before");
+        await Record(step, When.before, ran, "step before");
+        await Record(step, When.after, ran, "step after");
+        await Record(_app.type.list["step"], When.after, ran, "step type after");
+        await Record(goal, When.after, ran, "goal after");
+        await Record(_app.type.list["goal"], When.after, ran, "goal type after");
 
         await (await goal.Start(_app.actor.list.User.Context)).IsSuccess();
 
@@ -122,16 +122,16 @@ public class StartTests
     {
         var (_, step, set) = Program();
         var ran = new List<string>();
-        _bound.Add(_app.actor.list.User.@event.Add(new global::app.@event.code.@this(set.Module, "start", global::app.@event.When.before, (_, _, ctx) =>
+        _bound.Add(await _app.actor.list.User.@event.Add(new global::app.@event.code.@this(set.Module, "start", global::app.@event.When.before, (_, _, ctx) =>
         {
             var instead = ctx.Ok("instead");
             instead.Handled = true;
             return Task.FromResult(instead);
         }, _app.actor.list.User, global::app.@event.code.@this.Always)));
-        Record(set.Module[set.Name]!, When.before, ran, "catalog before");
+        await Record(set.Module[set.Name]!, When.before, ran, "catalog before");
         global::app.data.@this? seen = null;
-        _bound.Add(_app.actor.list.User.@event.Add(new global::app.@event.code.@this(_app.type.list["action"], "start", global::app.@event.When.after, (_, result, ctx) => { seen = result; return Task.FromResult(ctx.Ok()); }, _app.actor.list.User, global::app.@event.code.@this.Always)));
-        Record(set.Module[set.Name]!, When.after, ran, "catalog after");
+        _bound.Add(await _app.actor.list.User.@event.Add(new global::app.@event.code.@this(_app.type.list["action"], "start", global::app.@event.When.after, (_, result, ctx) => { seen = result; return Task.FromResult(ctx.Ok()); }, _app.actor.list.User, global::app.@event.code.@this.Always)));
+        await Record(set.Module[set.Name]!, When.after, ran, "catalog after");
 
         var result = await step.Start(_app.actor.list.User.Context);
 
@@ -148,17 +148,17 @@ public class StartTests
     {
         var (_, step, set) = Program();
         var context = _app.actor.list.User.Context;
-        _bound.Add(_app.actor.list.User.@event.Add(new global::app.@event.code.@this(set.Module[set.Name]!, "start", global::app.@event.When.before, (_, _, ctx) =>
+        _bound.Add(await _app.actor.list.User.@event.Add(new global::app.@event.code.@this(set.Module[set.Name]!, "start", global::app.@event.When.before, (_, _, ctx) =>
         {
             var mocked = ctx.Ok("mocked");
             mocked.Handled = true;
             return Task.FromResult(mocked);
         }, _app.actor.list.User, global::app.@event.code.@this.Always)));
         var coverage = new global::app.test.Coverage();
-        coverage.Watch(context);
+        await coverage.Watch(context);
         // debug binds the same way coverage does: on the action type's after, for the User actor
         var watched = new List<string>();
-        Record(_app.type.list["action"], When.after, watched, "debug");
+        await Record(_app.type.list["action"], When.after, watched, "debug");
 
         var result = await step.Start(context);
 
@@ -172,11 +172,11 @@ public class StartTests
     {
         var (_, step, set) = Program();
         var context = _app.actor.list.User.Context;
-        _bound.Add(_app.actor.list.User.@event.Add(new global::app.@event.code.@this(set.Module[set.Name]!, "start", global::app.@event.When.after, (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Broke", 400))), _app.actor.list.User, global::app.@event.code.@this.Always)));
+        _bound.Add(await _app.actor.list.User.@event.Add(new global::app.@event.code.@this(set.Module[set.Name]!, "start", global::app.@event.When.after, (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Broke", 400))), _app.actor.list.User, global::app.@event.code.@this.Always)));
         var coverage = new global::app.test.Coverage();
-        coverage.Watch(context);
+        await coverage.Watch(context);
         global::app.data.@this? seen = null;
-        _bound.Add(_app.actor.list.User.@event.Add(new global::app.@event.code.@this(_app.type.list["action"], "start", global::app.@event.When.after, (_, result, ctx) => { seen = result; return Task.FromResult(ctx.Ok()); }, _app.actor.list.User, global::app.@event.code.@this.Always)));
+        _bound.Add(await _app.actor.list.User.@event.Add(new global::app.@event.code.@this(_app.type.list["action"], "start", global::app.@event.When.after, (_, result, ctx) => { seen = result; return Task.FromResult(ctx.Ok()); }, _app.actor.list.User, global::app.@event.code.@this.Always)));
 
         var result = await step.Start(context);
 

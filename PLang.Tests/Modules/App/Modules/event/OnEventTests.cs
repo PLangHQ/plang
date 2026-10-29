@@ -49,9 +49,9 @@ public class OnEventTests
 
         // held by the binding actor, in a goal's list, never on the type entry
         var goal = Goal("Some");
-        var before = _app.actor.list.User.@event[goal].before;
+        var before = (await _app.actor.list.User.@event.On(goal)).before;
         await Assert.That(before.Count).IsEqualTo(1);
-        await Assert.That(_app.actor.list.System.@event[goal].before.Count).IsEqualTo(0);
+        await Assert.That((await _app.actor.list.System.@event.On(goal)).before.Count).IsEqualTo(0);
         await Assert.That(before[0]).IsSameReferenceAs(binding);
         await Assert.That(binding.Actor).IsSameReferenceAs(_app.actor.list.User);
     }
@@ -142,10 +142,10 @@ public class OnEventTests
         await Bind("%!app.module.file.read.on.start%", "before", "Log");
 
         var events = _app.actor.list.User.@event;
-        await Assert.That(events[_app.Module("file")["read"]!].before.Count).IsEqualTo(1);
-        await Assert.That(events[_app.Module("file")["save"]!].before.Count).IsEqualTo(0);
-        await Assert.That(events[_app.Module("output")["write"]!].before.Count).IsEqualTo(0);
-        await Assert.That(_app.actor.list.System.@event[_app.Module("file")["read"]!].before.Count).IsEqualTo(0);
+        await Assert.That((await events.On(_app.Module("file")["read"]!)).before.Count).IsEqualTo(1);
+        await Assert.That((await events.On(_app.Module("file")["save"]!)).before.Count).IsEqualTo(0);
+        await Assert.That((await events.On(_app.Module("output")["write"]!)).before.Count).IsEqualTo(0);
+        await Assert.That((await _app.actor.list.System.@event.On(_app.Module("file")["read"]!)).before.Count).IsEqualTo(0);
     }
 
     // An event bound on a whole module runs for each of its actions, and for no other module's.
@@ -155,9 +155,9 @@ public class OnEventTests
         await Bind("%!app.module.file.on.start%", "before", "Log");
 
         var events = _app.actor.list.User.@event;
-        await Assert.That(events[_app.Module("file")["read"]!].before.Count).IsEqualTo(1);
-        await Assert.That(events[_app.Module("file")["save"]!].before.Count).IsEqualTo(1);
-        await Assert.That(events[_app.Module("output")["write"]!].before.Count).IsEqualTo(0);
+        await Assert.That((await events.On(_app.Module("file")["read"]!)).before.Count).IsEqualTo(1);
+        await Assert.That((await events.On(_app.Module("file")["save"]!)).before.Count).IsEqualTo(1);
+        await Assert.That((await events.On(_app.Module("output")["write"]!)).before.Count).IsEqualTo(0);
     }
 
     // an item's event that isn't one (before/after fused into the name) can never bind: the build refuses it, naming
@@ -340,7 +340,7 @@ public class OnEventTests
 
         await unbound.IsSuccess();
         await Assert.That(_app.actor.list.User.@event.Items()).IsEmpty();
-        await Assert.That(_app.actor.list.User.@event[Goal("Some")].before.Count).IsEqualTo(0);
+        await Assert.That((await _app.actor.list.User.@event.On(Goal("Some"))).before.Count).IsEqualTo(0);
     }
 
     [Test]

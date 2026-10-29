@@ -51,7 +51,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
     [Test] public async Task VarAsImageGifStrict_BuildsClean_FailsAtRuntime()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("upload", PngBytes);
+        await context.Variable.Set("upload", PngBytes);
 
         // Validate defers — value is a %var% reference.
         await Assert.That(await Handler("%upload%").Validate()).IsNull();

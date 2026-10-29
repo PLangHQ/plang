@@ -188,7 +188,7 @@ public partial class @this
         }
         await using var _call = call;
 
-        var on = context.Actor!.@event[Catalog];
+        var on = await context.Actor!.@event.On(Catalog);
         var data = await Attempt(context);
 
         // The error outcome — after the attempt, so a cache stores only the real work and a recovery runs outside the
@@ -217,7 +217,7 @@ public partial class @this
     /// </summary>
     internal async Task<global::app.data.@this> Attempt(actor.context.@this context)
     {
-        var answer = await context.Actor!.@event[Catalog].before.Start(this, context);
+        var answer = await (await context.Actor!.@event.On(Catalog)).before.Start(this, context);
         if (answer is not ({ Success: false } or { Handled: true }))
             answer = await Clauses.before.Start(this, context, answer) ?? answer;
         global::app.data.@this data;

@@ -17,7 +17,7 @@ public class ExistsTests
     public async Task Exists_ExistingVariable_ReturnsTrue()
     {
         var (context, _) = CreateContext();
-        context.Variable.Set("testVar", "testValue");
+        await context.Variable.Set("testVar", "testValue");
 
         var action = new Exists(context) { Name = new app.type.item.variable.@this("testVar", context.App.type.list) };
         var result = await action.Start();

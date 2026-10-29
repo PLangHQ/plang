@@ -20,9 +20,9 @@ public class AfterActionPayloadTests
     public async Task Cleanup() => await _app.DisposeAsync();
 
     // Binds handler on the action type's start, before or after, for the User actor.
-    private void Bind(global::app.@event.When when,
+    private async Task Bind(global::app.@event.When when,
         Func<global::app.type.item.@this, Data, global::app.actor.context.@this, Task<Data>> handler)
-        => _app.actor.list.User.@event.Add(new global::app.@event.code.@this(_app.type.list["action"], "start", when, handler,
+        => await _app.actor.list.User.@event.Add(new global::app.@event.code.@this(_app.type.list["action"], "start", when, handler,
             _app.actor.list.User, global::app.@event.code.@this.Always));
 
     // Runs a simple goal with one action (variable.set) so a single action start fires.
@@ -40,7 +40,7 @@ public class AfterActionPayloadTests
     public async Task AfterAction_Fires_PassesActionInstanceInPayload()
     {
         PrAction? captured = null;
-        Bind(global::app.@event.When.after, (item, _, context) => { captured = item as PrAction; return Task.FromResult(context.Ok()); });
+        await Bind(global::app.@event.When.after, (item, _, context) => { captured = item as PrAction; return Task.FromResult(context.Ok()); });
 
         await RunSimpleGoal();
 
@@ -54,7 +54,7 @@ public class AfterActionPayloadTests
     public async Task AfterAction_Fires_PassesResultDataInPayload()
     {
         Data? captured = null;
-        Bind(global::app.@event.When.after, (_, result, context) => { captured = result; return Task.FromResult(context.Ok()); });
+        await Bind(global::app.@event.When.after, (_, result, context) => { captured = result; return Task.FromResult(context.Ok()); });
 
         await RunSimpleGoal();
 
@@ -74,7 +74,7 @@ public class AfterActionPayloadTests
         _app.goal.list.Add(goal);
 
         var observed = new List<(string Module, string Name)>();
-        Bind(global::app.@event.When.after, (item, _, context) =>
+        await Bind(global::app.@event.When.after, (item, _, context) =>
         {
             if (item is PrAction action) observed.Add((action.Module.Name, action.Name));
             return Task.FromResult(context.Ok());
@@ -93,7 +93,7 @@ public class AfterActionPayloadTests
     {
         PrAction? seenAction = null;
         Data? seenResult = null;
-        Bind(global::app.@event.When.before, (item, result, context) =>
+        await Bind(global::app.@event.When.before, (item, result, context) =>
         {
             seenAction = item as PrAction;
             seenResult = result;
@@ -116,7 +116,7 @@ public class AfterActionPayloadTests
         _app.goal.list.Add(goal);
 
         Data? captured = null;
-        Bind(global::app.@event.When.after, (_, result, context) => { captured = result; return Task.FromResult(context.Ok()); });
+        await Bind(global::app.@event.When.after, (_, result, context) => { captured = result; return Task.FromResult(context.Ok()); });
 
         await goal.Start(_app.actor.list.User.Context);
 
@@ -131,7 +131,7 @@ public class AfterActionPayloadTests
     public async Task AfterAction_Payload_ActionCarriesStepAndGoalForSiteKey()
     {
         PrAction? captured = null;
-        Bind(global::app.@event.When.after, (item, _, context) => { captured = item as PrAction; return Task.FromResult(context.Ok()); });
+        await Bind(global::app.@event.When.after, (item, _, context) => { captured = item as PrAction; return Task.FromResult(context.Ok()); });
 
         await RunSimpleGoal();
 

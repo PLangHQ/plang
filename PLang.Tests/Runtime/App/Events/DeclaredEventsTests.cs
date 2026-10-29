@@ -16,9 +16,9 @@ public class DeclaredEventsTests : System.IAsyncDisposable
     {
         var window = new Window();
         global::app.data.@this? heard = null;
-        _app.actor.list.User.@event.Add(new global::app.@event.code.@this(window, "closed", global::app.@event.When.after, (_, data, _) => { heard = data; return System.Threading.Tasks.Task.FromResult(data); }, _app.actor.list.User, global::app.@event.code.@this.Always));
+        await _app.actor.list.User.@event.Add(new global::app.@event.code.@this(window, "closed", global::app.@event.When.after, (_, data, _) => { heard = data; return System.Threading.Tasks.Task.FromResult(data); }, _app.actor.list.User, global::app.@event.code.@this.Always));
 
-        var on = Ctx.Actor!.@event[window];
+        var on = (await Ctx.Actor!.@event.On(window));
         await on["closed"]!.after.Start(window, Ctx.Ok((global::app.type.item.text.@this)"{\"window\":\"closed\",\"id\":3}"), Ctx);
 
         await Assert.That(heard).IsNotNull();
@@ -30,7 +30,7 @@ public class DeclaredEventsTests : System.IAsyncDisposable
     [Test] public async Task AnUnboundWindow_StillAnswersItsDeclaredEvents()
     {
         var window = new Window();
-        var on = Ctx.Actor!.@event[window];
+        var on = (await Ctx.Actor!.@event.On(window));
 
         await Assert.That(on["opened"]).IsNotNull();
         var raised = await on["opened"]!.after.Start(window, Ctx.Ok(), Ctx);
@@ -57,9 +57,9 @@ public class DeclaredEventsTests : System.IAsyncDisposable
         var text = (global::app.type.item.text.@this)"plain";
         var window = new Window();
 
-        await Assert.That(Ctx.Actor!.@event[text].Names).DoesNotContain("click");
-        await Assert.That(Ctx.Actor!.@event[text]["closed"]).IsNull();
-        await Assert.That(Ctx.Actor!.@event[window]["click"]).IsNull();
+        await Assert.That((await Ctx.Actor!.@event.On(text)).Names).DoesNotContain("click");
+        await Assert.That((await Ctx.Actor!.@event.On(text))["closed"]).IsNull();
+        await Assert.That((await Ctx.Actor!.@event.On(window))["click"]).IsNull();
 
         var data = new global::app.data.@this("w", window, context: Ctx);
         var refused = await (await data.Get("on")).Get("click");

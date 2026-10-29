@@ -29,7 +29,7 @@ public class FullVarMatchTests
     {
         await using var app = new global::app.@this("/app").Testing();
         // Variables.Set wraps the value in Data; the variable's .Value should be unwrapped during As<T>.
-        app.actor.list.User.Context.Variable.Set("count", 42);
+        await app.actor.list.User.Context.Variable.Set("count", 42);
         var result = await MatrixRunner.RunAsync<FullVarMatch>(app,
             parameters: new[] { ("path", (object?)"%count%") });
 
@@ -202,13 +202,13 @@ public class ReResolveAcrossCallsTests
     {
         await using var app = new global::app.@this("/app").Testing();
 
-        app.actor.list.User.Context.Variable.Set("x", "first");
+        await app.actor.list.User.Context.Variable.Set("x", "first");
         var first = await MatrixRunner.RunAsync<ReResolveAcrossCalls>(app,
             parameters: new[] { ("value", (object?)"%x%") });
         var firstTyped = first.Data as global::app.data.@this<global::app.type.item.text.@this>;
         await Assert.That((await firstTyped!.Value())?.ToString()).IsEqualTo("first");
 
-        app.actor.list.User.Context.Variable.Set("x", "second");
+        await app.actor.list.User.Context.Variable.Set("x", "second");
         var second = await MatrixRunner.RunAsync<ReResolveAcrossCalls>(app,
             parameters: new[] { ("value", (object?)"%x%") });
         var secondTyped = second.Data as global::app.data.@this<global::app.type.item.text.@this>;
@@ -222,7 +222,7 @@ public class ReResolveAcrossCallsTests
         await using var app = new global::app.@this("/app").Testing();
         var sharedData = PLang.Tests.Shared.Make.Built(app.actor.list.User.Context, "value", "%x%");
 
-        app.actor.list.User.Context.Variable.Set("x", "v1");
+        await app.actor.list.User.Context.Variable.Set("x", "v1");
         var action1 = new PrAction(app.type.list)
         {
             Module = app.Module("matrix.resolution"),
@@ -236,7 +236,7 @@ public class ReResolveAcrossCallsTests
         // mutation; Value() on a stamped template renders live by design.
         await Assert.That(sharedData.Peek()?.ToString()).IsEqualTo("%x%");
 
-        app.actor.list.User.Context.Variable.Set("x", "v2");
+        await app.actor.list.User.Context.Variable.Set("x", "v2");
         var action2 = new PrAction(app.type.list)
         {
             Module = app.Module("matrix.resolution"),
@@ -256,7 +256,7 @@ public class ReResolveAcrossCallsTests
         var seen = new List<string?>();
         for (int i = 0; i < 3; i++)
         {
-            app.actor.list.User.Context.Variable.Set("i", $"value-{i}");
+            await app.actor.list.User.Context.Variable.Set("i", $"value-{i}");
             var r = await MatrixRunner.RunAsync<ReResolveAcrossCalls>(app,
                 parameters: new[] { ("value", (object?)"%i%") });
             var typed = r.Data as global::app.data.@this<global::app.type.item.text.@this>;
@@ -275,7 +275,7 @@ public class ConcurrentHandlersTests
     public async Task ConcurrentHandlers_ParallelExecuteAsync_NoSharedState()
     {
         await using var app = new global::app.@this("/app").Testing();
-        app.actor.list.User.Context.Variable.Set("x", "value");
+        await app.actor.list.User.Context.Variable.Set("x", "value");
 
         // Pre-register; run in parallel.
         MatrixRunner.EnsureRegistered<ConcurrentHandlers>(app);
@@ -305,7 +305,7 @@ public class ConcurrentHandlersTests
     public async Task ConcurrentHandlers_ParallelAsT_ResolveConsistently()
     {
         await using var app = new global::app.@this("/app").Testing();
-        app.actor.list.User.Context.Variable.Set("x", "shared");
+        await app.actor.list.User.Context.Variable.Set("x", "shared");
         var data = PLang.Tests.Shared.Make.Built(app.actor.list.User.Context, "v", "%x%");
 
         var tasks = Enumerable.Range(0, 50).Select(_ => Task.Run(() =>

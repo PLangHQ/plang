@@ -56,8 +56,8 @@ public class AskAnswerTests : System.IAsyncDisposable
 
     // a binding before the input's ask that answers "a" in the channel's place — what a step's `on ask on "input"`
     // binding does — never answers a consent: it may watch it, never answer it
-    private void Binding()
-        => app.actor.list.User.@event.Add(new global::app.@event.code.@this(channel, "ask", global::app.@event.When.before, (item, data, ctx) =>
+    private async Task Binding()
+        => await app.actor.list.User.@event.Add(new global::app.@event.code.@this(channel, "ask", global::app.@event.When.before, (item, data, ctx) =>
         {
             var answer = ctx.Ok("a");
             answer.Handled = true;
@@ -66,13 +66,13 @@ public class AskAnswerTests : System.IAsyncDisposable
 
     [Test] public async Task ABindingOnTheInputsAsk_DoesNotAnswerARead()
     {
-        Binding();
+        await Binding();
         await Refused(await user.File(System.IO.Path.Combine(outside, "secret.txt")).Read(user));
     }
 
     [Test] public async Task ABindingOnTheInputsAsk_DoesNotAnswerAnIdentityCreate()
     {
-        Binding();
+        await Binding();
         await Refused(await Create());
     }
 

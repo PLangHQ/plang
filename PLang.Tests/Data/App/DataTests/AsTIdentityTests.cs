@@ -154,7 +154,7 @@ public class AsTIdentityTests
     {
         var context = _app.actor.list.User.Context;
         var live = new global::app.data.@this("products", global::PLang.Tests.Shared.Make.List(new List<object?> { "a", "b" }, context), context: context);
-        context.Variable.Set(live);
+        await context.Variable.Set(live);
 
         var paramData = PLang.Tests.Shared.Make.Built(context, "Slot", "%products%");
         var canonical = await paramData.Follow(context);
@@ -171,7 +171,7 @@ public class AsTIdentityTests
     public async Task AsT_PlainDataTarget_ListWithNestedVars_Resolves()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("greeting", "hello");
+        await context.Variable.Set("greeting", "hello");
         var raw = new List<object?> { "%greeting%", "literal" };
         var paramData = TemplateStamp.Container("Slot", raw, context);
 
@@ -187,7 +187,7 @@ public class AsTIdentityTests
     public async Task AsT_PlainDataTarget_DictWithNestedVars_Resolves()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("prompt", "You are a compiler");
+        await context.Variable.Set("prompt", "You are a compiler");
         var raw = new Dictionary<string, object?> { ["role"] = "system", ["content"] = "%prompt%" };
         var paramData = TemplateStamp.Container("Slot", raw, context);
 
@@ -203,8 +203,8 @@ public class AsTIdentityTests
     public async Task AsT_PlainDataTarget_ListOfDictsWithNestedVars_DeepResolves()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("prompt", "You are a compiler");
-        context.Variable.Set("user", "build this goal");
+        await context.Variable.Set("prompt", "You are a compiler");
+        await context.Variable.Set("user", "build this goal");
         var raw = new List<object?>
         {
             new Dictionary<string, object?> { ["Role"] = "system", ["Content"] = "%prompt%" },

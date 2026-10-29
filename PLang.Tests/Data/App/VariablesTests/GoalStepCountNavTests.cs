@@ -18,7 +18,7 @@ public class GoalStepCountNavTests : System.IAsyncDisposable
             Make.Step("write out %y%"));
 
         var stack = _app.actor.list.User.Context.Variable;
-        stack.Set("goal", goal);
+        await stack.Set("goal", goal);
 
         var count = await new global::app.type.item.variable.@this("goal.step.Count", _app.type.list).Start(stack.Context);
 

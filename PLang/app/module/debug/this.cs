@@ -66,7 +66,7 @@ public sealed class @this
         var user = _context.App.actor.list.User;
 
         // the watched variables print each set and remove the User actor makes of them
-        setting.Watch(user, this);
+        await setting.Watch(user, this);
 
         // Subscribe to granular LLM tracing — each Llm.* flag writes its own block to the debug channel, whose
         // backing (stderr, a file) decides where it lands.
@@ -110,41 +110,41 @@ public sealed class @this
         // what it calls
 
         var actions = setting.Level.Value == global::app.module.debug.Level.Action;
-        Bind(user, types["goal"], [types["step"]], actions ? [types["action"]] : [], index);
+        await Bind(user, types["goal"], [types["step"]], actions ? [types["action"]] : [], index);
 
         // A goal named by its address may be one of plang's own: it is looked up now and bound there, by name. (A goal is
         // read when it is first called.)
         if (setting.Address is { } address && await (await _context.App.goal.list.Find(address)).Value() is global::app.goal.@this named)
-            Bind(user, named, named.Step.Items(), actions ? named.Step.Items().SelectMany(step => step.Code.Items()) : [], index);
+            await Bind(user, named, named.Step.Items(), actions ? named.Step.Items().SelectMany(step => step.Code.Items()) : [], index);
         return null;
     }
 
     // Debug's events on what starts, each on its owner: a goal's, a step's, an action's start — on their types (every
     // goal, step and action) or on one goal's own (itself, its steps, their actions). The marks are bound before the
     // watchers, so a frame is marked before it is shown.
-    private void Bind(global::app.actor.@this user, global::app.type.item.@this goal,
+    private async Task Bind(global::app.actor.@this user, global::app.type.item.@this goal,
         IEnumerable<global::app.type.item.@this> steps, IEnumerable<global::app.type.item.@this> actions, int? index)
     {
         // a start of an item of T on `owner`, handed to `handler` — when debugged, only where debug follows
-        void On<T>(global::app.type.item.@this owner, When when, Func<T, actor.context.@this, Task<data.@this>> handler, bool debugged)
+        ValueTask<global::app.@event.code.@this> On<T>(global::app.type.item.@this owner, When when, Func<T, actor.context.@this, Task<data.@this>> handler, bool debugged)
             where T : global::app.type.item.@this
             => user.@event.Add(new global::app.@event.code.@this(owner, "start", when,
                 (item, _, context) => handler((T)item, context), user,
                 (item, context) => item is T && (!debugged || Debugged(context))));
 
-        On<global::app.goal.@this>(goal, When.before, (each, context) => Attach(each, context, index), debugged: false);
+        await On<global::app.goal.@this>(goal, When.before, (each, context) => Attach(each, context, index), debugged: false);
         foreach (var step in steps)
         {
             if (index != null)
-                On<global::app.goal.step.@this>(step, When.before, (each, context) => Attach(each, context, index.Value), debugged: false);
-            On<global::app.goal.step.@this>(step, When.before, Before, debugged: true);
-            On<global::app.goal.step.@this>(step, When.after, After, debugged: true);
+                await On<global::app.goal.step.@this>(step, When.before, (each, context) => Attach(each, context, index.Value), debugged: false);
+            await On<global::app.goal.step.@this>(step, When.before, Before, debugged: true);
+            await On<global::app.goal.step.@this>(step, When.after, After, debugged: true);
         }
-        On<global::app.goal.@this>(goal, When.after, After, debugged: true);
+        await On<global::app.goal.@this>(goal, When.after, After, debugged: true);
         foreach (var action in actions)
         {
-            On<global::app.goal.step.action.@this>(action, When.before, Before, debugged: true);
-            On<global::app.goal.step.action.@this>(action, When.after, After, debugged: true);
+            await On<global::app.goal.step.action.@this>(action, When.before, Before, debugged: true);
+            await On<global::app.goal.step.action.@this>(action, When.after, After, debugged: true);
         }
     }
 

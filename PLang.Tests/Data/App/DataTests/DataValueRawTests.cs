@@ -42,7 +42,7 @@ public class DataValueRawTests
     [Test]
     public async Task Value_StringWithVarPlaceholder_ReturnsRawNotSubstituted()
     {
-        _app.actor.list.User.Context.Variable.Set("name", "world");
+        await _app.actor.list.User.Context.Variable.Set("name", "world");
         var data = new Data("greeting", "Hello %name%", context: _app.actor.list.User.Context);
 
         await Assert.That((await data.Value())?.ToString()).IsEqualTo("Hello %name%");
@@ -52,7 +52,7 @@ public class DataValueRawTests
     [Test]
     public async Task Value_ListWithVarPlaceholders_ReturnsRawListUnchanged()
     {
-        _app.actor.list.User.Context.Variable.Set("x", "actual");
+        await _app.actor.list.User.Context.Variable.Set("x", "actual");
         var raw = new List<object?> { "%x%", "literal", "%x%" };
         var data = new Data("list", raw, context: _app.actor.list.User.Context);
 
@@ -67,7 +67,7 @@ public class DataValueRawTests
     [Test]
     public async Task Value_DictWithVarPlaceholders_ReturnsRawDictUnchanged()
     {
-        _app.actor.list.User.Context.Variable.Set("user", "alice");
+        await _app.actor.list.User.Context.Variable.Set("user", "alice");
         var raw = new Dictionary<string, object?> { ["name"] = "%user%", ["role"] = "admin" };
         var data = new Data("dict", raw, context: _app.actor.list.User.Context);
 

@@ -220,15 +220,15 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     public virtual async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key)
-        => await Member(parent, key) ?? On(parent, key) ?? await Setting(parent, key)
+        => await Member(parent, key) ?? await On(parent, key) ?? await Setting(parent, key)
            ?? (this as property.IOwner)?.property[key] ?? parent.Context.NotFound(key);
 
     // This value's moments for the asker's actor when the key is `on` — the event door, read by name though no member
     // lists it.
-    private protected global::app.data.@this? On(global::app.data.@this parent, string key)
+    private protected async System.Threading.Tasks.ValueTask<global::app.data.@this?> On(global::app.data.@this parent, string key)
     {
         if (!string.Equals(key, "on", System.StringComparison.OrdinalIgnoreCase)) return null;
-        var on = parent.Context.Actor!.@event[this];
+        var on = await parent.Context.Actor!.@event.On(this);
         return parent.Context.App.type.list.Kind(on.GetType()).Data(parent.Name, on, parent, parent.Context);
     }
 

@@ -139,7 +139,7 @@ public sealed partial class @this
         }
         await using var _frame = frame;
 
-        var on = context.Actor!.@event[this];
+        var on = await context.Actor!.@event.On(this);
         var answer = await on.before.Start(this, context);
         // action.list owns the chain loop, its fire, and a program's error that travels as an exception
         var result = answer is { Success: false } or { Handled: true } ? answer : await Code.Start(context);

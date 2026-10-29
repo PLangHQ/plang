@@ -162,6 +162,81 @@
         "health": "C# all green (Modules 1486 = baseline + 3 pins); plang 311 pass, 0 fail, 1 stale (the new stage 1 test, unbuilt: needs the decider key)",
         "notes": "plang-builder builds UnbindTakesTheEvent and refreshes 14 .pr whose Event records type event. Stage 2 next."
       }
+    },
+    {
+      "id": "cddf23fe-8387-48e5-a33f-125921dbf3c5",
+      "bot": "coder",
+      "timestamp_start": "2026-10-29T17:40:00+00:00",
+      "timestamp_end": "2026-10-29T19:00:26.712295+00:00",
+      "intent": "Stage 5: system events and the actor's events loaded lazily on first ask (rulings 53-59)",
+      "before": {
+        "assumptions": "type.Create keeps its signature; one async door per list",
+        "risk": "load cycles between actors; sync callers"
+      },
+      "plan": ".bot/event-action/coder/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/event/list/this.cs",
+            "PLang/app/type/this.cs",
+            "PLang/app/snapshot/this.cs",
+            "PLang/app/origin/",
+            "PLang/app/actor/this.cs",
+            "PLang/app/event/setting/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "medium",
+          "context": "lazy load; System loads first (a cycle on one .pr read otherwise); snapshot read loads before it binds; On(name) one answer"
+        },
+        {
+          "paths": [
+            "PLang/app/goal/",
+            "PLang/app/channel/this.cs",
+            "PLang/app/type/item/",
+            "PLang/app/module/",
+            "PLang/app/test/",
+            "PLang/Executor.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "callers on the async door; test session opens before any set"
+        },
+        {
+          "paths": [
+            "PLang/app/event/Scope.cs"
+          ],
+          "type": "delete",
+          "category": "code",
+          "confidence": "high",
+          "context": "start.md:72"
+        },
+        {
+          "paths": [
+            "PLang.Tests/"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "pins for stage 5; awaited bare sets; surface re-pinned (53, 54, start.md:72)"
+        },
+        {
+          "paths": [
+            "test/module/on/event/afteraction/EventAfterAction.test.goal",
+            "test/plan/event-action/app/event/AfterEachLlmQuery/AfterEachLlmQuery.test.goal"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "comments reworded (57)"
+        }
+      ],
+      "after": {
+        "status": "stage 5 committed; two pins open with the architect",
+        "health": "C# green but the two AMakersLaterEvent pins; plang 314/320 before the builder's rebuilds",
+        "notes": "see summary.md Next"
+      }
     }
   ]
 }

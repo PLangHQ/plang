@@ -63,7 +63,7 @@ public class VariablesTests : System.IAsyncDisposable
         var stack = new Variables(_app.actor.list.User.Context);
         var ov = _app.Data("test", "value");
 
-        stack.Set(ov);
+        await stack.Set(ov);
 
         var retrieved = await stack.Get("test");
         await Assert.That(retrieved).IsEqualTo(ov);
@@ -74,7 +74,7 @@ public class VariablesTests : System.IAsyncDisposable
     {
         var stack = new Variables(_app.actor.list.User.Context);
 
-        stack.Set("name", "John");
+        await stack.Set("name", "John");
 
         var ov = await stack.Get("name");
         await Assert.That(ov).IsNotNull();
@@ -86,7 +86,7 @@ public class VariablesTests : System.IAsyncDisposable
     {
         var stack = new Variables(_app.actor.list.User.Context);
 
-        stack.Set("count", 42);
+        await stack.Set("count", 42);
 
         var ov = await stack.Get("count");
         await Assert.That(ov!.Type).IsNotNull();
@@ -97,9 +97,9 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Set_UpdatesExistingValue()
     {
         var stack = new Variables(_app.actor.list.User.Context);
-        stack.Set("name", "John");
+        await stack.Set("name", "John");
 
-        stack.Set("name", "Jane");
+        await stack.Set("name", "Jane");
 
         var ov = await stack.Get("name");
         await Assert.That((await ov!.Value())?.ToString()).IsEqualTo("Jane");
@@ -109,9 +109,9 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Set_UpdatesType()
     {
         var stack = new Variables(_app.actor.list.User.Context);
-        stack.Set("value", "text");
+        await stack.Set("value", "text");
 
-        stack.Set("value", 42);
+        await stack.Set("value", 42);
 
         var ov = await stack.Get("value");
         await Assert.That(ov!.Type!.Name).IsEqualTo("number");
@@ -128,7 +128,7 @@ public class VariablesTests : System.IAsyncDisposable
         var stack = new Variables(_app.actor.list.User.Context);
         var original = _app.Data("originalName", 42);
 
-        stack.Set("alias", original);
+        await stack.Set("alias", original);
 
         var retrieved = await stack.Get("alias");
         await Assert.That(object.ReferenceEquals(retrieved, original)).IsTrue();
@@ -309,7 +309,7 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Get_ReturnsData()
     {
         var stack = new Variables(_app.actor.list.User.Context);
-        stack.Set("test", "value");
+        await stack.Set("test", "value");
 
         var ov = await stack.Get("test");
 
@@ -322,7 +322,7 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Get_CaseInsensitive()
     {
         var stack = new Variables(_app.actor.list.User.Context);
-        stack.Set("Name", "John");
+        await stack.Set("Name", "John");
 
         await Assert.That((await (await stack.Get("name"))!.Value())?.ToString()).IsEqualTo("John");
         await Assert.That((await (await stack.Get("NAME"))!.Value())?.ToString()).IsEqualTo("John");
@@ -353,7 +353,7 @@ public class VariablesTests : System.IAsyncDisposable
     {
         var stack = _app.actor.list.User.Context.Variable;
         var data = new Dictionary<string, object?> { { "name", "John" }, { "age", 30 } };
-        stack.Set("user", data);
+        await stack.Set("user", data);
 
         var name = await new global::app.type.item.variable.@this("user.name", _app.type.list).Start(stack.Context);
         var age = await new global::app.type.item.variable.@this("user.age", _app.type.list).Start(stack.Context);
@@ -367,7 +367,7 @@ public class VariablesTests : System.IAsyncDisposable
     {
         var stack = new Variables(_app.actor.list.User.Context);
         var items = new List<object> { "first", "second", "third" };
-        stack.Set("items", items);
+        await stack.Set("items", items);
 
         // Note: Index notation may not work correctly due to implementation
         // Verify the list itself is stored and accessible
@@ -390,7 +390,7 @@ public class VariablesTests : System.IAsyncDisposable
             new Dictionary<string, object?> { { "id", 42 }, { "name", "first" } },
             new Dictionary<string, object?> { { "id", 99 }, { "name", "second" } }
         };
-        stack.Set("arr", arr);
+        await stack.Set("arr", arr);
 
         var result = await new global::app.type.item.variable.@this("arr[0].id", _app.type.list).Start(stack.Context);
 
@@ -413,7 +413,7 @@ public class VariablesTests : System.IAsyncDisposable
                 }
             }
         };
-        stack.Set("list", list);
+        await stack.Set("list", list);
 
         var result = await new global::app.type.item.variable.@this("list[0].items[0].val", _app.type.list).Start(stack.Context);
 
@@ -429,8 +429,8 @@ public class VariablesTests : System.IAsyncDisposable
         await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var stack = app.actor.list.User.Context.Variable;
         var items = new List<object> { "zero", "one", "two" };
-        stack.Set("items", items);
-        stack.Set("idx", 1);
+        await stack.Set("items", items);
+        await stack.Set("idx", 1);
 
         var result = await new global::app.type.item.variable.@this("items[idx]", _app.type.list).Start(stack.Context);
 
@@ -443,7 +443,7 @@ public class VariablesTests : System.IAsyncDisposable
     {
         var stack = _app.actor.list.User.Context.Variable;
         var items = new List<object> { "first", "second", "third" };
-        stack.Set("items", items);
+        await stack.Set("items", items);
 
         var result = await new global::app.type.item.variable.@this("items[1]", _app.type.list).Start(stack.Context);
 
@@ -464,7 +464,7 @@ public class VariablesTests : System.IAsyncDisposable
                 }
             }
         };
-        stack.Set("data", data);
+        await stack.Set("data", data);
 
         var name = await new global::app.type.item.variable.@this("data.users[1].name", _app.type.list).Start(stack.Context);
 
@@ -475,7 +475,7 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Get_Generic_ReturnsTypedValue()
     {
         var stack = new Variables(_app.actor.list.User.Context);
-        stack.Set("count", 42);
+        await stack.Set("count", 42);
 
         var value = await stack.Get<global::app.type.item.number.@this>("count");
 
@@ -496,7 +496,7 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task GetValue_ReturnsRawValue()
     {
         var stack = new Variables(_app.actor.list.User.Context);
-        stack.Set("test", "hello");
+        await stack.Set("test", "hello");
 
         var value = await stack.GetValue("test");
 
@@ -517,7 +517,7 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Contains_ExistingName_ReturnsTrue()
     {
         var stack = new Variables(_app.actor.list.User.Context);
-        stack.Set("test", "value");
+        await stack.Set("test", "value");
 
         await Assert.That(stack.Contains("test")).IsTrue();
     }
@@ -526,7 +526,7 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Contains_CaseInsensitive()
     {
         var stack = new Variables(_app.actor.list.User.Context);
-        stack.Set("Test", "value");
+        await stack.Set("Test", "value");
 
         await Assert.That(stack.Contains("test")).IsTrue();
         await Assert.That(stack.Contains("TEST")).IsTrue();
@@ -544,7 +544,7 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Remove_RemovesVariable()
     {
         var stack = new Variables(_app.actor.list.User.Context);
-        stack.Set("test", "value");
+        await stack.Set("test", "value");
 
         var removed = await stack.Remove("test");
 
@@ -566,7 +566,7 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Remove_CaseInsensitive()
     {
         var stack = new Variables(_app.actor.list.User.Context);
-        stack.Set("Test", "value");
+        await stack.Set("Test", "value");
 
         var removed = await stack.Remove("TEST");
 
@@ -578,8 +578,8 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task GetAll_ReturnsNonSystemVariables()
     {
         var stack = new Variables(_app.actor.list.User.Context);
-        stack.Set("name", "John");
-        stack.Set("age", 30);
+        await stack.Set("name", "John");
+        await stack.Set("age", 30);
 
         var all = stack.GetAll().ToList();
         var names = all.Select(kvp => kvp.Key).ToList();
@@ -592,9 +592,9 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task GetAll_OrderedByUpdated()
     {
         var stack = new Variables(_app.actor.list.User.Context);
-        stack.Set("first", 1);
+        await stack.Set("first", 1);
         await Task.Delay(10);
-        stack.Set("second", 2);
+        await stack.Set("second", 2);
 
         var all = stack.GetAll().ToList();
 
@@ -606,8 +606,8 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Clear_RemovesNonSystemVariables()
     {
         var stack = new Variables(_app.actor.list.User.Context);
-        stack.Set("name", "John");
-        stack.Set("age", 30);
+        await stack.Set("name", "John");
+        await stack.Set("age", 30);
 
         stack.Clear();
 
@@ -619,7 +619,7 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Clear_PreservesSystemVariables()
     {
         var stack = new Variables(_app.actor.list.User.Context);
-        stack.Set("name", "John");
+        await stack.Set("name", "John");
 
         stack.Clear();
 
@@ -637,7 +637,7 @@ public class VariablesTests : System.IAsyncDisposable
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         // Variables set through global::app.actor.context.@this's Variables get context stamped
-        context.Variable.Set("name", "John");
+        await context.Variable.Set("name", "John");
 
         await Assert.That((await context.Variable.Get("name"))!.Context).IsEqualTo(context);
     }
@@ -649,7 +649,7 @@ public class VariablesTests : System.IAsyncDisposable
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         var data = new Data("test", "hello", context: engine.actor.list.User.Context);
-        context.Variable.Set(data);
+        await context.Variable.Set(data);
 
         // A stored Data keeps the context it was born with — storing never re-points it.
         await Assert.That(data.Context).IsEqualTo(engine.actor.list.User.Context);
@@ -674,7 +674,7 @@ public class VariablesAccessorTests : System.IAsyncDisposable
         goal.Child.Add(new global::app.goal.@this(_app.type.list) { Name = "ProcessGroup" });
         goal.Child.Add(new global::app.goal.@this(_app.type.list) { Name = "LlmFixer" });
         goal.Child.Add(new global::app.goal.@this(_app.type.list) { Name = "HandleFailure" });
-        stack.Set("goal", goal);
+        await stack.Set("goal", goal);
 
         var name0 = await new global::app.type.item.variable.@this("goal.Child[0].Name", _app.type.list).Start(stack.Context);
         var name1 = await new global::app.type.item.variable.@this("goal.Child[1].Name", _app.type.list).Start(stack.Context);
@@ -691,7 +691,7 @@ public class VariablesAccessorTests : System.IAsyncDisposable
     {
         var stack = _app.actor.list.User.Context.Variable;
         var goal = new global::app.goal.@this(_app.type.list) { Name = "BuildGoal" };
-        stack.Set("goal", goal);
+        await stack.Set("goal", goal);
 
         var name = await new global::app.type.item.variable.@this("goal.Name", _app.type.list).Start(stack.Context);
 
@@ -706,7 +706,7 @@ public class VariablesAccessorTests : System.IAsyncDisposable
         var goal = new global::app.goal.@this(_app.type.list) { Name = "BuildGoal" };
         goal.Child.Add(new global::app.goal.@this(_app.type.list) { Name = "Sub1" });
         goal.Child.Add(new global::app.goal.@this(_app.type.list) { Name = "Sub2" });
-        stack.Set("goal", goal);
+        await stack.Set("goal", goal);
 
         var count = await new global::app.type.item.variable.@this("goal.Child.Count", _app.type.list).Start(stack.Context);
 
@@ -722,7 +722,7 @@ public class VariablesAccessorTests : System.IAsyncDisposable
         goal.Child.Add(new global::app.goal.@this(_app.type.list) { Name = "SubGoal" });
         var step = new global::app.goal.step.@this(_app.type.list) { Index = 0, Text = "original" };
         goal.Step.Add(step);
-        stack.Set("goal", goal);
+        await stack.Set("goal", goal);
 
         // Simulate what builder.merge does: set %goal.Step[0]% = newStep
         var newStep = new global::app.goal.step.@this(_app.type.list) { Index = 0, Text = "updated" };
@@ -748,7 +748,7 @@ public class VariablesAccessorTests : System.IAsyncDisposable
     {
         var stack = new Variables(_app.actor.list.User.Context);
         var goal = new global::app.goal.@this(_app.type.list) { Name = "MyGoal" };
-        stack.Set("goal", goal);
+        await stack.Set("goal", goal);
 
         // A goal is a plang item now (the hosts-stay-hosts model was reversed) — it rides as
         // ITSELF, not wrapped in a clr carrier. The Data holds the goal directly.

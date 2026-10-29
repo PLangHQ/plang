@@ -19,7 +19,7 @@ public class ForeachTests
     {
         var context = _app.actor.list.User.Context;
         var items = new List<object?> { "a", "b", "c" };
-        context.Variable.Set("items", items);
+        await context.Variable.Set("items", items);
 
         _app.goal.list.Add(new Goal(_app.type.list) { Name = "ProcessItem", Path = global::app.type.item.path.@this.Resolve("/ProcessItem.goal", _app.actor.list.User.Context), Step = new GoalSteps(_app.type.list) });
 
@@ -44,7 +44,7 @@ public class ForeachTests
     public async Task Foreach_EmptyCollection_ReturnsZeroCount()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("items", new List<object?>());
+        await context.Variable.Set("items", new List<object?>());
 
         var action = global::PLang.Tests.Shared.Make.Action(context, "loop", "foreach",
             ("collection", "%items%"), global::PLang.Tests.Shared.Make.Param(context, "Item", "%item%", "variable"));
@@ -60,7 +60,7 @@ public class ForeachTests
     public async Task Foreach_SetsItemVariable()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("items", new List<object?> { "hello" });
+        await context.Variable.Set("items", new List<object?> { "hello" });
 
         _app.goal.list.Add(new Goal(_app.type.list) { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", _app.actor.list.User.Context), Step = new GoalSteps(_app.type.list) });
 
@@ -86,7 +86,7 @@ public class ForeachTests
     {
         var context = _app.actor.list.User.Context;
         var dict = new Dictionary<string, object?> { ["name"] = "Alice", ["age"] = 30 };
-        context.Variable.Set("dict", dict);
+        await context.Variable.Set("dict", dict);
 
         _app.goal.list.Add(new Goal(_app.type.list) { Name = "DictGoal", Path = global::app.type.item.path.@this.Resolve("/DictGoal.goal", _app.actor.list.User.Context), Step = new GoalSteps(_app.type.list) });
 
@@ -109,7 +109,7 @@ public class ForeachTests
         var context = _app.actor.list.User.Context;
         // Use single-entry dict so final state = only iteration
         var dict = new Dictionary<string, object?> { ["greeting"] = "hello" };
-        context.Variable.Set("dict", dict);
+        await context.Variable.Set("dict", dict);
 
         _app.goal.list.Add(new Goal(_app.type.list) { Name = "Noop", Path = global::app.type.item.path.@this.Resolve("/Noop.goal", _app.actor.list.User.Context), Step = new GoalSteps(_app.type.list) });
 
@@ -151,7 +151,7 @@ public class ForeachTests
     public async Task Foreach_Cancellation_StopsIteration()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("items", new List<object?> { "a", "b", "c", "d", "e" });
+        await context.Variable.Set("items", new List<object?> { "a", "b", "c", "d", "e" });
 
         var cts = new CancellationTokenSource();
         context.PushCancellation(cts);

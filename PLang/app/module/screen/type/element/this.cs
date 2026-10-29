@@ -34,7 +34,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>It was clicked: what is bound on its click runs, handed the click (the window it was in, where).</summary>
     internal async System.Threading.Tasks.Task Clicked(global::app.data.@this click, global::app.actor.context.@this context)
     {
-        var clicked = context.Actor!.@event[this]["click"]!;
+        var clicked = (await context.Actor!.@event.On(this))["click"]!;
         var before = await clicked.before.Start(this, context, click);
         if (before is { Success: false } or { Handled: true }) return;
         await clicked.after.Start(this, before ?? click, context);

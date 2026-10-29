@@ -14,20 +14,20 @@ public class CodeEventsTests
 
         // coverage, on every action's start
         var coverage = new global::app.test.Coverage();
-        coverage.Watch(context);
+        await coverage.Watch(context);
         // a mock: answers in variable.set's place
-        user.@event.Add(new global::app.@event.code.@this(app.Module("variable")["set"]!, "start", global::app.@event.When.before, (_, _, ctx) =>
+        await user.@event.Add(new global::app.@event.code.@this(app.Module("variable")["set"]!, "start", global::app.@event.When.before, (_, _, ctx) =>
         {
             var mocked = ctx.Ok("mocked");
             mocked.Handled = true;
             return Task.FromResult(mocked);
         }, user, global::app.@event.code.@this.Always));
         // the test runner's timing, after every step
-        user.@event.Add(new global::app.@event.code.@this(app.type.list["step"], "start", global::app.@event.When.after,
+        await user.@event.Add(new global::app.@event.code.@this(app.type.list["step"], "start", global::app.@event.When.after,
             (_, result, _) => { ran.Add("timed"); return Task.FromResult(result); }, user, global::app.@event.code.@this.Always));
         // debug's watch, on one variable's name
         var watched = new global::app.type.item.variable.parser.@this("%count%", app.type.list).Variable.Single();
-        user.@event.Add("count", new global::app.@event.code.@this(watched, "set", global::app.@event.When.after,
+        await user.@event.Add("count", new global::app.@event.code.@this(watched, "set", global::app.@event.When.after,
             (_, result, _) => { ran.Add("watched"); return Task.FromResult(result); }, user, global::app.@event.code.@this.Always));
 
         var goal = Make.Goal(context, "Main", Make.Step("set %x% = one",

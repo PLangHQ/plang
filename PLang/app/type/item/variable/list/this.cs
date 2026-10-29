@@ -188,30 +188,27 @@ public partial class @this
     // The variable type — once the app has it: the actors' stores are born before the app's types.
     private global::app.type.@this? type => _context.App.variable?.type;
 
-    // The moments a set or a remove of `name` runs for this memory's actor: the ones bound on that name (which take in
-    // the variable type's too), else the variable type's; none before the app has its types.
-    private global::app.@event.on.@this? Moments(string name)
-        => _context.Actor is not { } actor || type is not { } variable ? null : actor.@event[name] ?? actor.@event[variable];
+    // The moments a set or a remove of `name` runs for this memory's actor, as its events answer for the name; none
+    // before the app has its types.
+    private async System.Threading.Tasks.ValueTask<global::app.@event.on.@this?> Moments(string name)
+        => _context.Actor is not { } actor || type is null ? null : await actor.@event.On(name);
 
     // What is bound before `name` changes to `value` (the moment `moment`): null to go on — nothing bound, or nothing
     // refused — else a failure or a Handled answer, which is the write's answer. The variable is made only when
     // something is bound there.
-    private System.Threading.Tasks.ValueTask<data.@this?> Before(string moment, string name, object? value)
-        => Moments(name)?[moment] is { before.Count: > 0 } on
-            ? Before(on, name, value as data.@this ?? new data.@this(name, value, context: _context)) : default;
-
-    private async System.Threading.Tasks.ValueTask<data.@this?> Before(global::app.@event.on.@this moment, string name, data.@this about)
+    private async System.Threading.Tasks.ValueTask<data.@this?> Before(string moment, string name, object? value)
     {
-        var answer = await moment.before.Start(Named(moment, name), _context, about);
+        if ((await Moments(name))?[moment] is not { before.Count: > 0 } on) return null;
+        var answer = await on.before.Start(Named(on, name), _context, value as data.@this ?? new data.@this(name, value, context: _context));
         return answer is { Success: false } or { Handled: true } ? answer : null;
     }
 
     // `name` changed from `before` (null: it was new) to `stored`: the call stack records it for its history, then
     // what is bound after the set starts on the stored Data — its answer is the set's.
-    private System.Threading.Tasks.ValueTask<data.@this> After(string name, object? before, data.@this stored)
+    private async System.Threading.Tasks.ValueTask<data.@this> After(string name, object? before, data.@this stored)
     {
         _context.call.Record(this, name, before);
-        return Moments(name)?.set is { after.Count: > 0 } set ? set.after.Start(Named(set, name), stored, _context) : new(stored);
+        return (await Moments(name))?.set is { after.Count: > 0 } set ? await set.after.Start(Named(set, name), stored, _context) : stored;
     }
 
     // The variable named `name`, as `moment`'s events are handed it: the one the name's moments were made with, else read
@@ -357,7 +354,7 @@ public partial class @this
         if (!_variables.TryGetValue(name, out var binding)) return _context.NotFound(name);
         if (await Before("remove", name, binding) is { } refused) return refused;
         if (!Rows.TryRemove(name, out var removed)) return _context.NotFound(name);
-        return Moments(name)?.remove is { after.Count: > 0 } remove
+        return (await Moments(name))?.remove is { after.Count: > 0 } remove
             ? await remove.after.Start(Named(remove, name), removed, _context) : removed;
     }
 

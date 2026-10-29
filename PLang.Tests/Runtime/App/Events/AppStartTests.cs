@@ -1,5 +1,4 @@
 using When = global::app.@event.When;
-using Scope = global::app.@event.Scope;
 
 namespace PLang.Tests.App.Events;
 
@@ -59,14 +58,14 @@ public class AppStartTests
         var ran = new List<string>();
         // the entry goal runs as the User: the app's start runs the User's events, never the System's
         var user = app.actor.list.User;
-        user.@event.Add(new global::app.@event.code.@this(app, "start", global::app.@event.When.before, (item, _, ctx) => { lock (ran) ran.Add($"before {(item as global::app.@this)?.Name(ctx)}"); return Task.FromResult(ctx.Ok()); }, user, global::app.@event.code.@this.Always));
-        user.@event.Add(new global::app.@event.code.@this(app, "start", global::app.@event.When.after, async (_, result, ctx) =>
+        await user.@event.Add(new global::app.@event.code.@this(app, "start", global::app.@event.When.before, (item, _, ctx) => { lock (ran) ran.Add($"before {(item as global::app.@this)?.Name(ctx)}"); return Task.FromResult(ctx.Ok()); }, user, global::app.@event.code.@this.Always));
+        await user.@event.Add(new global::app.@event.code.@this(app, "start", global::app.@event.When.after, async (_, result, ctx) =>
         {
             var x = (await ctx.Variable.Get("x")).IsInitialized;
             lock (ran) ran.Add($"after x={x}");
             return ctx.Ok();
         }, user, global::app.@event.code.@this.Always));
-        app.actor.list.System.@event.Add(new global::app.@event.code.@this(app, "start", global::app.@event.When.before, (_, _, ctx) => { lock (ran) ran.Add("system's"); return Task.FromResult(ctx.Ok()); }, app.actor.list.System, global::app.@event.code.@this.Always));
+        await app.actor.list.System.@event.Add(new global::app.@event.code.@this(app, "start", global::app.@event.When.before, (_, _, ctx) => { lock (ran) ran.Add("system's"); return Task.FromResult(ctx.Ok()); }, app.actor.list.System, global::app.@event.code.@this.Always));
 
         var result = await app.Start();
 
@@ -78,7 +77,7 @@ public class AppStartTests
     [Test] public async Task ARefusingBefore_IsTheAnswer_AndTheGoalDoesntRun()
     {
         await using var app = await App();
-        app.actor.list.User.@event.Add(new global::app.@event.code.@this(app, "start", global::app.@event.When.before, (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Refused", 400))), app.actor.list.User, global::app.@event.code.@this.Always));
+        await app.actor.list.User.@event.Add(new global::app.@event.code.@this(app, "start", global::app.@event.When.before, (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Refused", 400))), app.actor.list.User, global::app.@event.code.@this.Always));
 
         var result = await app.Start();
 
@@ -90,7 +89,7 @@ public class AppStartTests
     [Test] public async Task ACancellingBefore_IsTheAnswer_AndTheGoalDoesntRun()
     {
         await using var app = await App();
-        app.actor.list.User.@event.Add(new global::app.@event.code.@this(app, "start", global::app.@event.When.before, (_, _, ctx) =>
+        await app.actor.list.User.@event.Add(new global::app.@event.code.@this(app, "start", global::app.@event.When.before, (_, _, ctx) =>
         {
             var instead = ctx.Ok("instead");
             instead.Handled = true;

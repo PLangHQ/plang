@@ -42,8 +42,8 @@ public sealed class Coverage
     /// (bound on the action type's <c>on.start.after</c>), and the branch a condition takes when it fires (its
     /// own result is truthy), keyed by its position in the step's action chain. Answers the event; whoever
     /// watches removes it when the watch ends.</summary>
-    public global::app.@event.@this Watch(global::app.actor.context.@this context)
-        => context.Actor!.@event.Add(new global::app.@event.code.@this(context.App.type.list["action"], "start", global::app.@event.When.after,
+    public async System.Threading.Tasks.ValueTask<global::app.@event.@this> Watch(global::app.actor.context.@this context)
+        => await context.Actor!.@event.Add<global::app.@event.@this>(new global::app.@event.code.@this(context.App.type.list["action"], "start", global::app.@event.When.after,
             async (item, result, ctx) =>
             {
                 if (item is not global::app.goal.step.action.@this action) return ctx.Ok();

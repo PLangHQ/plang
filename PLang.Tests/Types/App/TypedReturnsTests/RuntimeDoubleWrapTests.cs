@@ -35,7 +35,7 @@ public class RuntimeDoubleWrapTests
     public async Task ListFirst_OnPopulatedList_ValueIsRawNotData()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("xs", new List<object?> { 42L, "two", "three" });
+        await context.Variable.Set("xs", new List<object?> { 42L, "two", "three" });
 
         var action = new First(context) { ListName = new global::app.type.item.variable.@this("xs", context.App.type.list) };
         await action.Attach(null, context);
@@ -51,7 +51,7 @@ public class RuntimeDoubleWrapTests
     public async Task ListGet_OnPopulatedList_ValueIsRawNotData()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("xs", new List<object?> { "a", "b", "c" });
+        await context.Variable.Set("xs", new List<object?> { "a", "b", "c" });
 
         var action = new Get(context) { ListName = new global::app.type.item.variable.@this("xs", context.App.type.list), Index = (global::app.type.item.number.@this)1 };
         await action.Attach(null, context);
@@ -66,7 +66,7 @@ public class RuntimeDoubleWrapTests
     public async Task ListLast_OnPopulatedList_ValueIsRawNotData()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("xs", new List<object?> { 1L, 2L, 3L });
+        await context.Variable.Set("xs", new List<object?> { 1L, 2L, 3L });
 
         var action = new Last(context) { ListName = new global::app.type.item.variable.@this("xs", context.App.type.list) };
         await action.Attach(null, context);

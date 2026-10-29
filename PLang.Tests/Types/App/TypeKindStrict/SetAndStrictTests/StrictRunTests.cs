@@ -29,7 +29,7 @@ public class StrictRunTests
     [Test] public async Task Run_StrictImageGifWithRuntimeVarResolvingToPng_ThrowsTypedError()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("upload", PngBytes);
+        await context.Variable.Set("upload", PngBytes);
         var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
             global::PLang.Tests.Shared.Make.Param(context, "Name", "%img%", "variable"),
             ("value", "%upload%"),
@@ -42,7 +42,7 @@ public class StrictRunTests
     [Test] public async Task Run_StrictImageGifWithRuntimeVarResolvingToGif_Mints()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("upload", GifBytes);
+        await context.Variable.Set("upload", GifBytes);
         var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
             global::PLang.Tests.Shared.Make.Param(context, "Name", "%img%", "variable"),
             ("value", "%upload%"),

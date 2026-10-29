@@ -62,7 +62,7 @@ public class ContextVariableTests
     public async Task ContextVars_ExcludedFromGetAll()
     {
         var vars = _app.actor.list.User.Context.Variable;
-        vars.Set("regularVar", "hello");
+        await vars.Set("regularVar", "hello");
 
         var all = vars.GetAll().ToList();
         var names = all.Select(kvp => kvp.Key).ToList();
@@ -76,7 +76,7 @@ public class ContextVariableTests
     public async Task ContextVars_SurviveClear()
     {
         var vars = _app.actor.list.User.Context.Variable;
-        vars.Set("regularVar", "hello");
+        await vars.Set("regularVar", "hello");
 
         vars.Clear();
 

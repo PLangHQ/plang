@@ -148,7 +148,7 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     public virtual async Task<global::app.data.@this> WriteAsync(global::app.data.@this data, CancellationToken ct = default)
     {
         var context = Context;
-        var on = context.Actor!.@event[this].write;
+        var on = (await context.Actor!.@event.On(this)).write;
         var answer = await on.before.Start(this, context, data);
         global::app.data.@this result;
         if (answer is { Success: false } or { Handled: true }) result = Refused(answer);
@@ -173,7 +173,7 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     public virtual async Task<global::app.data.@this> ReadAsync(CancellationToken ct = default)
     {
         var context = Context;
-        var on = context.Actor!.@event[this].read;
+        var on = (await context.Actor!.@event.On(this)).read;
         var answer = await on.before.Start(this, context);
         global::app.data.@this result;
         if (answer is { Success: false } or { Handled: true }) result = Refused(answer);
@@ -198,7 +198,7 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     public virtual async Task<global::app.data.@this> AskAsync(module.output.ask action, CancellationToken ct = default)
     {
         var context = action.Context;
-        var on = context.Actor!.@event[this].ask;
+        var on = (await context.Actor!.@event.On(this)).ask;
         var answer = await on.before.Start(this, context);
         global::app.data.@this result;
         if (answer is { Success: false } or { Handled: true }) result = Refused(answer);

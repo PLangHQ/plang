@@ -12,18 +12,18 @@ public class DictKeyTests : System.IAsyncDisposable
     private async Task<global::app.data.@this> Read(string variable)
         => await new global::app.type.item.variable.parser.@this(variable, Context.App.type.list).Whole!.Start(Context);
 
-    private global::app.type.item.dict.@this Person()
+    private async Task<global::app.type.item.dict.@this> Person()
     {
         var person = new global::app.type.item.dict.@this(Context.App.type.list["dict"]);
         person.Set(new global::app.data.@this("name", "Ada", context: Context));
         person.Set(new global::app.data.@this("age", 36L, context: Context));
-        Context.Variable.Set(new global::app.data.@this("person", person, context: Context));
+        await Context.Variable.Set(new global::app.data.@this("person", person, context: Context));
         return person;
     }
 
     [Test] public async Task Key_ReadAlone_IsTheFirstKey()
     {
-        Person();
+        await Person();
         var key = await Read("%person!key%");
         await Assert.That((await key.Value())?.ToString()).IsEqualTo("name");
     }
@@ -33,7 +33,7 @@ public class DictKeyTests : System.IAsyncDisposable
     {
         var slice = Context.App.type.list["dict"].Make("{\"name\":\"Ada\",\"age\":36}",
             Context.App.type.list.Plang, global::app.View.Out);
-        Context.Variable.Set(new global::app.data.@this("person", slice, context: Context));
+        await Context.Variable.Set(new global::app.data.@this("person", slice, context: Context));
 
         var key = await Read("%person!key%");
         await Assert.That((await key.Value())?.ToString()).IsEqualTo("name");
@@ -41,14 +41,14 @@ public class DictKeyTests : System.IAsyncDisposable
 
     [Test] public async Task KeyList_IsEveryKey_InOrder()
     {
-        Person();
+        await Person();
         var keys = await (await Read("%person!key.list%")).Value() as global::app.type.item.list.@this;
         await Assert.That(keys!.Items(Context).Select(k => k.Peek().ToString()).ToList()).IsEquivalentTo(new[] { "name", "age" });
     }
 
     [Test] public async Task Key_HoldsItsDict_AKeySetLaterIsInIt()
     {
-        var person = Person();
+        var person = await Person();
         var key = person.Key(Context);
         person.Set(new global::app.data.@this("city", "London", context: Context));
         await Assert.That(key.list(Context).Items(Context).Select(k => k.Peek().ToString()).ToList())

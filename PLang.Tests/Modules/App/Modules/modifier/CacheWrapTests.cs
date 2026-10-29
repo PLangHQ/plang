@@ -86,9 +86,9 @@ public class CacheWrapTests
             new CacheSettings { DurationMs = 60_000, Sliding = false });
         var ran = new List<string>();
         var user = _app.actor.list.User;
-        user.@event.Add(new global::app.@event.code.@this(_app.type.list["action"], "start", global::app.@event.When.before,
+        await user.@event.Add(new global::app.@event.code.@this(_app.type.list["action"], "start", global::app.@event.When.before,
             (_, result, ctx) => { ran.Add("policy"); return Task.FromResult(ctx.Ok()); }, user, global::app.@event.code.@this.Always));
-        user.@event.Add(new global::app.@event.code.@this(_app.type.list["action"], "start", global::app.@event.When.after,
+        await user.@event.Add(new global::app.@event.code.@this(_app.type.list["action"], "start", global::app.@event.When.after,
             async (_, result, ctx) => { ran.Add($"after {await result.Value()}"); return result; }, user, global::app.@event.code.@this.Always));
         var action = global::PLang.Tests.Shared.Make.With(new PrAction(_app.type.list)
         {

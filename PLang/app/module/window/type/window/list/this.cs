@@ -164,8 +164,8 @@ public sealed class @this(Browser browser) : global::app.type.item.@this
                 {
                     using var json = JsonDocument.Parse(e.ToJsonString());
                     var happened = new global::app.data.@this("!data", new global::app.type.item.serializer.json(ctx).Parse(json.RootElement.Clone()), context: ctx);
-                    if (about != null) await ctx.Actor!.@event[about][what]!.after.Start(about, happened, ctx);
-                    await ctx.Actor!.@event[this][what]!.after.Start(this, happened, ctx);
+                    if (about != null) await (await ctx.Actor!.@event.On(about))[what]!.after.Start(about, happened, ctx);
+                    await (await ctx.Actor!.@event.On(this))[what]!.after.Start(this, happened, ctx);
                 }, ctx);
         });
     }

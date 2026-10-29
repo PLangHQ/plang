@@ -133,7 +133,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         var user = app.actor.list.User.Context;
         Begin();
-        global::app.@event.@this[] watching = [app.test.list.Report.Coverage.Watch(user), .. await Time(user)];
+        global::app.@event.@this[] watching = [await app.test.list.Report.Coverage.Watch(user),.. await Time(user)];
 
         var setting = await context.Setting.Get<global::app.test.setting.@this>();
         // its llm questions answered from the file beside it, unless the run asks live: registered on its own app, whose
@@ -191,7 +191,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         var actor = context.Actor!;
         return
         [
-            actor.@event.Add(new global::app.@event.code.@this(context.App.type.list["step"], "start", global::app.@event.When.after, (item, _, ctx) =>
+            await actor.@event.Add(new global::app.@event.code.@this(context.App.type.list["step"], "start", global::app.@event.When.after, (item, _, ctx) =>
             {
                 if (item is global::app.goal.step.@this step && Tested(step) && ctx.call.Current?.Duration is { } elapsed)
                     Timings.Add(new global::app.test.timing.@this { Step = step, Elapsed = elapsed });
