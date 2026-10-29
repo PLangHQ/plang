@@ -3,6 +3,7 @@
 / then binds Log before each goal and resumes. The resumed run goes on through this goal too, from the step after
 / `call Plan`: the marker sends it to Resumed, and Log, taken in from this app, runs before Resumed starts and notes it.
 Start
+- delete file 'workspace/resumed.marker', on error 'NotFound' ignore
 - call Plan
 - if file 'workspace/resumed.marker' exists
     - call Resumed

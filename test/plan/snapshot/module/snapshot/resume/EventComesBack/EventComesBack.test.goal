@@ -4,6 +4,7 @@
 / marker, written after the save and never in the snapshot, says the run is the resumed one; the resumed run then goes on
 / through this goal and ends at the marker.
 Start
+- delete file 'workspace/resumed.marker', on error 'NotFound' ignore
 - before each goal, call Log
 - call Work
 - if file 'workspace/resumed.marker' exists

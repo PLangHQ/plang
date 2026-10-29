@@ -4,6 +4,7 @@
 / keeps the value it had when the run was saved) and step 3 does. The resumed run goes on through this goal too, from
 / the step after `call Plan`: the marker sends it to Resumed, which writes what it saw and ends it.
 Start
+- delete file 'workspace/resumed.marker', on error 'NotFound' ignore
 - set %b% = "before"
 - set %c% = "before"
 - call Plan

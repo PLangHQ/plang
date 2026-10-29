@@ -5,6 +5,7 @@
 / written after the save and never in the snapshot, sends it to Resumed, which writes what it saw and ends it. The
 / asker's own variables are untouched by the resumed run.
 Start
+- delete file 'workspace/resumed.marker', on error 'NotFound' ignore
 - set %count% = 0
 - call Record
 - if file 'workspace/resumed.marker' exists
