@@ -32,4 +32,52 @@ public class FirstIdentityTests
         }
         finally { System.IO.Directory.Delete(root, recursive: true); }
     }
+
+    // Of first asks at once, one makes the identity and the others wait and answer it: one identity, the one stored.
+    [Test] public async Task FirstAsksAtOnce_AnswerOneIdentity_TheOneStored()
+    {
+        var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-first-id-" + Guid.NewGuid().ToString("N")[..8]);
+        System.IO.Directory.CreateDirectory(root);
+        try
+        {
+            await using var app = new global::app.@this(root).Consenting();
+            var ctx = app.actor.list.User.Context;
+            var (provider, _) = app.Code.Get<global::app.module.identity.code.IIdentity>();
+
+            var answers = await Task.WhenAll(Enumerable.Range(0, 4).Select(_ => Task.Run(() =>
+                provider!.GetOrCreateDefaultAsync(new global::app.module.identity.Get(ctx)))));
+
+            var keys = new List<string?>();
+            foreach (var answer in answers) { await answer.IsSuccess(); keys.Add((await answer.Value())?.PublicKey); }
+            await Assert.That(keys.Distinct().Count()).IsEqualTo(1);
+            var stored = (await app.actor.list.System.Setting.Get<global::app.module.identity.setting.@this>()).Identity;
+            await Assert.That(stored.CountRaw).IsEqualTo(1);
+            await Assert.That((await stored.Items(ctx).Single().Value<global::app.module.identity.Identity>())?.PublicKey).IsEqualTo(keys[0]);
+        }
+        finally { System.IO.Directory.Delete(root, recursive: true); }
+    }
+
+    // Two first saves at once are each signed by the app's one identity, so each is a snapshot this app saved: a resume
+    // takes both past the signature (each holds no call, so each answers that there is no frame to go on from).
+    [Test] public async Task FirstSavesAtOnce_BothResume()
+    {
+        var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-first-id-" + Guid.NewGuid().ToString("N")[..8]);
+        System.IO.Directory.CreateDirectory(root);
+        try
+        {
+            await using var app = new global::app.@this(root).Consenting();
+            var ctx = app.actor.list.User.Context;
+
+            var saves = await Task.WhenAll(Task.Run(() => app.Snapshot(ctx)), Task.Run(() => app.Snapshot(ctx)));
+
+            foreach (var save in saves)
+            {
+                await save.IsSuccess();
+                await ctx.Variable.Set("snap", save);
+                var resumed = await (await ctx.Action("snapshot.resume(Snapshot=%snap%)")).Start(ctx);
+                await Assert.That(resumed.Error?.Key).IsEqualTo("NoFrameToResume");
+            }
+        }
+        finally { System.IO.Directory.Delete(root, recursive: true); }
+    }
 }

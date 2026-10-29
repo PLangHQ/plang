@@ -276,40 +276,60 @@ public sealed class Default : IIdentity
     /// </summary>
     public async Task<data.@this<Identity>> GetOrCreateDefaultAsync(IContext action)
     {
+        // what is there answers at once, nothing made: the stored default, or who the app is as its origin answers
+        if (await Held(action) is { } held) return held;
+
+        // the default is made once: of two first asks at once, the second waits, finds what the first made, and
+        // answers it — never a second identity, which would leave what the first one signed verifying against none
+        await _make.WaitAsync();
+        try
+        {
+            if (await Held(action) is { } made) return made;
+            var (items, err) = await LoadAll(action);
+            if (err != null) return action.Context.Error<Identity>(err);
+
+            // Promote an existing non-archived identity
+            var candidate = items!.Find(i => !i.IsArchived);
+            if (candidate != null)
+            {
+                candidate.IsDefault = true;
+                var saveResult = await SaveAsync(action, candidate);
+                if (!saveResult.Success) return data.@this<Identity>.From(saveResult);
+                return action.Context.Ok<Identity>(candidate);
+            }
+
+            // No identities at all — auto-create; it is the app's identity from here, before its row is stored
+            var genResult = await GenerateIdentity(action, "default", true);
+            if (!genResult.Success) return genResult;
+            var identity = (await genResult.Value())!;
+            action.Context.App.actor.list.System.Identity = identity;
+            var result = await SaveAsync(action, identity);
+            if (!result.Success)
+            {
+                action.Context.App.actor.list.System.Identity = null;   // not stored: not the app's identity
+                return data.@this<Identity>.From(result);
+            }
+            return action.Context.Ok<Identity>(identity);
+        }
+        finally { _make.Release(); }
+    }
+
+    // Making the app's default, one at a time.
+    private readonly SemaphoreSlim _make = new(1, 1);
+
+    // The default already there, made nothing: the stored one, else who the app is as its origin answers — the code,
+    // the one being stored right now (its own row is signed with it on the way into the store, and that signing asks
+    // here, so it answers rather than waiting on the make it is inside); an actor, the actor's. Null when there is
+    // none, or when the stored rows can't be read (the make reads them again and answers why).
+    private async Task<data.@this<Identity>?> Held(IContext action)
+    {
         var (items, err) = await LoadAll(action);
-        if (err != null) return action.Context.Error<Identity>(err);
-
-        var def = items.Find(i => i.IsDefault && !i.IsArchived);
-        if (def != null) return action.Context.Ok<Identity>(def);
-
-        // Promote an existing non-archived identity
-        var candidate = items.Find(i => !i.IsArchived);
-        if (candidate != null)
-        {
-            candidate.IsDefault = true;
-            var saveResult = await SaveAsync(action, candidate);
-            if (!saveResult.Success) return data.@this<Identity>.From(saveResult);
-            return action.Context.Ok<Identity>(candidate);
-        }
-
-        // None stored yet: who the app is, as its origin answers — the code, the one being stored right now (its
-        // own row is signed with it on the way into the store, and that signing asks for the identity here, so it
-        // answers rather than making another for every row); an actor, the actor's.
-        if (action.Context.App.origin.Identity(action.Context.App) is { IsArchived: false } making)
-            return action.Context.Ok<Identity>(making);
-
-        // No identities at all — auto-create; it is the app's identity from here, before its row is stored
-        var genResult = await GenerateIdentity(action, "default", true);
-        if (!genResult.Success) return genResult;
-        var identity = (await genResult.Value())!;
-        action.Context.App.actor.list.System.Identity = identity;
-        var result = await SaveAsync(action, identity);
-        if (!result.Success)
-        {
-            action.Context.App.actor.list.System.Identity = null;   // not stored: not the app's identity
-            return data.@this<Identity>.From(result);
-        }
-        return action.Context.Ok<Identity>(identity);
+        if (err != null) return null;
+        if (items!.Find(i => i.IsDefault && !i.IsArchived) is { } def) return action.Context.Ok<Identity>(def);
+        if (items.Exists(i => !i.IsArchived)) return null;
+        return action.Context.App.origin.Identity(action.Context.App) is { IsArchived: false } making
+            ? action.Context.Ok<Identity>(making)
+            : null;
     }
 
     /// <summary>Saves the identities, whole, in one write — each in place of the one by its name. Bare Data;
