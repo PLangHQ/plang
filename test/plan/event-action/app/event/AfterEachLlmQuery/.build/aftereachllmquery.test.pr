@@ -122,6 +122,12 @@
             }
           ]
         }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 1 uses on.event, which the decider was not sure of (0.87)"
+        }
       ]
     },
     {
@@ -507,7 +513,7 @@
           "warning": [
             {
               "key": "Unsure",
-              "message": "step 0 uses math.add, which the decider was not sure of (0.98)"
+              "message": "step 0 uses math.add, which the decider was not sure of (0.97)"
             }
           ]
         }

@@ -37,13 +37,6 @@
                 "name": "bool"
               },
               "value": false
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "type"
-              },
-              "value": "bool"
             }
           ],
           "default": [
@@ -76,10 +69,10 @@
                 "name": "on",
                 "template": "plang"
               },
-              "value": "%!app.type.action.output.write.on.start%",
+              "value": "%!app.type.action.on.start%",
               "variable": [
                 {
-                  "text": "%!app.type.action.output.write.on.start%",
+                  "text": "%!app.type.action.on.start%",
                   "code": [
                     {
                       "variable": "!app"
@@ -89,12 +82,6 @@
                     },
                     {
                       "property": "action"
-                    },
-                    {
-                      "property": "output"
-                    },
-                    {
-                      "property": "write"
                     },
                     {
                       "property": "on"
@@ -134,12 +121,6 @@
               }
             }
           ]
-        }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 1's saved code no longer holds — rebuilt: step 1 'after action output.write call CaptureWrite': on.event: the default frozen for 'scope' is no option of this action any more."
         }
       ]
     },

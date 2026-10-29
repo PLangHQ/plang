@@ -20,16 +20,19 @@
                 "name": "on",
                 "template": "plang"
               },
-              "value": "%!channel.input.ask%",
+              "value": "%!channel.input.on.ask%",
               "variable": [
                 {
-                  "text": "%!channel.input.ask%",
+                  "text": "%!channel.input.on.ask%",
                   "code": [
                     {
                       "variable": "!channel"
                     },
                     {
                       "property": "input"
+                    },
+                    {
+                      "property": "on"
                     },
                     {
                       "property": "ask"
@@ -120,12 +123,8 @@
       ],
       "warning": [
         {
-          "key": "Reopened",
-          "message": "step 0's saved code no longer holds — rebuilt: step 0 'on ask on \"input\" channel call CaptchaGoal, write to %bindingId%': on.event: the default frozen for 'scope' is no option of this action any more."
-        },
-        {
           "key": "Unsure",
-          "message": "step 0 uses variable.set, which the decider was not sure of (0.87)"
+          "message": "step 0 uses variable.set, which the decider was not sure of (0.89)"
         }
       ]
     },
