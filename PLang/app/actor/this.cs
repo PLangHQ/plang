@@ -201,7 +201,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     global::app.module.code.@this? global::app.origin.@this.Code => App.Code;
 
-    global::app.@event.on.list.@this? global::app.origin.@this.@event => App.@event;
+    global::app.@event.list.@this? global::app.origin.@this.@event => App.@event;
 
     int global::app.origin.@this.Depth => App.Depth + 1;
 

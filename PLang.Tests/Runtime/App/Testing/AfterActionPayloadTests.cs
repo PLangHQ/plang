@@ -22,7 +22,7 @@ public class AfterActionPayloadTests
     // Binds handler on the action type's start, before or after, for the User actor.
     private void Bind(global::app.@event.When when,
         Func<global::app.type.item.@this, Data, global::app.actor.context.@this, Task<Data>> handler)
-        => _app.@event.Add(_app.type.list["action"]).Add("start")[when].Add(side => new global::app.@event.binding.@this(side, handler, _app.actor.list.User, global::app.@event.binding.Scope.actor, global::app.@event.binding.@this.Always));
+        => _app.@event.Add(_app.type.list["action"]).Add("start")[when].Add(side => new global::app.@event.code.@this(side, handler, _app.actor.list.User, global::app.@event.Scope.actor, global::app.@event.@this.Always));
 
     // Runs a simple goal with one action (variable.set) so a single action start fires.
     private async Task RunSimpleGoal(string varName = "x", int value = 42)

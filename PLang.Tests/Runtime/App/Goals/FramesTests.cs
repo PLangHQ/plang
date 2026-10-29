@@ -45,12 +45,12 @@ public class FramesTests
 
         // what the step type's after-binding sees, per step of the caller
         var seen = new List<(global::app.goal.step.@this ending, global::app.goal.step.@this? inPlay, global::app.goal.@this? goal)>();
-        _app.@event.Add(_app.type.list["step"]).Add("start")[global::app.@event.When.after].Add(side => new global::app.@event.binding.@this(side, (item, _, c) =>
+        _app.@event.Add(_app.type.list["step"]).Add("start")[global::app.@event.When.after].Add(side => new global::app.@event.code.@this(side, (item, _, c) =>
         {
             if (item is global::app.goal.step.@this step && ReferenceEquals(step.Goal, caller))
                 seen.Add((step, c.call.Step, c.call.Goal));
             return Task.FromResult(c.Ok());
-        }, _app.actor.list.User, global::app.@event.binding.Scope.actor, global::app.@event.binding.@this.Always));
+        }, _app.actor.list.User, global::app.@event.Scope.actor, global::app.@event.@this.Always));
 
         var result = await caller.Start(ctx);
 
@@ -73,12 +73,12 @@ public class FramesTests
         var (caller, _) = await CallerAndCallee();
 
         var took = new List<TimeSpan?>();
-        _app.@event.Add(_app.type.list["step"]).Add("start")[global::app.@event.When.after].Add(side => new global::app.@event.binding.@this(side, (item, _, c) =>
+        _app.@event.Add(_app.type.list["step"]).Add("start")[global::app.@event.When.after].Add(side => new global::app.@event.code.@this(side, (item, _, c) =>
         {
             if (item is global::app.goal.step.@this step && ReferenceEquals(step.Goal, caller))
                 took.Add(c.call.Current?.Duration?.Value);
             return Task.FromResult(c.Ok());
-        }, _app.actor.list.User, global::app.@event.binding.Scope.actor, global::app.@event.binding.@this.Always));
+        }, _app.actor.list.User, global::app.@event.Scope.actor, global::app.@event.@this.Always));
 
         await (await caller.Start(_app.actor.list.User.Context)).IsSuccess();
 

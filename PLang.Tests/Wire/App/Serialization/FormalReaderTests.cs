@@ -153,7 +153,7 @@ public class FormalReaderTests : System.IAsyncDisposable
         var bound = await goal.Step[0].Code[0].Start(ctx);
 
         await bound.IsSuccess();
-        await Assert.That(await bound.Value()).IsTypeOf<global::app.@event.binding.action.@this>();
+        await Assert.That(await bound.Value()).IsTypeOf<global::app.@event.call.@this>();
     }
 
     // a value made from a dict of literal members keeps them through a real .pr load

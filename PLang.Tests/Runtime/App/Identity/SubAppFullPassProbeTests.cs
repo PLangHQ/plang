@@ -155,12 +155,12 @@ public class SubAppFullPassProbeTests : System.IAsyncDisposable
 
     // ---- the hold (26) ----
 
-    private static async Task<global::app.@event.binding.@this> Bind(global::app.actor.context.@this ctx, string @event,
+    private static async Task<global::app.@event.@this> Bind(global::app.actor.context.@this ctx, string @event,
         global::app.goal.step.action.@this call, string scope)
     {
         var bound = await Make.Action(ctx, "on", "event", ("Event", @event), ("When", "before"), ("Action", call), ("Scope", scope)).Start(ctx);
         await bound.IsSuccess();
-        return (global::app.@event.binding.@this)bound.Peek();
+        return (global::app.@event.@this)bound.Peek();
     }
 
     private static async Task<global::app.data.@this> Work(global::app.@this app)

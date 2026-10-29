@@ -196,11 +196,11 @@ public class LlmAnswersFileTests
         var test = await global::app.test.@this.From(goal, context);
         // the answer the run's step got: what the query wrote to %result%
         string? answered = null;
-        app.@event.Add(app.type.list["step"]).Add("start")[global::app.@event.When.after].Add(side => new global::app.@event.binding.@this(side, async (_, _, ctx) =>
+        app.@event.Add(app.type.list["step"]).Add("start")[global::app.@event.When.after].Add(side => new global::app.@event.code.@this(side, async (_, _, ctx) =>
         {
             if (await ctx.Variable.Get("result") is { IsInitialized: true } result) answered = (await result.Value())?.ToString();
             return ctx.Ok();
-        }, app.actor.list.User, global::app.@event.binding.Scope.actor, global::app.@event.binding.@this.Always));
+        }, app.actor.list.User, global::app.@event.Scope.actor, global::app.@event.@this.Always));
 
         await test.Start(app, context);
         return (openAi.CallCount, answered, before.SequenceEqual(System.IO.File.ReadAllBytes(file)), test);

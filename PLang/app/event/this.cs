@@ -1,199 +1,98 @@
 namespace app.@event;
 
 /// <summary>
-/// One event of one object — a verb's (<c>start</c>, <c>create</c>, …) or an outcome's (<c>error</c>,
-/// <c>hit</c>, <c>miss</c>): the bindings started before it and after it. One class per event
-/// (<c>app/event/on/&lt;name&gt;.cs</c>); the item an event fires for is handed to its bindings when it starts,
-/// never kept (one event serves every item of a type).
+/// What is bound: run before or after a moment of the item it is bound on (<see cref="Name"/>, <see cref="When"/>,
+/// <see cref="Item"/>), by the actor that bound it. Each kind runs its own way: a program's goal call
+/// (<see cref="call.@this"/>), an action's clause (<see cref="clause.@this"/>), C# (<see cref="code.@this"/>), a maker's
+/// taken in by a sub app (<see cref="inherited.@this"/>). Taking it off is its own verb.
 /// </summary>
 [global::app.Attributes.PlangType("event")]
 public abstract class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    private protected @this(global::app.@event.on.@this on, string name, binding.list.before before, binding.list.after after)
+    /// <summary>The filter of an event that runs for every item.</summary>
+    internal static readonly System.Func<global::app.type.item.@this, global::app.actor.context.@this, bool> Always = (_, _) => true;
+
+    private readonly on.side _side;
+    private readonly System.Func<global::app.type.item.@this, global::app.actor.context.@this, bool> _filter;
+
+    private protected @this(on.side side, global::app.actor.@this actor, Scope scope,
+        System.Func<global::app.type.item.@this, global::app.actor.context.@this, bool> filter)
     {
-        this.on = on;
-        Name = name;
-        this.before = before;
-        this.after = after;
+        _side = side;
+        _filter = filter;
+        Actor = actor;
+        Scope = scope;
     }
 
-    /// <summary>The events this one is of — the item's that made it, or its class's shared ones.</summary>
-    internal global::app.@event.on.@this on { get; }
+    /// <summary>An event taken in from <paramref name="event"/> on <paramref name="side"/>, for <paramref name="actor"/>:
+    /// its scope and the items it runs for are <paramref name="event"/>'s.</summary>
+    private protected @this(on.side side, @this @event, global::app.actor.@this actor)
+        : this(side, actor, @event.Scope, @event._filter) { }
 
-    /// <summary>The event's name — the verb's own (<c>start</c> for <c>Start</c>), or the outcome's.</summary>
-    public string Name { get; }
+    /// <summary>The moment it runs on: <c>start</c>, <c>load</c>, <c>error</c>, <c>create</c> …</summary>
+    public string Name => _side.on.Name;
 
-    /// <summary>What finds this event where it is pointed at (a running bound call's <c>%!event%</c>): the item its events
-    /// are of, and its name — <c>{item, name}</c>, read back as the event of that name in the app's events for that item.
-    /// A class's shared event has no item and no key: it is written whole.</summary>
-    internal override System.Threading.Tasks.ValueTask<global::app.type.item.@this?> Key(global::app.actor.context.@this context)
-        => new(on.item is { } item
-            ? new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)])
-                .Set(new global::app.data.@this("item", item, context: context)).Set("name", Name)
-            : null);
+    /// <summary>Before the moment, or after it.</summary>
+    public When When => _side.When;
 
-    /// <summary>What is started before it.</summary>
-    public binding.list.before before { get; }
+    /// <summary>What it is bound on: a type (each goal), one goal, a catalog action, a module, a channel.</summary>
+    public global::app.type.item.@this Item => _side.on.item!;
 
-    /// <summary>What is started after it.</summary>
-    public binding.list.after after { get; }
+    /// <summary>The actor that bound it.</summary>
+    public global::app.actor.@this Actor { get; }
 
-    /// <summary>The side started <paramref name="when"/> it fires — what a binding is added to.</summary>
-    internal binding.list.@this this[When when] => when == When.before ? before : after;
+    /// <summary>Whose it is: the actor's, or the app's.</summary>
+    public Scope Scope { get; }
 
-    /// <summary>Takes in <paramref name="maker"/>'s: each side inheriting the maker's side of the same when — what a sub
-    /// app (<paramref name="app"/>) is born holding.</summary>
-    internal void Inherit(@this maker, global::app.@this app)
-    {
-        before.Inherit(maker.before, app);
-        after.Inherit(maker.after, app);
-    }
+    /// <summary>Whether a snapshot keeps it: an event a program made, which it can make again from what it wrote. A C#
+    /// event (a handler) is not: its maker binds it again.</summary>
+    internal virtual bool IsSaved => false;
 
-    /// <summary>Whether a snapshot keeps anything of this event: a binding a program made, on either side.</summary>
-    internal bool IsSaved => before.IsSaved || after.IsSaved;
+    /// <summary>The <c>on.event</c> action that made it — a program's event is numbered by it (its goal, step and
+    /// index). A C# event has none.</summary>
+    internal virtual global::app.goal.step.action.@this? action => null;
 
-    /// <summary>The event written: each side by its name, with the bindings a snapshot keeps — <c>{before: [binding]}</c>;
-    /// a side that keeps none is left out.</summary>
-    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
-    {
-        writer.BeginObject();
-        foreach (var (name, side) in new (string, binding.list.@this)[] { ("before", before), ("after", after) })
-        {
-            if (!side.IsSaved) continue;
-            var saved = side.Where(binding => binding.IsSaved).ToList();
-            writer.Name(name);
-            writer.BeginArray(saved.Count);
-            foreach (var binding in saved) await binding.Output(writer);
-            writer.EndArray();
-        }
-        writer.EndObject();
-    }
+    /// <summary>Whether it runs for <paramref name="item"/> while <paramref name="context"/>'s actor runs: its scope takes
+    /// the actor, and its filter the item.</summary>
+    internal bool For(global::app.type.item.@this item, global::app.actor.context.@this context)
+        => (Scope == Scope.app || ReferenceEquals(context.Actor, Actor)) && _filter(item, context);
 
-    /// <summary>The bindings a snapshot kept of this event, read back onto its sides: each row of a side the binding it
-    /// wrote — unless the side holds one the same action made already (the same program's, taken in from the maker at
-    /// birth), which fires once. A record that isn't this event's sides is refused, thrown to the read boundary.</summary>
-    internal void Read(global::app.type.item.dict.@this record, global::app.actor.context.@this context)
-    {
-        foreach (var row in record.Rows(context))
-        {
-            binding.list.@this? side = string.Equals(row.Name, "before", StringComparison.OrdinalIgnoreCase) ? before
-                : string.Equals(row.Name, "after", StringComparison.OrdinalIgnoreCase) ? after : null;
-            if (side == null || row.Peek() is not global::app.type.item.list.@this rows)
-                throw new global::app.error.DeclinedException(new global::app.error.@this(
-                    $"a saved event '{Name}' holds '{row.Name}', which is no side of its bindings", "SnapshotRowUnread", 400));
-            foreach (var saved in rows.Items(context))
-            {
-                var binding = new global::app.@event.binding.action.@this(side, this,
-                    saved.Peek() as global::app.type.item.dict.@this ?? throw new global::app.error.DeclinedException(
-                        new global::app.error.@this($"a saved binding on '{Name}' is no record", "SnapshotRowUnread", 400)), context);
-                if (side.Any(other => ReferenceEquals(other.action, binding.action))) continue;
-                side.Add(_ => binding);
-            }
-        }
-    }
-
-    /// <summary>Whether anything is bound on this event, before or after it, at any of <paramref name="item"/>'s
-    /// levels — so a door whose before is handed something it would have to make asks first.</summary>
-    public bool IsBound(global::app.type.item.@this item, global::app.actor.context.@this context)
-    {
-        for (var depth = 0; item.Level(depth, context) is { } level; depth++)
-            if (IsBoundAt(level, context, When.before) || IsBoundAt(level, context, When.after)) return true;
-        return false;
-    }
-
-    /// <summary>Whether anything is on this event's side <paramref name="when"/> at <paramref name="level"/> alone — its
-    /// own clauses or what the asker's app bound on it — so a door that would have to make what it hands a binding asks
-    /// first.</summary>
-    internal bool IsBoundAt(global::app.type.item.@this level, global::app.actor.context.@this context, When when)
-        => level.on[Name]?[when].Count > 0 || context.App.@event[level]?[Name]?[when].Count > 0;
-
-    /// <summary>What is on this event's before at <paramref name="level"/> alone — its own clauses, then what the asker's
-    /// app bound on it — started on <paramref name="item"/>, something other than the level's own items (a load's .pr,
-    /// before there is a goal), on <paramref name="result"/> (a plain success when none is given, made only when something
-    /// is there). A failure or a Handled answer stops it and is the answer; null when nothing is there.</summary>
-    internal async System.Threading.Tasks.ValueTask<global::app.data.@this?> BeforeAt(global::app.type.item.@this level,
-        global::app.type.item.@this item, global::app.actor.context.@this context, global::app.data.@this? result)
-    {
-        global::app.data.@this? answer = null;
-        if (level.on[Name]?.before is { Count: > 0 } clauses)
-        {
-            answer = await clauses.Start(item, result ?? context.Ok(), context);
-            if (!answer.Success || answer.Handled) return answer;
-        }
-        if (context.App.@event[level]?[Name]?.before is { Count: > 0 } bindings)
-            answer = await bindings.Start(item, answer ?? result ?? context.Ok(), context);
-        return answer;
-    }
-
-    // What is on this event's after at a level, on the result as it stands: what the asker's app bound on it, then the
-    // level's own clauses.
-    private async System.Threading.Tasks.ValueTask<global::app.data.@this> AfterAt(global::app.type.item.@this level,
-        global::app.type.item.@this item, global::app.actor.context.@this context, global::app.data.@this result)
-    {
-        if (context.App.@event[level]?[Name]?.after is { Count: > 0 } bindings) result = await bindings.Start(item, result, context);
-        if (level.on[Name]?.after is { Count: > 0 } clauses) result = await clauses.Start(item, result, context);
-        return result;
-    }
-
-    /// <summary>
-    /// Starts what is bound before <paramref name="item"/>'s event at each of its levels, outermost first
-    /// (<see cref="global::app.type.item.@this.Level"/>). A failure or a Handled answer stops it and is the answer;
-    /// null when nothing was bound — nothing said, and nothing made. The first binding is handed
-    /// <paramref name="result"/> (what the event is about to do, a set's value), else a plain success.
-    /// </summary>
-    public System.Threading.Tasks.ValueTask<global::app.data.@this?> Before(global::app.type.item.@this item,
-        global::app.actor.context.@this context, global::app.data.@this? result = null)
-    {
-        // one pass, outermost level first: the levels are gone through until one's lists hold something, and from there
-        // on they start — with nothing there, nothing awaited or made
-        for (var depth = 0; item.Level(depth, context) is { } level; depth++)
-            if (IsBoundAt(level, context, When.before)) return Before(item, depth, context, result);
-        return default;
-    }
-
-    // From the first level whose lists hold something, outward.
-    private async System.Threading.Tasks.ValueTask<global::app.data.@this?> Before(global::app.type.item.@this item,
-        int depth, global::app.actor.context.@this context, global::app.data.@this? result)
-    {
-        global::app.data.@this? answer = null;
-        for (; item.Level(depth, context) is { } level; depth++)
-            if (await BeforeAt(level, item, context, answer ?? result) is { } answered)
-            {
-                answer = answered;
-                if (!answer.Success || answer.Handled) return answer;
-            }
-        return answer;
-    }
-
-    /// <summary>
-    /// Starts what is bound after <paramref name="item"/>'s event at each of its levels, innermost first, every
-    /// one, on <paramref name="result"/> as it stands; answers the result.
-    /// </summary>
-    public System.Threading.Tasks.ValueTask<global::app.data.@this> After(global::app.type.item.@this item,
+    /// <summary>Runs it for the item its moment came for, on the result as it stands, in the asker's context. An event
+    /// doesn't run inside its own run (what it starts may reach its moment again): there it answers a plain success.</summary>
+    internal async System.Threading.Tasks.Task<global::app.data.@this> Start(global::app.type.item.@this item,
         global::app.data.@this result, global::app.actor.context.@this context)
     {
-        // one pass, innermost level first: from the deepest level out until one's lists hold something, and from there on
-        // they start — with nothing there, the result as it stands, nothing awaited
-        var depth = 0;
-        while (item.Level(depth + 1, context) != null) depth++;
-        for (; depth >= 0; depth--)
-            if (IsBoundAt(item.Level(depth, context)!, context, When.after)) return After(item, result, depth, context);
-        return new(result);
+        if (!context.TryEnterEvent(this)) return context.Ok();
+        try { return await Handle(item, result, context, this); }
+        finally { context.ExitEvent(this); }
     }
 
-    // From the innermost level whose lists hold something, outward.
-    private async System.Threading.Tasks.ValueTask<global::app.data.@this> After(global::app.type.item.@this item,
-        global::app.data.@this result, int depth, global::app.actor.context.@this context)
+    /// <summary>What it does when its moment comes for <paramref name="item"/>, on the result as it stands, as
+    /// <paramref name="event"/> — the event running here (itself, or the sub app's that took it in). Each kind has its
+    /// own.</summary>
+    internal abstract System.Threading.Tasks.Task<global::app.data.@this> Handle(global::app.type.item.@this item,
+        global::app.data.@this result, global::app.actor.context.@this context, @this @event);
+
+    /// <summary>What finds a program's event where it is pointed at (a running call's <c>%!event%</c>): the
+    /// <c>on.event</c> action that made it and its place among that action's events in the asker's app —
+    /// <c>{action, n}</c>, read back as that event. A C# event has no action and is never pointed at.</summary>
+    internal override System.Threading.Tasks.ValueTask<global::app.type.item.@this?> Key(global::app.actor.context.@this context)
     {
-        for (; depth >= 0; depth--)
-            result = await AfterAt(item.Level(depth, context)!, item, context, result);
-        return result;
+        if (action is not { } made) return new((global::app.type.item.@this?)null);
+        var n = context.App.@event.Of(made).ToList().IndexOf(this);
+        return new(new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)])
+            .Set(new global::app.data.@this("action", made, context: context)).Set("n", n));
     }
 
-    /// <summary>Every event is of the event type (<c>event</c>), whichever its class. Events are made by the event
-    /// door's own table and the empty ones are shared across apps (on's static empties), so no one app's type is
-    /// theirs to hold: it is built from the class.</summary>
+    /// <summary>Every event is of the event type (<c>event</c>), whichever its kind: what a snapshot writes where one is
+    /// pointed at is read back by the event type's own reader, from its key.</summary>
     protected internal override global::app.type.@this Type => new(typeof(@this));
 
-    public override string ToString() => Name;
+    /// <summary>An event holds its actor and the side it is on: a copy of the Data holding it shares it.</summary>
+    protected internal override global::app.type.item.@this Clone() => this;
+
+    /// <summary>Takes it off its moment: it runs no more. A kind that isn't its holder's to take off refuses.</summary>
+    public virtual void Remove() => _side.Remove(this);
+
+    public override string ToString() => $"{When} {Name}";
 }

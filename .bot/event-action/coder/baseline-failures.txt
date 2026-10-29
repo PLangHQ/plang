@@ -1,0 +1,10 @@
+event-action baseline — 2026-10-29, at 54c90f412 (runtime2 6cfe782d7 + the architect's plan commits), before any change
+
+C# (./dev.sh test, all suites): all green
+  Modules 1483, Types 1037, Wire 641, Data 871, Generator 191, Runtime 1424 — 0 failed
+
+plang (./dev.sh build; cd test && plang --test): 313 total, 311 pass, 0 fail, 0 timeout, 1 stale, 1 skipped
+  skipped: /app/type/duration/DurationPartsAndCompare.test.goal
+  stale:   /plan/event-action/module/on/UnbindTakesTheEvent (the coder's new stage 1 test, placed before its first build)
+
+No red to carry: any red after this is the branch's.

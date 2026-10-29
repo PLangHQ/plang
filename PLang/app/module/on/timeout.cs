@@ -19,9 +19,9 @@ public partial class OnTimeout : IContext, IClause
     public void Bind(global::app.goal.step.action.@this clause, global::app.goal.step.action.@this action, global::app.@event.on.@this on)
     {
         var start = on.Add("start");
-        start.before.Add(side => new global::app.@event.binding.clause.@this(
+        start.before.Add(side => new global::app.@event.clause.@this(
             side, clause, action, (handler, _, result, context) => ((OnTimeout)handler).Begin(result, context)));
-        start.after.Add(side => new global::app.@event.binding.clause.@this(
+        start.after.Add(side => new global::app.@event.clause.@this(
             side, clause, action, (handler, _, result, context) => ((OnTimeout)handler).End(result, context)));
     }
 

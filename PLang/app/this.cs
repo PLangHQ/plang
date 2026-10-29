@@ -135,9 +135,9 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public global::app.data.@this? data(global::app.actor.context.@this context) => context.Variable.Peek("!data");
 
     /// <summary>This app's events — <c>%!app.event%</c>: what was bound on each item while its programs ran, its maker's
-    /// taken in at its birth. A snapshot keeps the bindings this app made.</summary>
+    /// taken in at its birth. A snapshot keeps the events this app made.</summary>
     [global::app.LlmBuilder, global::app.Snapshot]
-    public global::app.@event.on.list.@this @event { get; }
+    public global::app.@event.list.@this @event { get; }
 
     /// <summary>
     /// When the app was started.

@@ -16,7 +16,7 @@ public class NavigableFactsTests
         "app.this.call",
         "app.this.trace",
         "app.this.data",
-        "app.event.on.list.this.current",
+        "app.event.list.this.current",
         "app.type.item.path.this.Mime",
         // a list's element by position: read, nothing changed (random draws from the shared generator, no state of the list's)
         "app.type.item.list.this.First",

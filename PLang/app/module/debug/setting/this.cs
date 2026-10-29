@@ -59,12 +59,12 @@ public sealed class @this : global::app.type.item.setting.module.@this
                 => item is global::app.type.item.variable.@this variable
                    && string.Equals(variable.Name, watched.Name, System.StringComparison.OrdinalIgnoreCase);
             events ??= actor.App.@event.Add(actor.App.variable.type);
-            events.Add("set").after.Add(side => new global::app.@event.binding.@this(side,
+            events.Add("set").after.Add(side => new global::app.@event.code.@this(side,
                 (item, result, context) => debug.Set((global::app.type.item.variable.@this)item, result, context),
-                actor, global::app.@event.binding.Scope.actor, Is));
-            events.Add("remove").after.Add(side => new global::app.@event.binding.@this(side,
+                actor, global::app.@event.Scope.actor, Is));
+            events.Add("remove").after.Add(side => new global::app.@event.code.@this(side,
                 (item, _, context) => debug.Remove((global::app.type.item.variable.@this)item, context),
-                actor, global::app.@event.binding.Scope.actor, Is));
+                actor, global::app.@event.Scope.actor, Is));
         }
     }
 

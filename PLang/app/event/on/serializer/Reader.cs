@@ -1,10 +1,9 @@
-namespace app.@event.serializer;
+namespace app.@event.on.serializer;
 
 /// <summary>
-/// The event type's reader: an event is never written as a value — it is an item's, reached by its path, with
-/// before or after its <c>When</c> (<c>Event=%!app.type.step.on.start%, When=before</c>). A value written where an
-/// event goes (<c>Event="/events/Runtime/X"</c>) is declined saying so — a refusal the build names, never a missing
-/// reader.
+/// The on type's reader: a moment is never written as a value — it is an item's, reached by its path, with before or
+/// after its <c>When</c> (<c>Event=%!app.type.step.on.start%, When=before</c>). A value written where a moment goes
+/// (<c>Event="/events/Runtime/X"</c>) is declined saying so — a refusal the build names, never a missing reader.
 /// </summary>
 public sealed class Reader : global::app.type.reader.ITypeReader
 {

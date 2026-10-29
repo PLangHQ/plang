@@ -103,12 +103,12 @@ public class AskAnswerTests
         var ctx = app.actor.list.User.Context;
         var input = Console(app, "never read\n");
         var given = ctx.Text("from the binding");
-        app.@event.Add(input).Add("ask")[global::app.@event.When.before].Add(side => new global::app.@event.binding.@this(side, (_, _, c) =>
+        app.@event.Add(input).Add("ask")[global::app.@event.When.before].Add(side => new global::app.@event.code.@this(side, (_, _, c) =>
         {
             global::app.data.@this answered = c.Ok(given);
             answered.Handled = true;
             return Task.FromResult(answered);
-        }, app.actor.list.User, global::app.@event.binding.Scope.actor, global::app.@event.binding.@this.Always));
+        }, app.actor.list.User, global::app.@event.Scope.actor, global::app.@event.@this.Always));
 
         var asked = await Asked(ctx);
         await asked.IsSuccess();

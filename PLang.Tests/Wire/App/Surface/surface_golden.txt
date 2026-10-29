@@ -491,90 +491,76 @@ class app.data.this<T> : app.data.this
   static FromError(app.error.this error, app.actor.context.this context) : app.data.this<T>
   static Uninitialized(System.String name, app.actor.context.this context) : app.data.this<T>
 
+enum app.event.Scope [Choice, PlangType]
+  static const actor : app.event.Scope
+  static const app : app.event.Scope
+
 enum app.event.When [Choice, PlangType]
   static const after : app.event.When
   static const before : app.event.When
 
-enum app.event.binding.Scope [Choice, PlangType]
-  static const actor : app.event.binding.Scope
-  static const app : app.event.binding.Scope
-
-class app.event.binding.action.this : app.event.binding.this
+class app.event.call.this : app.event.this
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
 
-class app.event.binding.clause.this : app.event.binding.this
+class app.event.clause.this : app.event.this
 
-class app.event.binding.inherited.this : app.event.binding.this
+class app.event.code.this : app.event.this
+
+class app.event.inherited.this : app.event.this
   override Remove() : System.Void
 
-class app.event.binding.list.after : app.event.binding.list.this
-
-class app.event.binding.list.before : app.event.binding.list.this
-
-abstract class app.event.binding.list.this : System.Collections.Generic.IEnumerable<app.event.binding.this>, System.Collections.Generic.IReadOnlyCollection<app.event.binding.this>, System.Collections.Generic.IReadOnlyList<app.event.binding.this>, System.Collections.IEnumerable
-  Count : System.Int32 { get; }
-  GetEnumerator() : System.Collections.Generic.IEnumerator<app.event.binding.this>
-  Item[System.Int32] : app.event.binding.this { get; }
-  Start(app.type.item.this item, app.data.this result, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
-
-class app.event.binding.this : app.type.item.this, app.type.item.ICreate<app.event.binding.this>
-  Actor : app.actor.this { get; }
-  Scope : app.event.binding.Scope { get; }
-  virtual Remove() : System.Void
-
-class app.event.on.ask : app.event.this
-
-class app.event.on.create : app.event.this
-
-class app.event.on.declared : app.event.this
-
-class app.event.on.empty : app.event.on.this
-  override Item[System.String] : app.event.this { get; }
-
-class app.event.on.error : app.event.this
-  Catch(app.type.item.this item, app.data.this failed, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
-
-class app.event.on.hit : app.event.this
-
-class app.event.on.list.this : app.type.item.this
+class app.event.list.this : app.type.item.this
   current(app.actor.context.this context) : app.data.this [LlmBuilder]
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
 
-class app.event.on.load : app.event.this
+class app.event.on.after : app.event.on.side
 
-class app.event.on.miss : app.event.this
+class app.event.on.before : app.event.on.side
 
-class app.event.on.read : app.event.this
+class app.event.on.empty : app.event.on.this
+  override Item[System.String] : app.event.on.this { get; }
 
-class app.event.on.remove : app.event.this
-
-class app.event.on.set : app.event.this
-
-class app.event.on.start : app.event.this
-
-class app.event.on.this : app.type.item.this, app.type.item.ICreate<app.event.on.this>
-  Names : System.Collections.Generic.IEnumerable<System.String> { get; }
-  NoEvent(System.String name) : app.error.this
-  ask : app.event.on.ask { get; }
-  create : app.event.on.create { get; }
-  error : app.event.on.error { get; }
-  load : app.event.on.load { get; }
-  override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
-  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
-  read : app.event.on.read { get; }
-  remove : app.event.on.remove { get; }
-  set : app.event.on.set { get; }
-  start : app.event.on.start { get; }
-  static Create(System.Object raw, app.type.this type, app.data.this data) : app.event.on.this
-  virtual Item[System.String] : app.event.this { get; }
-  write : app.event.on.write { get; }
-
-class app.event.on.write : app.event.this
-
-class app.event.serializer.Reader : app.type.reader.ITypeReader
+class app.event.on.serializer.Reader : app.type.reader.ITypeReader
   Kind : System.String { get; }
   Read<TReader>(TReader& reader, System.String kind, app.type.reader.ReadContext ctx) : app.type.item.this
   ctor()
+
+class app.event.on.serializer.Snapshot : app.type.reader.ITypeReader
+  Kind : System.String { get; }
+  Read<TReader>(TReader& reader, System.String kind, app.type.reader.ReadContext ctx) : app.type.item.this
+  Reads(app.type.format.TokenKind token) : System.Boolean
+  View : app.View { get; }
+  ctor()
+
+abstract class app.event.on.side : System.Collections.Generic.IEnumerable<app.event.this>, System.Collections.Generic.IReadOnlyCollection<app.event.this>, System.Collections.Generic.IReadOnlyList<app.event.this>, System.Collections.IEnumerable
+  Count : System.Int32 { get; }
+  GetEnumerator() : System.Collections.Generic.IEnumerator<app.event.this>
+  Item[System.Int32] : app.event.this { get; }
+  Start(app.type.item.this item, app.data.this result, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
+
+class app.event.on.this : app.type.item.this, app.type.item.ICreate<app.event.on.this> [PlangType]
+  After(app.type.item.this item, app.data.this result, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
+  Before(app.type.item.this item, app.actor.context.this context, app.data.this result = …) : System.Threading.Tasks.ValueTask<app.data.this>
+  Catch(app.type.item.this item, app.data.this failed, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
+  IsBound(app.type.item.this item, app.actor.context.this context) : System.Boolean
+  Name : System.String { get; }
+  Names : System.Collections.Generic.IEnumerable<System.String> { get; }
+  NoEvent(System.String name) : app.error.this
+  after : app.event.on.after { get; }
+  ask : app.event.on.this { get; }
+  before : app.event.on.before { get; }
+  create : app.event.on.this { get; }
+  error : app.event.on.this { get; }
+  load : app.event.on.this { get; }
+  override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
+  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
+  read : app.event.on.this { get; }
+  remove : app.event.on.this { get; }
+  set : app.event.on.this { get; }
+  start : app.event.on.this { get; }
+  static Create(System.Object raw, app.type.this type, app.data.this data) : app.event.on.this
+  virtual Item[System.String] : app.event.on.this { get; }
+  write : app.event.on.this { get; }
 
 class app.event.serializer.Snapshot : app.type.reader.ITypeReader
   Kind : System.String { get; }
@@ -584,15 +570,15 @@ class app.event.serializer.Snapshot : app.type.reader.ITypeReader
   ctor()
 
 abstract class app.event.this : app.type.item.this, app.type.item.ICreate<app.event.this> [PlangType]
-  After(app.type.item.this item, app.data.this result, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
-  Before(app.type.item.this item, app.actor.context.this context, app.data.this result = …) : System.Threading.Tasks.ValueTask<app.data.this>
-  IsBound(app.type.item.this item, app.actor.context.this context) : System.Boolean
+  Actor : app.actor.this { get; }
+  Item : app.type.item.this { get; }
   Name : System.String { get; }
-  after : app.event.binding.list.after { get; }
-  before : app.event.binding.list.before { get; }
+  Scope : app.event.Scope { get; }
+  When : app.event.When { get; }
   override ToString() : System.String
+  protected override Clone() : app.type.item.this
   protected override Type : app.type.this { get; }
-  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
+  virtual Remove() : System.Void
 
 class app.module.ActionAttribute : System.Attribute
   Cacheable : System.Boolean { get; set; }
@@ -998,7 +984,7 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.type.item.prop
   ctor(System.String absolutePath, System.String environment = …, app.Wiring wiring = …)
   data(app.actor.context.this context) : app.data.this [LlmBuilder]
   error : app.type.node.current.this<app.error.this, app.error.list.this> { get; } [LlmBuilder, Out]
-  event : app.event.on.list.this { get; } [LlmBuilder, Snapshot]
+  event : app.event.list.this { get; } [LlmBuilder, Snapshot]
   filesystem : app.type.item.path.file.filesystem.this { get; } [LlmBuilder]
   goal : app.type.node.current.this<app.goal.this, app.goal.list.this> { get; } [LlmBuilder, Out]
   module : app.module.this { get; } [LlmBuilder, Out]
@@ -3409,7 +3395,7 @@ type app
   .call : app.call.list
   .trace : app.actor.context.trace
   .data : item
-  .event : app.event.on.list
+  .event : app.event.list
   .startedAt : datetime
   .uptime : duration
   .module : module
@@ -3570,17 +3556,15 @@ type app.channel.type.test
   .buffer : number
   .mime : text
 
-type app.event.binding
+type app.event.call
 
-type app.event.binding.action
+type app.event.clause
 
-type app.event.binding.clause
+type app.event.code
 
-type app.event.binding.inherited
+type app.event.inherited
 
-type app.event.on
-
-type app.event.on.list
+type app.event.list
   .current : item
 
 type app.goal.list.setting
@@ -3887,6 +3871,8 @@ type number
   .round(decimals: number) : number
   .min(b: number) : number
   .max(b: number) : number
+
+type on
 
 type parallel
 
@@ -4487,7 +4473,7 @@ action on.error
   Recovery : list<action>
 
 action on.event
-  Event : event required
+  Event : on required
   When : choice<when> required
   Action : action required
   Scope : choice<scope>
@@ -4499,7 +4485,7 @@ action on.timeout
   After : duration required
 
 action on.unbind
-  Binding : app.event.binding required
+  Event : event required
 
 action output.ask
   Question : text required

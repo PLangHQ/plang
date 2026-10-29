@@ -1,5 +1,5 @@
 using When = global::app.@event.When;
-using Scope = global::app.@event.binding.Scope;
+using Scope = global::app.@event.Scope;
 
 namespace PLang.Tests.App.Events;
 
@@ -10,7 +10,7 @@ namespace PLang.Tests.App.Events;
 public class StartTests
 {
     private global::app.@this _app = null!;
-    private readonly List<global::app.@event.binding.@this> _bound = new();
+    private readonly List<global::app.@event.@this> _bound = new();
 
     [Before(Test)]
     public void Setup() => _app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
@@ -37,7 +37,7 @@ public class StartTests
     }
 
     private void Record(global::app.type.item.@this level, When when, List<string> ran, string name)
-        => _bound.Add(_app.@event.Add(level).Add("start")[when].Add(side => new global::app.@event.binding.@this(side, (_, _, ctx) => { ran.Add(name); return Task.FromResult(ctx.Ok()); }, _app.actor.list.User, Scope.actor, global::app.@event.binding.@this.Always)));
+        => _bound.Add(_app.@event.Add(level).Add("start")[when].Add(side => new global::app.@event.code.@this(side, (_, _, ctx) => { ran.Add(name); return Task.FromResult(ctx.Ok()); }, _app.actor.list.User, Scope.actor, global::app.@event.@this.Always)));
 
     private async Task<bool> IsSet(string name)
         => await _app.actor.list.User.Context.Variable.Get(name) is { IsInitialized: true };
@@ -118,16 +118,16 @@ public class StartTests
     {
         var (_, step, set) = Program();
         var ran = new List<string>();
-        _bound.Add(_app.@event.Add(set.Module).Add("start")[When.before].Add(side => new global::app.@event.binding.@this(side, (_, _, ctx) =>
+        _bound.Add(_app.@event.Add(set.Module).Add("start")[When.before].Add(side => new global::app.@event.code.@this(side, (_, _, ctx) =>
         {
             var instead = ctx.Ok("instead");
             instead.Handled = true;
             return Task.FromResult(instead);
-        }, _app.actor.list.User, Scope.actor, global::app.@event.binding.@this.Always)));
+        }, _app.actor.list.User, Scope.actor, global::app.@event.@this.Always)));
         Record(set.Module[set.Name]!, When.before, ran, "catalog before");
         Record(set, When.before, ran, "own before");
         global::app.data.@this? seen = null;
-        _bound.Add(_app.@event.Add(_app.type.list["action"]).Add("start")[When.after].Add(side => new global::app.@event.binding.@this(side, (_, result, ctx) => { seen = result; return Task.FromResult(ctx.Ok()); }, _app.actor.list.User, Scope.actor, global::app.@event.binding.@this.Always)));
+        _bound.Add(_app.@event.Add(_app.type.list["action"]).Add("start")[When.after].Add(side => new global::app.@event.code.@this(side, (_, result, ctx) => { seen = result; return Task.FromResult(ctx.Ok()); }, _app.actor.list.User, Scope.actor, global::app.@event.@this.Always)));
         Record(set, When.after, ran, "own after");
 
         var result = await step.Start(_app.actor.list.User.Context);
@@ -145,12 +145,12 @@ public class StartTests
     {
         var (_, step, set) = Program();
         var context = _app.actor.list.User.Context;
-        _bound.Add(_app.@event.Add(set.Module[set.Name]!).Add("start")[When.before].Add(side => new global::app.@event.binding.@this(side, (_, _, ctx) =>
+        _bound.Add(_app.@event.Add(set.Module[set.Name]!).Add("start")[When.before].Add(side => new global::app.@event.code.@this(side, (_, _, ctx) =>
         {
             var mocked = ctx.Ok("mocked");
             mocked.Handled = true;
             return Task.FromResult(mocked);
-        }, _app.actor.list.User, Scope.actor, global::app.@event.binding.@this.Always)));
+        }, _app.actor.list.User, Scope.actor, global::app.@event.@this.Always)));
         var coverage = new global::app.test.Coverage();
         coverage.Watch(context);
         // debug binds the same way coverage does: on the action type's after, for the User actor
@@ -169,11 +169,11 @@ public class StartTests
     {
         var (_, step, set) = Program();
         var context = _app.actor.list.User.Context;
-        _bound.Add(_app.@event.Add(set).Add("start")[When.after].Add(side => new global::app.@event.binding.@this(side, (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Broke", 400))), _app.actor.list.User, Scope.actor, global::app.@event.binding.@this.Always)));
+        _bound.Add(_app.@event.Add(set).Add("start")[When.after].Add(side => new global::app.@event.code.@this(side, (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Broke", 400))), _app.actor.list.User, Scope.actor, global::app.@event.@this.Always)));
         var coverage = new global::app.test.Coverage();
         coverage.Watch(context);
         global::app.data.@this? seen = null;
-        _bound.Add(_app.@event.Add(_app.type.list["action"]).Add("start")[When.after].Add(side => new global::app.@event.binding.@this(side, (_, result, ctx) => { seen = result; return Task.FromResult(ctx.Ok()); }, _app.actor.list.User, Scope.actor, global::app.@event.binding.@this.Always)));
+        _bound.Add(_app.@event.Add(_app.type.list["action"]).Add("start")[When.after].Add(side => new global::app.@event.code.@this(side, (_, result, ctx) => { seen = result; return Task.FromResult(ctx.Ok()); }, _app.actor.list.User, Scope.actor, global::app.@event.@this.Always)));
 
         var result = await step.Start(context);
 

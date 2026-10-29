@@ -2,9 +2,9 @@ using app.module.on;
 
 namespace PLang.Tests.App.actions.EventTests;
 
-// on.event binds a call on an event, reached by its path (%!app.type.goal.on.start%); the call reads %!event% (the
-// running event, with %!event!item% and %!event!result% for this firing) — on the frame the event fired in, for
-// exactly as long as the call runs. on.unbind takes the binding off; on.cancel, from a call bound before an event,
+// on.event binds a call on a moment, reached by its path (%!app.type.goal.on.start%), and answers the event; the call
+// reads %!event% (the running event, with %!event!item% and %!event!data% for this run) — on the frame the moment came
+// in, for exactly as long as the call runs. on.unbind takes the event off; on.cancel, from a call bound before a moment,
 // cancels it with a value.
 public class OnEventTests
 {
@@ -22,11 +22,11 @@ public class OnEventTests
     private async Task<global::app.data.@this> On(string eventPath, string when, string goal, params (string, object?)[] args)
         => await Make.Action(Ctx, "on", "event", ("Event", eventPath), ("When", when), ("Action", Make.Call(Ctx, goal, args))).Start(Ctx);
 
-    private async Task<global::app.@event.binding.@this> Bind(string eventPath, string when, string goal, params (string, object?)[] args)
+    private async Task<global::app.@event.@this> Bind(string eventPath, string when, string goal, params (string, object?)[] args)
     {
         var bound = await On(eventPath, when, goal, args);
         await bound.IsSuccess();
-        return (global::app.@event.binding.@this)bound.Peek();
+        return (global::app.@event.@this)bound.Peek();
     }
 
     private Goal Goal(string name, params Make.StepDef[] steps)
@@ -250,7 +250,7 @@ public class OnEventTests
     [Test]
     public async Task AfterAnAction_TheCallReadsItsResult()
     {
-        Goal("Watch", Keep("seenResult", "%!event!result%"));
+        Goal("Watch", Keep("seenResult", "%!event!data%"));
         await Bind("%!app.type.action.on.start%", "after", "Watch");
 
         var main = Goal("Main", Make.Step("set %x% = one", Make.Action(Ctx, "variable", "set", Make.Param(Ctx, "Name", "x", "variable"), ("Value", "one"))));
@@ -305,7 +305,7 @@ public class OnEventTests
 
         var unbound = await new OnUnbind(Ctx)
         {
-            Binding = new global::app.data.@this<global::app.@event.binding.@this>("Binding", binding, context: Ctx),
+            Event = new global::app.data.@this<global::app.@event.@this>("Event", binding, context: Ctx),
         }.Start();
 
         await unbound.IsSuccess();

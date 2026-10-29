@@ -48,7 +48,7 @@ public partial class OnError : IContext, IClause, IAction
     }
 
     public void Bind(Action clause, Action action, global::app.@event.on.@this on)
-        => on.Add("error").before.Add(side => new global::app.@event.binding.clause.@this(
+        => on.Add("error").before.Add(side => new global::app.@event.clause.@this(
             side, clause, action, (handler, a, failed, context) => ((OnError)handler).Catch(a, failed, context)));
 
     /// <summary>This clause's answer to <paramref name="action"/>'s failure: the failure itself, handed back, when

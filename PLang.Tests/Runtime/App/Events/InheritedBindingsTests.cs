@@ -1,5 +1,5 @@
 using When = global::app.@event.When;
-using Scope = global::app.@event.binding.Scope;
+using Scope = global::app.@event.Scope;
 
 namespace PLang.Tests.App.Events;
 
@@ -13,9 +13,9 @@ public class InheritedBindingsTests
     // A binding by app's user before item's start that records name.
     private static void Bind(global::app.@this app, global::app.type.item.@this item, List<string> ran, string name,
         Scope scope = Scope.actor)
-        => app.@event.Add(item).Add("start").before.Add(side => new global::app.@event.binding.@this(side,
+        => app.@event.Add(item).Add("start").before.Add(side => new global::app.@event.code.@this(side,
             (_, _, ctx) => { lock (ran) ran.Add(name); return Task.FromResult(ctx.Ok()); },
-            app.actor.list.User, scope, global::app.@event.binding.@this.Always));
+            app.actor.list.User, scope, global::app.@event.@this.Always));
 
     [Test]
     public async Task ASubApp_TakesInItsMakersBinding_AtBirth_AndFiresItForItsUser()
@@ -29,7 +29,7 @@ public class InheritedBindingsTests
         await item.on.start.Before(item, sub.actor.list.User.Context);
 
         await Assert.That(ran).IsEquivalentTo(new List<string> { "maker" });
-        await Assert.That(sub.@event[item]!.start.before[0]).IsTypeOf<global::app.@event.binding.inherited.@this>();
+        await Assert.That(sub.@event[item]!.start.before[0]).IsTypeOf<global::app.@event.inherited.@this>();
         await Assert.That(sub.@event[item]!.start.before[0].Actor).IsSameReferenceAs(sub.actor.list.User);
     }
 
@@ -60,11 +60,11 @@ public class InheritedBindingsTests
         var context = sub.actor.list.User.Context;
         var inherited = sub.@event[item]!.start.before[0];
 
-        await context.Variable.Set("binding", inherited);
-        var unbound = await (await context.Action("on.unbind(Binding=%binding%)")).Start(context);
+        await context.Variable.Set("event", inherited);
+        var unbound = await (await context.Action("on.unbind(Event=%event%)")).Start(context);
 
         await unbound.IsFailure();
-        await Assert.That(unbound.Error!.Key).IsEqualTo("BindingNotYours");
+        await Assert.That(unbound.Error!.Key).IsEqualTo("EventNotYours");
         await item.on.start.Before(item, context);
         await Assert.That(ran).IsEquivalentTo(new List<string> { "maker" });
     }

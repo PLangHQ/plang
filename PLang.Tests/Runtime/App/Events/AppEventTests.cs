@@ -1,8 +1,8 @@
 namespace PLang.Tests.App.Events;
 
 /// <summary>
-/// <c>%!app.event.current%</c> (what the shortcut <c>%!event%</c> reads) answers as its asker: the running bound call's Data —
-/// its value the event, its properties what it fired for and the result so far. Unset outside one.
+/// <c>%!app.event.current%</c> (what the shortcut <c>%!event%</c> reads) answers as its asker: the running event's call's
+/// Data — its value the event, its properties what it ran for and the value so far. Unset outside one.
 /// </summary>
 public class AppEventTests
 {
@@ -15,11 +15,13 @@ public class AppEventTests
         var ctx = app.actor.list.User.Context;
         var goal = new global::app.goal.@this(app.type.list) { Name = "Checkout",
             Path = global::app.type.item.path.@this.Resolve("/Checkout.goal", ctx) };
-        var fired = app.goal.type.on.start;
-        // as the binding scopes it: the event, what it fired for, the result so far — on the frame it fired in
+        var fired = app.@event.Add(app.goal.type).Add("start").before.Add(side => new global::app.@event.code.@this(side,
+            (_, result, _) => System.Threading.Tasks.Task.FromResult(result), ctx.Actor!, global::app.@event.Scope.actor,
+            global::app.@event.@this.Always));
+        // as the event's call scopes it: the event, what it ran for, the value so far — on the frame it came in
         var running = new global::app.data.@this("!event", fired, context: ctx);
         running.Properties.Set("item", goal);
-        running.Properties.Set("result", ctx.Text("so far"));
+        running.Properties.Set("data", ctx.Text("so far"));
         await using var frame = ctx.call.Push(goal, await ctx.call.Setting());
         frame.Event = running;
 
@@ -27,7 +29,7 @@ public class AppEventTests
         await Assert.That(read).IsSameReferenceAs(running);
         await Assert.That(read.Peek()).IsSameReferenceAs(fired);
         await Assert.That((await Read("%!app.event.current!item%", ctx)).Peek()).IsSameReferenceAs(goal);
-        await Assert.That((await (await Read("%!app.event.current!result%", ctx)).Value())?.ToString()).IsEqualTo("so far");
+        await Assert.That((await (await Read("%!app.event.current!data%", ctx)).Value())?.ToString()).IsEqualTo("so far");
     }
 
     [Test] public async Task OutsideOne_IsUnset()

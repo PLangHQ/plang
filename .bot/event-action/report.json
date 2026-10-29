@@ -1,59 +1,167 @@
 {
- "branch": "event-action",
- "sessions": [
-  {
-   "id": "7c1e9a24-3b58-4f0d-a6e2-91d4c5b8f017",
-   "bot": "architect",
-   "timestamp_start": "2026-10-29T09:00:00Z",
-   "timestamp_end": "2026-10-29T16:00:00Z",
-   "intent": "Merge the scattered next-work lists into one, cut event-action from runtime2 and plan it from snapshot's decisions and the code.",
-   "before": {
-    "assumptions": "Snapshot's branch-event-action.md describes the branch; the saved move patch applies.",
-    "risk": "The write-up predates snapshot 245-271; the event surface is locked."
-   },
-   "plan": ".bot/event-action/architect/plan/start.md",
-   "actions": [
+  "branch": "event-action",
+  "sessions": [
     {
-     "paths": [".bot/architect/backlog.md", ".bot/item-doors/architect/backlog.md", ".bot/snapshot/architect/plan/later.md"],
-     "type": "create",
-     "category": "doc",
-     "confidence": "high",
-     "context": "One list replaces two; done items dropped, the old files point to the new one."
+      "id": "7c1e9a24-3b58-4f0d-a6e2-91d4c5b8f017",
+      "bot": "architect",
+      "timestamp_start": "2026-10-29T09:00:00Z",
+      "timestamp_end": "2026-10-29T16:00:00Z",
+      "intent": "Merge the scattered next-work lists into one, cut event-action from runtime2 and plan it from snapshot's decisions and the code.",
+      "before": {
+        "assumptions": "Snapshot's branch-event-action.md describes the branch; the saved move patch applies.",
+        "risk": "The write-up predates snapshot 245-271; the event surface is locked."
+      },
+      "plan": ".bot/event-action/architect/plan/start.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/architect/backlog.md",
+            ".bot/item-doors/architect/backlog.md",
+            ".bot/snapshot/architect/plan/later.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "One list replaces two; done items dropped, the old files point to the new one."
+        },
+        {
+          "paths": [
+            "PLang/app/event/",
+            "PLang/app/module/on/event.cs",
+            "PLang/app/module/on/unbind.cs",
+            "PLang/app/goal/this.cs",
+            "PLang/app/goal/step/this.cs",
+            "PLang/app/goal/step/action/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read the event system whole; found the write-up stale against snapshot 245, 248, 251, 271 and the patch no longer applying."
+        },
+        {
+          "paths": [
+            ".bot/event-action/architect/plan/start.md",
+            ".bot/event-action/architect/plan/start.goal",
+            ".bot/event-action/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "medium",
+          "context": "Five stages; Level's new name is Ingi's; stage 2's navigation shape comes from the coder."
+        },
+        {
+          "paths": [
+            ".bot/event-action/architect/summary.md",
+            ".bot/event-action/architect/plan/start.md",
+            ".bot/event-action/architect/plan/start.goal",
+            ".bot/event-action/architect/plan/expected.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Decisions 3\u201318 with Ingi: events (not bindings) live on the actor that bound them; each goal, step and action makes its lists on its first run; one question, item.Is(type); clauses in the list at fixed places; on holds its moments; system events load from /system/event by default; a call finds its goal in the app its caller belongs to (reverses snapshot 265). Level, Scope, IsSystem and the walk go. The plan rewritten to eight stages."
+        },
+        {
+          "paths": [
+            ".bot/event-action/architect/briefs/coder-start.md",
+            ".bot/architect/backlog.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "The coder's brief (sent after Ingi cleared its context); plang-tester briefed on the variable hole; the early-return rule to plang-codeanalyzer; the cache-key bug and a future setting on the list."
+        }
+      ],
+      "after": {
+        "status": "Plan sent to plang-coder (decision 19); plang-tester measuring variable events.",
+        "health": "No production code changed.",
+        "notes": "Next: the coder's pushback and four shapes; the tester's write-up."
+      }
     },
     {
-     "paths": ["PLang/app/event/", "PLang/app/module/on/event.cs", "PLang/app/module/on/unbind.cs", "PLang/app/goal/this.cs", "PLang/app/goal/step/this.cs", "PLang/app/goal/step/action/this.cs"],
-     "type": "review",
-     "category": "code",
-     "confidence": "high",
-     "context": "Read the event system whole; found the write-up stale against snapshot 245, 248, 251, 271 and the patch no longer applying."
-    },
-    {
-     "paths": [".bot/event-action/architect/plan/start.md", ".bot/event-action/architect/plan/start.goal", ".bot/event-action/architect/summary.md"],
-     "type": "create",
-     "category": "doc",
-     "confidence": "medium",
-     "context": "Five stages; Level's new name is Ingi's; stage 2's navigation shape comes from the coder."
-    },
-    {
-     "paths": [".bot/event-action/architect/summary.md", ".bot/event-action/architect/plan/start.md", ".bot/event-action/architect/plan/start.goal", ".bot/event-action/architect/plan/expected.md"],
-     "type": "decision",
-     "category": "doc",
-     "confidence": "high",
-     "context": "Decisions 3–18 with Ingi: events (not bindings) live on the actor that bound them; each goal, step and action makes its lists on its first run; one question, item.Is(type); clauses in the list at fixed places; on holds its moments; system events load from /system/event by default; a call finds its goal in the app its caller belongs to (reverses snapshot 265). Level, Scope, IsSystem and the walk go. The plan rewritten to eight stages."
-    },
-    {
-     "paths": [".bot/event-action/architect/briefs/coder-start.md", ".bot/architect/backlog.md"],
-     "type": "create",
-     "category": "doc",
-     "confidence": "high",
-     "context": "The coder's brief (sent after Ingi cleared its context); plang-tester briefed on the variable hole; the early-return rule to plang-codeanalyzer; the cache-key bug and a future setting on the list."
+      "id": "13758eee-8d7c-4a2d-acc2-d73b6af7c9e3",
+      "bot": "coder",
+      "timestamp_start": "2026-10-29T00:00:00Z",
+      "intent": "Place the event-action plan, push back to the architect, then build stage 1 (the word and the folders).",
+      "before": {
+        "assumptions": "Decisions 3-18 are Ingi's; the core surface is locked beyond them.",
+        "risk": "Stage 1 renames touch the event core, on.event/unbind, the teaching and three goldens; re-pins must be read before committing."
+      },
+      "plan": ".bot/event-action/coder/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/event-action/architect/plan/",
+            "PLang/app/event/",
+            "PLang/app/module/on/"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read the plan and today's event code; sent six pushback points and four shapes to the architect before any code."
+        },
+        {
+          "paths": [
+            "test/plan/event-action/"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Placed the plan (start.md, start.goal) and the stage 1 test UnbindTakesTheEvent."
+        },
+        {
+          "paths": [
+            "PLang/app/event/",
+            "PLang/app/module/on/event.cs",
+            "PLang/app/module/on/unbind.cs"
+          ],
+          "type": "move",
+          "category": "code",
+          "confidence": "high",
+          "context": "binding -> event kinds (call, clause, code, inherited); the moment classes collapse into one on with before/after and named moments; on/list -> event/list; %!event% is the bound event, keyed {action, n}; dedupe against inherited events one for one."
+        },
+        {
+          "paths": [
+            "PLang/app/test/",
+            "PLang/app/module/debug/",
+            "PLang/app/module/on/",
+            "PLang/app/type/",
+            "PLang/app/this.cs",
+            "PLang/app/origin/",
+            "PLang/app/actor/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Call sites renamed to the new types."
+        },
+        {
+          "paths": [
+            "os/system/modules/on/"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Teaching: binding -> event, !result -> !data."
+        },
+        {
+          "paths": [
+            "PLang.Tests/",
+            "PLang.Tests/Wire/App/Surface/surface_golden.txt",
+            "PLang.Tests/Wire/App/Decider/pick_golden.json"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Tests renamed; three dedupe pins added; surface and pick goldens re-pinned (diffs reviewed: rename and teaching only)."
+        }
+      ],
+      "timestamp_end": "2026-10-29T23:59:00Z",
+      "after": {
+        "status": "stage 1 done",
+        "health": "C# all green (Modules 1486 = baseline + 3 pins); plang 311 pass, 0 fail, 1 stale (the new stage 1 test, unbuilt: needs the decider key)",
+        "notes": "plang-builder builds UnbindTakesTheEvent and refreshes 14 .pr whose Event records type event. Stage 2 next."
+      }
     }
-   ],
-   "after": {
-    "status": "Plan sent to plang-coder (decision 19); plang-tester measuring variable events.",
-    "health": "No production code changed.",
-    "notes": "Next: the coder's pushback and four shapes; the tester's write-up."
-   }
-  }
- ]
+  ]
 }

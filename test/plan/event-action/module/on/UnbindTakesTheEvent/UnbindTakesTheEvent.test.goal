@@ -1,0 +1,20 @@
+/ on.event answers the event it bound: its name is the moment, its when the side. Count runs before each goal; Work runs
+/ once with the event bound, then on.unbind takes the event off and Work runs again without it.
+Start
+- set %count% = 0
+- before each goal, call Count, write to %event%
+- assert %event.name% equals "start", "on.event answers the event, named for its moment"
+- assert %event.when% equals "before", "the event knows its side"
+- call Work
+- assert %count% equals 1, "the event ran before Work"
+- unbind %event%
+- call Work
+- assert %count% equals 1, "taken off, the event no longer runs"
+
+/ The goal the event runs before.
+Work
+- set %worked% = "yes"
+
+/ The event's call: counts each run.
+Count
+- set %count% = %count% + 1

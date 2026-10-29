@@ -1,11 +1,10 @@
 namespace app.@event.serializer;
 
 /// <summary>
-/// An event read in the snapshot view: its key comes in (<c>{item, name}</c>, what the snapshot wrote where a running
-/// bound call pointed at it) and the event of that name in the resumed app's events for that item comes out — the item
-/// read as what it says it is, then the event found through the app's read door, nothing made. An event the app binds
-/// nothing on is refused (<c>EventNotFound</c>), thrown to the read boundary — never read as the class's shared event,
-/// which holds no bindings.
+/// An event read in the snapshot view: its key comes in (<c>{action, n}</c>, what the snapshot wrote where a running
+/// event's call pointed at it) and the event comes out — the <c>on.event</c> action that made it, read as an action, then
+/// the n-th of the events that action made in the resumed app's events, the order the key was numbered in. A key no event
+/// answers is refused (<c>EventNotFound</c>), thrown to the read boundary.
 /// </summary>
 public sealed class Snapshot : global::app.type.reader.ITypeReader
 {
@@ -21,16 +20,14 @@ public sealed class Snapshot : global::app.type.reader.ITypeReader
     {
         var context = ctx.Context;
         var record = (global::app.type.item.dict.@this)new global::app.type.item.dict.serializer.Reader().Read(ref reader, null, ctx);
-        if (record.Get("item", context) is not { } row
-            || global::app.View.Snapshot.Make(row.Type ?? context.App.type.list[typeof(global::app.type.item.@this)], row.Peek(), context)
-                is not { } item)
+        if (record.Get("action", context) is not { } row
+            || global::app.View.Snapshot.Make(context.App.type.list[typeof(global::app.goal.step.action.@this)], row.Peek(), context)
+                is not global::app.goal.step.action.@this action
+            || record.Clr("n", typeof(int)) is not int n)
             throw new global::app.error.DeclinedException(new global::app.error.@this(
-                "a saved event names no item it is an event of", "EventKeyIncomplete", 400));
-        var name = record.Clr("name", typeof(string)) as string ?? "";
-        // the event the app's events for the item made: one never bound on reads as its class's shared one, which is not it
-        return context.App.@event[item] is { } events && events[name] is { } @event && ReferenceEquals(@event.on, events)
-            ? @event
-            : throw new global::app.error.DeclinedException(new global::app.error.@this(
-                $"the saved event '{name}' of {item} is no event this app binds on", "EventNotFound", 404));
+                "a saved event names no action that made it, or not its place among that action's events", "EventKeyIncomplete", 400));
+        return context.App.@event.Of(action).ElementAtOrDefault(n)
+            ?? throw new global::app.error.DeclinedException(new global::app.error.@this(
+                $"the saved event {n} made by '{action.Step?.Text}' is no event this app holds", "EventNotFound", 404));
     }
 }

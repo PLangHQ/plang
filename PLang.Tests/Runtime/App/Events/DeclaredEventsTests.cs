@@ -16,7 +16,7 @@ public class DeclaredEventsTests : System.IAsyncDisposable
     {
         var window = new Window();
         global::app.data.@this? heard = null;
-        _app.@event.Add(window).Add("closed")[global::app.@event.When.after].Add(side => new global::app.@event.binding.@this(side, (_, data, _) => { heard = data; return System.Threading.Tasks.Task.FromResult(data); }, _app.actor.list.User, global::app.@event.binding.Scope.actor, global::app.@event.binding.@this.Always));
+        _app.@event.Add(window).Add("closed")[global::app.@event.When.after].Add(side => new global::app.@event.code.@this(side, (_, data, _) => { heard = data; return System.Threading.Tasks.Task.FromResult(data); }, _app.actor.list.User, global::app.@event.Scope.actor, global::app.@event.@this.Always));
 
         await _app.@event.Add(window).Add("closed").After(window, Ctx.Ok((global::app.type.item.text.@this)"{\"window\":\"closed\",\"id\":3}"), Ctx);
 

@@ -188,16 +188,16 @@ public partial class @this
     // The variable type — once the app has it: the actors' stores are born before the app's types.
     private global::app.type.@this? type => _context.App.variable?.type;
 
-    // What is bound before `name` changes to `value` (the variable type's event `event`): null to go on — nothing bound,
-    // or nothing refused — else a failure or a Handled answer, which is the write's answer. The variable is made only
-    // when something is bound on the variable type, its own or in the app's events.
-    private System.Threading.Tasks.ValueTask<data.@this?> Before(string @event, string name, object? value)
-        => type is { } variable && variable.IsBoundAt(@event, global::app.@event.When.before, _context)
-            ? Before(variable.on[@event]!, name, value as data.@this ?? new data.@this(name, value, context: _context)) : default;
+    // What is bound before `name` changes to `value` (the variable type's moment `moment`): null to go on — nothing
+    // bound, or nothing refused — else a failure or a Handled answer, which is the write's answer. The variable is made
+    // only when something is bound on the variable type, its own or in the app's events.
+    private System.Threading.Tasks.ValueTask<data.@this?> Before(string moment, string name, object? value)
+        => type is { } variable && variable.IsBoundAt(moment, global::app.@event.When.before, _context)
+            ? Before(variable.on[moment]!, name, value as data.@this ?? new data.@this(name, value, context: _context)) : default;
 
-    private async System.Threading.Tasks.ValueTask<data.@this?> Before(global::app.@event.@this @event, string name, data.@this about)
+    private async System.Threading.Tasks.ValueTask<data.@this?> Before(global::app.@event.on.@this moment, string name, data.@this about)
     {
-        var answer = await @event.Before(Named(name), _context, about);
+        var answer = await moment.Before(Named(name), _context, about);
         return answer is { Success: false } or { Handled: true } ? answer : null;
     }
 

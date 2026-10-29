@@ -9,13 +9,13 @@ public class HoldTests
         => new global::app.@this(folder, parent.actor.list.User).Testing();
 
     // what a program's on.event step does: binds `call` on `event`, for the actor or the app
-    private static async Task<global::app.@event.binding.@this> Bind(global::app.actor.context.@this ctx, string @event,
+    private static async Task<global::app.@event.@this> Bind(global::app.actor.context.@this ctx, string @event,
         global::app.goal.step.action.@this call, string scope)
     {
         var bound = await Make.Action(ctx, "on", "event", ("Event", @event), ("When", "before"), ("Action", call),
             ("Scope", scope)).Start(ctx);
         await bound.IsSuccess();
-        return (global::app.@event.binding.@this)bound.Peek();
+        return (global::app.@event.@this)bound.Peek();
     }
 
     // one step run as a goal of its own in `app`, as its user: the step type's start fires
@@ -79,7 +79,7 @@ public class HoldTests
 
         var unbound = await new global::app.module.on.OnUnbind(ctx)
         {
-            Binding = new global::app.data.@this<global::app.@event.binding.@this>("Binding", binding, context: ctx),
+            Event = new global::app.data.@this<global::app.@event.@this>("Event", binding, context: ctx),
         }.Start();
 
         await unbound.IsSuccess();

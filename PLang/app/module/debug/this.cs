@@ -119,7 +119,7 @@ public sealed class @this
         return null;
     }
 
-    // Debug's bindings on what starts, each on its owner: a goal's, a step's, an action's start — on their types (every
+    // Debug's events on what starts, each on its owner: a goal's, a step's, an action's start — on their types (every
     // goal, step and action) or on one goal's own (itself, its steps, their actions). The marks are bound before the
     // watchers, so a frame is marked before it is shown.
     private void Bind(global::app.actor.@this user, global::app.type.item.@this goal,
@@ -128,8 +128,8 @@ public sealed class @this
         // a start of an item of T on `owner`, handed to `handler` — when debugged, only where debug follows
         void On<T>(global::app.type.item.@this owner, When when, Func<T, actor.context.@this, Task<data.@this>> handler, bool debugged)
             where T : global::app.type.item.@this
-            => user.App.@event.Add(owner).Add("start")[when].Add(side => new global::app.@event.binding.@this(side,
-                (item, _, context) => handler((T)item, context), user, global::app.@event.binding.Scope.actor,
+            => user.App.@event.Add(owner).Add("start")[when].Add(side => new global::app.@event.code.@this(side,
+                (item, _, context) => handler((T)item, context), user, global::app.@event.Scope.actor,
                 (item, context) => item is T && (!debugged || Debugged(context))));
 
         On<global::app.goal.@this>(goal, When.before, (each, context) => Attach(each, context, index), debugged: false);

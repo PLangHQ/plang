@@ -102,8 +102,9 @@ public class CallStackEventTests : System.IAsyncDisposable
         await (await Named(src, "Run").Start(context)).IsSuccess();
         var snap = await (await context.Variable.Get("snap")).Value() as global::app.snapshot.@this;
         await Assert.That(snap).IsNotNull();
-        // the event's key names it by its name, a string: its token says it is text
-        await Assert.That(System.Text.RegularExpressions.Regex.Replace(await snap!.Text(context), @"\s", "")).Contains("\"name\":\"start\"");
+        // the event's key names it by the on.event action that made it and its place among that action's events
+        await Assert.That(System.Text.RegularExpressions.Regex.Replace(await snap!.Text(context), @"\s", ""))
+            .Contains("\"event\":{\"type\":{\"name\":\"event\"},\"value\":{\"action\":");
 
         await using var dst = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing().TestIdentity();
         Program(dst);
@@ -113,8 +114,8 @@ public class CallStackEventTests : System.IAsyncDisposable
         await Assert.That(running).IsNotNull();
         var start = dst.@event[dst.type.list["goal"]]?["start"];
         await Assert.That(start).IsNotNull();
-        await Assert.That(await running!.Event!.Value()).IsSameReferenceAs(start);
         await Assert.That(start!.before.Count).IsEqualTo(1);
+        await Assert.That(await running!.Event!.Value()).IsSameReferenceAs(start.before[0]);
         await (await Named(dst, "Other").Start(into)).IsSuccess();
         await Assert.That(await into.Variable.GetValue("seen")).IsEqualTo("Other");
 
