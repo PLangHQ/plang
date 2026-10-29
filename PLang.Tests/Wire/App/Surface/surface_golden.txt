@@ -3039,6 +3039,7 @@ class app.type.item.variable.this : app.type.item.this, app.type.item.ICreate<ap
   static List(app.this app) : app.type.item.list.this<app.type.item.variable.this>
   static Of(app.actor.context.this context) : app.type.item.list.this<app.type.item.variable.this>
   static Resolve(System.String raw, app.actor.context.this context, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> given = …) : app.type.item.variable.this
+  static Select(app.type.item.this key, app.actor.context.this asker) : System.Threading.Tasks.ValueTask<app.data.this<app.type.item.variable.this>>
 
 class app.type.item.wire.kind.plang.Writer : app.type.format.IWriter
   BeginArray(System.Int32 count) : System.Void

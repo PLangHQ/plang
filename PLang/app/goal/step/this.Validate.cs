@@ -51,16 +51,24 @@ public sealed partial class @this
         var problems = new List<string>();
         // a variable is the same one whatever its case, as the variable list compares names
         var comparer = global::app.type.item.variable.list.@this.Comparer;
-        var said = new global::app.type.item.variable.parser.@this(Text, context.App.type.list).Variable.Select(x => x.Text).Distinct(comparer).ToList();
-        var answered = new global::app.type.item.variable.parser.@this(answer,context.App.type.list).Variable.Select(x => x.Text).Distinct(comparer).ToList();
-        // each told as the step writes it, to be copied exactly — beside the answer's own when it wrote one the step's
-        // variables say was meant to be this one
         var step = new global::app.type.item.variable.parser.@this(Text, context.App.type.list);
-        foreach (var v in said)
-            if (!answered.Contains(v, comparer))
-                problems.Add(answered.Where(a => !said.Contains(a, comparer)).FirstOrDefault(a => comparer.Equals(step.Nearest(a), v)) is { } near
-                    ? $"step {Index}: {v} is in the step but not in your answer: the step writes `{v}`; your answer has `{near}` — copy it exactly"
-                    : $"step {Index}: {v} is in the step but not in your answer: copy it exactly");
+        var stepped = step.Variable.DistinctBy(x => x.Text, comparer).ToList();
+        var answers = new global::app.type.item.variable.parser.@this(answer, context.App.type.list).Variable.DistinctBy(x => x.Text, comparer).ToList();
+        var said = stepped.Select(x => x.Text).ToList();
+        var answered = answers.Select(x => x.Text).ToList();
+        // each of the step's variables is named by one of the answer's — itself, or a path through the app's variables
+        // that selects it — else told as the step writes it, to be copied exactly, beside the answer's own when it wrote
+        // one the step's variables say was meant to be this one
+        foreach (var v in stepped)
+        {
+            var named = false;
+            foreach (var a in answers)
+                if (named = await a.Names(v, context)) break;
+            if (named) continue;
+            problems.Add(answered.Where(a => !said.Contains(a, comparer)).FirstOrDefault(a => comparer.Equals(step.Nearest(a), v.Text)) is { } near
+                ? $"step {Index}: {v.Text} is in the step but not in your answer: the step writes `{v.Text}`; your answer has `{near}` — copy it exactly"
+                : $"step {Index}: {v.Text} is in the step but not in your answer: copy it exactly");
+        }
         // and the other way: a variable the answer names that the step's words don't is invented — a
         // system variable (%!data%, %!error%) excepted
         foreach (var v in answered)

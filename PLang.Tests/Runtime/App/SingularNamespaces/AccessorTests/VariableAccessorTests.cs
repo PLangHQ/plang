@@ -58,12 +58,17 @@ public class VariableAccessorTests
         await Assert.That(read.Peek()?.ToString()).IsEqualTo("text");
     }
 
-    [Test] public async Task AppVariable_UnknownKey_IsNotFound()
+    // a variable is a name whether or not it holds anything: a key nothing is set under is the variable of that name,
+    // its value not set
+    [Test] public async Task AppVariable_AKeyNothingIsSetUnder_IsTheVariable_ItsValueNotSet()
     {
         await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
-        var read = await Read("%!app.variable.nobody%", app.actor.list.User.Context);
-        await Assert.That(read.Success).IsFalse();
-        await Assert.That(read.Error!.Key).IsEqualTo("NotFound");
+        var ctx = app.actor.list.User.Context;
+        var read = await Read("%!app.variable.nobody%", ctx);
+        await read.IsSuccess();
+        var nobody = (global::app.type.item.variable.@this)read.Peek()!;
+        await Assert.That(nobody.Name).IsEqualTo("nobody");
+        await Assert.That((await nobody.Start(ctx)).IsInitialized).IsFalse();
     }
 
     [Test] public async Task AppVariable_TheCallsOwnShadowsTheActors()

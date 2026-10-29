@@ -44,6 +44,12 @@ public sealed class Variable : Hop
         => IsProgram || Bound.Contains(Name, global::app.type.item.variable.list.@this.Comparer)
            || (await Start(null, context)).IsInitialized;
 
+    /// <summary>Whether reading the name runs a goal of plang's: a <c>!</c> name the memory doesn't bind that is a
+    /// shortcut (<c>%!goal%</c>). The app's member, a module or a binding is read, nothing run.</summary>
+    internal async System.Threading.Tasks.ValueTask<bool> Runs(global::app.actor.context.@this context)
+        => Name.StartsWith('!') && !(await context.Variable.Get(Name)).IsInitialized
+           && await context.App.shortcut.Get(Name[1..], context) is { Success: true };
+
     // the ! names a run binds as it goes — never there before it runs
     private static readonly string[] Bound = ["!data", "!event", "!buildData"];
 

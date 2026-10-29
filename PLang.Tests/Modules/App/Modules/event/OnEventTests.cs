@@ -42,6 +42,21 @@ public class OnEventTests
 
     private async Task<object?> Value(string name) => await (await Ctx.Variable.Get(name)).Value();
 
+    // a variable is a name whether or not it holds anything: its moments are bound before its first set, by its path
+    // through the app's variables, and that first set runs what was bound
+    [Test]
+    public async Task AVariablesSet_BoundBeforeItsFirstSet_ByItsPath_RunsOnTheFirstSet()
+    {
+        Goal("Log", Keep("logged", "yes"));
+        await Assert.That((await Ctx.Variable.Get("count")).IsInitialized).IsFalse();
+
+        var @event = await Bind("%!app.variable[\"count\"].on.set%", "after", "Log");
+        await Ctx.Variable.Set("count", 1);
+
+        await Assert.That(@event.Item).IsTypeOf<global::app.type.item.variable.@this>();
+        await Assert.That((await Value("logged"))?.ToString()).IsEqualTo("yes");
+    }
+
     [Test]
     public async Task BeforeEachGoal_BindsOnTheGoalTypesStart_ForThisActor()
     {
