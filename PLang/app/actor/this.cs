@@ -219,7 +219,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     // over its maker's folder has none of its own — the folder's files are the maker's, already run there; read again
     // they would bind twice
     IEnumerable<global::app.type.item.path.@this> global::app.origin.@this.Events(global::app.@this app)
-        => Equals(app.filesystem.root, App.filesystem.root)
+        => app.filesystem.root.Equals(App.filesystem.root)
             ? [] : [app.filesystem.root.Combine("system").Combine("event")];
 
     int global::app.origin.@this.Depth => App.Depth + 1;
@@ -228,7 +228,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     // types when it is read, so a goal its app reads reaches only its app's) and shares its folder (a .pr is then the same
     // file in both)
     async Task<global::app.data.@this?> global::app.origin.@this.Goal(global::app.type.item.path.@this source, global::app.@this app)
-        => app.HasCode || !Equals(app.filesystem.root, App.filesystem.root) ? null : await App.goal.list.Load(source);
+        => app.HasCode || !app.filesystem.root.Equals(App.filesystem.root) ? null : await App.goal.list.Load(source);
 
     Identity? global::app.origin.@this.Identity(global::app.@this app) => Identity ?? DefaultIdentity;
 
