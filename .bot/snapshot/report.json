@@ -105,25 +105,36 @@
       "timestamp_start": "2026-10-28T09:30:00Z",
       "timestamp_end": "2026-10-28T10:15:00Z",
       "intent": "Review and bench 35c1b3377 (the snapshot is one write)",
-      "before": { "assumptions": "decisions 183-200 are ruled; bytes columns are load-proof", "risk": "load 9-14 voids times" },
+      "before": {
+        "assumptions": "decisions 183-200 are ruled; bytes columns are load-proof",
+        "risk": "load 9-14 voids times"
+      },
       "plan": ".bot/snapshot/codeanalyzer/v1/plan.md",
       "actions": [
         {
-          "paths": ["Tools/Bench/record.md"],
+          "paths": [
+            "Tools/Bench/record.md"
+          ],
           "type": "review",
           "category": "test",
           "confidence": "medium",
           "context": "bench row at load 9: sub birth +6 KB (band 5), rest under base, memory flat, sweep 0 red, ptest 307/0 after rebuild"
         },
         {
-          "paths": [".bot/snapshot/codeanalyzer/review.md"],
+          "paths": [
+            ".bot/snapshot/codeanalyzer/review.md"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
           "context": "findings P2-1, P3-1, P3-2, P5-1, P7-1, P7-2, P9-1, P9-2; no mutation run"
         }
       ],
-      "after": { "status": "review written", "health": "fail (structure)", "notes": "coder next" }
+      "after": {
+        "status": "review written",
+        "health": "fail (structure)",
+        "notes": "coder next"
+      }
     },
     {
       "id": "6f1c2b9e-4d7a-4e3b-9a1f-2c8d5e7b0a41",
@@ -131,28 +142,103 @@
       "timestamp_start": "2026-10-28T00:00:00Z",
       "timestamp_end": "2026-10-28T23:59:00Z",
       "intent": "Direct the snapshot bot line through the one write (183-200), its reviews, the bench, and 10a's proposal; bring locked-core and plang-visible choices to Ingi.",
-      "before": { "assumptions": "The one write was built but uncommitted, waiting on Ingi's answer about the error's callback (199).", "risk": "Piling up mechanism or questions on Ingi; sketches that don't match the code." },
+      "before": {
+        "assumptions": "The one write was built but uncommitted, waiting on Ingi's answer about the error's callback (199).",
+        "risk": "Piling up mechanism or questions on Ingi; sketches that don't match the code."
+      },
       "plan": ".bot/snapshot/architect/summary.md",
       "actions": [
-        { "paths": [".bot/snapshot/architect/summary.md"], "type": "decision", "category": "doc", "confidence": "high",
-          "context": "200: Ingi said yes to the error's callback (the run as it stands, going on from where the error happened); what's saved is .call, never 'frames'. error.CallFrames -> error.call asked." },
-        { "paths": ["PLang/app/this.Snapshot.cs", "PLang/app/call/list/this.Snapshot.cs", "PLang/app/View.cs", "PLang/app/type/item/kind/reflection/this.cs", "PLang/app/snapshot/this.cs"], "type": "review", "category": "code", "confidence": "high",
-          "context": "201-202: reviewed coder 35c1b3377 (the one write); six findings by pattern; fixes accepted at add1a0e4c; the View.Make overload and the pre-pass DLL door were declined." },
-        { "paths": ["PLang/app/event/on/", "PLang/app/type/item/kind/reflection/Tagged.cs"], "type": "decision", "category": "code", "confidence": "medium",
-          "context": "203-207: 10a proposal sent back twice (it reversed 190; a tag contradicted its own write method; a public actor.on would clash with item.on); the walk sees tagged non-public members instead (patch held until Ingi's yes)." },
-        { "paths": ["PLang/app/module/code/this.cs", "PLang.Tests/Shared/Testing.cs", "Tools/Bench/"], "type": "decision", "category": "code", "confidence": "high",
-          "context": "209-214: sub birth +6 KB traced by codeanalyzer to the bench's own Testing() (a refused Register's error thrown away), not plang; the harness is fixed; the code layer's read makes nothing and the bottom table is made at birth (no 'own' name)." },
-        { "paths": ["PLang/app/error/this.cs", "PLang/app/call/this.cs", "os/system/error/"], "type": "decision", "category": "code", "confidence": "high",
-          "context": "216-224: error.call replaces CallFrames; a call's Chain is call.list; the error page shows the nearest 10 calls and the first 3; the error's step, goal and action read its own first, its call's after; the unused html error pages go." },
-        { "paths": ["PLang/app/event/", "PLang/app/this.cs", "PLang/app/origin/", "PLang/app/module/on/"], "type": "decision", "category": "code", "confidence": "high",
-          "context": "225-254, 268-270: 10a landed and was reviewed; on Ingi's model the per-actor hold became one event list per app (app.event, plang-visible; %!app.event.current% for the running event), a sub app inherits its maker's bindings at birth as its own inherited binding kind, each level inherits its own part, a fire goes through the lists in one pass, and reads make nothing. The event-action and module-list-type branches are written up." },
-        { "paths": ["PLang/app/goal/list/this.cs", "PLang/app/shortcut/"], "type": "decision", "category": "code", "confidence": "high",
-          "context": "255-275: the os decider key is saved on the system row through the build's own ask; security found S-1 (a sub app's goal replaces what a maker's handler calls), which Ingi accepted as the design; the goal lookup matches a / address exactly and prefers the goal beside its caller; a shortcut is its file and a failed one answers its own error." },
-        { "paths": ["Tools/Bench/run.sh"], "type": "review", "category": "test", "confidence": "high",
-          "context": "259-277: the codeanalyzer passed the event work; the root request's +274 KB was tiered PGO, not a commit; root birth's +26 KB is explained by 218." }
+        {
+          "paths": [
+            ".bot/snapshot/architect/summary.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "200: Ingi said yes to the error's callback (the run as it stands, going on from where the error happened); what's saved is .call, never 'frames'. error.CallFrames -> error.call asked."
+        },
+        {
+          "paths": [
+            "PLang/app/this.Snapshot.cs",
+            "PLang/app/call/list/this.Snapshot.cs",
+            "PLang/app/View.cs",
+            "PLang/app/type/item/kind/reflection/this.cs",
+            "PLang/app/snapshot/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "201-202: reviewed coder 35c1b3377 (the one write); six findings by pattern; fixes accepted at add1a0e4c; the View.Make overload and the pre-pass DLL door were declined."
+        },
+        {
+          "paths": [
+            "PLang/app/event/on/",
+            "PLang/app/type/item/kind/reflection/Tagged.cs"
+          ],
+          "type": "decision",
+          "category": "code",
+          "confidence": "medium",
+          "context": "203-207: 10a proposal sent back twice (it reversed 190; a tag contradicted its own write method; a public actor.on would clash with item.on); the walk sees tagged non-public members instead (patch held until Ingi's yes)."
+        },
+        {
+          "paths": [
+            "PLang/app/module/code/this.cs",
+            "PLang.Tests/Shared/Testing.cs",
+            "Tools/Bench/"
+          ],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "209-214: sub birth +6 KB traced by codeanalyzer to the bench's own Testing() (a refused Register's error thrown away), not plang; the harness is fixed; the code layer's read makes nothing and the bottom table is made at birth (no 'own' name)."
+        },
+        {
+          "paths": [
+            "PLang/app/error/this.cs",
+            "PLang/app/call/this.cs",
+            "os/system/error/"
+          ],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "216-224: error.call replaces CallFrames; a call's Chain is call.list; the error page shows the nearest 10 calls and the first 3; the error's step, goal and action read its own first, its call's after; the unused html error pages go."
+        },
+        {
+          "paths": [
+            "PLang/app/event/",
+            "PLang/app/this.cs",
+            "PLang/app/origin/",
+            "PLang/app/module/on/"
+          ],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "225-254, 268-270: 10a landed and was reviewed; on Ingi's model the per-actor hold became one event list per app (app.event, plang-visible; %!app.event.current% for the running event), a sub app inherits its maker's bindings at birth as its own inherited binding kind, each level inherits its own part, a fire goes through the lists in one pass, and reads make nothing. The event-action and module-list-type branches are written up."
+        },
+        {
+          "paths": [
+            "PLang/app/goal/list/this.cs",
+            "PLang/app/shortcut/"
+          ],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "255-275: the os decider key is saved on the system row through the build's own ask; security found S-1 (a sub app's goal replaces what a maker's handler calls), which Ingi accepted as the design; the goal lookup matches a / address exactly and prefers the goal beside its caller; a shortcut is its file and a failed one answers its own error."
+        },
+        {
+          "paths": [
+            "Tools/Bench/run.sh"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "259-277: the codeanalyzer passed the event work; the root request's +274 KB was tiered PGO, not a commit; root birth's +26 KB is explained by 218."
+        }
       ],
-      "after": { "status": "The event work is complete and reviewed: security SAFE (10/10), codeanalyzer PASS, C# 0 red in all six projects, plang 307/308. What's left is Ingi's held list.", "health": "good",
-        "notes": "Misses: I told Ingi Chain was plang-reachable (it had no tag); my 219 getter order named the wrong step for build errors; I removed app.@event without tracing that %!event% resolved through it; I ruled channel.Key {actor, name} in 204; I let _held through a whole-file review. One commit (255) used a peer's Claude-Session line by mistake." }
+      "after": {
+        "status": "The event work is complete and reviewed: security SAFE (10/10), codeanalyzer PASS, C# 0 red in all six projects, plang 307/308. What's left is Ingi's held list.",
+        "health": "good",
+        "notes": "Misses: I told Ingi Chain was plang-reachable (it had no tag); my 219 getter order named the wrong step for build errors; I removed app.@event without tracing that %!event% resolved through it; I ruled channel.Key {actor, name} in 204; I let _held through a whole-file review. One commit (255) used a peer's Claude-Session line by mistake."
+      }
     },
     {
       "id": "8d2f6a14-3b9c-4e71-a5d0-1c7e9b3f2a68",
@@ -160,15 +246,37 @@
       "timestamp_start": "2026-10-28T19:55:00Z",
       "timestamp_end": "2026-10-28T20:45:00Z",
       "intent": "Review and bench the per-app event list (941df01dd..0cd33f185)",
-      "before": { "assumptions": "bytes columns are load-proof; the diff touches birth and the request app, not the store", "risk": "a fire is the hottest path; request apps are born per request" },
+      "before": {
+        "assumptions": "bytes columns are load-proof; the diff touches birth and the request app, not the store",
+        "risk": "a fire is the hottest path; request apps are born per request"
+      },
       "plan": ".bot/snapshot/codeanalyzer/v2/plan.md",
       "actions": [
-        { "paths": ["Tools/Bench/record.md", "Tools/Bench/Program.cs"], "type": "review", "category": "test", "confidence": "high",
-          "context": "rows at 0cd33f185 and the parent 6e9db97b4; BENCH_MAKER probe: sub birth 99 / 105 / 108 KB for a maker with 0 / 4 / 16 bindings" },
-        { "paths": [".bot/snapshot/codeanalyzer/review.md"], "type": "review", "category": "code", "confidence": "high",
-          "context": "birth copy sweeps every event name per bound item; one ptest flake under load; dead Reach.Inner; string write door; inherited mirrors scope/filter" }
+        {
+          "paths": [
+            "Tools/Bench/record.md",
+            "Tools/Bench/Program.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "rows at 0cd33f185 and the parent 6e9db97b4; BENCH_MAKER probe: sub birth 99 / 105 / 108 KB for a maker with 0 / 4 / 16 bindings"
+        },
+        {
+          "paths": [
+            ".bot/snapshot/codeanalyzer/review.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "birth copy sweeps every event name per bound item; one ptest flake under load; dead Reach.Inner; string write door; inherited mirrors scope/filter"
+        }
       ],
-      "after": { "status": "review written", "health": "fail (small)", "notes": "coder next; no production edit, no mutation run" }
+      "after": {
+        "status": "review written",
+        "health": "fail (small)",
+        "notes": "coder next; no production edit, no mutation run"
+      }
     },
     {
       "id": "c4a9e1d2-7f35-4b68-8e0a-5d2c9b7f1e36",
@@ -176,15 +284,87 @@
       "timestamp_start": "2026-10-28T21:10:00Z",
       "timestamp_end": "2026-10-29T01:00:00Z",
       "intent": "Final review and bench before the merge (0cd33f185..1268c81f7)",
-      "before": { "assumptions": "PGO-off bytes repeat; the parent's numbers re-measured the same way", "risk": "the serializer write and the frame push are hot" },
+      "before": {
+        "assumptions": "PGO-off bytes repeat; the parent's numbers re-measured the same way",
+        "risk": "the serializer write and the frame push are hot"
+      },
       "plan": ".bot/snapshot/codeanalyzer/v3/plan.md",
       "actions": [
-        { "paths": ["Tools/Bench/record.md", "Tools/Bench/Program.cs"], "type": "review", "category": "test", "confidence": "high",
-          "context": "row at 1268c81f7; bisect of the sub request by commit (d67194934); probe mode `index`: action.Index allocates ~1.6 KB per call" },
-        { "paths": [".bot/snapshot/codeanalyzer/review.md"], "type": "review", "category": "code", "confidence": "high",
-          "context": "per-frame Index search (blocking), literal names in View.Record, Under late stamp, Module/Name copies, double Goal() list, naming" }
+        {
+          "paths": [
+            "Tools/Bench/record.md",
+            "Tools/Bench/Program.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "row at 1268c81f7; bisect of the sub request by commit (d67194934); probe mode `index`: action.Index allocates ~1.6 KB per call"
+        },
+        {
+          "paths": [
+            ".bot/snapshot/codeanalyzer/review.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "per-frame Index search (blocking), literal names in View.Record, Under late stamp, Module/Name copies, double Goal() list, naming"
+        }
       ],
-      "after": { "status": "review written", "health": "fail (one blocking)", "notes": "coder next; no production edit, no mutation run" }
+      "after": {
+        "status": "review written",
+        "health": "fail (one blocking)",
+        "notes": "coder next; no production edit, no mutation run"
+      }
+    },
+    {
+      "id": "48ff473e-a0c3-4ce8-82f1-c9dc1fbed5ca",
+      "bot": "tester",
+      "timestamp_start": "2026-10-28T23:59:00Z",
+      "timestamp_end": "2026-10-29T00:19:00Z",
+      "intent": "Test-quality pass on snapshot at 2df750c73: suite counts against runtime2, the plan's behaviours mapped to tests, each plan test alone, mutation checks of the resume path.",
+      "before": {
+        "assumptions": "The plan's behaviours are each pinned; a green suite means the resume path is tested.",
+        "risk": "start.goal is stale; resume core may have placeholder tests; no baseline file."
+      },
+      "plan": ".bot/snapshot/tester/v6/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/call/action/this.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Three announced mutations of Rest, each reverted: dropping or repeating the action after a returned call survives all suites; not re-running the stopped action goes red in 26 C# tests and 2 plang tests."
+        },
+        {
+          "paths": [
+            "test/plan/snapshot/",
+            "PLang.Tests/Wire/App/CallbackTests/SnapshotResumeTests.cs",
+            "PLang.Tests/Modules/App/Modules/snapshot/SignedSnapshotTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Mapped the architect's seven behaviours and start.goal's stages to tests; five have no plang test; start.goal calls 8 goals that do not exist."
+        },
+        {
+          "paths": [
+            ".bot/snapshot/tester/v6/result.md",
+            ".bot/snapshot/tester/v6/coverage.json",
+            ".bot/snapshot/test-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Verdict needs-fixes: two confirmed false greens in the resume core."
+        }
+      ],
+      "after": {
+        "status": "FAIL (needs-fixes)",
+        "health": "C# 5641 green, plang 307/308, no new red name vs runtime2; 1737 of 1908 changed executable lines reached",
+        "notes": "Fixes are tests only: a multi-action-step resume test, a non-idempotent FreshAppGoesOn, plang tests for %!event% and edit/sign/resume, a truthful start.goal."
+      }
     }
   ]
 }
