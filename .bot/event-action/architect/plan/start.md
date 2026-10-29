@@ -49,7 +49,7 @@ Start
 
 ## Open for Ingi before stage 2
 
-1. **How a step names a pattern.** `before each goal in api/*` must reach something on.event can bind on. A first idea: the goal list answers a pattern for a key with a wildcard (`%!app.goal["/api/*"].on.start%`), a plang-visible change to the goal list.
+1. ~~How a step names a pattern~~ — **decided (37):** `%!app.goal["/api/*"].on.start%`; the goal list answers a pattern for a name with a wildcard, and the event is bound on it.
 2. **Which side answers the one question, so a pattern fits.** `item.Is(@event.Item)` asks the goal; a pattern can only be answered by the pattern (it holds the glob). Either the thing bound on answers ("does an event on me run for this goal?": a goal, itself; a type, its items; a module, its actions; a pattern, the goals whose path matches), or `Is(item)` hands the question to it. Both are on item's locked base.
 
 ## Stages
