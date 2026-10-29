@@ -89,6 +89,11 @@ public sealed class @this
     // The whole text as one variable, read once — a second read of Whole adds no second error.
     private variable.@this? One()
     {
+        // a bare root name (`count`, `%count%`): the variable made at once, no reading hop by hop
+        var bare = _text.StartsWith('%') && _text.Length > 2 && _text[^1] == '%' ? _text[1..^1] : _text;
+        if (bare.Length > 0 && IsStart(bare[0]) && Root(bare))
+            return new variable.@this(bare.Length == _text.Length ? $"%{bare}%" : _text,
+                new code.@this(new code.Variable(bare, null, Hop<code.Variable>()), Code), _types[typeof(variable.@this)]);
         if (!_text.StartsWith('%'))
         {
             var named = new @this($"%{_text}%", _types);
@@ -149,6 +154,14 @@ public sealed class @this
     }
 
     private static bool IsStart(char c) => char.IsLetter(c) || c == '_' || c == '!';
+
+    // Whether name is one root and nothing more: a name's characters only (a `!` only first, as a setting's), no hop.
+    private static bool Root(string name)
+    {
+        for (var i = 0; i < name.Length; i++)
+            if (!(char.IsLetterOrDigit(name[i]) || name[i] == '_' || (i == 0 && name[i] == '!'))) return false;
+        return true;
+    }
 
     // The reference between `at` and `close`, read hop by hop.
     private variable.@this? Body(int at, int close)

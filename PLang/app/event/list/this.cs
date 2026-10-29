@@ -9,8 +9,9 @@ namespace app.@event.list;
 /// (<see cref="inherited.@this"/>); a snapshot's read loads them before it binds what it kept. An item's list (a goal's, a step's, a catalog action's, a
 /// type's, a channel's) is made on its first ask with every event whose Item has it
 /// (<see cref="global::app.type.item.@this.Has"/>), in the order bound; an event bound later is added to every list made.
-/// A variable's list is its name's, made on the name's first set and only when an event is bound on that name (a
-/// variable object is made anew at every set). A goal run as another actor reads that actor's events, never these. A
+/// A variable's list is an item's like any (a variable equals another by its name), made when something asks for it
+/// (<c>%count.on%</c>) or when a set of it finds an event bound on it (<see cref="Moments"/>); a set of a variable nothing
+/// is bound on makes none. A goal run as another actor reads that actor's events, never these. A
 /// list is held as long as the actor is, one per item that stays around (a goal, a step, a catalog action, a type, a
 /// channel, the app).
 /// </summary>
@@ -23,11 +24,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
     // each item's list for this actor, made on its first ask: none until then, by the item's own equality (a type by its
     // name), held as long as the actor is — a list for an item a sub app shares with its maker dies with the sub app
     private readonly ConcurrentDictionary<global::app.type.item.@this, on.@this> _on = new();
-
-    // each variable name an event is bound on, with those events; a name's list, made on its first set
-    // (read without the lock: a set of a name nothing is bound on takes none; each name's events replaced, never changed)
-    private readonly ConcurrentDictionary<string, global::app.@event.@this[]> _named = new(StringComparer.OrdinalIgnoreCase);
-    private readonly ConcurrentDictionary<string, on.@this> _variable = new(StringComparer.OrdinalIgnoreCase);
 
     // the load, once: started by the first ask or add, every other asker awaiting the same
     private System.Threading.Tasks.TaskCompletionSource? _load;
@@ -68,24 +64,25 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
         return await On(item);
     }
 
-    /// <summary>The list a set or a remove of the variable named <paramref name="name"/> runs, the events loaded first:
-    /// the name's own when an event is bound on that name (made on its first ask, the variable type's events in it too),
-    /// else the variable type's.</summary>
-    internal System.Threading.Tasks.ValueTask<on.@this> On(string name)
+    /// <summary>The moments a set or a remove of <paramref name="variable"/> runs, the events loaded first: the variable's
+    /// list when one is made or an event is bound on it (which makes it, the variable type's events in it too), else the
+    /// variable type's — a set of a variable nothing is bound on makes no list.</summary>
+    internal System.Threading.Tasks.ValueTask<on.@this> Moments(global::app.type.item.variable.@this variable)
     {
         var loaded = Loaded();
-        if (!loaded.IsCompletedSuccessfully) return Awaited(loaded, name);
-        if (_variable.TryGetValue(name, out var on)) return new(on);
-        if (!_named.TryGetValue(name, out var bound)) return On(_actor.App.variable.type);
-        // the name's list made as the events stand, which a bind changes only under the same lock
-        lock (_gate) return new(_variable.GetOrAdd(name, _ => List(bound[0].Item)));
+        if (!loaded.IsCompletedSuccessfully) return Awaited(loaded, variable);
+        if (_on.TryGetValue(variable, out var on)) return new(on);
+        foreach (var @event in _events)
+            if (@event.Item.Equals(variable)) return On(variable);
+        return On(_actor.App.variable.type);
     }
 
-    // The first ask of an actor whose events never loaded: they load, then the name's list.
-    private async System.Threading.Tasks.ValueTask<on.@this> Awaited(System.Threading.Tasks.ValueTask loaded, string name)
+    // The first ask of an actor whose events never loaded: they load, then the variable's moments.
+    private async System.Threading.Tasks.ValueTask<on.@this> Awaited(System.Threading.Tasks.ValueTask loaded,
+        global::app.type.item.variable.@this variable)
     {
         await loaded;
-        return await On(name);
+        return await Moments(variable);
     }
 
     // A list for item: every event whose Item has it, in the order bound.
@@ -98,23 +95,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
     }
 
     // Every list made.
-    private IEnumerable<on.@this> Made => _on.Values.Concat(_variable.Values);
+    private IEnumerable<on.@this> Made => _on.Values;
 
     /// <summary>Binds <paramref name="event"/>, the events loaded first: it joins this actor's events, and every list made
     /// that it runs for. A list not made yet gets it when it is. Answers it.</summary>
     internal async System.Threading.Tasks.ValueTask<T> Add<T>(T @event) where T : global::app.@event.@this
     {
         await Loaded();
-        Join(@event);
-        return @event;
-    }
-
-    /// <summary>Binds <paramref name="event"/>, bound on the variable named <paramref name="name"/>, the events loaded
-    /// first: the name is recorded as having events, so its list is made on its next set. Answers it.</summary>
-    internal async System.Threading.Tasks.ValueTask<T> Add<T>(string name, T @event) where T : global::app.@event.@this
-    {
-        await Loaded();
-        lock (_gate) _named[name] = _named.TryGetValue(name, out var bound) ? [.. bound, @event] : [@event];
         Join(@event);
         return @event;
     }
@@ -130,22 +117,16 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
         }
     }
 
-    /// <summary>Takes <paramref name="event"/> off: out of the list and every list made it was in; a variable name no event
-    /// is bound on any more has no list.</summary>
+    /// <summary>Takes <paramref name="event"/> off: out of the list and every list made it was in; a variable no event is
+    /// bound on any more has no list.</summary>
     internal void Remove(global::app.@event.@this @event)
     {
         lock (_gate)
         {
             _events = [.. _events.Except([@event])];
             foreach (var on in Made) on.Remove(@event);
-            foreach (var (name, bound) in _named)
-            {
-                if (!bound.Contains(@event)) continue;
-                global::app.@event.@this[] left = [.. bound.Except([@event])];
-                if (left.Length > 0) { _named[name] = left; continue; }
-                _named.TryRemove(name, out _);
-                _variable.TryRemove(name, out _);
-            }
+            if (@event.Item is global::app.type.item.variable.@this variable && !_events.Any(left => left.Item.Equals(variable)))
+                _on.TryRemove(variable, out _);
         }
     }
 

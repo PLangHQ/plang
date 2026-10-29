@@ -25,9 +25,9 @@ public class CodeEventsTests
         // the test runner's timing, after every step
         await user.@event.Add(new global::app.@event.code.@this(app.type.list["step"], "start", global::app.@event.When.after,
             (_, result, _) => { ran.Add("timed"); return Task.FromResult(result); }, user, global::app.@event.code.@this.Always));
-        // debug's watch, on one variable's name
+        // debug's watch, on one variable
         var watched = new global::app.type.item.variable.parser.@this("%count%", app.type.list).Variable.Single();
-        await user.@event.Add("count", new global::app.@event.code.@this(watched, "set", global::app.@event.When.after,
+        await user.@event.Add(new global::app.@event.code.@this(watched, "set", global::app.@event.When.after,
             (_, result, _) => { ran.Add("watched"); return Task.FromResult(result); }, user, global::app.@event.code.@this.Always));
 
         var goal = Make.Goal(context, "Main", Make.Step("set %x% = one",
