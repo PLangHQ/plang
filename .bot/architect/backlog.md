@@ -30,6 +30,7 @@ The one list of work after runtime2's merges (Ingi, 2026-10-29: "yes merge into 
 ## Before plang 2.0b is published (Ingi, 2026-10-25)
 
 - **Brotli** ("keep eye on it before we release"): check the shipped .NET runtime carries Google's fixed decoder, else drop `archive/type/archive/kind/brotli/this.cs`.
+- **`set %x% = %x% + 1` builds set-before-add 4 times in 5** (plang-builder, event-action 79, 2026-10-29; older than event-action, in runtime2 too: it happens the same with or without the writer's examples). The decider is sure of `variable.set` (0.98) and gives `math.add` only "possible" (module math 0.50), so the writer's starting line is `variable.set(Value, Name=%x%)`. The writer keeps that order and puts math.add after, and the set then stores the previous `%!data%`. Committed .prs built earlier are right; a fresh build of the most common step in plang is wrong. The builder bot traces it after event-action (5 whys: the module's score in stage 1, or the starting line's order). The same family as a set's verb pre-empting the module action. Proof: a goal of that one step builds add-then-set 5 of 5. Capture: the builder's scratchpad `noex.err`.
 - **The release goals** (bugs 2): `Publish/Publish.goal:20` publishes the deleted PlangWindowForms; `Publish/Nuget.goal` packs the deleted PlangTests. Drop those steps, run the pipeline end to end once.
 
 ## Branches and items, no order yet
