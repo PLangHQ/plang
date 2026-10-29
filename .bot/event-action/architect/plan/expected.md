@@ -31,7 +31,7 @@ A variable equals another by its name (42), so the base `Has` answers for it. No
 ```csharp
 // event/list/this.cs — the actor's events (%!app.event%), every event in bind order
 private readonly object _gate = new();
-private readonly System.Runtime.CompilerServices.ConditionalWeakTable<global::app.type.item.@this, on.@this> _on = new();   // loaded lists (20)
+private readonly System.Collections.Concurrent.ConcurrentDictionary<global::app.type.item.@this, on.@this> _on = new();   // loaded lists, owned by the actor's events (43)
 
 // pull: an item's lists, loaded on the first ask with every event that applies, the same after that
 internal on.@this this[global::app.type.item.@this item]
