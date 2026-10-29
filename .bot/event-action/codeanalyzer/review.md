@@ -62,3 +62,21 @@ I agree with decision 60 for the reason given (the setter is sync; a sync caller
 
 ## For the coder
 1 (the load's cost, the architect's ruling first), 4, 5, 6; 2 and 7 as time allows. 3 is noted.
+
+---
+
+# Recheck after event-action 66 (2d10af80f, 4f960bba3)
+
+Bench (PGO off, load 11): sub birth 103 KB (+4, in band), root birth 2366 KB (in), **sub request 524 KB** (parent 496, before the fix 549), root request 4434 KB (accepted by 66 as Hello's price: band explained), held flat (1.6→2.2, 0.1→2.1).
+
+| # | Status | Notes |
+|---|---|---|
+| 1 | **half closed** | A sub app over its maker's folder now reads no folder, and the setting is not read (`Run` returns on `folders.Count == 0`): the first-ask load fell from 78 KB to 15 KB (system 7.5, user 7.4 by `Bench events child`). The sub request is still **+28 KB over the parent** (band ±10). Of the 28: ~13 KB is the same minting this load does (kind.empty 2.6, RuntimeMethodInfoStub 2.1, CustomAttributeRecord 1.0, FormatAttribute 1.0, type 0.8, kind.format 0.55 … by allocation ticks: a type and its kind made, attributes read by reflection, on a first ask: call-cost idea 2), ~13 KB is the goal's, steps' and actions' lists made on the app's first run (decision 10's price), and ~2 KB is the goal load (36 → 45 KB). Low note: the folder test is `string.Equals(..., Ordinal)` on `Absolute`; the file system has a root comparison (`path.RootComparison`), so a Windows root differing by case would read the folder twice. |
+| 2 | closed | `actor.@event` is internal. |
+| 3 | closed | `_load` is a claimed `TaskCompletionSource`; `Load` answers on it in a `try`, the failure rides to every asker; nothing held while it runs. |
+| 4 | closed | `Declared` gone; `this[name]` is the one answer (`Add` and `Get` ask it); one `Moments`; the stacked summary fixed. `Add(name)` asks `this[name]` and `Made(name)` looks the name up again: two lookups of one answer, low. |
+| 5 | closed (retry open with the architect) | `Start` hands its `on` to `Attempt`; a retry asks once itself. |
+| 6 | closed | `set.cs` read whole: one local (`given`) and no `Value` reads after it, one write door (`name.Set(Binding(name, …))`, the typed branch too), the early return, the task path out of `Build`'s comment. Low: `Binding(name, typedData)` copies a Data made one line before; `named` in `Value.Given() is { } named` is a creative name for a Data. |
+| 7 | closed | one `Unread` on the event base; `Named(name)` has no `as`; the refusal comes from the reached item's own list (`On(reached.Peek())`); the window list asks `On(this)[what]`; `Glob` made once at the grant's birth; `_named` is lock-free to read (`_variable.TryGetValue`, then `_named.TryGetValue`; the lock only to make a name's list the first time). Unfixed and still low: `Glob.Matches` allocates a `bool[]` per piece. |
+
+Verdict v2: **FAIL, narrow.** 2–7 are closed. The sub request is +28 KB over the parent: 13 KB of it is decision 10's lists (explained); 13 KB is the type/kind minting on a first ask, which is the call-cost job's idea 2 (one type found, not made) and fixes the sub request, the root, and every action at once. The architect's choice: fix the mint now (a refactor of the type system's private part, and the largest saving in `call-cost.md`), or rule the 13 KB as the price of the lists' first ask and record the band as explained by 10 and 66.
