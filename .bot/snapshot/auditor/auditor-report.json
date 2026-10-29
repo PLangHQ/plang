@@ -1,0 +1,9 @@
+{"branch":"snapshot","bot":"auditor","audited":"cc944966a (code 7ae8f6dd9) vs runtime2 merge-base b283811f6","verdict":"fail","tests":{"csharp":"5644 total, 0 red","plang":"312 total, 311 pass, 0 fail, 0 stale, 1 skipped"},"findings":[
+{"id":"A1","severity":"major","file":"PLang/app/event/binding/action/this.cs","line":55,"issue":"binding runs a rebuilt goal.call with Name+Parameter only; Actor and Parallel dropped silently","missed_by":"codeanalyzer,tester","disposition":"pre-merge"},
+{"id":"A2","severity":"minor","file":"os/system/modules/snapshot/save.description.md","line":1,"issue":"teaches .snapshot files; only signed .plang resumes; resume teaching stale","disposition":"pre-merge"},
+{"id":"A3","severity":"minor","file":"PLang/app/module/identity/code/Default.cs","line":100,"issue":"banned names held/own introduced (also resume.cs:69, variable/this.cs:138, call/action:29, step/list:30)","disposition":"pre-merge"},
+{"id":"B1","severity":"minor","file":"PLang/app/module/identity/code/Default.cs","line":96,"issue":"Archive does not re-check default/force inside the change","disposition":"pre-merge"},
+{"id":"B2","severity":"minor","file":"PLang/app/snapshot/this.Variables.cs","line":17,"issue":"Get can throw AppException from View.Make instead of answering","disposition":"deferred"},
+{"id":"B3","severity":"minor","file":"PLang/app/module/snapshot/resume.cs","line":65,"issue":"Refusal creates the default identity as a side effect","disposition":"deferred"},
+{"id":"B4","severity":"minor","file":"PLang/app/View.cs","line":239,"issue":"five type names in the view; late stamps in call/step","disposition":"deferred"}
+]}
