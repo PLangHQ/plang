@@ -56,6 +56,8 @@ The one list of work after runtime2's merges (Ingi, 2026-10-29: "yes merge into 
 
 - **on.event's `Event` parameter holds an `on`** (event-action 20, the coder's point 5): since decision 13 the moment is an `on`, and since 4 an `event` is what's bound, so the parameter's name says one thing and its type another. Kept by decision 12 (no `.pr` changes); renaming it is a teaching change and a rebuild of every on.event `.pr`.
 
+- **Parsing a bare `%name%` costs 28.7 KB** (plang-tester, event-action 24, `.bot/event-action/tester/variable-events.md`): `Named(name)` (`type/item/variable/list/this.cs:213`) runs the full parser for a root name. The parser is the one definition of a reference, so the fix is the parser answering a bare root name cheaply, not a bypass. Anything under ~1 KB makes a type-level variable event on every set affordable.
+
 ### Cache
 
 - **The default cache key is the step's place, not its parameters** (event-action 11, Ingi: "yes"): `module/on/cache.cs:66–71` keys by goal path and step index, so `call LoadData id=%id%, cache for 10 minutes` or `read file %name%, cache …` answers the first value for every id or name unless the step names a key. Fix: the default key also takes the action's parameters (as they resolve). A test per case goes red today.
