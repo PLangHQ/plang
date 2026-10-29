@@ -244,25 +244,68 @@
       "timestamp_start": "2026-10-29T18:00:00Z",
       "timestamp_end": "2026-10-29T21:30:00Z",
       "intent": "Review event-action 6703697fb..3266637da by OBP patterns 11 and 12 and the return-early rule, and bench it against its parent.",
-      "before": { "assumptions": "The parent row is runtime2 6703697fb; set.cs joins at 89202009b.", "risk": "Per-actor lazy lists could move the request bytes." },
+      "before": {
+        "assumptions": "The parent row is runtime2 6703697fb; set.cs joins at 89202009b.",
+        "risk": "Per-actor lazy lists could move the request bytes."
+      },
       "plan": ".bot/event-action/codeanalyzer/v1/plan.md",
       "actions": [
         {
-          "paths": [".bot/event-action/codeanalyzer/review.md", ".bot/event-action/codeanalyzer/v1/verdict.json"],
+          "paths": [
+            ".bot/event-action/codeanalyzer/review.md",
+            ".bot/event-action/codeanalyzer/v1/verdict.json"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "medium",
           "context": "FAIL: sub request +53 KB and root +589 KB from the system-events load every request app pays; set.cs half-applied read-once; moment-name answered at three sites"
         },
         {
-          "paths": ["Tools/Bench/Program.cs", "Tools/Bench/record.md"],
+          "paths": [
+            "Tools/Bench/Program.cs",
+            "Tools/Bench/record.md"
+          ],
           "type": "modify",
           "category": "test",
           "confidence": "high",
           "context": "BENCH_MAKER binds through the actor's events; mode `events` measures the first-ask load per app; rows for 6703697fb and 3266637da"
         }
       ],
-      "after": { "status": "review sent to the architect, FAIL", "health": "tree clean", "notes": "call-cost job queued after the review" }
+      "after": {
+        "status": "review sent to the architect, FAIL",
+        "health": "tree clean",
+        "notes": "call-cost job queued after the review"
+      }
+    },
+    {
+      "id": "b7d2e0c4-5a1f-4e3b-8c96-tester-varevents",
+      "bot": "tester",
+      "timestamp_start": "2026-10-29T13:00:00Z",
+      "timestamp_end": "2026-10-29T14:00:00Z",
+      "intent": "Measure how a variable set finds its events and suggest a shape under the event-action plan",
+      "before": {
+        "assumptions": "Named() parses per set only when something is bound",
+        "risk": "a list per variable object would grow memory"
+      },
+      "plan": ".bot/event-action/tester/variable-events.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/event-action/tester/variable-events.md",
+            ".bot/event-action/tester/named-cache.patch",
+            ".bot/event-action/tester/VariableEventsMeasure.cs.txt"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "medium",
+          "context": "bytes per set 5.0K nothing bound vs 35K bound (28.7K is Named parse); per-variable lists hold 1.46K each; recommend by-name placement at bind. Measured via Variables.Set in C#, not a built goal. Prototype reverted."
+        }
+      ],
+      "after": {
+        "status": "done",
+        "health": "n/a",
+        "notes": "no production change kept"
+      }
     }
   ]
 }
