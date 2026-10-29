@@ -26,6 +26,7 @@ Each item was raised on snapshot and held by Ingi or by me, with the decision th
 - The app event list's lookup is O(n), and `on.unbind` leaves an emptied `on` in the list.
 - The code registry keeps partial state when a DLL is refused.
 - The sign/verify view asymmetry (plausible, not reproduced).
+- The resume dedupe compares by the action that made a binding, so an `on.event` step that ran twice (two bindings from one action) keeps one after a resume, where it fired twice before. Rare. (auditor, 344)
 
 ## Branches already written up
 
