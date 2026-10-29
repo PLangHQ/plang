@@ -1,7 +1,7 @@
 / %!app.event% reads the running actor's events: the user binds two, and its list holds both, in the order bound.
 Start
-- before goal Process, call Log, write to %first%
-- after goal Process, call Log, write to %second%
+- before goal Process, call Log
+- after goal Process, call Log
 - set %events% = %!app.event.list%
 - assert %events.count% equals 2, "the user's two events"
 - assert %events[0].when% equals "before", "in the order bound"

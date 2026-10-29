@@ -162,9 +162,10 @@ public partial class @this
     public global::app.type.property.@this? this[string name] => Property[name];
 
     /// <summary>
-    /// Starts this action through its start: its own clauses and what the running actor bound before it, then its
-    /// dispatch, then what is bound after it. A before that fails or cancels is the result; every after still
-    /// runs on it.
+    /// Starts this action, its own clauses around its catalog action's list for the running actor, in this order: the
+    /// actor's before events; one attempt (timeout's deadline, the cache lookup, the dispatch, the cache store); on a
+    /// failure its own <c>on error</c>, then the actor's error events; the actor's after events. A before that fails or
+    /// cancels is the result; every after still runs on it.
     /// Context travels as parameter — actions are shared objects, not per-request.
     /// Owns its own callstack push/pop, anchor save/restore and exception translation.
     /// </summary>
@@ -187,15 +188,19 @@ public partial class @this
         }
         await using var _call = call;
 
+        var on = context.Actor!.@event[Catalog];
         var data = await Attempt(context);
 
-        // The error outcome — after the attempt's own after-start, so a cache stores only the real work and a
-        // recovery runs outside the attempt's deadline. The first clause bound on it that takes the failure
-        // answers (a retry, a recovery, an ignore); a failure no clause takes stands.
+        // The error outcome — after the attempt, so a cache stores only the real work and a recovery runs outside the
+        // attempt's deadline: its own on error first, then the actor's error events. The first that takes the failure
+        // answers (a retry, a recovery, an ignore); a failure none takes stands.
         if (!data.Success)
             data = await Clauses.error.before.Catch(this, data, context)
-                ?? await context.Actor!.@event[Catalog].error.before.Catch(this, data, context)
+                ?? await on.error.before.Catch(this, data, context)
                 ?? data;
+
+        // the actor's after events last, on the result as it stands
+        data = await on.after.Start(this, data, context);
 
         // %!data% is the last action's result, as its attempt settled it.
         if (data.Success)
@@ -204,25 +209,22 @@ public partial class @this
     }
 
     /// <summary>
-    /// One attempt of this action, inside the frame <see cref="Start"/> pushed for it: what is bound before its
-    /// start, its dispatch, what is bound after it. A before that fails or cancels is the attempt's result, and
-    /// every after still runs on it. A retry (<c>on.error</c>) is another attempt in the same frame — a fresh
-    /// deadline, a fresh cache lookup.
+    /// One attempt of this action, inside the frame <see cref="Start"/> pushed for it: the actor's before events (a
+    /// policy runs even when the cache holds the answer), its own clauses before (timeout's deadline, the cache lookup),
+    /// its dispatch, its own clauses after (the cache stores the real result). A before that fails or answers in its
+    /// place (a mock, a cache hit, on.cancel) is the attempt's result. A retry (<c>on.error</c>) is another attempt in
+    /// the same frame — the actor's before again, a fresh deadline, a fresh cache lookup.
     /// </summary>
     internal async Task<global::app.data.@this> Attempt(actor.context.@this context)
     {
-        // what the running actor bound before it first (a policy runs even when the cache holds the answer), then its
-        // own clauses (timeout's deadline, the cache lookup)
-        var on = context.Actor!.@event[Catalog];
-        var answer = await on.before.Start(this, context);
+        var answer = await context.Actor!.@event[Catalog].before.Start(this, context);
         if (answer is not ({ Success: false } or { Handled: true }))
             answer = await Clauses.before.Start(this, context, answer) ?? answer;
         global::app.data.@this data;
         if (answer is { Handled: true })
         {
-            // Cancelled: a before-binding's answer is this action's result (a mock, a cache hit, on.cancel).
-            // Clear Handled so the outer step loop doesn't misread "dispatch was short-circuited" as "stop the
-            // step" — the next action in the chain still needs to run on this result.
+            // Cancelled: a before's answer is this attempt's result. Handled is cleared so the step loop goes on to the
+            // next action on this result.
             data = answer;
             data.Handled = false;
         }
@@ -234,9 +236,7 @@ public partial class @this
         // read where it is written (`return %!goal%` is this goal, `%Now%` the moment of the return, a call
         // argument the callee's), not where the caller opens it after the frame is gone. Nothing is read through
         // a value door, so a lazy source stays unread; a reference to nothing fails here, where on.error sees it.
-        // What is bound after the start still sees the attempt's own result: its own clauses first (the cache stores the
-        // real result), then what the running actor bound after it.
-        return await (await on.after.Start(this, await Clauses.after.Start(this, data, context), context)).Settle();
+        return await (await Clauses.after.Start(this, data, context)).Settle();
     }
 
     /// <summary>A program action of this catalog element's kind, in <paramref name="step"/> — a clause when this
