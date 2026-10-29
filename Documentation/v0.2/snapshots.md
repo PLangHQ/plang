@@ -1,7 +1,6 @@
 # Snapshots
 
-A snapshot is a run's state as a value: kept somewhere (a file, a db row) and resumed later, in this process or a fresh
-one.
+A snapshot is a run's state as a value: kept somewhere (a file, a db row) and resumed later, in this process or a fresh one.
 
 ```plang
 - save snapshot, write to %snapshot%
@@ -11,164 +10,100 @@ one.
 - resume %snapshot%
 ```
 
-`snapshot.save` answers the snapshot (a `Data<snapshot>`), signed by the app; keeping it is the developer's own step.
-`snapshot.resume` checks the signature, puts it back and goes on from where it was saved. Both verbs live in
-`PLang/app/module/snapshot/`.
+`snapshot.save` answers the snapshot (a `Data<snapshot>`), signed by the app; keeping it is the developer's own step. `snapshot.resume` checks the signature, reads the snapshot onto an app of its own and goes on from where it was saved. Both verbs live in `PLang/app/module/snapshot/` (`save.cs`, `resume.cs`).
 
-## Who takes part: `ISnapshot`
+## What a snapshot is
 
-A part is a class that implements `ISnapshot` (`PLang/app/snapshot/ISnapshot.cs`), with two members:
+A snapshot holds the app, written in its own view (`View.Snapshot`, `PLang/app/View.cs:30`) whoever writes it (`snapshot/this.cs`, `Write`): it is the one member, written under `app`. There is no interface a part implements and no walk over the app. Each object writes its own members that are tagged `[Snapshot]` (`View.cs:484`), and a type with any tagged member shows only those in this view (`View.cs:220–224`); a type with none shows what Store shows, minus `[Sensitive]` members.
 
-- `Store(snapshot, context)` writes the part's own state into the node at its place;
-- `Start(snapshot, context)` comes back from what that node holds.
+A value that something finds (an actor, the app, an event) is written as what finds it, wherever it is pointed at: an actor by its name (`actor/this.cs:65`), the app by its name (`this.cs:48`), an event by its item and its name (`event/this.cs:29`). The value is written whole only where it lives, at its `[Snapshot]` member (`View.cs:226–258`).
 
-Both answer Data: a part that can't store or start answers why, never a throw. Both default to doing nothing, so a part
-that only holds parts (the actors, an actor, a context) writes nothing of its own.
+What takes part is what is tagged:
 
-The parts today: what a program added to the app and to each actor (their `property`,
-`type/item/property/list/this.cs`), Code (`module/code/this.Snapshot.cs`: the DLLs a run took in, the providers
-registered in-process, each kind's default), the actors, each actor, each actor's context, a context's variables
-(`type/item/variable/list/this.Snapshot.cs`) and its calls (`call/list/this.Snapshot.cs`).
+- the app: its `property` (what a program added), its `actor` list, its events (`event`) and its code (`Code`) (`this.cs:53,139,172,275`);
+- Code (`module/code/this.Snapshot.cs`): the DLLs a run took in (`dll`), the providers registered in-process (`provider`) and each kind's default (`default`);
+- the events (`event/on/list/this.cs:63`): the events a snapshot keeps anything of, with the item they are on and this app's own bindings;
+- each actor: its `property` and its `Context` (`actor/this.cs:24,71`; `actor/list/this.cs:22,27` writes `System` and `User` whole, anywhere else an actor is its name);
+- each actor's context: its `Variable` and its `call` (`actor/context/this.cs:42,49`); the variables are written as a `row` (`type/item/variable/list/this.Snapshot.cs:14`);
+- the call stack and its frames (below).
 
-A class that doesn't implement it is rebuilt from the app's own files instead: modules, goals, channels, the cache, the
-filesystem.
-
-## The walk
-
-`app.Snapshot(context)` walks the live app from `app` (`snapshot/this.Store.cs`). A part's parts are its public members
-whose declared type is an `ISnapshot`, depth first, in declaration order; no other member is read. Each part is stored
-at the node of its member path from the app (`actor.list.User.Context.Variable`), never under a name it picks. A node
-that holds nothing is left out.
-
-Starting walks the stored tree the same way: each live part at a stored place starts from its node, in the order it was
-stored (Code before the actors). A live part with no node held nothing when it was saved, and stays as it is.
-
-**Each part is walked in its own context.** A part's answer carries a context, and the walk goes on into its parts in
-that answer's context. A part answers in the context it was handed; an actor's context answers in itself. So a context's
-variables and calls are stored and started in their own actor's context, both ways.
-
-A save from inside a task is refused (`SnapshotInTask`): a task's context is no member of anything the walk reaches.
-
-## Coming back as the right actor: the `In` door
-
-Every Data a restore puts into live memory answers as the actor whose memory it goes into, never as whoever read the
-snapshot's text. A part takes stored Data only through the snapshot's door, `snapshot.In(context)` (and `In(key,
-context)`): each entry cloned, so the run never shares a value with the snapshot, and born again in the part's context.
-What is still unread (a value through text) opens in that context too. `snapshot.Read<T>(key, context)` takes a list
-entry the same way; a row that doesn't read is the answer, its own error whole.
-
-A clone never copies a context. Lists, dicts and snapshots clone by their elements, each Data through `Data.Clone`
-(which keeps its context); live or shared values (a frame, the stack, an error, an actor, a goal, a step, a channel, a
-store, the app) are themselves when cloned.
+What nothing tags is not stored: it is the app's own, made again from its files when the app is born (modules, goals, channels, the cache, the filesystem), or it is how the app was started.
 
 ## The call stack
 
-A context's calls (`context.call`) are stored as they live: `root`, each frame with the frames it called under it in
-`children`, and `current`, the id of the frame the run is in. A frame writes:
+A context's `call` (`call/list/this.cs:105`) writes `Current`: the frame the run stopped in, and its callers (`call/this.cs:80`, `Caller`). A frame's children are never written (`call/this.cs:28`). A frame writes:
 
-- `id`, and `type`, its kind as its plang type (`call`, `binding`, `isolated`);
-- where it stands: `goal` (`address` and `hash`), `step` (its index) and `action` (`index`, `module`, `name`);
-- its own variables, as a node of their own, so they come back through `In`;
-- the names it was born with (`arguments`), its `errors`, `handled`, the `event` running in it, its `tags` and what a
-  program added to it (`property`).
+- its kind, as its plang type: a goal's frame, a step's frame, an action's frame, and the others the stack holds (`call/goal`, `call/step`, `call/action`, `call/binding`, `call/isolated`);
+- where it stands, each kind its own part: a goal's frame its `goal` (`call/goal/this.cs:22`), a step's frame the `index` of its step in its goal (`call/step/this.cs:36`), an action's frame the `index` of its action in its step, and the `Module` and `Name` of the action that stood there (`call/action/this.cs:44–54`);
+- its own variables, its `Parameter` list (`call/this.cs:304`);
+- what a program added to it (`property`), its `Tags`, the error it observed (`Error`), and the `Event` running in it (`call/this.cs:31,75,107,152`).
 
-A collection is written only when it holds something.
+A goal is written as what finds it: its `Name` and its `Path`, the `.goal` file the goal list loads it from (`goal/this.cs:32,121`). A goal has no hash in the snapshot.
 
-Starting a stored frame has two halves:
+Reading a frame back, the step is found at its saved `index` in its caller's goal, and the action at its saved `index` in its step, as the goal is now (`call/step/this.cs:22–27`, `call/action/this.cs:26–33`). A place past the end is refused, naming how many the goal or the step holds: `StepNotFound` and `ActionNotFound` (404).
 
-1. The async half, `call.Find`: each entry taken in through `In` and opened once, its goal found by its address through
-   `app.goal` (it may load) and checked against the stored hash, and the setting it is born with (the stack's, as it is
-   now). Each is narrowed into the read copy; the stored text is never touched.
-2. Its kind's own `Create`: `call`, `binding` and `isolated` each implement `ICreate` of themselves, and the stored
-   type dispatches to it. There's no switch on the kind. A frame comes back under the stack's current frame, entering as
-   a push enters.
+A save is refused when it can't be taken whole:
 
-A goal that isn't there is the goal list's own answer. A goal whose hash changed is `CallbackGoalHashMismatch` (409).
-A step or action index out of range is `CallbackGoalNotFound`, and a live action that isn't the stored one is
-`CallbackActionMismatch`. A frame missing what it needs is `CallbackFrameIncomplete`. A goal with no address can't be
-stored (`GoalHasNoAddress`), and a save while a task runs is refused (`SnapshotWhileTaskRuns`).
+- inside a task: `SnapshotInTask` (400), because a task's variables and frames are reached by nothing a snapshot saves (`this.Snapshot.cs:16–19`);
+- while a task runs: `SnapshotWhileTaskRuns` (409), because its frames go on in the task's own stack, which nothing would run again (`call/list/this.Snapshot.cs:43–54`);
+- a value the snapshot can't keep (a binding it can't make again): the error of that value, whole (`this.Snapshot.cs:22–25`).
 
 ## Resume
 
-`resume %snapshot%` is a call. The restored tree goes under the resume action's frame, the way a goal call's goal goes
-under its caller. The run goes on from the frame it stopped in, outward, each frame running what is left of it (the
-stopped action again, the rest of its step, the rest of each goal), up to the resume action's frame, where it stops. The
-resuming goal then goes on once, after the resume. The resume's answer is the restored run's.
+`resume %snapshot%` goes on with the run in an app of its own (`snapshot/this.Resume.cs`): a sub app made by the asker's actor, layered over the asker's app. Each object reads itself back onto it (`snapshot/this.cs`, `Read`), the code the run took in is taken in again, and then the run goes on in the actor of the asker's role, from the frame it stopped in, outward (`call/list/this.Snapshot.cs:87`): the stopped action again and the rest of its step, the rest of each goal, the action after each call, up to the frame the restored tree went under. The asker's variables, settings and calls are never touched; the step answers what the run answers, and the app ends when the run ends. A snapshot that held no call answers `NoFrameToResume` (400).
 
-A run saved by `save snapshot` stopped inside that action, so a resumed run goes on from the save itself: `save` answers
-again (a snapshot of the resumed run), then the steps after it run.
+A run saved by `save snapshot` stopped inside that action, so a resumed run goes on from the save itself: `save` answers again (a snapshot of the resumed run), then the steps after it run.
+
+`Parallel` (`resume %snapshot%, don't wait`) starts the resumed run as a task of the asker's actor and answers at once; the task's wait gives what the run answers (`snapshot/this.Resume.cs:34–40`).
+
+### A changed goal
+
+The run goes on at its saved place in the goal as it is now. When another action stands there than the one saved, the actor's error channel says so (`'Order' step 1, action 0 is math.add now, not variable.set as it was saved: going on there`, `call/action/this.cs:80–84`) and the run goes on.
+
+### What resume checks first
 
 Before anything is restored, the resume checks what it was given (`module/snapshot/resume.cs`):
 
 - no signature: `SnapshotUnsigned` (403);
-- a signature that doesn't hold (a value changed after it was signed, a moved `view`): `SnapshotSignatureInvalid` (403),
-  holding verify's own error;
-- signed by an identity that is none of this app's non-archived ones (another app's, a revoked one):
-  `SnapshotNotTheApps` (403). A rotated default still opens the app's older snapshots.
+- a signature that doesn't hold (a value changed after it was signed): `SnapshotSignatureInvalid` (403), holding verify's own error;
+- signed by an identity that is none of this app's non-archived ones (another app's, a revoked one): `SnapshotNotTheApps` (403). The identity the app signs as now and every other it holds that isn't archived open a snapshot, so a rotated default still opens the older ones.
 
-A signed value that isn't a snapshot is answered: the typed ask's own reason when it gave one (a dict: "a snapshot is
-made from a snapshot or its text"), else `NoSnapshot` (400), naming where one is kept.
+A value that isn't a snapshot is answered: the typed ask's own reason when it gave one (a dict: "a snapshot is made from a snapshot or its text", `snapshot/this.Wire.cs`), else `NoSnapshot` (400), naming where one is kept.
 
 ## Signed, in its own view
 
-`save` takes the state once: the walked snapshot is written in `View.Snapshot` (`View.cs`) and held as those bytes (a
-wire of type `snapshot`), then signed by the app's identity in that view. Whatever carries it later (a `.plang` file, a
-db row) carries exactly those bytes.
+`save` takes the state once: the app is written in `View.Snapshot`, held as those bytes, and signed by the app's identity through the signer, naming that view (`this.Snapshot.cs:24–37`). Whatever carries it later (a `.plang` file, a db row) carries exactly those bytes. A save never answers unsigned.
 
-`View.Snapshot` is Store's view with no secret in it: a `[Sensitive]` member is left out, a sensitive value is written as
-null (a resumed run asks again rather than going on with a fake value), and a Data's own name is not written (it is
-named by the key it is held under).
+`View.Snapshot` is Store's view with no secret in it: a `[Sensitive]` member is left out (`View.cs:222–224`), a sensitive value is written as null (`View.cs:342`: a resumed run asks again rather than going on with a fake value), and a Data's own name is not written (`View.cs:346`: it is named by the key it is held under). A row whose token already says its type (text, number, bool, dict, list, with no kind, template, properties or signature) is written as that token alone (`View.cs:237–242`).
 
-A signature records the view it was hashed in (`view`, inside the signed bytes), and verify re-hashes in it. Only a
-recorded `snapshot` view is read at rest: no window, and its nonce is no replay, so one file can be resumed again and
-again. A signature recording `store` or `out` keeps the reader's rule: one that arrives over the wire meets the window
-and the replay check, whatever it was signed for. A signature made before signatures named their view reads as before.
+A signature records the view it was hashed in, and verify re-hashes there (`module/signing/code/Ed25519.cs:39,113`). Signing a snapshot again after an edit is `signing.sign`'s job: `sign %snap%, write to %snap%`.
 
-## What isn't stored
+## Editing a snapshot
 
-- **The app's mode** (test, build, run): it's how the app was started, the host's choice, not the program's state. A
-  restore leaves the app as it was started.
-- **A one-time grant** ("y"): consent nobody gave in the run that would use it. A resumed run asks again.
-- **A sensitive value**: a variable holding one is left out, a `[Sensitive]` member inside a value is left out, and a
-  sensitive value inside a container comes back null. A resumed run that needs one asks again.
-- **A binding's held call** (`_for`): it is read only while that call binds its parameters, before anything runs under
-  the binding.
-- **What the app rebuilds from its files**: modules, goals, channels, the cache, types.
-- **A frame's history**: its diffs and timing (a resumed frame runs from now).
-- **A restored error's run**: an error comes back with its key, message, status and causes. It holds no run, so it has
-  no callback (`NoCallback`).
+A snapshot is navigable: `%snap.app.actor.list.user.context.variable.row.x%` reads the user's saved `x`, and `set %snap.app.….x% = 2` edits it (`snapshot/this.Variables.cs`). The stop point is two numbers, each its frame's own: `%snap.app.actor.list.user.context.call.current.caller.index%` (the step) and `%snap.app.actor.list.user.context.call.current.index%` (the action). An edit changes the snapshot alone, never the program that runs. An edit no one signed again is refused (`SnapshotSignatureInvalid`). A snapshot opened and edited is written again first and read back from what it wrote (`snapshot/this.cs`, `Read`).
 
 ## In a file
 
-A snapshot file is `.plang`, plang's own format: it keeps the whole Data, its signature included, and the read verifies
-it. `save %snapshot% to file 'run.plang'` and `read file 'run.plang', write to %snapshot%` are the whole road.
+A snapshot file is `.plang`, plang's own format: it keeps the whole Data, its signature included, and the read verifies it. `save %snapshot% to file 'run.plang'` and `read file 'run.plang', write to %snapshot%` are the whole road.
 
-In text a snapshot is its own typed form (`snapshot/this.Wire.cs`), written in the snapshot's view, so `read file
-'run.txt', write to %snapshot% as snapshot` still reads one back, but text keeps no signature: a resume refuses it.
-A `.json` file holds a value's content with no types; a file whose extension has no format takes plain bytes. Neither
-holds a snapshot that can resume.
+In text a snapshot is its own written form (`snapshot/this.Wire.cs`), made again by its own reader (`snapshot/serializer/Reader.cs`) in the snapshot's view. The reader keeps the app as the bytes the app wrote, until a resume reads them back or a navigation opens them. Text keeps no signature, so a resume refuses a snapshot read from bare text (`SnapshotUnsigned`).
 
 ## Templates
 
-A template comes back only from bytes the gate trusts (`type/item/source.cs:76–81`), by whose bytes they are: the
-build's own `.pr` (every variable its row lists), a file or url the program read (the program's own variables), anything
-else none. Raw text and the store are trusted for none, so a template restored from them reads as written.
+A template comes back only from bytes the gate trusts (`type/item/source.cs`). The snapshot's reader does not know where the bytes came from, so a template inside a snapshot comes back as written (`snapshot/this.cs` summary).
 
-Today a template inside a container comes back literal by every road, a file included: the bytes' origin is lost below
-the snapshot's reader (`type/this.cs:469,475`, `type/item/wire/this.cs:49`, `type/item/serializer/json.cs:103,197`).
-That gap is in the backlog.
+## What isn't stored
 
-## Open
-
-- Re-signing a snapshot after a hand edit or a fixed goal (`sign snapshot 'run.plang'`): stage 11.
-- Resuming a loop mid-items, and any action that holds a running call (a tool call, an event handler): open (question
-  3). Today a resume under one runs that action again from its start.
-- Which saves are refused because they can't come back exactly: open (question 4).
-- The resume verb's name, and going on after the save instead of from it: open (question 5).
+- **A sensitive value**: a variable holding one, or a `[Sensitive]` member inside a value, is left out or null. A resumed run that needs one asks again.
+- **A frame's children**: only the run's own chain is written (`call/this.cs:28`).
+- **What the app makes again from its files**: modules, goals, channels, the cache, types, the filesystem.
+- **A restored error's run**: an error that came back from a stored state keeps its key, message, status and causes. It holds no run, so it has no callback (`NoCallback`, `error/this.cs:157–168`).
 
 ## See also
 
-- `PLang/app/snapshot/` — the snapshot, its walk (`this.Store.cs`), its text (`this.Wire.cs`), resume (`this.Resume.cs`).
-- `PLang/app/call/this.Snapshot.cs`, `call/list/this.Snapshot.cs` — a frame and the stack.
+- `PLang/app/snapshot/` — the snapshot (`this.cs`), its navigation (`this.Variables.cs`), its text (`this.Wire.cs`), its reader (`serializer/Reader.cs`), resume (`this.Resume.cs`).
+- `PLang/app/this.Snapshot.cs` — the save, signed.
+- `PLang/app/call/list/this.Snapshot.cs` — the stack's resume.
 - `PLang/app/module/snapshot/` — `save` and `resume`.
-- `Documentation/v0.2/callbacks.md` — callbacks (later).
+- `test/plan/snapshot/start.md` — the plan's behaviours and the tests that prove them.
+- `Documentation/v0.2/callbacks.md` — callbacks.

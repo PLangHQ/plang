@@ -489,11 +489,11 @@ When an error goal is called, the error is passed as `%!error%` parameter to the
 
 ## Snapshot / Restore
 
-Subsystems that need to round-trip across a suspend implement `app.snapshot.ISnapshotted` — the type system is the bucket assignment. Each implementer captures into its own subtree of a `Snapshot.@this` and reconstructs from that subtree on Restore; references across subsystems are by name, never by pointer. `app.Snapshot()` walks every `ISnapshotted` property; `app.Restore(s, ctx)` walks `s.SectionNames` and dispatches each name to the right subsystem's `Restore`. Section presence is the gate — missing sections stay missing on the receiving side, which is what lets narrow wire shapes (e.g. CallStack + Variables only) round-trip cleanly.
+What round-trips across a suspend is what is tagged `[Snapshot]`: the app is written in the snapshot view (`View.Snapshot`), each object writing its own tagged members, and read back onto the app the run goes on in, each object reading itself. See `snapshots.md`. A value that something finds (an actor, the app, an event, a goal) is written as what finds it, so references across objects are by name, never by pointer. `app.Snapshot(context)` takes the app once and signs it; a resume reads the bytes back onto a sub app.
 
-Subsystems that don't implement `ISnapshotted` (Modules, Goals, Channels, Cache, FileSystem) are reconstructed at App build instead. There's no third bucket and no per-call opt-in.
+What nothing tags (modules, goals, channels, the cache, the filesystem) is made again from the app's own files when an app is born. There's no third bucket and no per-call opt-in.
 
-See `snapshots.md` for the per-subsystem subtrees and the referent-integrity discipline.
+See `snapshots.md` for what takes part, the call stack's frames and the resume.
 
 ---
 
