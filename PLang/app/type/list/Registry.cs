@@ -126,6 +126,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             if (!named.ContainsKey(claim)) named = named.Add(claim, type);
         _named = named;
         if (type.ClrType is { } clr && !_classed.ContainsKey(clr)) _classed = _classed.Add(clr, type);
+        System.Threading.Interlocked.Increment(ref _changes);
     }
 
     // One name, one class: the first name <paramref name="type"/> answers to — its word, its namespace, its
@@ -263,6 +264,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         if (kind.Owner is not { kind: global::app.type.kind.empty.@this root })
             throw new InvalidOperationException($"kind '{kind.Name}' names no type it is a kind of.");
         root.Add(kind);
+        System.Threading.Interlocked.Increment(ref _changes);
     }
 
     // The guard every format passes: a MIME or an extension is one format's — a second kind answering to it would make
