@@ -12,9 +12,7 @@ internal virtual bool Has(@this item) => Equals(this, item);
 internal override bool Has(global::app.type.item.@this item) => item.Is(this);          // item.Is(type): item/this.cs:395
 
 // module/this.cs — NEW: an event bound on a module runs for each of its actions
-internal override bool Has(global::app.type.item.@this item)
-    => item is global::app.goal.step.action.@this action && _action.ContainsKey(action.Name);   // _action: module/this.cs:57
-//   (the coder may find the action's own door for "am I this module's"; no ReferenceEquals)
+internal override bool Has(global::app.type.item.@this item) => _action.Values.Contains(item);   // _action: module/this.cs:57
 
 // a goal pattern (37) — NEW kind, made by the goal list for a name with a wildcard
 internal override bool Has(global::app.type.item.@this item)
