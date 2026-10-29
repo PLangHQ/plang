@@ -1,0 +1,15 @@
+diff --git a/PLang/app/type/item/variable/list/this.cs b/PLang/app/type/item/variable/list/this.cs
+index 40125ebfe..5cd9c5c79 100644
+--- a/PLang/app/type/item/variable/list/this.cs
++++ b/PLang/app/type/item/variable/list/this.cs
+@@ -210,7 +210,9 @@ public partial class @this
+     }
+ 
+     // The variable named `name`, as its events are handed it.
+-    private global::app.type.item.variable.@this Named(string name) => new parser.@this($"%{name}%", _context.App.type.list).Variable.Single();
++    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, global::app.type.item.variable.@this> _named = new();
++    private global::app.type.item.variable.@this Named(string name)
++        => _named.GetOrAdd(name, n => new parser.@this($"%{n}%", _context.App.type.list).Variable.Single());
+ 
+     /// <summary>What <paramref name="name"/> holds — or, when it holds nothing, the value
+     /// <paramref name="value"/> gives birth to, stored under it in one step: runs asking at once all answer
