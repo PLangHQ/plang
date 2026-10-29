@@ -152,8 +152,8 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     {
         if (raw is @this events) return events;
         var context = data.Context;
-        if (raw is not global::app.type.item.dict.@this record || record.Get("item", context) is not { } kept
-            || global::app.View.Snapshot.Make(kept.Type ?? context.App.type.list[typeof(global::app.type.item.@this)], kept.Peek(), context)
+        if (raw is not global::app.type.item.dict.@this record || record.Get("item", context) is not { } slot
+            || global::app.View.Snapshot.Make(slot.Type ?? context.App.type.list[typeof(global::app.type.item.@this)], slot.Peek(), context)
                 is not { } item)
         {
             data.Fail(new global::app.error.@this("a saved on's row names no item it is the events of", "SnapshotRowUnread", 400));

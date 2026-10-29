@@ -20,14 +20,14 @@ public sealed partial class @this
         foreach (var actor in this.actor.list.Items())
             if (actor.Context.call.Unsaved is { } error) return global::app.data.@this<snapshot.@this>.FromError(error, context);
         // a value the snapshot can't keep (a binding it can't make again, an object with no snapshot face) refuses the save
-        global::app.data.@this taken;
-        try { taken = context.Ok(await global::app.type.item.wire.@this.Of(new snapshot.@this(this, context), global::app.View.Snapshot, context)); }
+        global::app.data.@this wire;
+        try { wire = context.Ok(await global::app.type.item.wire.@this.Of(new snapshot.@this(this, context), global::app.View.Snapshot, context)); }
         catch (global::app.error.AppException ex) { return global::app.data.@this<snapshot.@this>.FromError(ex.Error, context); }
 
         // signed through the signer itself, so the view it names (the snapshot's, which no step gives) is the one it hashes in
         var (signer, missing) = Code.Get<global::app.module.signing.code.ISigning>();
         if (signer == null) return global::app.data.@this<snapshot.@this>.FromError(missing!, context);
-        var signed = await signer.SignAsync(new global::app.module.signing.sign(context) { Data = taken, View = global::app.View.Snapshot });
+        var signed = await signer.SignAsync(new global::app.module.signing.sign(context) { Data = wire, View = global::app.View.Snapshot });
         // a snapshot is never unsigned: a sign that failed says why, whole; one that answered with no signature is the
         // signer's fault, named so
         if (!signed.Success) return global::app.data.@this<snapshot.@this>.From(signed);

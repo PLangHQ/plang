@@ -27,7 +27,7 @@ public sealed class @this : global::app.type.item.list.bare.@this<Step>
     /// wherever it is added from (the reader, the parse, the build's fold), a step knows the list it goes on in.</summary>
     protected override void Admit(object? slot)
     {
-        if ((slot is data.@this held ? held.Peek() : slot) is Step step) step.List = this;
+        if ((slot is data.@this row ? row.Peek() : slot) is Step step) step.List = this;
     }
 
     protected override void Admit(global::app.type.item.list.@this other)

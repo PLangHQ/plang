@@ -176,7 +176,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>A frame come back from a snapshot, made, not entered: born under its caller as the snapshot wrote it,
     /// made first (none written: under <paramref name="stack"/>'s current frame), and its kept members read onto it as
     /// the snapshot wrote them — its variables (the names it is born with), the error in play, its tags and what a program
-    /// added. Its element its own kind reads (<see cref="Kept{T}"/>). The stack enters it when the run goes on.</summary>
+    /// added. Its element its own kind reads (<see cref="Element{T}"/>). The stack enters it when the run goes on.</summary>
     private protected @this(global::app.type.item.dict.@this record, global::app.type.@this type, global::app.call.list.@this stack,
         global::app.actor.context.@this context)
         : this(record, type, Saved(record, stack, context), stack, context) { }
@@ -210,7 +210,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>The element a stored frame's <paramref name="record"/> keeps under <paramref name="name"/> — a goal, a
     /// step, an action — read in the snapshot view: the live one its key finds. A key that finds none, or a record that
     /// keeps none, is refused, thrown to the read boundary: a frame is never born without its element.</summary>
-    private protected T Kept<T>(global::app.type.item.dict.@this record, string name, global::app.actor.context.@this context)
+    private protected T Element<T>(global::app.type.item.dict.@this record, string name, global::app.actor.context.@this context)
         where T : global::app.type.item.@this
         => global::app.View.Snapshot.Make(context.App.type.list[typeof(T)], record.Get(name, context)?.Peek(), context) as T
            ?? throw new global::app.error.DeclinedException(new global::app.error.@this(

@@ -38,10 +38,10 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             return await base.Set(key, isIndex, value, context);
 
         var binding = value as global::app.data.@this;
-        var incoming = binding != null ? await binding.Value() : value as global::app.type.item.@this;
+        var code = binding != null ? await binding.Value() : value as global::app.type.item.@this;
 
         var node = new global::app.goal.step.action.list.@this(_code.Type);
-        foreach (var row in Rows(incoming, context))
+        foreach (var row in Rows(code, context))
         {
             if (row is not global::app.goal.step.action.@this action)
                 return context.Error(new global::app.error.@this(
@@ -52,19 +52,19 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         return context.Ok(this);
     }
 
-    /// <summary>The rows of an incoming action write. A several-valued write enumerates ITSELF — a
+    /// <summary>The rows of a code write. A several-valued write enumerates ITSELF — a
     /// plang list its elements, a json array its own (each value owns how it is walked); a single
     /// action is one row.</summary>
     private static System.Collections.Generic.IEnumerable<global::app.type.item.@this> Rows(
-        global::app.type.item.@this? incoming, global::app.actor.context.@this context)
+        global::app.type.item.@this? code, global::app.actor.context.@this context)
     {
-        if (incoming == null) yield break;
-        if (incoming is global::app.goal.step.action.@this) { yield return incoming; yield break; }
+        if (code == null) yield break;
+        if (code is global::app.goal.step.action.@this) { yield return code; yield break; }
         var any = false;
-        foreach (var (_, row) in incoming.EnumerateItems(context))
+        foreach (var (_, row) in code.EnumerateItems(context))
         {
-            if (row.Peek() is { } item && !ReferenceEquals(item, incoming)) { any = true; yield return item; }
+            if (row.Peek() is { } item && !ReferenceEquals(item, code)) { any = true; yield return item; }
         }
-        if (!any) yield return incoming;
+        if (!any) yield return code;
     }
 }

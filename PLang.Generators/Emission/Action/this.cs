@@ -404,8 +404,8 @@ public static class @this
             var lower = prop.Name.ToLowerInvariant();
             sb.Append($$"""
                         if ({{prop.Name}}.IsVariable && {{prop.Name}}.Peek().Variable[0] is { Code.IsLookup: true } __variable{{prop.Name}}
-                            && await __variable{{prop.Name}}.Start(context) is { Success: true, IsInitialized: true } __held{{prop.Name}}
-                            && await __held{{prop.Name}}.Value() is null or { IsNull: true })
+                            && await __variable{{prop.Name}}.Start(context) is { Success: true, IsInitialized: true } __data{{prop.Name}}
+                            && await __data{{prop.Name}}.Value() is null or { IsNull: true })
                             return new global::app.error.ServiceError(
                                 $"'{{lower}}' must have a value: {__variable{{prop.Name}}.Text} holds nothing", context, "ValueRequired", 400);
 

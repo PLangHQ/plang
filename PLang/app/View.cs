@@ -154,8 +154,8 @@ public abstract class View
         if (Registered(type, kind, context) is { } reader)
             return slot.Read(reader, kind, context, this) as global::app.type.item.@this;
         // a birth that declines says why, as a read that can't make it does
-        var born = new global::app.data.@this("", context: context);
-        return type.Make(slot, born) ?? throw new global::app.error.AppException(born.Error
+        var data = new global::app.data.@this("", context: context);
+        return type.Make(slot, data) ?? throw new global::app.error.AppException(data.Error
             ?? new global::app.error.@this($"a {type.Name} is not made from a {slot.Type.Name}", "CreateItemDeclined", 400));
     }
 

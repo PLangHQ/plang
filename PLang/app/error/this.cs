@@ -166,13 +166,13 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
             return System.Threading.Tasks.Task.FromResult(context.Error<global::app.snapshot.@this>(new Error(
                 $"error '{Key}' holds no run (it wasn't raised inside one, or it came back from a stored state), so it has no callback to resume.",
                 "NoCallback", 400)));
-        return _callback = Taken(Context);
+        return _callback = Save(Context);
 
-        async System.Threading.Tasks.Task<global::app.data.@this<global::app.snapshot.@this>> Taken(actor.context.@this run)
+        async System.Threading.Tasks.Task<global::app.data.@this<global::app.snapshot.@this>> Save(actor.context.@this run)
         {
-            var taken = await run.App.Snapshot(this, run);
-            if (taken.Success) taken.Snapshot = await taken.Value() as global::app.snapshot.@this;
-            return taken;
+            var data = await run.App.Snapshot(this, run);
+            if (data.Success) data.Snapshot = await data.Value() as global::app.snapshot.@this;
+            return data;
         }
     }
     /// <summary>The action it happened in: the one it was born about (a build's, a validation's), else its call's.</summary>

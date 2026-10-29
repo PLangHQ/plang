@@ -72,7 +72,7 @@ public sealed partial class @this
     // The kind a type holds that answers to the key — by name, alias, MIME or extension; a type's own
     // format answers as its empty kind. Null when no type holds one. Registration keeps a MIME or an
     // extension to one kind; a name two types hold is refused here.
-    private global::app.type.kind.@this? Held(string key)
+    private global::app.type.kind.@this? Find(string key)
     {
         global::app.type.kind.@this? match = null;
         foreach (var type in Types)
@@ -134,7 +134,7 @@ public sealed partial class @this
     /// its content.
     /// </summary>
     public global::app.type.kind.@this Mime(string mime)
-        => !string.IsNullOrEmpty(mime) && Held(mime) is { } kind ? kind : this["binary"].kind;
+        => !string.IsNullOrEmpty(mime) && Find(mime) is { } kind ? kind : this["binary"].kind;
 
     /// <summary>
     /// The format <paramref name="named"/> names — by MIME (<c>application/plang</c>), name or alias (<c>json</c>), or
@@ -144,7 +144,7 @@ public sealed partial class @this
     public global::app.type.kind.@this? Format(string named)
     {
         if (string.IsNullOrWhiteSpace(named)) return null;
-        var kind = Held(named.Trim()) ?? (named.StartsWith('.') ? null : Held("." + named.Trim()));
+        var kind = Find(named.Trim()) ?? (named.StartsWith('.') ? null : Find("." + named.Trim()));
         return kind is { } k && (k.Mime.Count > 0 || k.Extension.Count > 0) ? k : null;
     }
 
@@ -160,7 +160,7 @@ public sealed partial class @this
     internal app.type.@this Extension(string extension)
     {
         if (string.IsNullOrEmpty(extension)) return app.type.@this.Null;
-        return Held(extension.StartsWith('.') ? extension : "." + extension) is { } kind
+        return Find(extension.StartsWith('.') ? extension : "." + extension) is { } kind
             ? Entry(new app.type.@this(kind.Owner?.Name ?? "binary", kind.IsEmpty ? null : kind.Name))
             : Entry(new app.type.@this("binary", extension.TrimStart('.')));
     }

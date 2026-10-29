@@ -28,16 +28,16 @@ public sealed class @this
         Value = Named(Interface);
     }
 
-    /// <summary>The kind whose providers serve <paramref name="face"/>, the registry's key — named by its interface, as
+    /// <summary>The kind whose providers serve <paramref name="interface"/>, the registry's key — named by its interface, as
     /// every kind is.</summary>
-    internal @this(System.Type face)
+    internal @this(System.Type @interface)
     {
-        Interface = face;
-        Value = Named(face);
+        Interface = @interface;
+        Value = Named(@interface);
     }
 
     public override string ToString() => Value;
 
     // ISigning → signing
-    private static string Named(System.Type face) => face.Name[1..].ToLowerInvariant();
+    private static string Named(System.Type @interface) => @interface.Name[1..].ToLowerInvariant();
 }

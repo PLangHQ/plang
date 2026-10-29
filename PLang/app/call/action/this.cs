@@ -25,10 +25,13 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
     /// actions the step holds, thrown to the read boundary.</summary>
     private @this(global::app.type.item.dict.@this record, global::app.type.@this type, list.@this stack, global::app.actor.context.@this context)
         : base(record, type, stack, context)
-        => Action = Caller?.Step is { } step && index >= 0 && index < step.Code.Count ? step.Code[index]
-            : throw new global::app.error.DeclinedException(new global::app.error.@this(Caller?.Step is { } held
-                ? $"the saved action {index} is past the end of step {held.Index} of '{held.Goal?.Name}' ({held.Code.Count} actions)"
+    {
+        var step = Caller?.Step;
+        Action = step != null && index >= 0 && index < step.Code.Count ? step.Code[index]
+            : throw new global::app.error.DeclinedException(new global::app.error.@this(step != null
+                ? $"the saved action {index} is past the end of step {step.Index} of '{step.Goal?.Name}' ({step.Code.Count} actions)"
                 : "a saved action's frame stands under no step", "ActionNotFound", 404));
+    }
 
     /// <summary>The action it runs; its step and goal are the action's.</summary>
     [Store, Out, Debug]

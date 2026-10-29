@@ -110,7 +110,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     // What the variable holds, its value touched (lazy content — a json list, a file's content — becomes what
     // it is), so a variable used as a list is its content; a failure or an ask is left as it is.
-    private async System.Threading.Tasks.ValueTask<global::app.data.@this> Held(actor.context.@this context)
+    private async System.Threading.Tasks.ValueTask<global::app.data.@this> Content(actor.context.@this context)
     {
         var data = await Start(context);
         if (data.Success && !data.Exits) await data.Value();
@@ -121,7 +121,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// its content, touched. A failure, an ask, or a value that isn't a TAs is the answer.</summary>
     public async System.Threading.Tasks.Task<global::app.data.@this> Use<TAs>(actor.context.@this context,
         System.Func<TAs, System.Threading.Tasks.Task<global::app.data.@this>> then)
-        => await (await Held(context)).Use(then);
+        => await (await Content(context)).Use(then);
 
     /// <summary>What the variable holds, as a <typeparamref name="TAs"/>, changed in place by
     /// <paramref name="then"/>, then written back (<see cref="Replace"/>) — for a bare name holding that very
@@ -135,9 +135,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         // changed in place, so what the root holds must be this context's own (a task's copy of its caller's), and the
         // stack is handed what it holds before the change, which a history keeps as it was
         var root = Code.Root.Name;
-        if (!root.StartsWith('!') && await context.Variable.Own(root) is { Success: true, IsInitialized: true } own)
-            context.call.Record(context.Variable, root, await own.Value());
-        var data = await Held(context);
+        if (!root.StartsWith('!') && await context.Variable.Own(root) is { Success: true, IsInitialized: true } stored)
+            context.call.Record(context.Variable, root, await stored.Value());
+        var data = await Content(context);
         return await data.Use<TAs>(async value =>
         {
             var changed = await then(value);

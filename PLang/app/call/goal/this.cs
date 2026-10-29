@@ -16,7 +16,7 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
     /// <summary>A goal's frame come back from a snapshot: born with the goal its <paramref name="record"/>'s key finds,
     /// under <paramref name="stack"/>'s current frame.</summary>
     private @this(global::app.type.item.dict.@this record, global::app.type.@this type, list.@this stack, global::app.actor.context.@this context)
-        : base(record, type, stack, context) => Goal = Kept<global::app.goal.@this>(record, "goal", context);
+        : base(record, type, stack, context) => Goal = Element<global::app.goal.@this>(record, "goal", context);
 
     /// <summary>The goal it runs.</summary>
     [Store, Out, Debug, global::app.Snapshot]

@@ -269,7 +269,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         global::app.actor.context.@this context, string name, global::app.type.item.path.@this? origin = null)
     {
         // a value that already is this type is no birth: it is answered as it is, nothing fired, nothing read
-        if (Held(raw) is { } value) return new(new global::app.data.@this(name, value, context: context));
+        if (Answer(raw) is { } value) return new(new global::app.data.@this(name, value, context: context));
         // nothing bound: the value, made — nothing awaited, nothing else allocated
         var events = on.create;
         return events.IsBound(this, context)
@@ -281,7 +281,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     // type with its kind, a value whose history is this type (an image is-a path); null when making it into this
     // type is a birth (a structure this type doesn't take is a birth attempt). A strict declaration always checks
     // and a template is a birth fact, so either holds nothing.
-    private item.@this? Held(object? raw) => Strict || Template != null ? null : raw switch
+    private item.@this? Answer(object? raw) => Strict || Template != null ? null : raw switch
     {
         item.source src when Same(src.Type) => src,
         item.@this { IsLeaf: true } leaf when Same(leaf.Type) || (!Names(leaf.Type.Name) && leaf.Is(this)) => leaf,

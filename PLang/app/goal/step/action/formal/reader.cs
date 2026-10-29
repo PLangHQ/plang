@@ -74,7 +74,7 @@ public sealed class Reader
         public string? Json;                                   // a scalar: "text", 5, true, null, "%x%"
         public global::app.goal.step.action.@this? Action;     // an action held as a value
         public List<Literal>? Items;                           // [ … ]
-        public List<(string Key, string? Type, Literal Value)>? Entries;   // { … }
+        public List<(string Key, string? Type, Literal Value)>? Dict;      // { … }
         public bool IsVariable;                                // written bare: %x%
         public System.Text.Json.JsonValueKind Kind;            // of a scalar
     }
@@ -389,7 +389,7 @@ public sealed class Reader
             // their names. Any other slot is what the step wrote: a list of objects stays a list of objects
             var holdsRecords = property.Member?.IsDefined(typeof(global::app.Attributes.RecordsAttribute), inherit: false) == true;
             if (value.Action != null) born = value.Action;
-            else if (holdsRecords && value.Items is { } records && records.All(r => r.Entries is [_]))
+            else if (holdsRecords && value.Items is { } records && records.All(r => r.Dict is [_]))
                 born = Born(type, await Arguments(records), marks: false);
             else if (holdsRecords && !value.IsVariable)
             { Fail($"`{prop}` takes a list of arguments, each a record: {prop}=[{{name: type = value}}, {{other: type = %x%}}]", at); return default; }
@@ -448,7 +448,7 @@ public sealed class Reader
         {
             if (v.Action != null) return "action";
             if (v.Items != null) return "list";
-            if (v.Entries != null) return "dict";
+            if (v.Dict != null) return "dict";
             if (v.IsVariable) return "item";
             return v.Kind switch
             {
@@ -476,7 +476,7 @@ public sealed class Reader
         private async System.Threading.Tasks.Task<string> Arguments(List<Literal> records)
         {
             var rows = new List<string>();
-            foreach (var e in records.Select(r => r.Entries![0]))
+            foreach (var e in records.Select(r => r.Dict![0]))
             {
                 var json = Json(e.Value);
                 var variables = Variables(json).DistinctBy(x => x.Text).ToList();
@@ -509,8 +509,8 @@ public sealed class Reader
             if (v.Json != null) return v.Json;
             if (v.Items != null) return "[" + string.Join(",", v.Items.Select(Json)) + "]";
             // an object's entries keep their type: a typed one is the row a dict writes for it, its type and its value
-            if (v.Entries != null)
-                return "{" + string.Join(",", v.Entries.Select(e => System.Text.Json.JsonSerializer.Serialize(e.Key) + ":"
+            if (v.Dict != null)
+                return "{" + string.Join(",", v.Dict.Select(e => System.Text.Json.JsonSerializer.Serialize(e.Key) + ":"
                     + (e.Type is { } type ? Typed(type, e.Value) : Json(e.Value)))) + "}";
             Fail("an action can't be a value here");
             return "";
@@ -562,11 +562,11 @@ public sealed class Reader
             if (c == '{')
             {
                 _pos++;
-                var entries = new List<(string, string?, Literal)>();
+                var dict = new List<(string, string?, Literal)>();
                 while (!Peek("}"))
                 {
                     if (AtEnd) Fail("a dict is not closed: expected `}`");
-                    if (entries.Count > 0) Take(",");
+                    if (dict.Count > 0) Take(",");
                     Space();
                     string key;
                     if (_pos < _text.Length && _text[_pos] == '"')
@@ -585,10 +585,10 @@ public sealed class Reader
                         type = typed.Groups[1].Value;
                         _pos += typed.Length;
                     }
-                    entries.Add((key, type, await Value()));
+                    dict.Add((key, type, await Value()));
                 }
                 Take("}");
-                return new Literal { Entries = entries };
+                return new Literal { Dict = dict };
             }
             if (Match(Number) is { } number)
             {

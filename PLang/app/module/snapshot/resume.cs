@@ -66,8 +66,8 @@ public partial class resume : IContext
         if (await signing.Value() is not { } current) return signing;
         if (current.Made(signature)) return null;
         var listed = await identities.ListAsync(new global::app.module.identity.list(Context));
-        if (await listed.Value() is not { } own) return listed;
-        if (own.Items().Any(identity => identity.Made(signature))) return null;
+        if (await listed.Value() is not { } list) return listed;
+        if (list.Items().Any(identity => identity.Made(signature))) return null;
         return Context.Error(new global::app.error.@this(
             $"%{Snapshot.Name}% was signed by '{signature.Identity}', which is none of this app's identities: a snapshot goes on only in the app that saved it",
             "SnapshotNotTheApps", 403));

@@ -21,8 +21,8 @@ public sealed class Snapshot : global::app.type.reader.ITypeReader
     {
         var context = ctx.Context;
         var record = (global::app.type.item.dict.@this)new global::app.type.item.dict.serializer.Reader().Read(ref reader, null, ctx);
-        if (record.Get("item", context) is not { } kept
-            || global::app.View.Snapshot.Make(kept.Type ?? context.App.type.list[typeof(global::app.type.item.@this)], kept.Peek(), context)
+        if (record.Get("item", context) is not { } row
+            || global::app.View.Snapshot.Make(row.Type ?? context.App.type.list[typeof(global::app.type.item.@this)], row.Peek(), context)
                 is not { } item)
             throw new global::app.error.DeclinedException(new global::app.error.@this(
                 "a saved event names no item it is an event of", "EventKeyIncomplete", 400));
