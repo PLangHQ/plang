@@ -148,3 +148,15 @@ Everything is inside its band against the parent: sub birth +2 (±5), root birth
 No mutations; the new `Interlocked.Increment`s in `Registry.cs` and the `_classes` cache were read, not deletion-tested. Probes of the set (3.5 KB) and parse (720 B) figures were not re-run: the request rows are the net.
 
 ## Verdict v4: **FAIL (narrow)** — coder next, then back to me for a read of finding 1. Everything else is low and can go with it. If the architect rules the five direct `goal.list.Find(name, caller)` sites stay by design and the two runtime sites share one ask, this is a PASS.
+
+---
+
+# Recheck v5 — 86d90db97..100305adb (88)
+
+1. **Closed.** `goal.Find` is gone. `goal.list.Find(name, caller)` redirects to the caller goal's own app when it is another app's (`goal/list/this.cs:205`, `caller?.App is { } home && home != App`; the recursion ends because the caller's app is then the list's own). `goal.Select` and `event.call.Start` call the list like the other five sites: one door, no ternary at either runtime site. A caller of no app (the os's, one made outside a list) is found here, as the doc comment says.
+3. **Closed.** `event/list` `Remove` has no type test: a list the removed event was in (`@event.Item.Has(item)`) is dropped when no remaining event is bound on its item, and made again on its next ask. Low note: that also drops a goal's list while "each goal" events still apply to it; it is rebuilt from what applies on the next ask, so the answer is right, but a goal already running holds the old `on` for its `after` and would not see an event bound mid-run. Not blocking.
+4–8, closed: `Names` walks every hop and asks `Equals` (no `is`), `Cover` keeps `stepped`/`answers` once (parsed once, `Distinct()` on the variable's own equality, `IsProgram` for the `!` test, a local `Named`), `pattern` makes one path and takes `Name`/glob from `Path.Raw`, `Registry.cs:280` asks `taken.Equals(kind)`, `Reference` is two guards, `Kept` is `Sub`.
+Low notes: `Names` now answers true for a variable reached at any hop, where it stopped at the first one reached; and `at.Peek().Equals(variable)` has no null guard (an initialized hop answering null would throw). Neither is reached by a test I know of.
+2 is kept as ruled by the architect.
+
+## Verdict v5: **PASS** — tester next, then security (stage 8), auditor, docs. No bench for this diff (neither change is on a birth or request allocation path); the 86d90db97 row stands.
