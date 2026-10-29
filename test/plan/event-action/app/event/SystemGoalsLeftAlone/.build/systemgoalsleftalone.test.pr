@@ -1,0 +1,702 @@
+{
+  "name": "Start",
+  "comment": "Inside plang's own goals an \"each goal\" event doesn't run while event.setting.goal is app (the default): reading\n%!error% three times shows plang's error goal each time, and \"before each goal\" runs Count once, for Loop alone. With\nevent.setting.goal all, it runs for each of plang's goals too: once for Loop and once for each read.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %items% = [1, 2, 3]",
+      "line": {
+        "number": 5,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%items%",
+              "variable": [
+                {
+                  "text": "%items%",
+                  "code": [
+                    {
+                      "variable": "items"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": [1,2,3]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %count% = 0",
+      "line": {
+        "number": 6,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%count%",
+              "variable": [
+                {
+                  "text": "%count%",
+                  "code": [
+                    {
+                      "variable": "count"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "before each goal, call Count",
+      "line": {
+        "number": 7,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "on",
+          "name": "event",
+          "property": [
+            {
+              "name": "Event",
+              "type": {
+                "name": "on",
+                "template": "plang"
+              },
+              "value": "%!app.type.goal.on.start%",
+              "variable": [
+                {
+                  "text": "%!app.type.goal.on.start%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "type"
+                    },
+                    {
+                      "property": "goal"
+                    },
+                    {
+                      "property": "on"
+                    },
+                    {
+                      "property": "start"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "When",
+              "type": {
+                "name": "choice",
+                "kind": "when"
+              },
+              "value": "before"
+            },
+            {
+              "name": "Action",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "goal"
+                    },
+                    "value": "Count"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "call Loop",
+      "line": {
+        "number": 8,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Loop"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %count% equals 1, \"under app, plang's own goals run no each-goal event\"",
+      "line": {
+        "number": 9,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%count%",
+              "variable": [
+                {
+                  "text": "%count%",
+                  "code": [
+                    {
+                      "variable": "count"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "under app, plang's own goals run no each-goal event"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "set %!app.event.setting.goal% = \"all\"",
+      "line": {
+        "number": 10,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%!app.event.setting.goal%",
+              "variable": [
+                {
+                  "text": "%!app.event.setting.goal%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "event"
+                    },
+                    {
+                      "property": "setting"
+                    },
+                    {
+                      "property": "goal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "all"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 5 uses variable.set, which the decider was not sure of (0.77)"
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "set %count% = 0",
+      "line": {
+        "number": 11,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%count%",
+              "variable": [
+                {
+                  "text": "%count%",
+                  "code": [
+                    {
+                      "variable": "count"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "text": "call Loop",
+      "line": {
+        "number": 12,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Loop"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "text": "assert %count% equals 4, \"under all, each of plang's goals runs it too\"",
+      "line": {
+        "number": 13,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 4
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%count%",
+              "variable": [
+                {
+                  "text": "%count%",
+                  "code": [
+                    {
+                      "variable": "count"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "under all, each of plang's goals runs it too"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "Loop",
+      "comment": "Reads %!error% once for each item.",
+      "step": [
+        {
+          "index": 0,
+          "text": "foreach %items%, call Read",
+          "line": {
+            "number": 17,
+            "indent": 0
+          },
+          "code": [
+            {
+              "module": "loop",
+              "name": "foreach",
+              "property": [
+                {
+                  "name": "Collection",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%items%",
+                  "variable": [
+                    {
+                      "text": "%items%",
+                      "code": [
+                        {
+                          "variable": "items"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "item",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%item%",
+                  "variable": [
+                    {
+                      "text": "%item%",
+                      "code": [
+                        {
+                          "variable": "item"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "Read"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "visibility": "Private",
+      "hash": "8d4a6b000119e0c60ccb31bf99139780fa651d7cc200143ece667229df2819d2"
+    },
+    {
+      "name": "Read",
+      "comment": "One read of %!error%.",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %seen% = %!error%",
+          "line": {
+            "number": 21,
+            "indent": 0
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%seen%",
+                  "variable": [
+                    {
+                      "text": "%seen%",
+                      "code": [
+                        {
+                          "variable": "seen"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!error%",
+                  "variable": [
+                    {
+                      "text": "%!error%",
+                      "code": [
+                        {
+                          "variable": "!error"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "visibility": "Private",
+      "hash": "9e2a9dea9482e9a2742630a5bc8be58748c46fb73697f38401cf74e381385da9"
+    },
+    {
+      "name": "Count",
+      "comment": "The event's call.",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %count% = %count% + 1",
+          "line": {
+            "number": 25,
+            "indent": 0
+          },
+          "code": [
+            {
+              "module": "math",
+              "name": "add",
+              "property": [
+                {
+                  "name": "A",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%count%",
+                  "variable": [
+                    {
+                      "text": "%count%",
+                      "code": [
+                        {
+                          "variable": "count"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "B",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 1
+                }
+              ],
+              "default": [
+                {
+                  "name": "overflow",
+                  "type": {
+                    "name": "choice",
+                    "kind": "overflow"
+                  },
+                  "value": "Promote"
+                },
+                {
+                  "name": "precision",
+                  "type": {
+                    "name": "choice",
+                    "kind": "precision"
+                  },
+                  "value": "Error"
+                }
+              ]
+            },
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%count%",
+                  "variable": [
+                    {
+                      "text": "%count%",
+                      "code": [
+                        {
+                          "variable": "count"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!data%",
+                  "variable": [
+                    {
+                      "text": "%!data%",
+                      "code": [
+                        {
+                          "variable": "!data"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 0 uses math.add, which the decider was not sure of (0.98)"
+            }
+          ]
+        }
+      ],
+      "visibility": "Private",
+      "hash": "b79220efd9cf003af2eb313cc7b0ced657e474ad67ad43a12acad11bc04e00b8"
+    }
+  ],
+  "visibility": "Public",
+  "file": "SystemGoalsLeftAlone.test.goal",
+  "hash": "0e9d1e7e479640df50175dd4e3c35cf7020de5ca9035a555232abdf14d8adccf"
+}

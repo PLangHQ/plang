@@ -1,0 +1,499 @@
+{
+  "name": "Start",
+  "comment": "%!app.event% reads the running actor's events: the user binds two, and its list holds both, in the order bound.",
+  "step": [
+    {
+      "index": 0,
+      "text": "before goal Process, call Log",
+      "line": {
+        "number": 3,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "on",
+          "name": "event",
+          "property": [
+            {
+              "name": "Event",
+              "type": {
+                "name": "on",
+                "template": "plang"
+              },
+              "value": "%!app.type.goal.on.start%",
+              "variable": [
+                {
+                  "text": "%!app.type.goal.on.start%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "type"
+                    },
+                    {
+                      "property": "goal"
+                    },
+                    {
+                      "property": "on"
+                    },
+                    {
+                      "property": "start"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "When",
+              "type": {
+                "name": "choice",
+                "kind": "when"
+              },
+              "value": "before"
+            },
+            {
+              "name": "Action",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "goal"
+                    },
+                    "value": "Log"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "after goal Process, call Log",
+      "line": {
+        "number": 4,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "on",
+          "name": "event",
+          "property": [
+            {
+              "name": "Event",
+              "type": {
+                "name": "on",
+                "template": "plang"
+              },
+              "value": "%!app.type.goal.on.start%",
+              "variable": [
+                {
+                  "text": "%!app.type.goal.on.start%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "type"
+                    },
+                    {
+                      "property": "goal"
+                    },
+                    {
+                      "property": "on"
+                    },
+                    {
+                      "property": "start"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "When",
+              "type": {
+                "name": "choice",
+                "kind": "when"
+              },
+              "value": "after"
+            },
+            {
+              "name": "Action",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "goal"
+                    },
+                    "value": "Log"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 1 uses on.event, which the decider was not sure of (0.95)"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %events% = %!app.event.list%",
+      "line": {
+        "number": 5,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%events%",
+              "variable": [
+                {
+                  "text": "%events%",
+                  "code": [
+                    {
+                      "variable": "events"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.event.list%",
+              "variable": [
+                {
+                  "text": "%!app.event.list%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "event"
+                    },
+                    {
+                      "property": "list"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %events.count% equals 2, \"the user's two events\"",
+      "line": {
+        "number": 6,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 2
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%events.count%",
+              "variable": [
+                {
+                  "text": "%events.count%",
+                  "code": [
+                    {
+                      "variable": "events"
+                    },
+                    {
+                      "property": "count"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the user's two events"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %events[0].when% equals \"before\", \"in the order bound\"",
+      "line": {
+        "number": 7,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "before"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%events[0].when%",
+              "variable": [
+                {
+                  "text": "%events[0].when%",
+                  "code": [
+                    {
+                      "variable": "events"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    },
+                    {
+                      "property": "when"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "in the order bound"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "assert %events[1].when% equals \"after\"",
+      "line": {
+        "number": 8,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "after"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%events[1].when%",
+              "variable": [
+                {
+                  "text": "%events[1].when%",
+                  "code": [
+                    {
+                      "variable": "events"
+                    },
+                    {
+                      "index": {
+                        "number": 1
+                      }
+                    },
+                    {
+                      "property": "when"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "Process",
+      "comment": "A goal the events are bound on.",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %done% = \"yes\"",
+          "line": {
+            "number": 12,
+            "indent": 0
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%done%",
+                  "variable": [
+                    {
+                      "text": "%done%",
+                      "code": [
+                        {
+                          "variable": "done"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "yes"
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "visibility": "Private",
+      "hash": "db0f724208650c066ff87bbf5164e096b5d923bb4cffc334a1fceac523222459"
+    },
+    {
+      "name": "Log",
+      "comment": "The events' call.",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %logged% = \"yes\"",
+          "line": {
+            "number": 16,
+            "indent": 0
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%logged%",
+                  "variable": [
+                    {
+                      "text": "%logged%",
+                      "code": [
+                        {
+                          "variable": "logged"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "yes"
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "visibility": "Private",
+      "hash": "ac0ad060ee0538c94c80514e02758c69860e6cec9c6f569fbd7fd2c6cda08539"
+    }
+  ],
+  "visibility": "Public",
+  "file": "ListsTheActorsEvents.test.goal",
+  "hash": "9b368f2b78d6d4c52c1f4cf9e9d6df50178be98c6888916e552553155fabf03e"
+}
