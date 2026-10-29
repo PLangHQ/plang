@@ -59,9 +59,9 @@ None. Decided: how a step names a pattern (37) and which side answers the questi
 3. **Clauses around the list**, in the order above; the error fold stays its own.
 4. **The C# kind; `context.Enter`; `Start` for every kind.**
 5. **Done** (f71d37fa7 … fe4167c02; codeanalyzer PASS 5d0ac4382, tester v4 PASS 034559e84). System events: `event.setting.system`, the folder, both proofs; inheritance at the first ask (60); a sub app over its maker's folder runs no system/event file (66); variable events on one store (73–77).
-6. **`Sub: inherit | none`.**
-7. **The goal**: `Enter`, `Leave`, the parent's goal kind.
-8. **A call finds its goal in its caller's app**; security probes it.
+6. **Done** (b8551ff48, b8db6b8f0; teaching 18ac4ce83): `Sub: inherit | none`; the event answers `IsInheritable`.
+7. **Done** (1f615b6c6): the goal: `Enter` and `Leave` folded, `app.parent.goal` its own kind, `Elsewhere` gone. Also 84 (18507e237, teaching fe1447d57): a pattern rooted as a path.
+8. **Done** (86d90db97): a call finds its goal in its caller goal's app: `goal.App` born in the reader (an os goal with none), `goal.Find(name, asker)`. Security probes it.
 
 Noted, not built: an action added by `module.add` after a module's event was bound gets it at its list's load (pull), so this gap closes; a goal with events from two types runs them in bind order (one list).
 
