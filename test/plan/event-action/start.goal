@@ -84,7 +84,8 @@ Stage8
 / CallFindsItsAppTests.APlatformsMeter_InItsOwnSystemFolder_StillCallsThePlatformsRecord
 / an app's own system/…/Record.goal still replaces the os's for an os goal's call — C#
 / CallFindsItsAppTests.AnAppsOwnSystemGoal_ReplacesTheOss, CallFindsItsAppTests.AnOsGoalsCall_InASubApp_FindsTheSubAppsOwnSystemCopy
-/ the security review's F1–F3 — C#
+/ an upload can't escape or swallow its maker's checks: its system/ goals are checked, its own system/event/ joins after its maker's,
+/ and its on error never takes a failure its maker's event raised — C#
 / SubOwnEventsProbeTests B2, E and B4
 / a sub app's own system/event/Hello.goal replaces only the inherited Hello — C#
 
