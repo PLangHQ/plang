@@ -37,6 +37,10 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     /// event (a handler) is not: its maker binds it again.</summary>
     internal virtual bool IsSaved => false;
 
+    /// <summary>Whether a sub app takes it in, when its events first load: every event does, unless it was bound to stay
+    /// in its own app (on.event's <c>Sub=none</c>).</summary>
+    internal virtual bool Reaches => true;
+
     /// <summary>The <c>on.event</c> action that made it — a program's event is numbered by it (its goal, step and
     /// index). A C# event has none.</summary>
     internal virtual global::app.goal.step.action.@this? action => null;

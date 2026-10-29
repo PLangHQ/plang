@@ -11,20 +11,40 @@ namespace app.@event.call;
 public sealed class @this : global::app.@event.@this
 {
     /// <summary>The event <paramref name="action"/> (an <c>on.event</c> step's) binds on <paramref name="item"/>'s moment
-    /// <paramref name="name"/>, <paramref name="when"/>, for <paramref name="actor"/>.</summary>
+    /// <paramref name="name"/>, <paramref name="when"/>, for <paramref name="actor"/>; a sub app takes it in as
+    /// <paramref name="sub"/> says.</summary>
     internal @this(global::app.type.item.@this item, string name, global::app.@event.When when,
-        global::app.goal.step.action.@this action, global::app.actor.@this actor)
+        global::app.goal.step.action.@this action, global::app.actor.@this actor, global::app.@event.Sub sub)
         : base(item, name, when, actor)
-        => this.action = action;
+    {
+        this.action = action;
+        _sub = sub;
+    }
 
     /// <summary>An event read back from what it wrote (<see cref="Write"/>), bound on <paramref name="item"/>'s moment
-    /// <paramref name="name"/>, <paramref name="when"/>: whose it was, and the action that bound it, each read as its
-    /// member's type. A row that doesn't read is refused, thrown to the read boundary.</summary>
+    /// <paramref name="name"/>, <paramref name="when"/>: whose it was, the action that bound it, each read as its
+    /// member's type, and whether a sub app takes it in (inherit when the record keeps none). A row that doesn't read is
+    /// refused, thrown to the read boundary.</summary>
     internal @this(global::app.type.item.@this item, string name, global::app.@event.When when,
         global::app.type.item.dict.@this record, global::app.actor.context.@this context)
         : this(item, name, when, Member<global::app.goal.step.action.@this>(record, "action", context),
-            Member<global::app.actor.@this>(record, "actor", context))
+            Member<global::app.actor.@this>(record, "actor", context), Kept(record, context))
     { }
+
+    // whether a sub app takes it in, as the on.event step said
+    private readonly global::app.@event.Sub _sub;
+
+    internal override bool Reaches => _sub == global::app.@event.Sub.inherit;
+
+    // the Sub a saved event's record keeps, read as the choice it is; none kept is the default, inherit
+    private static global::app.@event.Sub Kept(global::app.type.item.dict.@this record, global::app.actor.context.@this context)
+    {
+        if (record.Get("sub", context) is not { } row) return global::app.@event.Sub.inherit;
+        global::app.@event.Sub sub = global::app.type.item.choice.@this<global::app.@event.Sub>.Create(row.Peek()?.ToString(),
+                context.App.type.list[typeof(global::app.type.item.choice.@this<global::app.@event.Sub>)])
+            ?? throw Unread($"a saved event keeps a sub '{row.Peek()}' that is none of inherit, none");
+        return sub;
+    }
 
     /// <summary>The <c>on.event</c> action that bound it; what it runs is that action's <c>Action</c>, read when it runs.</summary>
     internal override global::app.goal.step.action.@this action { get; }
@@ -69,7 +89,8 @@ public sealed class @this : global::app.@event.@this
         finally { frame.Event = outer; }
     }
 
-    /// <summary>It writes whose it is and the action that bound it: <c>{actor, action}</c>, each as its member's
+    /// <summary>It writes whose it is, the action that bound it and whether a sub app takes it in: <c>{actor, action,
+    /// sub}</c>, each as its member's
     /// type, the actor by what finds it. The action carries its type: the snapshot's load pass finds the goal it names only
     /// through a typed row. An action that names its call by a variable (<c>Action=%x%</c>) is refused: read back, the
     /// variable would be read again where the moment comes.</summary>
@@ -85,6 +106,8 @@ public sealed class @this : global::app.@event.@this
         await Actor.Output(writer);
         writer.Name("action");
         await new global::app.data.@this("", action, context: context).Output(writer);
+        writer.Name("sub");
+        writer.String(_sub.ToString());
         writer.EndObject();
     }
 

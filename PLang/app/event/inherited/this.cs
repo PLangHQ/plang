@@ -18,6 +18,9 @@ public sealed class @this : global::app.@event.@this
     // the maker's: the action that made the event it runs
     internal override global::app.goal.step.action.@this? action => _event.action;
 
+    // as its source answers: a sub app's own sub app takes it in as the sub app did
+    internal override bool Reaches => _event.Reaches;
+
     // it runs the maker's: its call is found in the maker's app (the call event's own Start)
     internal override System.Threading.Tasks.Task<global::app.data.@this> Start(global::app.type.item.@this item,
         global::app.data.@this result, global::app.actor.context.@this context)

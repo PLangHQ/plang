@@ -23,6 +23,10 @@ public partial class OnEvent : IContext
     [IsNotNull]
     public partial data.@this<global::app.goal.step.action.@this> Action { get; init; }
 
+    /// <summary>Whether a sub app takes the event in — it does, unless the step keeps it to this app (none).</summary>
+    [Default(global::app.@event.Sub.inherit)]
+    public partial data.@this<global::app.type.item.choice.@this<global::app.@event.Sub>> Sub { get; init; }
+
     /// <summary>
     /// Build-time check: the moment's path is walked hop by hop. A name the item's moments refuse (<c>…on.before</c>)
     /// is the answer — every item has the same moments, so it can never bind. Any other hop that reaches nothing
@@ -64,12 +68,14 @@ public partial class OnEvent : IContext
 
         // each carrier is opened through its door: the first that doesn't resolve (a %variable% holding nothing, a
         // name that is none of the choice's) is the answer, and nothing is held for it. Bound on this actor's events,
-        // never on the item: it runs while this actor runs (and in the sub apps it makes after) and goes with it. The
-        // event holds this action, whose Action it runs when its moment comes, and the actor that bound it.
-        return data.@this<global::app.@event.@this>.From(await When.Use(when => Action.Use(async _ =>
+        // never on the item: it runs while this actor runs (and in the sub apps it makes after, unless Sub keeps it here)
+        // and goes with it. The event holds this action, whose Action it runs when its moment comes, the actor that bound
+        // it, and whether a sub app takes it in.
+        return data.@this<global::app.@event.@this>.From(await When.Use(when => Action.Use(_ => Sub.Use(async sub =>
         {
-            var @event = await Context.Actor!.@event.Add(new global::app.@event.call.@this(item, moment.Name, when.Value, __action!, Context.Actor!));
+            var @event = await Context.Actor!.@event.Add(
+                new global::app.@event.call.@this(item, moment.Name, when.Value, __action!, Context.Actor!, sub.Value));
             return (data.@this)Context.Ok<global::app.@event.@this>(@event);
-        })));
+        }))));
     }
 }

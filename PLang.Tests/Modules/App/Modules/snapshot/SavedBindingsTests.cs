@@ -39,6 +39,67 @@ public class SavedBindingsTests
             ("Action", action ?? Make.Call(context, "Log"))));
     }
 
+    // Log, Inner and G, G binding before each goal with Sub as given (null: the step names none, the default)
+    private static Goal Programs(global::app.@this app, string? sub)
+    {
+        var context = app.actor.list.User.Context;
+        Program(app, "Log", Make.Action(context, "variable", "set", Make.Param(context, "Name", "logged", "variable"), ("Value", "yes")));
+        Program(app, "Inner", Make.Action(context, "variable", "set", Make.Param(context, "Name", "inner", "variable"), ("Value", "ran")));
+        var on = sub == null
+            ? Make.Action(context, "on", "event", ("Event", "%!app.type.goal.on.start%"), ("When", "before"), ("Action", Make.Call(context, "Log")))
+            : Make.Action(context, "on", "event", ("Event", "%!app.type.goal.on.start%"), ("When", "before"), ("Action", Make.Call(context, "Log")), ("Sub", sub));
+        return Program(app, "G", on);
+    }
+
+    // whether a goal run in `app` as its user runs the binding (Log sets %logged%)
+    private static async Task<bool> Logged(global::app.@this app, global::app.@this owner)
+    {
+        var context = app.actor.list.User.Context;
+        await (await owner.goal.list.Items().OfType<Goal>().First(goal => goal.Name == "Inner").Start(context)).IsSuccess();
+        return (await context.Variable.Get("logged")).IsInitialized;
+    }
+
+    // Sub=none keeps the event in the app that bound it; bound by default (or inherit), a sub app takes it in, and a sub
+    // app's own sub app follows its source
+    [Test]
+    [Arguments(null, true)]
+    [Arguments("inherit", true)]
+    [Arguments("none", false)]
+    public async Task ASubApp_TakesInAnEvent_AsItsSubSays_AndItsOwnSubAppFollows(string? sub, bool taken)
+    {
+        var root = Root();
+        await using var maker = App(root);
+        await Bind(maker, Programs(maker, sub));
+        await using var child = new global::app.@this(root, maker.actor.list.User);
+        await using var grandchild = new global::app.@this(root, child.actor.list.User);
+
+        await Assert.That(await Logged(maker, maker)).IsTrue();
+        await Assert.That(await Logged(child, maker)).IsEqualTo(taken);
+        await Assert.That(await Logged(grandchild, maker)).IsEqualTo(taken);
+    }
+
+    // a snapshot keeps the event's Sub, and the fresh app's event read back answers the same: none stays in its app
+    [Test]
+    public async Task ASnapshot_KeepsSub_AndTheResumedEventAnswersTheSame()
+    {
+        var root = Root();
+        await using var app = App(root);
+        var context = app.actor.list.User.Context;
+        await Bind(app, Programs(app, "none"));
+        var snapshot = await app.Snapshot(context).Saved();
+
+        await using var fresh = App(root);
+        Programs(fresh, "none");
+        await fresh.Restore(snapshot, fresh.actor.list.User.Context);
+        var restored = fresh.actor.list.User.@event.Items().OfType<global::app.@event.call.@this>().Single();
+        await using var child = new global::app.@this(root, fresh.actor.list.User);
+
+        await Assert.That(await snapshot.Text(context)).Contains("\"sub\"");
+        await Assert.That(restored.Reaches).IsFalse();
+        await Assert.That(await Logged(fresh, fresh)).IsTrue();
+        await Assert.That(await Logged(child, fresh)).IsFalse();
+    }
+
     // G's step 0 run, as a program runs it: the binding is made.
     private static async Task Bind(global::app.@this app, Goal goal)
     {

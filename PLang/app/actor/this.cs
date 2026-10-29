@@ -207,12 +207,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     global::app.module.code.@this? global::app.origin.@this.Code => App.Code;
 
-    // this app's actor in the role, its events loaded first: the one the sub app's actor of that role takes in
+    // this app's actor in the role, its events loaded first: the ones that reach a sub app, each asked, are what the sub
+    // app's actor of that role takes in
     async ValueTask<IEnumerable<global::app.@event.@this>> global::app.origin.@this.@event(global::app.actor.role.@this role)
     {
         var actor = role.In(App.actor.list);
         await actor.@event.Loaded();
-        return actor.@event.Items();
+        return actor.@event.Items().Where(@event => @event.Reaches).ToList();
     }
 
     // a sub app reads only its own system/event/: its maker's system events came with the events it took in. A sub app

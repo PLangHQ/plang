@@ -40,7 +40,8 @@ internal interface @this
     global::app.module.code.@this? Code { get; }
 
     /// <summary>The events the app's actor in <paramref name="role"/> takes in when it loads its own: the code, none; an
-    /// actor, its app's actor in that role's (loaded first, it alone), each taken in as the sub app's actor's own.</summary>
+    /// actor, its app's actor in that role's (loaded first, it alone) that reach a sub app, each asked
+    /// (<c>Sub=none</c> keeps one in its own app), each taken in as the sub app's actor's own.</summary>
     System.Threading.Tasks.ValueTask<IEnumerable<global::app.@event.@this>> @event(global::app.actor.role.@this role);
 
     /// <summary>The folders <paramref name="app"/> reads its system events from, in order: the code, the app's own

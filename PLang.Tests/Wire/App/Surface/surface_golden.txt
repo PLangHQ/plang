@@ -490,6 +490,10 @@ class app.data.this<T> : app.data.this
   static FromError(app.error.this error, app.actor.context.this context) : app.data.this<T>
   static Uninitialized(System.String name, app.actor.context.this context) : app.data.this<T>
 
+enum app.event.Sub [Choice, PlangType]
+  static const inherit : app.event.Sub
+  static const none : app.event.Sub
+
 enum app.event.When [Choice, PlangType]
   static const after : app.event.When
   static const before : app.event.When
@@ -4430,6 +4434,7 @@ action on.event
   Event : on required
   When : choice<when> required
   Action : action required
+  Sub : choice<sub>
 
 action on.input
   Action : action required
