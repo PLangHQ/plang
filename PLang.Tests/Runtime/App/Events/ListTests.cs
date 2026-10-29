@@ -107,7 +107,7 @@ public class ListTests
             .Start(_app.actor.list.System.Context);
 
         // the system events (the os's Hello, taken in from the test parent) aside: what a program bound
-        bool Bound(global::app.data.@this row) => row.Peek() is global::app.@event.@this @event && !@event.IsSystem();
+        bool Bound(global::app.data.@this row) => row.Peek() is global::app.@event.@this @event && @event.action?.Step?.Goal.IsSystem != true;
         var events = (await read.Value() as global::app.type.item.list.@this<global::app.@event.@this>)!.Items(Ctx).Where(Bound).ToList();
         await Assert.That(events.Count).IsEqualTo(1);
         await Assert.That(events[0].Peek()).IsSameReferenceAs(bound);

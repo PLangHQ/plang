@@ -125,10 +125,11 @@ public sealed partial class @this : global::app.type.item.path.@this
         return isOsLocation ? new @this(absolute, context) : new @this(absolute, type) { Raw = rawPath };
     }
 
-    /// <summary>This file written from the root of the asker's app: <c>/data/a.json</c> under it, <c>/</c> for the root
-    /// itself, <c>/system/…</c> in the runtime's system folder, "/" as its separator on every OS (as a goal's path is
-    /// written in its .pr). A file elsewhere is written as it is — it has no place under either. Before the app is up
-    /// there is no root, and it is written as typed.</summary>
+    /// <summary>This file written from the root of the asker's app: <c>/system/…</c> in the runtime's system folder,
+    /// which is every app's <c>/system/</c> wherever the app sits (an app whose folder holds the os too);
+    /// <c>/data/a.json</c> under the root, <c>/</c> for the root itself, "/" as its separator on every OS (as a goal's
+    /// path is written in its .pr). A file elsewhere is written as it is — it has no place under either. Before the app
+    /// is up there is no root, and it is written as typed.</summary>
     public override global::app.type.item.path.@this Relative(actor.context.@this context)
     {
         var root = context.App?.filesystem.root.Absolute;
@@ -136,11 +137,11 @@ public sealed partial class @this : global::app.type.item.path.@this
         var under = root.EndsWith(PathHelper.DirectorySeparatorChar) || root.EndsWith(PathHelper.AltDirectorySeparatorChar)
             ? root : root + PathHelper.DirectorySeparatorChar;
         var system = context.App!.filesystem.os.Combine("system").Absolute;
-        var raw = Absolute.StartsWith(under, RootComparison) ? "/" + Absolute[under.Length..].Replace('\\', '/')
-            : string.Equals(Absolute, root, RootComparison) ? "/"
-            // the system folder and everything under it: its location replaced by /system
-            : (Absolute + PathHelper.DirectorySeparatorChar).StartsWith(system + PathHelper.DirectorySeparatorChar, RootComparison)
+        // the system folder and everything under it: its location replaced by /system
+        var raw = (Absolute + PathHelper.DirectorySeparatorChar).StartsWith(system + PathHelper.DirectorySeparatorChar, RootComparison)
                 ? "/system" + Absolute[system.Length..].Replace('\\', '/')
+            : Absolute.StartsWith(under, RootComparison) ? "/" + Absolute[under.Length..].Replace('\\', '/')
+            : string.Equals(Absolute, root, RootComparison) ? "/"
             : Absolute;
         return new @this(Absolute, Type) { Raw = raw };
     }

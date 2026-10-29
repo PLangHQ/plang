@@ -99,6 +99,19 @@ public class PathAskerContextTests
         await Assert.That(entries).Contains("/docs/a.txt");
     }
 
+    // the os's system folder is every app's /system/, wherever the app sits: an app whose folder holds the os (its
+    // parent folder; the test parent, at /) writes an os goal as /system/…, never by where the os lies under it
+    [Test] public async Task AnOsGoal_IsUnderSystem_InAnAppWhoseFolderHoldsTheOs()
+    {
+        await using var probe = NewApp();
+        var os = probe.filesystem.os.Absolute;
+        await using var holder = new global::app.@this(System.IO.Path.GetDirectoryName(os.TrimEnd('/', '\\'))!).Testing();
+        var hello = System.IO.Path.Combine(os, "system", "event", "Hello.goal");
+
+        foreach (var context in new[] { holder.actor.list.User.Context, global::PLang.Tests.Parent.Actor.Context })
+            await Assert.That(global::app.type.item.path.@this.Resolve(hello, context).Relative(context).Raw).IsEqualTo("/system/event/Hello.goal");
+    }
+
     [Test] public async Task Relative_IsTheAskersRoot_NotTheCreators()
     {
         await using var app1 = NewApp();
