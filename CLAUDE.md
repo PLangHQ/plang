@@ -32,7 +32,7 @@
 
 ## OBP Shape Smells (audit before writing or reviewing C#)
 
-**Patterns before smells.** Before writing or proposing a shape, name the OBP pattern it follows (`Documentation/v0.2/obp-patterns.md`: saved data maps by a view and its tags; a type per kind, decided at birth; a choice belongs on the element; whoever numbers it finds it; a birth fact, not a search; a compound name is a dot path; one door; the value answers; a reader never answers another type; one concept, one birth method). Every proposal and review opens with it; a review's findings are numbered by pattern.
+**Patterns before smells.** Before writing or proposing a shape, name the OBP pattern it follows (`Documentation/v0.2/obp-patterns.md`: saved data maps by a view and its tags; a type per kind, decided at birth; a choice belongs on the element; whoever numbers it finds it; a birth fact, not a search; a compound name is a dot path; one door; the value answers; a reader never answers another type; one concept, one birth method; the first asker loads it; one question, one answer, on the element). Every proposal and review opens with it; a review's findings are numbered by pattern.
 
 When reading or writing C#, check the diff against the named smells. A hit means the shape is wrong and the fix is structural, not a line edit. Names are canonical — cite findings by name; worked examples and grep tells live in `Documentation/v0.2/obp-smells.md`.
 
@@ -57,6 +57,8 @@ When reading or writing C#, check the diff against the named smells. A hit means
 
 **Design alarms:**
 - **fork** — two execution paths for one operation: behavioral `if`/`switch`, generic fallback beside per-type handlers, type-switch in a registry (push onto the element as a virtual member), optional-override branch.
+- **eager placement** — something prepared at a moment instead of loaded by its first asker: filled at start or launch, made at birth, pushed into another object's list when something is bound, or "this caller is sync, so it can't load". Fix: lazy — the first ask loads it, whoever asks; what is added later joins only what is loaded (pattern 11).
+- **second answer** — two or more members answering one question (`Has` beside `For` beside `Is`), a special method only one caller uses, an `is X` inside an answer about the item it is handed, or a second accessor beside a door. Fix: one member on the element the question is about, each kind overriding it (pattern 12).
 - **verb+noun** — any compound name where one half is a verb (`BuildTypeEntries`, `CoerceToKind`, `GetParameters`); only boolean `IsX`/`HasX` are exempt. Never allowed — always diagnostic of an object doing another object's job or proxying what should own itself.
 
 **Branch rules:**
