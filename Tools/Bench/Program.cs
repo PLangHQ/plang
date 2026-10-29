@@ -25,9 +25,8 @@ static global::app.@this Bound(global::app.@this maker)
     for (var i = 0; i < count; i++)
     {
         var (item, name) = items[i % items.Length];
-        maker.@event.Add(item).Add(name)!.after.Add(side => new global::app.@event.binding.@this(side,
-            (_, _, context) => Task.FromResult(context.Ok()), maker.actor.list.User, global::app.@event.binding.Scope.actor,
-            global::app.@event.binding.@this.Always));
+        maker.actor.list.User.@event.Add(new global::app.@event.code.@this(item, name, global::app.@event.When.after,
+            (_, _, context) => Task.FromResult(context.Ok()), maker.actor.list.User, global::app.@event.code.@this.Always)).AsTask().GetAwaiter().GetResult();
     }
     return maker;
 }
