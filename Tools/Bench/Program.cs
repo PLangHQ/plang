@@ -198,6 +198,26 @@ switch (args.Length > 0 ? args[0] : "")
         phasesTicks?.Report(count);
         break;
     }
+    case "repeat":
+    {
+        // one app, one goal load, the goal run BENCH_N times: the bytes of the first run, the second, and the later ones' average
+        var count = int.TryParse(Environment.GetEnvironmentVariable("BENCH_N"), out var rn) ? rn : 50;
+        const string goal = "/module/condition/if/basic/Condition.test.goal";
+        await using var app = Make(false).Testing();
+        var a0 = GC.GetAllocatedBytesForCurrentThread();
+        var loaded = await app.goal.Load(goal);
+        var load = GC.GetAllocatedBytesForCurrentThread() - a0;
+        var each = new List<long>();
+        for (var i = 0; i < count; i++)
+        {
+            var b0 = GC.GetAllocatedBytesForCurrentThread();
+            await ((await loaded.Value()) as global::app.goal.@this)!.Start(app.actor.list.User.Context);
+            each.Add(GC.GetAllocatedBytesForCurrentThread() - b0);
+        }
+        Console.WriteLine(FormattableString.Invariant(
+            $"repeat {mode} load={load / 1024.0:F0} run1={each[0] / 1024.0:F0} run2={each[1] / 1024.0:F0} run3={each[2] / 1024.0:F0} later_avg={each.Skip(3).Average() / 1024.0:F0} KB (n={count})"));
+        break;
+    }
     default:
         Console.Error.WriteLine("usage: Bench <birth|request|alloc> <root|child>");
         return 2;
