@@ -177,6 +177,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
     private async System.Threading.Tasks.Task Load(System.Threading.Tasks.TaskCompletionSource done)
     {
         _loading.Value = true;
+        // where the events stood: only the load joins any until it is done (an add waits for it)
+        var before = _events.Length;
         try
         {
             if (_actor.App.actor.list.System is { } system && !system.Equals(_actor)) await system.@event.Loaded();
@@ -186,9 +188,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
                     Join(new inherited.@this(made, _actor.App));
             done.SetResult();
         }
-        // a load that failed isn't kept: its askers get its failure, and the next ask loads again
+        // a load that failed isn't kept, all or nothing: what it joined comes off (out of the lists made too), its askers
+        // get its failure, and the next ask loads again — binding each event once
         catch (System.Exception ex)
         {
+            foreach (var joined in _events[before..]) Remove(joined);
             System.Threading.Interlocked.CompareExchange(ref _load, null, done);
             done.SetException(ex);
         }

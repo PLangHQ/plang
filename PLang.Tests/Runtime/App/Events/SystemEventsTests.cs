@@ -214,6 +214,28 @@ public class SystemEventsTests
         await Assert.That(Loads(user)).IsEqualTo(1);
     }
 
+    // all or nothing: a load that ran its system event and then failed (its maker's load throws) leaves no event, and the
+    // next ask binds the system event once
+    [Test] public async Task AFailedLoad_DropsWhatItJoined_TheNextBindsItOnce()
+    {
+        var root = Root();
+        await using var maker = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
+        var subRoot = System.IO.Path.Combine(root, "sub");
+        await using var sub = new global::app.@this(subRoot, maker.actor.list.User);
+        await Hello(sub, subRoot, "sub");
+        var makers = maker.actor.list.System;
+        var system = makers.Setting.Address(typeof(global::app.@event.setting.@this), "system");
+        makers.Setting.Set(system, "neither");
+        var own = sub.actor.list.System;
+
+        await Assert.That(async () => await sub.@event(own.Context)).Throws<System.Exception>();
+        await Assert.That(own.@event.Items()).IsEmpty();
+        makers.Setting.Set(system, (global::app.type.item.choice.@this<global::app.@event.setting.System>)global::app.@event.setting.System.load);
+        await sub.@event(own.Context);
+
+        await Assert.That(Loads(own)).IsEqualTo(1);
+    }
+
     [Test] public async Task ACreateEventASystemEventBinds_RunsForAValueTheUserMakes()
     {
         var root = Root();
