@@ -1,0 +1,1435 @@
+{
+ "files": {
+  "PLang/app/View.cs": {
+   "added": 221,
+   "executable": 99,
+   "missed": [
+    348
+   ],
+   "only_plang": 0,
+   "only_cs": 3
+  },
+  "PLang/app/actor/context/this.cs": {
+   "added": 7,
+   "executable": 2,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/actor/list/this.cs": {
+   "added": 7,
+   "executable": 0,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/actor/role/system.cs": {
+   "added": 2,
+   "executable": 1,
+   "missed": [
+    11
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/actor/role/user.cs": {
+   "added": 2,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/actor/serializer/Snapshot.cs": {
+   "added": 25,
+   "executable": 10,
+   "missed": [
+    14
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/actor/setting/this.cs": {
+   "added": 8,
+   "executable": 3,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 3
+  },
+  "PLang/app/actor/this.cs": {
+   "added": 22,
+   "executable": 6,
+   "missed": [
+    19
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/call/Diff.cs": {
+   "added": 33,
+   "executable": 20,
+   "missed": [
+    27,
+    36,
+    37,
+    38
+   ],
+   "only_plang": 0,
+   "only_cs": 16
+  },
+  "PLang/app/call/action/this.cs": {
+   "added": 84,
+   "executable": 32,
+   "missed": [
+    58,
+    60
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/call/binding/this.cs": {
+   "added": 21,
+   "executable": 8,
+   "missed": [
+    28,
+    30
+   ],
+   "only_plang": 0,
+   "only_cs": 5
+  },
+  "PLang/app/call/composed/this.cs": {
+   "added": 36,
+   "executable": 9,
+   "missed": [
+    32,
+    34
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/call/goal/this.cs": {
+   "added": 39,
+   "executable": 11,
+   "missed": [
+    30,
+    32
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/call/isolated/this.cs": {
+   "added": 19,
+   "executable": 8,
+   "missed": [
+    24,
+    26
+   ],
+   "only_plang": 0,
+   "only_cs": 5
+  },
+  "PLang/app/call/list/this.Snapshot.cs": {
+   "added": 58,
+   "executable": 26,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 5
+  },
+  "PLang/app/call/list/this.cs": {
+   "added": 51,
+   "executable": 19,
+   "missed": [
+    27
+   ],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/call/step/this.cs": {
+   "added": 52,
+   "executable": 18,
+   "missed": [
+    43,
+    45
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/call/this.cs": {
+   "added": 207,
+   "executable": 70,
+   "missed": [
+    22,
+    130,
+    474
+   ],
+   "only_plang": 0,
+   "only_cs": 6
+  },
+  "PLang/app/channel/type/message/this.cs": {
+   "added": 7,
+   "executable": 4,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 4
+  },
+  "PLang/app/data/Properties.cs": {
+   "added": 2,
+   "executable": 2,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/data/attachment.cs": {
+   "added": 18,
+   "executable": 7,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/data/reader/this.cs": {
+   "added": 7,
+   "executable": 5,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 2
+  },
+  "PLang/app/data/schema/signature.cs": {
+   "added": 5,
+   "executable": 2,
+   "missed": [
+    122
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/data/this.Navigation.cs": {
+   "added": 4,
+   "executable": 2,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/data/this.Result.cs": {
+   "added": 14,
+   "executable": 8,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/data/this.cs": {
+   "added": 35,
+   "executable": 22,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 4
+  },
+  "PLang/app/error/serializer/Reader.cs": {
+   "added": 1,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/error/this.cs": {
+   "added": 61,
+   "executable": 21,
+   "missed": [
+    31
+   ],
+   "only_plang": 0,
+   "only_cs": 5
+  },
+  "PLang/app/event/binding/action/this.cs": {
+   "added": 76,
+   "executable": 43,
+   "missed": [
+    42,
+    43,
+    45,
+    46,
+    103
+   ],
+   "only_plang": 0,
+   "only_cs": 3
+  },
+  "PLang/app/event/binding/inherited/this.cs": {
+   "added": 28,
+   "executable": 5,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 2
+  },
+  "PLang/app/event/binding/list/after.cs": {
+   "added": 1,
+   "executable": 0,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/event/binding/list/before.cs": {
+   "added": 1,
+   "executable": 0,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/event/binding/list/this.cs": {
+   "added": 11,
+   "executable": 4,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/event/binding/this.cs": {
+   "added": 11,
+   "executable": 3,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/event/on/ask.cs": {
+   "added": 1,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/event/on/create.cs": {
+   "added": 1,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/event/on/declared.cs": {
+   "added": 1,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/event/on/empty.cs": {
+   "added": 30,
+   "executable": 7,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/event/on/error.cs": {
+   "added": 19,
+   "executable": 14,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/event/on/hit.cs": {
+   "added": 1,
+   "executable": 1,
+   "missed": [
+    6
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/event/on/list/this.cs": {
+   "added": 73,
+   "executable": 36,
+   "missed": [
+    79,
+    80,
+    81,
+    82,
+    83,
+    84
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/event/on/load.cs": {
+   "added": 1,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/event/on/miss.cs": {
+   "added": 1,
+   "executable": 1,
+   "missed": [
+    6
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/event/on/read.cs": {
+   "added": 1,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/event/on/remove.cs": {
+   "added": 1,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/event/on/set.cs": {
+   "added": 1,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/event/on/start.cs": {
+   "added": 1,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/event/on/this.cs": {
+   "added": 121,
+   "executable": 73,
+   "missed": [
+    27,
+    28,
+    158,
+    159,
+    160,
+    170,
+    171,
+    172
+   ],
+   "only_plang": 0,
+   "only_cs": 6
+  },
+  "PLang/app/event/on/write.cs": {
+   "added": 1,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/event/serializer/Snapshot.cs": {
+   "added": 36,
+   "executable": 17,
+   "missed": [
+    17,
+    27,
+    28
+   ],
+   "only_plang": 0,
+   "only_cs": 12
+  },
+  "PLang/app/event/this.cs": {
+   "added": 100,
+   "executable": 58,
+   "missed": [
+    81,
+    82
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/goal/list/this.cs": {
+   "added": 67,
+   "executable": 32,
+   "missed": [
+    88
+   ],
+   "only_plang": 0,
+   "only_cs": 2
+  },
+  "PLang/app/goal/serializer/Reader.cs": {
+   "added": 1,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/goal/serializer/Snapshot.cs": {
+   "added": 49,
+   "executable": 25,
+   "missed": [
+    17,
+    35,
+    36,
+    42,
+    43,
+    45,
+    46
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/goal/setup/this.cs": {
+   "added": 2,
+   "executable": 2,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 2
+  },
+  "PLang/app/goal/step/action/clause/this.cs": {
+   "added": 1,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/goal/step/action/composed/this.cs": {
+   "added": 21,
+   "executable": 4,
+   "missed": [
+    17
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/goal/step/action/formal/reader.cs": {
+   "added": 40,
+   "executable": 36,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 36
+  },
+  "PLang/app/goal/step/action/keep/this.cs": {
+   "added": 1,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/goal/step/action/list/this.cs": {
+   "added": 32,
+   "executable": 16,
+   "missed": [
+    54,
+    55,
+    56
+   ],
+   "only_plang": 0,
+   "only_cs": 2
+  },
+  "PLang/app/goal/step/action/loop/this.cs": {
+   "added": 1,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/goal/step/action/serializer/Reader.cs": {
+   "added": 5,
+   "executable": 5,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/goal/step/action/serializer/Snapshot.cs": {
+   "added": 65,
+   "executable": 40,
+   "missed": [
+    18,
+    43,
+    44,
+    53,
+    54,
+    56,
+    57
+   ],
+   "only_plang": 0,
+   "only_cs": 5
+  },
+  "PLang/app/goal/step/action/this.cs": {
+   "added": 26,
+   "executable": 12,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/goal/step/list/this.cs": {
+   "added": 45,
+   "executable": 28,
+   "missed": [
+    34,
+    35,
+    36,
+    68
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/goal/step/serializer/Reader.cs": {
+   "added": 11,
+   "executable": 6,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/goal/step/serializer/Snapshot.cs": {
+   "added": 44,
+   "executable": 23,
+   "missed": [
+    16,
+    39,
+    40
+   ],
+   "only_plang": 0,
+   "only_cs": 2
+  },
+  "PLang/app/goal/step/this.Item.cs": {
+   "added": 8,
+   "executable": 1,
+   "missed": [
+    29
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/goal/step/this.cs": {
+   "added": 16,
+   "executable": 5,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/goal/this.Item.cs": {
+   "added": 7,
+   "executable": 1,
+   "missed": [
+    125
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/goal/this.cs": {
+   "added": 57,
+   "executable": 25,
+   "missed": [],
+   "only_plang": 3,
+   "only_cs": 1
+  },
+  "PLang/app/module/archive/type/archive/kind/compression/this.cs": {
+   "added": 1,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/module/build/code/Default.cs": {
+   "added": 34,
+   "executable": 23,
+   "missed": [
+    228,
+    338
+   ],
+   "only_plang": 0,
+   "only_cs": 10
+  },
+  "PLang/app/module/callback/start.cs": {
+   "added": 9,
+   "executable": 4,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 4
+  },
+  "PLang/app/module/code/dll/added/serializer/Reader.cs": {
+   "added": 40,
+   "executable": 22,
+   "missed": [
+    28
+   ],
+   "only_plang": 0,
+   "only_cs": 20
+  },
+  "PLang/app/module/code/dll/added/this.cs": {
+   "added": 30,
+   "executable": 6,
+   "missed": [
+    27,
+    29
+   ],
+   "only_plang": 0,
+   "only_cs": 3
+  },
+  "PLang/app/module/code/dll/loaded/serializer/Reader.cs": {
+   "added": 33,
+   "executable": 18,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 17
+  },
+  "PLang/app/module/code/dll/loaded/this.cs": {
+   "added": 23,
+   "executable": 5,
+   "missed": [
+    20,
+    22
+   ],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/module/code/dll/this.cs": {
+   "added": 34,
+   "executable": 5,
+   "missed": [
+    21
+   ],
+   "only_plang": 0,
+   "only_cs": 2
+  },
+  "PLang/app/module/code/kind/this.cs": {
+   "added": 8,
+   "executable": 5,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/module/code/this.Load.cs": {
+   "added": 18,
+   "executable": 7,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 5
+  },
+  "PLang/app/module/code/this.Snapshot.cs": {
+   "added": 95,
+   "executable": 55,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 13
+  },
+  "PLang/app/module/code/this.cs": {
+   "added": 85,
+   "executable": 55,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 22
+  },
+  "PLang/app/module/debug/setting/this.cs": {
+   "added": 24,
+   "executable": 17,
+   "missed": [
+    57
+   ],
+   "only_plang": 0,
+   "only_cs": 16
+  },
+  "PLang/app/module/debug/this.cs": {
+   "added": 49,
+   "executable": 33,
+   "missed": [
+    357,
+    358
+   ],
+   "only_plang": 0,
+   "only_cs": 31
+  },
+  "PLang/app/module/http/code/Default.cs": {
+   "added": 2,
+   "executable": 2,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 2
+  },
+  "PLang/app/module/identity/code/Default.cs": {
+   "added": 1,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/module/identity/type/identity.cs": {
+   "added": 5,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/module/llm/code/Live.cs": {
+   "added": 1,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/module/llm/code/OpenAi.cs": {
+   "added": 9,
+   "executable": 5,
+   "missed": [
+    967
+   ],
+   "only_plang": 0,
+   "only_cs": 3
+  },
+  "PLang/app/module/llm/code/TypeSafe.cs": {
+   "added": 1,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/module/llm/setting/IKey.cs": {
+   "added": 1,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/module/llm/type/message/this.cs": {
+   "added": 7,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/module/llm/type/tool/call/this.cs": {
+   "added": 43,
+   "executable": 13,
+   "missed": [
+    18
+   ],
+   "only_plang": 0,
+   "only_cs": 11
+  },
+  "PLang/app/module/module/add.cs": {
+   "added": 1,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/module/on/cache.cs": {
+   "added": 4,
+   "executable": 3,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/module/on/error.cs": {
+   "added": 4,
+   "executable": 3,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/module/on/event.cs": {
+   "added": 10,
+   "executable": 7,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/module/on/timeout.cs": {
+   "added": 4,
+   "executable": 3,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/module/on/unbind.cs": {
+   "added": 4,
+   "executable": 2,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 2
+  },
+  "PLang/app/module/screen/type/screen/display/this.cs": {
+   "added": 20,
+   "executable": 13,
+   "missed": [
+    68,
+    93,
+    94,
+    97,
+    112,
+    119,
+    130,
+    153,
+    206,
+    324,
+    325,
+    326,
+    327
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/module/screen/type/screen/this.cs": {
+   "added": 2,
+   "executable": 2,
+   "missed": [
+    111,
+    112
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/module/serializer/Snapshot.cs": {
+   "added": 36,
+   "executable": 17,
+   "missed": [
+    15,
+    26,
+    27,
+    32
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/module/signing/code/Ed25519.cs": {
+   "added": 14,
+   "executable": 8,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/module/signing/sign.cs": {
+   "added": 5,
+   "executable": 0,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/module/snapshot/resume.cs": {
+   "added": 52,
+   "executable": 29,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 16
+  },
+  "PLang/app/module/snapshot/save.cs": {
+   "added": 16,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/module/terminal/type/program/this.cs": {
+   "added": 1,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/module/this.cs": {
+   "added": 8,
+   "executable": 3,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/module/ui/code/Fluid.cs": {
+   "added": 3,
+   "executable": 2,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/origin/code.cs": {
+   "added": 6,
+   "executable": 3,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/serializer/Snapshot.cs": {
+   "added": 32,
+   "executable": 15,
+   "missed": [
+    15,
+    24,
+    25
+   ],
+   "only_plang": 0,
+   "only_cs": 10
+  },
+  "PLang/app/shortcut/list/this.cs": {
+   "added": 7,
+   "executable": 3,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 2
+  },
+  "PLang/app/shortcut/this.cs": {
+   "added": 26,
+   "executable": 13,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/snapshot/serializer/Reader.cs": {
+   "added": 28,
+   "executable": 12,
+   "missed": [
+    47
+   ],
+   "only_plang": 0,
+   "only_cs": 4
+  },
+  "PLang/app/snapshot/this.Resume.cs": {
+   "added": 39,
+   "executable": 21,
+   "missed": [
+    27,
+    28,
+    29
+   ],
+   "only_plang": 0,
+   "only_cs": 6
+  },
+  "PLang/app/snapshot/this.Variables.cs": {
+   "added": 20,
+   "executable": 12,
+   "missed": [
+    28,
+    29
+   ],
+   "only_plang": 0,
+   "only_cs": 3
+  },
+  "PLang/app/snapshot/this.Wire.cs": {
+   "added": 24,
+   "executable": 13,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 10
+  },
+  "PLang/app/snapshot/this.cs": {
+   "added": 63,
+   "executable": 27,
+   "missed": [
+    55,
+    56
+   ],
+   "only_plang": 0,
+   "only_cs": 6
+  },
+  "PLang/app/store/sqlite/this.cs": {
+   "added": 5,
+   "executable": 5,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 4
+  },
+  "PLang/app/test/Coverage.cs": {
+   "added": 2,
+   "executable": 2,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/test/junit/this.cs": {
+   "added": 2,
+   "executable": 2,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 2
+  },
+  "PLang/app/test/list/this.cs": {
+   "added": 15,
+   "executable": 13,
+   "missed": [
+    142,
+    158
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/test/report/this.cs": {
+   "added": 7,
+   "executable": 6,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/test/this.cs": {
+   "added": 8,
+   "executable": 6,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/this.Snapshot.cs": {
+   "added": 37,
+   "executable": 18,
+   "missed": [
+    35,
+    36
+   ],
+   "only_plang": 0,
+   "only_cs": 4
+  },
+  "PLang/app/this.cs": {
+   "added": 43,
+   "executable": 15,
+   "missed": [
+    454
+   ],
+   "only_plang": 0,
+   "only_cs": 8
+  },
+  "PLang/app/type/clr/this.cs": {
+   "added": 4,
+   "executable": 2,
+   "missed": [
+    120
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/type/format/IWriter.cs": {
+   "added": 3,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/type/format/item/reader.cs": {
+   "added": 3,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/type/item/ICreate.cs": {
+   "added": 4,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/type/item/content/this.cs": {
+   "added": 11,
+   "executable": 5,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/type/item/dict/this.cs": {
+   "added": 12,
+   "executable": 6,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 5
+  },
+  "PLang/app/type/item/directory/this.cs": {
+   "added": 4,
+   "executable": 3,
+   "missed": [
+    41,
+    42
+   ],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/type/item/file/this.cs": {
+   "added": 9,
+   "executable": 3,
+   "missed": [
+    29
+   ],
+   "only_plang": 0,
+   "only_cs": 2
+  },
+  "PLang/app/type/item/kind/json/this.cs": {
+   "added": 2,
+   "executable": 1,
+   "missed": [
+    126
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/type/item/kind/json/writer.cs": {
+   "added": 44,
+   "executable": 28,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 2
+  },
+  "PLang/app/type/item/kind/reflection/Tagged.cs": {
+   "added": 14,
+   "executable": 8,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/type/item/kind/reflection/this.cs": {
+   "added": 72,
+   "executable": 43,
+   "missed": [
+    100,
+    126,
+    133,
+    137,
+    269,
+    272
+   ],
+   "only_plang": 0,
+   "only_cs": 7
+  },
+  "PLang/app/type/item/list/serializer/Reader.cs": {
+   "added": 1,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/type/item/list/this.cs": {
+   "added": 9,
+   "executable": 4,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 4
+  },
+  "PLang/app/type/item/path/file/this.cs": {
+   "added": 4,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/type/item/path/http/this.cs": {
+   "added": 43,
+   "executable": 31,
+   "missed": [
+    223,
+    237,
+    272,
+    273,
+    274,
+    294
+   ],
+   "only_plang": 0,
+   "only_cs": 25
+  },
+  "PLang/app/type/item/path/this.cs": {
+   "added": 8,
+   "executable": 4,
+   "missed": [
+    98,
+    99
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/type/item/property/list/this.cs": {
+   "added": 117,
+   "executable": 54,
+   "missed": [
+    55,
+    85,
+    99,
+    100,
+    101,
+    102
+   ],
+   "only_plang": 0,
+   "only_cs": 22
+  },
+  "PLang/app/type/item/serializer/json.cs": {
+   "added": 34,
+   "executable": 22,
+   "missed": [
+    34,
+    130,
+    218
+   ],
+   "only_plang": 0,
+   "only_cs": 3
+  },
+  "PLang/app/type/item/signature/this.cs": {
+   "added": 6,
+   "executable": 2,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/type/item/source.cs": {
+   "added": 16,
+   "executable": 9,
+   "missed": [
+    226,
+    227,
+    228
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/type/item/this.cs": {
+   "added": 55,
+   "executable": 20,
+   "missed": [
+    332,
+    333
+   ],
+   "only_plang": 0,
+   "only_cs": 7
+  },
+  "PLang/app/type/item/url/this.cs": {
+   "added": 3,
+   "executable": 3,
+   "missed": [
+    29,
+    30
+   ],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/type/item/variable/code/Property.cs": {
+   "added": 3,
+   "executable": 2,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/type/item/variable/list/this.Snapshot.cs": {
+   "added": 24,
+   "executable": 10,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/type/item/variable/list/this.cs": {
+   "added": 8,
+   "executable": 5,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/type/item/variable/this.cs": {
+   "added": 5,
+   "executable": 3,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/type/item/wire/kind/plang/this.cs": {
+   "added": 8,
+   "executable": 5,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/type/item/wire/kind/plang/writer.cs": {
+   "added": 5,
+   "executable": 4,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 2
+  },
+  "PLang/app/type/item/wire/template.cs": {
+   "added": 2,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/type/item/wire/this.cs": {
+   "added": 32,
+   "executable": 14,
+   "missed": [
+    109
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/type/kind/this.cs": {
+   "added": 3,
+   "executable": 1,
+   "missed": [
+    364
+   ],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/type/list/this.cs": {
+   "added": 17,
+   "executable": 7,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/type/node/this.cs": {
+   "added": 3,
+   "executable": 0,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/type/property/this.cs": {
+   "added": 27,
+   "executable": 13,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/type/reader/ITypeReader.cs": {
+   "added": 7,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/type/reader/layer.cs": {
+   "added": 2,
+   "executable": 1,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 0
+  },
+  "PLang/app/type/reader/this.cs": {
+   "added": 42,
+   "executable": 22,
+   "missed": [
+    143,
+    144,
+    145
+   ],
+   "only_plang": 0,
+   "only_cs": 1
+  },
+  "PLang/app/type/this.cs": {
+   "added": 105,
+   "executable": 50,
+   "missed": [],
+   "only_plang": 0,
+   "only_cs": 1
+  }
+ },
+ "nofile": [
+  [
+   "PLang/app/actor/role/this.cs",
+   3
+  ],
+  [
+   "PLang/app/module/IClause.cs",
+   3
+  ],
+  [
+   "PLang/app/module/llm/code/ILlm.cs",
+   8
+  ],
+  [
+   "PLang/app/module/llm/type/tool/call/status.cs",
+   9
+  ],
+  [
+   "PLang/app/origin/this.cs",
+   11
+  ],
+  [
+   "PLang/app/snapshot/IView.cs",
+   11
+  ],
+  [
+   "PLang/app/type/item/property/IOwner.cs",
+   12
+  ]
+ ],
+ "tot": [
+  3937,
+  1908,
+  1740
+ ]
+}

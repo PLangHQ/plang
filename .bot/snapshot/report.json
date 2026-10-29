@@ -365,6 +365,54 @@
         "health": "C# 5641 green, plang 307/308, no new red name vs runtime2; 1737 of 1908 changed executable lines reached",
         "notes": "Fixes are tests only: a multi-action-step resume test, a non-idempotent FreshAppGoesOn, plang tests for %!event% and edit/sign/resume, a truthful start.goal."
       }
+    },
+    {
+      "id": "b3b3dd5e-c9b5-4f9e-8dc8-b8983ed4fa13",
+      "bot": "tester",
+      "timestamp_start": "2026-10-29T00:25:00Z",
+      "timestamp_end": "2026-10-29T01:10:00Z",
+      "intent": "Second tester pass on snapshot at 18a3b5d51: the coder's fixes to the first pass's findings, mutations re-run, each plan test alone and in its folder.",
+      "before": {
+        "assumptions": "The coder fixed findings 1-6 with test-only commits.",
+        "risk": "New plang tests may be order dependent; mutants may still survive."
+      },
+      "plan": ".bot/snapshot/tester/v6/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/call/action/this.cs",
+            "PLang/app/call/this.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Mutations, each reverted: the call re-run and rest-dropped mutants are now red; [Snapshot] removed from call.Event is red in EventComesBack and two C# tests."
+        },
+        {
+          "paths": [
+            "test/plan/snapshot/module/snapshot/resume/ResumeTakesInTheBinding/ResumeTakesInTheBinding.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Found flaky: 15/15 alone, 2/8 in the plan folder, 2 of 5 full runs red; a failed run leaves workspace/resumed.marker and poisons later runs."
+        },
+        {
+          "paths": [
+            ".bot/snapshot/tester/v6/result-2.md",
+            ".bot/snapshot/test-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Verdict stays needs-fixes on the flaky test."
+        }
+      ],
+      "after": {
+        "status": "FAIL (needs-fixes)",
+        "health": "C# 5641 green; plang 311/312 on a good run; changed-line coverage 1740/1908",
+        "notes": "First-pass false greens are closed. One flaky plang test is open."
+      }
     }
   ]
 }

@@ -1,1 +1,1 @@
-{ "status": "fail", "summary": "C# 5641 and plang 307/308 green with no new red name against runtime2, but two false greens in the resume core (placeholder ResumeChain_MultiActionStep test; mutants that drop or repeat the action after a returned call survive all suites) and five of seven main behaviours have no plang test" }
+{"status": "fail", "summary": "second pass: first-pass false greens fixed and mutation-checked, but ResumeTakesInTheBinding is flaky (red in 6 of 8 plan-folder runs, green alone) and a failed run leaves a marker that fails later runs"}
