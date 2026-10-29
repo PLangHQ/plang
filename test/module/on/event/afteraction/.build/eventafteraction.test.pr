@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "comment": "after action captures that action fired",
+  "comment": "An event bound after output.write runs CaptureWrite once the write is done.",
   "step": [
     {
       "index": 0,
@@ -69,19 +69,22 @@
                 "name": "on",
                 "template": "plang"
               },
-              "value": "%!app.type.action.on.start%",
+              "value": "%!app.module.output.write.on.start%",
               "variable": [
                 {
-                  "text": "%!app.type.action.on.start%",
+                  "text": "%!app.module.output.write.on.start%",
                   "code": [
                     {
                       "variable": "!app"
                     },
                     {
-                      "property": "type"
+                      "property": "module"
                     },
                     {
-                      "property": "action"
+                      "property": "output"
+                    },
+                    {
+                      "property": "write"
                     },
                     {
                       "property": "on"
@@ -191,5 +194,5 @@
   ],
   "visibility": "Public",
   "file": "EventAfterAction.test.goal",
-  "hash": "806168ef18ec5f0db71a8e8b0c1a7a7a5260fe5713fedb271504b1120b607499"
+  "hash": "7aef891feb290cc28c3c8ed9da55425123376d2505f8a27ae58297c2c08d2587"
 }

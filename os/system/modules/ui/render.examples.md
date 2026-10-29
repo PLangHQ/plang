@@ -1,8 +1,8 @@
 Step text: `render 'page.html' with title=%pageTitle%, write to %html%`
-Properties: `{"Template": "page.html", "Parameter": [{title: %pageTitle%}]}`
+Formal: `ui.render(Template="page.html", Parameter=[{title: %pageTitle%}]); variable.set(Name=%html%, Value=%!data%)`
 
 Step text: `render %template%, error=%error%, write to %text%`
-Properties: `{"Template": "%template%", "Parameter": [{error: %error%}]}` — every `name=value` after the template is an argument, even when the value is a variable of the same name: `ui.render(Template=%template%, Parameter=[{error: %error%}])`.
+Formal: `ui.render(Template=%template%, Parameter=[{error: %error%}]); variable.set(Name=%text%, Value=%!data%)` — every `name=value` after the template is an argument, even when the value is a variable of the same name.
 
 Step text: `render 'layout.html'`
 Formal: `ui.render(Template="layout.html")`
