@@ -66,6 +66,10 @@ The one list of work after runtime2's merges (Ingi, 2026-10-29: "yes merge into 
 
 - **Identity's `Held()` beside the gated `GetOrCreateDefault`** (`module/identity/code/Default.cs`, snapshot 335; plang-security, 2026-10-29): two doors for "the default identity", one gated, one not. Read-only and safe today, but a second accessor beside the door that checks, and `held` is a banned word. With `data.Held()` (below, "Types, data and the serializer") the same name shows up twice.
 
+### Speed
+
+- **The cost of calling an action** (Ingi, 2026-10-29: "it would be interesting to analyze if we can speed that up … I dont think specifically shortcut, but just general when calling an action, but good to have focus"): queued for plang-codeanalyzer after its event-action review. Focus: a `%!goal%` read, ~0.2 ms against ~0.03 ms for a value in memory (`shortcut/this.code.md`). Also a step of one action, and a `call X` to a goal of one step. Each broken down by piece, with ranked ideas. Written up at `.bot/event-action/codeanalyzer/call-cost.md`.
+
 ### Lazy (OBP pattern 11)
 
 - **The shortcut list is read at the app's start** (`app/this.cs:535–537`, found 2026-10-29 explaining shortcuts to Ingi): Launch reads every shortcut before anything runs, so a name clash (an app `/shortcut/x.goal` taking a system name) stops the start. That is work at start; the first `%!x%` read is the asker. Also `shortcut/this.cs:20` decides `IsSystem` from `path.ToString()`, while `this.code.md` says it asks its goal (`Goal.IsSystem`).
