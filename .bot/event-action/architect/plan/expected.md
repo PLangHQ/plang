@@ -14,15 +14,17 @@ internal override bool Has(global::app.type.item.@this item) => item.Is(this);  
 // module/this.cs — NEW: an event bound on a module runs for each of its actions
 internal override bool Has(global::app.type.item.@this item) => _action.Values.Contains(item);   // _action: module/this.cs:57
 
-// a goal pattern (37) — NEW kind, made by the goal list for a name with a wildcard
-internal override bool Has(global::app.type.item.@this item)
-    => item is global::app.goal.@this goal && <the one glob matcher>(goal.Path);        // permission/this.cs:117, one matcher
+// goal/pattern/this.cs — NEW kind (37), made by goal.list.Find for a name with * or ?: the goal answers (42)
+internal override bool Has(global::app.type.item.@this item) => item.Is(this);
 
-// type/item/variable/this.cs — NEW: a variable by its name (24)
-internal override bool Has(global::app.type.item.@this item) => item is @this variable && variable.Name == Name;   // Name: variable/this.cs:94
+// type/item/this.cs — NEW (42): is this item named by the pattern? An item on its own isn't
+internal virtual bool Is(global::app.goal.pattern.@this pattern) => false;
+
+// goal/this.cs — NEW (42): a goal is named by a pattern when its path matches (the one Glob, moved out of permission/this.cs:117)
+internal override bool Is(global::app.goal.pattern.@this pattern) => pattern.Matches(Path);
 ```
 
-The `item is …` lines are inside each kind's own answer, about the item it is handed; the coder shapes them (an item's own fact may answer instead). No `ReferenceEquals` anywhere.
+A variable equals another by its name (42), so the base `Has` answers for it. No `is` check and no `ReferenceEquals` anywhere.
 
 ## The actor's events — pull and push (3, 10, 34)
 
