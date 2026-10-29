@@ -59,33 +59,33 @@ Stage4
 / the debug watch, the test runner's timing, coverage and a mock each still run, and none is in a snapshot — C#
 
 Stage5
-/ the os's /system/event/Hello.goal event fires in an app, and not with event.setting.system=skip — plang test
-/ /plan/event-action/app/event/OsEventLoads
-- call /plan/event-action/app/event/OsEventLoads
-/ an app's own system/event/Hello.goal replaces the os's: only the app's fires — plang test
-/ /plan/event-action/app/event/AppReplacesOsEvent
-- call /plan/event-action/app/event/AppReplacesOsEvent
+/ the os's /system/event/Hello.goal event fires in an app, and not with event.setting.system=skip — C#
+/ SystemEventsTests.TheAppsSystemEvent_RunsAtItsStart, SystemEventsTests.UnderSkip_NoSystemEventLoads
+/ an app's own system/event/Hello.goal replaces the os's: only the app's fires — C#
+/ SystemEventsTests.ASubAppsOwnSystemEvent_ReplacesTheOneItsMakerBoundFromTheFileOfThatName,
+/ SystemEventsTests.ASubAppOverItsMakersFolder_RunsNoSystemEventFile_AndHasTheMakersEvents
 
 Stage6
-/ an event bound with Sub=none doesn't run in a sub app; one bound without it does — plang test
-/ /plan/event-action/app/event/SubNoneStaysHome
-- call /plan/event-action/app/event/SubNoneStaysHome
+/ an event bound with Sub=none doesn't run in a sub app; one bound without it does — C#
+/ SavedBindingsTests.ASubApp_TakesInAnEvent_AsItsSubSays_AndItsOwnSubAppFollows
 / a snapshot keeps an event's Sub, and a resumed app's sub app honours it — C#
+/ SavedBindingsTests.ASnapshot_KeepsSub_AndTheResumedEventAnswersTheSame
 
 Stage7
-/ "return false, 2 levels" ends two goals, and the caller of the second goes on — plang test
-/ /plan/event-action/app/goal/ReturnTwoLevels
-- call /plan/event-action/app/goal/ReturnTwoLevels
+/ "return false, 2 levels" ends two goals, and the caller of the second goes on — C#
+/ TaskTests.AReturnOfTwoLevels_EndsItsGoalAndItsCaller_TheNextGoesOnWithTheValue
 / a parent app's goal call goes up the link with its parameters — C#
+/ TaskTests.AParentGoalsCall_SendsItsParametersUp, TaskTests.AParentGoal_RunsNoneOfTheCallersGoalEvents_ItsGoalCallStillRunsThem
 
 Stage8
 / a platform's event calls Meter, Meter calls Record: inside an uploaded sub app with its own Record.goal, the
-/ platform's Record runs — plang test
-/ /plan/event-action/app/goal/CallerAppFindsTheGoal
-- call /plan/event-action/app/goal/CallerAppFindsTheGoal
-/ an app's own system/…/Record.goal still replaces the os's for an os goal's call — plang test
-/ /plan/event-action/app/goal/AppOverridesOsGoal
-- call /plan/event-action/app/goal/AppOverridesOsGoal
+/ platform's Record runs — C#
+/ CallFindsItsAppTests.APlatformsMeter_InAnUploadedSubApp_CallsThePlatformsRecord,
+/ CallFindsItsAppTests.APlatformsMeter_InItsOwnSystemFolder_StillCallsThePlatformsRecord
+/ an app's own system/…/Record.goal still replaces the os's for an os goal's call — C#
+/ CallFindsItsAppTests.AnAppsOwnSystemGoal_ReplacesTheOss, CallFindsItsAppTests.AnOsGoalsCall_InASubApp_FindsTheSubAppsOwnSystemCopy
+/ the security review's F1–F3 — C#
+/ SubOwnEventsProbeTests B2, E and B4
 / a sub app's own system/event/Hello.goal replaces only the inherited Hello — C#
 
 BoyScout

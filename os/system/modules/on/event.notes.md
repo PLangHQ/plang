@@ -6,13 +6,13 @@
   - an action the step names as module.action ("action file.read", "action variable.set") → `%!app.module.file.read%`, `%!app.module.variable.set%` — not `%!app.type.action%`, which is every action
   - one goal by name ("goal Process") → `%!app.goal["Process"]%` (the bare name); the goals under a folder beside the goal whose step names it ("each goal in api/") → `%!app.goal["api/*"]%`; from the app root ("each goal in /api/") → `%!app.goal["/api/*"]%`; every action of a module → `%!app.module.http%`
   - only when the step says "each" / "every" (no name): "each goal" / "each step" / "each action" → `%!app.type.goal%`, `%!app.type.step%`, `%!app.type.action%`
-- its event: a goal, step or action's is `start` ("before each step" → `%!app.type.step.on.start%`; "after action output.write" is that action's start, not a write); a channel's is `write`, `read` or `ask` ("before write on … channel" → `%!channel.audit.on.write%`). The event name is only `start` (or `error`, or a channel's `write`/`read`/`ask`) — **never `before`, `after` or `end`**: those are the moment, carried by `When`, not part of the path. "before each step" → Event=`%!app.type.step.on.start%`, When="before"; "before a goal ends" / "when each goal ends" → Event=`%!app.type.goal.on.start%`, When="after" (there is no `.on.end`/`.on.after`/`.on.before`).
+- its event: a goal, step or action's is `start` ("before each step" → `%!app.type.step.on.start%`; "after action output.write" is that action's start, not a write); a channel's is `write`, `read` or `ask` ("before write on … channel" → `%!channel.audit.on.write%`). An item's moments are `start` and its own named ones: a variable's `set`/`remove`, a type's `create`, a channel's `write`/`read`/`ask`, an element's `click`, and `error`. The event name is **never `before`, `after` or `end`**: those are the moment, carried by `When`, not part of the path. "before each step" → Event=`%!app.type.step.on.start%`, When="before"; "before a goal ends" / "when each goal ends" → Event=`%!app.type.goal.on.start%`, When="after" (there is no `.on.end`/`.on.after`/`.on.before`).
 
 `When` is `before` or `after`.
 
 Sub — whether the app's sub apps take the event in: `inherit` (the default, left out) or `none` · say: `not in sub apps`, `only in this app`, `just here` · builder: → `Sub="none"`; left out when the step says nothing about sub apps.
 
-The called goal reads `%!event%` (the event), `%!event!item%` (what it fired for) and `%!event!data%` (the value so far, after it; a failure is `%!error%`). A call bound before an event can cancel it with `on.cancel`.
+The called goal reads `%!event%` (the event: `%!event.name%`, `%!event.when%`), `%!event!item%` (what it fired for) and `%!event!data%` (the value so far, after it; a failure is `%!error%`). A call bound before an event can cancel it with `on.cancel`.
 
 `on input call X` — "input" with no channel, event or "before/after" — is `on.input` (listen to this app's input line by line), not this.
 
