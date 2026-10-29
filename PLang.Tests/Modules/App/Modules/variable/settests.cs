@@ -25,6 +25,24 @@ public class SetTests
         await Assert.That((await context.Variable.GetValue("testVar"))).IsEqualTo("testValue");
     }
 
+    // a set reads its reference once: `%!goal%` is a shortcut, a goal of plang's run for each read, so a second read
+    // would run it twice
+    [Test]
+    public async Task Set_OfAShortcut_RunsItsGoalOnce()
+    {
+        var context = _app.actor.list.User.Context;
+        var started = 0;
+        await _app.actor.list.User.@event.Add(new global::app.@event.code.@this(_app.type.list["goal"], "start", global::app.@event.When.before,
+            (item, result, _) => { if (((global::app.goal.@this)item).Name == "Goal") started++; return Task.FromResult(result); },
+            _app.actor.list.User, global::app.@event.code.@this.Always));
+        await global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%!app.event.setting.goal%", "variable"), ("Value", "all")).Start(context);
+
+        var set = await global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%seen%", "variable"), ("Value", "%!goal%")).Start(context);
+
+        await set.IsSuccess();
+        await Assert.That(started).IsEqualTo(1);
+    }
+
     [Test]
     public async Task Set_BangPath_WritesSetting_NotVariable()
     {

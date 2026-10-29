@@ -29,14 +29,14 @@ public partial class Set : IContext, IScope, IKeep
         }
         // a text with variables inside is unknown; a literal is read as the value it is
         if (Value.HasVariable) return;
-        if (await Value.Value() is { IsNull: false }) await name.Set(Binding(name), Context);
+        if (await Value.Value() is { IsNull: false }) await name.Set(Binding(name, Value), Context);
     }
 
-    // What the variable binds: a root is bound to a copy of the Value under its own name (Value is named for this
-    // action's parameter, never what the variable is called); a write deeper in hands Value to its container, which
-    // holds it under its own key.
-    private data.@this Binding(global::app.type.item.variable.@this name)
-        => name.Code.Count == 1 ? Value.Copy(name.Code.Root.Name) : Value;
+    // What the variable binds: a root is bound to a copy of the value under its own name (the value is named for this
+    // action's parameter, or for what a reference named, never what the variable is called); a write deeper in hands
+    // the value to its container, which holds it under its own key.
+    private static data.@this Binding(global::app.type.item.variable.@this name, data.@this value)
+        => name.Code.Count == 1 ? value.Copy(name.Code.Root.Name) : value;
 
     /// <summary>Build-time judgement of my own properties, read as authored — Peek, never the
     /// value door: a %var% is unknown at build and defers to Run.</summary>
@@ -144,10 +144,12 @@ public partial class Set : IContext, IScope, IKeep
                 return existing;
         }
 
-        // A whole variable that holds nothing is nothing to assign — the program named a variable that
-        // isn't there (VariableNotFound). Asked of a reference only; any other value stays unopened.
-        if (Value.IsVariable && await Value.Given() is { Success: false } missing)
-            return missing;
+        // A reference is read once, here: what it names is what flows on — the Data it names, unread, under the
+        // variable's name; a whole variable that holds nothing is nothing to assign (VariableNotFound). Any other
+        // value stays unopened.
+        var given = Value.IsVariable ? await Value.Given() : null;
+        if (given is { Success: false }) return given;
+        var value = given ?? Value;
 
         // Forced type via [Type]: convert via TryConvert and mint Data<T>. Conversion failure
         // surfaces as Data.Error (Success=false) — Variables.Set is not called in that case so
@@ -187,10 +189,10 @@ public partial class Set : IContext, IScope, IKeep
             // (`%!data%` is the Data it names), never read and never converted: a file stays the file,
             // unread, and is no new birth. Only a value that isn't the type is opened and converted below
             // (a re-kind and a strict declaration go on too).
-            var incoming = await Value.Follow(Context);
+            var incoming = given ?? await Value.Follow(Context);
             if (!type.Strict && incoming.Peek() is { IsNull: false } item && item.Is(type)
                 && (type.kind.IsEmpty || string.Equals(item.Type.kind.Name, type.kind.Name, StringComparison.OrdinalIgnoreCase)))
-                return await name.Set(Binding(name), Context);
+                return await name.Set(Binding(name, value), Context);
 
             // Kind-derivation and the strict probe read the IN-MEMORY value only: a
             // raw-backed (unparsed) value contributes null — deriving a kind from
@@ -318,7 +320,7 @@ public partial class Set : IContext, IScope, IKeep
         // (`set %a%=%a%`) is dropped at build, never handled here. The variable writes itself: a
         // bare name rebinds, `%x.a%` sets a member, `%x!cost%` the binding's Properties, `%!llm.setting.cache%`
         // a setting's option for this run.
-        return await name.Set(Binding(name), Context);
+        return await name.Set(Binding(name, value), Context);
     }
 
     /// <summary>
