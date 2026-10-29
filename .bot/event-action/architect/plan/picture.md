@@ -11,8 +11,8 @@ What holds now. The decisions it comes from are in `../summary.md`; the replaced
 | 5 | where events live | on the actor that bound them, in bind order; `%!app.event%` reads the running actor's | 4 | no |
 | 6 | whose list | a goal its own; a step its own; an action its catalog action's; a variable its name's when bound on the name, else the type's | 10, 28, 24 | no |
 | 7 | how a list fills | **pull** when it isn't loaded (its first run loads every event that applies); **push** when an on.event step runs (into loaded lists only) | 3, 10, 34 | no |
-| 8 | the one question | `item.Is(@event.Item)`: the item itself, of that type, or (a catalog action) of that module | 34, 33 | no |
-| 9 | by pattern | `before each goal in api/*`: applies by the goal's path, the one glob matcher | 35 | no |
+| 8 | the one question | `@event.Item.Has(item)`: the thing bound on answers (itself; a type, its items; a module, its actions; a pattern, by path; a variable, by name) | 34, 39 | no |
+| 9 | by pattern | `%!app.goal["/api/*"].on.start%`: the goal list answers a pattern; it answers `Has` by the goal's path, the one glob matcher | 35, 37 | no |
 | 10 | plang's own goals | one list; `event.setting.goal: app \| all` (default `app`); `goal.IsSystem` asked when a side runs | 31, 32 | no |
 | 11 | order | bind order. An action: app's before → timeout → cache lookup → **action** → cache store → step's `on error` → app's `on error` → app's after | 4, 11, 14 | no |
 | 12 | a handled error | `after error on each action` sees it; the failure is `%!error%` | 14, 23 | no |
@@ -23,8 +23,7 @@ What holds now. The decisions it comes from are in `../summary.md`; the replaced
 
 ## Open for Ingi before stage 2
 
-1. How a step names a pattern (a first idea: `%!app.goal["/api/*"].on.start%`, the goal list answering a pattern for a wildcard key).
-2. Which side answers the one question so a pattern fits: the thing bound on ("does an event on me run for this goal?") or `Is(item)` handing it over. Both on item's locked base.
+None (37, 39). Collision check done (40). Stage 2 waits for the green light.
 
 ## Where the code is
 
