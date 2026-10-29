@@ -57,6 +57,46 @@ public class FirstIdentityTests
         finally { System.IO.Directory.Delete(root, recursive: true); }
     }
 
+    // The app's identities change one change at a time, each reading the list inside: creates at once each keep their
+    // row, archives at once each land, renames at once leave every new name and no old one.
+    [Test] public async Task IdentityChangesAtOnce_EachKeepsTheOthers()
+    {
+        var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-first-id-" + Guid.NewGuid().ToString("N")[..8]);
+        System.IO.Directory.CreateDirectory(root);
+        try
+        {
+            await using var app = new global::app.@this(root).Consenting();
+            var ctx = app.actor.list.User.Context;
+            var names = Enumerable.Range(0, 8).Select(i => $"id{i}").ToArray();
+            async Task<global::app.data.@this> Run(string line) => await (await ctx.Action(line)).Start(ctx);
+            async Task<List<global::app.module.identity.Identity>> Stored()
+            {
+                var rows = (await app.actor.list.System.Setting.Get<global::app.module.identity.setting.@this>()).Identity;
+                var all = new List<global::app.module.identity.Identity>();
+                foreach (var row in rows.Items(ctx)) all.Add((await row.Value<global::app.module.identity.Identity>())!);
+                return all;
+            }
+
+            // the app's default made first, so none of these is it (the default isn't archived without force)
+            await (await Run("identity.get()")).IsSuccess();
+            foreach (var created in await Task.WhenAll(names.Select(n => Task.Run(() => Run($"identity.create(Name=\"{n}\")")))))
+                await created.IsSuccess();
+            await Assert.That((await Stored()).Count(i => names.Contains(i.Name))).IsEqualTo(names.Length);
+
+            foreach (var archived in await Task.WhenAll(names.Take(4).Select(n => Task.Run(() => Run($"identity.archive(Name=\"{n}\")")))))
+                await archived.IsSuccess();
+            await Assert.That((await Stored()).Count(i => names.Take(4).Contains(i.Name) && i.IsArchived)).IsEqualTo(4);
+
+            foreach (var renamed in await Task.WhenAll(names.Skip(4).Select(n => Task.Run(() => Run($"identity.rename(Name=\"{n}\", NewName=\"{n}x\")")))))
+                await renamed.IsSuccess();
+            var after = await Stored();
+            await Assert.That(after.Count(i => names.Skip(4).Select(n => n + "x").Contains(i.Name))).IsEqualTo(4);
+            await Assert.That(after.Count(i => names.Skip(4).Contains(i.Name))).IsEqualTo(0);
+            await Assert.That(after.Count(i => names.Take(4).Contains(i.Name) && i.IsArchived)).IsEqualTo(4);
+        }
+        finally { System.IO.Directory.Delete(root, recursive: true); }
+    }
+
     // Two first saves at once are each signed by the app's one identity, so each is a snapshot this app saved: a resume
     // takes both past the signature (each holds no call, so each answers that there is no frame to go on from).
     [Test] public async Task FirstSavesAtOnce_BothResume()
