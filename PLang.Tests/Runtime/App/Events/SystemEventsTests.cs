@@ -8,10 +8,10 @@ public class SystemEventsTests
     private static string Root() => System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-sysevents-" + Guid.NewGuid().ToString("N")[..8]);
 
     // system/event/Hello.goal in `app`'s folder `root`: `when` `on` (an event path), it calls Say, which sets %said% to
-    // `word`.
+    // `word`. Built in the shared test parent, so building it is no ask of the app's events.
     private static async Task Hello(global::app.@this app, string root, string word, string on = "%!app.on.start%", string when = "before")
     {
-        var context = app.actor.list.User.Context;
+        var context = global::PLang.Tests.Parent.Actor.Context;
         var hello = Make.Goal(context, "Hello", "/system/event/Hello.goal",
             Make.Step($"{when} {on}, call Say", Make.Action(context, "on", "event", ("Event", on),
                 ("When", when), ("Action", Make.Call(context, "Say")))));
@@ -141,6 +141,77 @@ public class SystemEventsTests
         await Assert.That((await sub.actor.list.System.Context.Variable.Get("loaded")).IsInitialized).IsFalse();
         await Assert.That(events.OfType<global::app.@event.inherited.@this>()).IsNotEmpty();
         await Assert.That(events.OfType<global::app.@event.call.@this>()).IsEmpty();
+    }
+
+    // the system event's call events the actor holds — one per load of the app's Hello
+    private static int Loads(global::app.actor.@this actor)
+        => actor.@event.Items().OfType<global::app.@event.call.@this>().Count();
+
+    // The first ask may come from anything that runs. Each below is the first: the load runs once, and the events are
+    // there.
+    [Test] public async Task AGoalsStart_IsAFirstAsk_TheEventsLoadOnce()
+    {
+        var root = Root();
+        await using var app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
+        await Hello(app, root, "hello");
+        var user = app.actor.list.User;
+        var parent = global::PLang.Tests.Parent.Actor.Context;
+        var goal = Make.Goal(parent, "Work", Make.Step("set %done% = yes",
+            Make.Action(parent, "variable", "set", Make.Param(parent, "Name", "done", "variable"), ("Value", "yes"))));
+        await Assert.That(Loads(user)).IsEqualTo(0);
+
+        await (await goal.Start(user.Context)).IsSuccess();
+        await (await goal.Start(user.Context)).IsSuccess();
+
+        await Assert.That(Loads(user)).IsEqualTo(1);
+    }
+
+    [Test] public async Task ASubAppsFirstAsk_LoadsOnce_AndTakesInItsMakers()
+    {
+        var root = Root();
+        await using var maker = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
+        await Hello(maker, root, "maker");
+        await using var sub = new global::app.@this(root, maker.actor.list.User);
+        var user = sub.actor.list.User;
+
+        await user.Context.Variable.Set("x", 1);
+        await user.Context.Variable.Set("x", 2);
+
+        await Assert.That(Loads(maker.actor.list.User)).IsEqualTo(1);
+        await Assert.That(user.@event.Items().OfType<global::app.@event.inherited.@this>().Count()).IsEqualTo(1);
+    }
+
+    [Test] public async Task ARestore_IsAFirstAsk_TheEventsLoadOnce()
+    {
+        var root = Root();
+        await using var app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing().TestIdentity();
+        await Hello(app, root, "hello");
+        var snapshot = await app.Snapshot(app.actor.list.User.Context).Saved();
+        await using var fresh = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing().TestIdentity();
+        var user = fresh.actor.list.User;
+
+        await fresh.Restore(snapshot, user.Context);
+        await fresh.@event(user.Context);
+
+        await Assert.That(Loads(user)).IsEqualTo(1);
+    }
+
+    // A load that fails isn't kept: the next ask loads again. The event setting the load reads holds a value no choice
+    // names, so that load throws; set right, the next ask loads.
+    [Test] public async Task AFailedLoad_IsNotKept_TheNextAskLoads()
+    {
+        var root = Root();
+        await using var app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
+        await Hello(app, root, "hello");
+        var user = app.actor.list.User;
+        var system = user.Setting.Address(typeof(global::app.@event.setting.@this), "system");
+        user.Setting.Set(system, "neither");
+
+        await Assert.That(async () => await app.@event(user.Context)).Throws<System.Exception>();
+        user.Setting.Set(system, (global::app.type.item.choice.@this<global::app.@event.setting.System>)global::app.@event.setting.System.load);
+        await app.@event(user.Context);
+
+        await Assert.That(Loads(user)).IsEqualTo(1);
     }
 
     [Test] public async Task ACreateEventASystemEventBinds_RunsForAValueTheUserMakes()

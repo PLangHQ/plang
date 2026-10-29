@@ -90,6 +90,30 @@ public class VariableEventsTests
         await Assert.That(await events.On("count")).IsSameReferenceAs(type);
     }
 
+    // The user's event after `name` is set, recording `tag` when it runs.
+    private static Task Tagged(global::app.@this app, string name, List<string> ran, string tag)
+    {
+        var variable = new global::app.type.item.variable.parser.@this($"%{name}%", app.type.list).Variable.Single();
+        return app.actor.list.User.@event.Add(name, new global::app.@event.code.@this(variable, "set", global::app.@event.When.after,
+            (_, result, _) => { lock (ran) ran.Add(tag); return Task.FromResult(result); },
+            app.actor.list.User, global::app.@event.code.@this.Always)).AsTask();
+    }
+
+    // a bind after the name's list was made (its first set) joins that list: the next set runs both, in the order bound
+    [Test] public async Task ABindAfterANamesListWasMade_JoinsIt()
+    {
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        var ran = new List<string>();
+
+        await Tagged(app, "count", ran, "a");
+        await context.Variable.Set("count", 1);
+        await Tagged(app, "count", ran, "b");
+        await context.Variable.Set("count", 2);
+
+        await Assert.That(ran).IsEquivalentTo(new[] { "a", "a", "b" }, TUnit.Assertions.Enums.CollectionOrdering.Matching);
+    }
+
     // The user's event after any variable is set, recording `name` and the variable it ran for.
     private static Task Typed(global::app.@this app, List<string> ran, string name)
         => app.actor.list.User.@event.Add(new global::app.@event.code.@this(app.variable.type, "set", global::app.@event.When.after,

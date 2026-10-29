@@ -161,7 +161,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
 
     /// <summary>This actor's events, loaded: at once when they are, or inside the flow that is loading them (which goes on
     /// with what is loaded so far); else the one load, started by whoever asks first — claimed, never under a lock, so
-    /// its first part runs with nothing held.</summary>
+    /// its first part runs with nothing held. A load that failed is let go, so the next ask loads again.</summary>
     internal System.Threading.Tasks.ValueTask Loaded()
     {
         if (_load is { Task.IsCompletedSuccessfully: true } || _loading.Value) return default;
@@ -186,7 +186,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
                     Join(new inherited.@this(made, _actor.App));
             done.SetResult();
         }
-        catch (System.Exception ex) { done.SetException(ex); }
+        // a load that failed isn't kept: its askers get its failure, and the next ask loads again
+        catch (System.Exception ex)
+        {
+            System.Threading.Interlocked.CompareExchange(ref _load, null, done);
+            done.SetException(ex);
+        }
     }
 
     // Runs the system/event/ files as this actor: their names from the folders the app's origin names (the root: its own
