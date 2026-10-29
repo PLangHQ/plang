@@ -82,3 +82,14 @@ Bench (PGO off, load 11): sub birth 103 KB (+4, in band), root birth 2366 KB (in
 Verdict v2: **FAIL, narrow.** 2–7 are closed. The sub request is +28 KB over the parent: 13 KB of it is decision 10's lists (explained); 13 KB is the type/kind minting on a first ask, which is the call-cost job's idea 2 (one type found, not made) and fixes the sub request, the root, and every action at once. The architect's choice: fix the mint now (a refactor of the type system's private part, and the largest saving in `call-cost.md`), or rule the 13 KB as the price of the lists' first ask and record the band as explained by 10 and 66.
 
 **Ruling (architect, event-action 69):** the sub-request band (+28 KB at 2d10af80f) is recorded as explained: ~13 KB the per-actor lists made on first ask (decisions 10, 34), ~15 KB the first ask's type and kind minting, an older waste fixed as call-cost idea 2 in its own branch with its own review. The lows (`origin.Events` with `RootComparison`, `Add(name)` one lookup, `Binding` takes the Data as made, `named` renamed) go to the coder; I look at them without a bench and write PASS.
+
+---
+
+# The four lows (584fef19c), no bench — PASS
+
+- `origin.Events` compares roots with `path.RootComparison`: closed.
+- `on.Add(name)`: one lookup, closed. One low note (pattern 12): it decides by a type test inside the answer (`empty => Made(name)`), which is an `is X` on the kind; the OBP form is the shared moment answering "I stand in" itself (a virtual), so `Add` has no type test. Not blocking: one site, and the old form looked the name up twice.
+- `set.cs`: the typed Data is made under `name.Code.Root.Name` and written as made through `name.Set(typedData)`; for a path target the container holds it under its own key as before. The read value's local is `binding`. Closed.
+- Sub-request band (+28 KB): explained by 69.
+
+Verdict: **PASS**, the tester next.

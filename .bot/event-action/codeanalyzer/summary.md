@@ -1,6 +1,6 @@
 # codeanalyzer summary — event-action
 
-**Version:** v1. Verdict: FAIL, coder next.
+**Version:** v3. Verdict: PASS, tester next (v1 FAIL on the system-events load; v2 narrow FAIL on the first-ask mint, ruled explained by 69; v3 the four lows closed).
 
 **What this is:** the review of the event-action redesign (6703697fb..3266637da): events held on the actor that bound them, a list per item made on its first ask, system events loaded lazily, `variable.set` reading a reference once.
 
