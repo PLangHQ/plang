@@ -1,0 +1,112 @@
+{
+ "tester": "tester",
+ "branch": "snapshot",
+ "timestamp": "2026-10-29T00:19:00Z",
+ "tested_version": "v6",
+ "tested_commit": "2df750c7335e4f909c861a71bdb988d16ca349f9",
+ "compared_against": "origin/runtime2 b283811f6 (6 red Wire tests, 3 stale plang; all six reds green on snapshot)",
+ "test_run": {
+  "csharp": {
+   "total": 5641,
+   "passed": 5596,
+   "failed": 0,
+   "skipped": 45
+  },
+  "plang": {
+   "total": 308,
+   "passed": 307,
+   "failed": 0,
+   "skipped": 1
+  }
+ },
+ "coverage": {
+  "changed_files_covered": 166,
+  "changed_files_total": 173,
+  "changed_executable_lines": 1908,
+  "changed_executable_lines_reached": 1737,
+  "uncovered_files": [
+   "PLang/app/module/screen/type/screen/display/this.cs",
+   "PLang/app/goal/serializer/Snapshot.cs",
+   "PLang/app/goal/step/action/serializer/Snapshot.cs",
+   "PLang/app/event/on/this.cs",
+   "PLang/app/event/on/list/this.cs",
+   "PLang/app/event/binding/action/this.cs",
+   "PLang/app/type/item/path/http/this.cs"
+  ],
+  "detail": ".bot/snapshot/tester/v6/coverage.json"
+ },
+ "findings": [
+  {
+   "id": 1,
+   "severity": "major",
+   "type": "false-green",
+   "test_file": "PLang.Tests/Wire/App/CallbackTests/SnapshotResumeTests.cs",
+   "code_file": "PLang/app/call/action/this.cs",
+   "issue": "ResumeChain_MultiActionStep_ContinuesAtActionIndexPlusOne is Assert.That(true).IsTrue(), pointing at a fixture (StatelessCrossGoalResumes) this branch moved out. Mutation: Rest's `if (!again) return await Step!.Code.Start(context, at + 1, result)` -> `return result` leaves all 5641 C# and 308 plang tests green.",
+   "impact": "A resume could drop every action that follows a returned call in the same step and no test would notice.",
+   "suggestion": "A CallSnapshotTests case with a multi-action step ('goal.call X ; variable.set ...') saved inside X and resumed; assert the action after the call ran exactly once. Delete the placeholder."
+  },
+  {
+   "id": 2,
+   "severity": "major",
+   "type": "false-green",
+   "test_file": "test/plan/snapshot/module/snapshot/resume/FreshAppGoesOn/FreshAppGoesOn.test.goal",
+   "code_file": "PLang/app/call/action/this.cs",
+   "issue": "Mutation `at + 1` -> `at` on the same line (a call whose callee returned runs again) leaves every suite green. FreshAppGoesOn cannot tell: Record resets %count% and %where%, so a double run ends on the same 'Alice in Reykjavik 1 yes'.",
+   "impact": "A resume that re-runs each call it resumes through passes the plan's plang proof.",
+   "suggestion": "Make the effects non-idempotent: Sub and Record's tail each append to a file; assert exactly one line each."
+  },
+  {
+   "id": 3,
+   "severity": "major",
+   "type": "missing-plang-test",
+   "test_file": "test/plan/snapshot/",
+   "code_file": "PLang/app/snapshot/",
+   "issue": "Five of seven main behaviours have no .test.goal: bindings inherited by sub apps, %!event% across a save, edit-the-stop-point-sign-resume, the changed-goal warning, the live program untouched. All are C#-pinned.",
+   "impact": "The developer-facing form (set %snap...%, sign, resume; on event steps) is unproven in plang.",
+   "suggestion": "Plang tests for %!event%, bindings in a resumed run, and edit -> sign -> resume at a changed step; the warning stays C# unless a goal can be rebuilt between save and resume."
+  },
+  {
+   "id": 4,
+   "severity": "major",
+   "type": "missing-coverage",
+   "test_file": "test/plan/snapshot/start.goal",
+   "code_file": "test/plan/snapshot/start.md",
+   "issue": "start.goal (the plan's index) calls 8 goals that do not exist and omits SavesTheRun; start.md holds the six-stage plan, not stages 7-11.",
+   "impact": "The index cannot be run or trusted; a behaviour's test cannot be found from it.",
+   "suggestion": "Rewrite both to what exists and what landed."
+  },
+  {
+   "id": 5,
+   "severity": "minor",
+   "type": "weak-assertion",
+   "test_file": "PLang.Tests/Data/App/CallStackTests/CallSnapshotTests.cs; PLang.Tests/Wire/App/CallbackTests/ErrorCallbackTests.cs",
+   "code_file": "PLang/app/call/action/this.cs",
+   "issue": "The resume warning is asserted by Contains('variable.set') and Contains('test.test'); the goal name and step are not asserted. ErrorCallbackTests.Callback_ErrorWithContext_AnswersASnapshot asserts only IsNotNull.",
+   "impact": "A warning that dropped the goal and step, or a callback holding the wrong state, passes.",
+   "suggestion": "Assert the goal name and step index in the warning; assert what the callback resumes to."
+  },
+  {
+   "id": 6,
+   "severity": "minor",
+   "type": "false-green",
+   "test_file": "PLang.Tests/Wire/App/CallbackTests/SnapshotResumeTests.cs",
+   "code_file": "PLang/app/call/list/this.Snapshot.cs",
+   "issue": "SnapshotResume_NestedChain_UnwindsToParentAfterSubGoalCompletes resumes an empty snapshot and asserts NoFrameToResume; its name claims a nested unwind.",
+   "impact": "Reads as coverage of the unwind it does not run.",
+   "suggestion": "Rename, or give it a nested chain (the same case as finding 1)."
+  },
+  {
+   "id": 7,
+   "severity": "minor",
+   "type": "edge-case",
+   "test_file": "none",
+   "code_file": "PLang/app/module/snapshot/",
+   "issue": "Ingi's decision 72 (a snapshot.sign action) is not in the tree; re-sign is the generic signing.sign. Process: coder/baseline-failures.txt is missing.",
+   "impact": "Stage 11 may be unbuilt; the baseline could not be used.",
+   "suggestion": "Architect to confirm stage 11's state; coder to write the baseline."
+  }
+ ],
+ "verdict": "needs-fixes",
+ "summary": "Green and clean against runtime2: C# 5641 (0 red; runtime2 had 6 red SnapshotWireTests, all green here), plang 307/308 (1 skip, 0 stale), each plan test passes alone and in the folder, no new red name. But two confirmed false greens in the resume core: ResumeChain_MultiActionStep_ContinuesAtActionIndexPlusOne is a placeholder, and mutants that drop or repeat the action after a returned call survive all 5641 + 308 tests, FreshAppGoesOn included. Five of the seven main behaviours have no plang test (C#-pinned, sound), and the plan's start.goal indexes tests that do not exist. 91.0% of 1908 changed executable lines are reached; the unreached list is in result.md."
+}

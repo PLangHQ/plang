@@ -14,6 +14,8 @@ Each item was raised on snapshot and held by Ingi or by me, with the decision th
 - **The `kind["*"]` recipe and `Kept<T>`:** the same record-reading recipe at several sites, a missing door (P7-2, 205, 235).
 - **`IsBound` in the doors that ask before making:** variable set/remove (`variable/list/this.cs`) and type creation (`type/this.cs:275`) still ask "is anything bound?" before they make what they would hand a binding. (254, 272)
 - **The per-step parse in debug's `Variables(sb…)`:** it goes with `module-list-type`. (231, 233)
+- **The bare-row rule's five type literals** (`View.Record`, snapshot view): no existing door answers "the type a bare token reads back as", so the literals stay until a type can say it. (324, 325)
+- **A frame's place handed in at push:** the action frame finds its `index` lazily, on the first ask from a snapshot or resume. Handing it in at birth needs a parameter on `action.Start` and `call.list.Push`, the locked call surface. (325)
 
 ## Branches already written up
 
