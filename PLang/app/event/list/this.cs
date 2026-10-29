@@ -178,8 +178,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
         _loading.Value = true;
         if (_actor.App.actor.list.System is { } system && !Equals(system, _actor)) await system.@event.Loaded();
         var replaced = await Run(_actor.Context);
-        foreach (var made in await _actor.App.origin.@event())
-            if (Equals(made.Actor.Role.In(_actor.App.actor.list), _actor) && !replaced.Contains(File(made)))
+        foreach (var made in await _actor.App.origin.@event(_actor.Role))
+            if (made.File is not { } file || !replaced.Contains(file))
                 Join(new inherited.@this(made, _actor.App));
     }
 
@@ -208,9 +208,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
         }
         return ran;
     }
-
-    // The name of the file an event's on.event step sits in; none for an event C# bound.
-    private static string? File(global::app.@event.@this @event) => @event.action?.Step?.Goal.Path?.Name.ToString();
 
     /// <summary>Whether this actor's general events (bound on many) skip a run in <paramref name="context"/>: it is inside
     /// one of plang's own goals (a goal under system/, the os's or the app's own copy), and <c>event.setting.goal</c> is

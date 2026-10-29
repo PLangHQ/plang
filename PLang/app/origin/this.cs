@@ -39,9 +39,9 @@ internal interface @this
     /// actor's app's, so a provider its app holds — one registered in-process too — is found in the sub app.</summary>
     global::app.module.code.@this? Code { get; }
 
-    /// <summary>The events the app's actors take in when they load theirs: the code, none; an actor's app's actors' (loaded
-    /// first), each taken in by the sub app's actor of its role as its own.</summary>
-    System.Threading.Tasks.ValueTask<IEnumerable<global::app.@event.@this>> @event();
+    /// <summary>The events the app's actor in <paramref name="role"/> takes in when it loads its own: the code, none; an
+    /// actor, its app's actor in that role's (loaded first, it alone), each taken in as the sub app's actor's own.</summary>
+    System.Threading.Tasks.ValueTask<IEnumerable<global::app.@event.@this>> @event(global::app.actor.role.@this role);
 
     /// <summary>The folders <paramref name="app"/> reads its system events from, in order: the code, the app's own
     /// system/event/ then the os's; an actor, the sub app's own only (its maker's came with the events it took in).</summary>

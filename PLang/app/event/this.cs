@@ -41,6 +41,10 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     /// index). A C# event has none.</summary>
     internal virtual global::app.goal.step.action.@this? action => null;
 
+    /// <summary>The name of the file its <c>on.event</c> step sits in — a system event's, which a sub app's own file of
+    /// that name replaces. A C# event has none.</summary>
+    internal string? File => action?.Step?.Goal.Path?.Name.ToString();
+
     /// <summary>Runs it for <paramref name="item"/>, the item its moment came for, on the result as it stands, in the
     /// asker's context. Each kind runs its own way; whoever runs it enters it on the context first
     /// (<see cref="global::app.actor.context.@this.Enter"/>), so it never runs inside its own run.</summary>

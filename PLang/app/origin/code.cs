@@ -40,7 +40,7 @@ internal sealed class code : @this
 
     public global::app.module.code.@this? Code => null;
 
-    public System.Threading.Tasks.ValueTask<IEnumerable<global::app.@event.@this>> @event() => new([]);
+    public System.Threading.Tasks.ValueTask<IEnumerable<global::app.@event.@this>> @event(global::app.actor.role.@this role) => new([]);
 
     public IEnumerable<global::app.type.item.path.@this> Events(global::app.@this app)
         => [app.filesystem.root.Combine("system").Combine("event"), app.filesystem.os.Combine("system").Combine("event")];

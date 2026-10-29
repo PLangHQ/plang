@@ -25,6 +25,21 @@ public class SystemEventsTests
         await System.IO.File.WriteAllTextAsync(pr, await context.Pr(hello));
     }
 
+    // system/event/Mark.goal in `root`, built in the shared test parent (so building it loads none of the apps tested):
+    // its own step sets %loaded%, in the memory of the actor whose load runs it
+    private static async Task Mark(string root)
+    {
+        var context = global::PLang.Tests.Parent.Actor.Context;
+        var mark = Make.Goal(context, "Mark", "/system/event/Mark.goal",
+            Make.Step("set %loaded% = yes", Make.Action(context, "variable", "set", Make.Param(context, "Name", "loaded", "variable"), ("Value", "yes"))));
+        var source = System.IO.Path.Combine(root, "system/event/Mark.goal");
+        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(source)!);
+        await System.IO.File.WriteAllTextAsync(source, "Mark\n- set %loaded% = yes\n");
+        var pr = System.IO.Path.Combine(root, mark.Pr!.Raw.TrimStart('/'));
+        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(pr)!);
+        await System.IO.File.WriteAllTextAsync(pr, await context.Pr(mark));
+    }
+
     // the app's start, run before for its user
     private static async Task Start(global::app.@this app)
     {
@@ -91,6 +106,20 @@ public class SystemEventsTests
         var user = sub.actor.list.User;
         await Assert.That(await user.Context.Variable.GetValue("said")).IsEqualTo("sub");
         await Assert.That((await sub.@event(user.Context)).Items().OfType<global::app.@event.inherited.@this>()).IsEmpty();
+    }
+
+    // a sub app's System, loading, takes in its maker's System's events: the maker's System loads, its User doesn't
+    [Test] public async Task ASubAppsLoad_LoadsOnlyItsMakersActorOfItsRole()
+    {
+        var root = Root();
+        await Mark(root);
+        await using var maker = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
+        await using var sub = new global::app.@this(System.IO.Path.Combine(root, "sub"), maker.actor.list.User);
+
+        await sub.@event(sub.actor.list.System.Context);
+
+        await Assert.That(await maker.actor.list.System.Context.Variable.GetValue("loaded")).IsEqualTo("yes");
+        await Assert.That((await maker.actor.list.User.Context.Variable.Get("loaded")).IsInitialized).IsFalse();
     }
 
     [Test] public async Task ACreateEventASystemEventBinds_RunsForAValueTheUserMakes()

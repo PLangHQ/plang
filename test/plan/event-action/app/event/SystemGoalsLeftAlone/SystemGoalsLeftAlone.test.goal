@@ -1,17 +1,20 @@
 / Inside plang's own goals an "each goal" event doesn't run while event.setting.goal is app (the default): Read reads
 / %!goal% three times, each read running plang's shortcut goal (/system/shortcut/goal.goal), and "before each goal" runs
 / Count for Loop and each Read, never for the shortcut goal. With event.setting.goal all, it runs for each shortcut goal
-/ too.
+/ too. Count keeps its count in count.txt beside the test: a shortcut's variables end with its call, a file doesn't.
 Start
 - set %items% = [1, 2, 3]
-- set %count% = 0
+- save 0 to file "count.txt"
 - before each goal, call Count
 - call Loop
+- read file "count.txt", write to %count%
 - assert %count% equals 4, "under app: Loop and the three Reads, none of plang's own goals"
 - set %!app.event.setting.goal% = "all"
-- set %count% = 0
+- save 0 to file "count.txt"
 - call Loop
+- read file "count.txt", write to %count%
 - assert %count% equals 7, "under all: the three shortcut goals too"
+- delete file "count.txt"
 
 / Reads %!goal% once for each item.
 Loop
@@ -21,6 +24,8 @@ Loop
 Read
 - set %seen% = %!goal%
 
-/ The event's call.
+/ The event's call: one more in count.txt.
 Count
+- read file "count.txt", write to %count%
 - set %count% = %count% + 1
+- save %count% to file "count.txt"

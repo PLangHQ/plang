@@ -171,12 +171,14 @@ public class SubAppFullPassProbeTests : System.IAsyncDisposable
         return await goal.Start(ctx);
     }
 
-    // the maker binds on the step type every app over its code shares, after its sub was made: a sub's step never runs it
+    // the maker binds on the step type every app over its code shares, after its sub's events first loaded (the sub's
+    // first run): a sub's step never runs it
     [Test]
-    public async Task H_AMakersLaterEvent_NeverRunsInItsSub()
+    public async Task H_AMakersEvent_BoundAfterItsSubsFirstAsk_NeverRunsInIt()
     {
         var maker = Maker();
         var sub = SubOf(maker.actor.list.User);
+        await (await Work(sub)).IsSuccess();
         var ctx = maker.actor.list.User.Context;
         await Bind(ctx, "%!app.type.step.on.start%", Make.Call(ctx, "OnlyInTheMaker"));
 

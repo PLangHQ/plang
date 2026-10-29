@@ -134,8 +134,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     [global::app.LlmBuilder]
     public global::app.data.@this? data(global::app.actor.context.@this context) => context.Variable.Peek("!data");
 
-    /// <summary>The events of <paramref name="context"/>'s actor — <c>%!app.event%</c> answers as its asker: what it bound,
-    /// its maker's actor's taken in at its birth.</summary>
+    /// <summary>The events of <paramref name="context"/>'s actor — <c>%!app.event%</c> answers as its asker, loaded first:
+    /// its system events, what its maker's actor of its role had bound when they first loaded, and what it bound.</summary>
     [global::app.LlmBuilder]
     public async System.Threading.Tasks.ValueTask<global::app.@event.list.@this> @event(global::app.actor.context.@this context)
     {

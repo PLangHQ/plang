@@ -1,7 +1,7 @@
 namespace app.@event.inherited;
 
 /// <summary>
-/// A maker's event a sub app's actor took in at its birth, bound on what the maker's was: it runs the maker's, for this
+/// A maker's event a sub app's actor took in when its events first loaded, bound on what the maker's was: it runs the maker's, for this
 /// app's actor in the maker event's role (the sub app's user for the maker's user), as the event running here. It is the
 /// maker's policy, so the sub app neither saves it nor takes it off, and shows nothing of the maker's.
 /// </summary>

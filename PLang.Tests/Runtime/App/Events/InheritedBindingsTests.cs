@@ -34,18 +34,22 @@ public class InheritedBindingsTests
     }
 
     [Test]
-    public async Task AMakersLaterEvent_DoesNotReachASubAppMadeBefore()
+    // a sub app takes in its maker's events when its own first load: one the maker bound before reaches it, even after
+    // the sub app was made; one bound after that first ask does not
+    public async Task AMakersEvent_ReachesASubApp_WhenBoundBeforeItsFirstAsk_NotAfter()
     {
         await using var maker = App();
         var item = maker.actor.list.User.Context.Dict();
         var ran = new List<string>();
         await using var sub = new global::app.@this(maker.filesystem.root.Absolute, maker.actor.list.User);
-        await Bind(maker, item, ran, "maker");
+        await Bind(maker, item, ran, "before");
 
         await Before(item, sub.actor.list.User.Context);
+        await Bind(maker, item, ran, "after");
+        await Before(item, sub.actor.list.User.Context);
 
-        await Assert.That(ran).IsEmpty();
-        await Assert.That(sub.actor.list.User.@event.Items()).IsEmpty();
+        await Assert.That(ran).IsEquivalentTo(new List<string> { "before", "before" });
+        await Assert.That(sub.actor.list.User.@event.Items().Count()).IsEqualTo(1);
     }
 
     [Test]
