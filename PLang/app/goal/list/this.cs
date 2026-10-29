@@ -355,7 +355,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var source in wants.Os.Value ? _app.Concat(_system) : _app)
         {
-            if (!seen.Add(source.ToString()!) || goals.Any(g => source.Equals(g.Path))) continue;
+            if (!seen.Add(source.Raw) || goals.Any(g => source.Equals(g.Path))) continue;
             var loaded = await Load(source);
             if (!loaded.Success)
             {
