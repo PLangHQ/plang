@@ -97,6 +97,36 @@ public class FirstIdentityTests
         finally { System.IO.Directory.Delete(root, recursive: true); }
     }
 
+    // An archive and a set-default of one identity at once: whichever goes first, the other is refused — archived, it
+    // can't be made the default; the default, it isn't archived without force. The default is never archived.
+    [Test] public async Task ArchiveAndSetDefaultAtOnce_OneLands_TheDefaultIsNeverArchived()
+    {
+        var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-first-id-" + Guid.NewGuid().ToString("N")[..8]);
+        System.IO.Directory.CreateDirectory(root);
+        try
+        {
+            await using var app = new global::app.@this(root).Consenting();
+            var ctx = app.actor.list.User.Context;
+            async Task<global::app.data.@this> Run(string line) => await (await ctx.Action(line)).Start(ctx);
+
+            await (await Run("identity.get()")).IsSuccess();
+            for (var round = 0; round < 12; round++)
+            {
+                var name = $"id{round}";
+                await (await Run($"identity.create(Name=\"{name}\")")).IsSuccess();
+                var answers = await Task.WhenAll(
+                    Task.Run(() => Run($"identity.archive(Name=\"{name}\")")),
+                    Task.Run(() => Run($"identity.setDefault(Name=\"{name}\")")));
+
+                await Assert.That(answers.Count(a => a.Success)).IsEqualTo(1);
+                var rows = (await app.actor.list.System.Setting.Get<global::app.module.identity.setting.@this>()).Identity;
+                foreach (var row in rows.Items(ctx))
+                    await Assert.That((await row.Value<global::app.module.identity.Identity>()) is { IsDefault: true, IsArchived: true }).IsFalse();
+            }
+        }
+        finally { System.IO.Directory.Delete(root, recursive: true); }
+    }
+
     // Two first saves at once are each signed by the app's one identity, so each is a snapshot this app saved: a resume
     // takes both past the signature (each holds no call, so each answers that there is no frame to go on from).
     [Test] public async Task FirstSavesAtOnce_BothResume()

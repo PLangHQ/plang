@@ -97,12 +97,17 @@ public sealed class Default : IIdentity
         {
             var now = await Load(action, identity.Name);
             if (!now.Success) return now;
-            var held = (await now.Value())!;
-            if (held.IsArchived) return action.Context.Ok<Identity>(held.Public());
-            held.IsArchived = true;
-            var saveResult = await SaveAsync(action, held);
+            var row = (await now.Value())!;
+            // checked again as the row is now: one made the default meanwhile is the default, archived only by force
+            if (row.IsDefault && !await action.Force.ToBooleanAsync())
+                return action.Context.Error<Identity>(new ActionError(
+                    "Cannot archive the default identity. Set a different default first, or use force.",
+                    "CannotArchiveDefault", 400));
+            if (row.IsArchived) return action.Context.Ok<Identity>(row.Public());
+            row.IsArchived = true;
+            var saveResult = await SaveAsync(action, row);
             if (!saveResult.Success) return data.@this<Identity>.From(saveResult);
-            return action.Context.Ok<Identity>(held.Public());
+            return action.Context.Ok<Identity>(row.Public());
         });
     }
 
@@ -121,12 +126,12 @@ public sealed class Default : IIdentity
         {
             var now = await Load(action, identity.Name);
             if (!now.Success) return now;
-            var held = (await now.Value())!;
-            if (!held.IsArchived) return action.Context.Ok<Identity>(held.Public());
-            held.IsArchived = false;
-            var saveResult = await SaveAsync(action, held);
+            var row = (await now.Value())!;
+            if (!row.IsArchived) return action.Context.Ok<Identity>(row.Public());
+            row.IsArchived = false;
+            var saveResult = await SaveAsync(action, row);
             if (!saveResult.Success) return data.@this<Identity>.From(saveResult);
-            return action.Context.Ok<Identity>(held.Public());
+            return action.Context.Ok<Identity>(row.Public());
         });
     }
 
@@ -201,16 +206,16 @@ public sealed class Default : IIdentity
             var rows = await Identities(setting!, action);
             if (rows.Exists(i => string.Equals(i.Name, name, StringComparison.OrdinalIgnoreCase)))
                 return action.Context.Error<Identity>(new ActionError($"Identity '{name}' already exists", "DuplicateName", 409));
-            if (rows.Find(i => string.Equals(i.Name, oldName, StringComparison.Ordinal)) is not { } held)
+            if (rows.Find(i => string.Equals(i.Name, oldName, StringComparison.Ordinal)) is not { } row)
                 return action.Context.Error<Identity>(new ActionError($"Identity '{oldName}' not found", "NotFound", 404));
-            held.Name = name!;
+            row.Name = name!;
             var saveResult = await Store(action, setting!, rows);
             if (!saveResult.Success) return data.@this<Identity>.From(saveResult);
 
-            if (held.IsDefault)
-                app.actor.list.System.Identity = held;
+            if (row.IsDefault)
+                app.actor.list.System.Identity = row;
 
-            return action.Context.Ok<Identity>(held.Public());
+            return action.Context.Ok<Identity>(row.Public());
         });
     }
 
@@ -309,13 +314,13 @@ public sealed class Default : IIdentity
     public async Task<data.@this<Identity>> GetOrCreateDefaultAsync(IContext action)
     {
         // what is there answers at once, nothing made: the stored default, or who the app is as its origin answers
-        if (await Held(action) is { } held) return held;
+        if (await Current(action) is { } current) return current;
 
         // the default is made once: of two first asks at once, the second waits, finds what the first made, and
         // answers it — never a second identity, which would leave what the first one signed verifying against none
         return await Change(async () =>
         {
-            if (await Held(action) is { } made) return made;
+            if (await Current(action) is { } now) return now;
             var (items, err) = await LoadAll(action);
             if (err != null) return action.Context.Error<Identity>(err);
 
@@ -371,14 +376,14 @@ public sealed class Default : IIdentity
     // the one being stored right now (its own row is signed with it on the way into the store, and that signing asks
     // here, so it answers rather than waiting on the make it is inside); an actor, the actor's. Null when there is
     // none, or when the stored rows can't be read (the make reads them again and answers why).
-    private async Task<data.@this<Identity>?> Held(IContext action)
+    private async Task<data.@this<Identity>?> Current(IContext action)
     {
         var (items, err) = await LoadAll(action);
         if (err != null) return null;
-        if (items!.Find(i => i.IsDefault && !i.IsArchived) is { } def) return action.Context.Ok<Identity>(def);
+        if (items!.Find(i => i.IsDefault && !i.IsArchived) is { } row) return action.Context.Ok<Identity>(row);
         if (items.Exists(i => !i.IsArchived)) return null;
-        return action.Context.App.origin.Identity(action.Context.App) is { IsArchived: false } making
-            ? action.Context.Ok<Identity>(making)
+        return action.Context.App.origin.Identity(action.Context.App) is { IsArchived: false } identity
+            ? action.Context.Ok<Identity>(identity)
             : null;
     }
 
