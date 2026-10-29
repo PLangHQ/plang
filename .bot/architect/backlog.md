@@ -52,6 +52,10 @@ The one list of work after runtime2's merges (Ingi, 2026-10-29: "yes merge into 
 - **fast-apps auditor N6–N9, N17, N18** (`.bot/fast-apps/auditor/final.md` §7): "has code of its own" with one owner; the origin's two refusal voices; the registry's type switches (`ContainerFamily`, `PlangName`), `IsCondition`/`IsBranch`/`Link` by literal name, `set.cs`'s throwaway Make, frames as types, channel catches `when (is not …)`, data's "did it answer itself"; the locked memory's verb+noun members (`GetNames`, `GetAll`, `GetChangedSince`, `ShallowCloneStore`); a `Class` pinning a DLL's types, the debug module's `item is goal` filters; fast-apps 42's root-only items (`module.Action` as `list<action>`, `Alias`/`Internal` without `init`, path's schemes as kind classes).
 - **`property.Read` doesn't answer an AppException a getter throws** (`type/property/this.cs:94`), where `Write` does (`:138`).
 
+### Events
+
+- **on.event's `Event` parameter holds an `on`** (event-action 20, the coder's point 5): since decision 13 the moment is an `on`, and since 4 an `event` is what's bound, so the parameter's name says one thing and its type another. Kept by decision 12 (no `.pr` changes); renaming it is a teaching change and a rebuild of every on.event `.pr`.
+
 ### Cache
 
 - **The default cache key is the step's place, not its parameters** (event-action 11, Ingi: "yes"): `module/on/cache.cs:66–71` keys by goal path and step index, so `call LoadData id=%id%, cache for 10 minutes` or `read file %name%, cache …` answers the first value for every id or name unless the step names a key. Fix: the default key also takes the action's parameters (as they resolve). A test per case goes red today.
