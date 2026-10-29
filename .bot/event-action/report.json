@@ -5,7 +5,7 @@
    "id": "7c1e9a24-3b58-4f0d-a6e2-91d4c5b8f017",
    "bot": "architect",
    "timestamp_start": "2026-10-29T09:00:00Z",
-   "timestamp_end": "2026-10-29T10:10:00Z",
+   "timestamp_end": "2026-10-29T16:00:00Z",
    "intent": "Merge the scattered next-work lists into one, cut event-action from runtime2 and plan it from snapshot's decisions and the code.",
    "before": {
     "assumptions": "Snapshot's branch-event-action.md describes the branch; the saved move patch applies.",
@@ -33,12 +33,26 @@
      "category": "doc",
      "confidence": "medium",
      "context": "Five stages; Level's new name is Ingi's; stage 2's navigation shape comes from the coder."
+    },
+    {
+     "paths": [".bot/event-action/architect/summary.md", ".bot/event-action/architect/plan/start.md", ".bot/event-action/architect/plan/start.goal", ".bot/event-action/architect/plan/expected.md"],
+     "type": "decision",
+     "category": "doc",
+     "confidence": "high",
+     "context": "Decisions 3–18 with Ingi: events (not bindings) live on the actor that bound them; each goal, step and action makes its lists on its first run; one question, item.Is(type); clauses in the list at fixed places; on holds its moments; system events load from /system/event by default; a call finds its goal in the app its caller belongs to (reverses snapshot 265). Level, Scope, IsSystem and the walk go. The plan rewritten to eight stages."
+    },
+    {
+     "paths": [".bot/event-action/architect/briefs/coder-start.md", ".bot/architect/backlog.md"],
+     "type": "create",
+     "category": "doc",
+     "confidence": "high",
+     "context": "The coder's brief (sent after Ingi cleared its context); plang-tester briefed on the variable hole; the early-return rule to plang-codeanalyzer; the cache-key bug and a future setting on the list."
     }
    ],
    "after": {
-    "status": "Plan drafted, not yet sent to the coder.",
-    "health": "No code changed.",
-    "notes": "Waits on Ingi: Level's name and his look at the plan."
+    "status": "Plan sent to plang-coder (decision 19); plang-tester measuring variable events.",
+    "health": "No production code changed.",
+    "notes": "Next: the coder's pushback and four shapes; the tester's write-up."
    }
   }
  ]
