@@ -148,6 +148,12 @@ The one list of work after runtime2's merges (Ingi, 2026-10-29: "yes merge into 
   - **New, 3, the context:** a task answers what it runs in: its actor, its goal, and the frame that started it (`module/goal/call.cs:85`, `from`).
   - **Open, what it wrote, and asking it:** a task is not a new app. It runs in a child context on the same actor (`module/goal/call.cs:94–99`), so it writes to its caller's channels. Reading what one task wrote, or asking it a question, needs the task to have channels of its own (written to its own buffer and passed on, or an input the task reads). That is the design question for when this is picked up.
 
+- **`app.jit`: compile code at run and start it** (Ingi, 2026-10-29: "app.jit, where we can insert c# code to run it (and compile it), that jit will be first c#, but who says it needs to be, so if we can generate some great code, send it to the jit to run, basically 'var data = app.jit.start(code);'"). Ties to the call-cost analysis (Speed): a goal the generator turns into C# is started through it.
+  - **Today:** the `code` module loads compiled DLLs (`load code 'x.dll'`, `module/code/load.cs`) and registers providers. Nothing compiles at run, and the runtime holds no compiler.
+  - **Shape (my suggestion):** code is a value whose language is its kind (C# first), and the value starts itself: compiled on its first start (lazy, pattern 11), kept by its source's hash, the same answer every app gets. `app.jit` is then the kept compiles, not a second door. A module owning it (what runs, runs in a module) keeps it off `app`'s locked members unless Ingi wants `app.jit` itself.
+  - **Security:** compiled code has a DLL's power. The compile runs plang's own analyzers at error (PLNG002 no System.IO, no Console), so what it runs goes through path's verbs and AuthGate like any action. Code from a goal or an llm is the actor's to allow; code plang generates is plang's.
+  - **Memory:** each compile is an assembly; it loads collectible and unloads with its app (the same need as "Sub apps own their code" (b)). Roslyn (`Microsoft.CodeAnalysis.CSharp`, large) loads only on the first compile.
+
 ## Very far backlog (never offered as next work)
 
 Ingi, 2026-10-25: "very far into future (this is not something you should suggest taking when I ask)".
