@@ -137,7 +137,11 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <summary>The events of <paramref name="context"/>'s actor — <c>%!app.event%</c> answers as its asker: what it bound,
     /// its maker's actor's taken in at its birth.</summary>
     [global::app.LlmBuilder]
-    public global::app.@event.list.@this @event(global::app.actor.context.@this context) => context.Actor!.@event;
+    public async System.Threading.Tasks.ValueTask<global::app.@event.list.@this> @event(global::app.actor.context.@this context)
+    {
+        await context.Actor!.@event.Loaded();
+        return context.Actor!.@event;
+    }
 
     /// <summary>
     /// When the app was started.
@@ -355,8 +359,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // the code providers, the built-ins registered at the registry's first use
         // a sub app's, a layer over its maker's
         Code = new AppCode(actor.list.System.Context, origin.Code);
-        // each actor's events, born holding its maker's actor's of the same role, each taken in as its own
-        foreach (var made in origin.@event) made.Actor.Role.In(actor.list).@event.Inherit(made, this);
         // the actions, a layer of its own over the ones the origin answers
         module = new(this, origin.Module(this));
         goal = new(this);
@@ -564,7 +566,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // User code executes under the User actor's context — the app starts running through its on.start: a
         // before that fails or cancels is the answer and the goal doesn't start; every after runs on the result.
         var user = actor.list.User.Context;
-        var on = actor.list.User.@event[this];
+        var on = await actor.list.User.@event.On(this);
         var answer = await on.before.Start(this, user);
         var result = answer is { Success: false } or { Handled: true } ? answer : await goal.Start(user);
         return await on.after.Start(this, result, user);

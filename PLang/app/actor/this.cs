@@ -207,8 +207,15 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     global::app.module.code.@this? global::app.origin.@this.Code => App.Code;
 
-    IEnumerable<global::app.@event.@this> global::app.origin.@this.@event
-        => App.actor.list.Items().SelectMany(actor => actor.@event.Items());
+    async ValueTask<IEnumerable<global::app.@event.@this>> global::app.origin.@this.@event()
+    {
+        foreach (var actor in App.actor.list.Items()) await actor.@event.Loaded();
+        return App.actor.list.Items().SelectMany(actor => actor.@event.Items()).ToList();
+    }
+
+    // a sub app reads only its own system/event/: its maker's system events came with the events it took in
+    IEnumerable<global::app.type.item.path.@this> global::app.origin.@this.Events(global::app.@this app)
+        => [app.filesystem.root.Combine("system").Combine("event")];
 
     int global::app.origin.@this.Depth => App.Depth + 1;
 
