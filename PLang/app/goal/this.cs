@@ -39,14 +39,29 @@ public partial class @this
 
     /// <summary>A goal, born holding its type and its step, child, tag and property lists from <paramref name="types"/>, the
     /// app's type list (read at birth, never kept).</summary>
-    public @this(global::app.type.list.@this types) : base(types[typeof(@this)])
+    public @this(global::app.type.list.@this types) : this(types, null) { }
+
+    /// <summary>A goal of <paramref name="app"/>, the app whose goal list read it from its own folder — none for a goal read
+    /// from the os's folder (mapped into every app, no app's own) or made outside a list.</summary>
+    internal @this(global::app.type.list.@this types, global::app.@this? app) : base(types[typeof(@this)])
     {
         _step = new(types[typeof(global::app.goal.step.list.@this)]);
         Child = new(this, types[typeof(child.@this)]);
         Tag = new(types[typeof(global::app.goal.tag.list.@this)]);
         Warning = new(types);
         property = new(types[typeof(global::app.type.item.property.list.@this)]);
+        App = app;
     }
+
+    /// <summary>The app this goal is: the one whose list read it from its own folder (its <c>system/</c> copy too), wherever
+    /// it runs. None for the os's goals, which belong to no app, and a goal made outside a list.</summary>
+    internal global::app.@this? App { get; }
+
+    /// <summary>The goal a call of <paramref name="name"/> from this goal reaches: found in this goal's app (a maker's goal
+    /// running in a sub app calls the maker's), else — an os goal, a goal made outside a list — in the asker's (its own
+    /// <c>system/</c> copy first, then the os's).</summary>
+    internal Task<data.@this<@this>> Find(string name, actor.context.@this asker)
+        => (App ?? asker.App).goal.list.Find(name, this);
 
     private global::app.goal.step.list.@this _step;
     [Store, Out, LlmBuilder, Debug, Default]

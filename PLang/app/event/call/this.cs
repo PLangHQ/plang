@@ -66,7 +66,10 @@ public sealed class @this : global::app.@event.@this
         // running app, or the running goal's folder, would find first. Its name is read as written (a %variable% in it
         // here, where the moment came, as its parameters are), never selected as a goal in the running context.
         var name = new global::app.data.@this("name", value, context: context);
-        var goal = await Actor.App.goal.list.Find((await name.Value())?.ToString() ?? "", action.Step?.Goal);
+        var called = (await name.Value())?.ToString() ?? "";
+        // the goal its step sits in finds it, as its own call would (in its own app); one of no app (the os's, one made
+        // outside a list) finds it in the app of the actor that bound it
+        var goal = action.Step?.Goal is { } binder ? await binder.Find(called, Actor.Context) : await Actor.App.goal.list.Find(called, null);
         if (!goal.Success) return goal;
         // the call as it was written, whole — every property its step gave it (its parameters, its actor, whether it runs
         // on its own) and what its build froze — with only the goal it names found here: the seed holds the name alone
