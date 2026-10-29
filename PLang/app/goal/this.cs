@@ -113,10 +113,6 @@ public partial class @this
         return sb.ToString();
     }
 
-    /// <summary>Where it runs, when that is another app's (<c>%!app.parent.goal["Claude"]%</c>): its run goes
-    /// there with the call's arguments, and what comes back is its result. Null for a goal of this app — its steps run.</summary>
-    internal global::app.parent.@this? Elsewhere { get; init; }
-
     /// <summary>The goal's .goal file — where its .pr is found. A sub-goal is in its parent's file. In a snapshot it is
     /// part of what finds the goal: the goal list loads it from there.</summary>
     [Debug, LlmBuilder, Snapshot]
@@ -369,9 +365,10 @@ public partial class @this
         }
         await using var _frame = frame;
 
+        // its steps, a return made in them ending as the frame counts it down
         var on = await context.Actor!.@event.On(this);
         var answer = await on.before.Start(this, context);
-        var result = answer is { Success: false } or { Handled: true } ? answer : await Enter(context);
+        var result = answer is { Success: false } or { Handled: true } ? answer : frame.Leave(await Step.Start(context));
         return await on.after.Start(this, result, context);
     }
 
@@ -386,26 +383,6 @@ public partial class @this
             $"goal '{Path}' has {steps.Count} broken step(s): {string.Join(", ", steps.Select(s => s.Index))}",
             "GoalBroken", 400)
         { Goal = this, list = steps.Select(s => s.Error!).ToList(), FixSuggestion = "fix the words and build again" };
-    }
-
-    // Starts the steps, and folds a return that ends here — or, for a goal of another app, runs it there.
-    private async Task<data.@this> Enter(actor.context.@this context)
-    {
-        if (Elsewhere is { } app) return await app.Run(Name, context);
-        return Leave(await Step.Start(context));
-    }
-
-    /// <summary>The answer as it leaves this goal: a return made in it ends here (a return of more levels goes on, one
-    /// fewer). A goal started and a goal's frame gone on from a snapshot leave the same way.</summary>
-    internal data.@this Leave(data.@this result)
-    {
-        if (result.Returned)
-        {
-            result.ReturnDepth--;
-            if (result.ReturnDepth <= 0)
-                result.Returned = false;
-        }
-        return result;
     }
 
     /// <summary>

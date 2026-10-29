@@ -34,6 +34,13 @@ public sealed class @this : call.@this, global::app.type.item.ICreate<@this>
 
     internal override bool IsGoal => true;
 
-    // a return made in the goal ends here, as the goal's own start ends it
-    internal override global::app.data.@this Leave(global::app.data.@this result) => Goal?.Leave(result) ?? result;
+    /// <summary>The answer as it leaves the goal: a return made in it ends here, and a return of more levels goes on, one
+    /// fewer. A goal started and a goal's frame gone on from a snapshot leave the same way.</summary>
+    internal override global::app.data.@this Leave(global::app.data.@this result)
+    {
+        if (!result.Returned) return result;
+        result.ReturnDepth--;
+        if (result.ReturnDepth <= 0) result.Returned = false;
+        return result;
+    }
 }

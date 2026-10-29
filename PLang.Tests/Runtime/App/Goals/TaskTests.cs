@@ -176,6 +176,80 @@ public class TaskTests
         await Assert.That(sent).Contains("Answer in json.\\n\\n---\\n\\nhello");
     }
 
+    // the parent answers each call that goes up with "ok", keeping the message
+    private System.Func<List<string>> Parented()
+    {
+        var sent = new List<string>();
+        _app.parent.Link = json =>
+        {
+            lock (sent) sent.Add(json);
+            var id = System.Text.Json.JsonDocument.Parse(json).RootElement.GetProperty("call").GetProperty("id").GetString();
+            _app.parent.Answered(System.Text.Json.JsonDocument.Parse("{\"id\":\"" + id + "\",\"result\":\"ok\"}").RootElement);
+            return Task.CompletedTask;
+        };
+        return () => sent;
+    }
+
+    // a parent goal's call sends the parameters its call gives it, by name, up the link
+    [Test]
+    public async Task AParentGoalsCall_SendsItsParametersUp()
+    {
+        var sent = Parented();
+        var ask = await Load("Ask", Make.Step("call the parent's Claude with message=\"hi\", count=2",
+            Make.Action(Ctx, "goal", "call", ("Name", "%!app.parent.goal[\"Claude\"]%"),
+                ("Parameter", new List<object?> { Make.Built(Ctx, "message", "hi"), Make.Built(Ctx, "count", "2") }))));
+
+        await (await ask.Start(Ctx)).IsSuccess();
+
+        var call = System.Text.Json.JsonDocument.Parse(sent().Single()).RootElement.GetProperty("call");
+        await Assert.That(call.GetProperty("goal").GetString()).IsEqualTo("Claude");
+        await Assert.That(call.GetProperty("parameters").GetProperty("message").GetString()).IsEqualTo("hi");
+        await Assert.That(call.GetProperty("parameters").GetProperty("count").ToString()).IsEqualTo("2");
+    }
+
+    // a parent goal is the parent's: the caller's "before each goal" doesn't run for it; the goal.call that makes it is
+    // the caller's, and what is bound after it runs
+    [Test]
+    public async Task AParentGoal_RunsNoneOfTheCallersGoalEvents_ItsGoalCallStillRunsThem()
+    {
+        Parented();
+        var goals = new List<string>();
+        var calls = new List<string>();
+        var user = _app.actor.list.User;
+        await user.@event.Add(new global::app.@event.code.@this(_app.type.list["goal"], "start", global::app.@event.When.before,
+            (item, result, _) => { lock (goals) goals.Add(((global::app.goal.@this)item).Name); return Task.FromResult(result); },
+            user, global::app.@event.code.@this.Always));
+        await user.@event.Add(new global::app.@event.code.@this(_app.Module("goal")["call"]!, "start", global::app.@event.When.after,
+            (item, result, _) => { lock (calls) calls.Add("goal.call"); return Task.FromResult(result); },
+            user, global::app.@event.code.@this.Always));
+        var ask = await Load("Ask", Make.Step("call the parent's Claude",
+            Make.Action(Ctx, "goal", "call", ("Name", "%!app.parent.goal[\"Claude\"]%"))));
+
+        await (await ask.Start(Ctx)).IsSuccess();
+
+        await Assert.That(goals).IsEquivalentTo(new[] { "Ask" });
+        await Assert.That(calls).IsEquivalentTo(new[] { "goal.call" });
+    }
+
+    // a return of two levels from C ends C and B; A goes on with the value
+    [Test]
+    public async Task AReturnOfTwoLevels_EndsItsGoalAndItsCaller_TheNextGoesOnWithTheValue()
+    {
+        await Load("C", Make.Step("return false, 2 levels", Make.Action(Ctx, "goal", "return", ("Data", false), ("Depth", 2L))),
+            Make.Step("set %c% = after", Set("c", "after")));
+        await Load("B", Make.Step("call C", Make.Action(Ctx, "goal", "call", ("Name", "C"))),
+            Make.Step("set %b% = after", Set("b", "after")));
+        var a = await Load("A", Make.Step("call B, write to %got%", Make.Action(Ctx, "goal", "call", ("Name", "B")), Set("got", "%!data%")),
+            Make.Step("set %a% = after", Set("a", "after")));
+
+        await (await a.Start(Ctx)).IsSuccess();
+
+        await Assert.That((await Ctx.Variable.Get("c")).IsInitialized).IsFalse();
+        await Assert.That((await Ctx.Variable.Get("b")).IsInitialized).IsFalse();
+        await Assert.That((await Ctx.Variable.GetValue("a"))?.ToString()).IsEqualTo("after");
+        await Assert.That((await Ctx.Variable.GetValue("got"))?.ToString()).IsEqualTo("False");
+    }
+
     // The run's cancellation cancels its actors: the wait ends, the task Cancelled and never reported
     [Test]
     public async Task CancellingTheActor_EndsTheWait_TheTaskCancelled_NotReported()

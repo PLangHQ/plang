@@ -3605,6 +3605,18 @@ type app.module.window.type.window.list
 
 type app.parent
 
+type app.parent.goal
+  .name : text
+  .comment : text
+  .step : list<step>
+  .child : list<goal>
+  .visibility : choice<visibility>
+  .path : path
+  .warning : list<warning>
+  .cache : goal
+  .isCached : bool
+  .property : app.type.item.property.list
+
 type app.setting
 
 type app.store.sqlite
