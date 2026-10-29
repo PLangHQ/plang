@@ -62,6 +62,10 @@ The one list of work after runtime2's merges (Ingi, 2026-10-29: "yes merge into 
 
 - **The default cache key is the step's place, not its parameters** (event-action 11, Ingi: "yes"): `module/on/cache.cs:66–71` keys by goal path and step index, so `call LoadData id=%id%, cache for 10 minutes` or `read file %name%, cache …` answers the first value for every id or name unless the step names a key. Fix: the default key also takes the action's parameters (as they resolve). A test per case goes red today.
 
+### Dead members
+
+- **`output.ask`'s `Variable` parameter is declared and never read** (plang-docs, 2026-10-29, at the snapshot-doc merge 9ad73cb3f): `module/output/ask.cs:53`. A snapshot already holds the run's variables. Either give it its job or remove it with its teaching (a catalog change: re-pins).
+
 ### Snapshot's leftovers
 
 - **The run's call at the snapshot's top** (`{app, call}`; snapshot 293–294). Ingi: "let's leave this long for now".
