@@ -1,24 +1,25 @@
-/ Inside plang's own goals an "each goal" event doesn't run while event.setting.goal is app (the default): reading
-/ %!error% three times shows plang's error goal each time, and "before each goal" runs Count once, for Loop alone. With
-/ event.setting.goal all, it runs for each of plang's goals too: once for Loop and once for each read.
+/ Inside plang's own goals an "each goal" event doesn't run while event.setting.goal is app (the default): Read reads
+/ %!goal% three times, each read running plang's shortcut goal (/system/shortcut/goal.goal), and "before each goal" runs
+/ Count for Loop and each Read, never for the shortcut goal. With event.setting.goal all, it runs for each shortcut goal
+/ too.
 Start
 - set %items% = [1, 2, 3]
 - set %count% = 0
 - before each goal, call Count
 - call Loop
-- assert %count% equals 1, "under app, plang's own goals run no each-goal event"
+- assert %count% equals 4, "under app: Loop and the three Reads, none of plang's own goals"
 - set %!app.event.setting.goal% = "all"
 - set %count% = 0
 - call Loop
-- assert %count% equals 4, "under all, each of plang's goals runs it too"
+- assert %count% equals 7, "under all: the three shortcut goals too"
 
-/ Reads %!error% once for each item.
+/ Reads %!goal% once for each item.
 Loop
 - foreach %items%, call Read
 
-/ One read of %!error%.
+/ One read of %!goal%, a shortcut plang answers with a goal of its own.
 Read
-- set %seen% = %!error%
+- set %seen% = %!goal%
 
 / The event's call.
 Count

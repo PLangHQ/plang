@@ -123,4 +123,29 @@ public class CallStackEventTests : System.IAsyncDisposable
         await resumed.IsSuccess();
         await Assert.That((await resumed.Value())?.ToString()).IsEqualTo("Run");
     }
+
+    // In a sub app the maker's event runs as the sub app's inherited one, and %!event% is the maker's event, keyed in the
+    // maker's list. A run saved inside it and read back in another sub app of the same maker finds that sub app's own
+    // inherited event in its place — the same order as the maker's.
+    [Test]
+    public async Task ARunSavedInsideAnInheritedEvent_ReadsItsEventBack_AsTheResumingSubAppsInherited()
+    {
+        await using var maker = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing().TestIdentity();
+        Program(maker);
+        await (await Named(maker, "Bind").Start(maker.actor.list.User.Context)).IsSuccess();
+        await using var sub = new global::app.@this(maker.filesystem.root.Absolute, maker.actor.list.User);
+        var context = sub.actor.list.User.Context;
+        await (await Named(maker, "Run").Start(context)).IsSuccess();
+        var snap = await (await context.Variable.Get("snap")).Value() as global::app.snapshot.@this;
+        await Assert.That(snap).IsNotNull();
+
+        await using var other = new global::app.@this(maker.filesystem.root.Absolute, maker.actor.list.User);
+        var into = other.actor.list.User.Context;
+        await other.Restore(snap!, into);
+
+        var running = Running(into.call.Root!);
+        await Assert.That(running).IsNotNull();
+        var inherited = other.actor.list.User.@event.Items().OfType<global::app.@event.inherited.@this>().Single();
+        await Assert.That(await running!.Event!.Value()).IsSameReferenceAs(inherited);
+    }
 }

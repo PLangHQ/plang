@@ -68,6 +68,22 @@ public class InheritedBindingsTests
         await Assert.That(ran).IsEquivalentTo(new List<string> { "maker" });
     }
 
+    // From a sub app, an event reaches nothing of its maker's upward: only its name and when are navigable, never the
+    // actor that bound it.
+    [Test]
+    public async Task FromASubApp_AnEventsActor_IsNotReached()
+    {
+        await using var maker = App();
+        var item = maker.actor.list.User.Context.Dict();
+        Bind(maker, item, new List<string>(), "maker");
+        await using var sub = new global::app.@this(maker.filesystem.root.Absolute, maker.actor.list.User);
+        var context = sub.actor.list.User.Context;
+        var running = new global::app.data.@this("!event", sub.actor.list.User.@event[item].before[0], context: context);
+
+        await Assert.That((await (await running.Get("name")).Value())?.ToString()).IsEqualTo("start");
+        await Assert.That((await running.Get("actor")).IsInitialized).IsFalse();
+    }
+
     [Test]
     public async Task InASubApp_TheMakersBeforeRunsFirst_ThenItsOwn()
     {

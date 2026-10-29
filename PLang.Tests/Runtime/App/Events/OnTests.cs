@@ -178,6 +178,29 @@ public class OnTests
         await Assert.That(times).IsEqualTo(1);
     }
 
+    // An error's before that is already running is passed by, never taken as answering: a failure its own run meets goes
+    // on past it, so an on-error event can't swallow a failure by being re-entered.
+    [Test] public async Task AFailure_GoesOnPastAnErrorEventAlreadyRunning()
+    {
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        var item = Item(context);
+        var inner = 0;
+        Bind(app, item, "error", global::app.@event.When.before, async (fired, failed, ctx) =>
+        {
+            // its own moment again, inside its run: it is passed by, and the failure stands
+            inner++;
+            return await ctx.Actor!.@event[fired]["error"]!.before.Catch(fired, ctx.Error(new global::app.error.@this("inner", "Inner", 400)), ctx)
+                ?? ctx.Error(new global::app.error.@this("inner", "Inner", 400));
+        });
+
+        var answer = await context.Actor!.@event[item]["error"]!.before.Catch(item, context.Error(new global::app.error.@this("outer", "Outer", 400)), context);
+
+        await Assert.That(inner).IsEqualTo(1);
+        await answer!.IsFailure();
+        await Assert.That(answer!.Error!.Key).IsEqualTo("Inner");
+    }
+
     [Test] public async Task AnActorsEvent_RunsOnlyForThatActor()
     {
         await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
