@@ -1,12 +1,12 @@
-/ A run saved inside a bound call keeps %!event%: Log is bound before goal Work starts, saves the run there and keeps it
-/ in workspace/run.plang. Resumed, the run goes on from the save inside Log and reads %!event!item.name% again: the
-/ event that fired, for the goal it fired for. The resumed run goes on through this goal too, from the step after
-/ `call Work`: the marker, written after the save, sends it to Resumed, which writes what it saw and ends it.
+/ A run saved inside a bound call keeps %!event%: Log is bound before each goal, so it runs before Work starts, saves the
+/ run there and keeps it in workspace/run.plang. Resumed, the run goes on from that save inside Log and reads
+/ %!event!item.name% right after it — no goal starts in between — so it names the goal the saved event fired for. The
+/ marker, written after the save and never in the snapshot, says the run is the resumed one; the resumed run then goes on
+/ through this goal and ends at the marker.
 Start
-- before goal Work starts, call Log
+- before each goal, call Log
 - call Work
 - if file 'workspace/resumed.marker' exists
-    - call Resumed
     - end goal
 - write "here" to file 'workspace/resumed.marker'
 - read file 'workspace/run.plang', write to %snapshot%
@@ -21,12 +21,9 @@ Start
 Work
 - set %worked% = "yes"
 
-/ The bound call: saves the run while it runs, then reads what the event fired for.
+/ The bound call: saves the run while it runs; resumed, it writes what the event fired for.
 Log
 - save snapshot, write to %run%
 - save %run% to file 'workspace/run.plang'
-- set %fired% = %!event!item.name%
-
-/ The resumed run's end: what it saw, written where the asker reads it.
-Resumed
-- write "%fired%" to file 'workspace/seen.txt'
+- if file 'workspace/resumed.marker' exists
+    - write "%!event!item.name%" to file 'workspace/seen.txt'
