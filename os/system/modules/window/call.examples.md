@@ -1,8 +1,8 @@
 Step text: `call ShowFiles files=%files% in %browser.desktop%`
-Formal: `window.call(Name: text = "ShowFiles", Parameter: list = [{files: item = %files%}], Window: item = %browser.desktop%)` — window.call, not goal.call: `in %window%` puts the goal in the window's page, not in this app.
+Formal: `window.call(Name="ShowFiles", Parameter=[{files: %files%}], Window=%browser.desktop%)` — window.call, not goal.call: `in %window%` puts the goal in the window's page, not in this app.
 
 Step text: `call Show text=%text%, file=%file% in %window%`
-Formal: `window.call(Name: text = "Show", Parameter: list = [{text: item = %text%}, {file: item = %file%}], Window: item = %window%)`
+Formal: `window.call(Name="Show", Parameter=[{text: %text%}, {file: %file%}], Window=%window%)`
 
 Step text: `call Saved in window %asked.from% of %browser%`
-Formal: `window.call(Name: text = "Saved", Window: item = %asked.from%, Browser: browser = %browser%)` — a window by its id on the screen: the browser it is in comes with it.
+Formal: `window.call(Name="Saved", Window=%asked.from%, Browser=%browser%)` — a window by its id on the screen: the browser it is in comes with it.

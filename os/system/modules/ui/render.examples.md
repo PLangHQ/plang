@@ -5,4 +5,4 @@ Step text: `render %template%, error=%error%, write to %text%`
 Properties: `{"Template": "%template%", "Parameter": [{error: %error%}]}` — every `name=value` after the template is an argument, even when the value is a variable of the same name: `ui.render(Template=%template%, Parameter=[{error: %error%}])`.
 
 Step text: `render 'layout.html'`
-Formal: `ui.render(Template: text = "layout.html")`
+Formal: `ui.render(Template="layout.html")`
