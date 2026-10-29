@@ -1,12 +1,12 @@
 {
   "name": "Start",
-  "comment": "Inside plang's own goals an \"each goal\" event doesn't run while event.setting.goal is app (the default): reading\n%!error% three times shows plang's error goal each time, and \"before each goal\" runs Count once, for Loop alone. With\nevent.setting.goal all, it runs for each of plang's goals too: once for Loop and once for each read.",
+  "comment": "Inside plang's own goals an \"each goal\" event doesn't run while event.setting.goal is app (the default): Read reads\n%!goal% three times, each read running plang's shortcut goal (/system/shortcut/goal.goal), and \"before each goal\" runs\nCount for Loop and each Read, never for the shortcut goal. With event.setting.goal all, it runs for each shortcut goal\ntoo.",
   "step": [
     {
       "index": 0,
       "text": "set %items% = [1, 2, 3]",
       "line": {
-        "number": 5,
+        "number": 6,
         "indent": 0
       },
       "code": [
@@ -55,7 +55,7 @@
       "index": 1,
       "text": "set %count% = 0",
       "line": {
-        "number": 6,
+        "number": 7,
         "indent": 0
       },
       "code": [
@@ -104,7 +104,7 @@
       "index": 2,
       "text": "before each goal, call Count",
       "line": {
-        "number": 7,
+        "number": 8,
         "indent": 0
       },
       "code": [
@@ -177,7 +177,7 @@
       "index": 3,
       "text": "call Loop",
       "line": {
-        "number": 8,
+        "number": 9,
         "indent": 0
       },
       "code": [
@@ -198,9 +198,9 @@
     },
     {
       "index": 4,
-      "text": "assert %count% equals 1, \"under app, plang's own goals run no each-goal event\"",
+      "text": "assert %count% equals 4, \"under app: Loop and the three Reads, none of plang's own goals\"",
       "line": {
-        "number": 9,
+        "number": 10,
         "indent": 0
       },
       "code": [
@@ -213,7 +213,7 @@
               "type": {
                 "name": "number"
               },
-              "value": 1
+              "value": 4
             },
             {
               "name": "Actual",
@@ -238,7 +238,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "under app, plang's own goals run no each-goal event"
+              "value": "under app: Loop and the three Reads, none of plang's own goals"
             }
           ]
         }
@@ -248,7 +248,7 @@
       "index": 5,
       "text": "set %!app.event.setting.goal% = \"all\"",
       "line": {
-        "number": 10,
+        "number": 11,
         "indent": 0
       },
       "code": [
@@ -304,7 +304,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 5 uses variable.set, which the decider was not sure of (0.77)"
+          "message": "step 5 uses variable.set, which the decider was not sure of (0.88)"
         }
       ]
     },
@@ -312,7 +312,7 @@
       "index": 6,
       "text": "set %count% = 0",
       "line": {
-        "number": 11,
+        "number": 12,
         "indent": 0
       },
       "code": [
@@ -361,7 +361,7 @@
       "index": 7,
       "text": "call Loop",
       "line": {
-        "number": 12,
+        "number": 13,
         "indent": 0
       },
       "code": [
@@ -382,9 +382,9 @@
     },
     {
       "index": 8,
-      "text": "assert %count% equals 4, \"under all, each of plang's goals runs it too\"",
+      "text": "assert %count% equals 7, \"under all: the three shortcut goals too\"",
       "line": {
-        "number": 13,
+        "number": 14,
         "indent": 0
       },
       "code": [
@@ -397,7 +397,7 @@
               "type": {
                 "name": "number"
               },
-              "value": 4
+              "value": 7
             },
             {
               "name": "Actual",
@@ -422,7 +422,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "under all, each of plang's goals runs it too"
+              "value": "under all: the three shortcut goals too"
             }
           ]
         }
@@ -432,13 +432,13 @@
   "child": [
     {
       "name": "Loop",
-      "comment": "Reads %!error% once for each item.",
+      "comment": "Reads %!goal% once for each item.",
       "step": [
         {
           "index": 0,
           "text": "foreach %items%, call Read",
           "line": {
-            "number": 17,
+            "number": 18,
             "indent": 0
           },
           "code": [
@@ -502,17 +502,17 @@
         }
       ],
       "visibility": "Private",
-      "hash": "8d4a6b000119e0c60ccb31bf99139780fa651d7cc200143ece667229df2819d2"
+      "hash": "92ac80a48a1281b946d291f3e05323d1788414513f61d3a0dc94c317e6d554a2"
     },
     {
       "name": "Read",
-      "comment": "One read of %!error%.",
+      "comment": "One read of %!goal%, a shortcut plang answers with a goal of its own.",
       "step": [
         {
           "index": 0,
-          "text": "set %seen% = %!error%",
+          "text": "set %seen% = %!goal%",
           "line": {
-            "number": 21,
+            "number": 22,
             "indent": 0
           },
           "code": [
@@ -543,13 +543,13 @@
                     "name": "item",
                     "template": "plang"
                   },
-                  "value": "%!error%",
+                  "value": "%!goal%",
                   "variable": [
                     {
-                      "text": "%!error%",
+                      "text": "%!goal%",
                       "code": [
                         {
-                          "variable": "!error"
+                          "variable": "!goal"
                         }
                       ]
                     }
@@ -570,7 +570,7 @@
         }
       ],
       "visibility": "Private",
-      "hash": "9e2a9dea9482e9a2742630a5bc8be58748c46fb73697f38401cf74e381385da9"
+      "hash": "68e18e1e17c2942683db40746939b083024c174ca6ededa6c5cfda1beb4263e0"
     },
     {
       "name": "Count",
@@ -580,7 +580,7 @@
           "index": 0,
           "text": "set %count% = %count% + 1",
           "line": {
-            "number": 25,
+            "number": 26,
             "indent": 0
           },
           "code": [
@@ -687,7 +687,7 @@
           "warning": [
             {
               "key": "Unsure",
-              "message": "step 0 uses math.add, which the decider was not sure of (0.98)"
+              "message": "step 0 uses math.add, which the decider was not sure of (0.97)"
             }
           ]
         }
@@ -698,5 +698,5 @@
   ],
   "visibility": "Public",
   "file": "SystemGoalsLeftAlone.test.goal",
-  "hash": "0e9d1e7e479640df50175dd4e3c35cf7020de5ca9035a555232abdf14d8adccf"
+  "hash": "3ead20e9a96c0bc8f9daf98b18926008b6fd38f91834c70da09e20e4fee6d145"
 }
