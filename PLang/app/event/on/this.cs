@@ -185,7 +185,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     // The events on side a snapshot keeps here: the ones a program bound on this item (an event a type's moment joined
     // here is written where it was bound).
     private List<global::app.@event.@this> Saved(side side)
-        => side.Where(@event => @event.IsSaved && Equals(@event.Item, item)).ToList();
+        => side.Where(@event => @event.IsSaved && @event.Item.Equals(item)).ToList();
 
     /// <summary>Whether a snapshot keeps anything of these moments: an event a program bound on this item.</summary>
     internal bool IsSaved => Moments.Any(moment => moment.Saved(moment.before).Count > 0 || moment.Saved(moment.after).Count > 0);

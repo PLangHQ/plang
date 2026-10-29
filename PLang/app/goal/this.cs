@@ -227,7 +227,7 @@ public partial class @this
     /// <summary>The name a call from <paramref name="caller"/> writes for this goal — its <see cref="Address"/>,
     /// or null when the call keeps the name it was written with: a goal in the caller's own file (a child, or
     /// the file's root) stays bare, it wins by rule and can't be shadowed.</summary>
-    public string? Reference(@this? caller) => Equals(Path, caller?.Path) ? null : Address;
+    public string? Reference(@this? caller) => (Path is { } path ? path.Equals(caller?.Path) : caller?.Path is null) ? null : Address;
 
     /// <summary>
     /// Merges LLM-derived fields from an existing built goal onto this freshly-parsed goal.

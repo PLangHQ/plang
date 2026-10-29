@@ -186,8 +186,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         var system = context.App.actor.list.System;
         system.Setting.Set(system.Setting.Address(typeof(global::app.call.setting.@this), "timing"), true);
 
-        var entry = Goal.Path?.ToString();
-        bool Tested(global::app.goal.step.@this step) => string.Equals(step.Goal.Path?.ToString(), entry, System.StringComparison.Ordinal);
+        var entry = Goal.Path;
+        bool Tested(global::app.goal.step.@this step) => entry is { } path ? path.Equals(step.Goal.Path) : step.Goal.Path is null;
         var actor = context.Actor!;
         return
         [

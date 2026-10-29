@@ -400,7 +400,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// <summary>Whether an event bound on this item runs for <paramref name="item"/>: itself, by its own equality. A kind
     /// that stands for more answers for them (a type, each item of it; a module, its actions; a pattern, the goals it
     /// names).</summary>
-    internal virtual bool Has(@this item) => Equals(this, item);
+    internal virtual bool Has(@this item) => Equals(item);
 
     /// <summary>Whether this item stands for many (each item of a type, each goal a pattern names, each action of a
     /// module): an event bound on it is a general one, quiet inside plang's own goals under event.setting.goal app. An item

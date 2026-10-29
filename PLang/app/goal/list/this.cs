@@ -219,7 +219,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         var folder = caller?.Folder;
         // the goals a name may be: every one read, newest first, but a setup goal — made once for the whole find
         var goals = Items().Where(g => !g.IsSetup).Reverse().ToList();
-        if (folder != null && Goal(name, goals.Where(g => Equals(g.Folder, folder)).ToList()) is { } beside) return context.Ok(beside);
+        if (folder != null && Goal(name, goals.Where(g => folder.Equals(g.Folder)).ToList()) is { } beside) return context.Ok(beside);
 
         var source = name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase) ? name : name + ".goal";
         if (!source.StartsWith('/') && !source.StartsWith('\\') && folder != null)
@@ -254,7 +254,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         async Task<string?> Spelled(global::app.type.item.path.@this at)
         {
             await foreach (var file in Beside(at.Parent, context))
-                if (string.Equals(file.Stem.ToString(), at.Stem.ToString(), StringComparison.OrdinalIgnoreCase))
+                if (file.Stem.Equals(at.Stem))
                     return file.Name.ToString();
             return null;
         }
@@ -355,7 +355,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var source in wants.Os.Value ? _app.Concat(_system) : _app)
         {
-            if (!seen.Add(source.ToString()!) || goals.Any(g => Equals(g.Path, source))) continue;
+            if (!seen.Add(source.ToString()!) || goals.Any(g => source.Equals(g.Path))) continue;
             var loaded = await Load(source);
             if (!loaded.Success)
             {

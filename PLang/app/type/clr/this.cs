@@ -175,7 +175,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
 
     public override string ToString() => Value.ToString() ?? "";
     public override bool Equals(object? obj) =>
-        obj is Clr other ? Equals(Value, other.Value) : Equals(Value, obj);
+        Value.Equals(obj is Clr other ? other.Value : obj);
     public override int GetHashCode() => Value.GetHashCode();
 
     /// <summary>The carrier writes its host: the host's tagged members are what item's general write shows.</summary>

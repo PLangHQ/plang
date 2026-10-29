@@ -150,7 +150,7 @@ public partial class OnError : IContext, IClause, IAction
         if (error == null) return false;
 
         if (status != null && !status.Equals(error.Status)) return false;
-        if (hasKey && !string.Equals(error.Key, key!.ToString(), StringComparison.OrdinalIgnoreCase)) return false;
+        if (hasKey && !key!.AreEqual(error.Key)) return false;
         if (hasMsg && !error.Message.Contains(msg!.ToString()!, StringComparison.OrdinalIgnoreCase)) return false;
 
         return true;

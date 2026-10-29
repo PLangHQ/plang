@@ -155,7 +155,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
     /// <summary>The events <paramref name="action"/> (an <c>on.event</c> step's) made, in the order bound — what an
     /// event's key numbers it among.</summary>
     internal IEnumerable<global::app.@event.@this> Of(global::app.goal.step.action.@this action)
-        => _events.Where(@event => Equals(@event.action, action));
+        => _events.Where(@event => action.Equals(@event.action));
 
     // ---- the load ----
 
@@ -179,7 +179,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
         _loading.Value = true;
         try
         {
-            if (_actor.App.actor.list.System is { } system && !Equals(system, _actor)) await system.@event.Loaded();
+            if (_actor.App.actor.list.System is { } system && !system.Equals(_actor)) await system.@event.Loaded();
             var replaced = await Run(_actor.Context);
             foreach (var made in await _actor.App.origin.@event(_actor.Role))
                 if (made.File is not { } file || !replaced.Contains(file))
@@ -284,7 +284,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
                 {
                     var saved = new call.@this(item, read.Add(moment.Name).Name, when, entry.Peek() as global::app.type.item.dict.@this
                         ?? throw global::app.@event.@this.Unread($"a saved event on '{moment.Name}' is no record"), context);
-                    var index = inherited.FindIndex(@event => Equals(@event.action, saved.action));
+                    var index = inherited.FindIndex(@event => saved.action.Equals(@event.action));
                     if (index >= 0) { inherited.RemoveAt(index); continue; }
                     Join(saved);
                 }
