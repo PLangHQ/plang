@@ -96,7 +96,7 @@
             {
               "name": "Event",
               "type": {
-                "name": "event",
+                "name": "on",
                 "template": "plang"
               },
               "value": "%!app.type.file.on.create%",
@@ -150,17 +150,17 @@
                 ]
               }
             }
-          ],
-          "default": [
-            {
-              "name": "scope",
-              "type": {
-                "name": "choice",
-                "kind": "scope"
-              },
-              "value": "actor"
-            }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 2's saved code no longer holds — rebuilt: step 2 'after %!app.type.file.on.create% call CountCreated': on.event: the default frozen for 'scope' is no option of this action any more."
+        },
+        {
+          "key": "Unsure",
+          "message": "step 2 uses on.event, which the decider was not sure of (0.95)"
         }
       ]
     },

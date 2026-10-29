@@ -224,13 +224,13 @@
             {
               "name": "Event",
               "type": {
-                "name": "event",
+                "name": "on",
                 "template": "plang"
               },
-              "value": "%!app.type.goal.on.start%",
+              "value": "%!app.type.step.on.start%",
               "variable": [
                 {
-                  "text": "%!app.type.goal.on.start%",
+                  "text": "%!app.type.step.on.start%",
                   "code": [
                     {
                       "variable": "!app"
@@ -239,7 +239,7 @@
                       "property": "type"
                     },
                     {
-                      "property": "goal"
+                      "property": "step"
                     },
                     {
                       "property": "on"
@@ -278,17 +278,13 @@
                 ]
               }
             }
-          ],
-          "default": [
-            {
-              "name": "scope",
-              "type": {
-                "name": "choice",
-                "kind": "scope"
-              },
-              "value": "actor"
-            }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 6's saved code no longer holds — rebuilt: step 6 'before each goal, call Log': on.event: the default frozen for 'scope' is no option of this action any more."
         }
       ]
     },

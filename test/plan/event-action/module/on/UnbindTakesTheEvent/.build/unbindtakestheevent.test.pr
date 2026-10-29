@@ -120,16 +120,6 @@
                 ]
               }
             }
-          ],
-          "default": [
-            {
-              "name": "scope",
-              "type": {
-                "name": "choice",
-                "kind": "scope"
-              },
-              "value": "actor"
-            }
           ]
         },
         {
@@ -181,6 +171,12 @@
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 1's saved code no longer holds — rebuilt: step 1 'before each goal, call Count, write to %event%': on.event: the default frozen for 'scope' is no option of this action any more."
         }
       ]
     },

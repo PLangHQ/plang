@@ -1,0 +1,470 @@
+{
+  "name": "Start",
+  "comment": "\"before each goal\" and \"before goal Process\" both run for Process, in the order they were bound. Each is the\n\"each goal\" event's call and One the named one's; One is a goal too, so the \"each goal\" event runs before it as well.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %ran% = \"\"",
+      "line": {
+        "number": 4,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%ran%",
+              "variable": [
+                {
+                  "text": "%ran%",
+                  "code": [
+                    {
+                      "variable": "ran"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": ""
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "before each goal, call Each",
+      "line": {
+        "number": 5,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "on",
+          "name": "event",
+          "property": [
+            {
+              "name": "Event",
+              "type": {
+                "name": "on",
+                "template": "plang"
+              },
+              "value": "%!app.type.goal.on.start%",
+              "variable": [
+                {
+                  "text": "%!app.type.goal.on.start%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "type"
+                    },
+                    {
+                      "property": "goal"
+                    },
+                    {
+                      "property": "on"
+                    },
+                    {
+                      "property": "start"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "When",
+              "type": {
+                "name": "choice",
+                "kind": "when"
+              },
+              "value": "before"
+            },
+            {
+              "name": "Action",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "goal"
+                    },
+                    "value": "Each"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "before goal Process, call One",
+      "line": {
+        "number": 6,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "on",
+          "name": "event",
+          "property": [
+            {
+              "name": "Event",
+              "type": {
+                "name": "on",
+                "template": "plang"
+              },
+              "value": "%!app.type.goal.on.start%",
+              "variable": [
+                {
+                  "text": "%!app.type.goal.on.start%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "type"
+                    },
+                    {
+                      "property": "goal"
+                    },
+                    {
+                      "property": "on"
+                    },
+                    {
+                      "property": "start"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "When",
+              "type": {
+                "name": "choice",
+                "kind": "when"
+              },
+              "value": "before"
+            },
+            {
+              "name": "Action",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "goal"
+                    },
+                    "value": "One"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "call Process",
+      "line": {
+        "number": 7,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Process"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %ran% equals \"each,each,one,\", \"each goal first, then the one bound on Process, in the order bound\"",
+      "line": {
+        "number": 8,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "each,each,one,"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%ran%",
+              "variable": [
+                {
+                  "text": "%ran%",
+                  "code": [
+                    {
+                      "variable": "ran"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "each goal first, then the one bound on Process, in the order bound"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "Process",
+      "comment": "The goal both events run before.",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %done% = \"yes\"",
+          "line": {
+            "number": 12,
+            "indent": 0
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%done%",
+                  "variable": [
+                    {
+                      "text": "%done%",
+                      "code": [
+                        {
+                          "variable": "done"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "yes"
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "visibility": "Private",
+      "hash": "b19286bc46f17c2524eb0c0b57f685f6a07e55b3b80bb36a94eaf039214aeb24"
+    },
+    {
+      "name": "Each",
+      "comment": "The \"each goal\" event's call.",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %ran% = \"%ran%each,\"",
+          "line": {
+            "number": 16,
+            "indent": 0
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%ran%",
+                  "variable": [
+                    {
+                      "text": "%ran%",
+                      "code": [
+                        {
+                          "variable": "ran"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "text",
+                    "template": "plang"
+                  },
+                  "value": "%ran%each,",
+                  "variable": [
+                    {
+                      "text": "%ran%",
+                      "code": [
+                        {
+                          "variable": "ran"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "visibility": "Private",
+      "hash": "46fa1f9ad86afccb81ad3a7a02563f822da479ac6251f1d83980e441576c6f62"
+    },
+    {
+      "name": "One",
+      "comment": "The \"before goal Process\" event's call.",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %ran% = \"%ran%one,\"",
+          "line": {
+            "number": 20,
+            "indent": 0
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%ran%",
+                  "variable": [
+                    {
+                      "text": "%ran%",
+                      "code": [
+                        {
+                          "variable": "ran"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "text",
+                    "template": "plang"
+                  },
+                  "value": "%ran%one,",
+                  "variable": [
+                    {
+                      "text": "%ran%",
+                      "code": [
+                        {
+                          "variable": "ran"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "visibility": "Private",
+      "hash": "1e716c778b852af097311f42849204342b69e68e4a39a817ef76b3c0776a4885"
+    }
+  ],
+  "visibility": "Public",
+  "file": "BindOrder.test.goal",
+  "hash": "ab3cc5640b2b23a589969461606298dc5fafc5c0c737c535fb1c5178412a1f25"
+}

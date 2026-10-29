@@ -6,7 +6,8 @@
       "index": 0,
       "text": "set %actionFired% = false",
       "line": {
-        "number": 3
+        "number": 3,
+        "indent": 0
       },
       "code": [
         {
@@ -61,7 +62,8 @@
       "index": 1,
       "text": "after action output.write call CaptureWrite",
       "line": {
-        "number": 4
+        "number": 4,
+        "indent": 0
       },
       "code": [
         {
@@ -71,13 +73,13 @@
             {
               "name": "Event",
               "type": {
-                "name": "event",
+                "name": "on",
                 "template": "plang"
               },
-              "value": "%!app.type.action.on.start%",
+              "value": "%!app.type.action.output.write.on.start%",
               "variable": [
                 {
-                  "text": "%!app.type.action.on.start%",
+                  "text": "%!app.type.action.output.write.on.start%",
                   "code": [
                     {
                       "variable": "!app"
@@ -87,6 +89,12 @@
                     },
                     {
                       "property": "action"
+                    },
+                    {
+                      "property": "output"
+                    },
+                    {
+                      "property": "write"
                     },
                     {
                       "property": "on"
@@ -120,22 +128,18 @@
                     "type": {
                       "name": "goal"
                     },
-                    "value": "CaptureWrite"
+                    "value": "/module/on/event/afteraction/CaptureWrite"
                   }
                 ]
               }
             }
-          ],
-          "default": [
-            {
-              "name": "scope",
-              "type": {
-                "name": "choice",
-                "kind": "scope"
-              },
-              "value": "actor"
-            }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 1's saved code no longer holds — rebuilt: step 1 'after action output.write call CaptureWrite': on.event: the default frozen for 'scope' is no option of this action any more."
         }
       ]
     },
@@ -143,7 +147,8 @@
       "index": 2,
       "text": "write out \"hello world\"",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -165,7 +170,8 @@
       "index": 3,
       "text": "assert %actionFired% equals true",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -202,9 +208,7 @@
       ]
     }
   ],
-  "child": [],
   "visibility": "Public",
-  "path": "/module/on/event/afteraction/EventAfterAction.test.goal",
-  "prPath": "/module/on/event/afteraction/.build/eventafteraction.test.pr",
+  "file": "EventAfterAction.test.goal",
   "hash": "806168ef18ec5f0db71a8e8b0c1a7a7a5260fe5713fedb271504b1120b607499"
 }

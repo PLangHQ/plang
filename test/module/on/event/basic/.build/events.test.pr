@@ -5,7 +5,8 @@
       "index": 0,
       "text": "before each goal call LogBefore",
       "line": {
-        "number": 2
+        "number": 2,
+        "indent": 0
       },
       "code": [
         {
@@ -15,7 +16,7 @@
             {
               "name": "Event",
               "type": {
-                "name": "event",
+                "name": "on",
                 "template": "plang"
               },
               "value": "%!app.type.goal.on.start%",
@@ -64,22 +65,18 @@
                     "type": {
                       "name": "goal"
                     },
-                    "value": "LogBefore"
+                    "value": "/module/on/event/basic/LogBefore"
                   }
                 ]
               }
             }
-          ],
-          "default": [
-            {
-              "name": "scope",
-              "type": {
-                "name": "choice",
-                "kind": "scope"
-              },
-              "value": "actor"
-            }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 0's saved code no longer holds — rebuilt: step 0 'before each goal call LogBefore': on.event: the default frozen for 'scope' is no option of this action any more."
         }
       ]
     },
@@ -87,7 +84,8 @@
       "index": 1,
       "text": "after each goal call LogAfter",
       "line": {
-        "number": 3
+        "number": 3,
+        "indent": 0
       },
       "code": [
         {
@@ -97,7 +95,7 @@
             {
               "name": "Event",
               "type": {
-                "name": "event",
+                "name": "on",
                 "template": "plang"
               },
               "value": "%!app.type.goal.on.start%",
@@ -146,22 +144,18 @@
                     "type": {
                       "name": "goal"
                     },
-                    "value": "LogAfter"
+                    "value": "/module/on/event/basic/LogAfter"
                   }
                 ]
               }
             }
-          ],
-          "default": [
-            {
-              "name": "scope",
-              "type": {
-                "name": "choice",
-                "kind": "scope"
-              },
-              "value": "actor"
-            }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 1's saved code no longer holds — rebuilt: step 1 'after each goal call LogAfter': on.event: the default frozen for 'scope' is no option of this action any more."
         }
       ]
     },
@@ -169,7 +163,8 @@
       "index": 2,
       "text": "set %name% = \"hello\"",
       "line": {
-        "number": 4
+        "number": 4,
+        "indent": 0
       },
       "code": [
         {
@@ -217,7 +212,8 @@
       "index": 3,
       "text": "assert %name% equals \"hello\"",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -257,7 +253,8 @@
       "index": 4,
       "text": "call TestGoal",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -279,7 +276,8 @@
       "index": 5,
       "text": "assert %name% equals \"hello\", \"variable should survive goal call\"",
       "line": {
-        "number": 7
+        "number": 7,
+        "indent": 0
       },
       "code": [
         {
@@ -323,9 +321,7 @@
       ]
     }
   ],
-  "child": [],
   "visibility": "Public",
-  "path": "/module/on/event/basic/Events.test.goal",
-  "prPath": "/module/on/event/basic/.build/events.test.pr",
+  "file": "Events.test.goal",
   "hash": "e15ca9b06e2663d5fc75ec7f6c589dd3a09c9523c7404ba726ebff9c6c4f78f6"
 }

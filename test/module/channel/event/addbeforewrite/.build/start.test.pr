@@ -6,7 +6,8 @@
       "index": 0,
       "text": "set channel \"audit\" call AuditLog",
       "line": {
-        "number": 3
+        "number": 3,
+        "indent": 0
       },
       "code": [
         {
@@ -47,7 +48,8 @@
       "index": 1,
       "text": "on before write on \"audit\" channel call ApprovalGoal",
       "line": {
-        "number": 4
+        "number": 4,
+        "indent": 0
       },
       "code": [
         {
@@ -57,7 +59,7 @@
             {
               "name": "Event",
               "type": {
-                "name": "event",
+                "name": "on",
                 "template": "plang"
               },
               "value": "%!channel.audit.on.write%",
@@ -103,22 +105,18 @@
                     "type": {
                       "name": "goal"
                     },
-                    "value": "ApprovalGoal"
+                    "value": "/module/channel/event/addbeforewrite/ApprovalGoal"
                   }
                 ]
               }
             }
-          ],
-          "default": [
-            {
-              "name": "scope",
-              "type": {
-                "name": "choice",
-                "kind": "scope"
-              },
-              "value": "actor"
-            }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 1's saved code no longer holds — rebuilt: step 1 'on before write on \"audit\" channel call ApprovalGoal': on.event: the default frozen for 'scope' is no option of this action any more."
         }
       ]
     },
@@ -126,7 +124,8 @@
       "index": 2,
       "text": "write 'payload' to audit",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -155,7 +154,8 @@
       "index": 3,
       "text": "assert %approvalCalled% is true",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -188,7 +188,8 @@
       "index": 4,
       "text": "assert %auditCalled% is true",
       "line": {
-        "number": 7
+        "number": 7,
+        "indent": 0
       },
       "code": [
         {
@@ -218,9 +219,7 @@
       ]
     }
   ],
-  "child": [],
   "visibility": "Public",
-  "path": "/module/channel/event/addbeforewrite/Start.test.goal",
-  "prPath": "/module/channel/event/addbeforewrite/.build/start.test.pr",
+  "file": "Start.test.goal",
   "hash": "b46bf454239712418f9397dab09a2dc042afc953a3995f734abc4ea8db412308"
 }
