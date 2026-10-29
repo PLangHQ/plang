@@ -34,7 +34,7 @@ public sealed class @this : global::app.@event.@this
     // whether a sub app takes it in, as the on.event step said
     private readonly global::app.@event.Sub _sub;
 
-    internal override bool Reaches => _sub == global::app.@event.Sub.inherit;
+    internal override bool IsInheritable => _sub == global::app.@event.Sub.inherit;
 
     // the Sub a saved event's record keeps, read as the choice it is; none kept is the default, inherit
     private static global::app.@event.Sub Kept(global::app.type.item.dict.@this record, global::app.actor.context.@this context)

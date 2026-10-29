@@ -213,7 +213,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         var actor = role.In(App.actor.list);
         await actor.@event.Loaded();
-        return actor.@event.Items().Where(@event => @event.Reaches).ToList();
+        return actor.@event.Items().Where(@event => @event.IsInheritable).ToList();
     }
 
     // a sub app reads only its own system/event/: its maker's system events came with the events it took in. A sub app

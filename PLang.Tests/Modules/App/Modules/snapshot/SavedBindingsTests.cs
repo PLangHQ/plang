@@ -95,7 +95,7 @@ public class SavedBindingsTests
         await using var child = new global::app.@this(root, fresh.actor.list.User);
 
         await Assert.That(await snapshot.Text(context)).Contains("\"sub\"");
-        await Assert.That(restored.Reaches).IsFalse();
+        await Assert.That(restored.IsInheritable).IsFalse();
         await Assert.That(await Logged(fresh, fresh)).IsTrue();
         await Assert.That(await Logged(child, fresh)).IsFalse();
     }
