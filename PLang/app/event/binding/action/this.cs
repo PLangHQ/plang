@@ -30,7 +30,7 @@ public sealed class @this : global::app.@event.binding.@this
     { }
 
     /// <summary>The <c>on.event</c> action that bound it; what it runs is that action's <c>Action</c>, read when it fires.</summary>
-    internal global::app.goal.step.action.@this action { get; }
+    internal override global::app.goal.step.action.@this action { get; }
 
     internal override bool IsSaved => true;
 

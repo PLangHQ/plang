@@ -51,6 +51,10 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// binding (a handler, a mock) is not: its maker binds it again.</summary>
     internal virtual bool IsSaved => false;
 
+    /// <summary>The <c>on.event</c> action that made it — a program's binding is numbered by it (its goal, step and
+    /// index). A C# binding has none.</summary>
+    internal virtual global::app.goal.step.action.@this? action => null;
+
     /// <summary>Whether it fires for <paramref name="item"/> while <paramref name="context"/>'s actor runs: its
     /// scope takes the actor, and its filter the item.</summary>
     internal bool For(global::app.type.item.@this item, global::app.actor.context.@this context)

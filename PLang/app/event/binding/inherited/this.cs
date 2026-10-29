@@ -16,6 +16,9 @@ public sealed class @this : global::app.@event.binding.@this
         : base(side, binding, binding.Actor.Role.In(app.actor.list))
         => _binding = binding;
 
+    // the maker's: the action that made the binding it runs
+    internal override global::app.goal.step.action.@this? action => _binding.action;
+
     // it runs the maker's: its call is found in the maker's app (the action binding's own Handle)
     private protected override System.Threading.Tasks.Task<global::app.data.@this> Handle(global::app.type.item.@this item,
         global::app.data.@this result, global::app.actor.context.@this context)

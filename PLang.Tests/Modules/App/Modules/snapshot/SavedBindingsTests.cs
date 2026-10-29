@@ -266,4 +266,56 @@ public class SavedBindingsTests
         await taken.IsFailure();
         await Assert.That(taken.Error!.Key).IsEqualTo("NoWireContract");
     }
+
+    // A program binds at start and resumes its own snapshot: the resumed app takes the binding in from its maker and
+    // reads the saved one back, and the two are the same on.event action's — it fires once, as in an app that holds none.
+    // Log counts its firings in %k%; the resume goes on from Inner's call of Counted, whose start fires Log.
+    [Test]
+    public async Task TheSameBinding_TakenInAndReadBack_FiresOnce()
+    {
+        var root = Root();
+        await using var app = App(root);
+        var context = app.actor.list.User.Context;
+        Program(app, "Log",
+            Make.Action(context, "math", "add", ("A", "%k%"), ("B", 1)),
+            Make.Action(context, "variable", "set", Make.Param(context, "Name", "k", "variable"), ("Value", "%!data%")));
+        var counted = Program(app, "Counted", Make.Action(context, "variable", "set", Make.Param(context, "Name", "x", "variable"), ("Value", "x")));
+        var log = app.goal.list.Items().OfType<Goal>().First(goal => goal.Name == "Log");
+        var inner = new Goal(app.type.list) { Name = "Inner", Path = global::app.type.item.path.@this.Resolve("/Inner.goal", context) };
+        var step = new Step(app.type.list) { Goal = inner, List = inner.Step, Index = 0, Text = "call Counted, return k" };
+        step.Code.Add(Make.Call(context, "Counted").In(step));
+        step.Code.Add((await context.Action("goal.return(Data=%k%)")).In(step));
+        inner.Step.Add(step);
+        app.goal.list.Add(inner);
+        var bound = Program(app, "G", Make.Action(context, "on", "event", ("Event", "%!app.type.goal.on.start%"), ("When", "before"),
+            ("Action", Make.Call(context, "Log"))));
+        await Bind(app, bound);
+        System.IO.Directory.CreateDirectory(root);
+        foreach (var goal in new[] { counted, log, bound, inner })
+        {
+            await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(root, goal.Name + ".goal"), goal.Name + "\n");
+            var pr = System.IO.Path.Combine(root, goal.Pr!.Raw.TrimStart('/'));
+            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(pr)!);
+            await System.IO.File.WriteAllTextAsync(pr, await context.Pr(goal));
+        }
+        await context.Variable.Set("k", 0);
+        global::app.snapshot.@this snapshot;
+        await using (context.call.Push(inner, await context.call.Setting()))
+        await using (context.call.Push(step, await context.call.Setting()))
+        await using (context.call.Push(step.Code[0], await context.call.Setting(), context.Variable))
+            snapshot = await app.Snapshot(context).Saved();
+
+        var resumed = await snapshot.Resumed(context);
+
+        await resumed.IsSuccess();
+        await Assert.That((await resumed.Value())?.ToString()).IsEqualTo("1");
+
+        // the same snapshot resumed in an app that holds no binding: only the read-back one fires
+        await using var other = App(root);
+        var into = other.actor.list.User.Context;
+        var control = await (await into.Snapshot(await snapshot.Text(context))).Resumed(into);
+
+        await control.IsSuccess();
+        await Assert.That((await control.Value())?.ToString()).IsEqualTo("1");
+    }
 }

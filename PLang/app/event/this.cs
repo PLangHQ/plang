@@ -70,7 +70,8 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     }
 
     /// <summary>The bindings a snapshot kept of this event, read back onto its sides: each row of a side the binding it
-    /// wrote. A record that isn't this event's sides is refused, thrown to the read boundary.</summary>
+    /// wrote — unless the side holds one the same action made already (the same program's, taken in from the maker at
+    /// birth), which fires once. A record that isn't this event's sides is refused, thrown to the read boundary.</summary>
     internal void Read(global::app.type.item.dict.@this record, global::app.actor.context.@this context)
     {
         foreach (var row in record.Rows(context))
@@ -81,9 +82,13 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
                 throw new global::app.error.DeclinedException(new global::app.error.@this(
                     $"a saved event '{Name}' holds '{row.Name}', which is no side of its bindings", "SnapshotRowUnread", 400));
             foreach (var saved in rows.Items(context))
-                side.Add(list => new global::app.@event.binding.action.@this(list, this,
+            {
+                var binding = new global::app.@event.binding.action.@this(side, this,
                     saved.Peek() as global::app.type.item.dict.@this ?? throw new global::app.error.DeclinedException(
-                        new global::app.error.@this($"a saved binding on '{Name}' is no record", "SnapshotRowUnread", 400)), context));
+                        new global::app.error.@this($"a saved binding on '{Name}' is no record", "SnapshotRowUnread", 400)), context);
+                if (side.Any(other => ReferenceEquals(other.action, binding.action))) continue;
+                side.Add(_ => binding);
+            }
         }
     }
 
