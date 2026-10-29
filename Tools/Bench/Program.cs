@@ -171,6 +171,33 @@ switch (args.Length > 0 ? args[0] : "")
             $"request {mode} ms={running * 1000 / total:F2} kb={kb:F0} held={string.Join(">", held.Select(h => h.ToString("F1")))} failed={failed}{(why != null ? $" why={why.Replace(' ', '_')}" : "")}"));
         return failed == 0 ? 0 : 1;
     }
+    case "phases":
+    {
+        // a request app's bytes by phase (this thread), averaged over BENCH_N: born, goal loaded, goal run, disposed
+        var count = int.TryParse(Environment.GetEnvironmentVariable("BENCH_N"), out var pn) ? pn : 500;
+        const string goal = "/module/condition/if/basic/Condition.test.goal";
+        long born = 0, load = 0, run = 0, dispose = 0;
+        var tick = Environment.GetEnvironmentVariable("BENCH_TICKS") == "1";
+        AllocTicks? phasesTicks = null;
+        for (var i = -20; i < count; i++)
+        {
+            if (i == 0 && tick) { phasesTicks = new AllocTicks(); }
+            var a0 = GC.GetAllocatedBytesForCurrentThread();
+            var app = Make(false).Testing();
+            var a1 = GC.GetAllocatedBytesForCurrentThread();
+            var loaded = await app.goal.Load(goal);
+            var a2 = GC.GetAllocatedBytesForCurrentThread();
+            if (loaded.Success) await ((await loaded.Value()) as global::app.goal.@this)!.Start(app.actor.list.User.Context);
+            var a3 = GC.GetAllocatedBytesForCurrentThread();
+            await app.DisposeAsync();
+            var a4 = GC.GetAllocatedBytesForCurrentThread();
+            if (i < 0) continue;
+            born += a1 - a0; load += a2 - a1; run += a3 - a2; dispose += a4 - a3;
+        }
+        Console.WriteLine(FormattableString.Invariant($"phases {mode} born={born / count / 1024.0:F0} load={load / count / 1024.0:F0} run={run / count / 1024.0:F0} dispose={dispose / count / 1024.0:F0} KB"));
+        phasesTicks?.Report(count);
+        break;
+    }
     default:
         Console.Error.WriteLine("usage: Bench <birth|request|alloc> <root|child>");
         return 2;
