@@ -219,7 +219,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     // over its maker's folder has none of its own — the folder's files are the maker's, already run there; read again
     // they would bind twice
     IEnumerable<global::app.type.item.path.@this> global::app.origin.@this.Events(global::app.@this app)
-        => string.Equals(app.filesystem.root.Absolute, App.filesystem.root.Absolute, global::app.type.item.path.@this.RootComparison)
+        => Equals(app.filesystem.root, App.filesystem.root)
             ? [] : [app.filesystem.root.Combine("system").Combine("event")];
 
     int global::app.origin.@this.Depth => App.Depth + 1;
