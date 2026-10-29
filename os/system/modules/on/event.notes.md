@@ -13,3 +13,5 @@
 The called goal reads `%!event%` (the event), `%!event!item%` (what it fired for) and `%!event!data%` (the value so far, after it; a failure is `%!error%`). A call bound before an event can cancel it with `on.cancel`.
 
 `on input call X` — "input" with no channel, event or "before/after" — is `on.input` (listen to this app's input line by line), not this.
+
+An event the step names one of — "goal X", "action module.name" — is that one item's path (`%!app.goal["X"].on.start%`, `%!app.module.<module>.<action>.on.start%`), not the type of all of them (`%!app.type.goal%`, `%!app.type.action%`): a type only for "each".
