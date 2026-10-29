@@ -9,8 +9,8 @@ Formal: `signing.verify(Data=%data%, Contracts=["C1"]); on.error(Recovery=[goal.
 Step text: `write 'hi' to dbg, on error set %failed% = true`
 Formal: `output.write(Data="hi", channel="dbg"); on.error(Recovery=[variable.set(Name=%failed%, Value=true)])` — the recovery is a `set`; it goes inside `Recovery`, never a top-level variable.set after the clause (that would run every time, not only on error).
 
-Step text: `if %a% == %b% then, on error call Caught`
-Properties: `{"Recovery": [goal.call(Name="Caught")]}` — the comparison is the step's action (condition.if); comparing values that can't be compared fails, and the on.error after the if catches it: `condition.if(Left=%a%, Operator="==", Right=%b%){ … }; on.error(Recovery=[goal.call(Name="Caught")])`. The on.error is never dropped because the action it guards is an if.
+Step text: `if %a% == %b% then, on error call Caught` (with `call Handle` indented below it)
+Formal: `condition.if(Left=%a%, Operator="==", Right=%b%); on.error(Recovery=[goal.call(Name="Caught")])` — the comparison is the step's action (condition.if), its body the indented step; comparing values that can't be compared fails, and the on.error after the if catches it. The on.error is never dropped because the action it guards is an if.
 
 Step text: `foreach %items%, call DoItem item=%item%, on error set %caught% = true`
 Formal: `loop.foreach(Collection=%items%); on.error(Recovery=[variable.set(Name=%caught%, Value=true)]); goal.call(Name="DoItem", Parameter=[{item: %item%}])` — the loop is the step's action (loop.foreach), the on.error comes after it, and the `set` nests in `Recovery`; an empty on.error with the set left beside it does nothing and is refused.
