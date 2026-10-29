@@ -57,12 +57,9 @@ Stage4
 / the debug watch, the test runner's timing, coverage and a mock each still run, and none is in a snapshot — C#
 
 Stage5
-/ the os's /system/event/Hello.goal event fires in an app, and not with event.setting.system=skip — plang test
-/ /plan/event-action/app/event/OsEventLoads
-- call /plan/event-action/app/event/OsEventLoads
-/ an app's own system/event/Hello.goal replaces the os's: only the app's fires — plang test
-/ /plan/event-action/app/event/AppReplacesOsEvent
-- call /plan/event-action/app/event/AppReplacesOsEvent
+/ the os's /system/event/Hello.goal event fires at an app's start, and not with event.setting.system=skip — C#
+/ (a plang test runs in a sub app, whose app object isn't the root's, so it can't see the root's start)
+/ a sub app's own system/event/Hello.goal replaces the inherited Hello: only its own fires — C#
 
 Stage6
 / an event bound with Sub=none doesn't run in a sub app; one bound without it does — plang test
