@@ -12,11 +12,13 @@ public sealed class @this : global::app.@event.@this
     private readonly Func<global::app.module.ICodeGenerated, global::app.goal.step.action.@this, global::app.data.@this,
         global::app.actor.context.@this, Task<global::app.data.@this>> _fire;
 
-    internal @this(global::app.@event.on.side side, global::app.goal.step.action.@this clause,
+    /// <summary>The clause <paramref name="clause"/> of <paramref name="action"/>, run <paramref name="when"/> its moment
+    /// <paramref name="name"/>.</summary>
+    internal @this(string name, global::app.@event.When when, global::app.goal.step.action.@this clause,
         global::app.goal.step.action.@this action,
         Func<global::app.module.ICodeGenerated, global::app.goal.step.action.@this, global::app.data.@this,
             global::app.actor.context.@this, Task<global::app.data.@this>> fire)
-        : base(side, clause.Module.App.actor.list.System, global::app.@event.Scope.app, Always)
+        : base(action, name, when, clause.Module.App.actor.list.System)
     {
         _clause = clause;
         _action = action;

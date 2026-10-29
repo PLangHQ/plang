@@ -14,6 +14,7 @@ public class NavigableFactsTests
         "app.this.Name",
         "app.this.Environment",
         "app.this.call",
+        "app.this.event",
         "app.this.trace",
         "app.this.data",
         "app.event.list.this.current",

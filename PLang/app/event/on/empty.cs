@@ -3,9 +3,8 @@ using System.Collections.Frozen;
 namespace app.@event.on;
 
 /// <summary>
-/// The moments of an item nothing is bound on: one per class, shared, closed — the core's, and the ones the class's plang
-/// type declares (<c>[Events(…)]</c>). An event is added to an item's own moments (an action's) or an app's
-/// (<c>app.event</c>), never here.
+/// The moments no event was added to: one set per class, shared, closed — the core's, and the ones the class's plang
+/// type declares (<c>[Events(…)]</c>). An event is added to an item's moments an actor's events made, never here.
 /// </summary>
 public sealed class empty : @this
 {

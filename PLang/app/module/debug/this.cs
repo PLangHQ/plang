@@ -112,8 +112,8 @@ public sealed class @this
         var actions = setting.Level.Value == global::app.module.debug.Level.Action;
         Bind(user, types["goal"], [types["step"]], actions ? [types["action"]] : [], index);
 
-        // A goal named by its address may be one of plang's own, which starts through its own events alone, as its
-        // steps and actions do: it is looked up now and bound there, by name. (A goal is read when it is first called.)
+        // A goal named by its address may be one of plang's own: it is looked up now and bound there, by name. (A goal is
+        // read when it is first called.)
         if (setting.Address is { } address && await (await _context.App.goal.list.Find(address)).Value() is global::app.goal.@this named)
             Bind(user, named, named.Step.Items(), actions ? named.Step.Items().SelectMany(step => step.Code.Items()) : [], index);
         return null;
@@ -128,8 +128,8 @@ public sealed class @this
         // a start of an item of T on `owner`, handed to `handler` — when debugged, only where debug follows
         void On<T>(global::app.type.item.@this owner, When when, Func<T, actor.context.@this, Task<data.@this>> handler, bool debugged)
             where T : global::app.type.item.@this
-            => user.App.@event.Add(owner).Add("start")[when].Add(side => new global::app.@event.code.@this(side,
-                (item, _, context) => handler((T)item, context), user, global::app.@event.Scope.actor,
+            => user.@event.Add(new global::app.@event.code.@this(owner, "start", when,
+                (item, _, context) => handler((T)item, context), user,
                 (item, context) => item is T && (!debugged || Debugged(context))));
 
         On<global::app.goal.@this>(goal, When.before, (each, context) => Attach(each, context, index), debugged: false);

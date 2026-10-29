@@ -112,7 +112,7 @@ public class CallStackEventTests : System.IAsyncDisposable
         await dst.Restore(snap!, into);
         var running = Running(into.call.Root!);
         await Assert.That(running).IsNotNull();
-        var start = dst.@event[dst.type.list["goal"]]?["start"];
+        var start = dst.actor.list.User.@event[dst.type.list["goal"]]?["start"];
         await Assert.That(start).IsNotNull();
         await Assert.That(start!.before.Count).IsEqualTo(1);
         await Assert.That(await running!.Event!.Value()).IsSameReferenceAs(start.before[0]);

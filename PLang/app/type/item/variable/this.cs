@@ -24,14 +24,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static global::app.type.item.list.@this<@this> List(global::app.@this app)
         => throw new System.InvalidOperationException("a variable list belongs to an actor: use context.Variable");
 
-    /// <summary>A variable is set and removed through the variable type's events, then its own.</summary>
-    protected internal override global::app.type.item.@this? Level(int depth, global::app.actor.context.@this context) => depth switch
-    {
-        0 => context.App.variable.type,
-        1 => this,
-        _ => null,
-    };
-
     /// <summary>The variables the asker sees — its actor's memory.</summary>
     public static global::app.type.item.list.@this<@this>? Of(global::app.actor.context.@this context)
         => context.Variable.list;
@@ -92,6 +84,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// store takes while callers still hand it names.</summary>
     [global::app.LlmBuilder]
     public string Name => Text.Length >= 2 ? Text[1..^1] : Text;
+
+    /// <summary>A variable is the name it reads (a variable object is made anew at every set): two that name the same are
+    /// equal, as the memory compares names.</summary>
+    public override bool Equals(object? obj)
+        => obj is @this other && global::app.type.item.variable.list.@this.Comparer.Equals(Name, other.Name);
+
+    public override int GetHashCode() => global::app.type.item.variable.list.@this.Comparer.GetHashCode(Name);
 
     /// <summary>Runs the code: what the variable holds.</summary>
     public System.Threading.Tasks.ValueTask<global::app.data.@this> Start(actor.context.@this context)

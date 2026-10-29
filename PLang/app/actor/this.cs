@@ -44,6 +44,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// folders.</summary>
     internal role.@this Role { get; }
 
+    /// <summary>The events this actor bound (<c>%!app.event%</c> as it asks), and each item's moments for it. A snapshot
+    /// keeps the ones a program bound.</summary>
+    [global::app.Snapshot]
+    public global::app.@event.list.@this @event { get; }
+
     /// <summary>The key this actor's row for the setting at <paramref name="address"/> is kept under in the settings'
     /// store (<c>user!app.test.setting</c>).</summary>
     internal string Row(string address) => $"{Name.ToLowerInvariant()}!{address}";
@@ -144,6 +149,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             : CancellationTokenSource.CreateLinkedTokenSource(parentToken);
         Context = new context.@this(app, this, parentToken: _cts.Token);
         _channels = new global::app.channel.list.@this(app, this, console);
+        @event = new(this, app.type.list[typeof(global::app.@event.list.@this)]);
         // %MyIdentity% and %Identity% are not set here: the memory is born holding them (variable.list), computed from
         // whoever asks, so an actor born at any time has them at once and no set — nor anything bound to one — runs.
     }
@@ -201,7 +207,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     global::app.module.code.@this? global::app.origin.@this.Code => App.Code;
 
-    global::app.@event.list.@this? global::app.origin.@this.@event => App.@event;
+    IEnumerable<global::app.@event.@this> global::app.origin.@this.@event
+        => App.actor.list.Items().SelectMany(actor => actor.@event.Items());
 
     int global::app.origin.@this.Depth => App.Depth + 1;
 

@@ -27,12 +27,12 @@ public class SecurityFixTests
 
         // A binding whose handler throws the first time it fires
         var callCount = 0;
-        var fragile = _app.@event.Add(_app.type.list["step"]).Add("start")[global::app.@event.When.before].Add(side => new global::app.@event.code.@this(side, (_, result, _) =>
+        var fragile = _app.actor.list.User.@event.Add(new global::app.@event.code.@this(_app.type.list["step"], "start", global::app.@event.When.before, (_, result, _) =>
         {
             callCount++;
             if (callCount == 1) throw new InvalidOperationException("first call fails");
             return Task.FromResult(result);
-        }, _app.actor.list.User, global::app.@event.Scope.actor, global::app.@event.@this.Always));
+        }, _app.actor.list.User, global::app.@event.code.@this.Always));
 
         try { await fragile.Start(step, context.Ok(), context); }
         catch (InvalidOperationException) { }

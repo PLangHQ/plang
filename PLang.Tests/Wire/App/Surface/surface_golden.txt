@@ -211,7 +211,7 @@ class app.channel.setting.this : app.type.item.setting.this
   ctor(app.type.this type)
   static Internal : System.Boolean { get; }
 
-abstract class app.channel.this : app.type.item.this, System.IAsyncDisposable, System.IDisposable [PlangType]
+abstract class app.channel.this : app.type.item.this, System.IAsyncDisposable, System.IDisposable [Kinds, PlangType]
   Actor : app.actor.this { get; }
   Buffer : app.type.item.number.this { get; init; } [LlmBuilder]
   Channels : app.channel.list.this { get; }
@@ -233,7 +233,6 @@ abstract class app.channel.this : app.type.item.this, System.IAsyncDisposable, S
   protected Read(System.Byte[] raw, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   protected ResolveEncoding() : System.Text.Encoding
   protected override Clone() : app.type.item.this
-  protected override Level(System.Int32 depth, app.actor.context.this context) : app.type.item.this
   protected virtual Format(app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.kind.this>
   virtual AskAsync(app.module.output.ask action, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   virtual Available : System.Boolean { get; }
@@ -509,13 +508,16 @@ class app.event.code.this : app.event.this
 class app.event.inherited.this : app.event.this
   override Remove() : System.Void
 
-class app.event.list.this : app.type.item.this
+class app.event.list.this : app.type.item.this, app.type.item.setting.ISetting<app.event.setting.this>
   current(app.actor.context.this context) : app.data.this [LlmBuilder]
+  list : app.type.item.list.this<app.event.this> { get; } [LlmBuilder]
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
 
 class app.event.on.after : app.event.on.side
+  Start(app.type.item.this item, app.data.this result, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
 
 class app.event.on.before : app.event.on.side
+  Start(app.type.item.this item, app.actor.context.this context, app.data.this about = …) : System.Threading.Tasks.ValueTask<app.data.this>
 
 class app.event.on.empty : app.event.on.this
   override Item[System.String] : app.event.on.this { get; }
@@ -536,13 +538,8 @@ abstract class app.event.on.side : System.Collections.Generic.IEnumerable<app.ev
   Count : System.Int32 { get; }
   GetEnumerator() : System.Collections.Generic.IEnumerator<app.event.this>
   Item[System.Int32] : app.event.this { get; }
-  Start(app.type.item.this item, app.data.this result, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
 
 class app.event.on.this : app.type.item.this, app.type.item.ICreate<app.event.on.this> [PlangType]
-  After(app.type.item.this item, app.data.this result, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
-  Before(app.type.item.this item, app.actor.context.this context, app.data.this result = …) : System.Threading.Tasks.ValueTask<app.data.this>
-  Catch(app.type.item.this item, app.data.this failed, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
-  IsBound(app.type.item.this item, app.actor.context.this context) : System.Boolean
   Name : System.String { get; }
   Names : System.Collections.Generic.IEnumerable<System.String> { get; }
   NoEvent(System.String name) : app.error.this
@@ -569,13 +566,20 @@ class app.event.serializer.Snapshot : app.type.reader.ITypeReader
   View : app.View { get; }
   ctor()
 
+enum app.event.setting.Goal [Choice, PlangType]
+  static const all : app.event.setting.Goal
+  static const app : app.event.setting.Goal
+
+class app.event.setting.this : app.type.item.setting.this
+  Goal : app.type.item.choice.this<app.event.setting.Goal> { get; set; } [Out, Store]
+  ctor(app.type.this type)
+  static Internal : System.Boolean { get; }
+
 abstract class app.event.this : app.type.item.this, app.type.item.ICreate<app.event.this> [PlangType]
   Actor : app.actor.this { get; }
   Item : app.type.item.this { get; }
   Name : System.String { get; } [LlmBuilder]
-  Scope : app.event.Scope { get; }
   When : app.type.item.choice.this<app.event.When> { get; } [LlmBuilder]
-  override ToString() : System.String
   protected override Clone() : app.type.item.this
   protected override Type : app.type.this { get; }
   virtual Remove() : System.Void
@@ -984,7 +988,7 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.type.item.prop
   ctor(System.String absolutePath, System.String environment = …, app.Wiring wiring = …)
   data(app.actor.context.this context) : app.data.this [LlmBuilder]
   error : app.type.node.current.this<app.error.this, app.error.list.this> { get; } [LlmBuilder, Out]
-  event : app.event.list.this { get; } [LlmBuilder, Snapshot]
+  event(app.actor.context.this context) : app.event.list.this [LlmBuilder]
   filesystem : app.type.item.path.file.filesystem.this { get; } [LlmBuilder]
   goal : app.type.node.current.this<app.goal.this, app.goal.list.this> { get; } [LlmBuilder, Out]
   module : app.module.this { get; } [LlmBuilder, Out]
@@ -2794,12 +2798,10 @@ abstract class app.type.item.this : app.data.IBooleanResolvable, app.type.item.I
   Output(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   ctor()
   ctor(app.type.this type)
-  on : app.event.on.this { get; }
   protected NoField(System.String name, System.Collections.Generic.IEnumerable<System.String> known, app.actor.context.this context) : app.data.this
   protected virtual Clone() : app.type.item.this
   protected virtual Fields : System.Collections.Generic.IEnumerable<System.String> { get; }
   protected virtual IsKind(System.String name) : System.Boolean
-  protected virtual Level(System.Int32 depth, app.actor.context.this context) : app.type.item.this
   protected virtual Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   protected virtual Setting(app.data.this parent) : System.Threading.Tasks.ValueTask<app.data.this>
   protected virtual Type : app.type.this { get; }
@@ -3021,14 +3023,15 @@ class app.type.item.variable.this : app.type.item.this, app.type.item.ICreate<ap
   Use<TAs>(app.actor.context.this context, System.Func<TAs, System.Threading.Tasks.Task<app.data.this>> then) : System.Threading.Tasks.Task<app.data.this>
   ctor(System.String name, app.type.list.this types)
   override Cacheable : System.Boolean { get; }
+  override Equals(System.Object obj) : System.Boolean
   override Get(app.actor.context.this ctx) : System.Threading.Tasks.ValueTask<app.data.this>
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
+  override GetHashCode() : System.Int32
   override IsLeaf : System.Boolean { get; }
   override IsVariable : System.Boolean { get; }
   override ToString() : System.String
   override Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
   override Variable : System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> { get; }
-  protected override Level(System.Int32 depth, app.actor.context.this context) : app.type.item.this
   protected override Write(app.type.format.IWriter w) : System.Threading.Tasks.ValueTask
   static Convert(System.Object value, System.String kind, app.actor.context.this context) : app.data.this
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.type.item.variable.this
@@ -3524,38 +3527,6 @@ type app.channel.list
 
 type app.channel.setting
 
-type app.channel.type.console
-  .buffer : number
-  .mime : text
-
-type app.channel.type.file
-  .buffer : number
-  .mime : text
-
-type app.channel.type.goal
-  .buffer : number
-  .mime : text
-
-type app.channel.type.message
-  .buffer : number
-  .mime : text
-
-type app.channel.type.noop
-  .buffer : number
-  .mime : text
-
-type app.channel.type.session
-  .buffer : number
-  .mime : text
-
-type app.channel.type.stream
-  .buffer : number
-  .mime : text
-
-type app.channel.type.test
-  .buffer : number
-  .mime : text
-
 type app.event.call
   .name : text
   .when : choice<when>
@@ -3574,19 +3545,23 @@ type app.event.inherited
 
 type app.event.list
   .current : item
+  .list : list<event>
+
+type app.event.setting
 
 type app.goal.list.setting
 
-type app.goal.step.action.composed
-  .module : module
+type app.goal.pattern
   .name : text
-  .property : list<clr>
-  .step : step
-  .return : type
-  .description : file
-  .note : app.type.item.note
-  .examples : file
-  .guide : file
+  .comment : text
+  .step : list<step>
+  .child : list<goal>
+  .visibility : choice<visibility>
+  .path : path
+  .warning : list<warning>
+  .cache : goal
+  .isCached : bool
+  .property : app.type.item.property.list
 
 type app.module.archive.setting
 
@@ -3684,17 +3659,6 @@ type channel
   .mime : text
 
 type choice
-
-type clause
-  .module : module
-  .name : text
-  .property : list<clr>
-  .step : step
-  .return : type
-  .description : file
-  .note : app.type.item.note
-  .examples : file
-  .guide : file
 
 type clipboard
 
@@ -3816,17 +3780,6 @@ type input
 
 type item
 
-type keep
-  .module : module
-  .name : text
-  .property : list<clr>
-  .step : step
-  .return : type
-  .description : file
-  .note : app.type.item.note
-  .examples : file
-  .guide : file
-
 type key
   .list : list<text>
 
@@ -3841,17 +3794,6 @@ type list
   .last : item
   .random : item
   .all(setting: dict) : list
-
-type loop
-  .module : module
-  .name : text
-  .property : list<clr>
-  .step : step
-  .return : type
-  .description : file
-  .note : app.type.item.note
-  .examples : file
-  .guide : file
 
 type message
   .role : text
@@ -3901,7 +3843,7 @@ type process
   .program : text
   .id : number
   .running : bool
-  .pipe : app.channel.type.stream
+  .pipe : channel<stream>
 
 type progress
   .received : size
@@ -4486,7 +4428,6 @@ action on.event
   Event : on required
   When : choice<when> required
   Action : action required
-  Scope : choice<scope>
 
 action on.input
   Action : action required

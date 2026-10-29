@@ -15,9 +15,9 @@ public class AppEventTests
         var ctx = app.actor.list.User.Context;
         var goal = new global::app.goal.@this(app.type.list) { Name = "Checkout",
             Path = global::app.type.item.path.@this.Resolve("/Checkout.goal", ctx) };
-        var fired = app.@event.Add(app.goal.type).Add("start").before.Add(side => new global::app.@event.code.@this(side,
-            (_, result, _) => System.Threading.Tasks.Task.FromResult(result), ctx.Actor!, global::app.@event.Scope.actor,
-            global::app.@event.@this.Always));
+        var fired = ctx.Actor!.@event.Add(new global::app.@event.code.@this(app.goal.type, "start", global::app.@event.When.before,
+            (_, result, _) => System.Threading.Tasks.Task.FromResult(result), ctx.Actor!,
+            global::app.@event.code.@this.Always));
         // as the event's call scopes it: the event, what it ran for, the value so far — on the frame it came in
         var running = new global::app.data.@this("!event", fired, context: ctx);
         running.Properties.Set("item", goal);

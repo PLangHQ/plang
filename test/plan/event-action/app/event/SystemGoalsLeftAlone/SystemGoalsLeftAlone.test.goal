@@ -1,0 +1,20 @@
+/ Inside plang's own goals no event runs while event.setting.goal is app (the default): reading %!error% a thousand
+/ times shows plang's error goal each time, and "before each goal" still runs Count once, for Loop alone. With
+/ event.setting.goal all, it runs for each of them too.
+Start
+- set %count% = 0
+- before each goal, call Count
+- call Loop
+- assert %count% equals 1, "under app, plang's own goals run no events"
+
+/ Reads %!error% a thousand times.
+Loop
+- foreach %!range.1.1000%, call Read
+
+/ One read of %!error%.
+Read
+- set %seen% = %!error%
+
+/ The event's call.
+Count
+- set %count% = %count% + 1

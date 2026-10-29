@@ -16,22 +16,24 @@ public class DeclaredEventsTests : System.IAsyncDisposable
     {
         var window = new Window();
         global::app.data.@this? heard = null;
-        _app.@event.Add(window).Add("closed")[global::app.@event.When.after].Add(side => new global::app.@event.code.@this(side, (_, data, _) => { heard = data; return System.Threading.Tasks.Task.FromResult(data); }, _app.actor.list.User, global::app.@event.Scope.actor, global::app.@event.@this.Always));
+        _app.actor.list.User.@event.Add(new global::app.@event.code.@this(window, "closed", global::app.@event.When.after, (_, data, _) => { heard = data; return System.Threading.Tasks.Task.FromResult(data); }, _app.actor.list.User, global::app.@event.code.@this.Always));
 
-        await _app.@event.Add(window).Add("closed").After(window, Ctx.Ok((global::app.type.item.text.@this)"{\"window\":\"closed\",\"id\":3}"), Ctx);
+        var on = Ctx.Actor!.@event[window];
+        await on["closed"]!.after.Start(window, Ctx.Ok((global::app.type.item.text.@this)"{\"window\":\"closed\",\"id\":3}"), Ctx);
 
         await Assert.That(heard).IsNotNull();
-        await Assert.That(_app.@event.Add(window).Names).Contains("closed");
-        await Assert.That(_app.@event.Add(window).Names).Contains("create");
+        await Assert.That(on.Names).Contains("closed");
+        await Assert.That(on.Names).Contains("create");
     }
 
-    // nothing bound on a window yet: its declared events are still there to raise, shared and closed to bindings
+    // nothing bound on a window yet: its declared moments are still there to raise
     [Test] public async Task AnUnboundWindow_StillAnswersItsDeclaredEvents()
     {
         var window = new Window();
+        var on = Ctx.Actor!.@event[window];
 
-        await Assert.That(window.on["opened"]).IsNotNull();
-        var raised = await window.on["opened"]!.After(window, Ctx.Ok(), Ctx);
+        await Assert.That(on["opened"]).IsNotNull();
+        var raised = await on["opened"]!.after.Start(window, Ctx.Ok(), Ctx);
         await raised.IsSuccess();
     }
 
@@ -55,9 +57,9 @@ public class DeclaredEventsTests : System.IAsyncDisposable
         var text = (global::app.type.item.text.@this)"plain";
         var window = new Window();
 
-        await Assert.That(text.on.Names).DoesNotContain("click");
-        await Assert.That(text.on["closed"]).IsNull();
-        await Assert.That(window.on["click"]).IsNull();
+        await Assert.That(Ctx.Actor!.@event[text].Names).DoesNotContain("click");
+        await Assert.That(Ctx.Actor!.@event[text]["closed"]).IsNull();
+        await Assert.That(Ctx.Actor!.@event[window]["click"]).IsNull();
 
         var data = new global::app.data.@this("w", window, context: Ctx);
         var refused = await (await data.Get("on")).Get("click");

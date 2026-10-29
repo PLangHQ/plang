@@ -17,15 +17,44 @@ public sealed class before : side
 
     internal override When When => When.before;
 
-    private protected override async System.Threading.Tasks.ValueTask<global::app.data.@this> Run(global::app.@event.@this[] events,
-        global::app.type.item.@this item, global::app.data.@this result, global::app.actor.context.@this context)
+    /// <summary>Starts each event, in the order bound, for <paramref name="item"/>, handed <paramref name="about"/> (what
+    /// the moment is about to do: a set's value, a load's .pr), else a plain success. A failure or a Handled answer stops
+    /// it and is the answer; else <paramref name="about"/> passes on. Null when nothing is bound — nothing said, nothing
+    /// made.</summary>
+    public System.Threading.Tasks.ValueTask<global::app.data.@this?> Start(global::app.type.item.@this item,
+        global::app.actor.context.@this context, global::app.data.@this? about = null)
     {
+        var events = Events;
+        return events.Length == 0 ? default : Run(events, item, context, about);
+    }
+
+    private async System.Threading.Tasks.ValueTask<global::app.data.@this?> Run(global::app.@event.@this[] events,
+        global::app.type.item.@this item, global::app.actor.context.@this context, global::app.data.@this? about)
+    {
+        events = await Running(events, context);
+        if (events.Length == 0) return null;
+        var result = about ?? context.Ok();
         foreach (var @event in events)
         {
-            if (!@event.For(item, context)) continue;
             var answer = await @event.Start(item, result, context);
             if (!answer.Success || answer.Handled) return answer;
         }
         return result;
+    }
+
+    /// <summary>The failure <paramref name="failed"/> handed to each event in the order bound (an error's before): the
+    /// first that takes it answers — anything but the failure handed back (a retry's result, a recovery's, an ignore, or a
+    /// new failure) — and the rest never see it. Null when none takes it.</summary>
+    internal async System.Threading.Tasks.ValueTask<global::app.data.@this?> Catch(global::app.type.item.@this item,
+        global::app.data.@this failed, global::app.actor.context.@this context)
+    {
+        var events = Events;
+        if (events.Length == 0) return null;
+        foreach (var @event in await Running(events, context))
+        {
+            var answer = await @event.Start(item, failed, context);
+            if (answer != failed) return answer;
+        }
+        return null;
     }
 }

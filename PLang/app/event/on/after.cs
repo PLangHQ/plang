@@ -17,12 +17,20 @@ public sealed class after : side
 
     internal override When When => When.after;
 
-    private protected override async System.Threading.Tasks.ValueTask<global::app.data.@this> Run(global::app.@event.@this[] events,
+    /// <summary>Starts each event, in the order bound, for <paramref name="item"/> on <paramref name="result"/> as it
+    /// stands; answers the result. With nothing bound it answers <paramref name="result"/> as is, nothing made.</summary>
+    public System.Threading.Tasks.ValueTask<global::app.data.@this> Start(global::app.type.item.@this item,
+        global::app.data.@this result, global::app.actor.context.@this context)
+    {
+        var events = Events;
+        return events.Length == 0 ? new(result) : Run(events, item, result, context);
+    }
+
+    private async System.Threading.Tasks.ValueTask<global::app.data.@this> Run(global::app.@event.@this[] events,
         global::app.type.item.@this item, global::app.data.@this result, global::app.actor.context.@this context)
     {
-        foreach (var @event in events)
+        foreach (var @event in await Running(events, context))
         {
-            if (!@event.For(item, context)) continue;
             var answer = await @event.Start(item, result, context);
             if (!answer.Success) result = answer;
         }

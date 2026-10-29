@@ -1,6 +1,5 @@
 using app.@event;
 using When = global::app.@event.When;
-using Scope = global::app.@event.Scope;
 
 namespace PLang.Tests.App.ChannelsTests;
 
@@ -25,16 +24,18 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
 
     private void Bind(global::app.type.item.@this on, string @event, When when,
         System.Func<global::app.type.item.@this, Data, global::app.actor.context.@this, Task<Data>> handler)
-        => app.@event.Add(on).Add(@event)![when].Add(side => new global::app.@event.code.@this(side, handler, app.actor.list.User, Scope.actor, global::app.@event.@this.Always));
+        => app.actor.list.User.@event.Add(new global::app.@event.code.@this(on, @event, when, handler, app.actor.list.User, global::app.@event.code.@this.Always));
 
     [Test]
     public async Task AChannel_IsAnItem_WithItsOwnEvents()
     {
         var ch = StreamChannel.Memory(app.actor.list.User.Channel, "c");
-        await Assert.That(ch.on.write.before.Count).IsEqualTo(0);
+        await Assert.That(app.actor.list.User.@event[ch].write.before.Count).IsEqualTo(0);
         await Assert.That(ReferenceEquals(ch.Clone(), ch)).IsTrue();
         await Assert.That(app.type.list["channel"].Namespace).IsEqualTo("app.channel");
-        await Assert.That(app.type.list["app.channel.type.stream"].Name).IsEqualTo("app.channel.type.stream");
+        // a stream channel is a kind of channel: {channel, stream}
+        await Assert.That(ch.Type.Name).IsEqualTo("channel");
+        await Assert.That(ch.Type.kind.Name).IsEqualTo("stream");
     }
 
     [Test]
@@ -228,7 +229,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task TheChannelTypesWrite_FiresForEveryChannel_UserAndServiceAlike()
+    public async Task TheChannelTypesWrite_RunsForTheBindingActorsChannels_NotAServicesOwn()
     {
         await using var app = new global::app.@this("/tmp/s8-cross", global::PLang.Tests.Parent.Actor).Testing();
         var userLogger = StreamChannel.Memory(app.actor.list.User.Channel, "logger");
@@ -237,12 +238,13 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
         var serviceLogger = StreamChannel.Memory(svc.Channels, "logger");
         svc.Channels.Register(serviceLogger);
         var hits = 0;
-        app.@event.Add(app.type.list["channel"]).Add("write")[When.before].Add(side => new global::app.@event.code.@this(side, (_, _, ctx) => { Interlocked.Increment(ref hits); return Task.FromResult(ctx.Ok()); }, app.actor.list.User, Scope.app, global::app.@event.@this.Always));
+        app.actor.list.User.@event.Add(new global::app.@event.code.@this(app.type.list["channel"], "write", global::app.@event.When.before, (_, _, ctx) => { Interlocked.Increment(ref hits); return Task.FromResult(ctx.Ok()); }, app.actor.list.User, global::app.@event.code.@this.Always));
 
         await userLogger.WriteAsync(app.Ok("a"));
         await serviceLogger.WriteAsync(app.Ok("b"));
 
-        await Assert.That(hits).IsEqualTo(2);
+        // the user's event runs for the user's channel; the service is its own actor, with its own events
+        await Assert.That(hits).IsEqualTo(1);
     }
 
     [Test]
@@ -250,7 +252,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     {
         var ch = Registered("c");
         var fired = false;
-        app.@event.Add(app.goal.type).Add("start")[When.before].Add(side => new global::app.@event.code.@this(side, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); }, app.actor.list.User, Scope.app, global::app.@event.@this.Always));
+        app.actor.list.User.@event.Add(new global::app.@event.code.@this(app.goal.type, "start", global::app.@event.When.before, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); }, app.actor.list.User, global::app.@event.code.@this.Always));
 
         await ch.WriteAsync(app.Ok("x"));
 

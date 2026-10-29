@@ -223,11 +223,14 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         => await Member(parent, key) ?? On(parent, key) ?? await Setting(parent, key)
            ?? (this as property.IOwner)?.property[key] ?? parent.Context.NotFound(key);
 
-    // This value's events when the key is `on` — the event door, read by name though no member lists it.
-    private global::app.data.@this? On(global::app.data.@this parent, string key)
-        => string.Equals(key, "on", System.StringComparison.OrdinalIgnoreCase)
-            ? parent.Context.App.type.list.Kind(on.GetType()).Data(parent.Name, on, parent, parent.Context)
-            : null;
+    // This value's moments for the asker's actor when the key is `on` — the event door, read by name though no member
+    // lists it.
+    private protected global::app.data.@this? On(global::app.data.@this parent, string key)
+    {
+        if (!string.Equals(key, "on", System.StringComparison.OrdinalIgnoreCase)) return null;
+        var on = parent.Context.Actor!.@event[this];
+        return parent.Context.App.type.list.Kind(on.GetType()).Data(parent.Name, on, parent, parent.Context);
+    }
 
 
     /// <summary>The member of this value's own plang surface named <paramref name="key"/> — one its type lists (a list's
@@ -394,6 +397,19 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     public bool Is(global::app.type.@this? other) => Type.Is(other) || history.Has(other);
 
+    /// <summary>Whether an event bound on this item runs for <paramref name="item"/>: itself, by its own equality. A kind
+    /// that stands for more answers for them (a type, each item of it; a module, its actions; a pattern, the goals it
+    /// names).</summary>
+    internal virtual bool Has(@this item) => Equals(this, item);
+
+    /// <summary>Whether this item stands for many (each item of a type, each goal a pattern names, each action of a
+    /// module): an event bound on it is a general one, quiet inside plang's own goals under event.setting.goal app. An item
+    /// on its own is named, so its events run wherever it runs.</summary>
+    internal virtual bool IsMany => false;
+
+    /// <summary>Is this value named by <paramref name="pattern"/>, a pattern of goals? Only a goal is, by its path.</summary>
+    internal virtual bool Is(global::app.goal.pattern.@this pattern) => false;
+
     /// <summary>
     /// Is this value a <paramref name="name"/> — the word a program writes after <c>is</c>? A type's name asks the type
     /// (<see cref="Is(global::app.type.@this?)"/>), so a type wins over a kind by the same word; any other word is a
@@ -458,32 +474,8 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         return deep;
     }
 
-    // its events: its class's shared ones, unless it was born with its own (an action, which a clause binds on)
+    // an action's own moments, holding its clauses for every actor (on.error, on.cache, on.timeout); a copy holds none
     private protected global::app.@event.on.@this? _on;
-
-    /// <summary>This value's events (<c>%x.on.start%</c>) — its class's shared ones (the core's, and its type's declared
-    /// ones), closed to bindings, unless it was born with its own. Not written with the value, and not taught as one of
-    /// its properties.</summary>
-    [System.Text.Json.Serialization.JsonIgnore]
-    public global::app.@event.on.@this on => _on ??= global::app.@event.on.empty.Of(GetType());
-
-    /// <summary>The item whose events this one's fire through at <paramref name="depth"/>, outermost first — the
-    /// general wrapping the specific, the last being the item itself; null past the last. An item on its own has
-    /// one level, itself.</summary>
-    protected internal virtual @this? Level(int depth, global::app.actor.context.@this context) => depth == 0 ? this : null;
-
-    /// <summary>Whether anything is bound on this item's event <paramref name="event"/>, on the side <paramref name="when"/>,
-    /// at this item alone — its own events or what the asker's app bound on it: a door that would have to make what it
-    /// hands a binding asks first.</summary>
-    internal bool IsBoundAt(string @event, global::app.@event.When when, global::app.actor.context.@this context)
-        => on[@event] is { } named && named.IsBoundAt(this, context, when);
-
-    /// <summary>What is bound before this item's event <paramref name="event"/>, at this item alone, started on
-    /// <paramref name="about"/> — something other than one of its own values (a load's .pr, before there is a goal);
-    /// null when nothing is bound there.</summary>
-    internal System.Threading.Tasks.ValueTask<global::app.data.@this?> Before(string @event, @this about,
-        global::app.actor.context.@this context, global::app.data.@this result)
-        => on[@event] is { } named ? named.BeforeAt(this, about, context, result) : default;
 
     /// <summary>The variables this value holds, each once: a template's <c>%…%</c>, a container's
     /// entries', a variable itself. Read-only, born with the value; empty when none.</summary>

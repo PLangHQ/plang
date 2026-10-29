@@ -1,30 +1,32 @@
 # coder — event-action
 
 ## Version
-v1: the plan placed, the pushback ruled (architect 20–24), stage 1 built.
+v2: stage 2 built (rulings 41–46). v1 was stage 1 (ec64ee712, 2c7b8f78d).
 
 ## What this is
-What runs when an event fires used to be a "binding", and each of an item's moments (start, load, error …) was its own class. Decisions 4 and 13 make it one word and one shape: what is bound is an **event** (kinds `call`, `clause`, `code`, `inherited`), and an item's moments are one class, **`on`**: `before`, `after`, and each named moment itself an `on`. Stage 1 is the word and the folders; stage 2 moves the events onto the actor and makes the per-item lists on first run.
+What runs when something happens is an **event**, held by the **actor** that bound it. Before, every start walked an item's "levels" (type, module, catalog action, itself) and asked two sources at each. Now each goal, step and catalog action has a list per actor, loaded on its first run with every event that applies, and an event bound later joins the lists already loaded. The thing an event is bound on answers which items it runs for (`Has`).
 
-## What was done (stage 1)
-- `PLang/app/event/`: `binding/**` is gone. `this.cs` is the bound event (abstract: `Name`, `When`, `Item`, `Actor`, `Scope`, `Start`, `Remove`, its snapshot key `{action, n}`, `Clone() => this`, type always `event`). Kinds: `call/` (on.event's goal call; `%!event%` is the event itself, with `!item` and `!data`), `clause/`, `code/` (C# handlers: debug, test timing, coverage), `inherited/` (runs the maker's as the event running here).
-- `event/on/`: `this.cs` is one `on` (`[PlangType("on")]`), with the walk (`Before`, `After`, `IsBound`, `Catch`) moved off the deleted moment classes; `side.cs` (the base of `before.cs`/`after.cs`); `empty.cs` (the shared, closed moments, still here until stage 2); `serializer/Reader.cs` (refuses a written moment) and `serializer/Snapshot.cs` (reads an item's moments back).
-- `event/list/` (was `on/list/`): the app's events, today's content; `Items()` and `Of(action)` number an event for its key. `event/serializer/Snapshot.cs` reads `{action, n}`.
-- `module/on/event.cs` answers an `event`, and its `Event` is `data<on>`; `module/on/unbind.cs` takes `Event`.
-- Error keys: `EventNoAction`, `EventNoGoalCall`, `SnapshotEventVariable`, `EventNotYours`.
-- The snapshot dedupe (architect 22): a saved event is compared only against events inherited at birth, one for one. Pins in `SavedBindingsTests`: `OneStep_BoundTwiceOnOneMoment_ComesBackAsTwo`, `OneStep_BindingTwoMoments_ComesBackWithBoth`, `AMakersOne_AndASavesTwo_ComeBackAsTwo`, plus the existing `TheSameBinding_TakenInAndReadBack_FiresOnce`.
-- Teaching `os/system/modules/on/{event.description,event.notes,event.examples,unbind.description,module.description}.md`: binding → event, `!result` → `!data` (a failure is `%!error%`). `loop/*` checked: its "binding" is a variable's, untouched.
-- Re-pinned: `surface_golden.txt` (decisions 4, 13; architect 20–23), `pick_golden.json` (deterministic: the recorded answers are frozen, and only the rename and teaching moved).
-- Plan placed at `test/plan/event-action/{start.md,start.goal}`; the stage 1 test `module/on/UnbindTakesTheEvent` is written, not built (the builder needs the TypeSafe key: plang-builder builds it).
+## What was done (stage 2)
+- `PLang/app/event/list/this.cs`: the actor's events (`actor.@event`, `%!app.event%` as the asker's): bind order, `this[item]` (pull: `Load` takes every event whose `Item.Has(item)`), `Add(event)` (push into loaded lists), `this[name]`/`Add(name, event)` for variable names (a name's list loads on its first set only when an event is bound on that name), `Remove`, `Inherit`, `Skips(context)`, the setting owner (`ISetting<event.setting>`), the snapshot member `on` and `Read`. The per-item lists are a `ConcurrentDictionary` owned by the actor (43: a weak table keyed by shared items kept sub apps alive).
+- `event/this.cs`: an event is born with `Item`, `Name`, `When`, `Actor`; `Scope`, `For`, `ToString` gone. Kinds: `call`, `clause`, `code` (holds the item filter), `inherited`.
+- `event/on/`: `on` loaded by an actor's list knows that list (`on.list`); `side` runs with no await when empty; inside plang's own goals under `event.setting.goal=app` the events bound on many are left out (`IsMany`), the ones on a named item run, an action's own clauses always run.
+- `type/item/this.cs`: NEW `Has(item)`, `Is(pattern)`, `IsMany` (approved by Ingi, 39/42/45); `item.on`, `Level`, `IsBoundAt`, `Before` gone; the `on` door answers the asker's actor's list. `type/this.cs`, `module/this.cs`, `goal/pattern/this.cs` override `Has`/`IsMany`; `goal/this.cs` overrides `Is(pattern)`; variable equality by name.
+- `goal/pattern/this.cs` (NEW): `%!app.goal["/api/*"]%`, made by `goal.list.Find` for a wildcard name; `Start` answers `NotAGoal`. `goal` unsealed, `Start` virtual. `type/item/path/Glob.cs`: the one glob matcher, moved out of permission.
+- `event/setting/this.cs` (NEW): `goal: app | all` (`event.goal` choice).
+- `[Kinds]` on action (keep, loop, clause, composed are kinds of action) and on channel (stream, file, noop … kinds of channel).
+- Fire sites one line per side: goal, step, action (its catalog action's list, its clauses around it), app start, goal load, type create, channel write/read/ask, screen element click, window events, variable set/remove.
+- Teaching: event.notes gains the pattern line. Re-pinned: surface, pick (read: the walk/Scope gone, the setting, the kinds, the pattern type).
+- Tests: `Runtime/App/Events/ListTests.cs` (8), `Data/App/VariablesTests/VariableEventsTests.cs` (4, the tester's), the composed-in-a-system-goal pin, OnEventTests' named-vs-each pins; the event test files migrated to the actor's lists. 7 plang tests written under `test/plan/event-action/app/event/` (not built: the builder needs the decider key).
 
 ## Next
-- plang-builder: build `UnbindTakesTheEvent`, and rebuild the 14 `.pr` files whose on.event `Event` still records type `event` (they run, but the catalog says `on` now).
-- Stage 2: the actor's events, the door `context.Actor.@event[item]` (a `ConditionalWeakTable`, a composed action asking with its catalog action), `%!x.on%` through item.Get, the variable name map (architect 24, the tester's option 3). Before code, the architect wants the name and body of the type-bound event's "does it take this item" member.
+- plang-builder: build the 7 new plang tests and rebuild the 12 on.event tests whose `.pr` froze a default for the removed `scope` (they're stale until rebuilt).
+- Stage 3: clauses in the list at their places (11).
 
 ## Code example
 ```csharp
-// on.event: the moment reached by the path, the event added to its side, answered
-var on = Context.App.@event.Add(item).Add(moment.Name);
-return Context.Ok<global::app.@event.@this>(on[when.Value].Add(side =>
-    new global::app.@event.call.@this(side, __action!, Context.Actor!, scope.Value)));
+// a goal's start: its list for the running actor, one line per side
+var on = context.Actor!.@event[this];
+var answer = await on.before.Start(this, context);
+var result = answer is { Success: false } or { Handled: true } ? answer : await Enter(context);
+return await on.after.Start(this, result, context);
 ```

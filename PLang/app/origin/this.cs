@@ -39,9 +39,9 @@ internal interface @this
     /// actor's app's, so a provider its app holds — one registered in-process too — is found in the sub app.</summary>
     global::app.module.code.@this? Code { get; }
 
-    /// <summary>The events the app is born holding: the code, none; an actor's app's, each taken in by the sub app as its
-    /// own.</summary>
-    global::app.@event.list.@this? @event { get; }
+    /// <summary>The events the app's actors are born holding: the code, none; an actor's app's actors', each taken in by
+    /// the sub app's actor of its role as its own.</summary>
+    IEnumerable<global::app.@event.@this> @event { get; }
 
     /// <summary>The goal at <paramref name="source"/> as <paramref name="app"/> takes it from what it is made from —
     /// the code has none; an actor's app's, while <paramref name="app"/> holds no code of its own and shares its folder.

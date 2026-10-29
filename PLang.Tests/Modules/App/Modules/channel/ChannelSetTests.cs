@@ -98,7 +98,8 @@ public class ChannelSetTests
     public async Task SettingsWithoutTheirGoal_AreRefused_AsGoalChannelIncomplete()
     {
         var ctx = _app.actor.list.User.Context;
-        var channel = ctx.App.type.list[new global::app.type.@this(typeof(global::app.channel.type.goal.@this)), ctx];
+        // the goal channel's type as channel.set asks for it: a kind of channel, {channel, goal}
+        var channel = ctx.App.type.list[typeof(global::app.channel.type.goal.@this)];
 
         var born = await channel.Create(ctx.Dict().Set("Name", "logger"), ctx);
 

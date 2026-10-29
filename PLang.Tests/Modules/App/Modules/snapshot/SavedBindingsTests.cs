@@ -62,9 +62,9 @@ public class SavedBindingsTests
 
         var text = await sub.Snapshot(context).Saved().Text(context);
 
-        await Assert.That(sub.@event[sub.type.list["goal"]]?.start.before.Count).IsEqualTo(1);
+        await Assert.That(sub.actor.list.User.@event[sub.type.list["goal"]]?.start.before.Count).IsEqualTo(1);
         await Assert.That(text).DoesNotContain("\"before\"");
-        await Assert.That(sub.@event.list.Items(context).Count()).IsEqualTo(0);
+        await Assert.That(sub.actor.list.User.@event.Items().Count(@event => @event.IsSaved)).IsEqualTo(0);
     }
 
     // a binding calls the goal it names as seen from the goal its step sits in (/a/G names /a/Log), wherever the event
@@ -124,7 +124,7 @@ public class SavedBindingsTests
         var into = fresh.actor.list.User.Context;
         await fresh.Restore(snapshot, into);
 
-        await Assert.That(fresh.@event[fresh.type.list["goal"]]?.start.before.Count).IsEqualTo(1);
+        await Assert.That(fresh.actor.list.User.@event[fresh.type.list["goal"]]?.start.before.Count).IsEqualTo(1);
         await (await fresh.goal.list.Items().OfType<Goal>().First(goal => goal.Name == "Inner").Start(into)).IsSuccess();
         await Assert.That(await into.Variable.GetValue("logged")).IsEqualTo("yes");
     }
@@ -187,7 +187,7 @@ public class SavedBindingsTests
         Programs(fresh, "%!app.on.start%", null);
         await fresh.Restore(snapshot, fresh.actor.list.User.Context);
 
-        await Assert.That(fresh.@event[fresh]?.start.before.Count).IsEqualTo(1);
+        await Assert.That(fresh.actor.list.User.@event[fresh]?.start.before.Count).IsEqualTo(1);
     }
 
     // a cold app, its settings on disk and not yet read: the snapshot's read loads the app's name before it reads what
@@ -204,7 +204,7 @@ public class SavedBindingsTests
         Programs(cold, "%!app.on.start%", null);
         await cold.Restore(snapshot, cold.actor.list.User.Context);
 
-        await Assert.That(cold.@event[cold]?.start.before.Count).IsEqualTo(1);
+        await Assert.That(cold.actor.list.User.@event[cold]?.start.before.Count).IsEqualTo(1);
     }
 
     // a module's own action (its catalog element) is written as what finds it, its module and name, and read back as it
@@ -220,7 +220,7 @@ public class SavedBindingsTests
         Programs(fresh, "%!app.module.file.read.on.start%", null);
         await fresh.Restore(snapshot, fresh.actor.list.User.Context);
 
-        await Assert.That(fresh.@event[fresh.Module("file")["read"]!]?.start.before.Count).IsEqualTo(1);
+        await Assert.That(fresh.actor.list.User.@event[fresh.Module("file")["read"]!]?.start.before.Count).IsEqualTo(1);
     }
 
     [Test]
@@ -229,14 +229,14 @@ public class SavedBindingsTests
         var root = Root();
         await using var app = App(root);
         var user = app.actor.list.User;
-        app.@event.Add(app.type.list["goal"]).Add("start").before.Add(side => new global::app.@event.code.@this(side,
-            (_, _, ctx) => Task.FromResult(ctx.Ok()), user, global::app.@event.Scope.actor, global::app.@event.@this.Always));
+        user.@event.Add(new global::app.@event.code.@this(app.type.list["goal"], "start", global::app.@event.When.before,
+            (_, _, ctx) => Task.FromResult(ctx.Ok()), user, global::app.@event.code.@this.Always));
         var snapshot = await app.Snapshot(user.Context).Saved();
 
         await using var fresh = App(root);
         await fresh.Restore(snapshot, fresh.actor.list.User.Context);
 
-        await Assert.That(fresh.@event[fresh.type.list["goal"]]).IsNull();
+        await Assert.That(fresh.actor.list.User.@event.Items()).IsEmpty();
     }
 
     [Test]
@@ -336,7 +336,7 @@ public class SavedBindingsTests
         Programs(fresh, "%!app.type.goal.on.start%", null);
         await fresh.Restore(snapshot, fresh.actor.list.User.Context);
 
-        await Assert.That(fresh.@event[fresh.type.list["goal"]]?.start.before.Count).IsEqualTo(2);
+        await Assert.That(fresh.actor.list.User.@event[fresh.type.list["goal"]]?.start.before.Count).IsEqualTo(2);
     }
 
     // one step binds two moments ("before each goal starts and loads, call Log"): its two on.event actions made one event
@@ -359,7 +359,7 @@ public class SavedBindingsTests
         TwoMoments(fresh);
         await fresh.Restore(snapshot, fresh.actor.list.User.Context);
 
-        var on = fresh.@event[fresh.type.list["goal"]];
+        var on = fresh.actor.list.User.@event[fresh.type.list["goal"]];
         await Assert.That(on?.start.before.Count).IsEqualTo(1);
         await Assert.That(on?.load.before.Count).IsEqualTo(1);
     }
@@ -391,12 +391,12 @@ public class SavedBindingsTests
         await Bind(app, bound);
         await Bind(app, bound);
         var snapshot = await app.Snapshot(context).Saved();
-        app.@event[app.type.list["goal"]]!.start.before[1].Remove();
+        app.actor.list.User.@event[app.type.list["goal"]]!.start.before[1].Remove();
 
         await using var sub = new global::app.@this(root, app.actor.list.User);
         await sub.Restore(snapshot, sub.actor.list.User.Context);
 
-        var before = sub.@event[sub.type.list["goal"]]!.start.before;
+        var before = sub.actor.list.User.@event[sub.type.list["goal"]]!.start.before;
         await Assert.That(before.Count).IsEqualTo(2);
         await Assert.That(before.OfType<global::app.@event.inherited.@this>().Count()).IsEqualTo(1);
     }

@@ -81,9 +81,16 @@ public partial class @this
     protected @this(global::app.type.list.@this types, global::app.type.@this type) : base(type)
     {
         Child = new(types[typeof(global::app.goal.step.list.@this)]);
-        // born with its own events: a clause its step reads after it binds on them
+        // born with its own moments: a clause its step reads after it binds on them
         _on = new global::app.@event.on.@this(this);
     }
+
+    // its own moments, holding its clauses; a copy holds none, so its class's shared, closed ones
+    private global::app.@event.on.@this Clauses => _on ?? global::app.@event.on.empty.Of(GetType());
+
+    // what an actor's events hold this action's moments under: its catalog action's, the program's, a composed one's
+    // and the catalog element's alike
+    private @this Catalog => Module[Name] ?? this;
 
     /// <summary>
     /// The action a C#-composed <paramref name="seed"/> is — an operation one owner composes from another's
@@ -154,25 +161,8 @@ public partial class @this
     /// </summary>
     public global::app.type.property.@this? this[string name] => Property[name];
 
-    /// <summary>An action starts through four levels, the general wrapping the specific: the action type's
-    /// events, its module's, its catalog action's (when it is another object than this one), its own. An action in one
-    /// of plang's own goals is none of the app's, so it starts through its own events alone.</summary>
-    protected internal override global::app.type.item.@this? Level(int depth, actor.context.@this context)
-    {
-        if (Step?.Goal is { IsSystem: true }) return depth == 0 ? this : null;
-        var catalog = Module[Name] is { } action && !ReferenceEquals(action, this) ? action : null;
-        return depth switch
-        {
-            0 => context.App.action,
-            1 => Module,
-            2 => catalog ?? this,
-            3 => catalog != null ? this : null,
-            _ => null,
-        };
-    }
-
     /// <summary>
-    /// Starts this action through its <c>on.start</c> (<see cref="Level"/>): what is bound before it, then its
+    /// Starts this action through its start: its own clauses and what the running actor bound before it, then its
     /// dispatch, then what is bound after it. A before that fails or cancels is the result; every after still
     /// runs on it.
     /// Context travels as parameter — actions are shared objects, not per-request.
@@ -202,7 +192,10 @@ public partial class @this
         // The error outcome — after the attempt's own after-start, so a cache stores only the real work and a
         // recovery runs outside the attempt's deadline. The first clause bound on it that takes the failure
         // answers (a retry, a recovery, an ignore); a failure no clause takes stands.
-        if (!data.Success) data = await on.error.Catch(this, data, context);
+        if (!data.Success)
+            data = await Clauses.error.before.Catch(this, data, context)
+                ?? await context.Actor!.@event[Catalog].error.before.Catch(this, data, context)
+                ?? data;
 
         // %!data% is the last action's result, as its attempt settled it.
         if (data.Success)
@@ -218,7 +211,11 @@ public partial class @this
     /// </summary>
     internal async Task<global::app.data.@this> Attempt(actor.context.@this context)
     {
-        var answer = await on.start.Before(this, context);
+        // its own clauses first, then what the running actor bound before it
+        var on = context.Actor!.@event[Catalog];
+        var answer = await Clauses.before.Start(this, context);
+        if (answer is not ({ Success: false } or { Handled: true }))
+            answer = await on.before.Start(this, context, answer) ?? answer;
         global::app.data.@this data;
         if (answer is { Handled: true })
         {
@@ -237,7 +234,8 @@ public partial class @this
         // argument the callee's), not where the caller opens it after the frame is gone. Nothing is read through
         // a value door, so a lazy source stays unread; a reference to nothing fails here, where on.error sees it.
         // What is bound after the start (the cache) still sees the attempt's own result.
-        return await (await on.start.After(this, data, context)).Settle();
+        // what the running actor bound after it, then its own clauses
+        return await (await Clauses.after.Start(this, await on.after.Start(this, data, context), context)).Settle();
     }
 
     /// <summary>A program action of this catalog element's kind, in <paramref name="step"/> — a clause when this
@@ -255,7 +253,7 @@ public partial class @this
     /// <summary>Takes <paramref name="clause"/>, read after this action, on its own events — the one door to an item's
     /// own events: what the program binds when it is read stays on the item, and what is bound while it runs is held
     /// by the context that binds it.</summary>
-    internal void Take(global::app.module.IClause handler, clause.@this clause) => handler.Bind(clause, this, on);
+    internal void Take(global::app.module.IClause handler, clause.@this clause) => handler.Bind(clause, this, _on!);
 
     /// <summary>Whether this action belongs to <paramref name="before"/>, the step action it follows (a clause does: it
     /// is that action's) — a step action is its own, so after a condition it stands beside it.</summary>

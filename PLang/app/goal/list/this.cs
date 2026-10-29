@@ -104,7 +104,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         if (await App.origin.Goal(source, App) is not { } loaded) return null;
         if (!loaded.Success || await loaded.Value() is not goal.@this inherited) return loaded;
         Add(inherited);
-        return await inherited.on.load.After(inherited, context.Ok(inherited), context);
+        return await context.Actor!.@event[inherited].load.after.Start(inherited, context.Ok(inherited), context);
     }
 
     // The read of `pr` — one at a time for each .pr: a load that finds one in flight awaits it. Whoever takes the slot
@@ -127,12 +127,12 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         finally { _reading.TryRemove(new KeyValuePair<global::app.type.item.path.@this, Task<data.@this>>(pr, ours.Task)); }
     }
 
-    // One .pr decoded into a goal and held here, through the goal's load: what is bound before a goal loads is the goal
-    // type's (its own, and each actor's hold), handed the .pr (there is no goal yet), and a failure or a Handled answer
-    // is the load's answer with nothing read; what is bound after it runs across the goal's levels, handed the goal.
+    // One .pr decoded into a goal and held here, through the goal's load: what the asker bound before a goal loads is the
+    // goal type's, handed the .pr (there is no goal yet), and a failure or a Handled answer is the load's answer with
+    // nothing read; what is bound after it runs on the goal's own moments, handed the goal.
     private async Task<data.@this> Decode(global::app.type.item.path.@this pr, actor.context.@this context)
     {
-        if (await App.goal.type.Before("load", pr, context, context.Ok()) is { } answer
+        if (await context.Actor!.@event[App.goal.type].load.before.Start(pr, context, context.Ok()) is { } answer
             && (!answer.Success || answer.Handled))
             return answer;
         try
@@ -151,7 +151,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
             // the stamp holds the .pr the goal itself has
             Add(goal, stat.Success && await stat.Value() is { } info && goal.Pr is { } path
                 ? new stamp.stat(path, info) : new stamp.unknown());
-            return await goal.on.load.After(goal, read, context);
+            return await context.Actor!.@event[goal].load.after.Start(goal, read, context);
         }
         // a refused .pr names itself — its reader was born knowing the file
         catch (Exception ex)
@@ -208,6 +208,8 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
             return context.Error<goal.@this>(new Error(
                 $"'{name}' climbs out of its folder ('..'): a goal is called by its name from where it is written, never above it",
                 "GoalNameClimbs", 400));
+        // a name with a wildcard names goals, never one: the pattern of them, so a goal loaded later is named too
+        if (name.IndexOfAny(['*', '?']) >= 0) return context.Ok<goal.@this>(new goal.pattern.@this(name, App.type.list, context));
 
         if (Chain(caller).FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) is { } near)
             return context.Ok(near);

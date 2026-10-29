@@ -1,0 +1,14 @@
+/ "after llm.query" is in llm.query's list, which every llm.query step runs: two steps ask the llm, and ShowCost runs
+/ after each.
+Start
+- set %count% = 0
+- after action llm.query, call ShowCost
+- [llm] user: 'What is 2+2? Reply with just the number'
+    write to %first%
+- [llm] user: 'What is 3+3? Reply with just the number'
+    write to %second%
+- assert %count% equals 2, "ShowCost ran after each llm.query step"
+
+/ The event's call.
+ShowCost
+- set %count% = %count% + 1
