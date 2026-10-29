@@ -1,0 +1,12 @@
+/ An event bound after %count% is set runs after each set of the variable %count%, not of its value.
+Start
+- set %count% = 0
+- set %runs% = 0
+- after %count% is set, call Log
+- set %count% = 1
+- set %count% = 2
+- assert %runs% equals 2, "Log ran after each set"
+
+/ The event's call.
+Log
+- add 1 to %runs%, write to %runs%

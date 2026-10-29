@@ -1,6 +1,9 @@
 Step text: `before the app starts, call Say`
 Formal: `on.event(Event=%!app.on.start%, When="before", Action=goal.call(Name="Say"))` — the app itself is `%!app%`; its start is `%!app.on.start%`.
 
+Step text: `after %count% is set, call Log`
+Formal: `on.event(Event=%!app.variable["count"].on.set%, When="after", Action=goal.call(Name="Log"))` — a variable the step names is `%!app.variable["count"]%`: its own moments, not its value's (`%count.on…%`).
+
 Step text: `before each goal call LogBefore`
 Formal: `on.event(Event=%!app.type.goal.on.start%, When="before", Action=goal.call(Name="LogBefore"))`
 

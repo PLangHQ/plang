@@ -40,6 +40,9 @@ Stage2
 / %!app.event% lists the running actor's events — plang test
 / /plan/event-action/app/event/ListsTheActorsEvents
 - call /plan/event-action/app/event/ListsTheActorsEvents
+/ an event bound after %count% is set runs after each set of the variable %count% — plang test
+/ /plan/event-action/app/variable/SetRunsItsEvent
+- call /plan/event-action/app/variable/SetRunsItsEvent
 
 Stage3
 / on a cache hit the app's before events still ran — C#

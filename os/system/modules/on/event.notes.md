@@ -14,4 +14,4 @@ The called goal reads `%!event%` (the event), `%!event!item%` (what it fired for
 
 `on input call X` — "input" with no channel, event or "before/after" — is `on.input` (listen to this app's input line by line), not this.
 
-An event the step names one of — "goal X", "action module.name" — is that one item's path (`%!app.goal["X"].on.start%`, `%!app.module.<module>.<action>.on.start%`), not the type of all of them (`%!app.type.goal%`, `%!app.type.action%`): a type only for "each".
+An event the step names one of — "goal X", "action module.name" — is that one item's path (`%!app.goal["X"].on.start%`, `%!app.module.<module>.<action>.on.start%`), not the type of all of them (`%!app.type.goal%`, `%!app.type.action%`): a type only for "each". A variable the step names ("%count% is set", "is removed") is `%!app.variable["count"]%` (its own moments); `%count.on…%` is its value's moments (a list's `add`).
