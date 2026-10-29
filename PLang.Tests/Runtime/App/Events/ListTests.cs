@@ -89,6 +89,25 @@ public class ListTests
         await Assert.That((await pattern!.Start(Ctx)).Error?.Key).IsEqualTo("NotAGoal");
     }
 
+    // a glob is rooted as a plang path is: `api/*` in the folder of the goal whose step names it, `/api/*` from the root;
+    // a goal loaded later under it is named too
+    [Test] public async Task APattern_IsRootedAsAPathIs_InItsGoalsFolder_OrFromTheRoot()
+    {
+        var shop = Goal("/shop/Bind.goal");
+        var near = Goal("/shop/api/Orders.goal");
+        var root = Goal("/api/Orders.goal");
+        var ran = new List<string>();
+        await Record((await (await _app.goal.list.Find("api/*", shop)).Value())!, global::app.@event.When.before, ran, "api/*");
+        await Record((await (await _app.goal.list.Find("/api/*", shop)).Value())!, global::app.@event.When.before, ran, "/api/*");
+        var later = Goal("/shop/api/Users.goal");
+
+        await (await near.Start(Ctx)).IsSuccess();
+        await (await root.Start(Ctx)).IsSuccess();
+        await (await later.Start(Ctx)).IsSuccess();
+
+        await Assert.That(ran).IsEquivalentTo(new[] { "api/*", "/api/*", "api/*" }, TUnit.Assertions.Enums.CollectionOrdering.Matching);
+    }
+
     [Test] public async Task AModulesEvent_RunsForEachOfItsActions_AndNoOtherModules()
     {
         var events = _app.actor.list.User.@event;

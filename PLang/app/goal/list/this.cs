@@ -209,7 +209,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
                 $"'{name}' climbs out of its folder ('..'): a goal is called by its name from where it is written, never above it",
                 "GoalNameClimbs", 400));
         // a name with a wildcard names goals, never one: the pattern of them, so a goal loaded later is named too
-        if (name.IndexOfAny(['*', '?']) >= 0) return context.Ok<goal.@this>(new goal.pattern.@this(name, App.type.list, context));
+        if (name.IndexOfAny(['*', '?']) >= 0) return context.Ok<goal.@this>(new goal.pattern.@this(name, caller?.Folder, App.type.list, context));
 
         if (Chain(caller).FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) is { } near)
             return context.Ok(near);

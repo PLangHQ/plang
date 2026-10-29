@@ -10,11 +10,12 @@ public sealed class @this : global::app.goal.@this
 {
     private readonly global::app.type.item.path.Glob _glob;
 
-    /// <summary>The goals <paramref name="glob"/> names, by their paths from the app's root (<c>/api/*</c>; a glob
-    /// written without its leading slash is from the root too).</summary>
-    internal @this(string glob, global::app.type.list.@this types, global::app.actor.context.@this context) : base(types)
+    /// <summary>The goals <paramref name="glob"/> names, rooted as a plang path is: <c>/api/*</c> from the app's root,
+    /// <c>api/*</c> in <paramref name="folder"/>, the folder of the goal whose step names it (the root when none does).</summary>
+    internal @this(string glob, global::app.type.item.path.@this? folder, global::app.type.list.@this types,
+        global::app.actor.context.@this context) : base(types)
     {
-        var rooted = glob.StartsWith('/') ? glob : "/" + glob;
+        var rooted = glob.StartsWith('/') ? glob : folder is { } at ? at.Combine(glob).Raw : "/" + glob;
         Name = rooted;
         Path = global::app.type.item.path.@this.Resolve(rooted, context);
         _glob = new(rooted, global::app.type.item.path.@this.RootComparison);
