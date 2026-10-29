@@ -118,6 +118,7 @@ The one list of work after runtime2's merges (Ingi, 2026-10-29: "yes merge into 
 ## Future (Ingi said "future"; never offered as next work)
 
 - A database module (2026-10-26: "3 future").
+- **System events that run but print nothing** (event-action 15, 2026-10-29: "event.setting.system.output = false … or am I extending to much now and we can just have it future feature?"): with `event.setting.system` on, a second setting keeps the system events' output quiet.
 
 ## Very far backlog (never offered as next work)
 
