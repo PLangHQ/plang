@@ -1,0 +1,57 @@
+{
+  "name": "One",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %one% = \"yes\"",
+      "line": {
+        "number": 2,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%one%",
+              "variable": [
+                {
+                  "text": "%one%",
+                  "code": [
+                    {
+                      "variable": "one"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "yes"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "visibility": "Public",
+  "file": "One.goal",
+  "hash": "df62a56d45558947e25f27ae7c71e6a8ba5e04797f95d2f30c7d6d9e4c797454"
+}

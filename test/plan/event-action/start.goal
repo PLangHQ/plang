@@ -43,6 +43,9 @@ Stage2
 / an event bound after %count% is set runs after each set of the variable %count% — plang test
 / /plan/event-action/app/variable/SetRunsItsEvent
 - call /plan/event-action/app/variable/SetRunsItsEvent
+/ "before each goal in api/*" runs for the goals in the api/ folder beside the goal, not for one outside it — plang test
+/ /plan/event-action/app/goal/pattern/NamesAFolder
+- call /plan/event-action/app/goal/pattern/NamesAFolder
 / "before each file action" runs for the file save and the file read, not for a write out — plang test
 / /plan/event-action/app/module/EachFileAction
 - call /plan/event-action/app/module/EachFileAction

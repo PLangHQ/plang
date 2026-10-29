@@ -10,6 +10,9 @@ Formal: `on.event(Event=%!app.type.goal.on.start%, When="before", Action=goal.ca
 Step text: `before each goal, call Audit, not in sub apps`
 Formal: `on.event(Event=%!app.type.goal.on.start%, When="before", Sub="none", Action=goal.call(Name="Audit"))` — the event stays in this app; its sub apps don't take it in.
 
+Step text: `before each goal in api/*, call Count`
+Formal: `on.event(Event=%!app.goal["api/*"].on.start%, When="before", Action=goal.call(Name="Count"))` — the goals under the `api/` folder beside the goal this step is in; `/api/*` would be from the app's root.
+
 Step text: `before goal Process, call Prepare`
 Formal: `on.event(Event=%!app.goal["Process"].on.start%, When="before", Action=goal.call(Name="Prepare"))` — a goal the step names is `%!app.goal["Name"]%` (its bare name), not `%!app.type.goal%`, which is every goal.
 

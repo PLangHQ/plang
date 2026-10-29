@@ -1,0 +1,57 @@
+{
+  "name": "Two",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %two% = \"yes\"",
+      "line": {
+        "number": 2,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%two%",
+              "variable": [
+                {
+                  "text": "%two%",
+                  "code": [
+                    {
+                      "variable": "two"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "yes"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "visibility": "Public",
+  "file": "Two.goal",
+  "hash": "e2d0a52bddf0823a05383a931fda0fcda90637e68fa0d251fc089fb0cc5486e6"
+}
