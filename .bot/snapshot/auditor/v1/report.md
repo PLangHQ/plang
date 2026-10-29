@@ -62,3 +62,11 @@ Pre-load walk in `View.Load` (decisions 94/103); `Kept<T>` (P7-2, with Ingi); th
 
 ## Next-branch list
 B4–B9, N-items; `member` writability Lows from security 307.
+
+## Update — A1, A2, A3, B1 and the resume dedupe closed at c1e1a9248 (PASS)
+- **A1 98df2694b:** the bound call is composed from the authored call's `Property` and `Default` with the goal found where it was bound as the seed (the seed's set parameters win, so `Name` stays the found goal). Pinned by `ABoundCall_KeepsItsActor_AndRunsOnItsOwn_AsItWasWritten` (Actor=system, Parallel=true; the run does not wait, Log ran as System).
+- **A2 409b6be0c, f913da2b6:** save/resume/module teaching now says signed `.plang`, the refusals, the sub app and `Parallel`; resume example adds `don't wait`; `pick_golden` re-pinned.
+- **A3 f9edf3051:** `held`/`own` gone from the branch's added code (scan: only message text matches); `Held()` → `Current()`.
+- **B1 c5f05a57c:** Archive re-checks default/force inside the change (`FirstIdentityTests` +30).
+- **d4c2abe81 (dedupe):** a read-back binding is skipped when its side already holds one the same action made (`binding.action`, `internal virtual`, not in the locked golden). Note (nit): the test is `ReferenceEquals` on the action, so an `on.event` step run twice (two bindings from one action) keeps one binding after a resume, where it fired twice before. Rare; log it.
+- Tests (keys unset): C# 5647 green, 0 red; `plang --test` 312 total, 311 pass, 0 fail, 0 stale, 1 skipped; tree clean.
