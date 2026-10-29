@@ -1,46 +1,66 @@
 # snapshot
 
-Cut from runtime2 after `windows`. Replaces `test/plan/snapshot/start.md` (2026-10-02), which this cuts down to what Ingi decided on 2026-10-26 and what's left in the code.
-
-## Why
-
-A run's exact state, saved to disk or a db, and run later (Ingi: "everything. this is not for web requests, we save this to disk or db and run later").
+A run's exact state, saved to a file or a store, and gone on with later (Ingi: "everything. this is not for web
+requests, we save this to disk or db and run later"), even after its program changed, or after a program moved the point
+it goes on from.
 
 ```
 - save snapshot, write to %snapshot%
-- save %snapshot% to 'run.snapshot'
-… later, in a fresh process …
-- read file 'run.snapshot', write to %snapshot%
+- save %snapshot% to file 'run.plang'
+… later, in a fresh app …
+- read file 'run.plang', write to %snapshot%
 - resume %snapshot%
 ```
 
-**Today:** the last two steps fail. Nothing turns a file's text back into a snapshot (`snapshot.Create` is `value as @this`, `snapshot/this.Wire.cs:42–43`); only the C# helper `SnapshotFromWire` can. The six `SnapshotWireTests` reds are this. The parts that take part are a fixed list on the app (`app/this.Snapshot.cs:7–9`), each writes a section it names by hand, the call stack keeps only the live caller chain and loses each frame's own variables (parameters, `%item%`, a handler's `%error%`), and resume walks a second chain (`_restoredChain`, `ResumeChain`'s recursion).
+`start.goal` beside this is the plan's index: each behaviour a comment, the step under it running the plang test that
+proves it; a behaviour proved only in C# names its test there.
 
-**After:** a part that takes part says so itself; `snapshot.save` walks the app tree and stores each; the tree is saved as it lives; resume starts each part where it was.
+## What a snapshot is
 
-## Ingi's decisions (2026-10-26)
+- **The app in the snapshot view.** A snapshot holds the app, written in its own view whoever writes it (a .plang file,
+  the wire): each object writes its own tagged members (`[Snapshot]`), and anything that points at an object writes what
+  finds it (an actor by its name, a goal by its name and its `.goal`). Read back, each object reads itself onto the app
+  the run goes on in.
+- **Signed by the app.** A save is signed by the app's identity, in the snapshot's view; a resume takes only a snapshot
+  one of the app's own identities signed, as it is.
+- **The call stack as it stood.** The frames from the root to the one the run stopped in, each writing what it keeps:
+  a goal's frame its goal, a step's frame its own place in its goal (`index`), an action's frame its own place in its
+  step (`index`) and the module and name of the action that stood there. A frame's step or action is found from its
+  place, under its caller, as the goal is now.
+- **The event in play.** A run saved while a bound call runs keeps `%!event%`: the event is written as what finds it
+  (its item and its name) and comes back as the resumed app's own event of that name.
+- **Plain rows bare.** A saved row whose token already says its type (text, number, bool, dict, list, with nothing more:
+  no kind, no template, no properties) is written as its token; any other keeps its type. Only in the snapshot view —
+  the store (`.pr`) and the wire are untouched. The app's event list rows keep their type label until typed lists come
+  (a later branch).
+- **Never a secret.** A `[Sensitive]` value is never saved: it comes back empty (null).
 
-- A class that takes part implements `ISnapshot` with two members: `Store` (it writes itself into the snapshot) and `Start` (it comes back from what it stored). The snapshot knows nothing of who takes part.
-- `snapshot.save` walks the live app tree from `app` and stores each node that is an `ISnapshot`: no list on the app, no hand-written section names.
-- The tree is saved as is: each part at its own place, and starting walks the saved tree.
-- The call stack is the run's (`context.call`): `root`, each frame's `children` beneath it, `current` as a reference into that tree. Starting restores the exact same state.
-- Everything, one size. A web request's resume is a callback, later (not here). The app's world to a file (the "app snapshot") waits for a user.
-- `start %callback%` stays as it is (callbacks later).
-- Standing (item-doors 311): a snapshot never carries a `[Sensitive]` value; a resumed run that needs one asks again.
+## Going on
 
-## Stages
+- **Resume** goes on in an app of its own (a sub app of the asker's actor), from the frame the run stopped in, outward:
+  the stopped action again and the rest of its step, the rest of each goal, the action after each call. A call saved
+  mid-step is finished, then the rest of its step runs once.
+- **A changed goal** is the goal as it is now: the run goes on at its saved place in it. When another action stands
+  there than the one saved, that is said on the actor's error channel (`'Order' step 1, action 0 is math.add now, not
+  variable.set as it was saved: going on there`) and the run goes on. A place past a goal's or a step's end is refused,
+  naming how many it holds (`StepNotFound`, `ActionNotFound`). A goal's key has no hash.
+- **A sub app** takes in its maker's bindings at birth and fires them for its own user; its save holds only what it
+  bound itself. A resume's app is one: a binding the resuming app made fires in the resumed run.
 
-1. **`ISnapshot` is `Store` and `Start`; `snapshot.save` walks the tree.** Today's five participants move: Code's providers (`module/code/this.Snapshot.cs`), Variables (`variable/list/this.Snapshot.cs`), Kept (`kept/list/this.cs`), the app's mode (`app/this.Snapshot.cs:47–61`), the call stack. The list (`:7–9`), `Section`, the private `Capture` loop and the app's own sections go. Each part's place in the saved tree is its path from `app`. Code's restore loads its DLL through the async path verb, never `.GetAwaiter().GetResult()` (`:116`).
-2. **The call stack stored as it lives, and started exactly.** Root, each frame's children, current as a reference; each frame with its position (goal by name and hash, step, action) and its own variables (`call/this.cs:179–180`). Starting pushes the frames as they were and goes on from current: `Position`, `_restoredChain`, `RestoredChain`, `BottomFrame` and `ResumeChain`'s recursion go. A goal gone or changed fails hard (`CallbackGoalNotFound`, `CallbackGoalHashMismatch`, `CallbackActionMismatch` stay); the PrPath fallback for old snapshots goes.
-3. **One door from text to a snapshot.** A snapshot read from its own text (a file, a db row) is born through the snapshot type's reader, so `resume %snapshot%` takes what a file read gave. `SnapshotToWire`, `SnapshotFromWire`, `ResumeFromWire` go (middlemen). The six `SnapshotWireTests` reds go green.
-4. **Never a `[Sensitive]` value.** The snapshot is written in the Store view today (`snapshot/this.Wire.cs:31`), which writes a `[Sensitive]` member and a `sensitive` value whole (`View.cs:125–152`). The snapshot's write masks them; a resumed run that needs one asks again. `IdentityPrivateKeyLeakTests` pins it, plus a probe for a `sensitive` variable.
-5. **`snapshot.save` and the proof in plang.** The verb answers the snapshot (a value); saving it is the developer's step. Plang tests: save, write to disk, read in a fresh app, resume at the step, with the same variables and frames (a call's parameters and a loop's `%item%` among them). The three unbuilt ask tests that sat in `test/plan/snapshot/module/callback/` are out of this plan, into the backlog (From snapshot), unbuilt.
-6. **Docs.** `Documentation/v0.2/snapshots.md` and `callbacks.md` describe types that are gone (`ISnapshotted`, `ICallback`, `AskCallback`, `ErrorCallback`, `RestoredFrame`); rewritten to what is, callbacks marked "later".
+## Editing a snapshot
 
-## Out
+- The stop point is two numbers in the snapshot, each its frame's own, both settable from a program:
+  `%snap.app.actor.list.user.context.call.current.caller.index%` (the step) and
+  `%snap.app.actor.list.user.context.call.current.index%` (the action).
+- An edit changes the snapshot alone, never the program that runs: a frame's number is the frame's, and a step's own
+  place (`step.index`), like every member of an object apps share, is read-only to a program (`ReadOnly`).
+- A program vouches for its own edit by signing the snapshot again (`sign %snap%, write to %snap%`); an edit no one
+  signed again is refused (`SnapshotSignatureInvalid`). Signing is `signing.sign`'s job: it hashes the data in its own
+  type's view, the one a verify re-hashes it in. **Decision 72's `snapshot.sign` is superseded by 287:** a snapshot has no
+  signing action of its own.
+- An edited snapshot kept again is the saved bytes plus the edit.
 
-Callbacks (`start %callback%`, the `Data.Snapshot` slot, an ask over a connection that isn't kept); the app snapshot to a file; the error's diff history as its own type (`error.Callback` keeps its throw-time projection through the new door).
+## Proved in C# only
 
-## Open for Ingi (not blocking)
-
-- The verbs: `snapshot.save` (new) and today's `resume %snapshot%`. Does the resume verb stay `resume`, or become `start` like the member?
+- The changed-goal warning needs the goal rebuilt between the save and the resume: `CallSnapshotTests`.
+- The signature's refusals (another app's, an archived identity's, a hand edit): `SignedSnapshotTests`.

@@ -186,6 +186,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
             await into.call.Resume(into);
 
             var said = System.Text.Encoding.UTF8.GetString(error.ToArray());
+            await Assert.That(said).Contains("'RecompiledGoal' step 0, action 0");
             await Assert.That(said).Contains("variable.set");
             await Assert.That(said).Contains("test.test");
         }
@@ -243,6 +244,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
         await Assert.That(await Saw("c")).IsEqualTo("3");
         await Assert.That(await Saw("b")).IsEqualTo("1");
         var said = System.Text.Encoding.UTF8.GetString(error.ToArray());
+        await Assert.That(said).Contains("'Order' step 1, action 0");
         await Assert.That(said).Contains("math.add");
         await Assert.That(said).Contains("variable.set");
     }

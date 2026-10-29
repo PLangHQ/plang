@@ -1,0 +1,15 @@
+runtime2's reds at snapshot's branch point (merge base b283811f6)
+
+Six PLang.Tests.Wire SnapshotWireTests, red for one cause (the plan, start.md 2026-10-26: "Nothing turns a file's
+text back into a snapshot … only the C# helper SnapshotFromWire can. The six SnapshotWireTests reds are this"):
+
+  SerializedString_ConvertsToSnapshotViaTypeSystem_AndResumesToSuccess
+  PlangPath_AsSnapshotConvert_EditSurvivesResume
+  ThrowTimeSnapshot_EditSurvivesResume
+  TypedSnapshotString_NavigateEditResume_PersistsEdit
+  NavigateAndEditCapturedVariable_ThenResumeToSuccess
+  FileSave_OfSnapshot_UnregisteredExtension_WritesJsonContent
+
+The names are inferred from that cause — the six of the file's twelve tests at the merge base that turn a snapshot's
+text back into a snapshot — not from a run of the merge base, which wasn't recorded at the time. All six are green on
+the branch.

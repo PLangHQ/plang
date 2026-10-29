@@ -33,6 +33,32 @@ public class ErrorCallbackTests : System.IAsyncDisposable
         await Assert.That(ReferenceEquals(await error.Callback(_app.actor.list.User.Context), callback)).IsTrue();
     }
 
+    // The callback stands where the error happened: its call is the error's, though those frames have ended by the time
+    // a handler asks — the snapshot holds the error's goal's frame, not the empty stack the handler stands in.
+    [Test]
+    public async Task Callback_StandsAtTheErrorsCall_AfterItsFramesEnded()
+    {
+        var context = _app.actor.list.User.Context;
+        var goal = new Goal(_app.type.list) { Name = "Where", Path = global::app.type.item.path.@this.Resolve("/Where.goal", context) };
+        var step = new Step(_app.type.list) { Goal = goal, Index = 0, Text = "step" };
+        step.Code.Add((await context.Action("variable.set(Name=%x%, Value=1)")).In(step));
+        goal.Step.Add(step);
+        _app.goal.list.Add(goal);
+        var error = new global::app.error.@this("boom", context, "Boom");
+        await using (context.call.Push(goal, await context.call.Setting()))
+        await using (context.call.Push(step, await context.call.Setting()))
+        await using (var frame = context.call.Push(step.Code[0], await context.call.Setting()))
+            frame.Record(error, context);
+        await Assert.That(context.call.Current).IsNull();
+        await Assert.That(error.call).IsNotNull();
+
+        var callback = await error.Callback(context);
+
+        await callback.IsSuccess();
+        var text = System.Text.RegularExpressions.Regex.Replace(await callback.Snapshot!.Text(context), @"\s", "");
+        await Assert.That(text).Contains("\"goal\":{\"name\":\"Where\"");
+    }
+
     // An error built without a context takes the handler's when it is returned through
     // Context.Error — the first run it meets — so its callback answers a snapshot.
     [Test]

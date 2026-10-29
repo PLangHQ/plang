@@ -100,25 +100,46 @@ public class SnapshotResumeTests
         }
     }
 
-    [Test] public async Task SnapshotResume_NestedChain_UnwindsToParentAfterSubGoalCompletes()
+    // A goal of the steps given, each line one step's actions split by " ; " (a "call X" line a goal call), held by the app.
+    private static async Task<Goal> Program(global::app.@this app, string name, params string[] lines)
     {
-        // Cross-goal end-to-end is pinned by 2a.8's
-        // test/Callback/StatelessCrossGoalResumes .test.goal fixture. Here we
-        // just pin the API contract: ResumeChain handles >1 frame without
-        // throwing on the recursive walk.
-        var app = NewApp();
-        var snap = app.actor.list.User.Context.EmptySnapshot();
-        var result = await snap.Resumed(app.actor.list.User.Context);
-        // Empty chain → NoFrameToResume; demonstrates recursion entry doesn't NRE.
-        await Assert.That(result.Error!.Key).IsEqualTo("NoFrameToResume");
+        var context = app.actor.list.User.Context;
+        var goal = new Goal(app.type.list) { Name = name, Path = global::app.type.item.path.@this.Resolve("/" + name + ".goal", context) };
+        for (var index = 0; index < lines.Length; index++)
+        {
+            var step = new Step(app.type.list) { Goal = goal, Index = index, Text = lines[index] };
+            foreach (var call in lines[index].Split(" ; "))
+                step.Code.Add((call.StartsWith("call ") ? global::PLang.Tests.Shared.Make.Call(context, call[5..]) : await context.Action(call)).In(step));
+            goal.Step.Add(step);
+        }
+        app.goal.list.Add(goal);
+        return goal;
     }
 
-    [Test] public async Task ResumeChain_MultiActionStep_ContinuesAtActionIndexPlusOne()
+    // A run saved inside a goal it called, from a step with actions after the call: the resume finishes the called goal,
+    // then goes on with the rest of the calling step exactly once — never the call again, never skipping what follows it.
+    [Test] public async Task SnapshotResume_InsideACall_FinishesIt_ThenTheRestOfTheCallingStep_Once()
     {
-        // Pinned by Goal.Resume contract (GoalRunFromTests). ResumeChain's
-        // parent-frame branch calls Goal.Resume(context, stepIdx, ActionIndex+1) —
-        // the +1 mirrors what GoalRunFrom's tests already pin. End-to-end
-        // exercised by 2a.8's cross-goal .test.goal fixture.
-        await Assert.That(true).IsTrue();
+        var app = NewApp();
+        var context = app.actor.list.User.Context;
+        await Program(app, "Sub",
+            "math.add(A=%n%, B=1) ; variable.set(Name=%n%, Value=%!data%)",
+            "snapshot.save() ; variable.set(Name=%snap%, Value=%!data%)");
+        var g = await Program(app, "G",
+            "call Sub ; math.add(A=%m%, B=1) ; variable.set(Name=%m%, Value=%!data%)",
+            "goal.return(Data={\"n\": %n%, \"m\": %m%})");
+        await context.Variable.Set("n", 0);
+        await context.Variable.Set("m", 0);
+        await (await g.Start(context)).IsSuccess();
+        var snap = await (await context.Variable.Get("snap")).Value() as global::app.snapshot.@this;
+        await Assert.That(snap).IsNotNull();
+
+        var result = await snap!.Resumed(context);
+
+        await result.IsSuccess();
+        // the call isn't run again: Sub's first step counted once, before the save
+        await Assert.That((await (await result.Get("n")).Value())?.ToString()).IsEqualTo("1");
+        // what follows the call in its step ran, once
+        await Assert.That((await (await result.Get("m")).Value())?.ToString()).IsEqualTo("1");
     }
 }
