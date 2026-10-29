@@ -211,11 +211,12 @@ public partial class @this
     /// </summary>
     internal async Task<global::app.data.@this> Attempt(actor.context.@this context)
     {
-        // its own clauses first, then what the running actor bound before it
+        // what the running actor bound before it first (a policy runs even when the cache holds the answer), then its
+        // own clauses (timeout's deadline, the cache lookup)
         var on = context.Actor!.@event[Catalog];
-        var answer = await Clauses.before.Start(this, context);
+        var answer = await on.before.Start(this, context);
         if (answer is not ({ Success: false } or { Handled: true }))
-            answer = await on.before.Start(this, context, answer) ?? answer;
+            answer = await Clauses.before.Start(this, context, answer) ?? answer;
         global::app.data.@this data;
         if (answer is { Handled: true })
         {
@@ -233,9 +234,9 @@ public partial class @this
         // read where it is written (`return %!goal%` is this goal, `%Now%` the moment of the return, a call
         // argument the callee's), not where the caller opens it after the frame is gone. Nothing is read through
         // a value door, so a lazy source stays unread; a reference to nothing fails here, where on.error sees it.
-        // What is bound after the start (the cache) still sees the attempt's own result.
-        // what the running actor bound after it, then its own clauses
-        return await (await Clauses.after.Start(this, await on.after.Start(this, data, context), context)).Settle();
+        // What is bound after the start still sees the attempt's own result: its own clauses first (the cache stores the
+        // real result), then what the running actor bound after it.
+        return await (await on.after.Start(this, await Clauses.after.Start(this, data, context), context)).Settle();
     }
 
     /// <summary>A program action of this catalog element's kind, in <paramref name="step"/> — a clause when this

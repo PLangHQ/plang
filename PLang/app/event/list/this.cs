@@ -105,9 +105,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
         }
     }
 
-    /// <summary>Takes in <paramref name="maker"/>, an event of the actor this one's sub app was made by: bound again on
+    /// <summary>Takes in <paramref name="event"/>, an event of the actor this one's sub app was made by: bound again on
     /// what it was bound on, as this actor's own inherited event.</summary>
-    internal void Inherit(global::app.@event.@this maker, global::app.@this app) => Add(new inherited.@this(maker, app));
+    internal void Inherit(global::app.@event.@this @event, global::app.@this app) => Add(new inherited.@this(@event, app));
 
     /// <summary>Takes <paramref name="event"/> off: out of the list and every loaded list it was in; a variable name no
     /// event is bound on any more has no list.</summary>
@@ -115,7 +115,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
     {
         lock (_gate)
         {
-            _events = System.Array.FindAll(_events, held => held != @event);
+            _events = [.. _events.Except([@event])];
             foreach (var on in Loaded) on.Remove(@event);
             foreach (var (name, bound) in _named.ToList())
             {
@@ -179,31 +179,32 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
                 is not { } item)
             throw Unread("a saved on's row names no item it is the moments of");
         var read = new on.@this(item);
+        var choices = context.App.type.list[typeof(global::app.type.item.choice.@this<When>)];
         lock (_gate)
-            foreach (var row in record.Rows(context))
+            foreach (var moment in record.Rows(context))
             {
-                if (string.Equals(row.Name, "item", StringComparison.OrdinalIgnoreCase)) continue;
-                if (read[row.Name] == null) throw new global::app.error.DeclinedException(read.NoEvent(row.Name));
-                if (row.Peek() is not global::app.type.item.dict.@this sides)
-                    throw Unread($"a saved on's '{row.Name}' holds no sides");
-                foreach (var held in sides.Rows(context))
+                if (string.Equals(moment.Name, "item", StringComparison.OrdinalIgnoreCase)) continue;
+                if (read[moment.Name] == null) throw new global::app.error.DeclinedException(read.NoEvent(moment.Name));
+                if (moment.Peek() is not global::app.type.item.dict.@this sides)
+                    throw Unread($"a saved on's '{moment.Name}' holds no sides");
+                foreach (var side in sides.Rows(context))
                 {
-                    var when = string.Equals(held.Name, "before", StringComparison.OrdinalIgnoreCase) ? When.before
-                        : string.Equals(held.Name, "after", StringComparison.OrdinalIgnoreCase) ? When.after
-                        : throw Unread($"a saved event '{row.Name}' holds '{held.Name}', which is no side of its events");
-                    if (held.Peek() is not global::app.type.item.list.@this rows)
-                        throw Unread($"a saved event '{row.Name}' holds '{held.Name}', which is no list of events");
+                    // the side reads itself as its When; a name that is no side is refused
+                    When when = global::app.type.item.choice.@this<When>.Create(side.Name, choices)
+                        ?? throw Unread($"a saved event '{moment.Name}' holds '{side.Name}', which is no side of its events");
+                    if (side.Peek() is not global::app.type.item.list.@this rows)
+                        throw Unread($"a saved event '{moment.Name}' holds '{side.Name}', which is no list of events");
                     var inherited = _events.OfType<inherited.@this>()
-                        .Where(maker => Equals(maker.Item, item) && string.Equals(maker.Name, row.Name, StringComparison.OrdinalIgnoreCase)
-                                        && maker.When.Value == when).ToList();
-                    foreach (var saved in rows.Items(context))
+                        .Where(@event => Equals(@event.Item, item) && string.Equals(@event.Name, moment.Name, StringComparison.OrdinalIgnoreCase)
+                                         && @event.When.Value == when).ToList();
+                    foreach (var entry in rows.Items(context))
                     {
-                        var @event = new call.@this(item, read.Add(row.Name).Name, when, saved.Peek() as global::app.type.item.dict.@this
-                            ?? throw Unread($"a saved event on '{row.Name}' is no record"), context);
-                        var taken = inherited.FindIndex(maker => Equals(maker.action, @event.action));
-                        if (taken >= 0) { inherited.RemoveAt(taken); continue; }
-                        Add(@event);
-                        read.Add(@event);
+                        var saved = new call.@this(item, read.Add(moment.Name).Name, when, entry.Peek() as global::app.type.item.dict.@this
+                            ?? throw Unread($"a saved event on '{moment.Name}' is no record"), context);
+                        var index = inherited.FindIndex(@event => Equals(@event.action, saved.action));
+                        if (index >= 0) { inherited.RemoveAt(index); continue; }
+                        Add(saved);
+                        read.Add(saved);
                     }
                 }
             }

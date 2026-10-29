@@ -20,14 +20,8 @@ public sealed class @this : global::app.goal.@this
         _glob = new(rooted, global::app.type.item.path.@this.RootComparison);
     }
 
-    /// <summary>Whether <paramref name="path"/>, a goal's, is one this glob names: its path from the root, with or
-    /// without its <c>.goal</c>.</summary>
-    internal bool Matches(global::app.type.item.path.@this? path)
-    {
-        if (path == null) return false;
-        var raw = path.Raw;
-        return _glob.Matches(raw) || (raw.EndsWith(".goal", StringComparison.OrdinalIgnoreCase) && _glob.Matches(raw[..^5]));
-    }
+    /// <summary>Whether <paramref name="address"/>, a goal's, is one this glob names.</summary>
+    internal bool Matches(string? address) => address != null && _glob.Matches(address);
 
     /// <summary>An event bound on a pattern runs for each goal it names.</summary>
     internal override bool Has(global::app.type.item.@this item) => item.Is(this);

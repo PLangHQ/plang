@@ -41,7 +41,7 @@ public abstract class side : IReadOnlyList<global::app.@event.@this>
     // Takes an event off: it runs here no more.
     internal void Remove(global::app.@event.@this @event)
     {
-        lock (_gate) _events = System.Array.FindAll(_events, held => held != @event);
+        lock (_gate) _events = [.. _events.Except([@event])];
     }
 
     // The events as they stand: a side nothing is bound on answers with no await and nothing made.

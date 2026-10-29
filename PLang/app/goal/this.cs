@@ -179,8 +179,8 @@ public partial class @this
     [Debug]
     public bool IsSystem => Under("system");
 
-    /// <summary>A goal is named by a pattern when its path matches the pattern's glob.</summary>
-    internal override bool Is(global::app.goal.pattern.@this pattern) => pattern.Matches(Path);
+    /// <summary>A goal is named by a pattern when its address matches the pattern's glob.</summary>
+    internal override bool Is(global::app.goal.pattern.@this pattern) => pattern.Matches(Address);
 
     /// <summary>A test goal — its file is a <c>.test.goal</c>.</summary>
     [Debug]
