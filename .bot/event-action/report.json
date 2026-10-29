@@ -1,0 +1,45 @@
+{
+ "branch": "event-action",
+ "sessions": [
+  {
+   "id": "7c1e9a24-3b58-4f0d-a6e2-91d4c5b8f017",
+   "bot": "architect",
+   "timestamp_start": "2026-10-29T09:00:00Z",
+   "timestamp_end": "2026-10-29T10:10:00Z",
+   "intent": "Merge the scattered next-work lists into one, cut event-action from runtime2 and plan it from snapshot's decisions and the code.",
+   "before": {
+    "assumptions": "Snapshot's branch-event-action.md describes the branch; the saved move patch applies.",
+    "risk": "The write-up predates snapshot 245-271; the event surface is locked."
+   },
+   "plan": ".bot/event-action/architect/plan/start.md",
+   "actions": [
+    {
+     "paths": [".bot/architect/backlog.md", ".bot/item-doors/architect/backlog.md", ".bot/snapshot/architect/plan/later.md"],
+     "type": "create",
+     "category": "doc",
+     "confidence": "high",
+     "context": "One list replaces two; done items dropped, the old files point to the new one."
+    },
+    {
+     "paths": ["PLang/app/event/", "PLang/app/module/on/event.cs", "PLang/app/module/on/unbind.cs", "PLang/app/goal/this.cs", "PLang/app/goal/step/this.cs", "PLang/app/goal/step/action/this.cs"],
+     "type": "review",
+     "category": "code",
+     "confidence": "high",
+     "context": "Read the event system whole; found the write-up stale against snapshot 245, 248, 251, 271 and the patch no longer applying."
+    },
+    {
+     "paths": [".bot/event-action/architect/plan/start.md", ".bot/event-action/architect/plan/start.goal", ".bot/event-action/architect/summary.md"],
+     "type": "create",
+     "category": "doc",
+     "confidence": "medium",
+     "context": "Five stages; Level's new name is Ingi's; stage 2's navigation shape comes from the coder."
+    }
+   ],
+   "after": {
+    "status": "Plan drafted, not yet sent to the coder.",
+    "health": "No code changed.",
+    "notes": "Waits on Ingi: Level's name and his look at the plan."
+   }
+  }
+ ]
+}

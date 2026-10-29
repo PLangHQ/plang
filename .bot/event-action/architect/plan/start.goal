@@ -1,0 +1,45 @@
+/ event-action: what an event runs is an action. This goal is the plan's index and its proof: each comment a
+/ behaviour, the test under it proves it. The text is start.md.
+Start
+- call Stage1
+- call Stage2
+- call Stage3
+- call Stage4
+- call BoyScout
+
+Stage1
+/ on.event answers the event's action, and on.unbind with Action=%action% takes it off; after, the event no longer
+/ runs it — plang test
+/ /plan/event-action/module/on/UnbindTakesTheAction
+- call /plan/event-action/module/on/UnbindTakesTheAction
+/ the surface golden and the decider fixtures are re-pinned under this decision — C# (SurfaceGolden, PickListTests,
+/ ModulePageTests)
+
+Stage2
+/ "before each goal, call Log" binds through %!app.event.goal.start% and Log runs before each goal — plang test
+/ /plan/event-action/app/event/BeforeEachGoal
+- call /plan/event-action/app/event/BeforeEachGoal
+/ %!app.event.goal.before% holds no action before the bind and one after — plang test
+/ /plan/event-action/app/event/ReadTheBeforeSide
+- call /plan/event-action/app/event/ReadTheBeforeSide
+/ an action on %!app.event.goal["/Process"].start% runs for Process only, never for another goal — plang test
+/ /plan/event-action/app/event/OneGoalsStart
+- call /plan/event-action/app/event/OneGoalsStart
+/ "after each file.read, call Audit" runs Audit after a file read — plang test
+/ /plan/event-action/app/event/AfterEachFileRead
+- call /plan/event-action/app/event/AfterEachFileRead
+/ reading %!app.event.goal.before% in an app that bound nothing leaves %!app.event% empty — C#
+
+Stage3
+/ an action bound with Sub=none doesn't run in a sub app born after it; one bound without Sub does — plang test
+/ /plan/event-action/app/event/SubNoneStaysHome
+- call /plan/event-action/app/event/SubNoneStaysHome
+/ a snapshot keeps an action's Sub, and a resumed app's sub app honours it — C#
+
+Stage4
+/ the debug watch, the test runner's timing, coverage and a mock each still run, and none is in a snapshot — C#
+/ every core event but error is the event class, and a type's declared event ([Events("closed")]) binds and runs — C#
+
+BoyScout
+/ after on.unbind takes the last action off an item's events, %!app.event% no longer lists that item — C#
+/ two actions made by one on.event step both run after a resume — C#

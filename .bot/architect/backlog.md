@@ -1,0 +1,123 @@
+# The list
+
+The one list of work after runtime2's merges (Ingi, 2026-10-29: "yes merge into one list"). It replaces `.bot/item-doors/architect/backlog.md` and `.bot/snapshot/architect/plan/later.md`, which now point here. Each item says where it came from (a branch's decision number) and whose call it is. A branch's own log keeps the full reasoning. Checked against runtime2 6cfe782d7 (snapshot's merge); an item marked *unverified* wasn't re-read in the code.
+
+## Now
+
+- **event-action**, cut 2026-10-29 from runtime2 6cfe782d7 (Ingi: "lets do the event-action"). What an event runs is an action: the `binding` folders become `event/action/`, `app.event` reached by path, each binding chooses whether it reaches sub apps, the C# handler its own kind, one event class. Plan: `.bot/event-action/architect/plan/start.md`.
+
+## Ingi's order (2026-10-25: "I agree on the order")
+
+1. ~~JSON Lines~~ (493b157df), ~~decider-key~~ (b4a549d1c), ~~bugs~~ (0a178687b), ~~windows~~ (d72538402), ~~snapshot~~ (6cfe782d7): merged.
+2. **Stores per actor and an app per request.** Tabled (Ingi, 2026-10-26: "not ready for actor"). A webserver can't run without it. The structure (item-doors 317a): a webserver is a terminal app whose User starts the server; each request is an app whose System is that User and whose User is the caller (identity optional, never a private key on the server). Keys stay inside the app; no outside key store. The architect's open proposal: a store belongs to an actor and stores nest as actors do (`/.data/`, `/.data/user/`, `/.data/user/<caller>/`). What rides with it:
+   - item-doors auditor N2: every actor's rows are judged against the system actor's identities (`module/identity/code/Default.cs:264–269`, `type/item/setting/this.cs:130–141`); with it, the core setting's reach into `module.identity.code.IIdentity` and archived identities' rows read as foreign until saved again (316b).
+   - item-doors auditor N9: egress never re-signs a Data that holds a signature (latent; a ruling with a red test).
+   - fast-apps N5 / item 10: a request app is rooted at the server's folder, so its file store would open the server's `.data/`. Security's T1 (`T_LATENT_*` in `SubAppFullPassProbeTests`, skipped with this reason: unskip them first). The SQLite pool: each store clears its database's pool on dispose (`store/sqlite/this.cs:310`), which drops other apps' connections once they share a file; Ingi's question from test-speed §29: "never clear a file database's pool per app".
+   - fast-apps item 9: `app.parent` in the same process and one owner for the end that answers a call (PlangOS's display `Called`, `module/screen/type/screen/display/this.cs:255`, moves onto `parent/this.cs`). Test `TestAppHasItsRunnerAsParent` restorable from a9e513045.
+   - The settings rule (windows, Finding H; Ingi: "if sub app ask for setting and is unset, then get it from parent"): only the root reads the environment, for every setting. Could also be its own small branch.
+   - fast-apps N10: late stamps in actor/context and actor/setting, the identity slot at six doors, two kinds of store instead of `bool memory`.
+3. **The LLM provider and writer** (parked branches `llm-provider`, `llm-writer`): the builder's quality. llm-provider's design is complete (its log 853–866; open note 866: a model picks its provider). llm-writer is parked after its stages 1–2; its stage 3 waits for llm-provider.
+4. **Returns** (801, plan only).
+
+## Written up, waiting for Ingi
+
+- **module-list-type** (snapshot 231–232; `.bot/snapshot/architect/plan/branch-module-list-type.md`). A module's own list (a `list<T>` subclass) becomes a type of its own, so it can be a setting's or a parameter's slot read by its own reader; debug's `Watch` moves onto its variables list and the per-step parse in debug's `Variables(sb…)` goes. Locked type system. Open: (1) how a module's list shows in text, its own name or `list<variable>`; (2) whether a module's type may take a name a core type has.
+- **service-actor** (843, plan only): the far end of an outbound call is a Service actor (reverses runtime2-channels stage 7). Order not set.
+- **A goal as a code provider** (item-doors 266): any `[Code]` interface pluggable with a plang goal. Needs design; the recursion of a goal-backed setting store's own settings is the example to answer. The `Code.Get<IStore>()`-or-throw written twice (864a3d1df) goes with it.
+- **The OBP-root follow-up** (item-doors 280; `.bot/item-doors/architect/v3-triage.md` §B and §D), each a locked question: the view answering "from our own store" (Window/Origin/RequiresSignature); `type.Make` answering value-or-error (retires ~29 throwaway carriers); a type answering its settings address (no `Activator.CreateInstance` per class); a typed `Bind<T>` on the event door; Data born with its context. Also 315c (the filesystem as a plang type), 315b (the terminal's ToString and an `IWriter` location primitive), E (a folder's `Absolute` in OS form), R5.
+- **Critical actions** (item-doors 307): an action marked critical asks three scam-check questions an LLM judges; "scammed" blocks it 24 h (v0.1: `PLang/Errors/AskUser/AskUserPrivateKeyExport.cs`). Until then `identity.export` refuses (bugs N1). With it, the sensitive text kind (masks itself in every view except one reveal door; security's three proofs), which also closes Finding H's probe (`KeyNavigationProbeTests`).
+
+## Before plang 2.0b is published (Ingi, 2026-10-25)
+
+- **Brotli** ("keep eye on it before we release"): check the shipped .NET runtime carries Google's fixed decoder, else drop `archive/type/archive/kind/brotli/this.cs`.
+- **The release goals** (bugs 2): `Publish/Publish.goal:20` publishes the deleted PlangWindowForms; `Publish/Nuget.goal` packs the deleted PlangTests. Drop those steps, run the pipeline end to end once.
+
+## Branches and items, no order yet
+
+### Types, data and the serializer (locked: each addition is Ingi's)
+
+- **`type.list.Of(name, kind, …)` by parts** (item-doors 198, Ingi: "sounds good"; never built): 96 sites still write `new global::app.type.@this("…")`. With it, F2.
+- **A read's origin is lost below a container** (snapshot 28–29): a template inside a container read from a file with load vars comes back literal (`type/this.cs:469,475`, `type/item/wire/this.cs:49`, `type/item/serializer/json.cs:103,197`). Suggestion: carry the origin; proven on `read file`. Ingi's.
+- **No module DLL outside PLang compiles** (snapshot): the generator emits `data.As<T>()`, internal on Data (`data/this.cs:629,656`). Find every internal a generated action reaches, then one public door. Snapshot's proof that a resumed frame calls a run-time module's action waits on it.
+- **Typed lists (`list<on>`)** (snapshot 317, 321): the list says once what its rows are and the rows go bare; needs the core list reader to read records for every typed list.
+- **An empty dict writes nothing**, as an empty list does; changes the Out view too (snapshot 208).
+- **`data.Held()` gets a name** (snapshot 343, 348; `data/this.cs:711`): the value door as a question reads it; `Content()` is taken. **DynamicData's ctor parameter `declared` → `type`** (`data/this.cs:964`).
+- **The bare-row rule's five type literals** (`View.Record`, snapshot 324–325): stay until a type can say "the type a bare token reads back as".
+- **The `kind["*"]` recipe and `Kept<T>`** (snapshot P7-2, 205, 235): one record-reading recipe at several sites, a missing door.
+- **A frame's place handed in at push** (snapshot 325): needs a parameter on `action.Start` and `call.list.Push` (locked call surface).
+- **Only item's kinds are walkable at `app.type.kind`** (json-lines 12; `type/this.cs:905`): needed only when another type's kind has settings.
+- **Record types holding C# values a template row can make** (windows 21, 25): `error/this.cs`, `warning/this.cs`, `module/llm/type/message/this.cs` keep C# strings, so a template's variable is lost; the fix makes them plang values rendered by the sending layer, and llm.query's `Peek() is source { HasVariable: true }` check goes.
+- **Sub apps own their code** (fast-apps 19–20, item 11): (a) a kind a sub app's DLL adds to a parent's type lives in its layer (until then refused); (b) the DLL unloads with its app (collectible load context; class-keyed caches per app or weak: `type/list/Code.cs`, `type/item/this.cs:513`, `event/on/empty.cs:11`, the JSON serializer's metadata).
+- **A sub app's own teaching** (fast-apps 31, item 12): the catalog's teaching items are made once with the module's app's context; nothing needs it until a sub app builds.
+- **fast-apps auditor N6–N9, N17, N18** (`.bot/fast-apps/auditor/final.md` §7): "has code of its own" with one owner; the origin's two refusal voices; the registry's type switches (`ContainerFamily`, `PlangName`), `IsCondition`/`IsBranch`/`Link` by literal name, `set.cs`'s throwaway Make, frames as types, channel catches `when (is not …)`, data's "did it answer itself"; the locked memory's verb+noun members (`GetNames`, `GetAll`, `GetChangedSince`, `ShallowCloneStore`); a `Class` pinning a DLL's types, the debug module's `item is goal` filters; fast-apps 42's root-only items (`module.Action` as `list<action>`, `Alias`/`Internal` without `init`, path's schemes as kind classes).
+- **`property.Read` doesn't answer an AppException a getter throws** (`type/property/this.cs:94`), where `Write` does (`:138`).
+
+### Snapshot's leftovers
+
+- **The run's call at the snapshot's top** (`{app, call}`; snapshot 293–294). Ingi: "let's leave this long for now".
+- **Finding a channel again after a resume** (snapshot 225): a binding on a channel refuses the save (NoWireContract).
+- **The auditor's minors** (snapshot 341, `.bot/snapshot/auditor/final.md`): snapshot navigation can throw out of `View.Make`; `resume` creates a default identity as a side effect; late stamps in `call` (`call.Under`, accepted at 324) and in `step`; dropped answers at `call/action:79`, `Resume.cs:47`, `test/this.cs:144`; the code registry keeps partial state when a DLL is refused; the sign/verify view asymmetry (plausible, not reproduced).
+- **Item types whose clone copies through a live or shared reference** (snapshot 39): channel list, module, type nodes, program nodes (action, shortcut, test, setting action), browser/cdp/screen types, llm conversation and exchange. Each a one-line Clone in a branch that touches it. (The event ones go into event-action.)
+- **The three ask tests** (snapshot 35; text in 624eea3b3's parent): belong to the callback plan, which doesn't exist yet.
+- **Callbacks** (`start %callback%`, an ask over a connection that isn't kept): later, by Ingi.
+- **item-doors auditor N7** (the answer on resume): was placed with snapshot; *unverified* whether snapshot closed it.
+
+### Settings, secrets, identity
+
+- **Two concurrent asks for a missing key each prompt** (decider-key N1): `IKey.Asked` has no gate.
+- **The build reads `.data/setting/data.sqlite` and is refused** (doc2): why a builder goal reads it is untraced. The builder bot's.
+- **Ingi replaces the TypeSafe, OpenAI and GitHub keys** doc2 printed (windows, Finding H): "later".
+- **Unused `app.KeepAlive` and `app.Services`** (snapshot inventory, `this.cs:289–291`): a removal pass; `app`'s members, so Ingi's.
+
+### Code shape in files a branch may touch again (boy scout candidates)
+
+- windows W5/X2: `goal/this.cs:184–205` (`FolderPath`/`Folder`, `FullPath`/`Address` stored twice); `goal/step/action/this.cs:116–132` (module/action string compares beside the `clause` subclass) and `:23,73` (a late stamp); `module/terminal/type/process/this.cs` (`_said`/`Heard`, `Lines` twice, `Write(string)`); `path/file/this.cs:137–154` (`Replace('\\','/')` ×3, `Canonicalize`/`Trimmed` statics); `permission/this.cs:55,74` (a string `Path`).
+- json-lines X1, X2, C3 (`.bot/json-lines/auditor/final.md`): older smells in `type/item/list/this.cs` and `type/item/this.cs`; window's `Said`.
+- bugs X1–X9 (`.bot/bugs/auditor/final.md`): duration/clipboard/input readers throw raw FormatException (`duration/serializer/Reader.cs:24,27`); containment copies outside `path.Holds` (`path/file/this.cs:132–140`, `build/code/Default.cs:39`); `Window.cs:203`'s stale comment; `module/remove.cs:16` a bare `Task<Data>`; `OsTrustTests`' `'/'`; stale "auto-wire" wording; docs `bans.md:35`, `good_to_know.md:110`, `filesystem-permission.md:71`; no test that a streamed ask goes live past saved answers.
+- **`IsBound` in the doors that ask before making** (snapshot 254, 272): variable set/remove (`variable/list/this.cs`), type creation (`type/this.cs:275`).
+- **The Linux view's message queue is unbounded** (security, bugs 32).
+- **The image type's formats answering their own facts** (fast-apps 100), if a second fact needs it.
+
+### The builder bot's
+
+- doc2's build findings (json-lines): A (`call Early done=true` built as a name), B (two on-error clauses on one line fail StepsBroken), D (counts with `after each goal` + `before action output.write`, untraced), E (`ask the model …` built with the prompt as `Model`), F (`call tools/Shout` built as `Shout`), G (`drop the empty ones` built with no `Empty`), and `- make it better` building, then dying with NullReferenceException (the coder fixes the throw).
+- The build's per-step `[✓]`/`[≡]` lines never print (`build-output.template`, `EmitBuildEvent.goal`).
+- StepsBroken names a variable the step never says.
+- The nothing-altered check misses a dict literal's keys (`build-checks.md`).
+- A variable inside quoted text fails to build (`write out "decider key: %!llm.decider.setting.key%"`).
+- **BareLiteralJudgedByForm** (the baseline's one plang fail; windows): no teaching edit gets it green. Ingi's question: a deterministic rule (each candidate type's strict parse judges a quoted literal) or drop the claim from the test and `set.notes.md:2`, `set.examples.md:7–8`.
+- Debugging a system goal shows only that goal (windows 13): debug follows calls down when the builder bot needs it.
+
+### Tests, tooling, runs
+
+- **Done plans' tests move into the concept tree** (CLAUDE.md "Running plang Tests"): `test/plan/` still holds app-systems, bugs, decider-key, fast-apps, item-doors, json-lines, kind-is-type, snapshot, windows (and list-query, task). The builder rebuilds the moved `.pr`s.
+- **The decision guard** (doc2): `scripts/verify-decisions.sh` fails `variable-ref-binds-instance` (it greps a moved file); `core.hooksPath` is unset so `.githooks/pre-commit` never runs. The architect's.
+- **The Windows runs** (item-doors 8, bugs, windows): LinkSpotTests, StoresFolderTests, RealPathGateReCheckProbeTests, the sub app containment probes on a case-blind disk, APatchBeforeTheFirstFrame, a stores probe for a case variant (`.DATA\setting`). No full Windows sweep was run at windows' final tip.
+- **The real window** (host): waits on Ingi's yes to touch data.vhd; the window's keyboard is Ingi's.
+- **text-culture** (windows): numbers, held (IDecode handed its kind, or another route, plus a base Clr line).
+- **Debug builds unchecked, Release checked** (`PLang.csproj:38–39`, bugs B1): whether Debug checks too is Ingi's.
+- fast-apps N13 (`KindLookupTests` reads `_gate` by reflection), N15 (the bench's request and held rows at a new tip), N16 (a future webserver module needs `Microsoft.AspNetCore.App` back).
+- `ProbeAnswerer.goal` (`test/app/permission/grantastorespersisted/`) saves its question into the source tree: move the write out, with the builder.
+- `Documentation/Runtime2/todos.md`: plang-docs' triage (done and stale entries go, open ones grouped by theme) — *unverified* whether it ran.
+
+## To discuss with Ingi
+
+- **A new C# project** (item-doors, 2026-10-23: "I actually want to discuss new project, but that can be later"): the ABP idea (`app.snapshot.start() { .. }`), handlers as blocks with carriers resolved before Start, what fast-apps learned about a birth.
+- **"get all files in /temp modified in the last 5 minutes"** builds to the right execution (held 2026-10-23): `modified` on a file path beside `size`, and datetime owning `Subtract(duration)` (or `age` on a path) rather than a parse that reads the clock; with it, `list.query`'s Where as separate actions (`list.where`, `list.order`, …). The build half is the decider's pick list.
+
+## Brainstormed, not designed (item-doors 318)
+
+- **Diff: a save writes only what changed**: a `patch` (pieces of `start`, `bytes`, plus `length`); the step chains `text.diff(…); file.save(Value=%!data%)`. Open: the patch's own write into a file.
+- **An option that changes a value is its own action** (`file.read`'s `Template` → `template.fill(Value=%!data%)`); the same for diff, compress, encrypt.
+- **Required carriers resolved before Start; handlers as a block** (`Resolve` answers the first that fails; optional ones stay lazy). Locked `data`: Ingi's yes and a re-pin.
+
+## Future (Ingi said "future"; never offered as next work)
+
+- A database module (2026-10-26: "3 future").
+
+## Very far backlog (never offered as next work)
+
+Ingi, 2026-10-25: "very far into future (this is not something you should suggest taking when I ask)".
+
+- Metadata built into plang (MetadataExtractor; `%photo.metadata.…%`, read lazily; owner image or content reference; security reads it first).
+- Readers for formats Skia can't read, each a kind of image, added when a step needs one: TIFF, PDF pages, animated GIF writing, camera RAW, HEIC; Magick.NET under packages 6's four rules.
