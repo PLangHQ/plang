@@ -13,7 +13,7 @@ public sealed class empty : @this
 
     private empty(FrozenSet<string> names) : base(null, "start", names, open: false) { }
 
-    private empty(empty start, string name) : base(start, name, start.Declared, open: false) { }
+    private empty(empty start, string name) : base(start, name, start._names, open: false) { }
 
     /// <summary>The shared moments of an item of <paramref name="class"/>: the core's, and the ones its plang type
     /// declares.</summary>
@@ -25,7 +25,7 @@ public sealed class empty : @this
     /// <summary>The moment named <paramref name="name"/>, shared and closed: made once for the class. Null when there is
     /// no moment of that name.</summary>
     public override @this? this[string name]
-        => Core.Contains(name) || Declared.Contains(name) ? Add(name) : null;
+        => Core.Contains(name) || _names.Contains(name) ? Made(name) : null;
 
     /// <summary>The moment named <paramref name="name"/>, made with sides closed to events.</summary>
     private protected override @this Moment(string name) => new empty((empty)this, name);

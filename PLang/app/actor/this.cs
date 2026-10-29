@@ -44,10 +44,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// folders.</summary>
     internal role.@this Role { get; }
 
-    /// <summary>The events this actor bound (<c>%!app.event%</c> as it asks), and each item's moments for it. A snapshot
-    /// keeps the ones a program bound.</summary>
+    /// <summary>The events this actor bound, and each item's moments for it — reached by plang only as the asker's,
+    /// <c>%!app.event%</c>: a goal run as another actor never sees them. A snapshot keeps the ones a program bound.</summary>
     [global::app.Snapshot]
-    public global::app.@event.list.@this @event { get; }
+    internal global::app.@event.list.@this @event { get; }
 
     /// <summary>The key this actor's row for the setting at <paramref name="address"/> is kept under in the settings'
     /// store (<c>user!app.test.setting</c>).</summary>
@@ -215,9 +215,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         return actor.@event.Items();
     }
 
-    // a sub app reads only its own system/event/: its maker's system events came with the events it took in
+    // a sub app reads only its own system/event/: its maker's system events came with the events it took in. A sub app
+    // over its maker's folder has none of its own — the folder's files are the maker's, already run there; read again
+    // they would bind twice
     IEnumerable<global::app.type.item.path.@this> global::app.origin.@this.Events(global::app.@this app)
-        => [app.filesystem.root.Combine("system").Combine("event")];
+        => string.Equals(app.filesystem.root.Absolute, App.filesystem.root.Absolute, System.StringComparison.Ordinal)
+            ? [] : [app.filesystem.root.Combine("system").Combine("event")];
 
     int global::app.origin.@this.Depth => App.Depth + 1;
 

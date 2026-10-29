@@ -31,7 +31,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
     // the moments this item's type declares besides the core's
-    private readonly FrozenSet<string> _names;
+    private protected readonly FrozenSet<string> _names;
 
     // the start a named moment is of; none on the start itself
     private readonly @this? _start;
@@ -62,7 +62,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         this.list = list;
     }
 
-    private @this(empty shared) : this(null, "start", shared.Declared, open: true) => _shared = shared;
+    private @this(empty shared) : this(null, "start", shared._names, open: true) => _shared = shared;
 
     /// <summary>The item these are the moments of; none on a class's shared moments (<see cref="empty"/>).</summary>
     internal global::app.type.item.@this? item { get; }
@@ -82,9 +82,6 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>The side that runs <paramref name="when"/> — what an event is added to.</summary>
     internal side this[When when] => when == When.before ? before : after;
 
-    /// <summary>The moments the item's type declares besides the core's (a window's <c>closed</c>).</summary>
-    internal FrozenSet<string> Declared => _names;
-
     // Whether name is the start's — the on itself.
     private protected static bool IsStart(string name) => string.Equals(name, "start", StringComparison.OrdinalIgnoreCase);
 
@@ -96,13 +93,18 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
 
     /// <summary>The moment named <paramref name="name"/> an event is added to: made with sides that take events the first
     /// time. A name that is no moment is refused (<see cref="NoEvent"/>), thrown: no event is added for it.</summary>
-    internal @this Add(string name)
+    internal @this Add(string name) => this[name] is null ? throw new global::app.error.AppException(NoEvent(name)) : Made(name);
+
+    // The moment named name, a moment's name: the start itself, else made the first time with sides that take events.
+    private protected @this Made(string name)
     {
         if (IsStart(name)) return start;
-        if (!Core.Contains(name) && !_names.Contains(name)) throw new global::app.error.AppException(NoEvent(name));
         return (start._moments ?? System.Threading.LazyInitializer.EnsureInitialized(ref start._moments,
             static () => new(StringComparer.OrdinalIgnoreCase))).GetOrAdd(name, static (named, moments) => moments.Moment(named), start);
     }
+
+    // The start and each named moment made.
+    private IEnumerable<@this> Moments => _moments is null ? [this] : [this, .. _moments.Values];
 
     /// <summary>The moment named <paramref name="name"/> of this start, made with sides that take events.</summary>
     private protected virtual @this Moment(string name) => new(this, name, _names, open: true);
@@ -151,18 +153,18 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>One step down: the moment by its name (<c>.load</c>), made if it isn't yet, so a moment reached knows its
     /// item; a name that is no moment is refused (<see cref="NoEvent"/>).</summary>
     public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
-        => new(this[key] != null
-            ? new global::app.data.@this(key, Add(key), parent: parent)
-            : parent.Context.Error(NoEvent(key)));
+        => new(this[key] is null
+            ? parent.Context.Error(NoEvent(key))
+            : new global::app.data.@this(key, Made(key), parent: parent));
 
-    /// <summary>Takes <paramref name="event"/> off each of these moments' sides it is on.</summary>
     /// <summary>Takes in <paramref name="event"/> on its own moment and side: it runs there, after the ones already
     /// there.</summary>
     internal void Add(global::app.@event.@this @event) => Add(@event.Name)[@event.When].Add(@event);
 
+    /// <summary>Takes <paramref name="event"/> off each of these moments' sides it is on.</summary>
     internal void Remove(global::app.@event.@this @event)
     {
-        foreach (var moment in new[] { this }.Concat(_moments?.Values ?? []))
+        foreach (var moment in Moments)
         {
             moment.before.Remove(@event);
             moment.after.Remove(@event);
@@ -170,7 +172,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     }
 
     /// <summary>Whether no moment holds an event.</summary>
-    internal bool IsEmpty => !IsBound && _moments?.Values.Any(moment => moment.IsBound) != true;
+    internal bool IsEmpty => !Moments.Any(moment => moment.IsBound);
 
     // ---- what a snapshot keeps ----
 
@@ -180,8 +182,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         => side.Where(@event => @event.IsSaved && Equals(@event.Item, item)).ToList();
 
     /// <summary>Whether a snapshot keeps anything of these moments: an event a program bound on this item.</summary>
-    internal bool IsSaved => new[] { this }.Concat(_moments?.Values ?? [])
-        .Any(moment => moment.Saved(moment.before).Count > 0 || moment.Saved(moment.after).Count > 0);
+    internal bool IsSaved => Moments.Any(moment => moment.Saved(moment.before).Count > 0 || moment.Saved(moment.after).Count > 0);
 
     /// <summary>These moments written for a snapshot: the item they are the moments of, as what it is, then each moment
     /// holding an event a program bound on it, by its name, with its sides — <c>{item, start: {before: [event]}}</c>. Here
@@ -191,7 +192,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         writer.BeginObject();
         writer.Name("item");
         await new global::app.data.@this("", item, context: writer.Context).Output(writer);
-        foreach (var moment in new[] { this }.Concat(_moments?.Values ?? []))
+        foreach (var moment in Moments)
         {
             var sides = new (string Name, List<global::app.@event.@this> Saved)[]
                 { ("before", moment.Saved(moment.before)), ("after", moment.Saved(moment.after)) };

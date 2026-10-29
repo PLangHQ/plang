@@ -103,7 +103,7 @@ public sealed class @this(Browser browser) : global::app.type.item.@this
         // is not about the window
         var what = e["window"] is JsonValue said && said.TryGetValue<string>(out var happened) ? happened
             : Request.FirstOrDefault(e.ContainsKey);
-        if (what == null || !global::app.@event.on.empty.Of(GetType()).Names.Contains(what, StringComparer.OrdinalIgnoreCase)) return;
+        if (what == null || (await context.Actor!.@event.On(this))[what] is null) return;
         // the window it is about, before what happened changes the list (a closed one leaves it)
         Raise(what, ById(id), e, context);
         if (e["window"] is null) return;

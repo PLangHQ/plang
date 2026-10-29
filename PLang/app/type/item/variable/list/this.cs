@@ -199,7 +199,7 @@ public partial class @this
     private async System.Threading.Tasks.ValueTask<data.@this?> Before(string moment, string name, object? value)
     {
         if ((await Moments(name))?[moment] is not { before.Count: > 0 } on) return null;
-        var answer = await on.before.Start(Named(on, name), _context, value as data.@this ?? new data.@this(name, value, context: _context));
+        var answer = await on.before.Start(Named(name), _context, value as data.@this ?? new data.@this(name, value, context: _context));
         return answer is { Success: false } or { Handled: true } ? answer : null;
     }
 
@@ -208,13 +208,13 @@ public partial class @this
     private async System.Threading.Tasks.ValueTask<data.@this> After(string name, object? before, data.@this stored)
     {
         _context.call.Record(this, name, before);
-        return (await Moments(name))?.set is { after.Count: > 0 } set ? await set.after.Start(Named(set, name), stored, _context) : stored;
+        return (await Moments(name))?.set is { after.Count: > 0 } set ? await set.after.Start(Named(name), stored, _context) : stored;
     }
 
-    // The variable named `name`, as `moment`'s events are handed it: the one the name's moments were made with, else read
-    // from its name now.
-    private global::app.type.item.variable.@this Named(global::app.@event.on.@this moment, string name)
-        => moment.item as global::app.type.item.variable.@this ?? new parser.@this($"%{name}%", _context.App.type.list).Variable.Single();
+    // The variable named `name`, as a moment's events are handed it — read from its name, which is what a variable's
+    // equality is: only when something is bound there.
+    private global::app.type.item.variable.@this Named(string name)
+        => new parser.@this($"%{name}%", _context.App.type.list).Variable.Single();
 
     /// <summary>What <paramref name="name"/> holds — or, when it holds nothing, the value
     /// <paramref name="value"/> gives birth to, stored under it in one step: runs asking at once all answer
@@ -355,7 +355,7 @@ public partial class @this
         if (await Before("remove", name, binding) is { } refused) return refused;
         if (!Rows.TryRemove(name, out var removed)) return _context.NotFound(name);
         return (await Moments(name))?.remove is { after.Count: > 0 } remove
-            ? await remove.after.Start(Named(remove, name), removed, _context) : removed;
+            ? await remove.after.Start(Named(name), removed, _context) : removed;
     }
 
     /// <summary>The variables this memory holds, as a list — <c>%!app.variable.list%</c>: one variable per

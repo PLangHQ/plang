@@ -17,7 +17,7 @@ public class RemoveTests
     public async Task Remove_RemovesVariable()
     {
         var (context, memory) = CreateContext();
-        memory.Set("testVar", "testValue");
+        await memory.Set("testVar", "testValue");
 
         var action = new Remove(context) { Name = new app.type.item.variable.@this("testVar", context.App.type.list) };
         var result = await action.Start();

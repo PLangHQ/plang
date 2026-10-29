@@ -25,11 +25,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
     private readonly ConcurrentDictionary<global::app.type.item.@this, on.@this> _on = new();
 
     // each variable name an event is bound on, with those events; a name's list, made on its first set
-    private readonly Dictionary<string, List<global::app.@event.@this>> _named = new(StringComparer.OrdinalIgnoreCase);
+    // (read without the lock: a set of a name nothing is bound on takes none; each name's events replaced, never changed)
+    private readonly ConcurrentDictionary<string, global::app.@event.@this[]> _named = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, on.@this> _variable = new(StringComparer.OrdinalIgnoreCase);
 
     // the load, once: started by the first ask or add, every other asker awaiting the same
-    private System.Threading.Tasks.Task? _load;
+    private System.Threading.Tasks.TaskCompletionSource? _load;
 
     // the flow that is loading: the system/event goals it runs ask the door themselves, and go on with what is loaded so far
     private readonly System.Threading.AsyncLocal<bool> _loading = new();
@@ -75,10 +76,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
         var loaded = Loaded();
         if (!loaded.IsCompletedSuccessfully) return Awaited(loaded, name);
         if (_variable.TryGetValue(name, out var on)) return new(on);
-        lock (_gate)
-            if (_named.TryGetValue(name, out var bound) && bound.Count > 0)
-                return new(_variable.GetOrAdd(name, _ => List(bound[0].Item)));
-        return On(_actor.App.variable.type);
+        if (!_named.TryGetValue(name, out var bound)) return On(_actor.App.variable.type);
+        // the name's list made as the events stand, which a bind changes only under the same lock
+        lock (_gate) return new(_variable.GetOrAdd(name, _ => List(bound[0].Item)));
     }
 
     // The first ask of an actor whose events never loaded: they load, then the name's list.
@@ -114,11 +114,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
     internal async System.Threading.Tasks.ValueTask<T> Add<T>(string name, T @event) where T : global::app.@event.@this
     {
         await Loaded();
-        lock (_gate)
-        {
-            if (!_named.TryGetValue(name, out var bound)) _named[name] = bound = [];
-            bound.Add(@event);
-        }
+        lock (_gate) _named[name] = _named.TryGetValue(name, out var bound) ? [.. bound, @event] : [@event];
         Join(@event);
         return @event;
     }
@@ -142,10 +138,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
         {
             _events = [.. _events.Except([@event])];
             foreach (var on in Made) on.Remove(@event);
-            foreach (var (name, bound) in _named.ToList())
+            foreach (var (name, bound) in _named)
             {
-                if (!bound.Remove(@event) || bound.Count > 0) continue;
-                _named.Remove(name);
+                if (!bound.Contains(@event)) continue;
+                global::app.@event.@this[] left = [.. bound.Except([@event])];
+                if (left.Length > 0) { _named[name] = left; continue; }
+                _named.TryRemove(name, out _);
                 _variable.TryRemove(name, out _);
             }
         }
@@ -162,25 +160,33 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
     // ---- the load ----
 
     /// <summary>This actor's events, loaded: at once when they are, or inside the flow that is loading them (which goes on
-    /// with what is loaded so far); else the one load, started by whoever asks first.</summary>
+    /// with what is loaded so far); else the one load, started by whoever asks first — claimed, never under a lock, so
+    /// its first part runs with nothing held.</summary>
     internal System.Threading.Tasks.ValueTask Loaded()
     {
-        if (_load is { IsCompletedSuccessfully: true } || _loading.Value) return default;
-        lock (_gate) _load ??= Load();
-        return new(_load);
+        if (_load is { Task.IsCompletedSuccessfully: true } || _loading.Value) return default;
+        var load = new System.Threading.Tasks.TaskCompletionSource();
+        if (System.Threading.Interlocked.CompareExchange(ref _load, load, null) is { } started) return new(started.Task);
+        _ = Load(load);
+        return new(load.Task);
     }
 
-    // The load: the system events, then what this actor took in from its maker's (a sub app's). The app's System loads
-    // first: every goal is read as it, so a goal another actor's load reads finds System's events standing — and System's
-    // own load, reading the same file, never waits on this one.
-    private async System.Threading.Tasks.Task Load()
+    // The load, answered on done: the system events, then what this actor took in from its maker's (a sub app's). The
+    // app's System loads first: every goal is read as it, so a goal another actor's load reads finds System's events
+    // standing — and System's own load, reading the same file, never waits on this one.
+    private async System.Threading.Tasks.Task Load(System.Threading.Tasks.TaskCompletionSource done)
     {
         _loading.Value = true;
-        if (_actor.App.actor.list.System is { } system && !Equals(system, _actor)) await system.@event.Loaded();
-        var replaced = await Run(_actor.Context);
-        foreach (var made in await _actor.App.origin.@event(_actor.Role))
-            if (made.File is not { } file || !replaced.Contains(file))
-                Join(new inherited.@this(made, _actor.App));
+        try
+        {
+            if (_actor.App.actor.list.System is { } system && !Equals(system, _actor)) await system.@event.Loaded();
+            var replaced = await Run(_actor.Context);
+            foreach (var made in await _actor.App.origin.@event(_actor.Role))
+                if (made.File is not { } file || !replaced.Contains(file))
+                    Join(new inherited.@this(made, _actor.App));
+            done.SetResult();
+        }
+        catch (System.Exception ex) { done.SetException(ex); }
     }
 
     // Runs the system/event/ files as this actor: their names from the folders the app's origin names (the root: its own
@@ -191,8 +197,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
     private async System.Threading.Tasks.Task<HashSet<string>> Run(global::app.actor.context.@this context)
     {
         var ran = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        if ((await context.Setting.Get<setting.@this>()).System.Value == setting.System.skip) return ran;
-        foreach (var folder in context.App.origin.Events(context.App))
+        // no folder of its own (a sub app over its maker's), nothing to read — the setting not either
+        var folders = context.App.origin.Events(context.App).ToList();
+        if (folders.Count == 0 || (await context.Setting.Get<setting.@this>()).System.Value == setting.System.skip) return ran;
+        foreach (var folder in folders)
         {
             if (!await (await folder.Exists(context)).ToBooleanAsync()) continue;
             var listed = await folder.List("*.goal", recursive: false, context);
@@ -253,7 +261,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
         if (record.Get("item", context) is not { } slot
             || global::app.View.Snapshot.Make(slot.Type ?? context.App.type.list[typeof(global::app.type.item.@this)], slot.Peek(), context)
                 is not { } item)
-            throw Unread("a saved on's row names no item it is the moments of");
+            throw global::app.@event.@this.Unread("a saved on's row names no item it is the moments of");
         var read = new on.@this(item);
         var choices = context.App.type.list[typeof(global::app.type.item.choice.@this<When>)];
         foreach (var moment in record.Rows(context))
@@ -261,21 +269,21 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
             if (string.Equals(moment.Name, "item", StringComparison.OrdinalIgnoreCase)) continue;
             if (read[moment.Name] == null) throw new global::app.error.DeclinedException(read.NoEvent(moment.Name));
             if (moment.Peek() is not global::app.type.item.dict.@this sides)
-                throw Unread($"a saved on's '{moment.Name}' holds no sides");
+                throw global::app.@event.@this.Unread($"a saved on's '{moment.Name}' holds no sides");
             foreach (var side in sides.Rows(context))
             {
                 // the side reads itself as its When; a name that is no side is refused
                 When when = global::app.type.item.choice.@this<When>.Create(side.Name, choices)
-                    ?? throw Unread($"a saved event '{moment.Name}' holds '{side.Name}', which is no side of its events");
+                    ?? throw global::app.@event.@this.Unread($"a saved event '{moment.Name}' holds '{side.Name}', which is no side of its events");
                 if (side.Peek() is not global::app.type.item.list.@this rows)
-                    throw Unread($"a saved event '{moment.Name}' holds '{side.Name}', which is no list of events");
+                    throw global::app.@event.@this.Unread($"a saved event '{moment.Name}' holds '{side.Name}', which is no list of events");
                 var inherited = _events.OfType<inherited.@this>()
                     .Where(@event => Equals(@event.Item, item) && string.Equals(@event.Name, moment.Name, StringComparison.OrdinalIgnoreCase)
                                      && @event.When.Value == when).ToList();
                 foreach (var entry in rows.Items(context))
                 {
                     var saved = new call.@this(item, read.Add(moment.Name).Name, when, entry.Peek() as global::app.type.item.dict.@this
-                        ?? throw Unread($"a saved event on '{moment.Name}' is no record"), context);
+                        ?? throw global::app.@event.@this.Unread($"a saved event on '{moment.Name}' is no record"), context);
                     var index = inherited.FindIndex(@event => Equals(@event.action, saved.action));
                     if (index >= 0) { inherited.RemoveAt(index); continue; }
                     Join(saved);
@@ -284,9 +292,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
         }
         return read;
     }
-
-    private static global::app.error.DeclinedException Unread(string message)
-        => new(new global::app.error.@this(message, "SnapshotRowUnread", 400));
 
     /// <summary>The actor's events written: each as it writes itself, in the order bound.</summary>
     protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)

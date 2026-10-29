@@ -99,6 +99,17 @@ public class ListTests
         await Assert.That((await events.On(_app.Module("file")["read"]!)).before.Count).IsEqualTo(0);
     }
 
+    // an actor's events are reached only as the asker's (%!app.event%): a path through another actor reaches nothing
+    [Test] public async Task AnotherActorsEvents_AreNotReachedByPath()
+    {
+        await Record(_app.type.list["goal"], global::app.@event.When.before, new List<string>(), "x");
+
+        var read = await new global::app.type.item.variable.parser.@this("%!app.actor.user.event%", _app.type.list).Variable.Single()
+            .Start(_app.actor.list.System.Context);
+
+        await Assert.That(read.Success && read.IsInitialized).IsFalse();
+    }
+
     [Test] public async Task AppEvent_ListsTheRunningActorsEvents()
     {
         var bound = await Record(_app.type.list["goal"], global::app.@event.When.before, new List<string>(), "x");

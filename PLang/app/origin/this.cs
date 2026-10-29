@@ -44,7 +44,8 @@ internal interface @this
     System.Threading.Tasks.ValueTask<IEnumerable<global::app.@event.@this>> @event(global::app.actor.role.@this role);
 
     /// <summary>The folders <paramref name="app"/> reads its system events from, in order: the code, the app's own
-    /// system/event/ then the os's; an actor, the sub app's own only (its maker's came with the events it took in).</summary>
+    /// system/event/ then the os's; an actor, the sub app's own only (its maker's came with the events it took in), and
+    /// none for a sub app over its maker's folder.</summary>
     IEnumerable<global::app.type.item.path.@this> Events(global::app.@this app);
 
     /// <summary>The goal at <paramref name="source"/> as <paramref name="app"/> takes it from what it is made from —

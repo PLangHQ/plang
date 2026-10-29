@@ -124,6 +124,25 @@ public class SystemEventsTests
         await Assert.That((await maker.actor.list.User.Context.Variable.Get("loaded")).IsInitialized).IsFalse();
     }
 
+    // a sub app over its maker's folder has no system/event of its own: the folder's files are the maker's, run there,
+    // and come to the sub app as the maker's events, taken in — never run a second time
+    [Test] public async Task ASubAppOverItsMakersFolder_RunsNoSystemEventFile_AndHasTheMakersEvents()
+    {
+        var root = Root();
+        await Mark(root);
+        await using var maker = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
+        await Hello(maker, root, "maker");
+        await Start(maker);
+        await using var sub = new global::app.@this(root, maker.actor.list.User);
+
+        var events = (await sub.@event(sub.actor.list.User.Context)).Items().ToList();
+
+        await Assert.That((await sub.actor.list.User.Context.Variable.Get("loaded")).IsInitialized).IsFalse();
+        await Assert.That((await sub.actor.list.System.Context.Variable.Get("loaded")).IsInitialized).IsFalse();
+        await Assert.That(events.OfType<global::app.@event.inherited.@this>()).IsNotEmpty();
+        await Assert.That(events.OfType<global::app.@event.call.@this>()).IsEmpty();
+    }
+
     [Test] public async Task ACreateEventASystemEventBinds_RunsForAValueTheUserMakes()
     {
         var root = Root();

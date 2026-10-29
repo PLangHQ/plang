@@ -189,7 +189,7 @@ public partial class @this
         await using var _call = call;
 
         var on = await context.Actor!.@event.On(Catalog);
-        var data = await Attempt(context);
+        var data = await Attempt(on, context);
 
         // The error outcome — after the attempt, so a cache stores only the real work and a recovery runs outside the
         // attempt's deadline: its own on error first, then the actor's error events. The first that takes the failure
@@ -213,11 +213,16 @@ public partial class @this
     /// policy runs even when the cache holds the answer), its own clauses before (timeout's deadline, the cache lookup),
     /// its dispatch, its own clauses after (the cache stores the real result). A before that fails or answers in its
     /// place (a mock, a cache hit, on.cancel) is the attempt's result. A retry (<c>on.error</c>) is another attempt in
-    /// the same frame — the actor's before again, a fresh deadline, a fresh cache lookup.
+    /// the same frame — the actor's before again, a fresh deadline, a fresh cache lookup; it asks for the actor's list
+    /// itself, as on.error holds only the action.
     /// </summary>
     internal async Task<global::app.data.@this> Attempt(actor.context.@this context)
+        => await Attempt(await context.Actor!.@event.On(Catalog), context);
+
+    // One attempt with the actor's list for this action's catalog action, which Start asked for once.
+    private async Task<global::app.data.@this> Attempt(global::app.@event.on.@this on, actor.context.@this context)
     {
-        var answer = await (await context.Actor!.@event.On(Catalog)).before.Start(this, context);
+        var answer = await on.before.Start(this, context);
         if (answer is not ({ Success: false } or { Handled: true }))
             answer = await Clauses.before.Start(this, context, answer) ?? answer;
         global::app.data.@this data;

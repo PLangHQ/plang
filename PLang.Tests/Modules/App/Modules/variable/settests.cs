@@ -43,6 +43,23 @@ public class SetTests
         await Assert.That(started).IsEqualTo(1);
     }
 
+    // the typed write goes through the variable's own door, as the untyped one does: a member path sets the member
+    [Test]
+    public async Task Set_AMember_AsATypedValue_SetsTheMember()
+    {
+        var context = _app.actor.list.User.Context;
+        await context.Variable.Set("x", global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?> { ["b"] = "kept" }, context));
+
+        var set = await global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%x.a%", "variable"),
+            ("Value", "1"), ("Type", context.App.type.list["number"])).Start(context);
+
+        await set.IsSuccess();
+        var a = await new global::app.type.item.variable.parser.@this("%x.a%", context.App.type.list).Variable.Single().Start(context);
+        await Assert.That(a.Peek()).IsTypeOf<global::app.type.item.number.@this>();
+        await Assert.That(a.Peek()?.ToString()).IsEqualTo("1");
+        await Assert.That((await context.Variable.Get("a")).IsInitialized).IsFalse();
+    }
+
     [Test]
     public async Task Set_BangPath_WritesSetting_NotVariable()
     {

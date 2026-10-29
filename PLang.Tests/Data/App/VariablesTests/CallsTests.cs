@@ -42,7 +42,7 @@ public class CallsTests : System.IAsyncDisposable
     public async Task Push_FrameWinsOverUnderlyingForSameName()
     {
         var vars = new AppVars(_app.actor.list.User.Context);
-        vars.Set("x", "underlying");
+        await vars.Set("x", "underlying");
         await using var _ = _app.actor.list.User.Context.call.Push(new[] { _app.Data("x", "framed") }, await _app.actor.list.User.Context.call.Setting());
 
         await Assert.That((await (await vars.Get("x")).Value())?.ToString()).IsEqualTo("framed");
@@ -138,7 +138,7 @@ public class CallsTests : System.IAsyncDisposable
         await using var _ = _app.actor.list.User.Context.call.Push(new[] { _app.Data("x", 1) }, await _app.actor.list.User.Context.call.Setting());
 
         await Assert.That((await (await vars.Get("x")).Value())?.ToString()).IsEqualTo("1");
-        vars.Set("x", 2);
+        await vars.Set("x", 2);
         await Assert.That((await (await vars.Get("x")).Value())?.ToString()).IsEqualTo("2");
     }
 
@@ -146,10 +146,10 @@ public class CallsTests : System.IAsyncDisposable
     public async Task SetInsideCall_ANameItDoesNotBind_ReachesUnderlying_ItsOwnEndsWithIt()
     {
         var vars = new AppVars(_app.actor.list.User.Context);
-        vars.Set("k", "underlying");
+        await vars.Set("k", "underlying");
         var scope = _app.actor.list.User.Context.call.Push(new[] { _app.Data("own", 1) }, await _app.actor.list.User.Context.call.Setting());
-        vars.Set("k", "written");
-        vars.Set("own", 2);
+        await vars.Set("k", "written");
+        await vars.Set("own", 2);
 
         await scope.DisposeAsync();
         await Assert.That((await (await vars.Get("k")).Value())?.ToString()).IsEqualTo("written");
@@ -162,9 +162,9 @@ public class CallsTests : System.IAsyncDisposable
         // Writes inside an isolated frame stay in it. After dispose, the
         // actor-shared dict is unchanged.
         var vars = new AppVars(_app.actor.list.User.Context);
-        vars.Set("k", "underlying");
+        await vars.Set("k", "underlying");
         var scope = _app.actor.list.User.Context.call.Isolate(null, await _app.actor.list.User.Context.call.Setting());
-        vars.Set("k", "scoped");
+        await vars.Set("k", "scoped");
         await Assert.That((await (await vars.Get("k")).Value())?.ToString()).IsEqualTo("scoped");
 
         await scope.DisposeAsync();
@@ -178,7 +178,7 @@ public class CallsTests : System.IAsyncDisposable
         // is gone after dispose.
         var vars = new AppVars(_app.actor.list.User.Context);
         var scope = _app.actor.list.User.Context.call.Isolate(null, await _app.actor.list.User.Context.call.Setting());
-        vars.Set("fresh", 42);
+        await vars.Set("fresh", 42);
         await Assert.That((await (await vars.Get("fresh")).Value())?.ToString()).IsEqualTo("42");
 
         await scope.DisposeAsync();
@@ -192,7 +192,7 @@ public class CallsTests : System.IAsyncDisposable
         // reader must NOT see the writer's value. This is the production race
         // GoalChannel.InvokeGoal solves — both fires read %!data% concurrently.
         var vars = new AppVars(_app.actor.list.User.Context);
-        vars.Set("k", "underlying");
+        await vars.Set("k", "underlying");
 
         var writerStarted = new TaskCompletionSource<bool>();
         var readerCanRead = new TaskCompletionSource<bool>();
@@ -200,7 +200,7 @@ public class CallsTests : System.IAsyncDisposable
         async Task<string> Writer()
         {
             await using var _ = _app.actor.list.User.Context.call.Isolate(null, await _app.actor.list.User.Context.call.Setting());
-            vars.Set("k", "writer-only");
+            await vars.Set("k", "writer-only");
             writerStarted.TrySetResult(true);
             await readerCanRead.Task;          // hold the overlay open
             return (await (await vars.Get("k")).Value())!.ToString()!;
@@ -223,7 +223,7 @@ public class CallsTests : System.IAsyncDisposable
     public async Task Push_NullParameters_PushesEmptyFrame()
     {
         var vars = new AppVars(_app.actor.list.User.Context);
-        vars.Set("x", "underlying");
+        await vars.Set("x", "underlying");
         await using var _ = _app.actor.list.User.Context.call.Push((IEnumerable<Data>?)null, await _app.actor.list.User.Context.call.Setting());
 
         await Assert.That((await (await vars.Get("x")).Value())?.ToString()).IsEqualTo("underlying");

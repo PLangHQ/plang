@@ -93,8 +93,5 @@ public sealed class @this : global::app.@event.@this
         where T : global::app.type.item.@this
         => record.Get(name, context) is { } row
            && global::app.View.Snapshot.Make(context.App.type.list[typeof(T)], row.Peek(), context) is T value
-            ? value : throw Unread(name);
-
-    private static global::app.error.DeclinedException Unread(string name)
-        => new(new global::app.error.@this($"a saved event keeps no {name} that reads", "SnapshotRowUnread", 400));
+            ? value : throw Unread($"a saved event keeps no {name} that reads");
 }

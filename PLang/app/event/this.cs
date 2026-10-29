@@ -45,6 +45,11 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     /// that name replaces. A C# event has none.</summary>
     internal string? File => action?.Step?.Goal.Path?.Name.ToString();
 
+    /// <summary>The refusal of a saved event, or a saved item's events, that doesn't read back: thrown to the read
+    /// boundary.</summary>
+    internal static global::app.error.DeclinedException Unread(string message)
+        => new(new global::app.error.@this(message, "SnapshotRowUnread", 400));
+
     /// <summary>Runs it for <paramref name="item"/>, the item its moment came for, on the result as it stands, in the
     /// asker's context. Each kind runs its own way; whoever runs it enters it on the context first
     /// (<see cref="global::app.actor.context.@this.Enter"/>), so it never runs inside its own run.</summary>

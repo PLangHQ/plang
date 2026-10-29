@@ -58,8 +58,9 @@ public partial class OnEvent : IContext
         if (!reached.IsInitialized)
             return Context.Error<global::app.@event.@this>(new global::app.error.@this(
                 $"on.event: '{path}' reaches nothing — the item isn't there to bind on", "EventUnreached", 404));
+        // something other than a moment: the item reached refuses the path, naming the moments it has
         if (reached.Peek() is not global::app.@event.on.@this { item: { } item } moment)
-            return Context.Error<global::app.@event.@this>(global::app.@event.on.empty.Of(typeof(global::app.type.item.@this)).NoEvent(path));
+            return Context.Error<global::app.@event.@this>((await Context.Actor!.@event.On(reached.Peek())).NoEvent(path));
 
         // each carrier is opened through its door: the first that doesn't resolve (a %variable% holding nothing, a
         // name that is none of the choice's) is the answer, and nothing is held for it. Bound on this actor's events,

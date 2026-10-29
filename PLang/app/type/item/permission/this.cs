@@ -64,7 +64,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         this.Path = Path;
         this.Verbs = Verbs;
         this.Match = Match;
+        _glob = Match == Match.glob ? new global::app.type.item.path.Glob(Path, Comparison) : null;
     }
+
+    // a glob grant's pattern, made once at its birth
+    private readonly global::app.type.item.path.Glob? _glob;
 
     /// <summary>Every verb — the "fully granted" set an "a"/"y" answer mints.</summary>
     public static IReadOnlySet<Verb> AllVerbs { get; } =
@@ -97,7 +101,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private bool PathMatches(string requestPath) => Match switch
     {
         Match.exact => string.Equals(Path, requestPath, Comparison),
-        Match.glob  => new global::app.type.item.path.Glob(Path, Comparison).Matches(requestPath),
+        Match.glob  => _glob!.Matches(requestPath),
         _ => false,
     };
 
