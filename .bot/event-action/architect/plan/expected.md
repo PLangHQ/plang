@@ -1,105 +1,51 @@
-# event-action — the expected C# (decisions 3–6)
+# event-action — the expected C# (decisions 3–13)
 
-The goal's start path only. Actions, a goal's `load`/`error` by name, IsSystem and the `on.event` path come next. NEW marks a member that doesn't exist; anything else is quoted with its file:line.
+What the coder's code should look like, for comparing when a stage reports done. NEW marks a member that doesn't exist; anything else is quoted with its file:line. Names the coder proposes (on.unbind's parameter, `%!x.on%`'s reach) are left as they are today.
 
-## The actor holds its events
-
-```csharp
-// actor/this.cs — NEW: the events this actor bound; %!app.event% reads the running actor's
-public global::app.@event.list.@this @event { get; }
-```
-
-## event/this.cs — what's bound (NEW; replaces binding/this.cs)
+## What's bound — `event/this.cs` (NEW; replaces binding/this.cs)
 
 ```csharp
 namespace app.@event;
 
-/// <summary>What a program bound: run before or after the event it names, for the item it names, by the actor that
-/// bound it, whose events hold it.</summary>
+/// <summary>What a program bound: run before or after a moment of the item it is bound on, by the actor that bound
+/// it, whose events hold it.</summary>
 [global::app.Attributes.PlangType("event")]
 public abstract class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    private protected @this(string name, When when, global::app.type.item.@this item, global::app.actor.@this actor)
-    {
-        Name = name;
-        When = when;
-        Item = item;
-        Actor = actor;
-    }
-
-    /// <summary>The event it runs on: start, load, error.</summary>
+    /// <summary>The moment it runs on: start, load, error, create …</summary>
     public string Name { get; }
 
-    /// <summary>Before the event, or after it.</summary>
+    /// <summary>Before the moment, or after it.</summary>
     public When When { get; }
 
-    /// <summary>What it is bound on: one goal, or the goal type (each goal).</summary>
+    /// <summary>What it is bound on: a type (each goal), one goal, a catalog action, a module, a channel.</summary>
     public global::app.type.item.@this Item { get; }
 
     /// <summary>The actor that bound it.</summary>
     public global::app.actor.@this Actor { get; }
 
-    /// <summary>Whether it runs for <paramref name="item"/>: the one it is bound on, or each item of the type it is bound on.</summary>
-    internal virtual bool For(global::app.type.item.@this item)
-    {
-        if (ReferenceEquals(item, Item)) return true;
-        return ReferenceEquals(item.Type, Item);
-    }
-
-    /// <summary>Runs it for <paramref name="item"/> on the result as it stands; inside its own call it doesn't run again
-    /// (binding/this.cs:66–72).</summary>
-    internal async Task<data.@this> Start(global::app.type.item.@this item, data.@this result, actor.context.@this context)
-    {
-        if (!context.TryEnterEvent(this)) return result;
-        try { return await Handle(item, result, context); }
-        finally { context.ExitEvent(this); }
-    }
-
-    private protected abstract Task<data.@this> Handle(global::app.type.item.@this item, data.@this result, actor.context.@this context);
+    /// <summary>Runs it for <paramref name="item"/> on the result as it stands. Each kind has its own.</summary>
+    public abstract Task<data.@this> Start(global::app.type.item.@this item, data.@this result, actor.context.@this context);
 }
 ```
 
-## event/call/this.cs — what on.event binds (was binding/action/this.cs)
+Kinds: `event/call/` (on.event's goal call; its `Start` is today's `binding/action/this.cs:37–73`), `event/clause/`, `event/code/` (C#), `event/inherited/`.
 
-```csharp
-namespace app.@event.call;
-
-/// <summary>What on.event binds: a goal call, run when its event fires. It points to the on.event step that made it.</summary>
-public sealed class @this : global::app.@event.@this
-{
-    internal @this(global::app.goal.step.action.@this action, string name, When when, global::app.type.item.@this item,
-        global::app.actor.@this actor) : base(name, when, item, actor)
-    {
-        this.action = action;
-    }
-
-    /// <summary>The on.event step that made it; its Action is the goal call it runs.</summary>
-    internal global::app.goal.step.action.@this action { get; }
-
-    // unchanged from binding/action/this.cs:37–73: finds the goal in its own app, runs the call with this as %!event%
-    private protected override async Task<data.@this> Handle(global::app.type.item.@this item, data.@this result,
-        actor.context.@this context) { … }
-}
-```
-
-## event/list/this.cs — the actor's events (NEW; replaces event/on/list/)
+## The actor's events — `event/list/this.cs` (NEW; replaces event/on/list/)
 
 ```csharp
 namespace app.@event.list;
 
-/// <summary>An actor's events (%!app.event%): every event it bound, in bind order, and each item's lists, made on the
+/// <summary>An actor's events (%!app.event%): every event it bound, in bind order, and each item's moments, made on the
 /// item's first run.</summary>
 public sealed class @this : global::app.type.item.list.@this<global::app.@event.@this>
 {
     private readonly object _gate = new();
 
-    // each item's lists, made on its first run: none until then
-    private readonly System.Collections.Concurrent.ConcurrentDictionary<global::app.type.item.@this, on.@this> _on =
-        new(System.Collections.Generic.ReferenceEqualityComparer.Instance);
+    // each item's moments for this actor, made on its first run: none until then
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<global::app.type.item.@this, on.@this> _on = new();
 
-    internal @this(global::app.type.@this type) : base(type) { }
-
-    /// <summary>The item's lists: matched against every event on the first ask, the same lists after that.</summary>
+    /// <summary>The item's moments: made on the first ask from every event that applies, the same after that.</summary>
     internal on.@this this[global::app.type.item.@this item]
     {
         get
@@ -110,67 +56,59 @@ public sealed class @this : global::app.type.item.list.@this<global::app.@event.
                 if (_on.TryGetValue(item, out on)) return on;
                 on = new on.@this(Type);
                 foreach (var @event in Items())
-                    if (@event.For(item)) on.Add(@event);
+                    if (item.Is(@event.Item.Type)) on.Add(@event);   // bound on a type: each item of it (the path rule for system/ goals is the coder's)
                 _on[item] = on;
                 return on;
             }
         }
     }
 
-    /// <summary>Binds <paramref name="event"/>: it joins the actor's events, then every item's lists already made that it
-    /// is for.</summary>
+    /// <summary>Binds <paramref name="event"/>: it joins the actor's events, then the moments it belongs in — the one
+    /// item's it is bound on, or every made item's that Is the type it is bound on.</summary>
     internal void Add(global::app.@event.@this @event)
     {
         lock (_gate)
         {
             base.Add(@event);
-            foreach (var (item, on) in _on)
-                if (@event.For(item)) on.Add(@event);
+            … placement by what the path reached (decision 7): one item → this[item].Add(@event); a type → each made item
+              that Is it; a module → each of its actions
         }
     }
 }
 ```
 
-`Items()` is `list/this.Generic.cs:28`; `base.Add(item)` is `list/this.cs:400`. `on.unbind` is the same walk, leaving each list.
+`Items()` is `list/this.Generic.cs:28`; `base.Add` is `list/this.cs:400`; `item.Is(type)` is `item/this.cs:395`. The maps use their keys' own equality (a type by name, `type/this.cs:610`).
 
-## event/on/ — one item's lists for one actor (NEW body)
+## An item's moments — `event/on/this.cs` (NEW body)
 
 ```csharp
 namespace app.@event.on;
 
-/// <summary>One item's events for one actor: what runs before and after it starts, made on the item's first run.</summary>
+/// <summary>An item's moments for one actor: what runs before and after it starts, and each named moment (load, error,
+/// create …), itself an on with its own before and after.</summary>
 public sealed class @this
 {
-    internal @this(global::app.type.@this type)
-    {
-        before = new(type);
-        after = new(type);
-    }
-
     public before before { get; }
 
     public after after { get; }
 
-    // the side an event runs on (today's event/this.cs:42)
-    internal global::app.type.item.list.@this<global::app.@event.@this> this[When when] => when == When.before ? before : after;
-
-    internal void Add(global::app.@event.@this @event)
-    {
-        this[@event.When].Add(@event);
-    }
+    /// <summary>A named moment: load, error, create, set, write … (start is this one).</summary>
+    public @this this[string name] { get … }    // made when an event of that name is added
 }
+```
 
-/// <summary>What runs before an item starts: each event in bind order. A failure or a Handled answer stops it and is the
-/// answer.</summary>
+## Running a side — `event/on/before.cs`, `after.cs`
+
+```csharp
 public sealed class before : global::app.type.item.list.@this<global::app.@event.@this>
 {
-    internal before(global::app.type.@this type) : base(type) { }
-
     public async ValueTask<data.@this> Start(global::app.type.item.@this item, actor.context.@this context)
     {
         var answer = context.Ok();
         foreach (var @event in Items())
         {
+            using var running = context.Enter(@event);   // NEW: null when it's already running in this flow
+            if (running == null) continue;
             answer = await @event.Start(item, answer, context);
             if (!answer.Success || answer.Handled) return answer;
         }
@@ -178,16 +116,14 @@ public sealed class before : global::app.type.item.list.@this<global::app.@event
     }
 }
 
-/// <summary>What runs after an item starts: each event in bind order, whatever the others answer; one that fails makes
-/// the result its error (binding/list/after.cs:18–28).</summary>
 public sealed class after : global::app.type.item.list.@this<global::app.@event.@this>
 {
-    internal after(global::app.type.@this type) : base(type) { }
-
     public async ValueTask<data.@this> Start(global::app.type.item.@this item, data.@this result, actor.context.@this context)
     {
         foreach (var @event in Items())
         {
+            using var running = context.Enter(@event);
+            if (running == null) continue;
             var answer = await @event.Start(item, result, context);
             if (!answer.Success) result = answer;
         }
@@ -196,31 +132,12 @@ public sealed class after : global::app.type.item.list.@this<global::app.@event.
 }
 ```
 
-## on.event binds (module/on/event.cs:55–80)
-
-```csharp
-public async Task<data.@this<global::app.@event.@this>> Start()
-{
-    // :57–68 unchanged for now: the path reached, the event's name, the item it's on (the path's shape is open)
-    …
-    return data.@this<global::app.@event.@this>.From(await When.Use(when => Action.Use(_ =>
-    {
-        var @event = new global::app.@event.call.@this(__action!, named.Name, when.Value, item, Context.Actor!);
-        Context.Actor!.@event.Add(@event);
-        return Task.FromResult<data.@this>(Context.Ok<global::app.@event.@this>(@event));
-    })));
-}
-```
-
-`Scope` and its `Use` go.
-
-## goal.Start (goal/this.cs:356–381)
+## goal.Start — `goal/this.cs:356–381`
 
 ```csharp
 public virtual async Task<data.@this> Start(actor.context.@this context, IEnumerable<data.@this>? parameters)
 {
     // :358–376 unchanged: cancelled, broken, the frame pushed
-    …
     var on = context.Actor.@event[this];
     var answer = await on.before.Start(this, context);
     var result = answer is { Success: false } or { Handled: true } ? answer : frame.Leave(await Step.Start(context));
@@ -228,12 +145,11 @@ public virtual async Task<data.@this> Start(actor.context.@this context, IEnumer
 }
 ```
 
-`Enter` (`:397–401`), `Leave` (`:405–414`) and `Elsewhere` (`:117`) go; `Start` becomes virtual.
+`Enter` (`:397`), `Leave` (`:405`) and `Elsewhere` (`:117`) go.
 
-## The goal frame leaves (call/goal/this.cs:38)
+## The goal frame leaves — `call/goal/this.cs:38`
 
 ```csharp
-// today: => Goal?.Leave(result) ?? result;
 internal override global::app.data.@this Leave(global::app.data.@this result)
 {
     if (!result.Returned) return result;
@@ -243,7 +159,7 @@ internal override global::app.data.@this Leave(global::app.data.@this result)
 }
 ```
 
-## A goal of the parent app (NEW: parent/goal/this.cs)
+## A goal of the parent app — `parent/goal/this.cs` (NEW)
 
 ```csharp
 namespace app.parent.goal;
@@ -267,10 +183,14 @@ public sealed class @this : global::app.goal.@this
 }
 ```
 
-`parent/this.cs:113` makes it: `new global::app.parent.goal.@this(parent, key, data.Context.App.type.list)`. `parent.Run` (`:48`) takes the goal and the call's parameters, instead of a name and the caller's frame (`:55–64` read `context.call.Scope`'s arguments).
+`parent/this.cs:113` makes it; `parent.Run` (`:48`) takes the goal and the call's parameters instead of a name and the caller's frame (`:55–64`).
 
-## For the coder to check
+## on.event binds — `module/on/event.cs:74–79`
 
-- `goal.Type` is the same object `%!app.type.goal%` reaches, so "each goal" matches by reference.
-- The base list's public `Add(item)` stays a second way in; the event list must not let an event in without joining the made lists.
-- Inside its own call an event answered `context.Ok()` (`binding/this.cs:69`); here it answers the result as it stands, so an after doesn't lose it.
+```csharp
+var @event = new global::app.@event.call.@this(__action!, named.Name, when.Value, item, Context.Actor!);
+Context.Actor!.@event.Add(@event);
+return Task.FromResult<data.@this>(Context.Ok<global::app.@event.@this>(@event));
+```
+
+`Scope` and its `Use` go.
