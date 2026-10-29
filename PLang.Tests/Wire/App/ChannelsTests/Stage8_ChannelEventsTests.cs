@@ -237,7 +237,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
         var serviceLogger = StreamChannel.Memory(svc.Channels, "logger");
         svc.Channels.Register(serviceLogger);
         var hits = 0;
-        app.@event.Add(app.type.list["channel"]).Add("write")[When.before].Add(side => new global::app.@event.code.@this(side, (_, _, ctx) => { Interlocked.Increment(ref hits); return Task.FromResult(ctx.Ok()); }, app.actor.list.User, Scope.app, global::app.@event.@this.Always));
+        app.actor.list.User.@event.Add(app.type.list["channel"], "write", global::app.@event.When.before, side => new global::app.@event.code.@this(side, (_, _, ctx) => { Interlocked.Increment(ref hits); return Task.FromResult(ctx.Ok()); }, app.actor.list.User, global::app.@event.code.@this.Always));
 
         await userLogger.WriteAsync(app.Ok("a"));
         await serviceLogger.WriteAsync(app.Ok("b"));
@@ -250,7 +250,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     {
         var ch = Registered("c");
         var fired = false;
-        app.@event.Add(app.goal.type).Add("start")[When.before].Add(side => new global::app.@event.code.@this(side, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); }, app.actor.list.User, Scope.app, global::app.@event.@this.Always));
+        app.actor.list.User.@event.Add(app.goal.type, "start", global::app.@event.When.before, side => new global::app.@event.code.@this(side, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); }, app.actor.list.User, global::app.@event.code.@this.Always));
 
         await ch.WriteAsync(app.Ok("x"));
 

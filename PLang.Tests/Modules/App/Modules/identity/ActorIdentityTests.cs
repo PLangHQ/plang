@@ -52,7 +52,7 @@ public class ActorIdentityTests : System.IAsyncDisposable
     public async Task ALaterBornActor_HasItsIdentityVariablesAtOnce_WhateverIsBoundToSet()
     {
         var gate = new TaskCompletionSource();
-        _app.@event.Add(_app.variable.type).Add("set")[global::app.@event.When.before].Add(side => new global::app.@event.code.@this(side, async (_, _, ctx) => { await gate.Task; return ctx.Ok(); }, _app.actor.list.User, global::app.@event.Scope.app, global::app.@event.@this.Always));
+        _app.actor.list.User.@event.Add(_app.variable.type, "set", global::app.@event.When.before, side => new global::app.@event.code.@this(side, async (_, _, ctx) => { await gate.Task; return ctx.Ok(); }, _app.actor.list.User, global::app.@event.code.@this.Always));
 
         await using var born = new global::app.actor.@this(new global::app.actor.role.user(), _app, system: _app.actor.list.System);
 

@@ -97,12 +97,12 @@ public class FileChannelTests
     {
         var (app, context, dir) = MakeApp();
         await using var _ = app;
-        app.@event.Add(app.type.list["image"]).Add("create")[global::app.@event.When.before].Add(side => new global::app.@event.code.@this(side, (_, _, ctx) =>
+        app.actor.list.User.@event.Add(app.type.list["image"], "create", global::app.@event.When.before, side => new global::app.@event.code.@this(side, (_, _, ctx) =>
         {
             global::app.data.@this made = ctx.Ok(context.Image(Png1x1, "image/png"));
             made.Handled = true;
             return Task.FromResult(made);
-        }, app.actor.list.User, global::app.@event.Scope.actor, global::app.@event.@this.Always));
+        }, app.actor.list.User, global::app.@event.code.@this.Always));
 
         var saved = await context.File(Path.Combine(dir, "x.png")).Save(ADict(context), context);
 

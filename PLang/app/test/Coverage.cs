@@ -43,7 +43,7 @@ public sealed class Coverage
     /// own result is truthy), keyed by its position in the step's action chain. Answers the event; whoever
     /// watches removes it when the watch ends.</summary>
     public global::app.@event.@this Watch(global::app.actor.context.@this context)
-        => context.App.@event.Add(context.App.type.list["action"]).Add("start").after.Add(side => new global::app.@event.code.@this(side,
+        => context.Actor!.@event.Add(context.App.type.list["action"], "start", global::app.@event.When.after, side => new global::app.@event.code.@this(side,
             async (item, result, ctx) =>
             {
                 if (item is not global::app.goal.step.action.@this action) return ctx.Ok();
@@ -59,7 +59,7 @@ public sealed class Coverage
                 RecordBranchLabel(site, lone ? (fired ? "true" : "false") : action.Name);
                 return ctx.Ok();
             },
-            context.Actor!, global::app.@event.Scope.actor, global::app.@event.@this.Always));
+            context.Actor!, global::app.@event.code.@this.Always));
 
     // A condition step's site — "goal:stepIndex", its goal by its path (a goal with none, by its name).
     private string Site(global::app.goal.@this goal, global::app.goal.step.@this step)

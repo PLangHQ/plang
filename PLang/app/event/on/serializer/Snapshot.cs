@@ -1,9 +1,10 @@
 namespace app.@event.on.serializer;
 
 /// <summary>
-/// An item's moments read in the snapshot view: the record the moments wrote (<c>{item, start: {before: [event]}}</c>)
-/// comes in, and the moments the resumed app holds for that item come out, the saved events read onto them
-/// (<see cref="on.@this.Create"/>). A record that doesn't read is refused, thrown to the read boundary.
+/// The events bound on one item, read in the snapshot view: the record they were written as
+/// (<c>{item, start: {before: [event]}}</c>) comes in, and each event is bound again on the reading actor's events
+/// (<see cref="list.@this.Read"/>); the item's moments come out. A record that doesn't read is refused, thrown to the
+/// read boundary.
 /// </summary>
 public sealed class Snapshot : global::app.type.reader.ITypeReader
 {
@@ -17,9 +18,8 @@ public sealed class Snapshot : global::app.type.reader.ITypeReader
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind, global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        var record = new global::app.type.item.dict.serializer.Reader().Read(ref reader, null, ctx);
-        var read = new global::app.data.@this("", record, context: ctx.Context);
-        return on.@this.Create(record, null, read)
-            ?? throw new global::app.error.DeclinedException(read.Error!);
+        var context = ctx.Context;
+        var record = (global::app.type.item.dict.@this)new global::app.type.item.dict.serializer.Reader().Read(ref reader, null, ctx);
+        return context.Actor!.@event.Read(record, context);
     }
 }

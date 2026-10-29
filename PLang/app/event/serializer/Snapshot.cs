@@ -3,7 +3,7 @@ namespace app.@event.serializer;
 /// <summary>
 /// An event read in the snapshot view: its key comes in (<c>{action, n}</c>, what the snapshot wrote where a running
 /// event's call pointed at it) and the event comes out — the <c>on.event</c> action that made it, read as an action, then
-/// the n-th of the events that action made in the resumed app's events, the order the key was numbered in. A key no event
+/// the n-th of the events that action made in the resuming actor's events, the order the key was numbered in. A key no event
 /// answers is refused (<c>EventNotFound</c>), thrown to the read boundary.
 /// </summary>
 public sealed class Snapshot : global::app.type.reader.ITypeReader
@@ -26,8 +26,8 @@ public sealed class Snapshot : global::app.type.reader.ITypeReader
             || record.Clr("n", typeof(int)) is not int n)
             throw new global::app.error.DeclinedException(new global::app.error.@this(
                 "a saved event names no action that made it, or not its place among that action's events", "EventKeyIncomplete", 400));
-        return context.App.@event.Of(action).ElementAtOrDefault(n)
+        return context.Actor!.@event.Of(action).ElementAtOrDefault(n)
             ?? throw new global::app.error.DeclinedException(new global::app.error.@this(
-                $"the saved event {n} made by '{action.Step?.Text}' is no event this app holds", "EventNotFound", 404));
+                $"the saved event {n} made by '{action.Step?.Text}' is no event this actor holds", "EventNotFound", 404));
     }
 }

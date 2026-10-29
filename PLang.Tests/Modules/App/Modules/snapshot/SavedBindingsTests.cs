@@ -229,8 +229,8 @@ public class SavedBindingsTests
         var root = Root();
         await using var app = App(root);
         var user = app.actor.list.User;
-        app.@event.Add(app.type.list["goal"]).Add("start").before.Add(side => new global::app.@event.code.@this(side,
-            (_, _, ctx) => Task.FromResult(ctx.Ok()), user, global::app.@event.Scope.actor, global::app.@event.@this.Always));
+        user.@event.Add(app.type.list["goal"], "start", global::app.@event.When.before, side => new global::app.@event.code.@this(side,
+            (_, _, ctx) => Task.FromResult(ctx.Ok()), user, global::app.@event.code.@this.Always));
         var snapshot = await app.Snapshot(user.Context).Saved();
 
         await using var fresh = App(root);

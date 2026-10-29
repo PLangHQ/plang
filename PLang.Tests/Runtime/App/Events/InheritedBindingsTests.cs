@@ -13,9 +13,9 @@ public class InheritedBindingsTests
     // A binding by app's user before item's start that records name.
     private static void Bind(global::app.@this app, global::app.type.item.@this item, List<string> ran, string name,
         Scope scope = Scope.actor)
-        => app.@event.Add(item).Add("start").before.Add(side => new global::app.@event.code.@this(side,
+        => app.actor.list.User.@event.Add(item, "start", global::app.@event.When.before, side => new global::app.@event.code.@this(side,
             (_, _, ctx) => { lock (ran) ran.Add(name); return Task.FromResult(ctx.Ok()); },
-            app.actor.list.User, scope, global::app.@event.@this.Always));
+            app.actor.list.User, global::app.@event.code.@this.Always));
 
     [Test]
     public async Task ASubApp_TakesInItsMakersBinding_AtBirth_AndFiresItForItsUser()

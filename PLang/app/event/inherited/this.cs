@@ -13,7 +13,7 @@ public sealed class @this : global::app.@event.@this
     /// <summary><paramref name="event"/>, the maker's, taken in on <paramref name="side"/> of <paramref name="app"/>'s
     /// own moment.</summary>
     internal @this(global::app.@event.on.side side, global::app.@event.@this @event, global::app.@this app)
-        : base(side, @event, @event.Actor.Role.In(app.actor.list))
+        : base(side, @event.Actor.Role.In(app.actor.list))
         => _event = @event;
 
     // the maker's: the action that made the event it runs

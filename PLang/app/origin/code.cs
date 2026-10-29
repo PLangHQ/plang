@@ -40,7 +40,7 @@ internal sealed class code : @this
 
     public global::app.module.code.@this? Code => null;
 
-    public global::app.@event.list.@this? @event => null;
+    public IEnumerable<global::app.@event.@this> @event => [];
 
     public int Depth => 0;
 

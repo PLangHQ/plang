@@ -334,20 +334,10 @@ public sealed partial class @this
     // A goal by its location, as item's ILoad door asks it: the app's goals load it.
     public static Task<data.@this> Load(global::app.type.item.path.@this source, global::app.@this app) => app.goal.list.Load(source);
 
-    /// <summary>A goal starts through the goal type's events, then its own. A goal of plang's own (<see cref="IsSystem"/>)
-    /// is none of the app's goals, so it starts through its own events alone: "each goal" never hears it, a binding on
-    /// it by name does.</summary>
-    protected internal override global::app.type.item.@this? Level(int depth, actor.context.@this context) => depth switch
-    {
-        0 => IsSystem ? this : context.App.goal.type,
-        1 when !IsSystem => this,
-        _ => null,
-    };
-
     /// <summary>
-    /// Starts this goal through its <c>on.start</c>: what is bound before it, then its steps, then what is bound
-    /// after it (<see cref="Level"/>). A before that fails or cancels is the result: the steps don't start, every
-    /// after still runs on it. Context travels as parameter — goals may be cached/shared.
+    /// Starts this goal through its moments for the running actor: what is bound before it, then its steps, then what is
+    /// bound after it. A before that fails or cancels is the result: the steps don't start, every after still runs on it.
+    /// Context travels as parameter — goals may be cached/shared.
     /// </summary>
     public Task<data.@this> Start(actor.context.@this context) => Start(context, null);
 
@@ -375,9 +365,10 @@ public sealed partial class @this
         }
         await using var _frame = frame;
 
-        var answer = await on.start.Before(this, context);
+        var on = context.Actor!.@event[this];
+        var answer = await on.before.Start(this, context);
         var result = answer is { Success: false } or { Handled: true } ? answer : await Enter(context);
-        return await on.start.After(this, result, context);
+        return await on.after.Start(this, result, context);
     }
 
     // Why this goal cannot start: it holds steps the build could not fix. Its own message names the goal's path and

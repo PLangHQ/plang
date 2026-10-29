@@ -10,17 +10,15 @@ namespace app.@event.call;
 /// </summary>
 public sealed class @this : global::app.@event.@this
 {
-    internal @this(global::app.@event.on.side side, global::app.goal.step.action.@this action, global::app.actor.@this actor,
-        global::app.@event.Scope scope)
-        : base(side, actor, scope, Always)
+    internal @this(global::app.@event.on.side side, global::app.goal.step.action.@this action, global::app.actor.@this actor)
+        : base(side, actor)
         => this.action = action;
 
     /// <summary>An event read back from what it wrote (<see cref="Write"/>): whose it was, and the action that bound it,
     /// each read as its member's type. A row that doesn't read is refused, thrown to the read boundary.</summary>
     internal @this(global::app.@event.on.side side, global::app.type.item.dict.@this record, global::app.actor.context.@this context)
         : this(side, Member<global::app.goal.step.action.@this>(record, "action", context),
-            Member<global::app.actor.@this>(record, "actor", context),
-            Member<global::app.type.item.choice.@this<global::app.@event.Scope>>(record, "scope", context).Value)
+            Member<global::app.actor.@this>(record, "actor", context))
     { }
 
     /// <summary>The <c>on.event</c> action that bound it; what it runs is that action's <c>Action</c>, read when it runs.</summary>
@@ -66,7 +64,7 @@ public sealed class @this : global::app.@event.@this
         finally { frame.Event = outer; }
     }
 
-    /// <summary>It writes whose it is and the action that bound it: <c>{actor, scope, action}</c>, each as its member's
+    /// <summary>It writes whose it is and the action that bound it: <c>{actor, action}</c>, each as its member's
     /// type, the actor by what finds it. The action carries its type: the snapshot's load pass finds the goal it names only
     /// through a typed row. An action that names its call by a variable (<c>Action=%x%</c>) is refused: read back, the
     /// variable would be read again where the moment comes.</summary>
@@ -80,8 +78,6 @@ public sealed class @this : global::app.@event.@this
         writer.BeginObject();
         writer.Name("actor");
         await Actor.Output(writer);
-        writer.Name("scope");
-        await ((global::app.type.item.choice.@this<global::app.@event.Scope>)Scope).Output(writer);
         writer.Name("action");
         await new global::app.data.@this("", action, context: context).Output(writer);
         writer.EndObject();

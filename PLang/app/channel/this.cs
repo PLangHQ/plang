@@ -36,14 +36,6 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     /// <summary>A channel is a live resource: a copy of it is it.</summary>
     protected internal override global::app.type.item.@this Clone() => this;
 
-    /// <summary>A channel writes, reads and asks through the channel type's events, then its own.</summary>
-    protected internal override global::app.type.item.@this? Level(int depth, global::app.actor.context.@this context) => depth switch
-    {
-        0 => context.App.channel,
-        1 => this,
-        _ => null,
-    };
-
     /// <summary>Logical channel name (e.g. "output", "logger"). Case-insensitive at registry level.</summary>
     [global::app.Debug] public string Name { get; init; } = "";
 
@@ -156,7 +148,8 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     public virtual async Task<global::app.data.@this> WriteAsync(global::app.data.@this data, CancellationToken ct = default)
     {
         var context = Context;
-        var answer = await on.write.Before(this, context, data);
+        var on = context.Actor!.@event[this].write;
+        var answer = await on.before.Start(this, context, data);
         global::app.data.@this result;
         if (answer is { Success: false } or { Handled: true }) result = Refused(answer);
         else
@@ -171,7 +164,7 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
                     $"Channel '{Name}' write failed: {ex.Message}", "WriteError") { Exception = ex });
             }
         }
-        return await on.write.After(this, result, context);
+        return await on.after.Start(this, result, context);
     }
 
     /// <summary>
@@ -180,7 +173,8 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     public virtual async Task<global::app.data.@this> ReadAsync(CancellationToken ct = default)
     {
         var context = Context;
-        var answer = await on.read.Before(this, context);
+        var on = context.Actor!.@event[this].read;
+        var answer = await on.before.Start(this, context);
         global::app.data.@this result;
         if (answer is { Success: false } or { Handled: true }) result = Refused(answer);
         else
@@ -192,7 +186,7 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
                     $"Channel '{Name}' read failed: {ex.Message}", "ReadError") { Exception = ex }, context);
             }
         }
-        return await on.read.After(this, result, context);
+        return await on.after.Start(this, result, context);
     }
 
     /// <summary>
@@ -204,7 +198,8 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     public virtual async Task<global::app.data.@this> AskAsync(module.output.ask action, CancellationToken ct = default)
     {
         var context = action.Context;
-        var answer = await on.ask.Before(this, context);
+        var on = context.Actor!.@event[this].ask;
+        var answer = await on.before.Start(this, context);
         global::app.data.@this result;
         if (answer is { Success: false } or { Handled: true }) result = Refused(answer);
         else
@@ -222,7 +217,7 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
                     $"Channel '{Name}' ask failed: {ex.Message}", "AskError") { Exception = ex });
             }
         }
-        return await on.ask.After(this, result, context);
+        return await on.after.Start(this, result, context);
     }
 
     // What a before-binding answered in place of the channel's own work — the operation's answer. A cancel is

@@ -16,7 +16,7 @@ public sealed class @this : global::app.@event.@this
         global::app.goal.step.action.@this action,
         Func<global::app.module.ICodeGenerated, global::app.goal.step.action.@this, global::app.data.@this,
             global::app.actor.context.@this, Task<global::app.data.@this>> fire)
-        : base(side, clause.Module.App.actor.list.System, global::app.@event.Scope.app, Always)
+        : base(side, clause.Module.App.actor.list.System)
     {
         _clause = clause;
         _action = action;

@@ -89,12 +89,12 @@ public class ScopeTests
         await Picked(goal, app.actor.list.System.Context, BuildPicks);
         var heard = new List<string>();
         // every set made in the builder's own stores (the actors' contexts): the variable type's after-set, for the app
-        app.@event.Add(app.variable.type).Add("set")[global::app.@event.When.after].Add(side => new global::app.@event.code.@this(side, (item, _, ctx) =>
+        app.actor.list.User.@event.Add(app.variable.type, "set", global::app.@event.When.after, side => new global::app.@event.code.@this(side, (item, _, ctx) =>
         {
             if (ReferenceEquals(ctx, app.actor.list.System.Context) || ReferenceEquals(ctx, app.actor.list.User.Context))
                 lock (heard) heard.Add(((global::app.type.item.variable.@this)item).Name);
             return Task.FromResult(ctx.Ok());
-        }, app.actor.list.User, global::app.@event.Scope.app, global::app.@event.@this.Always));
+        }, app.actor.list.User, global::app.@event.code.@this.Always));
 
         await goal.Step.Scope(app.actor.list.System.Context);
 

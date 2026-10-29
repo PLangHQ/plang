@@ -5,8 +5,8 @@ namespace app.module.on;
 /// item's moment, reached by its path: <c>%!app.type.goal.on.start%</c> (each goal starting),
 /// <c>%!app.module.file.read.on.start%</c> (each file.read), <c>%!channels.audit.on.write%</c> (a channel writing).
 /// The call reads <c>%!event%</c>: the event, with <c>%!event!item%</c> (what it ran for) and <c>%!event!data%</c> (the
-/// value so far; a failure is <c>%!error%</c>) — its own, for as long as it runs. Bound for this actor unless
-/// <see cref="Scope"/> is app. Answers the event — <c>on.unbind</c> takes it off.
+/// value so far; a failure is <c>%!error%</c>) — its own, for as long as it runs. Bound for this actor: a goal run as
+/// another actor never runs it. Answers the event — <c>on.unbind</c> takes it off.
 /// </summary>
 [Action("event", Cacheable = false)]
 public partial class OnEvent : IContext
@@ -22,10 +22,6 @@ public partial class OnEvent : IContext
     /// <summary>The call run when it comes — a <c>goal.call</c> action, held whole.</summary>
     [IsNotNull]
     public partial data.@this<global::app.goal.step.action.@this> Action { get; init; }
-
-    /// <summary>Whose the event is: this actor's (it runs while this actor runs), or the app's.</summary>
-    [Default(global::app.@event.Scope.actor)]
-    public partial data.@this<global::app.type.item.choice.@this<global::app.@event.Scope>> Scope { get; init; }
 
     /// <summary>
     /// Build-time check: the moment's path is walked hop by hop. A name the item's moments refuse (<c>…on.before</c>)
@@ -54,30 +50,23 @@ public partial class OnEvent : IContext
 
     public async Task<data.@this<global::app.@event.@this>> Start()
     {
-        // The path navigates moment ← its on ← the item. An item nothing is bound on answers its class's shared moments,
-        // which don't know their item: the item is the navigation's, the first hop back that is no moment, and it binds
-        // on its own moments. A name the moments refuse is that refusal; an item that isn't there is unreached; a path
-        // ending at something other than a moment names no event.
+        // The path navigates to an item's moment, which knows its item. A name the moments refuse is that refusal; an
+        // item that isn't there is unreached; a path ending at something other than a moment names no event.
         var path = Event.Peek()?.ToString() ?? Event.Name;
         var reached = await Event.Follow(Context);
         if (!reached.Success) return Context.Error<global::app.@event.@this>(reached.Error!);
         if (!reached.IsInitialized)
             return Context.Error<global::app.@event.@this>(new global::app.error.@this(
                 $"on.event: '{path}' reaches nothing — the item isn't there to bind on", "EventUnreached", 404));
-        var owner = reached.Parent;
-        while (owner?.Peek() is global::app.@event.on.@this) owner = owner.Parent;
-        if (reached.Peek() is not global::app.@event.on.@this moment || owner?.Peek() is not global::app.type.item.@this item)
+        if (reached.Peek() is not global::app.@event.on.@this { item: { } item } moment)
             return Context.Error<global::app.@event.@this>(global::app.@event.on.empty.Of(typeof(global::app.type.item.@this)).NoEvent(path));
 
         // each carrier is opened through its door: the first that doesn't resolve (a %variable% holding nothing, a
-        // name that is none of the choice's) is the answer, and nothing is held for it. Added to this app's events, never
-        // on the item: it runs in this app (and the sub apps it makes after) and goes with it. The event holds this
-        // action, whose Action it runs when its moment comes, and the actor that bound it.
-        return data.@this<global::app.@event.@this>.From(await When.Use(when => Scope.Use(scope => Action.Use(_ =>
-        {
-            var on = Context.App.@event.Add(item).Add(moment.Name);
-            return Task.FromResult<data.@this>(Context.Ok<global::app.@event.@this>(on[when.Value].Add(side =>
-                new global::app.@event.call.@this(side, __action!, Context.Actor!, scope.Value))));
-        }))));
+        // name that is none of the choice's) is the answer, and nothing is held for it. Bound on this actor's events,
+        // never on the item: it runs while this actor runs (and in the sub apps it makes after) and goes with it. The
+        // event holds this action, whose Action it runs when its moment comes, and the actor that bound it.
+        return data.@this<global::app.@event.@this>.From(await When.Use(when => Action.Use(_ =>
+            Task.FromResult<data.@this>(Context.Ok<global::app.@event.@this>(Context.Actor!.@event.Add(item, moment.Name, when.Value,
+                side => new global::app.@event.call.@this(side, __action!, Context.Actor!)))))));
     }
 }
