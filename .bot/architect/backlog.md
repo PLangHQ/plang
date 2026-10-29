@@ -79,6 +79,17 @@ The one list of work after runtime2's merges (Ingi, 2026-10-29: "yes merge into 
   - archive.unpack's Value from a literal path writes `{"held": …}`: a value writing its insides, and `held` is a banned word (archive/unpack:5).
   - variable.set's `list<path>` Type (variable/set:29).
 
+### The value answers its own equality (Ingi, 2026-10-29: "check other places for this wrong pattern")
+
+Equality asked from outside, as strings, where the value has its own `Equals` (event-action 71–72 fixed the files that branch touched). Files no branch has touched yet:
+- `module/archive/type/archive/kind/this.cs:40`: `at.Absolute.TrimEnd('/') == into.Absolute.TrimEnd('/')`, two paths compared as trimmed strings.
+- `module/terminal/code/Sandbox.cs:92`: a regex over `path.Absolute` compared to a real path. The sandbox: security reads it first.
+- `type/item/setting/this.cs:139` and `module/identity/setting/this.cs:26`: `identity.PublicKey` against `signature.Identity.ToString()`, a signature's identity checked by text (the same code twice; security reads it).
+- `module/archive/type/archive/held/this.cs:30`: `IsData => Of.ToString() == "data"`, a type check by its word (and `held` is banned).
+- `goal/list/setting/this.cs:36`: a choice compared by `ToString()` on both sides.
+- `type/item/note/this.cs:53`, `module/code/this.Snapshot.cs:104`, `serializer/Snapshot.cs:27`: a name's text compared outside its owner.
+- `goal/step/pick/list/this.cs:242`, `module/build/code/Default.cs:263`: the builder comparing step text; check whether they are values or the step's own text.
+
 ### Read once, pass on
 
 - **`actor.list.Use` reads the actor's name twice** (`actor/list/this.cs:39`; plang-coder at event-action 64, the same shape it fixed in `variable.set`): `named.Given() is null` reads the name to ask "none named?" and drops it, then `named.Use(...)` reads it again. Cheap for a choice, but it is a dropped answer: keep what `Given()` answered and use it.
