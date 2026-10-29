@@ -198,6 +198,44 @@ switch (args.Length > 0 ? args[0] : "")
         phasesTicks?.Report(count);
         break;
     }
+    case "cold":
+    {
+        // one fresh process: what the first of everything costs, then the same again; with the JIT's share of each
+        const string goal = "/module/condition/if/basic/Condition.test.goal";
+        var sinceStart = (DateTime.Now - System.Diagnostics.Process.GetCurrentProcess().StartTime).TotalMilliseconds;
+        Console.WriteLine(FormattableString.Invariant($"process start to Main: {sinceStart:F0} ms (jit so far {System.Runtime.JitInfo.GetCompilationTime().TotalMilliseconds:F0} ms, {System.Runtime.JitInfo.GetCompiledMethodCount()} methods)"));
+        async Task<T> Step<T>(string name, Func<Task<T>> op)
+        {
+            var j0 = System.Runtime.JitInfo.GetCompilationTime(); var m0 = System.Runtime.JitInfo.GetCompiledMethodCount();
+            var t0 = System.Diagnostics.Stopwatch.GetTimestamp();
+            var r = await op();
+            Console.WriteLine(FormattableString.Invariant($"{name,-34} {System.Diagnostics.Stopwatch.GetElapsedTime(t0).TotalMilliseconds,8:F1} ms   jit {(System.Runtime.JitInfo.GetCompilationTime() - j0).TotalMilliseconds,7:F1} ms  {System.Runtime.JitInfo.GetCompiledMethodCount() - m0,5} methods"));
+            return r;
+        }
+        if (child) await Step("server app (cold, as root)", () => Task.FromResult(server.Value));
+        for (var pass = 1; pass <= 2; pass++)
+        {
+            var app = await Step($"#{pass} app born", () => Task.FromResult(Make(false).Testing()));
+            var loaded = await Step($"#{pass} goal loaded", async () => await app.goal.Load(goal));
+            await Step($"#{pass} goal run (first)", async () => await ((await loaded.Value()) as global::app.goal.@this)!.Start(app.actor.list.User.Context));
+            await Step($"#{pass} goal run (again)", async () => await ((await loaded.Value()) as global::app.goal.@this)!.Start(app.actor.list.User.Context));
+            await app.DisposeAsync();
+        }
+        break;
+    }
+    case "loadtypes":
+    {
+        // allocation ticks by type of an app born + (BENCH_LOAD=1) its goal loaded: run both and subtract
+        var count = int.TryParse(Environment.GetEnvironmentVariable("BENCH_N"), out var ln) ? ln : 3000;
+        var withLoad = Environment.GetEnvironmentVariable("BENCH_LOAD") == "1";
+        const string goal = "/module/condition/if/basic/Condition.test.goal";
+        async Task One() { await using var app = Make(false).Testing(); if (withLoad) await app.goal.Load(goal); }
+        for (var i = 0; i < 20; i++) await One();
+        using var ticks = new AllocTicks();
+        for (var i = 0; i < count; i++) await One();
+        ticks.Report(count);
+        break;
+    }
     case "repeat":
     {
         // one app, one goal load, the goal run BENCH_N times: the bytes of the first run, the second, and the later ones' average
@@ -208,12 +246,18 @@ switch (args.Length > 0 ? args[0] : "")
         var loaded = await app.goal.Load(goal);
         var load = GC.GetAllocatedBytesForCurrentThread() - a0;
         var each = new List<long>();
+        var pause0 = GC.GetTotalPauseDuration(); var g0 = GC.CollectionCount(0); var g1 = GC.CollectionCount(1); var g2 = GC.CollectionCount(2);
+        var wall0 = System.Diagnostics.Stopwatch.GetTimestamp();
         for (var i = 0; i < count; i++)
         {
             var b0 = GC.GetAllocatedBytesForCurrentThread();
             await ((await loaded.Value()) as global::app.goal.@this)!.Start(app.actor.list.User.Context);
             each.Add(GC.GetAllocatedBytesForCurrentThread() - b0);
         }
+        var wall = System.Diagnostics.Stopwatch.GetElapsedTime(wall0);
+        var pause = GC.GetTotalPauseDuration() - pause0;
+        Console.WriteLine(FormattableString.Invariant(
+            $"gc: wall={wall.TotalMilliseconds:F0} ms pause={pause.TotalMilliseconds:F1} ms ({100 * pause / wall:F1}%) gen0={GC.CollectionCount(0) - g0} gen1={GC.CollectionCount(1) - g1} gen2={GC.CollectionCount(2) - g2} per run={wall.TotalMilliseconds * 1000 / count:F0} us"));
         Console.WriteLine(FormattableString.Invariant(
             $"repeat {mode} load={load / 1024.0:F0} run1={each[0] / 1024.0:F0} run2={each[1] / 1024.0:F0} run3={each[2] / 1024.0:F0} later_avg={each.Skip(3).Average() / 1024.0:F0} KB (n={count})"));
         break;

@@ -88,3 +88,30 @@ Each names its OBP pattern, the number it saves against the pieces above, and wh
 | 8 | compiled goals | — | −48% of a step (estimate) | action door, call memory | a design |
 
 After 1+2+3 (arithmetic on the pieces above, not measured): case A 46 → ~27 KB (−41%), case B step 21 → ~16 KB (−25%), case C 96 → ~45 KB (−53%). The measurements are repeatable with the harness; I have not tried any of the changes.
+
+---
+
+# Addendum — what the open questions measured (Ingi asked; for the call-cost branch)
+
+All with `Tools/Bench` (modes `phases`, `repeat`, `cold`, `loadtypes`; `DOTNET_TieredPGO=0`, load 3–6, bytes exact, times best-of or repeated). The one source change was a mutation (item 3), announced and reverted.
+
+## A. Where a request app's 441 KB goes (the Condition.test.goal request)
+born 99 KB + goal load 40 KB + goal run 300 KB + dispose 2 KB. The same goal run again in the same app costs **230 KB flat** (500 runs, no growth): the first run pays ~70 KB of one-time work (per-actor lists, type/kind minting). It is garbage per run, not held; GC pause is **5.8% of wall** (1.1% with a bigger gen0), so bytes matter as work not done, not as GC.
+
+## B. Step cache made at birth — IDEA 10 (pattern 11), biggest win found
+`app/this.cs:199` `Cache { get; internal set; } = new module.cache.Memory()` wraps a .NET `MemoryCache` (`module/cache/Memory.cs:11`): **47 KB and 29 µs per app**, made and disposed (`new Memory()` + Dispose measured alone). Only `on.cache` (`module/on/cache.cs:40,60`) and the signing nonce (`signing/code/Ed25519.cs:142`) ask for it. Mutation (made on first ask, `Dispose` skips an unmade one): **sub birth 101 → 55 KB and 0.48 → 0.14 ms (3.4×); root birth 2265 → 2206 KB; the request's run/load unchanged.** The 5.8 KB in the fast-apps notes (§24, bare request app) is of this order. Not run: the C# and plang suites with the change (the mutation was a measurement).
+
+## C. The step layer — the "24 µs" I raised was a loaded-machine artifact
+Best of 7 rounds: `step.Start` 29.1 µs / 20.5 KB, `step.Code.Start` 23.7 / 16.4 KB, `action.Start` 23.0 / 16.2 KB. The step layer is **~5 µs and ~4 KB** (its frame 1.4 µs / 2.5 KB; the rest the awaits and the two empty moments); the action list adds 0.7 µs. Nothing to fix there beyond the frame store (idea 3). Of an action's 23 µs, the real work is ~4 µs (as before).
+
+## D. The goal load (40 KB), by type (ticks, born vs born+load)
+String 9.5 KB, `FileInfo` 4.1 + `path.file` 3.2 (file stats), String[]/AppendPrepend 4.3 (probing candidate locations), type/kind objects ~5.6 (idea 2 again), the rest small. About 8 KB looks like file probing the load repeats (how many stats per load is not counted); ~6 KB is the type mint. Not all avoidable: the `.pr` text and the goal's objects are real. Sampling is coarse (±1 KB per type).
+
+## E. Cold costs (fresh process, never seen before) — IDEA 11, the largest time cost
+One fresh process, root app: **born 245 ms (JIT 95 ms), first goal load 168 ms (JIT 129), first run 47 ms (JIT 43) = ~460 ms, of which JIT ~270 ms (~60%), ~3,200 methods compiled**; the same again in the same process: born 31, load 5, run 3 ms. A child app after a cold server: born 5 ms, load 175 ms, run 48 ms. The real CLI (`plang Condition.test.goal`, Debug) takes **0.60–0.67 s wall**; nothing in the csproj sets ReadyToRun or tiering. A trial: `dotnet publish -r linux-x64 -p:PublishReadyToRun=true` (Debug config, `os/` copied beside it) runs the same goal in **0.35 s: −45% of the CLI's wall time** with the same output. This is time, not bytes, and it is a build/publish setting, not a code change (it needs the ReadyToRun compiler at build, and the file is bigger).
+
+## Ranked additions to the list above
+10. Step cache made on its first ask (B): −46 KB and −0.3 ms per app birth; four lines in `app/this.cs`. Small, no design question.
+11. ReadyToRun for `PLang.dll`/`plang.dll` (E): −45% of a cold CLI run in a trial. Ingi's call (build and shipping).
+12. Goal load: type mint (with idea 2) and the file probing (D): ~14 KB of 40.
+Unchanged: ideas 1–3 stand; the step layer (C) is not a target. Not done: ideas 2+3 in a scratch copy (the 25–50% remains arithmetic), the number of stats per load, the suites with idea 10.
