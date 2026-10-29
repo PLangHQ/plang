@@ -17,6 +17,16 @@ Each item was raised on snapshot and held by Ingi or by me, with the decision th
 - **The bare-row rule's five type literals** (`View.Record`, snapshot view): no existing door answers "the type a bare token reads back as", so the literals stay until a type can say it. (324, 325)
 - **A frame's place handed in at push:** the action frame finds its `index` lazily, on the first ask from a snapshot or resume. Handing it in at birth needs a parameter on `action.Start` and `call.list.Push`, the locked call surface. (325)
 
+## The auditor's deferred minors (snapshot 341, `.bot/snapshot/auditor/final.md`)
+
+- Snapshot navigation can throw out of `View.Make` (it should answer an error).
+- `resume` creates a default identity as a side effect.
+- Late stamps in `call` (`call.Under`, accepted at 324 with a reason) and in `step`.
+- Dropped answers at `call/action:79`, `Resume.cs:47` and `test/this.cs:144`.
+- The app event list's lookup is O(n), and `on.unbind` leaves an emptied `on` in the list.
+- The code registry keeps partial state when a DLL is refused.
+- The sign/verify view asymmetry (plausible, not reproduced).
+
 ## Branches already written up
 
 - `plan/branch-event-action.md`: the event folders, the plang word binding → action, the `Sub: inherit | none` option, `on.Declared` and the `declared` class, the C# handler kind, ten event classes that differ only by name.

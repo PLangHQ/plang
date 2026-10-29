@@ -30,3 +30,11 @@ a concept nothing is ever *inside* (`type`, `channel`, `module`, `format`) has n
 ```markdown
 - `run.sh` runs with `DOTNET_TieredPGO=0`: tiered PGO allocates by timing, so one binary's bytes move by ±250 KB between runs. Bytes are stable with it off; times are then not production times, so a row is compared on time only with rows measured the same way (`record.md` marks the change).
 ```
+
+## architect — snapshot 341 — 2026-10-29
+**Target:** /CLAUDE.md
+**Why:** Snapshot 240–268 moved a run's bindings from each actor's hold (`actor.on`) to one list per app (`app.event`), which a sub app takes in at birth (each maker binding as its own inherited binding; nothing flows upward). Line 65 still says bindings live on `actor.on` (the auditor's finding).
+**Proposed change:** in "**A run never writes an object its app shares.**", replace "A binding made while a program runs is held on the context of the actor that made it (`actor.on`); a type takes no history." with:
+```markdown
+A binding made while a program runs is held on its app's event list (`app.event`), never on the shared item; a sub app takes in its maker's bindings at birth, each as its own inherited binding, and nothing it binds reaches its maker. A type takes no history.
+```
