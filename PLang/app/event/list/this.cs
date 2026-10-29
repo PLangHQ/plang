@@ -156,9 +156,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
         return new(load.Task);
     }
 
-    // The load, answered on done: the system events, then what this actor took in from its maker's (a sub app's). The
-    // app's System loads first: every goal is read as it, so a goal another actor's load reads finds System's events
-    // standing — and System's own load, reading the same file, never waits on this one.
+    // The load, answered on done: what this actor takes in from its maker's (a sub app's), then its system events — the
+    // maker's are bound first, so they run first. The app's System loads first: every goal is read as it, so a goal
+    // another actor's load reads finds System's events standing — and System's own load, reading the same file, never
+    // waits on this one.
     private async System.Threading.Tasks.Task Load(System.Threading.Tasks.TaskCompletionSource done)
     {
         _loading.Value = true;
@@ -167,10 +168,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
         try
         {
             if (_actor.App.actor.list.System is { } system && !system.Equals(_actor)) await system.@event.Loaded();
-            var replaced = await Run(_actor.Context);
+            var files = await Files(_actor.Context);
             foreach (var made in await _actor.App.origin.@event(_actor.Role))
-                if (made.File is not { } file || !replaced.Contains(file))
+                if (made.File is not { } file || !files.Contains(file, StringComparer.OrdinalIgnoreCase))
                     Join(new inherited.@this(made, _actor.App));
+            await Run(files, _actor.Context);
             done.SetResult();
         }
         // a load that failed isn't kept, all or nothing: what it joined comes off (out of the lists made too), its askers
@@ -183,17 +185,15 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
         }
     }
 
-    // Runs the system/event/ files as this actor: their names from the folders the app's origin names (the root: its own
-    // then the os's; a sub app: its own only), each loaded at its plang path, /system/event/<name>, as the goal list
-    // finds it (the app's own copy first, else the os's), so it is one of plang's own goals. Nothing runs under
-    // event.setting.system skip. A file that doesn't load is said on the error channel, and the next one loads. Answers
-    // the names it ran: a sub app's own file replaces what its maker bound from the file of that name.
-    private async System.Threading.Tasks.Task<HashSet<string>> Run(global::app.actor.context.@this context)
+    // The names of the system/event/ files this actor runs, in order: from the folders the app's origin names (the root:
+    // its own then the os's; a sub app: its own only), each name once. None under event.setting.system skip, or with no
+    // folder of its own (a sub app over its maker's). Nothing is run: a sub app's own file replaces what its maker bound
+    // from the file of that name.
+    private async System.Threading.Tasks.Task<List<string>> Files(global::app.actor.context.@this context)
     {
-        var ran = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        // no folder of its own (a sub app over its maker's), nothing to read — the setting not either
+        var names = new List<string>();
         var folders = context.App.origin.Events(context.App).ToList();
-        if (folders.Count == 0 || (await context.Setting.Get<setting.@this>()).System.Value == setting.System.skip) return ran;
+        if (folders.Count == 0 || (await context.Setting.Get<setting.@this>()).System.Value == setting.System.skip) return names;
         foreach (var folder in folders)
         {
             if (!await (await folder.Exists(context)).ToBooleanAsync()) continue;
@@ -202,22 +202,30 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
             foreach (var file in files.Items())
             {
                 var name = file.Name.ToString();
-                if (!ran.Add(name)) continue;
-                var goal = await context.App.goal.list.Load(global::app.type.item.path.@this.Resolve("/system/event/" + name, context));
-                var started = goal.Success && await goal.Value() is global::app.goal.@this bound ? await bound.Start(context) : goal;
-                if (!started.Success && context.Actor!.Channel.Get(global::app.channel.list.@this.Error) is { } error)
-                    await error.WriteText($"the system event {name} didn't load: {started.Error?.Message}");
+                if (!names.Contains(name, StringComparer.OrdinalIgnoreCase)) names.Add(name);
             }
         }
-        return ran;
+        return names;
     }
 
-    /// <summary>Whether this actor's general events (bound on many) skip a run in <paramref name="context"/>: it is inside
-    /// one of plang's own goals (a goal under system/, the os's or the app's own copy), and <c>event.setting.goal</c> is
-    /// app.</summary>
+    // Runs the system/event/ files named as this actor, each loaded at its plang path, /system/event/<name>, as the goal
+    // list finds it (the app's own copy first, else the os's), so it is one of plang's own goals. A file that doesn't
+    // load is said on the error channel, and the next one loads.
+    private async System.Threading.Tasks.Task Run(List<string> files, global::app.actor.context.@this context)
+    {
+        foreach (var name in files)
+        {
+            var goal = await context.App.goal.list.Load(global::app.type.item.path.@this.Resolve("/system/event/" + name, context));
+            var started = goal.Success && await goal.Value() is global::app.goal.@this bound ? await bound.Start(context) : goal;
+            if (!started.Success && context.Actor!.Channel.Get(global::app.channel.list.@this.Error) is { } error)
+                await error.WriteText($"the system event {name} didn't load: {started.Error?.Message}");
+        }
+    }
+
+    /// <summary>Whether this actor's events may skip a run in <paramref name="context"/>: <c>event.setting.goal</c> is app,
+    /// so an event left out inside a goal of plang's own (<see cref="global::app.@event.@this.Skips"/>) is.</summary>
     internal async System.Threading.Tasks.ValueTask<bool> Skips(global::app.actor.context.@this context)
-        => context.call.Scope?.Goal is { IsSystem: true }
-           && (await context.Setting.Get<setting.@this>()).Goal.Value == setting.Goal.app;
+        => (await context.Setting.Get<setting.@this>()).Goal.Value == setting.Goal.app;
 
     // ---- what a snapshot keeps ----
 

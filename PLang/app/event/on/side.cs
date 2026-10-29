@@ -47,13 +47,13 @@ public abstract class side : IReadOnlyList<global::app.@event.@this>
     // The events as they stand: a side nothing is bound on answers with no await and nothing made.
     private protected global::app.@event.@this[] Events => _events;
 
-    // The events as they stand. When they are an actor's and the run is inside one of plang's own goals under
-    // event.setting.goal app, the general ones (bound on many: a type, a pattern, a module) are left out and the ones
-    // bound on a named item still run; an action's own clauses always run.
+    // The events as they stand. When they are an actor's, inside a goal under event.setting.goal app, each event that
+    // skips that goal (a general one, in one of plang's own goals for it) is left out; an action's own clauses always run.
     private protected async System.Threading.Tasks.ValueTask<global::app.@event.@this[]> Running(
         global::app.@event.@this[] events, global::app.actor.context.@this context)
     {
-        if (on.list is not { } actor || !await actor.Skips(context)) return events;
-        return System.Array.FindAll(events, @event => !@event.Item.IsMany);
+        if (on.list is not { } actor || context.call.Scope?.Goal is not { } goal
+            || !System.Array.Exists(events, @event => @event.Skips(goal)) || !await actor.Skips(context)) return events;
+        return System.Array.FindAll(events, @event => !@event.Skips(goal));
     }
 }

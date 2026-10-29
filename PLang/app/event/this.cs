@@ -41,6 +41,13 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     /// in its own app (on.event's <c>Sub=none</c>).</summary>
     internal virtual bool IsInheritable => true;
 
+    /// <summary>Whether it is left out inside <paramref name="goal"/> under <c>event.setting.goal</c> app: it is bound on
+    /// many (a type, a pattern, a module) and the goal is one of plang's own for it — under <c>system/</c>, and the os's
+    /// (of no app) or its own app's copy. A sub app's <c>system/</c> goals are its own code, never plang's for its
+    /// maker's events.</summary>
+    internal virtual bool Skips(global::app.goal.@this goal)
+        => Item.IsMany && goal.IsSystem && (goal.App is not { } app || app.Equals(Actor.App));
+
     /// <summary>The <c>on.event</c> action that made it — a program's event is numbered by it (its goal, step and
     /// index). A C# event has none.</summary>
     internal virtual global::app.goal.step.action.@this? action => null;
