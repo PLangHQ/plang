@@ -211,6 +211,53 @@ public class IdentityMakeRaceProbeTests
         await Assert.That(subKeys.SetEquals(makerKeys)).IsTrue();
     }
 
+    // A key provider the app's own code registers runs inside one Create's change (the make asks it for keys). Work it spawns in
+    // parallel inherits the AsyncLocal "inside" flag, so those creates go through the gate at once and race each other.
+    // Needs C# provider code (module.add / code.register territory: the user's own, trusted) — no plang step reaches it.
+    private sealed class SpawningKey : global::app.module.signing.code.IKey
+    {
+        public string Name => "spawning";
+        public bool IsBuiltIn { get; set; } = true;
+        public string? Source { get; set; }
+        private readonly global::app.module.signing.code.IKey _real;
+        private readonly global::app.@this _app;
+        private int _spawned;
+        public SpawningKey(global::app.module.signing.code.IKey real, global::app.@this app) { _real = real; _app = app; }
+        public (global::app.module.signing.code.KeyPair? keys, global::app.error.@this? error) GenerateKeyPair()
+        {
+            if (System.Threading.Interlocked.Exchange(ref _spawned, 1) == 0)
+            {
+                var system = _app.actor.list.System.Context;
+                Task.WaitAll(Enumerable.Range(0, 6).Select(i => Task.Run(async () =>
+                {
+                    var make = new global::app.module.identity.Create(system) { Name = (global::app.type.item.text.@this)("child" + i), Default = (global::app.type.item.@bool.@this)false };
+                    await make.Attach(null, system);
+                    await make.Start();
+                })).ToArray());
+            }
+            return _real.GenerateKeyPair();
+        }
+    }
+
+    [Test]
+    public async Task J_WorkSpawnedInsideOneChange_InheritsTheFlag_AndRacesPastTheGate()
+    {
+        await using var app = App();
+        var system = app.actor.list.System.Context;
+        await Within(Ask(app), 20);
+        var (real, _) = app.Code.Get<global::app.module.signing.code.IKey>();
+        var spawning = new SpawningKey(real!, app);
+        app.Code.Register<global::app.module.signing.code.IKey>(spawning);
+        app.Code.SetDefault<global::app.module.signing.code.IKey>("spawning");
+        var make = new global::app.module.identity.Create(system) { Name = (global::app.type.item.text.@this)"outer", Default = (global::app.type.item.@bool.@this)false };
+        await make.Attach(null, system);
+        var done = await Within(make.Start(), 60);
+        var stored = await Stored(app);
+        await TestContext.Current!.OutputWriter.WriteLineAsync($"IDRACE-J outer={done.Success}/{done.Error?.Key} stored={stored.Count} (default + outer + 6 children = 8 if the gate held) names={string.Join(",", stored.Select(s => s.Name))}");
+        // pinned as the known edge, not a pass: parallel work inside one change races (needs the user's own C# provider)
+        await Assert.That(stored.Select(s => s.Name)).Contains("outer");
+    }
+
     // Same read-then-write shape, the rest of the door: identity.create reads every row, checks the name, then writes the whole
     // list back, with no gate. Concurrent creates of distinct names lose rows (last write wins).
     [Test]
