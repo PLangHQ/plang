@@ -1,3 +1,6 @@
+Step text: `before the app starts, call Say`
+Properties: `{"Event": "%!app.on.start%", "When": "before", "Action": {"module": "goal", "name": "call", "property": [{"name": "Name", "value": "Say"}]}}` — the app itself is `%!app%`; its start is `%!app.on.start%`.
+
 Step text: `before each goal call LogBefore`
 Properties: `{"Event": "%!app.type.goal.on.start%", "When": "before", "Action": {"module": "goal", "name": "call", "property": [{"name": "Name", "value": "LogBefore"}]}}`
 
@@ -26,4 +29,4 @@ Step text: `on ask on "input" channel call CaptchaGoal, write to %event%`
 Properties: `{"Event": "%!channel.input.on.ask%", "When": "before", "Action": {"module": "goal", "name": "call", "property": [{"name": "Name", "value": "CaptchaGoal"}]}}` — the trailing `write to %event%` is its own action.
 
 Step text: `on click on #window.bot, call ShowClaude`
-Properties: `{"Event": "%!screen.element[\"#window.bot\"].on.click%", "When": "after", "Action": {"module": "goal", "name": "call", "property": [{"name": "Name", "value": "ShowClaude"}]}}` — `#…` in a step is an element of the screen in play, `%!screen.element["#…"]%`: a window's own part (`#window.bot` is its ☰, `#window.save` its save tool) or a page's id. The call reads `%!event!item%` (the element) and `%!event!result%` (the click: its window, where).
+Properties: `{"Event": "%!screen.element[\"#window.bot\"].on.click%", "When": "after", "Action": {"module": "goal", "name": "call", "property": [{"name": "Name", "value": "ShowClaude"}]}}` — `#…` in a step is an element of the screen in play, `%!screen.element["#…"]%`: a window's own part (`#window.bot` is its ☰, `#window.save` its save tool) or a page's id. The call reads `%!event!item%` (the element) and `%!event!data%` (the click: its window, where).

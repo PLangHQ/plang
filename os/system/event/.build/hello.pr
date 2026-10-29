@@ -1,0 +1,115 @@
+{
+  "name": "Hello",
+  "comment": "The first system event, loaded from /system/event/ when the app starts (event.setting.system load): before the app\nstarts, it writes out that it ran — there to prove the folder loads. An app's own system/event/Hello.goal replaces it.",
+  "step": [
+    {
+      "index": 0,
+      "text": "before the app starts, call Say",
+      "line": {
+        "number": 4,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "on",
+          "name": "event",
+          "property": [
+            {
+              "name": "Event",
+              "type": {
+                "name": "on",
+                "template": "plang"
+              },
+              "value": "%!app.on.start%",
+              "variable": [
+                {
+                  "text": "%!app.on.start%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "on"
+                    },
+                    {
+                      "property": "start"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "When",
+              "type": {
+                "name": "choice",
+                "kind": "when"
+              },
+              "value": "before"
+            },
+            {
+              "name": "Action",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "goal"
+                    },
+                    "value": "Say"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 0 uses on.event, which the decider was not sure of (0.91)"
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "Say",
+      "comment": "Writes out that the system event ran, to the channel it is given.",
+      "step": [
+        {
+          "index": 0,
+          "text": "write out 'This is system event'",
+          "line": {
+            "number": 8,
+            "indent": 0
+          },
+          "code": [
+            {
+              "module": "output",
+              "name": "write",
+              "property": [
+                {
+                  "name": "Data",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "This is system event"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "visibility": "Private",
+      "hash": "b7d9c14f42e25c4b95b139f2b203ff05a96bdf3e8bdd4b57e5bb05ec08c0bfad"
+    }
+  ],
+  "visibility": "Public",
+  "file": "Hello.goal",
+  "hash": "c952927a8afef8b5e43a2faf4464e636c9aec0946caae662364901a830508d0e"
+}
