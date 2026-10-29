@@ -24,9 +24,9 @@ public sealed class @this : global::app.@event.binding.@this
     /// each read as its member's type. A row that doesn't read is refused, thrown to the read boundary.</summary>
     internal @this(global::app.@event.binding.list.@this side, global::app.@event.@this @event,
         global::app.type.item.dict.@this record, global::app.actor.context.@this context)
-        : this(side, @event, Kept<global::app.goal.step.action.@this>(record, "action", context),
-            Kept<global::app.actor.@this>(record, "actor", context),
-            Kept<global::app.type.item.choice.@this<global::app.@event.binding.Scope>>(record, "scope", context).Value)
+        : this(side, @event, Member<global::app.goal.step.action.@this>(record, "action", context),
+            Member<global::app.actor.@this>(record, "actor", context),
+            Member<global::app.type.item.choice.@this<global::app.@event.binding.Scope>>(record, "scope", context).Value)
     { }
 
     /// <summary>The <c>on.event</c> action that bound it; what it runs is that action's <c>Action</c>, read when it fires.</summary>
@@ -37,26 +37,27 @@ public sealed class @this : global::app.@event.binding.@this
     private protected override async Task<global::app.data.@this> Handle(global::app.type.item.@this item,
         global::app.data.@this result, global::app.actor.context.@this context)
     {
-        var bound = action["action"]?.Data(context);
-        if (bound == null || await bound.Value<global::app.goal.step.action.@this>() is not { } call)
-            return bound?.Error != null ? bound : context.Error(new global::app.error.@this(
+        var data = action["action"]?.Data(context);
+        if (data == null || await data.Value<global::app.goal.step.action.@this>() is not { } call)
+            return data?.Error != null ? data : context.Error(new global::app.error.@this(
                 $"the binding made by '{action.Step?.Text}' runs no action", "BindingNoAction", 400));
-        if (call["name"]?.Value is not { } written)
+        if (call["name"]?.Value is not { } value)
             return context.Error(new global::app.error.@this(
                 $"the binding made by '{action.Step?.Text}' runs {call.Module.Name}.{call.Name}: on.event runs a goal call", "BindingNoGoalCall", 400));
 
         // the goal it calls is found where it was bound: in its own app, from the goal its step sits in — never one the
         // firing app, or the firing goal's folder, would find first. Its name is read as written (a %variable% in it here,
         // where the event fires, as its parameters are), never selected as a goal in the firing context.
-        var named = new global::app.data.@this("name", written, context: context);
-        var goal = await Actor.App.goal.list.Find((await named.Value())?.ToString() ?? "", action.Step?.Goal);
+        var name = new global::app.data.@this("name", value, context: context);
+        var goal = await Actor.App.goal.list.Find((await name.Value())?.ToString() ?? "", action.Step?.Goal);
         if (!goal.Success) return goal;
-        var parameter = call["parameter"]?.Data(context);
-        var calls = new global::app.goal.step.action.composed.@this(new global::app.module.goal.Call(context)
+        // the call as it was written, whole — every property its step gave it (its parameters, its actor, whether it runs
+        // on its own) and what its build froze — with only the goal it names found here: the seed holds the name alone
+        var composed = new global::app.goal.step.action.composed.@this(new global::app.module.goal.Call(context) { Name = goal }, context)
         {
-            Name = goal,
-            Parameter = parameter == null ? null : global::app.data.@this<global::app.type.item.list.@this>.From(parameter),
-        }, context);
+            Property = call.Property,
+            Default = call.Default,
+        };
 
         // a property holds a value, never a Data — the result's value; a failed result is %!error%
         var running = new global::app.data.@this("!event", _event, context: context);
@@ -64,10 +65,10 @@ public sealed class @this : global::app.@event.binding.@this
         running.Properties.Set("result", result.Peek());
 
         var frame = context.call.Current;
-        if (frame == null) return await calls.Start(context);
+        if (frame == null) return await composed.Start(context);
         var outer = frame.Event;
         frame.Event = running;
-        try { return await calls.Start(context); }
+        try { return await composed.Start(context); }
         finally { frame.Event = outer; }
     }
 
@@ -93,10 +94,10 @@ public sealed class @this : global::app.@event.binding.@this
     }
 
     // the member a saved binding's record keeps under name, read in the snapshot view as its member's type
-    private static T Kept<T>(global::app.type.item.dict.@this record, string name, global::app.actor.context.@this context)
+    private static T Member<T>(global::app.type.item.dict.@this record, string name, global::app.actor.context.@this context)
         where T : global::app.type.item.@this
-        => record.Get(name, context) is { } kept
-           && global::app.View.Snapshot.Make(context.App.type.list[typeof(T)], kept.Peek(), context) is T value
+        => record.Get(name, context) is { } row
+           && global::app.View.Snapshot.Make(context.App.type.list[typeof(T)], row.Peek(), context) is T value
             ? value : throw Unread(name);
 
     private static global::app.error.DeclinedException Unread(string name)

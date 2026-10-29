@@ -345,4 +345,26 @@ public class OnEventTests
         await cancelled.IsSuccess();
         await Assert.That(cancelled.Handled).IsTrue();
     }
+
+    // A bound call is the call as it was written, whole: the actor it names runs it, and one written to run on its own
+    // does — the binding finds only the goal it names, and takes nothing else away.
+    [Test]
+    public async Task ABoundCall_KeepsItsActor_AndRunsOnItsOwn_AsItWasWritten()
+    {
+        // what Log saw is kept on the app, where a task's run writes as any run does
+        Goal("Log",
+            Make.Step("sleep 300ms", Make.Action(Ctx, "timer", "sleep", ("Duration", "300ms"))),
+            Keep("!app.who", "%!app.actor.current.name%"));
+        var run = Goal("Run", Keep("ran", "yes"));
+        await (await Make.Action(Ctx, "on", "event", ("Event", "%!app.type.goal.on.start%"), ("When", "before"),
+            ("Action", Make.Action(Ctx, "goal", "call", ("Name", "Log"), ("Actor", "system"), ("Parallel", true)))).Start(Ctx)).IsSuccess();
+
+        await (await run.Start(Ctx)).IsSuccess();
+
+        // on its own: the run went on without waiting for Log, which hasn't written yet
+        await Assert.That(_app.property["who"]).IsNull();
+        for (var waited = 0; _app.property["who"] == null && waited < 50; waited++) await Task.Delay(100);
+        // as its actor: Log ran as the system actor
+        await Assert.That((await _app.property["who"]!.Value())?.ToString()).IsEqualTo("System");
+    }
 }
