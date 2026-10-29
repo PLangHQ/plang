@@ -107,6 +107,26 @@ switch (args.Length > 0 ? args[0] : "")
         Console.WriteLine(FormattableString.Invariant($"index actions={actions.Count} bytes-per-pass={bytes:F0}"));
         break;
     }
+    case "events":
+    {
+        // bytes of an actor's events' first ask (the system events load), and of the goal's load and run after, per app (this thread)
+        var count = int.TryParse(Environment.GetEnvironmentVariable("BENCH_N"), out var en) ? en : 500;
+        long made = 0, loadUser = 0, loadSystem = 0, loaded = 0, run = 0;
+        for (var i = 0; i < 20 + count; i++)
+        {
+            var a0 = GC.GetAllocatedBytesForCurrentThread();
+            await using var app = Make(false).Testing();
+            var a1 = GC.GetAllocatedBytesForCurrentThread();
+            await app.actor.list.System.@event.Loaded(); var a2 = GC.GetAllocatedBytesForCurrentThread();
+            await app.actor.list.User.@event.Loaded(); var a3 = GC.GetAllocatedBytesForCurrentThread();
+            var goal = (global::app.goal.@this)(await (await app.goal.Load("/module/condition/if/basic/Condition.test.goal")).Value())!;
+            var a4 = GC.GetAllocatedBytesForCurrentThread();
+            await goal.Start(app.actor.list.User.Context); var a5 = GC.GetAllocatedBytesForCurrentThread();
+            if (i >= 20) { made += a1 - a0; loadSystem += a2 - a1; loadUser += a3 - a2; loaded += a4 - a3; run += a5 - a4; }
+        }
+        Console.WriteLine(FormattableString.Invariant($"app={made / count / 1024.0:F1} KB  system.load={loadSystem / count / 1024.0:F1} KB  user.load={loadUser / count / 1024.0:F1} KB  goal.load={loaded / count / 1024.0:F1} KB  goal.run={run / count / 1024.0:F1} KB"));
+        break;
+    }
     case "alloc":
     {
         // allocation ticks (one per ~100 KB, sampled by bytes) by type over BENCH_N births: `type kb-per-birth`
