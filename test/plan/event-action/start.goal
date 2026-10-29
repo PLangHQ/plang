@@ -43,6 +43,9 @@ Stage2
 / an event bound after %count% is set runs after each set of the variable %count% — plang test
 / /plan/event-action/app/variable/SetRunsItsEvent
 - call /plan/event-action/app/variable/SetRunsItsEvent
+/ "before each file action" runs for the file save and the file read, not for a write out — plang test
+/ /plan/event-action/app/module/EachFileAction
+- call /plan/event-action/app/module/EachFileAction
 
 Stage3
 / on a cache hit the app's before events still ran — C#

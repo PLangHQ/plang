@@ -16,6 +16,12 @@ Formal: `on.event(Event=%!app.module.llm.query.on.start%, When="after", Action=g
 Step text: `after step call TrackAfterStep`
 Formal: `on.event(Event=%!app.type.step.on.start%, When="after", Action=goal.call(Name="TrackAfterStep"))`
 
+Step text: `before each file action, call Count`
+Formal: `on.event(Event=%!app.module.file.on.start%, When="before", Action=goal.call(Name="Count"))` — each action of a module the step names is that module's start, `%!app.module.<module>.on.start%`; not each step.
+
+Step text: `after each http action, call Meter`
+Formal: `on.event(Event=%!app.module.http.on.start%, When="after", Action=goal.call(Name="Meter"))`
+
 Step text: `before action file.read call OverrideFileRead`
 Formal: `on.event(Event=%!app.module.file.read.on.start%, When="before", Action=goal.call(Name="OverrideFileRead"))`
 

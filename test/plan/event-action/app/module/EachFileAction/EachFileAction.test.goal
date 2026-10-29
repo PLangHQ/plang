@@ -1,0 +1,13 @@
+/ "before each file action" is every action of the file module: the save and the read run it, the write out does not.
+Start
+- set %ran% = 0
+- before each file action, call Count
+- save "hi" to .data/eachfileaction.txt
+- read .data/eachfileaction.txt, write to %text%
+- write out "not a file action"
+- assert %ran% equals 2, "Count ran for the file save and the file read, not for the write out"
+- delete file .data/eachfileaction.txt
+
+/ The event's call.
+Count
+- add 1 to %ran%, write to %ran%
