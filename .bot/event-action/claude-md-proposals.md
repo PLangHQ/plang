@@ -23,3 +23,11 @@ Before a plan (or a change to it) goes to the next bot, read every decision in t
 ```
 - **Return early.** A guard that ends a method returns first; the rest of the body is never nested inside an `if`. Write `if (!result.Returned) return result;` then the work, never `if (result.Returned) { … } return result;`. The codeanalyzer flags the nested form in every file a branch touches.
 ```
+
+## architect — event-action — 2026-10-29 (4)
+**Target:** /CLAUDE.md (OBP Shape Smells, "Branch rules", "A run never writes an object its app shares")
+**Why:** event-action 53 and 60: an actor's events load on their first ask (pattern 11), so a sub app takes in its maker's events then, not at its birth. The coder's stage 5 found two pins that still said "at birth"; they are re-pinned to the first ask.
+**Proposed change:** replace "a sub app takes in its maker's bindings at birth, each as its own inherited binding" with:
+```
+a sub app takes in its maker's events on its events' first ask, each as its own inherited event
+```
