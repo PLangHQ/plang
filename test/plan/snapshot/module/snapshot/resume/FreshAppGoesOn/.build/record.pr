@@ -1,12 +1,12 @@
 {
   "name": "Record",
-  "comment": "The run FreshAppGoesOn.test.goal resumes: Record calls Sub, Sub saves the run, and Record keeps the snapshot in\nworkspace/run.plang (a .plang file holds it signed, as the save signed it).",
+  "comment": "The run FreshAppGoesOn.test.goal resumes: Record calls Sub, Sub saves the run, and Record keeps the snapshot in\nworkspace/run.plang (a .plang file holds it signed, as the save signed it). %count% is set by the test before it calls\nRecord, never here: a Record or Sub run twice counts on from the saved count, so it shows.",
   "step": [
     {
       "index": 0,
       "text": "set %where% = 'workspace/run.plang'",
       "line": {
-        "number": 4,
+        "number": 5,
         "indent": 0
       },
       "code": [
@@ -55,7 +55,7 @@
       "index": 1,
       "text": "set %name% = \"Alice\"",
       "line": {
-        "number": 5,
+        "number": 6,
         "indent": 0
       },
       "code": [
@@ -102,55 +102,6 @@
     },
     {
       "index": 2,
-      "text": "set %count% = 0",
-      "line": {
-        "number": 6,
-        "indent": 0
-      },
-      "code": [
-        {
-          "module": "variable",
-          "name": "set",
-          "property": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "variable"
-              },
-              "value": "%count%",
-              "variable": [
-                {
-                  "text": "%count%",
-                  "code": [
-                    {
-                      "variable": "count"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "number"
-              },
-              "value": 0
-            }
-          ],
-          "default": [
-            {
-              "name": "default",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "index": 3,
       "text": "call Sub city=\"Reykjavik\"",
       "line": {
         "number": 7,
@@ -180,7 +131,7 @@
       ]
     },
     {
-      "index": 4,
+      "index": 3,
       "text": "set %unwound% = \"yes\"",
       "line": {
         "number": 8,
@@ -229,7 +180,7 @@
       ]
     },
     {
-      "index": 5,
+      "index": 4,
       "text": "save %run% to file %where%",
       "line": {
         "number": 9,
@@ -283,5 +234,5 @@
   ],
   "visibility": "Public",
   "file": "Record.goal",
-  "hash": "ad4d98307d959938eb6797c39f0be8dd82d8f2a77c8966b2b67f66d07e76afbd"
+  "hash": "d976b781167cf055891ffbf01560e0dcbcf35d592025e967ac5f0bc980312ea2"
 }
