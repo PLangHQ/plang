@@ -59,5 +59,18 @@ private global::app.error.list.@this? _errors;
 - Tests: `FrameFirstAskTests` (the tester's two probes, red under a plain check-then-assign), `KindedTypeTests`,
   `TypeReadTests` (a read 24,608 → 9,936 B); BirthTests' call-cost ceilings at measured + 2–4%.
 
+## Stage 3 — a lookup kept by its owner
+- The setting store (`actor/setting/this.cs`): `Get(action, option)` keeps its answer at the scope that answers
+  (`Keeper`: the nearest with a run value or an actor's rows; a goal call's empty layer reads through), keyed
+  (module name, action name, option), at the root's version read first; not kept while any rows are unread (`IsRead`).
+  Pin `AnUnsetOption_IsAnsweredOnce_EvenInAFreshChildContext`: 1,856 → 160 B per ask (the same Data).
+- `shortcut.Name`: a birth fact. Pin `AShortcutsMatch_MakesNothing`: 5,520 → 0 B.
+- `goal.list.Find`: the goals a name may be (and each folder's) kept in one object (`found`), made under the gate
+  Add takes, let go whole by Add. Pin `AGoalFoundAgain_ReadsTheKeptGoals`: 3,048 → 1,152 B.
+- A frame's `Children` and `property` at their first ask. The frame pin: 1,544 → 680 B.
+- Not built, to the architect: the json serializer made per read (its owner would be the context or the read
+  context: a new member on a locked surface); the `Func<string, (…View)>` (not found by its text; its stack asked of
+  the codeanalyzer).
+
 ## Next
-- Stage 3 (a lookup kept by its owner): the setting store's shape first.
+- The codeanalyzer measures stage 3; then stage 4 (the generator).

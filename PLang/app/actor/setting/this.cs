@@ -108,7 +108,22 @@ public sealed class @this : IDisposable
     /// </summary>
     public async ValueTask<data.@this> Get(global::app.goal.step.action.@this action, string option)
     {
-        // read at the action's address, then its module's
+        // kept by the scope that answers, at the version it was answered at: the same answer while nothing is set, saved
+        // or removed anywhere in the chain — read first, so a write while it is worked out leaves it stale, never wrong
+        var version = System.Threading.Volatile.Read(ref Root._version);
+        var keeper = Keeper;
+        var key = (action.Module.Name, action.Name, option);
+        if (keeper._options.TryGetValue(key, out var kept) && kept.Version == version) return kept.Answer;
+        // worked out by the keeper (the same answer: what lies between is empty), so what it keeps holds the keeper's
+        // context, never a goal call's that ends
+        var answer = await keeper.Answer(action, option);
+        if (IsRead) keeper._options[key] = (version, answer);
+        return answer;
+    }
+
+    // The option as the scopes and the saved rows hold it: read at the action's address, then its module's.
+    private async ValueTask<data.@this> Answer(global::app.goal.step.action.@this action, string option)
+    {
         var address = action.Address;
         var module = action.Module.Address;
         var run = Run([$"{address}.{option}", $"{module}.{option}"]);
@@ -116,6 +131,27 @@ public sealed class @this : IDisposable
         if (await Saved(address) is { } row && Option(row, option) is { } value) return value;
         if (await Saved(module) is { } setting && Option(setting, option) is { } entry) return entry;
         return _context.NotFound($"{address}.{option}");
+    }
+
+    // Each action's option this scope answered, with the version it was answered at, by its module's name, its own and
+    // the option's — the address's parts, nothing built to ask it; bounded by the catalog's options.
+    private readonly ConcurrentDictionary<(string Module, string Action, string Option),
+        (long Version, data.@this Answer)> _options = new();
+
+    // The scope that answers this one's asks: this, when it holds a run value or an actor's rows; else its parent's — a
+    // layer with nothing of its own (a goal call's) reads through to the answer kept there.
+    private @this Keeper => _values.IsEmpty && _actor == null && _parent != null ? _parent.Keeper : this;
+
+    // Whether every actor's rows up the chain are read: an answer worked out before they are isn't kept, as their
+    // arrival moves no version.
+    private bool IsRead
+    {
+        get
+        {
+            for (@this? s = this; s != null; s = s._parent)
+                if (s._reading.Value || s._rows is { } rows && !(rows.IsValueCreated && rows.Value.IsCompletedSuccessfully)) return false;
+            return true;
+        }
     }
 
     // This run's value for the first key that has one, the closest scope first.

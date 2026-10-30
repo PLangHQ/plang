@@ -27,9 +27,15 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // element, its variables, what a program added, its tags, the error in play and its caller, so a frame writes the
     // chain it stands in; the event running in it is the app's answer, never saved. Its children are never written.
 
-    /// <summary>What a program adds to the call (<c>%!call.scope.retries%</c>) — kept as long as the call lives.</summary>
+    /// <summary>What a program adds to the call (<c>%!call.scope.retries%</c>) — kept as long as the call lives. Made at
+    /// its first ask: most calls get nothing added.</summary>
     [Store, global::app.Snapshot, global::app.LlmBuilder]
-    public global::app.type.item.property.list.@this property { get; private set; }
+    public global::app.type.item.property.list.@this property
+    {
+        get => _property ?? System.Threading.Interlocked.CompareExchange(ref _property, new(_stack.Properties), null) ?? _property;
+        private set => _property = value;
+    }
+    private global::app.type.item.property.list.@this? _property;
 
     private Stopwatch? _stopwatch;
     private readonly global::app.call.list.@this _stack;
@@ -115,10 +121,12 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>
     /// Live siblings under this Call. Owns its own lock + FIFO eviction policy — see
-    /// <see cref="child.list.@this"/>. Allocated lazily via the constructor below so the
-    /// back-reference to the parent CallStack is set before any Add can land.
+    /// <see cref="child.list.@this"/>. Made at its first ask, with the back-reference to the stack it is of: a call
+    /// nothing is pushed under (an action's) has none.
     /// </summary>
-    public child.list.@this Children { get; }
+    public child.list.@this Children
+        => _children ?? System.Threading.Interlocked.CompareExchange(ref _children, new(_stack), null) ?? _children;
+    private child.list.@this? _children;
 
     // --- Timing tier (null when Flags.Timing off) ---
     // When it ran is a value of its stack's datetime type, how long a span, written in the standard its asker's setting
@@ -248,8 +256,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         _previousCurrent = previous;
         _store = store;
         _call = call;
-        property = new(stack.Properties);
-        Children = new child.list.@this(stack);
         foreach (var name in names ?? [])
             if (name != null && !string.IsNullOrEmpty(name.Name)) Born(name.Name, name);
     }

@@ -194,8 +194,8 @@ public class BirthTests
             return frame;
         });
 
-        // 1,544 bytes on this machine; 2,592 with the three made at the push
-        await Assert.That(born).IsLessThan(1_600L).Because("a frame's store, tags and errors are made at their first write");
+        // 680 bytes on this machine; 1,544 with its children and property made at the push, 2,592 with all five
+        await Assert.That(born).IsLessThan(720L).Because("a frame's store, tags and errors are made at their first write");
     }
 
     // a goal started again judges no broken steps again: it was judged at its first start
@@ -248,6 +248,72 @@ public class BirthTests
 
         // 189,072 bytes on this machine; 227,552 with a number type made per count and depth
         await Assert.That(born).IsLessThan(195_000L).Because("a count and a depth are of the app's number types, found, not made");
+    }
+
+    // an option the step didn't give is answered once and kept, by the scope that answers: asked again, or first asked
+    // in a fresh child context (a goal call's), nothing is worked out again
+    [Test]
+    public async Task AnUnsetOption_IsAnsweredOnce_EvenInAFreshChildContext()
+    {
+        await using var app = new global::app.@this("/birth", global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        var parent = global::PLang.Tests.Parent.Actor.Context;
+        var action = Make.Action(parent, "variable", "set", Make.Param(parent, "Name", "x", "variable"), ("Value", "1"));
+        await Assert.That((await context.Setting.Get(action, "type")).IsInitialized).IsFalse();
+        await Assert.That(await context.Setting.Get(action, "type")).IsSameReferenceAs(await context.Setting.Get(action, "type"));
+        for (var i = 0; i < 200; i++) await context.Setting.Get(action, "type");
+
+        var from = System.GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 200; i++) await context.Setting.Get(action, "type");
+        var again = (System.GC.GetAllocatedBytesForCurrentThread() - from) / 200;
+
+        var children = Enumerable.Range(0, 20).Select(_ => context.Child(app.actor.list.User, System.Threading.CancellationToken.None)).ToList();
+        foreach (var child in children) _ = child.Setting;
+        from = System.GC.GetAllocatedBytesForCurrentThread();
+        foreach (var child in children) await child.Setting.Get(action, "type");
+        var fresh = (System.GC.GetAllocatedBytesForCurrentThread() - from) / 20;
+        foreach (var child in children) child.Dispose();
+
+        await Assert.That(again).IsLessThan(400L).Because("an unset option is kept by the scope that answered it");
+        await Assert.That(fresh).IsLessThan(400L).Because("a child layer with nothing of its own reads through to the kept answer");
+    }
+
+    // a shortcut's name is its file's, kept at its birth: matching a key reads it, making nothing
+    [Test]
+    public async Task AShortcutsMatch_MakesNothing()
+    {
+        await using var app = new global::app.@this("/birth", global::PLang.Tests.Parent.Actor).Testing();
+        var shortcut = new global::app.shortcut.@this(
+            global::app.type.item.path.@this.Resolve("/system/shortcut/goal.goal", app.actor.list.System.Context),
+            app.type.list[typeof(global::app.shortcut.@this)]);
+        await Assert.That(await shortcut.Match("goal")).IsSameReferenceAs(shortcut);
+
+        var from = System.GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 200; i++) await shortcut.Match("other");
+        var born = (System.GC.GetAllocatedBytesForCurrentThread() - from) / 200;
+
+        // 0 bytes on this machine; 5,520 with its name made at every match
+        await Assert.That(born).IsLessThan(16L).Because("a shortcut's name is a birth fact");
+    }
+
+    // a name found among the goals read reads the list this one keeps, made once after the last goal came in
+    [Test]
+    public async Task AGoalFoundAgain_ReadsTheKeptGoals()
+    {
+        await using var app = new global::app.@this("/birth", global::PLang.Tests.Parent.Actor).Testing();
+        var parent = global::PLang.Tests.Parent.Actor.Context;
+        foreach (var name in new[] { "One", "Two", "Three", "Four", "Five", "Six" })
+            app.goal.list.Add(Make.Goal(parent, name, $"/area/{name}.goal"));
+        var caller = Make.Goal(parent, "Caller", "/area/Caller.goal");
+        app.goal.list.Add(caller);
+        for (var i = 0; i < 3; i++) await (await app.goal.list.Find("Four", caller)).IsSuccess();
+
+        var from = System.GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 50; i++) await app.goal.list.Find("Four", caller);
+        var born = (System.GC.GetAllocatedBytesForCurrentThread() - from) / 50;
+
+        // 1,152 bytes on this machine; 3,048 with the goals' lists made at every find
+        await Assert.That(born).IsLessThan(1_200L).Because("the goals a name may be are kept until a goal comes in");
     }
 
     [Test]

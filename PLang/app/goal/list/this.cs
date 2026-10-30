@@ -185,6 +185,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
             base.Add((global::app.type.item.@this)goal);
             _stamp.AddOrUpdate(goal, stamp);
             _app = _system = null;
+            _found = null;
         }
     }
 
@@ -220,9 +221,9 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         // a name is the goal beside its caller before any other of that name: one already read there, then one there on
         // disk; only then one read anywhere, then the app root's
         var folder = caller?.Folder;
-        // the goals a name may be: every one read, newest first, but a setup goal — made once for the whole find
-        var goals = Items().Where(g => !g.IsSetup).Reverse().ToList();
-        if (folder != null && Goal(name, goals.Where(g => folder.Equals(g.Folder)).ToList()) is { } beside) return context.Ok(beside);
+        var read = Found;
+        var goals = read.Goals;
+        if (folder != null && Goal(name, read.In(folder)) is { } beside) return context.Ok(beside);
 
         var source = name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase) ? name : name + ".goal";
         if (!source.StartsWith('/') && !source.StartsWith('\\') && folder != null)
@@ -261,6 +262,33 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
                     return file.Name.ToString();
             return null;
         }
+    }
+
+    // The goals a name may be, as this list holds them now: made at the first find after a goal comes in (Add lets it go
+    // whole), kept for every find until then — made under the gate Add takes, so it is never made from the goals before
+    // an Add and kept after it.
+    private found Found
+    {
+        get
+        {
+            if (System.Threading.Volatile.Read(ref _found) is { } found) return found;
+            lock (_gate) return _found ??= new found(Items().Where(g => !g.IsSetup).Reverse().ToList());
+        }
+    }
+    private found? _found;
+
+    /// <summary>The goals a call's name may be: every one read, newest first, but a setup goal; and those of each folder,
+    /// kept per folder once asked. One object, so a goal coming in lets both go at once.</summary>
+    private sealed class found(List<goal.@this> goals)
+    {
+        internal List<goal.@this> Goals { get; } = goals;
+
+        // the goals in each folder asked
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<global::app.type.item.path.@this, List<goal.@this>> _in = new();
+
+        /// <summary>Those of the goals in <paramref name="folder"/>.</summary>
+        internal List<goal.@this> In(global::app.type.item.path.@this folder)
+            => _in.TryGetValue(folder, out var kept) ? kept : _in.GetOrAdd(folder, at => Goals.Where(g => at.Equals(g.Folder)).ToList());
     }
 
     // The goals a caller reaches by name before anything is read: the caller itself and its children, then each
