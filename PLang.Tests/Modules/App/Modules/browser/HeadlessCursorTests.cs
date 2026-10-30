@@ -17,7 +17,7 @@ public class HeadlessCursorTests
     [Test]
     public async Task TheCursor_IsOneCompactLine_WithJsonFormatted()
     {
-        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+        await using var app = global::PLang.Tests.Root.Make("/test", wiring: global::app.Wiring.none).Testing();
 
         await Assert.That(await Line(app)).IsEqualTo("{\"cursor\":\"pointer\"}");
     }
@@ -25,7 +25,7 @@ public class HeadlessCursorTests
     [Test]
     public async Task TheWindow_FindsTheCursorInTheLine()
     {
-        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+        await using var app = global::PLang.Tests.Root.Make("/test", wiring: global::app.Wiring.none).Testing();
 
         await Assert.That(global::app.module.screen.type.screen.window.code.Window.Field(await Line(app), "cursor")).IsEqualTo("pointer");
     }

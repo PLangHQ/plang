@@ -105,7 +105,7 @@ public class PathAskerContextTests
     {
         await using var probe = NewApp();
         var os = probe.filesystem.os.Absolute;
-        await using var holder = new global::app.@this(System.IO.Path.GetDirectoryName(os.TrimEnd('/', '\\'))!).Testing();
+        await using var holder = global::PLang.Tests.Root.Make(System.IO.Path.GetDirectoryName(os.TrimEnd('/', '\\'))!).Testing();
         var hello = System.IO.Path.Combine(os, "system", "event", "Hello.goal");
 
         foreach (var context in new[] { holder.actor.list.User.Context, global::PLang.Tests.Parent.Actor.Context })

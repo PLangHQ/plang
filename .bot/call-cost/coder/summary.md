@@ -93,6 +93,19 @@ private global::app.error.list.@this? _errors;
 - `data.attachment.Copy()`: none when it carries nothing; `Property(type)` captures nothing on its kept ask.
 - Pins: a goal run again 101,512 B (103,672 / 107,528 without the pairs); an action start 10,744 B.
 
+## One code for several roots (call-cost 15–17, Ingi's yes)
+- `app(path, origin.code code, environment)` (internal): a root made from a code its maker holds. The CLI keeps one
+  code per root (`app(path, environment, wiring)`).
+- `origin.code`'s types are made at the first ask; `origin.shared` (NEW, `origin/shared.cs`), a kind of code several
+  roots share, refuses `Hold` (a kind on a code type) with `TypesShared`, as the actor origin does.
+- The tests' holder: `PLang.Tests/Shared/Root.cs`, one shared code per wiring for the process; 221 test root births
+  ask `Root.Make`. 21 files keep their own code (they load kinds onto code types, or test a root's own code): the
+  Generator matrix tests (the `matrixenum` choice set) and `AppRunScaffolding`, `Stage2_GetParameterLazy`,
+  `SnapshotParams`; `FileHandlerTests`, `NullWrapperTests`, `KindCanonicalisationTests`, `CodeFactsTests`,
+  `OriginTests`, `SchemeRegistryTests`, `FormatEncodeContractTests`.
+- Pins (`SharedCodeTests`): a second root from one code allocates 1,418,440 B less; a kind on a shared code's type
+  is refused and no other root sees it.
+
 ## Next
-- The review line: tester (stages 3, 4 and the cleanup), security (the kept settings answers across actors and sub
-  apps), auditor, docs.
+- The codeanalyzer measures the sweep's time; then the review line: tester (stages 3, 4, the cleanup, the shared
+  code), security (the kept settings answers across actors and sub apps), auditor, docs.

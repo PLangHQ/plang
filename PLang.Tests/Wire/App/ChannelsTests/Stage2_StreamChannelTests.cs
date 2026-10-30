@@ -5,7 +5,7 @@ namespace PLang.Tests.App.ChannelsTests;
 
 public class Stage2_StreamChannelTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this(
+    private readonly global::app.@this app = global::PLang.Tests.Root.Make(
         "/tmp/s2-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
 
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
@@ -13,7 +13,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     [Test]
     public async Task StreamChannel_WriteCore_WritesDataViaSerializer()
     {
-        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+        await using var app = global::PLang.Tests.Root.Make("/test", wiring: global::app.Wiring.none).Testing();
         var captureStream = new MemoryStream();
         var ch = new StreamChannel(app.actor.list.User.Channel, "c", captureStream, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" };
@@ -79,7 +79,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     [Test]
     public async Task StreamChannel_WriteCore_FailsWithWriteError_OnUnderlyingStreamThrow()
     {
-        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+        await using var app = global::PLang.Tests.Root.Make("/test", wiring: global::app.Wiring.none).Testing();
         var ch = new StreamChannel(app.actor.list.User.Channel, "c", new ThrowingStream(throwOnWrite: true), ChannelDirection.Output, ownsStream: false);
         app.actor.list.User.Channel.Register(ch);
         var result = await ch.Write(app.Ok("x"));
@@ -150,7 +150,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     public async Task OutputAsk_EndsWhenTheRunIsCancelled()
     {
         // The run's cancellation (a timeout on the ask, a test's timeout, Ctrl-C) is what ends a waiting ask.
-        await using var app = new global::app.@this("/tmp/s2c-" + System.Guid.NewGuid().ToString("N")[..6], wiring: global::app.Wiring.none).Testing();
+        await using var app = global::PLang.Tests.Root.Make("/tmp/s2c-" + System.Guid.NewGuid().ToString("N")[..6], wiring: global::app.Wiring.none).Testing();
         app.actor.list.User.Channel.Register(new StreamChannel(app.actor.list.User.Channel, global::app.channel.list.@this.Input, new BlockingStream(), ChannelDirection.Input, ownsStream: false) { Mime = "text/plain" });
         var ctx = app.actor.list.User.Context;
 
@@ -305,7 +305,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     [Test]
     public async Task StreamChannel_WriteText_HonorsLatin1Encoding()
     {
-        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+        await using var app = global::PLang.Tests.Root.Make("/test", wiring: global::app.Wiring.none).Testing();
         var capture = new MemoryStream();
         var ch = new StreamChannel(app.actor.list.User.Channel, "c", capture, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain", Encoding = "iso-8859-1", Framed = true };
@@ -323,7 +323,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     [Test]
     public async Task StreamChannel_Unframed_WritesNoNewline()
     {
-        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+        await using var app = global::PLang.Tests.Root.Make("/test", wiring: global::app.Wiring.none).Testing();
         var capture = new MemoryStream();
         var ch = new StreamChannel(app.actor.list.User.Channel, "c", capture, ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" };
         app.actor.list.User.Channel.Register(ch);
@@ -337,7 +337,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     [Test]
     public async Task StreamChannel_WriteText_FiresOnWrite()
     {
-        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+        await using var app = global::PLang.Tests.Root.Make("/test", wiring: global::app.Wiring.none).Testing();
         var ch = StreamChannel.Memory(app.actor.list.User.Channel, "output");
         app.actor.list.User.Channel.Register(ch);
         string? seen = null;
@@ -368,7 +368,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     [Test]
     public async Task StreamChannel_UnknownEncoding_IsAnErrorNamingIt()
     {
-        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+        await using var app = global::PLang.Tests.Root.Make("/test", wiring: global::app.Wiring.none).Testing();
         var capture = new MemoryStream();
         var ch = new StreamChannel(app.actor.list.User.Channel, "c", capture, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain", Encoding = "totally-not-an-encoding" };

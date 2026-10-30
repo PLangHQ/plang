@@ -94,7 +94,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         // the DLL's provider is taken in again before the defaults are applied — a default naming it then finds it. Plain
         // apps: a test app's own signing mock answers to the fixture provider's name.
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-dll-" + System.Guid.NewGuid().ToString("N")[..8]);
-        await using var src = new global::app.@this(root + "-src");
+        await using var src = global::PLang.Tests.Root.Make(root + "-src");
         src.TestIdentity();
         var context = src.actor.list.User.Context;
         await Load(src, TestProviderDll);
@@ -106,7 +106,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         await Assert.That(await (await snap.Node("app.code.default")).Text("signing", context)).IsEqualTo("test-signing");
 
         var text = await snap.Text(context);
-        await using var dst = new global::app.@this(root + "-dst");
+        await using var dst = global::PLang.Tests.Root.Make(root + "-dst");
         dst.TestIdentity();
         var into = dst.actor.list.User.Context;
         await Granted(dst, TestProviderDll);
@@ -124,13 +124,13 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
     public async Task ADllTheRunLoaded_ComesBackInAFreshApp_AndItsProviderAnswers()
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-dll-" + System.Guid.NewGuid().ToString("N")[..8]);
-        await using var src = new global::app.@this(root + "-src");
+        await using var src = global::PLang.Tests.Root.Make(root + "-src");
         src.TestIdentity();
         var context = src.actor.list.User.Context;
         await Load(src, TestProviderDll);
         var text = await src.Snapshot(context).Saved().Text(context);
 
-        await using var dst = new global::app.@this(root + "-dst");
+        await using var dst = global::PLang.Tests.Root.Make(root + "-dst");
         dst.TestIdentity();
         var into = dst.actor.list.User.Context;
         await Granted(dst, TestProviderDll);

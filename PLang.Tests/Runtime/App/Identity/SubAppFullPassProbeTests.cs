@@ -28,7 +28,7 @@ public class SubAppFullPassProbeTests : System.IAsyncDisposable
     private global::app.@this Maker(string name = "maker")
     {
         var path = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(dir, name)).FullName;
-        var app = new global::app.@this(path).TestSigning();
+        var app = global::PLang.Tests.Root.Make(path).TestSigning();
         born.Add(app);
         return app;
     }

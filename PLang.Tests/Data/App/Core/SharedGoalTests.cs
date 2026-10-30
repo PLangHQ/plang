@@ -51,7 +51,7 @@ public class SharedGoalTests
     [Test]
     public async Task AGoalReadAfterTheSubAppLoadsCode_StaysItsOwn()
     {
-        await using var parent = new global::app.@this(_dir).Testing();
+        await using var parent = global::PLang.Tests.Root.Make(_dir).Testing();
         await using var child = new global::app.@this(_dir, parent.actor.list.User).Testing();
         await child.type.list.Add(typeof(GoalProbe), child.actor.list.System.Context).IsSuccess();
 
@@ -64,7 +64,7 @@ public class SharedGoalTests
     [Test]
     public async Task ManySubAppsLoadingOneGoal_MakeOneRead()
     {
-        await using var parent = new global::app.@this(_dir).Testing();
+        await using var parent = global::PLang.Tests.Root.Make(_dir).Testing();
         var children = Enumerable.Range(0, 8).Select(_ => new global::app.@this(_dir, parent.actor.list.User).Testing()).ToList();
         try
         {

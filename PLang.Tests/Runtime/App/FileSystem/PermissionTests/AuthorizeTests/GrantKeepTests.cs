@@ -19,7 +19,7 @@ public class GrantKeepTests : System.IAsyncDisposable
     {
         root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-grantkeep-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        app = new global::app.@this(root).TestSigning();
+        app = global::PLang.Tests.Root.Make(root).TestSigning();
     }
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
@@ -111,7 +111,7 @@ public class GrantKeepTests : System.IAsyncDisposable
         var file = System.IO.Path.Combine(at, ".data", "setting", "data.sqlite");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(file)!);
         System.IO.File.WriteAllText(file, "not a database");
-        return new global::app.@this(at).TestSigning();
+        return global::PLang.Tests.Root.Make(at).TestSigning();
     }
 
     private sealed class Answering : global::app.channel.@this

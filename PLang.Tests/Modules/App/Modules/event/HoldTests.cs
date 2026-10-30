@@ -39,7 +39,7 @@ public class HoldTests
     [Test]
     public async Task ABindingGoesWithItsApp()
     {
-        await using var parent = new global::app.@this("/parent").Testing();
+        await using var parent = global::PLang.Tests.Root.Make("/parent").Testing();
 
         var child = await Bound(parent);
         // the child's events load through file reads, whose continuations ran on pool threads: those let go of what
@@ -58,7 +58,7 @@ public class HoldTests
     [Test]
     public async Task AnAppWideBinding_NeverFiresInASibling()
     {
-        await using var parent = new global::app.@this("/parent").Testing();
+        await using var parent = global::PLang.Tests.Root.Make("/parent").Testing();
         await using var binding = Child(parent, "/parent/binding");
         await using var sibling = Child(parent, "/parent/sibling");
         var ctx = binding.actor.list.User.Context;
@@ -71,7 +71,7 @@ public class HoldTests
     [Test]
     public async Task AnUnboundBinding_LeavesNothingInTheHold()
     {
-        await using var parent = new global::app.@this("/parent").Testing();
+        await using var parent = global::PLang.Tests.Root.Make("/parent").Testing();
         await using var app = Child(parent, "/parent/app");
         var ctx = app.actor.list.User.Context;
         var binding = await Bind(ctx, "%!app.type.step.on.start%", Make.Call(ctx, "Log"));
@@ -91,7 +91,7 @@ public class HoldTests
     [Test]
     public async Task AnActorScopedBinding_FiresOnlyForItsActor()
     {
-        await using var parent = new global::app.@this("/parent").Testing();
+        await using var parent = global::PLang.Tests.Root.Make("/parent").Testing();
         await using var app = Child(parent, "/parent/app");
         var user = app.actor.list.User.Context;
         var watch = Make.Goal(user, "Watch", Make.Step("set %seen% = true",

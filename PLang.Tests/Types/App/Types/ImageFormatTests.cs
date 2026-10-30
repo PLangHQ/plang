@@ -23,7 +23,7 @@ public class ImageFormatTests
 
     [Test] public async Task AnImageChannelWrite_WritesTheBytes()
     {
-        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+        await using var app = global::PLang.Tests.Root.Make("/test", wiring: global::app.Wiring.none).Testing();
         var capture = new System.IO.MemoryStream();
         var channel = new StreamChannel(app.actor.list.User.Channel, "img", capture, ChannelDirection.Output, ownsStream: false) { Mime = "image/png" };
         app.actor.list.User.Channel.Register(channel);

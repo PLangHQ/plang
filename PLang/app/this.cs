@@ -321,6 +321,11 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         Wiring wiring = Wiring.console)
         : this(absolutePath, new global::app.origin.code(wiring), environment) { }
 
+    /// <summary>A root app made from <paramref name="code"/>, a code its maker holds and hands to each root it makes, so
+    /// they read one scan of the code's facts.</summary>
+    internal @this(string absolutePath, global::app.origin.code code, string? environment = null)
+        : this(absolutePath, (global::app.origin.@this)code, environment) { }
+
     /// <summary>An app made by <paramref name="actor"/>, the actor that calls: its folder is its own, and its lists are
     /// layers over the caller's app's. Its life ends with its caller's; it is who its caller is.</summary>
     internal @this(string absolutePath, global::app.actor.@this actor) : this(absolutePath, actor, null) { }

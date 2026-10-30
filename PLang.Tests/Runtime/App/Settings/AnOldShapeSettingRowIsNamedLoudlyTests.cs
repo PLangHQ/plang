@@ -32,7 +32,7 @@ public class AnOldShapeSettingRowIsNamedLoudlyTests
 
     [Test] public async Task AnOldShapeSettingRow_IsNamedLoudly()
     {
-        await using var app = new global::app.@this(_dir);
+        await using var app = global::PLang.Tests.Root.Make(_dir);
         await app.actor.list.User.Setting.Load();
 
         var read = await app.actor.list.User.Setting.Get("llm.setting");

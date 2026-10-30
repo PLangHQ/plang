@@ -10,7 +10,7 @@ public class Stage1_ChannelBaseTests
     [Test]
     public async Task ChannelBase_Properties_RoundTripOnConcreteSubtype()
     {
-        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+        await using var app = global::PLang.Tests.Root.Make("/test", wiring: global::app.Wiring.none).Testing();
         var ch = new StreamChannel(app.actor.list.User.Channel, "custom", new MemoryStream(), ChannelDirection.Bidirectional, ownsStream: true)
         {
             Buffer = 8192L,
@@ -33,7 +33,7 @@ public class Stage1_ChannelBaseTests
     [Test]
     public async Task ChannelBase_Defaults_MatchSpecTable()
     {
-        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+        await using var app = global::PLang.Tests.Root.Make("/test", wiring: global::app.Wiring.none).Testing();
         var ch = StreamChannel.Memory(app.actor.list.User.Channel, "d");
         await Assert.That(ch.Buffer).IsEqualTo(4096L);
         await Assert.That(ch.Timeout).IsEqualTo(TimeSpan.FromSeconds(30));
@@ -70,7 +70,7 @@ public class Stage1_ChannelBaseTests
     [Test]
     public async Task Encryption_DefaultsNull_SigningDefaultsAuto()
     {
-        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+        await using var app = global::PLang.Tests.Root.Make("/test", wiring: global::app.Wiring.none).Testing();
         var ch = StreamChannel.Memory(app.actor.list.User.Channel, "d");
         await Assert.That(ch.Encryption).IsNull();
         await Assert.That(ch.Signing).IsEqualTo("auto");
@@ -91,7 +91,7 @@ public class Stage1_ChannelBaseTests
     {
         // Mime drives serializer selection. Default "text/plain" → text serializer.
         // Switching Mime to "application/json" → JSON serializer.
-        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+        await using var app = global::PLang.Tests.Root.Make("/test", wiring: global::app.Wiring.none).Testing();
 
         var captureA = new MemoryStream();
         var jsonCh = new StreamChannel(app.actor.list.User.Channel, "json", captureA, ChannelDirection.Output, ownsStream: false)

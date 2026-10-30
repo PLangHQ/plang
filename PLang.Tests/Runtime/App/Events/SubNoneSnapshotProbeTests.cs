@@ -38,7 +38,7 @@ public class SubNoneSnapshotProbeTests
 
     private async Task<(int before, int after, string? resumed)> Run(string sub)
     {
-        await using var maker = new global::app.@this(_dir).Consenting();
+        await using var maker = global::PLang.Tests.Root.Make(_dir).Consenting();
         var ctx = maker.actor.list.User.Context;
         var log = Make.Goal(ctx, "Log", Make.Step("set x", Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "x", "variable"), ("Value", "1"))));
         maker.goal.list.Add(log);

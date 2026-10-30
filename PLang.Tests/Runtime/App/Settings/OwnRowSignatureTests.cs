@@ -30,7 +30,7 @@ public class OwnRowSignatureTests : System.IAsyncDisposable
     // the user's persisted grant on the secret file, saved by its owner's door (signed), in a first run
     private async Task Granted()
     {
-        await using var first = new global::app.@this(root).TestIdentity();
+        await using var first = global::PLang.Tests.Root.Make(root).TestIdentity();
         var user = first.actor.list.User;
         await user.Permission.Add(new global::app.data.@this<Grant>("", Grant.Request(user, secret, Verb.read), context: user.Context), persist: true);
         await Assert.That(await user.Permission.Find(user.Context.File(secret), Verb.read)).IsNotNull();
@@ -59,7 +59,7 @@ public class OwnRowSignatureTests : System.IAsyncDisposable
     [Test] public async Task ASignedOwnRow_IsReadBack()
     {
         await Granted();
-        await using var next = new global::app.@this(root).TestIdentity();
+        await using var next = global::PLang.Tests.Root.Make(root).TestIdentity();
         var user = next.actor.list.User;
         await Assert.That(await user.Permission.Find(user.Context.File(secret), Verb.read)).IsNotNull();
     }
@@ -68,12 +68,12 @@ public class OwnRowSignatureTests : System.IAsyncDisposable
     // grant's row by it — the next run reads both as the app's
     [Test] public async Task TheAppsOwnIdentity_SignsItsRows_ReadBackOnTheNextRun()
     {
-        await using (var first = new global::app.@this(root))
+        await using (var first = global::PLang.Tests.Root.Make(root))
         {
             var user = first.actor.list.User;
             await user.Permission.Add(new global::app.data.@this<Grant>("", Grant.Request(user, secret, Verb.read), context: user.Context), persist: true);
         }
-        await using var next = new global::app.@this(root);
+        await using var next = global::PLang.Tests.Root.Make(root);
         var again = next.actor.list.User;
         await Assert.That(await again.Permission.Find(again.Context.File(secret), Verb.read)).IsNotNull();
     }
@@ -82,7 +82,7 @@ public class OwnRowSignatureTests : System.IAsyncDisposable
     {
         await Granted();
         Unsigned();
-        await using var next = new global::app.@this(root).TestIdentity();
+        await using var next = global::PLang.Tests.Root.Make(root).TestIdentity();
         var user = next.actor.list.User;
 
         var read = await user.Setting.Get("app.actor.permission.setting");

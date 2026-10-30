@@ -23,12 +23,12 @@ public class ShippedIdentityStoreTests
         var root = Temp("own");
         var secret = System.IO.Path.Combine(Temp("own-out"), "secret.txt");
         System.IO.File.WriteAllText(secret, "outside");
-        await using (var first = new global::app.@this(root))
+        await using (var first = global::PLang.Tests.Root.Make(root))
         {
             var user = first.actor.list.User;
             await user.Permission.Add(new global::app.data.@this<Grant>("", Grant.Request(user, secret, Verb.read), context: user.Context), persist: true);
         }
-        await using var again = new global::app.@this(root);
+        await using var again = global::PLang.Tests.Root.Make(root);
         var u = again.actor.list.User;
         await Assert.That(await u.Permission.Find(u.Context.File(secret), Verb.read)).IsNotNull();
     }
@@ -41,13 +41,13 @@ public class ShippedIdentityStoreTests
         System.IO.File.WriteAllText(secret, "outside");
         // the attacker, in their checkout with the REAL identity provider: the grant is signed with the identity the
         // app made for them, and that identity row is in the same store they ship
-        await using (var shipped = new global::app.@this(root))
+        await using (var shipped = global::PLang.Tests.Root.Make(root))
         {
             var user = shipped.actor.list.User;
             await user.Permission.Add(new global::app.data.@this<Grant>("", Grant.Request(user, secret, Verb.read), context: user.Context), persist: true);
         }
         // the victim clones it (store included) and opens it with no identity of their own
-        await using var victim = new global::app.@this(root);
+        await using var victim = global::PLang.Tests.Root.Make(root);
         var v = victim.actor.list.User;
         var answered = false;
         try { answered = await v.Permission.Find(v.Context.File(secret), Verb.read) != null; }
@@ -61,7 +61,7 @@ public class ShippedIdentityStoreTests
         var root = Temp("replay");
         var secret = System.IO.Path.Combine(Temp("replay-out"), "secret.txt");
         System.IO.File.WriteAllText(secret, "outside");
-        await using (var first = new global::app.@this(root))
+        await using (var first = global::PLang.Tests.Root.Make(root))
         {
             var system = first.actor.list.System;
             await system.Permission.Add(new global::app.data.@this<Grant>("", Grant.Request(system, secret, Verb.read), context: system.Context), persist: true);
@@ -87,7 +87,7 @@ public class ShippedIdentityStoreTests
             cp.ExecuteNonQuery();
         }
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        await using var again = new global::app.@this(root);
+        await using var again = global::PLang.Tests.Root.Make(root);
         var u = again.actor.list.User;
         var answered = false;
         try { answered = await u.Permission.Find(u.Context.File(secret), Verb.read) != null; }
