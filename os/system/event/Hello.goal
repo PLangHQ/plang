@@ -1,5 +1,5 @@
-/ The first system event, loaded from /system/event/ when the app starts (event.setting.system load): before the app
-/ starts, it writes out that it ran — there to prove the folder loads. An app's own system/event/Hello.goal replaces it.
+/ The first system event, loaded from /system/event/ on the actor's events' first ask (event.setting.system load): before
+/ the app starts, it writes out that it ran — there to prove the folder loads. An app's own system/event/Hello.goal replaces it.
 Hello
 - before the app starts, call Say
 

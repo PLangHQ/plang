@@ -1,6 +1,6 @@
 {
   "name": "Hello",
-  "comment": "The first system event, loaded from /system/event/ when the app starts (event.setting.system load): before the app\nstarts, it writes out that it ran — there to prove the folder loads. An app's own system/event/Hello.goal replaces it.",
+  "comment": "The first system event, loaded from /system/event/ on the actor's events' first ask (event.setting.system load): before\nthe app starts, it writes out that it ran — there to prove the folder loads. An app's own system/event/Hello.goal replaces it.",
   "step": [
     {
       "index": 0,
@@ -65,13 +65,23 @@
                 ]
               }
             }
+          ],
+          "default": [
+            {
+              "name": "sub",
+              "type": {
+                "name": "choice",
+                "kind": "sub"
+              },
+              "value": "inherit"
+            }
           ]
         }
       ],
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 0 uses on.event, which the decider was not sure of (0.96)"
+          "message": "step 0 uses on.event, which the decider was not sure of (0.92)"
         }
       ]
     }
@@ -111,5 +121,5 @@
   ],
   "visibility": "Public",
   "file": "Hello.goal",
-  "hash": "c952927a8afef8b5e43a2faf4464e636c9aec0946caae662364901a830508d0e"
+  "hash": "1e62fac7e4c21bec1ce18d71b14e5b0eb787bacfbb90de003aa5afa57cb4bf7e"
 }

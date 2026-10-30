@@ -1,0 +1,506 @@
+{
+  "name": "Start",
+  "comment": "After runs in the order bound too: \"after goal Process, call XX\" then \"after goal Process, call YY\", so XX runs before\nYY.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %ran% = \"\"",
+      "line": {
+        "number": 4,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%ran%",
+              "variable": [
+                {
+                  "text": "%ran%",
+                  "code": [
+                    {
+                      "variable": "ran"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": ""
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "after goal Process, call XX",
+      "line": {
+        "number": 5,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "on",
+          "name": "event",
+          "property": [
+            {
+              "name": "Event",
+              "type": {
+                "name": "on",
+                "template": "plang"
+              },
+              "value": "%!app.goal[\"Process\"].on.start%",
+              "variable": [
+                {
+                  "text": "%!app.goal[\"Process\"].on.start%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "goal"
+                    },
+                    {
+                      "index": {
+                        "text": "Process"
+                      }
+                    },
+                    {
+                      "property": "on"
+                    },
+                    {
+                      "property": "start"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "When",
+              "type": {
+                "name": "choice",
+                "kind": "when"
+              },
+              "value": "after"
+            },
+            {
+              "name": "Action",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "goal"
+                    },
+                    "value": "XX"
+                  }
+                ]
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "sub",
+              "type": {
+                "name": "choice",
+                "kind": "sub"
+              },
+              "value": "inherit"
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 1 uses on.event, which the decider was not sure of (0.92)"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "after goal Process, call YY",
+      "line": {
+        "number": 6,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "on",
+          "name": "event",
+          "property": [
+            {
+              "name": "Event",
+              "type": {
+                "name": "on",
+                "template": "plang"
+              },
+              "value": "%!app.goal[\"Process\"].on.start%",
+              "variable": [
+                {
+                  "text": "%!app.goal[\"Process\"].on.start%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "goal"
+                    },
+                    {
+                      "index": {
+                        "text": "Process"
+                      }
+                    },
+                    {
+                      "property": "on"
+                    },
+                    {
+                      "property": "start"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "When",
+              "type": {
+                "name": "choice",
+                "kind": "when"
+              },
+              "value": "after"
+            },
+            {
+              "name": "Action",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "goal"
+                    },
+                    "value": "YY"
+                  }
+                ]
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "sub",
+              "type": {
+                "name": "choice",
+                "kind": "sub"
+              },
+              "value": "inherit"
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 2 uses on.event, which the decider was not sure of (0.86)"
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "call Process",
+      "line": {
+        "number": 7,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Process"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %ran% equals \"xx,yy,\", \"the first bound runs first after Process\"",
+      "line": {
+        "number": 8,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "xx,yy,"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%ran%",
+              "variable": [
+                {
+                  "text": "%ran%",
+                  "code": [
+                    {
+                      "variable": "ran"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the first bound runs first after Process"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "Process",
+      "comment": "The goal both events run after.",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %done% = \"yes\"",
+          "line": {
+            "number": 12,
+            "indent": 0
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%done%",
+                  "variable": [
+                    {
+                      "text": "%done%",
+                      "code": [
+                        {
+                          "variable": "done"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "yes"
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "visibility": "Private",
+      "hash": "fe26f581c46342ef53a833acc27a3dbbd28076ecee4543284ee6a7e946b8b97a"
+    },
+    {
+      "name": "XX",
+      "comment": "The first event's call.",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %ran% = \"%ran%xx,\"",
+          "line": {
+            "number": 16,
+            "indent": 0
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%ran%",
+                  "variable": [
+                    {
+                      "text": "%ran%",
+                      "code": [
+                        {
+                          "variable": "ran"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "text",
+                    "template": "plang"
+                  },
+                  "value": "%ran%xx,",
+                  "variable": [
+                    {
+                      "text": "%ran%",
+                      "code": [
+                        {
+                          "variable": "ran"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "visibility": "Private",
+      "hash": "14815b657cf228983bd44eae33f0d4ffcc854bc4392a436e2b6c764149654c8f"
+    },
+    {
+      "name": "YY",
+      "comment": "The second event's call.",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %ran% = \"%ran%yy,\"",
+          "line": {
+            "number": 20,
+            "indent": 0
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%ran%",
+                  "variable": [
+                    {
+                      "text": "%ran%",
+                      "code": [
+                        {
+                          "variable": "ran"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "text",
+                    "template": "plang"
+                  },
+                  "value": "%ran%yy,",
+                  "variable": [
+                    {
+                      "text": "%ran%",
+                      "code": [
+                        {
+                          "variable": "ran"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "visibility": "Private",
+      "hash": "ec5439000ad27ee8e5d605a8102490607081bb365ac76a490dac84d8c8c91d54"
+    }
+  ],
+  "visibility": "Public",
+  "file": "AfterInBindOrder.test.goal",
+  "hash": "740c2155aed5069e1dfaf9f4eaaba8ee71015a2e157d3c082309c832b96ad481"
+}
