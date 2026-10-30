@@ -67,6 +67,32 @@
         }
       ],
       "after": { "status": "PASS sent to the architect, tester next", "health": "tree clean after commit", "notes": "one reverted probe, no production edits kept" }
+    },
+    {
+      "id": "c5e1a7d3-9f42-4b86-a0d8-2b7f3c6e1a94",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-30T11:00:00Z",
+      "timestamp_end": "2026-10-30T13:00:00Z",
+      "intent": "Prototype the type list's build-time tables (stage 6), check which DLLs bring plang types, and measure and review call-cost stage 3 (a62c2da21..b274f0406).",
+      "before": { "assumptions": "A generated table beats the reflection scan; no DLL outside PLang brings plang types.", "risk": "typeof tables may cost JIT; test fixtures load non-generator DLLs." },
+      "plan": ".bot/call-cost/codeanalyzer/v3/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/call-cost/codeanalyzer/startup-tables.md", ".bot/call-cost/codeanalyzer/prototype/emit.cs.txt", ".bot/call-cost/codeanalyzer/prototype/tables.cs.txt"],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Prototype in a scratch bench: typeof tables ~40 ms cold (JIT), names-only ~2 ms + ~8 ms asked, vs a ~66 ms Library; 3,521 classes scanned for 308 entries. DLL check: six fixture DLLs and a PersistedAssemblyBuilder test load non-generator assemblies bringing plang types."
+        },
+        {
+          "paths": [".bot/call-cost/codeanalyzer/review.md", ".bot/call-cost/codeanalyzer/v3/verdict.json", "Tools/Bench/record.md"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "PASS: a goal run again 145 -> 109 KB, sub request 306 -> 284, births flat; four lows; the per-call Func site named (type/reader/this.cs:101)."
+        }
+      ],
+      "after": { "status": "stage 3 PASS and the prototype sent to the architect and coder", "health": "tree clean after commit", "notes": "no production edits kept" }
     }
   ]
 }
