@@ -1,6 +1,3 @@
-Step text: `before the app starts, call Say`
-Formal: `on.event(Event=%!app.on.start%, When="before", Action=goal.call(Name="Say"))` — the app itself is `%!app%`; its start is `%!app.on.start%`.
-
 Step text: `after %count% is set, call Log`
 Formal: `on.event(Event=%!app.variable["count"].on.set%, When="after", Action=goal.call(Name="Log"))` — a variable the step names is `%!app.variable["count"]%`: its own moments, not its value's (`%count.on…%`).
 
@@ -15,6 +12,9 @@ Formal: `on.event(Event=%!app.goal["api/*"].on.start%, When="before", Action=goa
 
 Step text: `before goal Process, call Prepare`
 Formal: `on.event(Event=%!app.goal["Process"].on.start%, When="before", Action=goal.call(Name="Prepare"))` — a goal the step names is `%!app.goal["Name"]%` (its bare name), not `%!app.type.goal%`, which is every goal.
+
+Step text: `before the app starts, call Say`
+Formal: `on.event(Event=%!app.on.start%, When="before", Action=goal.call(Name="Say"))` — the app itself is `%!app%`; its start is `%!app.on.start%`.
 
 Step text: `after action llm.query, call ShowCost`
 Formal: `on.event(Event=%!app.module.llm.query.on.start%, When="after", Action=goal.call(Name="ShowCost"))` — an action the step names as module.action is `%!app.module.<module>.<action>%`, not `%!app.type.action%`, which is every action.

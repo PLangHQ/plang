@@ -3,6 +3,8 @@
 Start
 - set %count% = 0
 - before goal Process, call Count
+- call Other
+- assert %count% equals 0, "a goal other than Process doesn't run the event"
 - call Process, as system
 - assert %count% equals 0, "the system's run doesn't see the user's event"
 - call Process
@@ -11,6 +13,10 @@ Start
 / The goal the event is bound on.
 Process
 - set %done% = "yes"
+
+/ A goal the event is not bound on.
+Other
+- set %other% = "yes"
 
 / The event's call.
 Count
