@@ -1,7 +1,18 @@
 # coder — event-action
 
 ## Version
-v3: stages 5–8 built and accepted (rulings 53–86); in review (codeanalyzer from 5d0ac4382, then tester, security, auditor, docs). v2 was stages 2–4; v1 stage 1 (ec64ee712, 2c7b8f78d).
+v3: stages 1–8 built and accepted; the review line's fixes through ruling 98. Codeanalyzer, tester and security have passed; the auditor's re-check of 99af7fa0b/756467fa6 is next, then docs and the merge (Ingi's go, 96). v2 was stages 2–4; v1 stage 1.
+
+## The review line's fixes (latest first)
+- 97 (99af7fa0b): the actor's events load runs in its own context under the actor's lifetime (`Child(actor, actor.CancellationToken)`); an asker cancelled while it waits only stops waiting (`Loaded(cancel)` → `WaitAsync`). goal.Start, action.Start, the variable write and channel write/read/ask answer a failed load as Data (its Error; a cancelled wait → `GoalError.Cancelled`). What a system event file sets stays in the load's context; what it binds is the actor's (98).
+- 95: system events fail closed: a `system/event/` file that doesn't load or run fails the actor's load with its Error, all or nothing.
+- 94 (the auditor's v1): a sub app's own `system/event/X.goal` replaces only its maker's event bound at `/system/event/X` (`event.IsBoundIn(address)`); probes pin the denial key and exact counts; `Takes` proven both ways (B4, B5); `Names` stops at the first variable it reaches (it read on into `.on` and loaded events); `on.Add(name)` asks `IsMoment`; `Join` finds its sides before joining; the os's Hello runs end to end in a root app; `_on` lives on the action; `pattern.Matches(goal)`; renames.
+- 91/92 (security): an event skips a `system/` goal only when the goal is plang's own for it (`event.Skips(goal)`: the os's, or its own app's copy; `event.App`, an inherited event's is its maker's); a sub app's maker's events join before its own system/event files run; a failure an event raises is offered only to its own app's error events (`event.Takes(raised)`, `call.list.@event`).
+- 88/89 (codeanalyzer): one door for finding a caller's goal (`goal.list.Find(name, caller)`); an event list goes only when empty.
+
+## Backlog from the review line (the architect's)
+- The six doors with the same two catches around `@event.On` (a door answering `data<on>` would allocate per ask: call-cost's ground).
+- F4: a bare goal name falls through to any goal the app's list has read ("Sub apps and their makers").
 
 ## Stages 6–8 and the fixes since stage 5 (latest first)
 - Stage 8 (86d90db97): a call finds its goal in the app its caller goal is. `goal.App` is born in the goal reader (the reading app's for a .pr in its own folder, its system/ copy too; none for one in the os's folder, judged by location); `goal.Find(name, asker)` = `(App ?? asker.App).goal.list.Find(name, this)`, asked by goal.Select and the call event. Proofs: `PLang.Tests/Runtime/App/Goals/CallFindsItsAppTests.cs`.
@@ -12,7 +23,7 @@ v3: stages 5–8 built and accepted (rulings 53–86); in review (codeanalyzer f
 - Examples to formal (63/65, a3942896b): 202 of 239 action examples in formal's untyped form.
 
 ## Next
-- Wait for the review line's findings.
+- The auditor's re-check, then docs and the merge.
 
 ## What this is
 What runs when something happens is an **event**, held by the **actor** that bound it. Before, every start walked an item's "levels" (type, module, catalog action, itself) and asked two sources at each. Now each goal, step and catalog action has a list per actor, loaded on its first run with every event that applies, and an event bound later joins the lists already loaded. The thing an event is bound on answers which items it runs for (`Has`).
