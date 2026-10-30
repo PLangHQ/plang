@@ -91,7 +91,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// </summary>
     [Out, Debug, global::app.LlmBuilder]
     public global::app.error.list.@this Errors
-        => _errors ?? System.Threading.Interlocked.CompareExchange(ref _errors, new(_stack.Errors), null) ?? _errors;
+        => _errors ?? System.Threading.LazyInitializer.EnsureInitialized(ref _errors, () => new(_stack.Errors));
     private global::app.error.list.@this? _errors;
 
     /// <summary>
@@ -155,7 +155,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     [Store, Out, Debug, global::app.Snapshot, global::app.LlmBuilder]
     public global::app.type.item.dict.@this Tags
     {
-        get => _tags ?? System.Threading.Interlocked.CompareExchange(ref _tags, new(_stack.Dict), null) ?? _tags;
+        get => _tags ?? System.Threading.LazyInitializer.EnsureInitialized(ref _tags, () => new(_stack.Dict));
         private set => _tags = value;
     }
     private global::app.type.item.dict.@this? _tags;
@@ -309,7 +309,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     [Store, global::app.Snapshot, global::app.LlmBuilder]
     public global::app.type.item.property.list.@this Parameter
     {
-        get => _parameter ?? System.Threading.Interlocked.CompareExchange(ref _parameter, new(_stack.Properties), null) ?? _parameter;
+        get => _parameter ?? System.Threading.LazyInitializer.EnsureInitialized(ref _parameter, () => new(_stack.Properties));
         private set
         {
             _parameter = value;
@@ -422,7 +422,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// caller's. PLang tests can <c>assert %!callStack.Current.Depth% equals 2</c>.
     /// </summary>
     [Out, Debug, global::app.LlmBuilder]
-    public global::app.type.item.number.@this Depth => _depth;
+    public global::app.type.item.number.@this Depth => new(_stack.Number, _depth);
 
     /// <summary>The frame records an error against itself — the one door. Stamps what the error does
     /// not carry yet: the failing chain, the context of the run it met here, and — when the error keeps

@@ -239,8 +239,9 @@ public sealed partial class @this
         return (entry?.Types ?? this).Made(entry, type, name);
     }
 
-    // The full type this list makes for its own entry (or for no entry), kept: a kinded type is one object here.
-    private app.type.@this Made(app.type.@this? entry, app.type.@this type, string? name)
+    /// <summary>The full type this list makes for its own entry (or for no entry), kept: a kinded type is one object
+    /// here, whichever door asks (a reader's identity, a class, <see cref="app.type.@this.Kinded"/>).</summary>
+    internal app.type.@this Made(app.type.@this? entry, app.type.@this type, string? name)
     {
         var kind = name == null ? null
             : entry?.kind[name] is { } match ? (match.IsEmpty ? null : match)

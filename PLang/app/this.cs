@@ -194,8 +194,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public global::app.type.item.path.file.filesystem.@this filesystem { get; }
 
     /// <summary>
-    /// Pluggable step cache. Default: in-memory, made at its first ask (on.cache, the signing nonce): an app that never
-    /// caches pays for none. Swap via: - use 'redis.dll' for caching
+    /// The step cache, in memory, made at its first ask (on.cache, the signing nonce): an app that never caches pays for
+    /// none.
     /// </summary>
     public ICache Cache => _cache.Value;
     private readonly Lazy<ICache> _cache = new(() => new global::app.module.cache.Memory());

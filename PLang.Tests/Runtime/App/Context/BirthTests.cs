@@ -215,6 +215,41 @@ public class BirthTests
         await Assert.That(born).IsLessThan(4_256L).Because("a goal's broken steps are judged once, at its first start");
     }
 
+    // a step's Error written after a start (the build refusing it) is heard: the goal judges its steps again
+    [Test]
+    public async Task AGoalWhoseStepIsRefusedAfterAStart_AnswersBrokenAtItsNextStart()
+    {
+        await using var app = new global::app.@this("/birth", global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        var parent = global::PLang.Tests.Parent.Actor.Context;
+        var goal = Make.Goal(parent, "Refused", Make.Step("set %x% = 1",
+            Make.Action(parent, "variable", "set", Make.Param(parent, "Name", "x", "variable"), ("Value", "1"))));
+        await (await goal.Start(context)).IsSuccess();
+
+        goal.Step.Items().First().Error = new global::app.error.@this("refused", "Refused", 400);
+
+        await Assert.That((await goal.Start(context)).Error?.Key).IsEqualTo("GoalBroken");
+    }
+
+    // a goal run again makes no number type per count or depth: the app's number type answers its kinded type, kept
+    [Test]
+    public async Task AGoalRunAgain_FindsItsNumberTypes()
+    {
+        await using var app = new global::app.@this("/birth", global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        var parent = global::PLang.Tests.Parent.Actor.Context;
+        var goal = Make.Goal(parent, "Counted", Enumerable.Range(0, 8).Select(i => Make.Step($"set %x{i}% = 1",
+            Make.Action(parent, "variable", "set", Make.Param(parent, "Name", $"x{i}", "variable"), ("Value", "1")))).ToArray());
+        for (var i = 0; i < 3; i++) await (await goal.Start(context)).IsSuccess();
+
+        var from = System.GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 20; i++) await goal.Start(context);
+        var born = (System.GC.GetAllocatedBytesForCurrentThread() - from) / 20;
+
+        // 189,456 bytes on this machine; 227,552 with a number type made per count and depth
+        await Assert.That(born).IsLessThan(208_000L).Because("a count and a depth are of the app's number types, found, not made");
+    }
+
     [Test]
     public async Task AnActorsPermissionView_IsOneView()
     {

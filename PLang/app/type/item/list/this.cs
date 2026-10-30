@@ -282,8 +282,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>Number of elements as the PLang <c>number</c> (a chunk contributes its list's
     /// count; any other row contributes 1). Walked on demand: a chunk aliases a list that may be
-    /// mutated elsewhere, so a stored counter would stale.</summary>
-    [LlmBuilder] public global::app.type.item.number.@this Count => CountRaw;
+    /// mutated elsewhere, so a stored counter would stale. Of the app's number type, found through the list's own.</summary>
+    [LlmBuilder] public global::app.type.item.number.@this Count => new(Type.Types![typeof(global::app.type.item.number.@this)], CountRaw);
 
     /// <summary>The interior raw count — index math and loop bounds.</summary>
     internal int CountRaw

@@ -105,9 +105,18 @@ public sealed partial class @this
 
     /// <summary>Why the build could not write this step: the reasons that still refuse it after the step-fixer's
     /// retry, one cause each in its <c>list</c>. Null for a step that built. A goal holding a step with an Error
-    /// does not start.</summary>
+    /// does not start. Written, it tells its goal, which judges its steps again at its next start.</summary>
     [Store, Out, Debug]
-    public global::app.error.@this? Error { get; internal set; }
+    public global::app.error.@this? Error
+    {
+        get => _error;
+        internal set
+        {
+            _error = value;
+            Goal?.Changed();
+        }
+    }
+    private global::app.error.@this? _error;
 
     /// <summary>The goal this step belongs to — a BIRTH FACT. The reader constructs the goal shell
     /// first and hands it to each step at construction, so this is set once and never reassigned.

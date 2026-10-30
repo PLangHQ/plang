@@ -36,6 +36,17 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     private @this(object value, kind.@this kind)
         : base(new global::app.type.@this("number", typeof(@this)) { kind = kind }) => _value = value;
 
+    /// <summary>A number of <paramref name="value"/>, born holding <paramref name="number"/>'s kinded type for its
+    /// kind (the app's {number, int}).</summary>
+    internal @this(global::app.type.@this number, int value) : this(number, value, @int) { }
+
+    /// <summary>A number of <paramref name="value"/>, born holding <paramref name="number"/>'s kinded type for its
+    /// kind (the app's {number, long}).</summary>
+    internal @this(global::app.type.@this number, long value) : this(number, value, @long) { }
+
+    // The value answers its kind, the app's number type its kinded type.
+    private @this(global::app.type.@this number, object value, kind.@this kind) : base(number.Kinded(kind)) => _value = value;
+
     /// <summary>The number <paramref name="source"/> is, born holding <paramref name="type"/> — the app's
     /// <c>{number, &lt;its kind&gt;}</c>, handed in by its maker (the courier, a reader, a derived result).</summary>
     internal @this(global::app.type.@this type, @this source) : base(type) => _value = source._value;

@@ -29,5 +29,20 @@ public global::app.error.list.@this Errors
 private global::app.error.list.@this? _errors;
 ```
 
+## Stage 2 — a type is found, not made (call-cost 3, Ingi's yes)
+- `type.Kinded(kind)` (internal): the type's kinded type by the kind's name, made once by the list that made the type
+  (`type.list.Made`, now internal, the one birth door; `_full` keeps it).
+- number: internal births `(type number, int)` and `(type number, long)` hold the app's kinded type.
+- Hot sites by reference: `call.Depth => new(_stack.Number, _depth)` (`call.list.Number` NEW, internal);
+  `call.list.Push` compares the frame's `_depth`; `goal.step.list` Start/Rest loop on `CountRaw`;
+  `list.Count => new(Type.Types![typeof(number)], CountRaw)`; the bool reader and the type reader's null rows go
+  through `Made` with the kind they're handed; `event.Type` is the app's event type.
+- Kept: the type reader's lines 25 and 67 (the type read is the data's identity); `error.Type` (an error is often born
+  with no app).
+- Pin `AGoalRunAgain_FindsItsNumberTypes` (8 steps): 227,552 → 189,456 B (bound 208,000).
+- The codeanalyzer's stage-1 lows: one lazy idiom (`x ?? LazyInitializer.EnsureInitialized(ref x, …)`, the flag
+  overload for Broken's null answer); a step's Error written tells its goal (`goal.Changed()`), pinned by
+  `AGoalWhoseStepIsRefusedAfterAStart_AnswersBrokenAtItsNextStart`; Cache's summary.
+
 ## Next
-- The codeanalyzer measures stage 1 on the bench; then stage 2 (a type is found, not made).
+- The codeanalyzer measures stage 2; then stage 3 (a lookup kept by its owner).

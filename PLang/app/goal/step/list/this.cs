@@ -42,7 +42,7 @@ public sealed class @this : global::app.type.item.list.bare.@this<Step>
     public async System.Threading.Tasks.Task<data.@this> Start(actor.context.@this context)
     {
         data.@this result = context.Ok();
-        for (int i = 0; i < Count; i++)
+        for (int i = 0; i < CountRaw; i++)
         {
             if (context.CancellationToken.IsCancellationRequested)
                 return context.Error(new global::app.error.@this("Operation was cancelled", "Cancelled", 499));
@@ -59,10 +59,10 @@ public sealed class @this : global::app.type.item.list.bare.@this<Step>
     internal async System.Threading.Tasks.Task<data.@this> Rest(Step step, actor.context.@this context, data.@this result)
     {
         var position = -1;
-        for (int i = 0; i < Count && position < 0; i++)
+        for (int i = 0; i < CountRaw && position < 0; i++)
             if (ReferenceEquals(this[i], step)) position = i;
         if (position < 0) return result;
-        for (int i = position + 1; i < Count; i++)
+        for (int i = position + 1; i < CountRaw; i++)
         {
             if (context.CancellationToken.IsCancellationRequested)
                 return context.Error(new global::app.error.@this("Operation was cancelled", "Cancelled", 499));
