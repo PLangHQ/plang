@@ -18,7 +18,7 @@ public static class csv
         // the text type (it owns bytes→string), then parse.
         if (raw is not (string or byte[])) return raw;
         string text = new global::app.type.item.text.@this(raw, ctx.Context.App.type.list[typeof(global::app.type.item.text.@this)]).ToString();
-        var type = ctx.Context.App.type.list[new global::app.type.@this("table", kind), ctx.Context];
+        var type = ctx.Context.App.type.list["table"].Kinded(kind);
         if (string.IsNullOrEmpty(text)) return new global::app.type.table.@this(System.Array.Empty<string>(),
             System.Array.Empty<IReadOnlyDictionary<string, object?>>(), type);
 

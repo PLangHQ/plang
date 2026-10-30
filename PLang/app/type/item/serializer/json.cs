@@ -65,10 +65,12 @@ public partial class json
     // (flagging it would change its canonicalization/signing). A runtime-ingest slot is
     // never a template (injection-safe). The text takes the row's variables it holds.
     private object? Stamped(string s, global::app.type.reader.ReadContext? ctx)
-        => ctx?.Template is { } template
-           && new text.@this(s, _context.App.type.list[new global::app.type.@this("text", template: template), _context], ctx.Variable) is { HasVariable: true } value
+    {
+        if (ctx?.Template is not { } template) return s;
+        return new text.@this(s, _context.App.type.list[typeof(text.@this)].Kinded(null, template), ctx.Variable) is { HasVariable: true } value
             ? value
             : s;
+    }
 
     // A typed value WITHOUT the @schema layer marker — a dict/list entry's {type:{name,…}, value:…}
     // shape (a goal-call argument row, a config entry). The container knows its entries are typed
@@ -169,7 +171,7 @@ public partial class json
     {
         // An authored container is born with its template mode so its `%ref%` leaves re-resolve
         // on read (dict.@this.Value → Resolve); a runtime-ingest read (ctx null) stays literal.
-        var d = new dict.@this(_context.App.type.list[new global::app.type.@this("dict", template: ctx?.Template), _context]);
+        var d = new dict.@this(_context.App.type.list[typeof(dict.@this)].Kinded(null, ctx?.Template));
         foreach (var prop in element.EnumerateObject())
             d.Set(prop.Name, Slot(prop.Value, ctx, depth + 1));
         return d;
@@ -177,7 +179,7 @@ public partial class json
 
     private list.@this ArrayLeaf(System.Text.Json.JsonElement element, global::app.type.reader.ReadContext? ctx, int depth)
     {
-        var l = new list.@this(_context.App.type.list[new global::app.type.@this("list", null, false, ctx?.Template), _context]);
+        var l = new list.@this(_context.App.type.list[typeof(list.@this)].Kinded(null, ctx?.Template));
         foreach (var item in element.EnumerateArray())
             l.AddRaw(Slot(item, ctx, depth + 1));
         return l;

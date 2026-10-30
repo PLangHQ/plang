@@ -23,7 +23,7 @@ public sealed class Default : ITerminal
     {
         var folders = (System.Environment.GetEnvironmentVariable("PATH") ?? "")
             .Split(global::app.Utils.PathHelper.PathSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        var file = context.App.type.list[new global::app.type.@this("path", "file"), context];
+        var file = context.App.type.list["path"].Kinded("file");
         foreach (var folder in folders)
             foreach (var extension in Extensions(name))
             {

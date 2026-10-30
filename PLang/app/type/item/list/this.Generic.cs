@@ -66,8 +66,8 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
         if (value is @this<T> already) return already;
         // the app's {list, T} type, with the template a re-tagged list carries
         global::app.type.@this Of(global::app.type.item.template.kind.@this? template)
-            => data.Context.App.type.list[new global::app.type.@this("list",
-                typeof(T) == typeof(global::app.type.item.@this) ? null : NameOf(typeof(T)), false, template), data.Context];
+            => data.Context.App.type.list[typeof(global::app.type.item.list.@this)].Kinded(
+                typeof(T) == typeof(global::app.type.item.@this) ? null : NameOf(typeof(T)), template);
         if (value is @this list) return new @this<T>(list, Of(list.Type.Template));
         // A raw container lifts to a base list first, then re-tags; one value is a list of one, as the list's reader
         // reads it.

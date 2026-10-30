@@ -61,7 +61,7 @@ public sealed partial class @this
         // of the places it names, the first that is there; else the first whose folder is there (a new file lands
         // beside its siblings); else where it was written
         var places = Places(path, app);
-        var file = app.type.list[new global::app.type.@this("path", "file"), app.actor.list.System.Context];
+        var file = app.type.list["path"].Kinded("file");
         return places.FirstOrDefault(Present) ?? places.FirstOrDefault(Housed) ?? path;
 
         // Where a /system/ path is found is decided on the app's disk: the runtime's own files are never a build's.

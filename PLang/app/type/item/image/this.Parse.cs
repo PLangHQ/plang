@@ -19,7 +19,7 @@ public sealed partial class @this
     {
         if (bytes == null || bytes.Length == 0) return null;
         return Sniff(bytes) is { } kind
-            ? new @this(bytes, context.App.type.list[new global::app.type.@this("image", kind), context])
+            ? new @this(bytes, context.App.type.list[typeof(@this)].Kinded(kind))
             : null;
     }
 

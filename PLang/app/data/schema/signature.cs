@@ -97,10 +97,10 @@ public sealed class signature : ISchemaReader
         var stored = ctx.View == global::app.View.Store || inner.Type?.View != null;
         var datetime = context.App.type.list[typeof(global::app.type.item.datetime.@this)];
         var layer = new global::app.type.item.signature.@this(
-            context.App.type.list[new global::app.type.@this("signature", algorithm.ToString()), context],
+            context.App.type.list["signature"].Kinded(algorithm.ToString()),
             inner, algorithm, nonce, new global::app.type.item.datetime.@this(created, datetime), identity,
             new global::app.module.crypto.type.hash.@this(hashValue, hashKind,
-                context.App.type.list[new global::app.type.@this("hash", hashKind.Name), context]), sig,
+                context.App.type.list["hash"].Kinded(hashKind.Name)), sig,
             expires is { } ex ? new global::app.type.item.datetime.@this(ex, datetime) : null, contracts,
             stored ? global::app.type.item.signature.Origin.Stored : global::app.type.item.signature.Origin.Live,
             stored ? null : ctx.Window);

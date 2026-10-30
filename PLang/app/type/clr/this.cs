@@ -56,7 +56,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// position, kind = the format.
     /// </summary>
     private @this(object value, global::app.actor.context.@this context, global::app.type.kind.@this kind, bool _)
-        : base(context.App.type.list[new global::app.type.@this("item", kind.Name), context])
+        : base(context.App.type.list["item"].Kinded(kind.Name))
     {
         Value = value;
         // Nested Data is not a shape: a Data never rides as a value (Lift forbids it). The

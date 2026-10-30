@@ -1,0 +1,3 @@
+call-cost at its cut (runtime2 7bf093245 + the plan, 77add2895):
+C# (./dev.sh test): no failing tests. Modules 1500, Types 1042, Wire 641, Data 881, Generator 191, Runtime 1489.
+plang (plang --test in test/): 323 total, 322 pass, 0 fail, 0 stale, 1 skipped (the baseline skip).

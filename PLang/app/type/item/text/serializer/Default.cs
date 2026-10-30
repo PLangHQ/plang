@@ -16,15 +16,15 @@ namespace app.type.item.text.serializer;
 public static class Default
 {
     public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
-        => raw switch
-        {
-            null => null,
-            global::app.type.item.text.@this t => t,
-            // A string is the value; binary bytes off I/O decode in the text ctor
-            // (the text class owns bytes→string — born only from a decoded string).
-            string or byte[] => new global::app.type.item.text.@this(raw,
-                ctx.Context.App.type.list[new global::app.type.@this("text", kind, false, ctx.Template), ctx.Context], ctx.Variable),
-            _ => new global::app.type.item.text.@this(raw.ToString() ?? "",
-                ctx.Context.App.type.list[new global::app.type.@this("text", kind, false, ctx.Template), ctx.Context], ctx.Variable),
-        };
+    {
+        if (raw is null) return null;
+        if (raw is global::app.type.item.text.@this t) return t;
+        // the app's text type by reference, with the kind and the template the read is handed
+        var type = ctx.Context.App.type.list[typeof(global::app.type.item.text.@this)].Kinded(kind, ctx.Template);
+        // A string is the value; binary bytes off I/O decode in the text ctor
+        // (the text class owns bytes→string — born only from a decoded string).
+        return raw is string or byte[]
+            ? new global::app.type.item.text.@this(raw, type, ctx.Variable)
+            : new global::app.type.item.text.@this(raw.ToString() ?? "", type, ctx.Variable);
+    }
 }

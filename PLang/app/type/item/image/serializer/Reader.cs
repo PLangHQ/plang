@@ -18,7 +18,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        var type = ctx.Context.App.type.list[new global::app.type.@this("image", kind), ctx.Context];
+        var type = ctx.Context.App.type.list[typeof(global::app.type.item.image.@this)].Kinded(kind);
         if (reader.Null()) return new global::app.type.item.@null.@this(type);
         byte[] bytes = reader.Bytes();
         // bytes the wire names no kind for are the kind their magic bytes name

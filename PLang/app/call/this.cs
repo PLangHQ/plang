@@ -91,7 +91,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// </summary>
     [Out, Debug, global::app.LlmBuilder]
     public global::app.error.list.@this Errors
-        => _errors ?? System.Threading.LazyInitializer.EnsureInitialized(ref _errors, () => new(_stack.Errors));
+        => _errors ?? System.Threading.Interlocked.CompareExchange(ref _errors, new(_stack.Errors), null) ?? _errors;
     private global::app.error.list.@this? _errors;
 
     /// <summary>
@@ -155,7 +155,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     [Store, Out, Debug, global::app.Snapshot, global::app.LlmBuilder]
     public global::app.type.item.dict.@this Tags
     {
-        get => _tags ?? System.Threading.LazyInitializer.EnsureInitialized(ref _tags, () => new(_stack.Dict));
+        get => _tags ?? System.Threading.Interlocked.CompareExchange(ref _tags, new(_stack.Dict), null) ?? _tags;
         private set => _tags = value;
     }
     private global::app.type.item.dict.@this? _tags;
@@ -309,7 +309,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     [Store, global::app.Snapshot, global::app.LlmBuilder]
     public global::app.type.item.property.list.@this Parameter
     {
-        get => _parameter ?? System.Threading.LazyInitializer.EnsureInitialized(ref _parameter, () => new(_stack.Properties));
+        get => _parameter ?? System.Threading.Interlocked.CompareExchange(ref _parameter, new(_stack.Properties), null) ?? _parameter;
         private set
         {
             _parameter = value;

@@ -17,10 +17,11 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("duration", kind), ctx.Context]);
         var text = reader.String();
         // the standard the wire names makes it, from its own form only; with none named, the one whose form it is
-        if (!string.IsNullOrEmpty(kind) && ctx.Context.App.type.list["duration"].kind[kind!] is not null)
+        var durations = ctx.Context.App.type.list[typeof(global::app.type.item.duration.@this)];
+        if (!string.IsNullOrEmpty(kind) && durations.kind[kind!] is not null)
         {
             var carrier = new global::app.data.@this("", context: ctx.Context);
-            return ctx.Context.App.type.list[new global::app.type.@this("duration", kind), ctx.Context].Make(text, carrier)
+            return durations.Kinded(kind).Make(text, carrier)
                 ?? throw new System.FormatException(carrier.Error?.Message ?? $"'{text}' is not a duration in {kind}.");
         }
         return global::app.type.item.duration.@this.Resolve(text, ctx.Context)

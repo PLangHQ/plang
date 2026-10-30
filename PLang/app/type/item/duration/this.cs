@@ -60,8 +60,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// <summary>A span with no form of its own (how long a step ran): a <c>{duration, span}</c>, written in the standard
     /// its asker's setting names (<c>short</c> unless set).</summary>
     public static @this Create(System.TimeSpan span, global::app.actor.context.@this context)
-        => new global::app.type.item.duration.span.@this(span,
-            context.App.type.list[new global::app.type.@this("duration", "span"), context]);
+        => new global::app.type.item.duration.span.@this(span, context.App.type.list[typeof(@this)].Kinded("span"));
 
     /// <summary>THE PURE CORE — a <c>duration</c> passes through; a TimeSpan is made in its asker's standard; a string (30s, ISO-8601
     /// <c>PT30S</c> or .NET <c>00:00:30</c>, via <see cref="Resolve"/>) is the standard it is written in, as
@@ -84,8 +83,9 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     public static @this? Create(object? value, global::app.type.@this? type, global::app.data.@this data)
     {
         // asked for in a standard (`as iso`): that standard makes it, from a span or a text in its own form only
-        if (type?.kind is { IsEmpty: false } asked && data.Context.App.type.list["duration"].kind[asked.Name] is global::app.type.kind.@this<@this> standard)
-            return data.Context.App.type.list[new global::app.type.@this("duration", standard.Name), data.Context].Make(value, data) as @this;
+        if (type?.kind is { IsEmpty: false } asked && data.Context.App.type.list[typeof(@this)] is var durations
+            && durations.kind[asked.Name] is global::app.type.kind.@this<@this> standard)
+            return durations.Kinded(standard.Name).Make(value, data) as @this;
         if (Create(value, data.Context) is { } duration) return duration;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
             ? new global::app.error.@this($"Cannot parse '{s}' as duration — expected a number and its unit (30s, 200ms, 5m), ISO-8601 (PT30S) or .NET format (00:00:30).", "DurationParseFailed", 400)

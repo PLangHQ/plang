@@ -41,7 +41,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     // the file archive in the format named or found, born holding the app's {archive, <format>}
     private @this(File at, kind.@this? format, global::app.actor.context.@this context, bool _)
-        : base(context.App.type.list[new global::app.type.@this("archive", format?.Name), context])
+        : base(context.App.type.list["archive"].Kinded(format?.Name))
     {
         _at = at;
         var name = at.Name.ToString();
@@ -88,7 +88,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                     case "held": holds = held.@this.Create(entry.Peek(), null, data); break;
                 }
             if (value != null && holds != null)
-                return new @this(value, holds, context.App.type.list[new global::app.type.@this("archive", named.Name), context]);
+                return new @this(value, holds, context.App.type.list["archive"].Kinded(named.Name));
         }
         data.Fail(new global::app.error.@this(
             $"%{data.Name}% is no archive: an archive is what pack answers, or a file in a format (gzip, tar.gz, zip…)", "ArchiveInvalid", 400));

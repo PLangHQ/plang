@@ -174,8 +174,8 @@ public class BirthTests
             return app;
         });
 
-        // 39,008 bytes on this machine; 86,036 with the cache made at birth
-        await Assert.That(born).IsLessThan(60_000L).Because("the step cache is made at its first ask");
+        // 38,912 bytes on this machine; 86,036 with the cache made at birth
+        await Assert.That(born).IsLessThan(40_000L).Because("the step cache is made at its first ask");
     }
 
     // a frame pushed and popped that nothing writes to makes no variable store, tags or errors
@@ -195,7 +195,7 @@ public class BirthTests
         });
 
         // 1,544 bytes on this machine; 2,592 with the three made at the push
-        await Assert.That(born).IsLessThan(2_000L).Because("a frame's store, tags and errors are made at their first write");
+        await Assert.That(born).IsLessThan(1_600L).Because("a frame's store, tags and errors are made at their first write");
     }
 
     // a goal started again judges no broken steps again: it was judged at its first start
@@ -211,8 +211,8 @@ public class BirthTests
         for (var i = 0; i < 20; i++) await goal.Start(context);
         var born = (System.GC.GetAllocatedBytesForCurrentThread() - from) / 20;
 
-        // 4,136 bytes on this machine; 4,376 with its steps judged at every start
-        await Assert.That(born).IsLessThan(4_256L).Because("a goal's broken steps are judged once, at its first start");
+        // 2,776 bytes on this machine; 3,016 with its steps judged at every start
+        await Assert.That(born).IsLessThan(2_900L).Because("a goal's broken steps are judged once, at its first start");
     }
 
     // a step's Error written after a start (the build refusing it) is heard: the goal judges its steps again
@@ -246,8 +246,8 @@ public class BirthTests
         for (var i = 0; i < 20; i++) await goal.Start(context);
         var born = (System.GC.GetAllocatedBytesForCurrentThread() - from) / 20;
 
-        // 189,456 bytes on this machine; 227,552 with a number type made per count and depth
-        await Assert.That(born).IsLessThan(208_000L).Because("a count and a depth are of the app's number types, found, not made");
+        // 189,072 bytes on this machine; 227,552 with a number type made per count and depth
+        await Assert.That(born).IsLessThan(195_000L).Because("a count and a depth are of the app's number types, found, not made");
     }
 
     [Test]

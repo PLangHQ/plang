@@ -44,5 +44,20 @@ private global::app.error.list.@this? _errors;
   overload for Broken's null answer); a step's Error written tells its goal (`goal.Changed()`), pinned by
   `AGoalWhoseStepIsRefusedAfterAStart_AnswersBrokenAtItsNextStart`; Cache's summary.
 
+## Stage 2b — the rest of the types found, not made
+- `type.Kinded(string? kind, template? = null)`: the kind by its name (none: the type itself), a template when given;
+  a type no list made answers one of its own. `type.list.Made(entry, name, kind, strict, template)` takes the parts
+  (no type built to carry them) and answers a kept one with nothing made (TryGetValue before GetOrAdd).
+- number's two births take `type?`; none in hand, the operator's {number, kind} (the operator chains to it).
+  `list.Count` hands what its type's list answers, so a bare-typed list counts.
+- ~45 `list[new type(name, kind), ctx]` sites ask `list[name or class].Kinded(kind[, template])` (26 by a Haiku
+  agent, read back). Kept: null-row births, the pick list, the formal reader, the type reader's two identity reads,
+  `error.Type`, `data.Value<T>`'s no-asker refusal, the choice and duration operator births (no app), `bool`'s two
+  singletons (made twice a process).
+- One lazy idiom, allocation-free: `x ?? Interlocked.CompareExchange(ref x, new(...), null) ?? x` for the frame's
+  three and for `goal.Broken`, which keeps its broken steps (a list, empty when none).
+- Tests: `FrameFirstAskTests` (the tester's two probes, red under a plain check-then-assign), `KindedTypeTests`,
+  `TypeReadTests` (a read 24,608 → 9,936 B); BirthTests' call-cost ceilings at measured + 2–4%.
+
 ## Next
-- The codeanalyzer measures stage 2; then stage 3 (a lookup kept by its owner).
+- Stage 3 (a lookup kept by its owner): the setting store's shape first.

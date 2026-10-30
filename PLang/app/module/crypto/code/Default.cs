@@ -34,7 +34,7 @@ public class Default : ICrypto
         if (!poured.Success) return global::app.data.@this<global::app.module.crypto.type.hash.@this>.From(poured);
         var hash = digest.Hash;
         return action.Context.Ok<global::app.module.crypto.type.hash.@this>(hash,
-            action.Context.App.type.list[new global::app.type.@this("hash", hash.Algorithm?.Name), action.Context]);
+            action.Context.App.type.list["hash"].Kinded(hash.Algorithm?.Name));
     }
 
     public async Task<data.@this<global::app.type.item.@bool.@this>> Verify(Verify action)

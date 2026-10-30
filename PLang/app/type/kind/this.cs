@@ -207,8 +207,7 @@ public class @this : global::app.type.@this
     /// <c>binary</c>. <c>{binary, md}</c> is bytes whose content is text. Asked with the caller's context.
     /// </summary>
     public global::app.type.@this type(actor.context.@this context)
-        => Owner ?? context.App.type.list[new global::app.type.@this(
-            context.App.type.list.Reader.TypeOf(Name) ?? "binary"), context];
+        => Owner ?? context.App.type.list[context.App.type.list.Reader.TypeOf(Name) ?? "binary"];
 
     /// <summary>
     /// The kinds of this kind's type, each as the full type it makes: <c>{number, int}</c>,

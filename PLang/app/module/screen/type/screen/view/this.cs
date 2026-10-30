@@ -58,7 +58,7 @@ public sealed class @this : screen.@this
                 : global::app.module.on.code.Gate.Call(call, new global::app.data.@this("!data", value, context: context), context);
         var view = new @this(title, width, height, value => Call(onInput, value), () => Call(onClose, (Text)"{\"closed\":true}"),
             Report(context),
-            context.App.type.list[new global::app.type.@this("image", "png"), context]);
+            context.App.type.list["image"].Kinded("png"));
         return context.Ok<screen.@this>(view);
     }
 
