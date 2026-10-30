@@ -91,3 +91,20 @@ maker's `system/` copies (92a); a hidden denial (92b); F4; the writer scores on 
 ## Locked core
 `Has`, `IsMany`, `Is(pattern)` (item base), `goal.App`, `[Kinds]` on channel/action, `event.App`, `Takes`, `Skips`: each is
 covered by a named decision (39, 42, 43, 45, 46, 92) and the surface golden re-pins cite them. No unapproved surface change.
+
+---
+
+## Update — A1 and A2 closed at 99af7fa0b (PASS)
+
+Read the delta 434763384..99af7fa0b (30 files) and re-ran everything with the keys unset, PlangConsole rebuilt: C# Modules 1500, Types 1042, Wire 641, Data 881, Generator 191, Runtime 1489 — green; `plang --test` 323 / 322 pass / 0 fail / 0 stale / 1 skipped; tree clean.
+
+- **A1 closed.** `event.File` is gone; `IsBoundIn(address)` compares the event's goal `Address` with `/system/event/<stem>`, so an upload's `system/event/Start.goal` replaces only the maker's event bound at `/system/event/Start`, never one bound in `/Start.goal`. `SystemEventsTests.ASubAppsOwnSystemEvent_ReplacesOnlyTheMakersEventFromTheSameAddress` asserts both directions (`/Start` kept, `/system/event/Start` dropped).
+- **A2 closed.** The probes now assert `Denied` and `worked` null on every case; B4 asserts the sub app's own `on error` was passed over; B5 pins that a sub app's own failure reaches its own `on error`. `SubNoneSnapshotProbeTests` counts exact program events (none 0, inherit 1) and pins the refusal (`SnapshotAppMismatch`) instead of a success that never happens. I did not re-run their mutations (no production edits in an audit).
+- **B1–B6, B8, B10, B11 read as ruled:** `Add(name)` has no `empty` test (`IsMoment`); `Join` finds every side before it joins anything; `item._on` moved to the action (and `Clone` on the action); `pattern.Matches(goal)`; `list.Skips` gone; `Names` ends at the first variable; coverage/time binding inside the test's `try`.
+- **95 (fail closed) and 97 (the load is the actor's):** a system event that fails fails the load with its Error whole (thrown to the load, which takes off what it joined); the load runs in a child context under the actor's lifetime; a cancelled asker stops waiting (`WaitAsync`).
+
+### New, minor (deferred)
+- **C1** (error rule, `goal/list/this.cs:135,107,154`, `step/this.cs:142`, `action/this.cs:236`, `item/this.cs:231`, `type/this.cs:275`): only `goal.Start`, `action.Start`, the variable `Before` and the channel doors answer a failed load as Data. The others let the `AppException` out of a method that can return a result. I probed it with a temporary test (reverted): `goal.Load` of a goal with a broken system event throws `AppException GoalNotBuilt`. At the entry `Executor.cs:56` catches it and answers `ex.Error`, so a run is not broken — but the plain-`Load` door should answer `Fail` like `Start`.
+- **C2** (not a finding): a goal's load that is itself a system event file, asked first, waits on the load that is loading it (my first probe hung that way). Only reachable by loading a `system/event/*.goal` before anything else; no entry does.
+
+verdict.json is now pass; next bot docs.
