@@ -33,7 +33,7 @@ A bool option is `[Default(false)]` (or has no default) and is named for what th
 
 ## 5. A run never writes an object its app shares
 
-A sub app's types, actions and goals are layers over what it is made from, so a shared entry is every app's. What a run adds goes to its own layer or its own context. A binding made while a program runs is held on the actor that made it; a type takes no history.
+A sub app's types, actions and goals are layers over what it is made from, so a shared entry is every app's. What a run adds goes to its own layer or its own context. An event bound while a program runs is held on the actor that bound it; a type takes no history.
 
 - **Held by:** `SharedEntryWritesTests` (1 test, pass) and `HeldBindingTests` (named, not run), both named in `Documentation/v0.2/apps.md`, "A run never writes an object its app shares".
 

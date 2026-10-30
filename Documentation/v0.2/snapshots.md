@@ -20,10 +20,10 @@ A value that something finds (an actor, the app, an event) is written as what fi
 
 What takes part is what is tagged:
 
-- the app: its `property` (what a program added), its `actor` list, its events (`event`) and its code (`Code`) (`this.cs:53,139,172,275`);
+- the app: its `property` (what a program added), its `actor` list and its code (`Code`) (`this.cs:53,176,279`);
 - Code (`module/code/this.Snapshot.cs`): the DLLs a run took in (`dll`), the providers registered in-process (`provider`) and each kind's default (`default`);
-- the events (`event/on/list/this.cs:63`): the events a snapshot keeps anything of, with the item they are on and this app's own bindings;
-- each actor: its `property` and its `Context` (`actor/this.cs:24,71`; `actor/list/this.cs:22,27` writes `System` and `User` whole, anywhere else an actor is its name);
+- each actor's events (`actor/this.cs:49`, `event/list/this.cs:241`): for each item a program bound an event on, its moments holding those events (`events.md`);
+- each actor: its `property`, its events and its `Context` (`actor/this.cs:24,49,76`; `actor/list/this.cs:22,27` writes `System` and `User` whole, anywhere else an actor is its name);
 - each actor's context: its `Variable` and its `call` (`actor/context/this.cs:42,49`); the variables are written as a `row` (`type/item/variable/list/this.Snapshot.cs:14`);
 - the call stack and its frames (below).
 
@@ -46,7 +46,7 @@ A save is refused when it can't be taken whole:
 
 - inside a task: `SnapshotInTask` (400), because a task's variables and frames are reached by nothing a snapshot saves (`this.Snapshot.cs:16–19`);
 - while a task runs: `SnapshotWhileTaskRuns` (409), because its frames go on in the task's own stack, which nothing would run again (`call/list/this.Snapshot.cs:43–54`);
-- a value the snapshot can't keep (a binding it can't make again): the error of that value, whole (`this.Snapshot.cs:22–25`).
+- a value the snapshot can't keep (an event it can't make again): the error of that value, whole (`this.Snapshot.cs:22–25`).
 
 ## Resume
 

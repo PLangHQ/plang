@@ -257,3 +257,8 @@ Five tasks, 2 builds, key piped from a file and never printed. Passing and faili
 | 186 | settings | read, set for a run, keep, drop, flag, refusals | agent task 3 and 4 | pass |
 | 187 | modules | the action's `description.md` lists step texts and what they build to | for `timer/sleep`, `crypto/hash`, `error/throw` it is one line; parameter names are in `.examples.md` | **fail**; page now says so |
 | 188 | modules | the table finds sleep, hash, throw | agent task 5: `timer`, `crypto`, `error` | pass |
+| 189 | events | `event.setting.goal` `all` lets an event hear plang's own goals; read each time an event is about to run | `event/setting/this.cs`, `event/on/side.cs:53–58` | read, not run |
+| 190 | events | `in api/*` is the folder beside the goal whose step says it; `in /api/*` from the root; a later goal is heard; `..` refused | `goal/pattern/this.cs:13–19`, `goal/list/this.cs:210–215` | read, not run |
+| 191 | events | a variable's own moments are `%!app.variable["x"].on.set%` | `type/item/variable/this.cs:105–117`, `on/event.examples.md` | read, not run |
+| 192 | events | a sub app takes in the maker's events first; `Sub=none` keeps one out; the sub app cannot take one off | `event/list/this.cs:164–195`, `event/this.cs:42,55–58`, `event/inherited/this.cs` | read, not run |
+| 193 | events | events load on the first ask; a failed load fails the ask | `event/list/this.cs:5–17,155–195` | read, not run |

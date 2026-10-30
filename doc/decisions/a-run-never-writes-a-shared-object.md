@@ -1,6 +1,6 @@
 # A run never writes an object its app shares
 
-**Chosen.** A sub app's types, actions and goals are layers over those of the app it is made from, so a shared entry belongs to every app. What a run adds goes to its own layer or its own context, never onto the shared object. A binding made while a program runs is held on the actor that made it. A type takes no history (`Documentation/v0.2/apps.md`, "A run never writes an object its app shares").
+**Chosen.** A sub app's types, actions and goals are layers over those of the app it is made from, so a shared entry belongs to every app. What a run adds goes to its own layer or its own context, never onto the shared object. An event bound while a program runs is held on the actor that bound it. A type takes no history (`Documentation/v0.2/apps.md`, "A run never writes an object its app shares").
 
 **Why.** `apps.md`: "A sub app's types, actions and goals are the origin's, so a shared entry is every app's." On types taking no history: "A read that finds a registered type adds nothing to it; otherwise every request would grow a shared entry for ever." The cost that makes layering worthwhile is recorded too: a sub app costs "about 0.15 ms and 110 KB at birth, against about 19 ms and 2.4 MB for the command line's root app" (`apps.md`, first paragraph).
 
