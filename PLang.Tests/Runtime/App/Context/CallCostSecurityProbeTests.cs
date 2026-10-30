@@ -183,4 +183,28 @@ public class CallCostSecurityProbeTests
         await Assert.That(await (await maker.goal.list.Find("Same", makerCaller)).Value()).IsSameReferenceAs(makers);
         await Assert.That(await (await sub.goal.list.Find("Same", subCaller)).Value()).IsSameReferenceAs(subs);
     }
+
+    // B1 (auditor): a kept answer is one Data shared by every run of its keeper; a handler's typed face of it (`As<T>`) that
+    // writes a property: does another run's read of the answer see it?
+    [Test]
+    public async Task B1_Pinned_APropertyWrittenOnARunsFaceOfAKeptAnswer_IsSeenByAnotherRun()
+    {
+        await using var app = new global::app.@this("/probe", global::PLang.Tests.Parent.Actor).Testing();
+        var user = app.actor.list.User;
+        var action = SetX();
+        user.Setting.Set($"{action.Address}.type", "text");
+        var runA = user.Context.Child(user, System.Threading.CancellationToken.None);
+        var runB = user.Context.Child(user, System.Threading.CancellationToken.None);
+        var seenByA = await runA.Setting.Get(action, "type");
+        var face = seenByA.As<global::app.type.item.text.@this>();
+        face.Properties["leak"] = "from-run-A";
+        var seenByB = await runB.Setting.Get(action, "type");
+        var leaked = await seenByB.Properties.Value("leak");
+        await TestContext.Current!.OutputWriter.WriteLineAsync(
+            $"CC B1: same Data={ReferenceEquals(seenByA, seenByB)} leaked={leaked?.ToString()} contextIsRunB={ReferenceEquals(seenByB.Context, runB)} contextIsKeeper={ReferenceEquals(seenByB.Context, user.Context)}");
+        // pinned edge: the face shares the answer's properties bag, so the write is shared. No production handler writes onto a
+        // parameter it was given (grep of Properties writers: all on a result it made); flip this when the answer is copied per run
+        await Assert.That(leaked?.ToString()).IsEqualTo("from-run-A");
+        runA.Dispose(); runB.Dispose();
+    }
 }
