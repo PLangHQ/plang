@@ -459,21 +459,11 @@ public static class @this
         sb.Append("""
                 // The program holds properties, shared by every run — a run makes its own first Data
                 // from one, born with the running context. A plain slot takes the step's property,
-                // then the frozen default; a typed slot asks the step's (__View) and the frozen
-                // default (__Default, action.Default's) separately, so a setting can sit between them.
+                // then the frozen default; a typed slot reads the step's and the frozen default
+                // (action.Default's) in Resolve itself, so a setting can sit between them.
                 private static global::app.data.@this __Copy(
                     global::app.goal.step.action.@this? action, string name, global::app.actor.context.@this context)
                     => (action?[name] ?? action?.Default[name])?.Data(context) ?? global::app.data.@this.NotFound(name, context);
-
-                private static global::app.data.@this<T> __View<T>(
-                    global::app.goal.step.action.@this? action, string name, global::app.actor.context.@this context)
-                    where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-                    => action?[name]?.Data(context).As<T>() ?? global::app.data.@this.NotFound(name, context).As<T>();
-
-                private static global::app.data.@this<T> __Default<T>(
-                    global::app.goal.step.action.@this? action, string name, global::app.actor.context.@this context)
-                    where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-                    => action?.Default[name]?.Data(context).As<T>() ?? global::app.data.@this.NotFound(name, context).As<T>();
 
                 // Wraps a resolution error with the action's module.action context so the
                 // reader can locate the failing call site. The raw error from Data<T>.As<T>

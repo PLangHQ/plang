@@ -162,14 +162,16 @@ public sealed record @this(
         var settingGet = $"await context.Setting.Get(action, \"{ParamName}\")";
 
         sb.AppendLine($"        {TypeName} {Local};");
+        // The step's row, read once (null when the step doesn't hold it, so an absent row costs nothing): what the
+        // cascade below takes, and what a slot with no fallback answers when it is given but holds nothing.
+        sb.AppendLine($"        var __d{Name} = action?[\"{ParamName}\"]?.Data(context).As<{InnerType}>();");
         // A C#-composed Seed's SET value passes through untouched (no As<T> round-trip); only an
         // UNSET slot falls to the step value → setting → [Default] cascade below.
         sb.AppendLine($"        if (__seed?.{Name} is {{ IsInitialized: true }} __sv{Name}) {Local} = __sv{Name};");
         // step value → setting → frozen default (.pr) → [Default]: an explicit setting beats what
         // the build froze; a runtime change of [Default] never does. "Was it given" is presence
         // (HasValue), never truthiness: a written false or 0 is given (list.split's Empty=false stays false).
-        // A row the step (or the build's frozen defaults) doesn't hold costs nothing: its Data is made only when it is there.
-        sb.AppendLine($"        else if (action?[\"{ParamName}\"]?.Data(context).As<{InnerType}>() is {{ HasValue: true }} __d{Name}) {Local} = __d{Name};");
+        sb.AppendLine($"        else if (__d{Name} is {{ HasValue: true }}) {Local} = __d{Name};");
         sb.AppendLine($"        else if ({settingGet} is {{ IsInitialized: true }} __s{Name}) {Local} = __s{Name}.As<{InnerType}>();");
         sb.AppendLine($"        else if (action?.Default[\"{ParamName}\"]?.Data(context).As<{InnerType}>() is {{ HasValue: true }} __f{Name}) {Local} = __f{Name};");
         if (IsNullable)
@@ -177,7 +179,7 @@ public sealed record @this(
         else if (DefaultValue != null)
             sb.AppendLine($"        else {Local} = {Defaulted("context")};");
         else
-            sb.AppendLine($"        else {Local} = __View<{InnerType}>(action, \"{ParamName}\", context);");
+            sb.AppendLine($"        else {Local} = __d{Name} ?? global::app.data.@this.NotFound(\"{ParamName}\", context).As<{InnerType}>();");
         sb.AppendLine($"        if (!{Local}.Success) return (null, __PrefixActionContext({Local}.Error!, action));");
         // [Default] also fires when the step value resolves to null (`mime: %unsetVar%`).
         if (DefaultValue != null)

@@ -116,8 +116,9 @@ public sealed class @this : IDisposable
         if (keeper._options.TryGetValue(key, out var kept) && kept.Version == version) return kept.Answer;
         // worked out by the keeper (the same answer: what lies between is empty), so what it keeps holds the keeper's
         // context, never a goal call's that ends
+        // an answer worked out while rows were read is stale already: the read moves the version when it ends
         var answer = await keeper.Answer(action, option);
-        if (IsRead) keeper._options[key] = (version, answer);
+        keeper._options[key] = (version, answer);
         return answer;
     }
 
@@ -141,18 +142,6 @@ public sealed class @this : IDisposable
     // The scope that answers this one's asks: this, when it holds a run value or an actor's rows; else its parent's — a
     // layer with nothing of its own (a goal call's) reads through to the answer kept there.
     private @this Keeper => _values.IsEmpty && _actor == null && _parent != null ? _parent.Keeper : this;
-
-    // Whether every actor's rows up the chain are read: an answer worked out before they are isn't kept, as their
-    // arrival moves no version.
-    private bool IsRead
-    {
-        get
-        {
-            for (@this? s = this; s != null; s = s._parent)
-                if (s._reading.Value || s._rows is { } rows && !(rows.IsValueCreated && rows.Value.IsCompletedSuccessfully)) return false;
-            return true;
-        }
-    }
 
     // This run's value for the first key that has one, the closest scope first.
     private data.@this Run(string[] keys)
