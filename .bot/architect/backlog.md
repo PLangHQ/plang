@@ -71,6 +71,7 @@ The one list of work after runtime2's merges (Ingi, 2026-10-29: "yes merge into 
 ### The builder
 
 - **on.event's build warns on a path that can never reach, and should refuse it** (event-action 81): `%!app.type.file.on.start%` (the app has no type `file`) is kept with an EventUnreached warning, so the writer's retry never sees it. A refusal needs navigation to tell "never there" (a member a fixed type doesn't have, a type or module name the app doesn't hold) from "not there yet" (a channel a step before creates). That's a locked-core design, not a wording fix. It wouldn't catch a wrong path that does reach (`%!app.type.step%` for "each file action").
+- **OtherActorDoesntSee doesn't tell "goal Process" from "each goal"** (plang-builder, event-action's test move): its committed .pr binds `%!app.type.goal.on.start%` and passes, since only Process is called. It needs a second goal that mustn't count. Also seen in those rebuilds: `call Process, as system` lost its Actor in about a third of builds.
 - **Writer reliability on event paths, known** (event-action 67, 81, 87): AfterEachLlmQuery 2/3, EachFileAction 2/3 (with two module examples; 0/6 without), NamesAFolder (`before each goal in api/*, call Count`) path 6/6, whole step 4/6: twice the Action was a `loop.foreach` ("each goal … call" read as a loop). Each test commits a right build; the score is the writer's.
 
 ### Speed
