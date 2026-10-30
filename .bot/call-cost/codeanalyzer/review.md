@@ -60,3 +60,36 @@ The coder's pin (a goal of 8 sets run again 227,552 → 189,456 B) is the same d
 6. **Value answers equality.** No raw-form compare added.
 
 ## Verdict v2: **PASS** — tester next. Finding 1 should be a pin and a one-line fix with the next stage that touches `list/this.cs`; finding 2's hot sites are the stage's remaining work (bool, number reader, dict/list readers, `data.Create`), measured on a goal that reads them.
+
+---
+
+# Review v3 — call-cost stage 3 (a62c2da21..b274f0406)
+
+Patterns first: 11 (lazy), 5/7 (found, not made / one door), 12 (one answer). Touched files: `actor/setting/this.cs`, `call/this.cs`, `goal/list/this.cs`, `shortcut/this.cs`; the diff's methods read whole, the invalidation points of each kept answer checked.
+
+## Bench (`run.sh` birth + request, `Bench repeat`/`phases`; bytes load-independent, load 5–6)
+
+| | Sub birth | Root birth | Sub request | Root request | Held | A goal run again (`repeat`) | Request born / load / run |
+|---|---|---|---|---|---|---|---|
+| 77add2895 (start) | 101 KB | 2260 | 441 | 3897 | flat | 227 KB | 98 / 43 / 299 |
+| a62c2da21 (stage 2b) | 54 | 2206 | 306 | 3729 | flat | 145 | 54 / 40 / 211 |
+| **b274f0406 (stage 3)** | **54** | **2194** | **284** | **3713** | flat | **109** | **54 / 40 / 192** |
+| stage 3 vs 2b | 0 | −12 | −22 (−7%) | −16 | — | −36 KB (−25%) | run −19 |
+| since the start | −47% | −3% | −36% | −5% | — | **−52%** | run −36% |
+
+Everything in band or below; held flat. The coder's pins (an option ask 1,856 → 160 B, a match 5,520 → 0, a frame 1,544 → 680 B) agree with the repeat row.
+
+## Findings (all low; none blocks)
+
+1. **Pattern 12 — the lazy idiom is back to the `CompareExchange` form. Low.** Stage 2 closed my stage-1 finding by moving `Errors`/`Tags`/`Parameter` to `LazyInitializer.EnsureInitialized`; the two pieces stage 3 makes lazy, `property` and `Children` (`call/this.cs:36`, `:128`), are written `_x ?? Interlocked.CompareExchange(ref _x, new(...), null) ?? _x` again. Five lazy pieces on one class, two idioms. Take `LazyInitializer` (as `call.list._audit`) for the two new ones so the class answers "made at its first ask" one way.
+2. **Kept settings answer: correct, with two notes. Low.** (a) The answer is read at a `version` taken *before* it is worked out, and the cache is not written while any actor's rows up the chain are unread (`IsRead`), so a write during the work leaves it stale-and-recomputed, never wrong; the invalidation points (`Set`, `Save`, `Remove`, and the clone path) all call `Move()`. (b) The kept `data` (usually the same "not set" `NotFound` error Data) is one object returned to every asker of that scope. A caller that writes a property onto the answer writes onto the shared one; the generated `Resolve` only reads it (`.As<T>()`), so nothing does today. If an asker ever should own it, it asks for a copy. A pin that sets an option, asks, sets another option anywhere in the chain, asks again and sees the new answer is what protects the version, if it is not in the stage's pins already.
+3. **`goal.list` kept finds: one mutation point, which is why it holds. Low.** `_found` is cleared only in `Add` (`goal/list/this.cs:188`), and `Add` is the only writer to the list (`base.Add` at `:185`; no `Remove`/`Clear`/`Replace` in the class). If a removal is ever added, it must clear `_found` too; the comment says the gate order but not that rule. The per-folder dictionary is keyed by `path` (its own `Equals`/hash), fine.
+4. **Pattern 5 — `shortcut.Name` is a birth fact. Closed**, and `Path.Stem.ToString()` at birth costs one string per shortcut (6 per app) against 5,520 B per match before.
+5. **Return early.** The diff's methods guard first (`Get`, `Found`, `In`); no wrapped-rest nesting.
+6. **Value answers equality.** `found.In` compares folders through `path.Equals`; no raw-form compare added.
+
+## The `Func<string, (string,string,View)>` the coder asked about (4.6 KB a run in the ticks above)
+It is `type/reader/this.cs:101`: `Token(typeName, kind, view) => Find(_runtimeTyped, Shipped.Tokens, k => (typeName, k, view), kind)`. The lambda captures `typeName` and `view`, so every reader lookup allocates a closure (`<>c__DisplayClass11_0`, 2.25 KB in the ticks) and a delegate; `Find` calls it twice (`exact`, `any`). The sibling at `:97` (`Payload`, `k => (typeName, k)`) is the same shape with `Func<string,(string,string)>`. The key a lookup builds is data, not a function: `Find` can take the two keys (`(typeName, kind-or-any, view)` and `(typeName, AnyKind, view)`) and no delegate or closure is made. Both are on the path of every typed read (a number, a bool, a dict).
+Others at the top of a repeated run's ticks, unnamed: `<>c__DisplayClass32_0` 7.7 KB (a closure class, method not found by text), `Func<property,bool>` 4.8 KB (`Instance()`'s unknown-property check, `goal/step/action/this.cs:365`), `type.item.serializer.json` 4.7 KB (a json serializer made per run; site not found).
+
+## Verdict v3: **PASS** — tester next.
