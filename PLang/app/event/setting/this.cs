@@ -14,12 +14,12 @@ public sealed class @this : global::app.type.item.setting.@this
     /// <summary>The goals events run in: the app's own (app), or plang's own too (all).</summary>
     [Out, Store] public global::app.type.item.choice.@this<Goal> Goal { get; set; } = setting.Goal.app;
 
-    /// <summary>Whether the app loads its system events, the files of system/event/, when it starts (load), or not
-    /// (skip).</summary>
+    /// <summary>Whether an actor's events, at their first ask, run the system events, the files of system/event/ (load),
+    /// or not (skip).</summary>
     [Out, Store] public global::app.type.item.choice.@this<System> System { get; set; } = setting.System.load;
 }
 
-/// <summary>Whether the app loads its system events.</summary>
+/// <summary>Whether an actor's events, at their first ask, run the system events.</summary>
 [global::app.Attributes.PlangType("event.system"), global::app.Attributes.Choice]
 public enum System
 {
