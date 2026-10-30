@@ -55,6 +55,7 @@ The one list of work after runtime2's merges (Ingi, 2026-10-29: "yes merge into 
 
 ### Events
 
+- **`on/empty.cs` and its static `Emptied` stayed** (event-action's demolition list, not done): a per-CLR-class static cache of an item's empty moments, used as the action's clause fallback and to answer "is this a moment's name". A static (Ingi: no static), and the class's moments belong on its type. Removing it means the item's type answers its moment names (`[Events(...)]`, the locked events surface: Ingi's yes), and the action makes its own `on` on its first ask.
 - **on.event's `Event` parameter holds an `on`** (event-action 20, the coder's point 5): since decision 13 the moment is an `on`, and since 4 an `event` is what's bound, so the parameter's name says one thing and its type another. Kept by decision 12 (no `.pr` changes); renaming it is a teaching change and a rebuild of every on.event `.pr`.
 
 - **Parsing a bare `%name%` costs 28.7 KB** (plang-tester, event-action 24, `.bot/event-action/tester/variable-events.md`): `Named(name)` (`type/item/variable/list/this.cs:213`) runs the full parser for a root name. The parser is the one definition of a reference, so the fix is the parser answering a bare root name cheaply, not a bypass. Anything under ~1 KB makes a type-level variable event on every set affordable.

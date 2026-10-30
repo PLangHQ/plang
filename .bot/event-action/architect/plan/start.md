@@ -55,9 +55,11 @@ None. Decided: how a step names a pattern (37) and which side answers the questi
 ## Stages
 
 1. **Done** (ec64ee712, 2c7b8f78d): binding → event; `on`; `%!event%`; on.unbind's `Event`; the teaching; the dedupe.
-2. **Events on the actor; lists by pull and push; the one question; patterns; variable names; `event.setting.goal`.** `Level` and its overrides, the walk, `IsBoundAt`, `Scope`, the class's shared empty moments (`on/empty.cs`), `item.on`, and the per-item scan go; `%!x.on%` answers the running actor's `on`. Folded in from stage 1's review (26): an event's `ToString` goes, "start is the on itself" in one place, no `ReferenceEquals` left in `event/`, on.event's walk up the parents goes.
-3. **Clauses around the list**, in the order above; the error fold stays its own.
-4. **The C# kind; `context.Enter`; `Start` for every kind.**
+2. **Done** (eb5d47121, 2bdcaab2f). **Events on the actor; lists by pull and push; the one question; patterns; variable names; `event.setting.goal`.** `Level` and its overrides, the walk, `IsBoundAt`, `Scope`, the class's shared empty moments (`on/empty.cs`), `item.on`, and the per-item scan go; `%!x.on%` answers the running actor's `on`. Folded in from stage 1's review (26): an event's `ToString` goes, "start is the on itself" in one place, no `ReferenceEquals` left in `event/`, on.event's walk up the parents goes.
+3. **Done** (ee67e2da5). **Clauses around the list**, in the order above; the error fold stays its own.
+4. **Done** (f7eb594c4, 839ccf6c9). **The C# kind; `context.Enter`; `Start` for every kind.**
+
+The whole branch passed codeanalyzer v5, tester v5, security v2 and the auditor's re-check (084d73b49); docs 8b49a0d6a. Decisions 1–99 in `summary.md`.
 5. **Done** (f71d37fa7 … fe4167c02; codeanalyzer PASS 5d0ac4382, tester v4 PASS 034559e84). System events: `event.setting.system`, the folder, both proofs; inheritance at the first ask (60); a sub app over its maker's folder runs no system/event file (66); variable events on one store (73–77).
 6. **Done** (b8551ff48, b8db6b8f0; teaching 18ac4ce83): `Sub: inherit | none`; the event answers `IsInheritable`.
 7. **Done** (1f615b6c6): the goal: `Enter` and `Leave` folded, `app.parent.goal` its own kind, `Elsewhere` gone. Also 84 (18507e237, teaching fe1447d57): a pattern rooted as a path.
@@ -67,13 +69,14 @@ Noted, not built: an action added by `module.add` after a module's event was bou
 
 ## Demolition
 
-- [ ] `item.Level` and its overrides (`goal/this.cs:340`, `step/this.cs:126`, `action/this.cs:160`, `variable/this.cs:28`, `channel/this.cs:40`).
-- [ ] The walk and `IsBoundAt` (now on `on`, `on/this.cs:147–`); `item.IsBoundAt` (`item/this.cs:478`).
-- [ ] `Scope`, `event.For`, `ReferenceEquals(context.Actor, Actor)`.
-- [ ] `item.on`, `item._on`, `on/empty.cs` and its static `Emptied`.
-- [ ] `app.event` on the app (`app/this.cs:140`) and `origin.event` → the actor's.
-- [ ] `binding._handler` (now `event.code`'s), `Handle`, `TryEnterEvent`/`ExitEvent`.
-- [ ] `goal.Enter`, `goal.Leave`, `goal.Elsewhere`.
+- [x] `item.Level` and its overrides.
+- [x] The walk and `IsBoundAt`; `item.IsBoundAt`.
+- [x] `Scope` (deleted in stage 5), `event.For`, `ReferenceEquals(context.Actor, Actor)`.
+- [x] `item.on`; `item._on` (moved onto the action, the auditor's B10).
+- [ ] **Not done:** `on/empty.cs` and its static `Emptied` (a per-class cache of the empty moments: the action's clause fallback, and "is this a moment's name"). Removing it needs the moment names on the item's type (`[Events(...)]`, the locked events surface). On the backlog, not done here.
+- [x] `app.event` reads the asker's actor's; `origin.@event(role)` answers the maker's actor's.
+- [x] `Handle`, `TryEnterEvent`/`ExitEvent`. `event.code`'s `_handler` is the C# kind's own handler, so it stays.
+- [x] `goal.Enter`, `goal.Leave`, `goal.Elsewhere`.
 - Stays: `When`, `on.unbind`, `item.Is(type)`, `goal.IsSystem`, the error fold.
 
 ## Proof
