@@ -49,3 +49,17 @@ Known and ruled, not re-raised: stage 5 dropped; stage 6 held; `error.Type` and 
 
 ## Locked core
 `Kinded`, `Made` and number's two ctors are internal (not in `surface_golden.txt`); `context.Json` is covered by summary row 13, `Kinded`/`call.list.Number` by row 3. No unapproved surface change.
+
+---
+
+## Update — A1 and three minors closed at fd91aea2b (PASS)
+
+Delta e63656a51..fd91aea2b (7 files; production: `goal/list/this.cs` comment, `type/kind/this.cs`, `type/this.cs`). Keys unset, PlangConsole rebuilt: C# Modules 1500, Types 1049, Wire 641, Data 882, Generator 191, Runtime 1512 — all green (the Runtime birth pin that failed before passes in the full sweep); `plang --test` 323 / 322 pass / 0 fail / 0 stale / 1 skipped; tree clean. A second `dev.sh test` returned the cached result, so the green is one fresh full sweep plus the coder's two.
+
+- **A1 closed.** Each byte pin's bound now sits between its two measured states (step cache < 60,000 against 86,036 made at birth; the others with a reason each), and the two narrow whole-run pins are split into direct pins at the ask (`Asked(...)` < 24 / 12 / 44 bytes). The figures no longer ride process order.
+- **B3 closed.** `Kinded` keys `Made` by `Family`.
+- **B4 closed.** `kind.type(context)` answers a reader's unknown name as the list did (`list[new type(name), context]`); the other moved `list[name]` sites name literal types plang holds.
+- **B5 closed.** `_found`'s comment now says `Add` is the one writer that lets it go. (The inherited `Remove` still leaves it — the ruled `RemoveAt` family, backlog.)
+- Security's probes are merged in as tests (`CallCostSecurityProbeTests`); green.
+
+verdict.json is pass; next bot docs. B1, B2, B6, B7 stay on the backlog.
