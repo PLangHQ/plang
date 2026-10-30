@@ -93,3 +93,41 @@ It is `type/reader/this.cs:101`: `Token(typeName, kind, view) => Find(_runtimeTy
 Others at the top of a repeated run's ticks, unnamed: `<>c__DisplayClass32_0` 7.7 KB (a closure class, method not found by text), `Func<property,bool>` 4.8 KB (`Instance()`'s unknown-property check, `goal/step/action/this.cs:365`), `type.item.serializer.json` 4.7 KB (a json serializer made per run; site not found).
 
 ## Verdict v3: **PASS** — tester next.
+
+---
+
+# Review v4 — call-cost stage 4 (b274f0406..9a96736d1), and stage 5's property-bag measurement
+
+Patterns: 11 (lazy), 5/7 (found, not made), 12. Touched: the generator (`Emission/Action`, `Emission/Property`), `goal/step/action/this.cs`, `actor/context/this.cs`, `data/this.cs`, `type/reader/this.cs`, and the `View`/serializer callers of `context.Json`.
+
+## Bench (`run.sh` birth + request, `Bench repeat`/`phases`; bytes load-independent, load 7.6)
+
+| | Sub birth | Root birth | Sub request | Root request | Held | A goal run again (`repeat`) | Request born / load / run |
+|---|---|---|---|---|---|---|---|
+| 77add2895 (start) | 101 KB | 2260 | 441 | 3897 | flat | 227 KB | 98 / 43 / 299 |
+| b274f0406 (stage 3) | 54 | 2194 | 284 | 3713 | flat | 109 | 54 / 40 / 192 |
+| **9a96736d1 (stage 4)** | **54** | **2203** | **246** | **3647** | flat | **69** | **54 / 40 / 151** |
+| stage 4 vs 3 | 0 | +9 (band ±25) | −38 (−13%) | −66 | — | −40 KB (−37%) | run −41 |
+| since the start | −47% | −3% | **−44%** | −6% | — | **−70%** | run −50% |
+
+The coder's pins (an action started again 14,272 → 11,488 B; a reader lookup 264 → 0) agree. A goal run again is now 69 KB, down from 227.
+
+## Findings
+
+1. **The `<>c__DisplayClass32_0` the coder asked for is `type.Empty` (`type/this.cs:173`), 176 calls a run.** A probe (counter in `Empty`, reverted) counted **176.2 calls per goal run** and **0** for the parser candidate. `Empty` memoizes (`if (_empty is { } empty) return empty();`), but its lambdas capture `typed`, `ctor`, `first` and `this`, so the compiler makes the closure object **at method entry, before the early return**: 176 × 48 B ≈ 8.4 KB, the 7.7 KB in the ticks. Fix: the memoized path takes no closure — split the method (`Empty` returns `_empty` when made; a private method that builds the delegate holds the captures), or keep the constructor and `first` in fields. After stage 4 the same name is 2.7 KB in the ticks (fewer calls), so it is still there. Pattern 11: a piece made by its first asker, not at entry.
+2. **The same trap in the new `Unknown(element)` (`goal/step/action/this.cs:394`). Low.** `_unknown ?? CompareExchange(ref _unknown, Property.Where(p => element.Property[p.Name] == null).ToList(), null) ?? _unknown`: `element` is a parameter captured by the lambda, so a closure is made on every call, including the calls that return `_unknown`. ~32 B × ~11 actions a run: small, but the idiom for a once-judged fact should not allocate on the judged path. `Func<property,bool>` is still 3.6 KB a run in the ticks after this stage; this method is not the whole of it (a delegate is made only when the lambda is evaluated, and `_unknown` is set), so there is a second site I have not named. I can find it with a counter if wanted.
+3. **The frame's lazies and my stage-3 note.** At 9a96736d1 all five frame lazies (`property`, `Errors`, `Children`, `Tags`, `Parameter`) are `Interlocked.CompareExchange`, as the coder said: my "LazyInitializer for three" read stage 2's diff, which 2b changed back. Finding retired. The same one-line idiom is now also `Unknown`, `Resolver` and `context.Json` (eight sites); a one-line owner for it would name it, but it is allocation-free as written and a choice of the plan, so this is a note only.
+4. **`Resolver` (idea 4): sound.** `element.Resolver` is made at the class's first run with its module's own System context (`Module.App.actor.list.System.Context`), never a run's, so no sub app is held (the rule in CLAUDE.md "a run never writes an object its app shares": the resolver is a cache every app over the module gets the same answer from). It never runs; `Resolve(action, context)` takes the run's own context for the handler it makes.
+5. **Reader keys (`Find(exact, any)`): closed** — the lookup is 0 B, the site I named.
+6. **`context.Json`:** one json reader per context, made at its first ask; replaces `new serializer.json(_context)` at two `data` sites. Correct (it holds only the context).
+
+## Stage 5 — the property bag of a copy: not worth it; drop it
+`Bench copy` (best of 7, this thread's bytes):
+| a copy of… | bytes | time |
+|---|---|---|
+| a value that carries nothing (`set %y% = %x%`, a goal-call argument) | **112 B** | 0.13 µs |
+| a value whose bag was made, empty | 248 B (+136) | 0.14 µs |
+| a value carrying one property | 384 B | 0.25 µs |
+The bag is already lazy: `Copy` takes `Carried?.Copy()`, and `Carried` is null until something asks (`data/attachment.cs`), so a copy of a plain value costs no bag. In a real run (probe in `Copy`, reverted; 503 runs): **~4 copies a run, every one with an attachment that holds nothing** (`withAttachment` = all, `withSomething` = 0), so each pays the 136 B for copying an empty attachment: **~0.5 KB of a 69 KB run (0.8%)**. A guard in `Copy` (copy the attachment only when `HasProperties || HasProperty`) would take it, for one line and nothing else. Not a stage: if anything, a one-line addition to whichever stage touches `data/this.cs` next. The reason for the log: stage 5's bag costs 0 B in the common case and 136 B in the empty-attachment case, ~0.8% of a run.
+
+## Verdict v4: **PASS** — tester next.

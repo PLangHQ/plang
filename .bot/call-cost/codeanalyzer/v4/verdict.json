@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "9a96736d1 call-cost stage 4: a goal run again 109 -> 69 KB (-37%; -70% since the start), sub request 284 -> 246, births flat, held flat; the DisplayClass32_0 is type.Empty (176 calls a run, a closure made before the early return); Unknown(element) has the same trap; stage 5 bag measured and dropped (0.5 KB of 69)" }

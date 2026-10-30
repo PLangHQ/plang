@@ -18,6 +18,7 @@ internal static class @this
         "repeat" => new repeat.@this(setting),
         "resolve" => new resolve.@this(setting),
         "jit" => new jit.@this(setting),
+        "copy" => new copy.@this(setting),
         "closure" => new closure.@this(setting),
         _ => null,
     };
