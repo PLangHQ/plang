@@ -48,6 +48,25 @@
         }
       ],
       "after": { "status": "PASS sent to the architect, tester next", "health": "tree clean after commit", "notes": "no mutations" }
+    },
+    {
+      "id": "b8d4f2a6-3e19-4c75-9a0b-6e2c7d1f8b53",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-30T09:30:00Z",
+      "timestamp_end": "2026-10-30T10:30:00Z",
+      "intent": "Measure and review call-cost stage 2 (4dcfa3f36..1878bef03): birth, request and a goal run again; the new-type sites left.",
+      "before": { "assumptions": "Number's operator type found, not made, takes ~23% off a run (the trial).", "risk": "Types reached by reference may be null for a type born with no app." },
+      "plan": ".bot/call-cost/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/call-cost/codeanalyzer/review.md", ".bot/call-cost/codeanalyzer/v2/verdict.json", "Tools/Bench/record.md"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "PASS: a goal run again 201 -> 145 KB, sub request 371 -> 313, births flat, held flat; list.Count throws for a bare-typed list (probed, reverted); 127 new-type sites left, the hot ones listed."
+        }
+      ],
+      "after": { "status": "PASS sent to the architect, tester next", "health": "tree clean after commit", "notes": "one reverted probe, no production edits kept" }
     }
   ]
 }
