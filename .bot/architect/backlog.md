@@ -118,6 +118,7 @@ Equality asked from outside, as strings, where the value has its own `Equals` (e
 
 - **A C# handler's constructor now runs once with its module's System context** (security I2, call-cost: the catalog element's `Resolver`). Only third-party `module.add` handlers could do anything in a constructor. If one does work there as System, it does it once, at the class's first run. Worth a line in the module-authoring docs: a handler's constructor does nothing with its context.
 - **A kept settings answer from a saved row is born with the keeper's context** (I1): it only matters for a saved row holding a `%variable%`, and no such shape was found.
+- **A kept settings answer's properties are shared across runs** (security B1 follow-up, Low, latent; probe a3a916034 on `security-call-cost`). `As<T>()` of the kept answer shares its properties, so a property one run writes on it is read by another run of the same actor. No production handler writes onto a parameter it was given today. The fix with the next branch that touches settings: the keeper hands each ask its own copy (`answer.Copy(name)`, ~112 B), or keeps the value and each run makes its Data.
 
 ### From call-cost's audit (minor, deferred)
 
