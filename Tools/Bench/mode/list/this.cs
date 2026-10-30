@@ -16,6 +16,7 @@ internal static class @this
         "cold" => new cold.@this(setting),
         "loadtypes" => new loadtypes.@this(setting),
         "repeat" => new repeat.@this(setting),
+        "resolve" => new resolve.@this(setting),
         _ => null,
     };
 }
