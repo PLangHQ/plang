@@ -1,0 +1,27 @@
+{
+  "tester": "tester",
+  "branch": "call-cost",
+  "timestamp": "2026-10-30T04:00:00Z",
+  "tested_version": "v2",
+  "test_run": {
+    "csharp": { "total": 5762, "passed": 5762, "failed": 0, "skipped": 0 },
+    "plang": { "total": 323, "passed": 322, "failed": 0, "skipped": 1 }
+  },
+  "coverage": { "changed_files_covered": 0, "changed_files_total": 0, "uncovered_files": [] },
+  "findings": [
+    { "id": 1, "severity": "minor", "type": "false-green", "test_file": "PLang.Tests/Runtime/App/Context/BirthTests.cs", "code_file": "PLang/app/actor/setting/this.cs",
+      "issue": "IsRead (the guard that keeps an answer only once every actor's rows are read) can be replaced by 'return true' with every suite still green.",
+      "impact": "Either dead code (Read ends with Move(), so an answer kept during the read is stale at once) or an unpinned guard.",
+      "suggestion": "Remove it, or pin the window it covers with a test that asks during the rows' read." },
+    { "id": 2, "severity": "minor", "type": "weak-assertion", "test_file": "PLang.Tests/Runtime/App/Context/BirthTests.cs", "code_file": "PLang/app/goal/list/this.cs",
+      "issue": "AGoalFoundAgain_ReadsTheKeptGoals pins only bytes; the correctness of a goal added after a Find kept its candidates is guarded only by distant tests.",
+      "impact": "A stale _found is caught by far-away tests, not a named one.",
+      "suggestion": "Add tester probe F4 (beside goal added after a Find still beats a newer far one) as a test." },
+    { "id": 3, "severity": "minor", "type": "missing-coverage", "test_file": "PLang.Tests/Runtime/App/Context/BirthTests.cs", "code_file": "PLang.Generators/Emission/Property/Data/this.cs",
+      "issue": "A required parameter given but unresolved now evaluates the step's row twice (the HasValue branch, then the final else's __View).",
+      "impact": "A row with side effects in its path reads twice; no test counts evaluations.",
+      "suggestion": "Pin the evaluation count for a required given-but-null row, or reuse the first evaluation." }
+  ],
+  "verdict": "approved",
+  "summary": "Stages 3-4 hold. Mutations to the setting store (Save/Remove version, Keeper), and the goal list's _found were caught; IsRead is redundant by test. Three minor findings."
+}
