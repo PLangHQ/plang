@@ -16,15 +16,7 @@ Mark
 - set %marks% = %marks% + 1
 ```
 
-Output:
-
-```
-one
-two
-marks: 2
-```
-
-`before action output.write call Mark` runs the goal `Mark` before each `write out`. `Mark` uses `set`, not `write out`, so it does not trigger itself.
+`before action output.write call Mark` runs the goal `Mark` before each `write out`, so three times here. `Mark` uses `set`, not `write out`, so it does not trigger itself.
 
 ## What you can bind to
 
