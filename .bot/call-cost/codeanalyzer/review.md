@@ -131,3 +131,41 @@ The coder's pins (an action started again 14,272 → 11,488 B; a reader lookup 2
 The bag is already lazy: `Copy` takes `Carried?.Copy()`, and `Carried` is null until something asks (`data/attachment.cs`), so a copy of a plain value costs no bag. In a real run (probe in `Copy`, reverted; 503 runs): **~4 copies a run, every one with an attachment that holds nothing** (`withAttachment` = all, `withSomething` = 0), so each pays the 136 B for copying an empty attachment: **~0.5 KB of a 69 KB run (0.8%)**. A guard in `Copy` (copy the attachment only when `HasProperties || HasProperty`) would take it, for one line and nothing else. Not a stage: if anything, a one-line addition to whichever stage touches `data/this.cs` next. The reason for the log: stage 5's bag costs 0 B in the common case and 136 B in the empty-attachment case, ~0.8% of a run.
 
 ## Verdict v4: **PASS** — tester next.
+
+---
+
+# Review v5 — call-cost 16–17: the cleanup (04d6812a7) and one code for several roots (615f8a5b2)
+
+Patterns: 3 (a choice on the element), 11 (lazy), 5/7; the rule "No runtime code for tests"; "a run never writes an object its app shares". Touched: `origin/code.cs`, `origin/shared.cs`, `app/this.cs` (the new constructor), `PLang.Tests/Shared/Root.cs`, `SharedCodeTests`, the cleanup's four sites (`data/attachment.cs`, `goal/step/action/this.cs`, `type/property/list/this.cs`, `type/this.cs`).
+
+## Bench (`run.sh` birth + request, `Bench repeat`/`phases`; load 7)
+
+| | Sub birth | Root birth | Sub request | Root request | Held | A goal run again | Request born / load / run |
+|---|---|---|---|---|---|---|---|
+| 77add2895 (start) | 101 KB | 2260 | 441 | 3897 | flat | 227 KB | 98 / 43 / 299 |
+| 9a96736d1 (stage 4) | 54 | 2203 | 246 | 3647 | flat | 69 | 54 / 40 / 151 |
+| **615f8a5b2** | **54** | **2179** | **238** | **3597** | flat | **61** | **54 / 40 / 142** |
+| vs stage 4 | 0 | −24 | −8 | −50 | — | −8 KB (−12%) | run −9 |
+| since the start | −47% | −4% | **−46%** | −8% | — | **−73%** | run −53% |
+
+The −8 KB a run is the cleanup (`Empty`'s closure, `Judged`, the property lookup's closure and delegate, the empty attachment). The product's births are unchanged by `origin.shared`: `new app.@this(path)` still makes a new code, so a CLI root or a bench root scans once as before.
+
+## The C# sweep (`./dev.sh test --force`; all suites green with the same counts at both hashes: Wire 641, Data 881, Generator 191, Runtime 1501; load 13–21, so a ratio, not a quiet-machine time)
+
+| | run 1 | run 2 | Runtime | Data | Wire |
+|---|---|---|---|---|---|
+| 04d6812a7 (before) | 39 s | 41 s | 14.1–14.2 s | 9.0–9.3 s | 18.1–18.5 s |
+| 615f8a5b2 (after) | 34 s | 36 s | 11.3 s | 7.1–7.9 s | 14.8–17.4 s |
+| change | −13% | −12% | −20% | −18% | −13% |
+
+The test processes' root births no longer rescan the assembly (221 roots × ~1.4 MB). The coder's pin (a second root 1,418,440 B less) agrees with my 1.3 MB.
+
+## Findings
+
+1. **"No runtime code for tests" — `origin.shared` and `app(string, code, env)` have no caller in production. Medium, for a ruling.** `git grep` of `PLang/` and `PlangConsole/` finds `new origin.code` only in `app/this.cs:322` (the public constructor, a code per app) and no use of `shared` or of the new `(path, code, environment)` constructor; the only caller is `PLang.Tests/Shared/Root.cs`. The rule (CLAUDE.md, branch rules): a production member only tests call is removed with the tests, a test of real behaviour reaches it through the door production uses. Here three things in production exist for the test process: the `shared` class, the new `app` constructor, and `code` being unsealed with `Hold` made virtual. Two ways to meet the rule: (a) a production caller — whoever makes several root apps in production holds one code (the architect's wording); none does today, so it is the plan's claim, not a fact yet; (b) the test project owns the subclass: `code` stays unsealed with `Hold` virtual (the smallest production change), and the sharing class and the constructor go where the tests are, or the constructor stays `internal` and says so. Not a defect in behaviour; a rule.
+2. **Pattern 3 — the refusal is a choice on the element. Closed.** `shared` overrides `Hold` to refuse a kind on a code type; `code` keeps its own. No type test anywhere.
+3. **A run never writes a shared object. Sound.** The shared code's list holds only caches that give every root the same answer (`_classes`, `_full`, `Made`), and a kind on one of its types, the one write that would reach every root, is refused (`TypesShared`, pinned by `AKindOnASharedCodesType_IsRefused_AndNoOtherRootSeesIt`). The 21 files that load kinds onto code types keep a code of their own. The lazy `type` is made under a lock with a volatile read: correct for 221 roots in parallel.
+4. **The cleanup is what it says. Closed.** `Empty`/`First`, `Unknown`/`Judged` (the closures live on the first path only); `attachment.Copy()` returns null when nothing is carried (the line I proposed; the 136 B of an empty attachment is gone); `property.list[name]` walks instead of `FirstOrDefault(p => …name…)`, which made a closure and a `Func<property,bool>` for every parameter lookup — most likely the second site of that delegate I could not name; the run's −8 KB fits. I have not re-run the ticks at this hash to confirm it.
+5. **A stale sentence. Low.** `code`'s summary still says "A new one for each app, so nothing in it is another app's" before the sentence about `shared`; the first is now true only of the product's path.
+
+## Verdict v5: **PASS** — tester next. Finding 1 for the architect.

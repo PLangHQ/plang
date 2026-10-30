@@ -56,6 +56,7 @@ per birth + dispose; a request app is born, a goal loaded and run, disposed, × 
 | Date | Branch | Commit | Load | Sub birth | Root birth | Sub request | Root request | Held, sub (MB) | Held, root (MB) | `plang --test` | C# sweep | Build, clean | Build, incr. |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 <!-- rows -->
+| 2026-10-30 | call-cost | 615f8a5b2 (call-cost-615f8a5b2) | 7.06 | 0.14 ms, 54 KB | 14.98 ms, 2179 KB | 1.17 ms, 238 KB | 21.20 ms, 3597 KB | 1.5 → 2.0 → 2.0 → 2.0 | 0.1 → 2.0 → 2.0 → 2.0 | - | - | - | - |
 | 2026-10-30 | call-cost | 9a96736d1 (call-cost-stage4) | 7.58 | 0.13 ms, 54 KB | 14.15 ms, 2203 KB | 1.00 ms, 246 KB | 20.79 ms, 3647 KB | 1.5 → 2.0 → 2.0 → 2.1 | 0.1 → 2.0 → 2.0 → 2.0 | - | - | - | - |
 | 2026-10-30 | call-cost | b274f0406 (call-cost-stage3) | 5.70 | 0.13 ms, 54 KB | 14.42 ms, 2194 KB | 1.05 ms, 284 KB | 21.29 ms, 3713 KB | 1.5 → 2.1 → 2.0 → 2.0 | 0.1 → 2.0 → 2.0 → 2.0 | - | - | - | - |
 | 2026-10-30 | call-cost | a62c2da21 (call-cost-a62c2da21) | 4.82 | 0.13 ms, 54 KB | 13.78 ms, 2206 KB | 1.06 ms, 306 KB | 21.14 ms, 3729 KB | 1.5 → 2.0 → 2.0 → 2.0 | 0.1 → 2.0 → 2.0 → 2.0 | - | - | - | - |
