@@ -1,14 +1,14 @@
 # codeanalyzer summary — call-cost
 
-**Version:** v1. Verdict: PASS, tester next (stage 1, 77add2895..4dcfa3f36).
+**Version:** v2. Verdict: PASS, tester next (v1 stage 1 PASS; v2 stage 2, 4dcfa3f36..1878bef03).
 
-**What this is:** the call-cost branch makes the runtime cheaper per call, stage by stage from the measured ideas (`.bot/event-action/codeanalyzer/call-cost.md`). Stage 1: the step cache made at its first ask, a frame's `Parameter`/`Tags`/`Errors` made at their first ask, `goal.Broken()` judged once.
+**What this is:** the call-cost branch makes the runtime cheaper per call, stage by stage (`.bot/event-action/codeanalyzer/call-cost.md`). Stage 1: lazy step cache, frame `Parameter`/`Tags`/`Errors`, `Broken()` once. Stage 2: a type is found, not made (`type.Kinded`, number's births with the app's type, `Depth`/`Count`/readers by reference).
 
-**What was done:** bench at both hashes. Sub birth 101 → 54 KB, sub request 441 → 371, root birth 2260 → 2195, root request 3897 → 3832, a goal run again (`repeat`) 227 → 201 KB, held flat. Review in `review.md`: four low notes (the lazy idiom written four times, the cache seam's stale comment, `Broken` judged once against a mutable step `Error`, `Children`/`property` still eager per frame).
+**What was done:** bench at each hash. A goal run again: 227 → 201 → 145 KB (−36%); sub request 441 → 371 → 313; sub birth 101 → 54; held flat. Review in `review.md` (v1, v2): stage 2's findings are `list.Count` throwing for a bare-typed list (probed; latent), and the 127 `new type(...)` sites left, of which `bool`, the number reader, the dict/list readers and `data.Create` are hot and not yet found.
 
-**Next:** measure each stage on its own hash (`Tools/Bench/run.sh`, `Bench repeat`, `Bench phases`); stage 2 is the coder's now.
+**Next:** measure each stage on its own hash (`Tools/Bench/run.sh`, `Bench repeat`, `Bench phases`, `BENCH_TICKS=1 repeat` for the types left).
 
 **Example:**
 ```csharp
-public Errors => _errors ?? Interlocked.CompareExchange(ref _errors, new(_stack.Errors), null) ?? _errors;   // made by its first asker; a reader that only looks reads the field
+internal @this Kinded(kind.@this kind) => Types!.Made(this, this, kind.Name);   // the type for a name and a kind, found; no object made to ask for it
 ```
