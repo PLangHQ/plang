@@ -185,7 +185,7 @@ public partial class @this
     public bool IsSystem => Under("system");
 
     /// <summary>A goal is named by a pattern when its address matches the pattern's glob.</summary>
-    internal override bool Is(global::app.goal.pattern.@this pattern) => pattern.Matches(Address);
+    internal override bool Is(global::app.goal.pattern.@this pattern) => pattern.Matches(this);
 
     /// <summary>A test goal — its file is a <c>.test.goal</c>.</summary>
     [Debug]
@@ -378,8 +378,12 @@ public partial class @this
         }
         await using var _frame = frame;
 
+        // its moments, the actor's events loaded first: a load that fails is this start's answer, a wait cancelled too
+        global::app.@event.on.@this on;
+        try { on = await context.Actor!.@event.On(this, context.CancellationToken); }
+        catch (global::app.error.AppException ex) { return context.Error(ex.Error); }
+        catch (System.OperationCanceledException) { return context.Error(global::app.error.GoalError.Cancelled(context)); }
         // its steps, a return made in them ending as the frame counts it down
-        var on = await context.Actor!.@event.On(this);
         var answer = await on.before.Start(this, context);
         var result = answer is { Success: false } or { Handled: true } ? answer : frame.Leave(await Step.Start(context));
         return await on.after.Start(this, result, context);

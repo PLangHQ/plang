@@ -52,8 +52,9 @@ public abstract class side : IReadOnlyList<global::app.@event.@this>
     private protected async System.Threading.Tasks.ValueTask<global::app.@event.@this[]> Running(
         global::app.@event.@this[] events, global::app.actor.context.@this context)
     {
-        if (on.list is not { } actor || context.call.Scope?.Goal is not { } goal
-            || !System.Array.Exists(events, @event => @event.Skips(goal)) || !await actor.Skips(context)) return events;
+        if (on.list == null || context.call.Scope?.Goal is not { } goal || !System.Array.Exists(events, @event => @event.Skips(goal))
+            || (await context.Setting.Get<global::app.@event.setting.@this>()).Goal.Value != global::app.@event.setting.Goal.app)
+            return events;
         return System.Array.FindAll(events, @event => !@event.Skips(goal));
     }
 }

@@ -49,36 +49,35 @@ public sealed partial class @this
         await Code.Output(writer);
         var answer = writer.ToString();
         var problems = new List<string>();
-        // the step's variables and the answer's, each once — a variable is the same one whatever its case, as variables
-        // compare
+        // the step's words and its code, each read for its variables — a variable is the same one whatever its case, as
+        // variables compare
         var step = new global::app.type.item.variable.parser.@this(Text, context.App.type.list);
-        var stepped = step.Variable.Distinct().ToList();
-        var answers = new global::app.type.item.variable.parser.@this(answer, context.App.type.list).Variable.Distinct().ToList();
-        // whether one of the answer's variables names v — v itself, or a path through the app's variables that selects it
+        var code = new global::app.type.item.variable.parser.@this(answer, context.App.type.list);
+        // whether one of the code's variables names v — v itself, or a path through the app's variables that selects it
         async System.Threading.Tasks.Task<bool> Named(global::app.type.item.variable.@this v)
         {
-            foreach (var a in answers)
+            foreach (var a in code.Variable)
                 if (await a.Names(v, context)) return true;
             return false;
         }
         // each of the step's variables not named is told as the step writes it, to be copied exactly, beside the answer's
         // own when it wrote one the step's variables say was meant to be this one
-        foreach (var v in stepped)
+        foreach (var v in step.Variable.Distinct())
         {
             if (await Named(v)) continue;
             // the parser answers which of the step's variables an answer's starts most like, as its text
-            problems.Add(answers.Where(a => !stepped.Contains(a))
+            problems.Add(code.Variable.Where(a => !step.Variable.Contains(a))
                     .FirstOrDefault(a => global::app.type.item.variable.list.@this.Comparer.Equals(step.Nearest(a.Text), v.Text)) is { } near
                 ? $"step {Index}: {v.Text} is in the step but not in your answer: the step writes `{v.Text}`; your answer has `{near.Text}` — copy it exactly"
                 : $"step {Index}: {v.Text} is in the step but not in your answer: copy it exactly");
         }
         // and the other way: a variable the answer names that the step's words don't is invented — a
         // system variable (%!data%, %!error%) excepted
-        foreach (var v in answers)
-            if (v.Code.Root.IsProgram && !stepped.Contains(v)) problems.Add($"step {Index}: {v.Text} isn't in the step — use only the step's variables");
+        foreach (var v in code.Variable.Distinct())
+            if (v.Code.Root.IsProgram && !step.Variable.Contains(v)) problems.Add($"step {Index}: {v.Text} isn't in the step — use only the step's variables");
         // a %!…% the answer names that names nothing — no binding, shortcut, app member or module (%!photo.png%) —
         // reads nothing at run
-        foreach (var v in answers)
+        foreach (var v in code.Variable.Distinct())
             if (!await v.Code.Root.Names(context))
                 problems.Add($"step {Index}: {v.Text} names nothing plang has — a %!…% reads one of its own: %!data% (the last answer), a shortcut (%!goal%, %!step%, %!error%), %!app…%, or a module's (%!llm.setting.cache%)");
         // a quoted literal is held by one of the answer's values — each asked, as it answers for itself (a separator
@@ -216,6 +215,8 @@ public sealed partial class @this
     private async System.Threading.Tasks.Task<string?> Meant(string quoted, global::app.actor.context.@this context)
     {
         if (!quoted.StartsWith('"')) return null;
+        // the value made asks its type's create moment, so the asking actor's events load: at a build that is the
+        // builder's own actor (the check context is born on it), whose events its first goal start loaded already
         var read = await context.App.type.list.Kind("item", "json").Decode(System.Text.Encoding.UTF8.GetBytes(quoted), context);
         // Reading the literal as the text it means is a USE: the typed ask opens the json source and
         // parses it to its text ("BuilderChannel"). The untyped .Value() rests (the courier door), so it would

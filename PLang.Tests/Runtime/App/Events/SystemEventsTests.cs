@@ -9,36 +9,32 @@ public class SystemEventsTests
 
     // system/event/Hello.goal in `app`'s folder `root`: `when` `on` (an event path), it calls Say, which sets %said% to
     // `word`. Built in the shared test parent, so building it is no ask of the app's events.
-    private static async Task Hello(global::app.@this app, string root, string word, string on = "%!app.on.start%", string when = "before")
+    private static async Task Hello(global::app.@this app, string root, string word, string on = "%!app.on.start%", string when = "before",
+        string at = "/system/event/Hello.goal")
     {
         var context = global::PLang.Tests.Parent.Actor.Context;
-        var hello = Make.Goal(context, "Hello", "/system/event/Hello.goal",
+        var name = System.IO.Path.GetFileNameWithoutExtension(at);
+        var hello = Make.Goal(context, name, at,
             Make.Step($"{when} {on}, call Say", Make.Action(context, "on", "event", ("Event", on),
                 ("When", when), ("Action", Make.Call(context, "Say")))));
-        hello.Child.Add(Make.Goal(context, "Say", "/system/event/Hello.goal",
+        hello.Child.Add(Make.Goal(context, "Say", at,
             Make.Step($"set %said% = {word}", Make.Action(context, "variable", "set", Make.Param(context, "Name", "said", "variable"), ("Value", word)))));
-        var source = System.IO.Path.Combine(root, "system/event/Hello.goal");
+        var source = System.IO.Path.Combine(root, at.TrimStart('/'));
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(source)!);
-        await System.IO.File.WriteAllTextAsync(source, $"Hello\n- {when} {on}, call Say\n");
+        await System.IO.File.WriteAllTextAsync(source, $"{name}\n- {when} {on}, call Say\n");
         var pr = System.IO.Path.Combine(root, hello.Pr!.Raw.TrimStart('/'));
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(pr)!);
         await System.IO.File.WriteAllTextAsync(pr, await context.Pr(hello));
     }
 
     // system/event/Mark.goal in `root`, built in the shared test parent (so building it loads none of the apps tested):
-    // its own step sets %loaded%, in the memory of the actor whose load runs it
-    private static async Task Mark(string root)
-    {
-        var context = global::PLang.Tests.Parent.Actor.Context;
-        var mark = Make.Goal(context, "Mark", "/system/event/Mark.goal",
-            Make.Step("set %loaded% = yes", Make.Action(context, "variable", "set", Make.Param(context, "Name", "loaded", "variable"), ("Value", "yes"))));
-        var source = System.IO.Path.Combine(root, "system/event/Mark.goal");
-        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(source)!);
-        await System.IO.File.WriteAllTextAsync(source, "Mark\n- set %loaded% = yes\n");
-        var pr = System.IO.Path.Combine(root, mark.Pr!.Raw.TrimStart('/'));
-        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(pr)!);
-        await System.IO.File.WriteAllTextAsync(pr, await context.Pr(mark));
-    }
+    // it binds an event, so an actor whose load ran it holds one bound there (Marked). A load runs in its own context,
+    // so what a file sets stays in it; what it binds is the actor's.
+    private static Task Mark(string root) => Hello(null!, root, "marked", at: "/system/event/Mark.goal");
+
+    // whether actor's own load ran Mark: an event of its own bound there (one taken in from its maker is the maker's run)
+    private static bool Marked(global::app.actor.@this actor)
+        => actor.@event.Items().OfType<global::app.@event.call.@this>().Any(@event => @event.IsBoundIn("/system/event/Mark"));
 
     // the app's start, run before for its user
     private static async Task Start(global::app.@this app)
@@ -57,6 +53,18 @@ public class SystemEventsTests
         await Start(app).WaitAsync(TimeSpan.FromSeconds(20));
 
         await Assert.That(await app.actor.list.User.Context.Variable.GetValue("said")).IsEqualTo("hello");
+    }
+
+    // the os's own Hello (os/system/event/Hello.goal, its built .pr), loaded by a root app from the os's system/event/:
+    // at the app's start it writes out that it ran
+    [Test] public async Task TheOsHello_WritesOutAtARootAppsStart()
+    {
+        await using var app = new global::app.@this(Root()).Testing();
+        var output = new global::PLang.Tests.Shared.CapturedOutput(app);
+
+        await Start(app);
+
+        await Assert.That(output.Text).Contains("This is system event");
     }
 
     [Test] public async Task UnderSkip_NoSystemEventLoads()
@@ -110,6 +118,29 @@ public class SystemEventsTests
         await Assert.That((await sub.@event(user.Context)).Items().OfType<global::app.@event.inherited.@this>()).IsEmpty();
     }
 
+    // a sub app's own system/event/Start.goal replaces what its maker bound in the goal at /system/event/Start, never what
+    // it bound in a goal of the same name elsewhere (its /Start.goal)
+    [Test] public async Task ASubAppsOwnSystemEvent_ReplacesOnlyTheMakersEventFromTheSameAddress()
+    {
+        var root = Root();
+        await using var maker = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
+        await Hello(maker, root, "maker's system event", at: "/system/event/Start.goal");
+        await Hello(maker, root, "maker's start", "%!app.type.goal.on.start%", at: "/Start.goal");
+        var makers = maker.actor.list.User.Context;
+        await (await (await (await maker.goal.list.Find("/Start")).Value())!.Start(makers)).IsSuccess();
+
+        var subRoot = System.IO.Path.Combine(root, "sub");
+        await using var sub = new global::app.@this(subRoot, maker.actor.list.User);
+        await Hello(sub, subRoot, "sub", "%!app.on.start%", at: "/system/event/Start.goal");
+        var user = sub.actor.list.User;
+        // where each event taken in from the maker was bound (the os's own system events come down too)
+        var taken = (await sub.@event(user.Context)).Items().OfType<global::app.@event.inherited.@this>()
+            .Select(@event => @event.action?.Step?.Goal.Address).ToList();
+
+        await Assert.That(taken).Contains("/Start");
+        await Assert.That(taken).DoesNotContain("/system/event/Start");
+    }
+
     // a sub app's System, loading, takes in its maker's System's events: the maker's System loads, its User doesn't
     [Test] public async Task ASubAppsLoad_LoadsOnlyItsMakersActorOfItsRole()
     {
@@ -120,8 +151,8 @@ public class SystemEventsTests
 
         await sub.@event(sub.actor.list.System.Context);
 
-        await Assert.That(await maker.actor.list.System.Context.Variable.GetValue("loaded")).IsEqualTo("yes");
-        await Assert.That((await maker.actor.list.User.Context.Variable.Get("loaded")).IsInitialized).IsFalse();
+        await Assert.That(Marked(maker.actor.list.System)).IsTrue();
+        await Assert.That(Marked(maker.actor.list.User)).IsFalse();
     }
 
     // a sub app over its maker's folder has no system/event of its own: the folder's files are the maker's, run there,
@@ -137,8 +168,8 @@ public class SystemEventsTests
 
         var events = (await sub.@event(sub.actor.list.User.Context)).Items().ToList();
 
-        await Assert.That((await sub.actor.list.User.Context.Variable.Get("loaded")).IsInitialized).IsFalse();
-        await Assert.That((await sub.actor.list.System.Context.Variable.Get("loaded")).IsInitialized).IsFalse();
+        await Assert.That(Marked(sub.actor.list.User)).IsFalse();
+        await Assert.That(Marked(sub.actor.list.System)).IsFalse();
         await Assert.That(events.OfType<global::app.@event.inherited.@this>()).IsNotEmpty();
         await Assert.That(events.OfType<global::app.@event.call.@this>()).IsEmpty();
     }
@@ -234,6 +265,135 @@ public class SystemEventsTests
         await sub.@event(own.Context);
 
         await Assert.That(Loads(own)).IsEqualTo(1);
+    }
+
+    // system/event/<name>.goal in `root`, written and never built
+    private static async Task Unbuilt(string root, string name)
+    {
+        var source = System.IO.Path.Combine(root, $"system/event/{name}.goal");
+        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(source)!);
+        await System.IO.File.WriteAllTextAsync(source, $"{name}\n- set %loaded% = yes\n");
+    }
+
+    private static global::app.goal.@this Work()
+    {
+        var parent = global::PLang.Tests.Parent.Actor.Context;
+        return Make.Goal(parent, "Work", Make.Step("set %done% = yes",
+            Make.Action(parent, "variable", "set", Make.Param(parent, "Name", "done", "variable"), ("Value", "yes"))));
+    }
+
+    // fail closed: a system event file that doesn't load fails the actor's load with its error, whole — the goal whose
+    // start asked answers it, and nothing the load bound stays
+    [Test] public async Task AnUnbuiltSystemEventFile_FailsTheLoad_TheGoalAnswersItsError_NothingStays()
+    {
+        var root = Root();
+        await using var app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
+        await Hello(app, root, "hello");
+        await Unbuilt(root, "Mark");
+        var user = app.actor.list.User;
+
+        var started = await Work().Start(user.Context);
+
+        await Assert.That(started.Error?.Key).IsEqualTo("GoalNotBuilt");
+        await Assert.That(user.@event.Items()).IsEmpty();
+        await Assert.That((await user.Context.Variable.Get("done")).IsInitialized).IsFalse();
+    }
+
+    // system/event/Slow.goal in `root`: it sleeps, then binds as Mark does — a load that takes a while
+    private static async Task Slow(string root)
+    {
+        var context = global::PLang.Tests.Parent.Actor.Context;
+        var slow = Make.Goal(context, "Slow", "/system/event/Slow.goal",
+            Make.Step("wait 500ms", Make.Action(context, "timer", "sleep", ("Duration", "500ms"))));
+        var source = System.IO.Path.Combine(root, "system/event/Slow.goal");
+        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(source)!);
+        await System.IO.File.WriteAllTextAsync(source, "Slow\n- wait 500ms\n");
+        var pr = System.IO.Path.Combine(root, slow.Pr!.Raw.TrimStart('/'));
+        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(pr)!);
+        await System.IO.File.WriteAllTextAsync(pr, await context.Pr(slow));
+    }
+
+    // the load is the actor's: an asker cancelled while it runs stops waiting and answers Cancelled; another asker
+    // waiting on the same load gets the events, and the load ran once
+    [Test] public async Task AnAskerCancelledWhileTheEventsLoad_StopsWaiting_TheOtherGetsTheEvents()
+    {
+        var root = Root();
+        await Mark(root);
+        await Slow(root);
+        await using var app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
+        var user = app.actor.list.User;
+        // the first asker's flow, cancelled while the load runs: its cancellation pushed on the actor's own context
+        using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+        user.Context.PushCancellation(cts);
+        global::app.data.@this stopped, ran;
+        try
+        {
+            var first = Work().Start(user.Context);
+            using var other = user.Context.Child(user, System.Threading.CancellationToken.None);
+            ran = await Work().Start(other);
+            stopped = await first;
+        }
+        finally { user.Context.PopCancellation(); }
+
+        await Assert.That(stopped.Error?.Key).IsEqualTo("Cancelled");
+        await ran.IsSuccess();
+        await Assert.That(Marked(user)).IsTrue();
+        await Assert.That(user.@event.Items().OfType<global::app.@event.call.@this>().Count(@event => @event.IsBoundIn("/system/event/Mark"))).IsEqualTo(1);
+    }
+
+    // the file built, the next ask loads it, and the goal runs
+    [Test] public async Task AFixedSystemEventFile_LoadsAtTheNextAsk()
+    {
+        var root = Root();
+        await using var app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
+        await Hello(app, root, "hello");
+        await Unbuilt(root, "Mark");
+        var user = app.actor.list.User;
+        await Assert.That((await Work().Start(user.Context)).Error?.Key).IsEqualTo("GoalNotBuilt");
+
+        await Mark(root);
+        await (await Work().Start(user.Context)).IsSuccess();
+
+        // Hello's event and Mark's, each bound once
+        await Assert.That(Loads(user)).IsEqualTo(2);
+        await Assert.That(Marked(user)).IsTrue();
+        await Assert.That(await user.Context.Variable.GetValue("done")).IsEqualTo("yes");
+    }
+
+    // a sub app's own broken file fails the sub app's load; its maker's loads and runs
+    [Test] public async Task ASubAppsBrokenSystemEventFile_FailsItsLoad_NotItsMakers()
+    {
+        var root = Root();
+        await using var maker = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
+        await Hello(maker, root, "maker");
+        var subRoot = System.IO.Path.Combine(root, "sub");
+        await using var sub = new global::app.@this(subRoot, maker.actor.list.User);
+        await Unbuilt(subRoot, "Mark");
+
+        await Assert.That((await Work().Start(sub.actor.list.User.Context)).Error?.Key).IsEqualTo("GoalNotBuilt");
+        await (await Work().Start(maker.actor.list.User.Context)).IsSuccess();
+
+        await Assert.That(Loads(maker.actor.list.User)).IsEqualTo(1);
+        await Assert.That(sub.actor.list.User.@event.Items()).IsEmpty();
+    }
+
+    // a build's Cover asks whether the code's variables name the step's: a path through the app's variables is read hop
+    // by hop up to the first variable it reaches, never on into its moments, so asking loads no actor's events
+    [Test] public async Task WhetherAPathToAVariablesMoment_NamesAVariable_LoadsNoEvents()
+    {
+        var root = Root();
+        await Mark(root);
+        await using var app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
+        var user = app.actor.list.User;
+        var path = new global::app.type.item.variable.parser.@this("%!app.variable[\"count\"].on.set%", app.type.list).Variable.Single();
+        var other = new global::app.type.item.variable.parser.@this("%other%", app.type.list).Variable.Single();
+        var count = new global::app.type.item.variable.parser.@this("%count%", app.type.list).Variable.Single();
+
+        await Assert.That(await path.Names(other, user.Context)).IsFalse();
+        await Assert.That(await path.Names(count, user.Context)).IsTrue();
+
+        await Assert.That(user.@event.Items()).IsEmpty();
+        await Assert.That(Marked(user)).IsFalse();
     }
 
     [Test] public async Task ACreateEventASystemEventBinds_RunsForAValueTheUserMakes()

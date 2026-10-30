@@ -3,7 +3,7 @@ namespace app.module.on;
 /// <summary>
 /// Binds a call on a moment: <see cref="Action"/> runs <see cref="When"/> (before or after) <see cref="Event"/> — an
 /// item's moment, reached by its path: <c>%!app.type.goal.on.start%</c> (each goal starting),
-/// <c>%!app.module.file.read.on.start%</c> (each file.read), <c>%!channels.audit.on.write%</c> (a channel writing).
+/// <c>%!app.module.file.read.on.start%</c> (each file.read), <c>%!channel.audit.on.write%</c> (a channel writing).
 /// The call reads <c>%!event%</c>: the event, with <c>%!event!item%</c> (what it ran for) and <c>%!event!data%</c> (the
 /// value so far; a failure is <c>%!error%</c>) — its own, for as long as it runs. Bound for this actor: a goal run as
 /// another actor never runs it. Answers the event — <c>on.unbind</c> takes it off.

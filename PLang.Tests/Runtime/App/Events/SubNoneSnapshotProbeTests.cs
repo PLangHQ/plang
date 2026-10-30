@@ -25,10 +25,15 @@ public class SubNoneSnapshotProbeTests
     private static System.Threading.Tasks.ValueTask<global::app.data.@this> Read(string variable, global::app.actor.context.@this context)
         => new global::app.type.item.variable.@this(variable.Trim('%'), context.App.type.list).Start(context);
 
+    // the events the sub app's user holds that a program bound (the os's system events, taken in too, left out); a read
+    // that fails is a failed test, never a count
     private static async Task<int> Count(global::app.@this app)
     {
-        var read = await Read("%!app.event.list%", app.actor.list.User.Context);
-        return read.Success && read.Peek() is global::app.type.item.list.@this list ? list.CountRaw : -1;
+        var context = app.actor.list.User.Context;
+        var read = await Read("%!app.event.list%", context);
+        await read.IsSuccess();
+        return (read.Peek() as global::app.type.item.list.@this<global::app.@event.@this>)!.Items(context)
+            .Count(row => row.Peek() is global::app.@event.@this @event && @event.action?.Step?.Goal.IsSystem != true);
     }
 
     private async Task<(int before, int after, string? resumed)> Run(string sub)
@@ -55,7 +60,10 @@ public class SubNoneSnapshotProbeTests
     {
         var (before, after, resumed) = await Run("none");
         await TestContext.Current!.OutputWriter.WriteLineAsync($"P8e Sub=none: sub events before resume={before} after={after} resume={resumed}");
-        await Assert.That(after).IsEqualTo(before);
+        await Assert.That(before).IsEqualTo(0);
+        // the maker's snapshot is refused in the sub app, so it binds nothing there
+        await Assert.That(resumed).IsEqualTo("SnapshotAppMismatch");
+        await Assert.That(after).IsEqualTo(0);
     }
 
     // control: Sub=inherit is in the sub app from its first ask
@@ -64,6 +72,8 @@ public class SubNoneSnapshotProbeTests
     {
         var (before, after, resumed) = await Run("inherit");
         await TestContext.Current!.OutputWriter.WriteLineAsync($"P8e Sub=inherit: sub events before resume={before} after={after} resume={resumed}");
-        await Assert.That(before).IsGreaterThan(0);
+        await Assert.That(before).IsEqualTo(1);
+        await Assert.That(resumed).IsEqualTo("SnapshotAppMismatch");
+        await Assert.That(after).IsEqualTo(1);
     }
 }

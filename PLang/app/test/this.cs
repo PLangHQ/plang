@@ -133,7 +133,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         var user = app.actor.list.User.Context;
         Begin();
-        global::app.@event.@this[] watching = [await app.test.list.Report.Coverage.Watch(user),.. await Time(user)];
+        // bound inside the run's try: an app whose events fail to load fails this test, and what was bound comes off
+        global::app.@event.@this[] watching = [];
 
         var setting = await context.Setting.Get<global::app.test.setting.@this>();
         // its llm questions answered from the file beside it, unless the run asks live: registered on its own app, whose
@@ -152,6 +153,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         var timedOut = () => cts.IsCancellationRequested && !context.CancellationToken.IsCancellationRequested;
         try
         {
+            watching = [await app.test.list.Report.Coverage.Watch(user)];
+            watching = [.. watching, .. await Time(user)];
             var loaded = await app.goal.Load(Goal.Path!.ToString());
             var result = loaded.Success
                 ? await ((await loaded.Value()) as global::app.goal.@this)!.Start(user)

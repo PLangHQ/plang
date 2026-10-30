@@ -144,8 +144,8 @@ public partial class Set : IContext, IScope, IKeep
         // The value as the step gave it, read once, here: a reference the Data it names, unread (a whole variable that
         // holds nothing is nothing to assign: VariableNotFound); any other value itself, unopened. What it gives is what
         // flows on.
-        var given = Value.IsVariable && await Value.Given() is { } binding ? binding : Value;
-        if (!given.Success) return given;
+        var value = Value.IsVariable && await Value.Given() is { } data ? data : Value;
+        if (!value.Success) return value;
 
         // An omitted `as` clause is an EMPTY slot, not C# null — it holds the null item, which is not truthy. With no type,
         // just set the data. Data flows: bind what was given under the target name, without inspecting or computing it
@@ -153,7 +153,7 @@ public partial class Set : IContext, IScope, IKeep
         // dropped at build, never handled here. The variable writes itself: a bare name rebinds, `%x.a%` sets a member,
         // `%x!cost%` the binding's Properties, `%!llm.setting.cache%` a setting's option for this run.
         var typeValue = Type == null || !await Type.ToBooleanAsync() ? null : await Type.Value();
-        if (typeValue == null) return await name.Set(Binding(name, given), Context);
+        if (typeValue == null) return await name.Set(Binding(name, value), Context);
 
         // Forced type via [Type]: the type makes the value. Conversion failure surfaces as Data.Error (Success=false) —
         // nothing is written in that case, so the binding stays whatever it was. For primitives this is straight coercion
@@ -183,14 +183,14 @@ public partial class Set : IContext, IScope, IKeep
         // A value that already is the declared type is kept as it is (`%!data%` is the Data it names), never read and
         // never converted: a file stays the file, unread, and is no new birth. Only a value that isn't the type is opened
         // and converted below (a re-kind and a strict declaration go on too).
-        if (!type.Strict && given.Peek() is { IsNull: false } item && item.Is(type)
+        if (!type.Strict && value.Peek() is { IsNull: false } item && item.Is(type)
             && (type.kind.IsEmpty || string.Equals(item.Type.kind.Name, type.kind.Name, StringComparison.OrdinalIgnoreCase)))
-            return await name.Set(Binding(name, given), Context);
+            return await name.Set(Binding(name, value), Context);
 
         // Kind-derivation and the strict probe read the IN-MEMORY value only: a raw-backed (unparsed) value contributes
         // null — deriving a kind from content would force the parse the verbatim fast-path below exists to avoid. Content
         // is read (door opened) only for a value that isn't the declared type.
-        object? sourceValue = given.RawUntouched ? null : await given.Value();
+        object? sourceValue = value.RawUntouched ? null : await value.Value();
         // The value as it is — what the declared type is handed to make itself from.
         object? converted = sourceValue;
         // The strict probe below reasons over the raw CLR face (ctor matching, magic-byte sniffing) — a born-typed
@@ -226,20 +226,20 @@ public partial class Set : IContext, IScope, IKeep
         // (file.read/channel.read stamp {table,csv}/{object,json} and the same stamp lands here). Store it as-is so it
         // stays lazy: scalar %var% remains the raw source form and verbatim passthrough holds. Re-materializing would
         // parse it on store and defeat the whole lazy path.
-        if (given.RawUntouched && given.Type is { } vt
+        if (value.RawUntouched && value.Type is { } vt
             && string.Equals(vt.Name, type.Name, StringComparison.OrdinalIgnoreCase)
             && string.Equals(vt.kind.Name, type.kind.Name, StringComparison.OrdinalIgnoreCase))
-            return await name.Set(Binding(name, given), Context);
+            return await name.Set(Binding(name, value), Context);
 
-        if (given.RawUntouched) converted = await given.Value();
+        if (value.RawUntouched) converted = await value.Value();
 
         // The value composes the declared type as a facet under a DIFFERENT name (an image has-a path, so an image bound
         // to a `path` slot satisfies `path`) — keep its own richer type; downgrading would drop the bytes. Same-name is
         // excluded so `as text/md` over `{text}` (and strict) still applies. Ask the VALUE — its type history answers "an
         // image is-a path" from the "path" entry it was born with (no CLR-inheritance lattice on the type entity).
-        var keepAsIs = given.Type != null
-            && !string.Equals(given.Type.Name, type.Name, StringComparison.OrdinalIgnoreCase)
-            && given.Is(type);
+        var keepAsIs = value.Type != null
+            && !string.Equals(value.Type.Name, type.Name, StringComparison.OrdinalIgnoreCase)
+            && value.Is(type);
 
         // `as <type>` is a converter: the TYPE makes a value of itself (kind-aware), and a value converted to another type
         // is born — its type's on.create fires (a before may refuse or answer instead). A byte-backed family (image) keeps
@@ -248,7 +248,7 @@ public partial class Set : IContext, IScope, IKeep
         // {item, kind: json} would never reach type.Create and would stay text. Is reads the kind (a text is an item but
         // not {item, json}), so a format-typed literal is re-typed through the type's own kind-aware birth (the kind
         // decides eager vs lazy).
-        if (!keepAsIs && converted != null && !given.Is(type))
+        if (!keepAsIs && converted != null && !value.Is(type))
         {
             // The build throws on a bad conversion (the throw boundary) — converted is a materialized leaf, so this
             // re-types eagerly. A kind-validatable target defers: its failure surfaces when the value loads (its own load
@@ -288,7 +288,7 @@ public partial class Set : IContext, IScope, IKeep
                         "StrictKindMismatch", 400));
         }
 
-        CopyProperties(given, typedData);
+        CopyProperties(value, typedData);
         return await name.Set(typedData, Context);
     }
 

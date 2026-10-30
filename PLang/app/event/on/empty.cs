@@ -25,7 +25,7 @@ public sealed class empty : @this
     /// <summary>The moment named <paramref name="name"/>, shared and closed: made once for the class. Null when there is
     /// no moment of that name.</summary>
     public override @this? this[string name]
-        => Core.Contains(name) || _names.Contains(name) ? Made(name) : null;
+        => IsMoment(name) ? Made(name) : null;
 
     /// <summary>The moment named <paramref name="name"/>, made with sides closed to events.</summary>
     private protected override @this Moment(string name) => new empty((empty)this, name);

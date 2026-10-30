@@ -1,7 +1,7 @@
 namespace app.module.on;
 
 /// <summary>Takes an event off its moment (the one <c>on.event</c> answered): it runs no more. One its maker made, which
-/// this app took in at its birth, is refused: it isn't this app's to take off.</summary>
+/// this app took in when its events loaded, is refused: it isn't this app's to take off.</summary>
 [Action("unbind", Cacheable = false)]
 public partial class OnUnbind : IContext
 {

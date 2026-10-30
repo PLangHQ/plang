@@ -48,10 +48,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
 
     /// <summary>The list of <paramref name="item"/> for this actor, its events loaded first if they never were: made on
     /// the first ask with every event whose Item has it, in the order bound; the same after that. Once loaded (or inside
-    /// the flow that is loading) it answers at once, nothing awaited.</summary>
-    internal System.Threading.Tasks.ValueTask<on.@this> On(global::app.type.item.@this item)
+    /// the flow that is loading) it answers at once, nothing awaited. An asker whose <paramref name="cancel"/> fires
+    /// while the events load stops waiting; the load goes on.</summary>
+    internal System.Threading.Tasks.ValueTask<on.@this> On(global::app.type.item.@this item, System.Threading.CancellationToken cancel = default)
     {
-        var loaded = Loaded();
+        var loaded = Loaded(cancel);
         if (!loaded.IsCompletedSuccessfully) return Awaited(loaded, item);
         if (_on.TryGetValue(item, out var on)) return new(on);
         lock (_gate) return new(_on.GetOrAdd(item, List));
@@ -66,10 +67,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
 
     /// <summary>The moments a set or a remove of <paramref name="variable"/> runs, the events loaded first: the variable's
     /// list when one is made or an event is bound on it (which makes it, the variable type's events in it too), else the
-    /// variable type's — a set of a variable nothing is bound on makes no list.</summary>
-    internal System.Threading.Tasks.ValueTask<on.@this> Moments(global::app.type.item.variable.@this variable)
+    /// variable type's — a set of a variable nothing is bound on makes no list. An asker whose <paramref name="cancel"/>
+    /// fires while the events load stops waiting.</summary>
+    internal System.Threading.Tasks.ValueTask<on.@this> Moments(global::app.type.item.variable.@this variable,
+        System.Threading.CancellationToken cancel = default)
     {
-        var loaded = Loaded();
+        var loaded = Loaded(cancel);
         if (!loaded.IsCompletedSuccessfully) return Awaited(loaded, variable);
         if (_on.TryGetValue(variable, out var on)) return new(on);
         foreach (var @event in _events)
@@ -106,14 +109,15 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
         return @event;
     }
 
-    // Binds event as the events stand: it joins this actor's events, and every list made that it runs for.
+    // Binds event as the events stand: it joins this actor's events, and every list made that it runs for. Each side it
+    // joins is found first: a list whose item has no moment of its name refuses it (NoEvent) before it joins anything.
     private void Join(global::app.@event.@this @event)
     {
         lock (_gate)
         {
+            var sides = Made.Where(on => @event.Item.Has(on.item!)).Select(on => on.Add(@event.Name)[@event.When]).ToList();
             _events = [.. _events, @event];
-            foreach (var on in Made)
-                if (@event.Item.Has(on.item!)) on.Add(@event);
+            foreach (var side in sides) side.Add(@event);
         }
     }
 
@@ -146,14 +150,15 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
 
     /// <summary>This actor's events, loaded: at once when they are, or inside the flow that is loading them (which goes on
     /// with what is loaded so far); else the one load, started by whoever asks first — claimed, never under a lock, so
-    /// its first part runs with nothing held. A load that failed is let go, so the next ask loads again.</summary>
-    internal System.Threading.Tasks.ValueTask Loaded()
+    /// its first part runs with nothing held. A load that failed is let go, so the next ask loads again. An asker whose
+    /// <paramref name="cancel"/> fires stops waiting; the load is the actor's and goes on.</summary>
+    internal System.Threading.Tasks.ValueTask Loaded(System.Threading.CancellationToken cancel = default)
     {
         if (_load is { Task.IsCompletedSuccessfully: true } || _loading.Value) return default;
         var load = new System.Threading.Tasks.TaskCompletionSource();
-        if (System.Threading.Interlocked.CompareExchange(ref _load, load, null) is { } started) return new(started.Task);
+        if (System.Threading.Interlocked.CompareExchange(ref _load, load, null) is { } started) return new(started.Task.WaitAsync(cancel));
         _ = Load(load);
-        return new(load.Task);
+        return new(load.Task.WaitAsync(cancel));
     }
 
     // The load, answered on done: what this actor takes in from its maker's (a sub app's), then its system events — the
@@ -168,32 +173,35 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
         try
         {
             if (_actor.App.actor.list.System is { } system && !system.Equals(_actor)) await system.@event.Loaded();
-            var files = await Files(_actor.Context);
-            foreach (var made in await _actor.App.origin.@event(_actor.Role))
-                if (made.File is not { } file || !files.Contains(file, StringComparer.OrdinalIgnoreCase))
-                    Join(new inherited.@this(made, _actor.App));
-            await Run(files, _actor.Context);
+            // the actor's own, under its lifetime: no flow's cancellation reaches it, so one asker that stops waiting
+            // never fails the load the others await
+            using var context = _actor.Context.Child(_actor, _actor.CancellationToken);
+            var files = await Files(context);
+            foreach (var @event in await _actor.App.origin.@event(_actor.Role))
+                if (!files.Exists(@event.IsBoundIn))
+                    Join(new inherited.@this(@event, _actor.App));
+            await Run(files, context);
             done.SetResult();
         }
         // a load that failed isn't kept, all or nothing: what it joined comes off (out of the lists made too), its askers
         // get its failure, and the next ask loads again — binding each event once
         catch (System.Exception ex)
         {
-            foreach (var joined in _events[before..]) Remove(joined);
+            foreach (var @event in _events[before..]) Remove(@event);
             System.Threading.Interlocked.CompareExchange(ref _load, null, done);
             done.SetException(ex);
         }
     }
 
-    // The names of the system/event/ files this actor runs, in order: from the folders the app's origin names (the root:
-    // its own then the os's; a sub app: its own only), each name once. None under event.setting.system skip, or with no
-    // folder of its own (a sub app over its maker's). Nothing is run: a sub app's own file replaces what its maker bound
-    // from the file of that name.
+    // The system/event/ files this actor runs, in order, each as its plang address (/system/event/<stem>): from the
+    // folders the app's origin names (the root: its own then the os's; a sub app: its own only), each address once. None
+    // under event.setting.system skip, or with no folder of its own (a sub app over its maker's). Nothing is run: a sub
+    // app's own file replaces what its maker bound in the goal at that address.
     private async System.Threading.Tasks.Task<List<string>> Files(global::app.actor.context.@this context)
     {
-        var names = new List<string>();
+        var addresses = new List<string>();
         var folders = context.App.origin.Events(context.App).ToList();
-        if (folders.Count == 0 || (await context.Setting.Get<setting.@this>()).System.Value == setting.System.skip) return names;
+        if (folders.Count == 0 || (await context.Setting.Get<setting.@this>()).System.Value == setting.System.skip) return addresses;
         foreach (var folder in folders)
         {
             if (!await (await folder.Exists(context)).ToBooleanAsync()) continue;
@@ -201,31 +209,28 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
             if (!listed.Success || await listed.Value() is not { } files) continue;
             foreach (var file in files.Items())
             {
-                var name = file.Name.ToString();
-                if (!names.Contains(name, StringComparer.OrdinalIgnoreCase)) names.Add(name);
+                var address = "/system/event/" + file.Stem;
+                if (!addresses.Contains(address, StringComparer.OrdinalIgnoreCase)) addresses.Add(address);
             }
         }
-        return names;
+        return addresses;
     }
 
-    // Runs the system/event/ files named as this actor, each loaded at its plang path, /system/event/<name>, as the goal
-    // list finds it (the app's own copy first, else the os's), so it is one of plang's own goals. A file that doesn't
-    // load is said on the error channel, and the next one loads.
+    // Runs the system/event/ files at the addresses as this actor, each loaded as the goal list finds it (the app's own
+    // copy first, else the os's), so it is one of plang's own goals. A file that doesn't load or doesn't run fails the
+    // load with its Error, whole: thrown to the load, which takes off what it joined. A run cancelled meanwhile is the
+    // cancellation, never the file's failure.
     private async System.Threading.Tasks.Task Run(List<string> files, global::app.actor.context.@this context)
     {
-        foreach (var name in files)
+        foreach (var address in files)
         {
-            var goal = await context.App.goal.list.Load(global::app.type.item.path.@this.Resolve("/system/event/" + name, context));
+            var goal = await context.App.goal.list.Load(global::app.type.item.path.@this.Resolve(address + ".goal", context));
             var started = goal.Success && await goal.Value() is global::app.goal.@this bound ? await bound.Start(context) : goal;
-            if (!started.Success && context.Actor!.Channel.Get(global::app.channel.list.@this.Error) is { } error)
-                await error.WriteText($"the system event {name} didn't load: {started.Error?.Message}");
+            if (started.Success) continue;
+            context.CancellationToken.ThrowIfCancellationRequested();
+            throw new global::app.error.AppException(started.Error!);
         }
     }
-
-    /// <summary>Whether this actor's events may skip a run in <paramref name="context"/>: <c>event.setting.goal</c> is app,
-    /// so an event left out inside a goal of plang's own (<see cref="global::app.@event.@this.Skips"/>) is.</summary>
-    internal async System.Threading.Tasks.ValueTask<bool> Skips(global::app.actor.context.@this context)
-        => (await context.Setting.Get<setting.@this>()).Goal.Value == setting.Goal.app;
 
     // ---- what a snapshot keeps ----
 

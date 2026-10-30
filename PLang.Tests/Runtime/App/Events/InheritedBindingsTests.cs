@@ -1,8 +1,8 @@
 namespace PLang.Tests.App.Events;
 
-// A sub app's actor is born holding what its maker's actor of its role had bound then, each event taken in as its own
-// (an inherited event): it runs for the sub app's actor, the maker's first, and the sub app can't take it off. What the
-// maker binds after never reaches it.
+// A sub app's actor, when its events first load, takes in what its maker's actor of its role has bound then, each event
+// as its own (an inherited event): it runs for the sub app's actor, the maker's first, and the sub app can't take it off.
+// What the maker binds after that load never reaches it.
 public class InheritedBindingsTests
 {
     private static global::app.@this App() => new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
@@ -18,7 +18,7 @@ public class InheritedBindingsTests
         => await (await context.Actor!.@event.On(item)).before.Start(item, context);
 
     [Test]
-    public async Task ASubApp_TakesInItsMakersEvent_AtBirth_AndRunsItForItsUser()
+    public async Task ASubApp_TakesInItsMakersEvent_WhenItsEventsLoad_AndRunsItForItsUser()
     {
         await using var maker = App();
         var item = maker.actor.list.User.Context.Dict();

@@ -61,9 +61,11 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     /// index). A C# event has none.</summary>
     internal virtual global::app.goal.step.action.@this? action => null;
 
-    /// <summary>The name of the file its <c>on.event</c> step sits in — a system event's, which a sub app's own file of
-    /// that name replaces. A C# event has none.</summary>
-    internal string? File => action?.Step?.Goal.Path?.Name.ToString();
+    /// <summary>Whether its <c>on.event</c> step sits in the goal at <paramref name="address"/>, the app-absolute address
+    /// (<c>/system/event/Hello</c>) — a system event's file, which a sub app's own file at that address replaces. A C#
+    /// event sits in none.</summary>
+    internal bool IsBoundIn(string address)
+        => string.Equals(action?.Step?.Goal.Address, address, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>The refusal of a saved event, or a saved item's events, that doesn't read back: thrown to the read
     /// boundary.</summary>

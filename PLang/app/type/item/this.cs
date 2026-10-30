@@ -464,18 +464,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// correct semantics (a carried host IS shared, per the value model) and the
     /// thing that keeps the clone bounded.
     /// </summary>
-    protected internal virtual @this Clone()
-    {
-        // a copy is a new value: nothing is bound on it (its events would reach the actors and the app)
-        var copy = (@this)MemberwiseClone();
-        copy._on = null;
-        var deep = Force.DeepCloner.DeepClonerExtensions.DeepClone(copy);
-        deep._on = null;   // its class's shared ones, not a copy of the original's
-        return deep;
-    }
-
-    // an action's own moments, holding its clauses for every actor (on.error, on.cache, on.timeout); a copy holds none
-    private protected global::app.@event.on.@this? _on;
+    protected internal virtual @this Clone() => Force.DeepCloner.DeepClonerExtensions.DeepClone(this);
 
     /// <summary>The variables this value holds, each once: a template's <c>%…%</c>, a container's
     /// entries', a variable itself. Read-only, born with the value; empty when none.</summary>

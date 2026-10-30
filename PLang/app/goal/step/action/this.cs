@@ -85,8 +85,20 @@ public partial class @this
         _on = new global::app.@event.on.@this(this);
     }
 
+    // its own moments, holding its clauses for every actor (on.error, on.cache, on.timeout); a copy holds none
+    private global::app.@event.on.@this? _on;
+
     // its own moments, holding its clauses; a copy holds none, so its class's shared, closed ones
     private global::app.@event.on.@this Clauses => _on ?? global::app.@event.on.empty.Of(GetType());
+
+    /// <summary>A copy is a new action: nothing is bound on it, its clauses' events would reach the actors and the app.
+    /// It holds no moments of its own, so its class's shared ones.</summary>
+    protected internal override global::app.type.item.@this Clone()
+    {
+        var copy = (@this)MemberwiseClone();
+        copy._on = null;
+        return Force.DeepCloner.DeepClonerExtensions.DeepClone(copy);
+    }
 
     // what an actor's events hold this action's moments under: its catalog action's, the program's, a composed one's
     // and the catalog element's alike
@@ -188,7 +200,11 @@ public partial class @this
         }
         await using var _call = call;
 
-        var on = await context.Actor!.@event.On(Catalog);
+        // its moments, the actor's events loaded first: a load that fails is this action's answer, a wait cancelled too
+        global::app.@event.on.@this on;
+        try { on = await context.Actor!.@event.On(Catalog, context.CancellationToken); }
+        catch (global::app.error.AppException ex) { return context.Error(ex.Error); }
+        catch (System.OperationCanceledException) { return context.Error(global::app.error.GoalError.Cancelled(context)); }
         var data = await Attempt(on, context);
 
         // The error outcome — after the attempt, so a cache stores only the real work and a recovery runs outside the

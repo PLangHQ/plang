@@ -148,7 +148,11 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     public virtual async Task<global::app.data.@this> WriteAsync(global::app.data.@this data, CancellationToken ct = default)
     {
         var context = Context;
-        var on = (await context.Actor!.@event.On(this)).write;
+        // the channel's moments, the actor's events loaded first: a load that fails is the write's answer, a wait cancelled too
+        global::app.@event.on.@this on;
+        try { on = (await context.Actor!.@event.On(this, ct)).write; }
+        catch (global::app.error.AppException ex) { return context.Error(ex.Error); }
+        catch (OperationCanceledException) { return context.Error(global::app.error.GoalError.Cancelled(context)); }
         var answer = await on.before.Start(this, context, data);
         global::app.data.@this result;
         if (answer is { Success: false } or { Handled: true }) result = Refused(answer);
@@ -173,7 +177,10 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     public virtual async Task<global::app.data.@this> ReadAsync(CancellationToken ct = default)
     {
         var context = Context;
-        var on = (await context.Actor!.@event.On(this)).read;
+        global::app.@event.on.@this on;
+        try { on = (await context.Actor!.@event.On(this, ct)).read; }
+        catch (global::app.error.AppException ex) { return context.Error(ex.Error); }
+        catch (OperationCanceledException) { return context.Error(global::app.error.GoalError.Cancelled(context)); }
         var answer = await on.before.Start(this, context);
         global::app.data.@this result;
         if (answer is { Success: false } or { Handled: true }) result = Refused(answer);
@@ -198,7 +205,10 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     public virtual async Task<global::app.data.@this> AskAsync(module.output.ask action, CancellationToken ct = default)
     {
         var context = action.Context;
-        var on = (await context.Actor!.@event.On(this)).ask;
+        global::app.@event.on.@this on;
+        try { on = (await context.Actor!.@event.On(this, ct)).ask; }
+        catch (global::app.error.AppException ex) { return context.Error(ex.Error); }
+        catch (OperationCanceledException) { return context.Error(global::app.error.GoalError.Cancelled(context)); }
         var answer = await on.before.Start(this, context);
         global::app.data.@this result;
         if (answer is { Success: false } or { Handled: true }) result = Refused(answer);

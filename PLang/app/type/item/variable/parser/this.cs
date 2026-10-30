@@ -90,10 +90,10 @@ public sealed class @this
     private variable.@this? One()
     {
         // a bare root name (`count`, `%count%`): the variable made at once, no reading hop by hop
-        var bare = _text.StartsWith('%') && _text.Length > 2 && _text[^1] == '%' ? _text[1..^1] : _text;
-        if (bare.Length > 0 && IsStart(bare[0]) && Root(bare))
-            return new variable.@this(bare.Length == _text.Length ? $"%{bare}%" : _text,
-                new code.@this(new code.Variable(bare, null, Hop<code.Variable>()), Code), _types[typeof(variable.@this)]);
+        var name = _text.StartsWith('%') && _text.Length > 2 && _text[^1] == '%' ? _text[1..^1] : _text;
+        if (name.Length > 0 && IsStart(name[0]) && Root(name))
+            return new variable.@this(name.Length == _text.Length ? $"%{name}%" : _text,
+                new code.@this(new code.Variable(name, null, Hop<code.Variable>()), Code), _types[typeof(variable.@this)]);
         if (!_text.StartsWith('%'))
         {
             var named = new @this($"%{_text}%", _types);

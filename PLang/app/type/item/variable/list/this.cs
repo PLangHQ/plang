@@ -196,14 +196,19 @@ public partial class @this
 
     // The moments a set or a remove of `variable` runs for this memory's actor, as its events answer for it.
     private async System.Threading.Tasks.ValueTask<global::app.@event.on.@this?> Moments(global::app.type.item.variable.@this? variable)
-        => _context.Actor is not { } actor || variable is null ? null : await actor.@event.Moments(variable);
+        => _context.Actor is not { } actor || variable is null ? null : await actor.@event.Moments(variable, _context.CancellationToken);
 
     // What is bound before `variable` changes to `value` (the moment `moment`): null to go on — nothing bound, or nothing
-    // refused — else a failure or a Handled answer, which is the write's answer.
+    // refused — else a failure or a Handled answer, which is the write's answer; a load of the actor's events that fails
+    // is too.
     private async System.Threading.Tasks.ValueTask<data.@this?> Before(string moment, global::app.type.item.variable.@this? variable,
         string name, object? value)
     {
-        if ((await Moments(variable))?[moment] is not { before.Count: > 0 } on) return null;
+        global::app.@event.on.@this? moments;
+        try { moments = await Moments(variable); }
+        catch (global::app.error.AppException ex) { return _context.Error(ex.Error); }
+        catch (System.OperationCanceledException) { return _context.Error(global::app.error.GoalError.Cancelled(_context)); }
+        if (moments?[moment] is not { before.Count: > 0 } on) return null;
         var answer = await on.before.Start(variable!, _context, value as data.@this ?? new data.@this(name, value, context: _context));
         return answer is { Success: false } or { Handled: true } ? answer : null;
     }

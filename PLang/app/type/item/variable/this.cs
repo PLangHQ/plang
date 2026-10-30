@@ -114,7 +114,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         {
             at = await hop.Start(at, context);
             if (!at.Success || !at.IsInitialized) return false;
-            if (at.Peek() is { } reached && reached.Equals(variable)) return true;
+            // the walk ends at the first variable it reaches, never read on into its moments (which load an actor's events)
+            if (at.Peek() is @this reached) return reached.Equals(variable);
         }
         return false;
     }
