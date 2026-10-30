@@ -56,11 +56,19 @@ The codeanalyzer measures each stage before and after on the same bench. The tab
    - `data.Copy` (`data/this.cs:741`) copies the property bag at every goal-call parameter and every `set %y% = %x%`. Most variables never get a property. The copy shares its source's bag until its first write to it.
    - The codeanalyzer measures the wrapper and the bag first: if the bag isn't worth it, this stage is dropped and the log says why.
 
+6. **The type tables made at build time, and read lazily** (Ingi, 2026-10-30: "bring it into this branch"; "and lazy ofc"; the codeanalyzer's section H and `.bot/call-cost/codeanalyzer/startup-tables.md`).
+   - A cold root app is ~210 ms, and ~105 ms of it is `origin.code` scanning the PLang assembly by reflection (`type/list/Code.cs:141–181`), again for every root app.
+   - The generator (a new `Emission/Library` beside Action and Property) writes each assembly's tables. They're the only door: an assembly without them brings no plang types, with no reflection scan beside them.
+   - Lazy: each table is read at its first ask, and a type's entry is made when its name is first asked. Only an enumeration of every type makes them all, pinned against the old eager list.
+   - First, the codeanalyzer measures a hand-copied prototype's JIT cost. Then the coder brings the shape.
+   - Also one scan per process, if the tables don't already make it free.
+   - The generator and the type system are locked: Ingi's yes is his "bring it into this branch". The shape still comes to me before it's built, and anything beyond it goes to him.
+
 Every stage: the bench before and after (`Tools/Bench/run.sh`, the parts it touches), a C# byte pin that goes red without the change, C# and plang green.
 
 ## Not in this branch, on the backlog
 
-- ReadyToRun (Ingi: "no not yet").
+- ReadyToRun (Ingi: "no not yet"). Stage 6 cuts startup without it.
 - `app.jit` (Future).
 - The six doors' repeated catches for a failed events load: decided with stage 2's measurements, not built here unless they show (a `data<on>` door allocates per ask).
 - `set %x% = %x% + 1` building set-before-add: the builder bot's, before 2.0b.
