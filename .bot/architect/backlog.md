@@ -114,6 +114,10 @@ Equality asked from outside, as strings, where the value has its own `Equals` (e
 - **A bare goal name falls through to any goal the app's list has read, anywhere** (F4, Low, older than event-action; `goal/list/this.cs:239`). A platform whose root holds an upload's folder has read the upload's goals as its own (`goal.App` = the platform), so a bare `call Record` written where no Record sits beside it can run the upload's. Probe `PlatformStoryProbeTests.E` (skipped on event-action, naming this). Fix options: the read-anywhere fallback leaves out goals under a sub app's root, or a maker's list never reads a folder it made a sub app in. Also covers security's Info: a `call %variable%` the upload set reaching its own goals under the maker's root. The question for Ingi: should a bare name fall through anywhere at all?
 - **`%!app.actor.list[0].channel%` reaches another actor's channel list** (security Info, older than event-action). The same rule as 66's `actor.event`: what an actor holds is reached through the asker's own door only.
 
+### Lists' own doors
+
+- **`goal.list` inherits the base list's internal `RemoveAt`, which doesn't let `_found` go** (plang-coder, call-cost 22). There's no production caller (only `Add` removes, under the gate, and lets it go). If a remover comes, it goes through the goal list's own door, which lets the kept candidates go.
+
 ### Read once, pass on
 
 - **`actor.list.Use` reads the actor's name twice** (`actor/list/this.cs:39`; plang-coder at event-action 64, the same shape it fixed in `variable.set`): `named.Given() is null` reads the name to ask "none named?" and drops it, then `named.Use(...)` reads it again. Cheap for a choice, but it is a dropped answer: keep what `Given()` answered and use it.
