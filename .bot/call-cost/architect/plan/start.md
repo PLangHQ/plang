@@ -52,7 +52,7 @@ The codeanalyzer measures each stage before and after on the same bench. The tab
 4. **The generator** (ideas 4 and 5; Ingi's yes: a change to the locked generator shape and the action's door, re-pinned citing it).
    - Idea 4: `Instance()` makes a throwaway handler (`goal/step/action/this.cs:385`, `Module.Create`, 1.6 KB) only to call its generated `Resolve` (`:414`). Ingi chose (B), "no static": the catalog element keeps one handler of its class, made with its module's app's System context at the class's first run, and resolves through it. One birth per run, no generator change for this part. Also the unknown-property check per run (304 B) is judged once per loaded action, as `Stale` is.
    - Idea 5: the generated `Resolve` binds each lazy parameter through closures and wrappers (6.5 KB, 9.3 µs). The generator emits the typed assignment directly. Estimated half of it.
-5. **A copy shares until it's written** (Ingi: "agree").
+5. **DROPPED** (the codeanalyzer, 2f73e65ba: a copy's bag is already lazy, `Carried?.Copy()`. The leftover is an empty attachment copied, ~136 B × ~4 copies, ~0.8% of a run, taken by one line in `Copy` in the cleanup). Was: **A copy shares until it's written** (Ingi: "agree").
    - `data.Copy` (`data/this.cs:741`) copies the property bag at every goal-call parameter and every `set %y% = %x%`. Most variables never get a property. The copy shares its source's bag until its first write to it.
    - The codeanalyzer measures the wrapper and the bag first: if the bag isn't worth it, this stage is dropped and the log says why.
 
