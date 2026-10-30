@@ -119,6 +119,13 @@ Equality asked from outside, as strings, where the value has its own `Equals` (e
 - **A C# handler's constructor now runs once with its module's System context** (security I2, call-cost: the catalog element's `Resolver`). Only third-party `module.add` handlers could do anything in a constructor. If one does work there as System, it does it once, at the class's first run. Worth a line in the module-authoring docs: a handler's constructor does nothing with its context.
 - **A kept settings answer from a saved row is born with the keeper's context** (I1): it only matters for a saved row holding a `%variable%`, and no such shape was found.
 
+### From call-cost's audit (minor, deferred)
+
+- The readers' null rows still build `list[new type(...)]`, and the `type` reader's null row makes a `{type}` with no list.
+- `Broken`/`Changed`: a narrow race between a goal's judgment and a step's Error written during it.
+- The `CompareExchange` lazy line is written seven times. One idiom, but no one owner.
+- `call._depth` is reached from outside the frame (`call.list.Push`).
+
 ### Lists' own doors
 
 - **`goal.list` inherits the base list's internal `RemoveAt`, which doesn't let `_found` go** (plang-coder, call-cost 22). There's no production caller (only `Add` removes, under the gate, and lets it go). If a remover comes, it goes through the goal list's own door, which lets the kept candidates go.
