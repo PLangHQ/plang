@@ -1,0 +1,54 @@
+using System.Runtime;
+
+namespace Bench.mode.tables;
+
+/// <summary>PROTOTYPE (scratch, not committed): in a fresh process, what loading the emitted tables costs cold — each of the
+/// six lists on its own (a lazy read), their time and the JIT's share — beside the reflection scan the same process would
+/// run (<c>BENCH_SCAN=1</c>).</summary>
+internal sealed class @this(setting.@this setting) : mode.@this(setting)
+{
+    internal override Task<int> Run()
+    {
+        var sinceStart = (DateTime.Now - System.Diagnostics.Process.GetCurrentProcess().StartTime).TotalMilliseconds;
+        Say($"process start to Main: {sinceStart:F0} ms");
+        if (Environment.GetEnvironmentVariable("BENCH_SCAN") == "1")
+        {
+            Time("reflection scan: new Library(assembly)", () => new global::app.type.list.@this.Code()[typeof(global::app.@this).Assembly].Item.Count);
+            return Task.FromResult(0);
+        }
+        if (Environment.GetEnvironmentVariable("BENCH_NAMES") == "1")
+        {
+            var all = 0;
+            all += Time("Names.Item() (strings only)", () => proto.Names.Item().Length);
+            all += Time("Names.Subclasses()", () => proto.Names.Subclasses().Length);
+            all += Time("Names.Kind()", () => proto.Names.Kind().Length);
+            all += Time("Names.Marks()", () => proto.Names.Marks().Length);
+            all += Time("Names.Tokens()", () => proto.Names.Tokens().Length);
+            // what a hello world asks for: a few dozen types, each resolved by name at its first ask
+            var assembly = typeof(global::app.@this).Assembly;
+            var asked = proto.Names.Item().Take(40).ToArray();
+            Time("resolve 40 asked classes: assembly.GetType(name)", () => asked.Count(name => assembly.GetType(name) != null));
+            Say($"    entries in the five name lists: {all}");
+            return Task.FromResult(0);
+        }
+        var total = 0;
+        total += Time("Tables.Item()", () => proto.Tables.Item().Length);
+        total += Time("Tables.Subclasses()", () => proto.Tables.Subclasses().Length);
+        total += Time("Tables.Kind()", () => proto.Tables.Kind().Length);
+        total += Time("Tables.Marks()", () => proto.Tables.Marks().Length);
+        total += Time("Tables.Tokens()", () => proto.Tables.Tokens().Length);
+        total += Time("Tables.Payloads()", () => proto.Tables.Payloads().Length);
+        Say($"    entries in all six: {total}");
+        return Task.FromResult(0);
+    }
+
+    private int Time(string name, Func<int> load)
+    {
+        var jit = JitInfo.GetCompilationTime();
+        var methods = JitInfo.GetCompiledMethodCount();
+        var step = new meter.@this();
+        var count = load();
+        Say($"    {name,-44} {step.Elapsed.TotalMilliseconds,7:F1} ms   jit {(JitInfo.GetCompilationTime() - jit).TotalMilliseconds,6:F1} ms  {JitInfo.GetCompiledMethodCount() - methods,4} methods  {count,5} entries");
+        return count;
+    }
+}

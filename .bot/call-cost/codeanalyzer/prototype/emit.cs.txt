@@ -1,0 +1,113 @@
+using System.Reflection;
+using System.Text;
+
+namespace Bench.mode.emit;
+
+/// <summary>PROTOTYPE (scratch, not committed): writes the PLang assembly's Library as C# tables to
+/// Tools/Bench/proto/Tables.cs — what a generator would emit — so <c>tables</c> can measure their cold cost.</summary>
+internal sealed class @this(setting.@this setting) : mode.@this(setting)
+{
+    private int _skipped;
+
+    internal override Task<int> Run()
+    {
+        var assembly = typeof(global::app.@this).Assembly;
+        var library = new global::app.type.list.@this.Code()[assembly];
+
+        var sb = new StringBuilder();
+        sb.AppendLine("namespace Bench.proto;");
+        sb.AppendLine("internal static class Tables");
+        sb.AppendLine("{");
+        List("Item", "(string Name, System.Type Clr)", library.Item.Select(i => Row(i.Clr, t => $"(\"{i.Name}\", {t})")), sb);
+        List("Subclasses", "(System.Type Clr, string Family, string Kind, System.Type Type, System.Type? Reader)",
+            library.Subclasses.Select(s => Row(s.Clr, t => $"({t}, \"{s.Family}\", \"{s.Kind}\", {Ref(s.Type)}, {(s.Reader != null && Visible(s.Reader) ? Ref(s.Reader) : "null")})")), sb);
+        List("Kind", "(System.Type Clr, string Owner)", library.Kind.Select(k => Row(k.Clr, t => $"({t}, \"{k.Owner}\")")), sb);
+        List("Marks", "(System.Type Clr, bool Format, bool List, bool Choice)",
+            library.Marks.Select(m => Row(m.Clr, t => $"({t}, {(m.Codec != null ? "true" : "false")}, {(m.List ? "true" : "false")}, {(m.Choice ? "true" : "false")})")), sb);
+        List("Tokens", "(string Name, System.Func<global::app.type.reader.ITypeReader> Make)",
+            library.Tokens.Select(t => Row(t.Reader.GetType(), _ => $"(\"{t.Name}\", () => new {Name(t.Reader.GetType())}())")), sb);
+        // payloads: the delegate a static Read becomes — a direct call, no reflection
+        var payloads = new List<string>();
+        foreach (var p in library.Payloads)
+        {
+            var read = p.Read.Method;
+            payloads.Add($"(\"{p.Name}\", \"{p.Kind}\")");
+        }
+        sb.AppendLine($"    internal static (string Name, string Kind)[] Payloads() => new (string, string)[] {{ {string.Join(", ", payloads)} }};");
+        sb.AppendLine("}");
+
+        // the same six lists as names only (a class by its full name), resolved when asked
+        var names = new StringBuilder();
+        names.AppendLine("namespace Bench.proto;");
+        names.AppendLine("internal static class Names");
+        names.AppendLine("{");
+        void Strings(string list, IEnumerable<System.Type> classes)
+        {
+            names.AppendLine($"    internal static string[] {list}() => new string[]");
+            names.AppendLine("    {");
+            foreach (var clr in classes.Where(Visible)) names.AppendLine($"        \"{clr.FullName}\",");
+            names.AppendLine("    };");
+        }
+        Strings("Item", library.Item.Select(i => i.Clr));
+        Strings("Subclasses", library.Subclasses.Select(s => s.Clr));
+        Strings("Kind", library.Kind.Select(k => k.Clr));
+        Strings("Marks", library.Marks.Select(m => m.Clr));
+        Strings("Tokens", library.Tokens.Select(t => t.Reader.GetType()));
+        names.AppendLine("}");
+        File.WriteAllText(Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../Names.cs")), names.ToString());
+
+        var path = Path.Combine(AppContext.BaseDirectory, "../../../../Tables.cs");
+        File.WriteAllText(Path.GetFullPath(path), sb.ToString());
+        Say($"emit: wrote {Path.GetFullPath(path)} — classes={library.Classes.Length} item={library.Item.Count} subclasses={library.Subclasses.Count} kind={library.Kind.Count} marks={library.Marks.Count} tokens={library.Tokens.Count} payloads={library.Payloads.Count} skipped-inaccessible={_skipped}");
+        return Task.FromResult(0);
+    }
+
+    private void List(string name, string tuple, IEnumerable<string?> rows, StringBuilder sb)
+    {
+        var kept = rows.Where(row => row != null).ToList();
+        sb.AppendLine($"    internal static {tuple}[] {name}() => new {tuple}[]");
+        sb.AppendLine("    {");
+        foreach (var row in kept) sb.AppendLine($"        {row},");
+        sb.AppendLine("    };");
+    }
+
+    private string? Row(System.Type clr, Func<string, string> row)
+    {
+        if (!Visible(clr)) { _skipped++; return null; }
+        return row(Ref(clr));
+    }
+
+    // Reachable from an assembly the PLang assembly shows its internals to: public, or internal, all the way out.
+    private static bool Visible(System.Type t)
+    {
+        if (t.IsGenericParameter || t.Name.Contains('<') || t.Name.Contains('>')) return false;
+        for (var at = t; at != null; at = at.DeclaringType)
+            if (!(at.IsPublic || at.IsNestedPublic || at.IsNotPublic || at.IsNestedAssembly || at.IsNestedFamORAssem)) return false;
+        return true;
+    }
+
+    private static string Ref(System.Type t) => $"typeof({Name(t)})";
+
+    private static string Name(System.Type t)
+    {
+        if (t.IsGenericType && !t.IsGenericTypeDefinition)
+            return Name(t.GetGenericTypeDefinition()).Replace("<" + new string(',', t.GetGenericArguments().Length - 1) + ">",
+                "<" + string.Join(", ", t.GetGenericArguments().Select(Name)) + ">");
+        var own = t.Name;
+        var tick = own.IndexOf('`');
+        if (tick >= 0) own = own[..tick] + "<" + new string(',', int.Parse(own[(tick + 1)..]) - 1) + ">";
+        if (t.IsGenericTypeDefinition && tick < 0) own += "<>";
+        return t.DeclaringType != null ? Name(t.DeclaringType) + "." + Escape(own)
+            : "global::" + string.Join(".", (t.Namespace ?? "").Split('.', StringSplitOptions.RemoveEmptyEntries).Select(Escape)) + "." + Escape(own);
+    }
+
+    private static readonly HashSet<string> Keywords = new(
+        "abstract as base bool break byte case catch char checked class const continue decimal default delegate do double else enum event explicit extern false finally fixed float for foreach goto if implicit in int interface internal is lock long namespace new null object operator out override params private protected public readonly ref return sbyte sealed short sizeof stackalloc static string struct switch this throw true try typeof uint ulong unchecked unsafe ushort using virtual void volatile while".Split(' '));
+
+    private static string Escape(string n)
+    {
+        var generic = n.IndexOf('<');
+        var bare = generic >= 0 ? n[..generic] : n;
+        return Keywords.Contains(bare) ? "@" + n : n;
+    }
+}
