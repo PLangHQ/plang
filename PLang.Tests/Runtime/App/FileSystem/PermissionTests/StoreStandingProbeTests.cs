@@ -27,7 +27,7 @@ public class StoreStandingProbeTests
     public async Task TheUser_CannotReadTheStoresKey_AndIsNotAsked()
     {
         var root = NewRoot(System.IO.Path.GetTempPath());
-        await using var app = global::PLang.Tests.Root.Make(root).TestSigning();
+        await using var app = new global::app.@this(root).TestSigning();
         var asking = new Asking(app.actor.list.User.Channel, app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(asking);
         var user = app.actor.list.User.Context;
@@ -40,7 +40,7 @@ public class StoreStandingProbeTests
     public async Task TheSystem_ReadsAndWritesItsOwnStoresFile()
     {
         var root = NewRoot(System.IO.Path.GetTempPath());
-        await using var app = global::PLang.Tests.Root.Make(root).TestSigning();
+        await using var app = new global::app.@this(root).TestSigning();
         var system = app.actor.list.System.Context;
         var file = System.IO.Path.Combine(root, ".data", "secret.key");
         await Assert.That((await system.File(file).Read(system)).Success).IsTrue();
@@ -57,7 +57,7 @@ public class StoreStandingProbeTests
         var root = NewRoot(os);
         try
         {
-            await using var app = global::PLang.Tests.Root.Make(root).TestSigning();
+            await using var app = new global::app.@this(root).TestSigning();
             var user = app.actor.list.User.Context;
             var r = await user.File(System.IO.Path.Combine(root, ".data", "secret.key")).Read(user);
             await Assert.That(r.Success).IsFalse();

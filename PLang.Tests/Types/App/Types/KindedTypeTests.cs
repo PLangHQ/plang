@@ -17,7 +17,7 @@ public class KindedTypeTests
     [Test]
     public async Task AKindedType_IsOneObject_InARootAndItsSubApp()
     {
-        await using var root = global::PLang.Tests.Root.Make("/kinded").Testing();
+        await using var root = new global::app.@this("/kinded").Testing();
         await using var sub = new global::app.@this("/kinded/sub", root.actor.list.User).Testing();
         var number = root.type.list[typeof(global::app.type.item.number.@this)];
 

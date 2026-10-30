@@ -358,6 +358,16 @@ public class BirthTests
         await Assert.That(born).IsLessThan(1_200L).Because("the goals a name may be are kept until a goal comes in");
     }
 
+    // a code's types are made at their first ask: a code made and never asked scans nothing
+    [Test]
+    public async Task ACodeNeverAsked_ScansNothing()
+    {
+        var born = Bytes(() => new global::app.origin.code(global::app.Wiring.none));
+
+        // 64 bytes on this machine; 1,711,930 with the scan made at the code's birth
+        await Assert.That(born).IsLessThan(1_000L).Because("the scan is made at the first ask of the code's types");
+    }
+
     [Test]
     public async Task AnActorsPermissionView_IsOneView()
     {

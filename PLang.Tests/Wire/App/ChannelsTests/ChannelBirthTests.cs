@@ -16,7 +16,7 @@ public class ChannelBirthTests
     [Test]
     public async Task AChannelsActor_IsItsChannelsActor()
     {
-        await using var app = global::PLang.Tests.Root.Make("/test", wiring: global::app.Wiring.none).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var user = global::app.channel.type.stream.@this.Memory(app.actor.list.User.Channel, "probe");
         var system = global::app.channel.type.stream.@this.Memory(app.actor.list.System.Channel, "probe");
 
@@ -30,7 +30,7 @@ public class ChannelBirthTests
     [Test]
     public async Task AChannelBornOfAnotherActorsChannels_IsRefused_AndTheListIsUnchanged()
     {
-        await using var app = global::PLang.Tests.Root.Make("/test", wiring: global::app.Wiring.none).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var system = app.actor.list.System.Channel;
         var before = system.Get(global::app.channel.list.@this.Output);
         var stray = global::app.channel.type.stream.@this.Memory(app.actor.list.User.Channel, global::app.channel.list.@this.Output);
@@ -43,7 +43,7 @@ public class ChannelBirthTests
     [Test]
     public async Task AStreamChannelThatNeverReads_HoldsNoReadBuffer()
     {
-        await using var app = global::PLang.Tests.Root.Make("/test", wiring: global::app.Wiring.none).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var born = Bytes(() => new global::app.channel.type.console.@this(app.actor.list.User.Channel, "output", System.IO.Stream.Null, global::app.channel.ChannelDirection.Output));
 
         await Assert.That(born).IsLessThan(32 * 1024L).Because("the 64 KB read-ahead is the first read's to make");
@@ -52,7 +52,7 @@ public class ChannelBirthTests
     [Test]
     public async Task AChannelsSettings_AreMadeWhenRead()
     {
-        await using var app = global::PLang.Tests.Root.Make("/test", wiring: global::app.Wiring.none).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var born = Bytes(() => new global::app.channel.type.console.@this(app.actor.list.User.Channel, "output", System.IO.Stream.Null, global::app.channel.ChannelDirection.Output));
 
         await Assert.That(born).IsLessThan(4 * 1024L).Because("a channel's direction, buffer and mime are made when read, unless given");

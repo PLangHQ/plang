@@ -11,7 +11,7 @@ public class SharedModuleTests
     [Test]
     public async Task AChildsModule_IsItsParentsModule()
     {
-        await using var parent = global::PLang.Tests.Root.Make("/parent").Testing();
+        await using var parent = new global::app.@this("/parent").Testing();
         await using var child = new global::app.@this("/parent/child", parent.actor.list.User).Testing();
 
         await Assert.That(child.module).IsNotSameReferenceAs(parent.module).Because("a sub app's registry is a layer of its own");
@@ -22,7 +22,7 @@ public class SharedModuleTests
     [Test]
     public async Task AModuleASubAppAdds_IsOnlyItsOwn()
     {
-        await using var parent = global::PLang.Tests.Root.Make("/parent").Testing();
+        await using var parent = new global::app.@this("/parent").Testing();
         await using var sibling = new global::app.@this("/parent/sibling", parent.actor.list.User).Testing();
         await using var child = new global::app.@this("/parent/child", parent.actor.list.User).Testing();
 
@@ -37,7 +37,7 @@ public class SharedModuleTests
     [Test]
     public async Task AnActionIntoAParentsModule_IsRefused_NamingIt()
     {
-        await using var parent = global::PLang.Tests.Root.Make("/parent").Testing();
+        await using var parent = new global::app.@this("/parent").Testing();
         await using var child = new global::app.@this("/parent/child", parent.actor.list.User).Testing();
 
         var refused = await Assert.ThrowsAsync<global::app.error.AppException>(() =>
@@ -54,7 +54,7 @@ public class SharedModuleTests
     [Test]
     public async Task TheSameActionAgain_IsTheSameAnswer()
     {
-        await using var parent = global::PLang.Tests.Root.Make("/parent").Testing();
+        await using var parent = new global::app.@this("/parent").Testing();
         await using var child = new global::app.@this("/parent/child", parent.actor.list.User).Testing();
         var set = parent.Module("variable")["set"]!;
 
@@ -66,7 +66,7 @@ public class SharedModuleTests
     [Test]
     public async Task AParentLoadingAfterMakingASubApp_IsTheSubAppsToo()
     {
-        await using var parent = global::PLang.Tests.Root.Make("/parent").Testing();
+        await using var parent = new global::app.@this("/parent").Testing();
         await using var child = new global::app.@this("/parent/child", parent.actor.list.User).Testing();
 
         parent.module.Register("probe", "go", typeof(Probe));

@@ -7,7 +7,7 @@ public class AppConsoleTests
     [Test]
     public async Task AnAppMadeByDefault_HasTheConsolesOutput()
     {
-        await using var app = global::PLang.Tests.Root.Make("/appconsole-default");
+        await using var app = new global::app.@this("/appconsole-default");
 
         await Assert.That(app.actor.list.User.Channel.Get(global::app.channel.list.@this.Output))
             .IsTypeOf<global::app.channel.type.console.@this>();
@@ -16,7 +16,7 @@ public class AppConsoleTests
     [Test]
     public async Task AnAppMadeWithNone_HasNoConsoleUntilWired()
     {
-        await using var app = global::PLang.Tests.Root.Make("/appconsole-none", wiring: global::app.Wiring.none);
+        await using var app = new global::app.@this("/appconsole-none", wiring: global::app.Wiring.none);
 
         await Assert.That(app.actor.list.User.Channel.Get(global::app.channel.list.@this.Output)).IsNull();
 

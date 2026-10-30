@@ -59,7 +59,7 @@ public class SystemEventsTests
     // at the app's start it writes out that it ran
     [Test] public async Task TheOsHello_WritesOutAtARootAppsStart()
     {
-        await using var app = global::PLang.Tests.Root.Make(Root()).Testing();
+        await using var app = new global::app.@this(Root()).Testing();
         var output = new global::PLang.Tests.Shared.CapturedOutput(app);
 
         await Start(app);

@@ -1,12 +1,12 @@
 namespace app.origin;
 
 /// <summary>
-/// The code an app is made from — its facts and the entries made from them: the types the scan finds (with path's
-/// schemes) and, born with the app it is made for, the actions. A new one for each app, so nothing in it is another
-/// app's; what the app changes under its layers is its own. It has no goals. One several apps share is a
-/// <see cref="shared"/>.
+/// The code a root app is made from — its facts and the entries made from them: the types the scan finds (with path's
+/// schemes), made at their first ask, and, born with the app it is made for, the actions. Each root app is made with a
+/// code of its own, so nothing in it is another app's; what the app changes under its layers is its own. It has no
+/// goals.
 /// </summary>
-internal class code : @this
+internal sealed class code : @this
 {
     /// <summary>The code, its types scanned from its facts on first ask, path's schemes among them; the app it is made
     /// for born wired as <paramref name="wiring"/> says.</summary>
@@ -66,7 +66,7 @@ internal class code : @this
     // the identity the System is making now, before its row is stored
     public global::app.module.identity.Identity? Identity(global::app.@this app) => app.actor.list.System.Identity;
 
-    public virtual global::app.error.@this? Hold(global::app.type.kind.@this kind)
+    public global::app.error.@this? Hold(global::app.type.kind.@this kind)
     {
         type.Put(kind);
         return null;

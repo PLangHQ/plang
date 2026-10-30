@@ -9,7 +9,7 @@ public class ConsoleChannelTests
 
     private static async Task<(global::app.@this App, MemoryStream Out)> Console(string? format)
     {
-        var app = global::PLang.Tests.Root.Make("/test", wiring: global::app.Wiring.none).Testing();
+        var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         if (format != null)
         {
             var set = await app.actor.list.System.Setting.Flag("app.channel.setting", new Dictionary<string, object?> { ["format"] = format }, app.actor.list.System.Context);
@@ -73,7 +73,7 @@ public class ConsoleChannelTests
     [Test]
     public async Task AFormatNoTypeReads_IsRefusedWhenSet()
     {
-        await using var app = global::PLang.Tests.Root.Make("/test", wiring: global::app.Wiring.none).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
 
         var set = await app.actor.list.System.Setting.Flag("app.channel.setting", new Dictionary<string, object?> { ["format"] = "nonsense" }, app.actor.list.System.Context);
 
@@ -101,7 +101,7 @@ public class ConsoleChannelTests
     [Arguments("plang")]
     public async Task AnAsk_GoesOutAsTheFormatShowsIt(string? format)
     {
-        await using var app = global::PLang.Tests.Root.Make("/test", wiring: global::app.Wiring.none).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         if (format != null)
             await (await app.actor.list.System.Setting.Flag("app.channel.setting", new Dictionary<string, object?> { ["format"] = format }, app.actor.list.System.Context)).IsSuccess();
         var context = app.actor.list.User.Context;
@@ -141,7 +141,7 @@ public class ConsoleChannelTests
     [Test]
     public async Task AConsole_ReadsLfAndCrLfLinesAlike()
     {
-        await using var app = global::PLang.Tests.Root.Make("/test", wiring: global::app.Wiring.none).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var input = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("unix\nwindows\r\nlast\n"));
         var channel = new global::app.channel.type.console.@this(app.actor.list.User.Channel, "lines", input,
             global::app.channel.ChannelDirection.Bidirectional);

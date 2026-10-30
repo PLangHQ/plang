@@ -23,7 +23,7 @@ public class PersistedGrantCannotOverrideStoresTests : System.IAsyncDisposable
         file = System.IO.Path.Combine(root, ".data", "secret.key");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(file)!);
         System.IO.File.WriteAllText(file, "SECRET-KEY");
-        app = global::PLang.Tests.Root.Make(root).TestSigning();
+        app = new global::app.@this(root).TestSigning();
         app.actor.list.User.Channel.Register(new Asking(app.actor.list.User.Channel, app.actor.list.User.Context, () => asked++));
     }
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();

@@ -13,7 +13,7 @@ public class ConsentAskTests : System.IAsyncDisposable
     private readonly global::app.@this app;
 
     public ConsentAskTests()
-        => app = global::PLang.Tests.Root.Make(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-consentask-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+        => app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-consentask-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     // the actor asked, its input throwing what it's given; a yes would answer Ok

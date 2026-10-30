@@ -11,7 +11,7 @@ public class FirstIdentityTests
         try
         {
             // real signing and the real identity provider — the loop lives between them
-            await using var app = global::PLang.Tests.Root.Make(root).Consenting();
+            await using var app = new global::app.@this(root).Consenting();
             var ctx = app.actor.list.User.Context;
 
             var gets = 0;
@@ -40,7 +40,7 @@ public class FirstIdentityTests
         System.IO.Directory.CreateDirectory(root);
         try
         {
-            await using var app = global::PLang.Tests.Root.Make(root).Consenting();
+            await using var app = new global::app.@this(root).Consenting();
             var ctx = app.actor.list.User.Context;
             var (provider, _) = app.Code.Get<global::app.module.identity.code.IIdentity>();
 
@@ -65,7 +65,7 @@ public class FirstIdentityTests
         System.IO.Directory.CreateDirectory(root);
         try
         {
-            await using var app = global::PLang.Tests.Root.Make(root).Consenting();
+            await using var app = new global::app.@this(root).Consenting();
             var ctx = app.actor.list.User.Context;
             var names = Enumerable.Range(0, 8).Select(i => $"id{i}").ToArray();
             async Task<global::app.data.@this> Run(string line) => await (await ctx.Action(line)).Start(ctx);
@@ -105,7 +105,7 @@ public class FirstIdentityTests
         System.IO.Directory.CreateDirectory(root);
         try
         {
-            await using var app = global::PLang.Tests.Root.Make(root).Consenting();
+            await using var app = new global::app.@this(root).Consenting();
             var ctx = app.actor.list.User.Context;
             async Task<global::app.data.@this> Run(string line) => await (await ctx.Action(line)).Start(ctx);
 
@@ -135,7 +135,7 @@ public class FirstIdentityTests
         System.IO.Directory.CreateDirectory(root);
         try
         {
-            await using var app = global::PLang.Tests.Root.Make(root).Consenting();
+            await using var app = new global::app.@this(root).Consenting();
             var ctx = app.actor.list.User.Context;
 
             var saves = await Task.WhenAll(Task.Run(() => app.Snapshot(ctx)), Task.Run(() => app.Snapshot(ctx)));

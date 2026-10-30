@@ -7,7 +7,7 @@ public class CursorLineProbeTests
     [Test]
     public async Task AHostileCursorValue_IsStillOneLine()
     {
-        await using var app = global::PLang.Tests.Root.Make("/test", wiring: global::app.Wiring.none).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var user = app.actor.list.User;
         var capture = new System.IO.MemoryStream();
         user.Channel.Register(new global::app.channel.type.stream.@this(user.Channel, "out", capture,

@@ -6,7 +6,7 @@ namespace PLang.Tests.App.Core;
 
 public class EngineTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = global::PLang.Tests.Root.Make("/app").Testing();
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private Step MakeStep(string actionClass, string method, object? parameters = null, int index = 0, string text = "")
@@ -64,7 +64,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task System_ReturnsActorWithCorrectName()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
 
         var system = engine.actor.list.System;
 
@@ -74,7 +74,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task User_ReturnsActorWithCorrectName()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
 
         var user = engine.actor.list.User;
 
@@ -84,7 +84,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task Actors_AreLazilyCreated()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
 
         // Access only User actor
         var user = engine.actor.list.User;
@@ -98,7 +98,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task Actors_HaveIsolatedContexts()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
 
         await engine.actor.list.User.Context.Variable.Set("key", "user-value");
         await engine.actor.list.System.Context.Variable.Set("key", "system-value");
@@ -110,7 +110,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task Actors_HaveIsolatedIO()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
 
         engine.actor.list.User.Channel.CreateMemoryChannel("test");
         engine.actor.list.System.Channel.CreateMemoryChannel("test");
@@ -124,7 +124,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task Actor_Context_HasBackReference()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
 
         await Assert.That(engine.actor.list.User.Context.Actor).IsEqualTo(engine.actor.list.User);
         await Assert.That(engine.actor.list.System.Context.Actor).IsEqualTo(engine.actor.list.System);
@@ -134,7 +134,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task Actor_SameInstanceOnMultipleAccess()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
 
         var user1 = engine.actor.list.User;
         var user2 = engine.actor.list.User;
@@ -147,7 +147,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task Constructor_SetsProperties()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
 
         // the root as the OS names it ("/app" on Linux, "C:\app" on Windows)
         await Assert.That(engine.filesystem.root.Absolute).IsEqualTo(System.IO.Path.GetFullPath("/app"));
@@ -160,7 +160,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task Constructor_GeneratesId()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
 
         await Assert.That(engine.Id).IsNotNull();
         await Assert.That(engine.Id.Length).IsEqualTo(12);
@@ -169,7 +169,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task Constructor_DefaultsNameFromFolder()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/myapp").Testing();
+        await using var engine = new global::app.@this("/myapp").Testing();
 
         await Assert.That(engine.Name(engine.actor.list.System.Context).ToString()).IsEqualTo("myapp");
     }
@@ -178,7 +178,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task Name_IsTheAskersSetting()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
         var user = engine.actor.list.User.Context;
 
         user.Setting.Set("app.setting.name", new Data("name", user.Text("CustomEngine"), context: user));
@@ -190,7 +190,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task Debug_IsEnabled_ReflectsEngine()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
 
         engine.Debug = new global::app.module.debug.@this(engine.actor.list.System.Context);
 
@@ -200,7 +200,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task Constructor_AcceptsCustomModules()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
         var modules = engine.Module;
 
         await Assert.That(engine.Module).IsEqualTo(modules);
@@ -209,7 +209,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task TypeList_HasJsonFormat()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
 
         await Assert.That(engine.type.list.Stamp("application/json", engine.actor.list.User.Context).kind.Name).IsEqualTo("json");
     }
@@ -217,7 +217,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task Modules_HasVariableActions()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
 
         await Assert.That(engine.Module("variable")["set"] != null).IsTrue();
         await Assert.That(engine.Module("variable")["get"] != null).IsTrue();
@@ -226,7 +226,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task Modules_HasOutputActions()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
 
         await Assert.That(engine.Module("output")["write"] != null).IsTrue();
     }
@@ -234,7 +234,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task Context_ReturnsContext()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
 
         var context = engine.actor.list.User.Context;
 
@@ -246,7 +246,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task RunGoalAsync_NonexistentGoal_ReturnsError()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
 
         var result = await Make.Call(app.actor.list.User.Context, "NonexistentGoal").Start(engine.actor.list.User.Context);
 
@@ -257,7 +257,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task RunGoalAsync_EmptyGoal_ReturnsSuccess()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
         var goal = new Goal(engine.type.list) { Name = "EmptyGoal", Path = global::app.type.item.path.@this.Resolve("/EmptyGoal.goal", app.actor.list.User.Context) };
         engine.goal.list.Add(goal);
 
@@ -269,7 +269,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task RunGoalAsync_CancelledToken_ReturnsError()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
         var goal = new Goal(engine.type.list)
         {
             Name = "TestGoal",
@@ -295,7 +295,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task RunGoalAsync_SetsContextGoal()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
         var goal = new Goal(engine.type.list) { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", app.actor.list.User.Context) };
         engine.goal.list.Add(goal);
         var context = engine.actor.list.User.Context;
@@ -310,7 +310,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task RunGoalAsync_PushesCall()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
         var goal = new Goal(engine.type.list) { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", app.actor.list.User.Context) };
         engine.goal.list.Add(goal);
 
@@ -324,7 +324,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task RunGoalAsync_ExecutesSteps()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
 
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal(app.actor.list.User.Context, "TestGoal",
             Make.Step("set variable",
@@ -341,7 +341,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task RunGoalAsync_StepFailure_ReturnsError()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
 
         var goal = new Goal(engine.type.list)
         {
@@ -363,7 +363,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task StepRunAsync_ActionNotFound_ReturnsError()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
         var step = MakeStep("nonexistent", "method");
         var context = engine.actor.list.User.Context;
 
@@ -377,7 +377,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task StepRunAsync_SetsReturnVariable()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
 
         var step = MakeStep("variable", "set",
             new Dictionary<string, object?> { { "name", "source" }, { "value", "hello" } });
@@ -443,7 +443,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task DisposeAsync_CalledTwice_DoesNotThrow()
     {
-        var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        var engine = new global::app.@this("/app").Testing();
 
         await engine.DisposeAsync();
         await engine.DisposeAsync();
@@ -454,7 +454,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task DisposeAsync_DisposesCreatedActors()
     {
-        var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        var engine = new global::app.@this("/app").Testing();
 
         // Access actors to create them
         var user = engine.actor.list.User;
@@ -475,7 +475,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task DisposeAsync_HandlesUncreatedActors()
     {
-        var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        var engine = new global::app.@this("/app").Testing();
 
         // Don't access any actors
         await engine.DisposeAsync();
@@ -487,7 +487,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task RunGoalAsync_WithActor_UsesActorContext()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
 
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal(app.actor.list.User.Context, "TestGoal",
             Make.Step("set variable",
@@ -505,7 +505,7 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task RunGoalAsync_ByName_WithActor_UsesActorContext()
     {
-        await using var engine = global::PLang.Tests.Root.Make("/app").Testing();
+        await using var engine = new global::app.@this("/app").Testing();
 
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal(app.actor.list.User.Context, "TestGoal",
             Make.Step("set variable",

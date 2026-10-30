@@ -21,7 +21,7 @@ public class IdentityPrivateKeyLeakTests : System.IAsyncDisposable
     {
         root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-sec-k-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        app = global::PLang.Tests.Root.Make(root).TestSigning();
+        app = new global::app.@this(root).TestSigning();
     }
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 

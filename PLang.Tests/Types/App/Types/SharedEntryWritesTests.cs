@@ -8,7 +8,7 @@ public class SharedEntryWritesTests
     [Test]
     public async Task RequestsThroughOneParent_LeaveNoHistoryOnASharedTypeEntry()
     {
-        await using var parent = global::PLang.Tests.Root.Make("/parent").Testing();
+        await using var parent = new global::app.@this("/parent").Testing();
         var types = parent.type.list;
         var entry = types["bool"];
 

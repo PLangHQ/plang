@@ -13,7 +13,7 @@ public class ModuleRemoveTests
     [Before(Test)]
     public void Setup()
     {
-        _app = global::PLang.Tests.Root.Make("/app").Testing();
+        _app = new global::app.@this("/app").Testing();
     }
 
     [After(Test)]

@@ -94,7 +94,7 @@ public class ModulePageTests
         System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "module.notes.md"), "BUILDER-ONLY\n");
         try
         {
-            await using var app = global::PLang.Tests.Root.Make(root).Testing();
+            await using var app = new global::app.@this(root).Testing();
             var context = app.actor.list.User.Context;
             await context.Variable.Set(new global::app.data.@this("module", app.Module("file")!, context: context));
             var render = new Render(context)
@@ -130,7 +130,7 @@ public class ModulePageTests
         System.IO.File.SetUnixFileMode(examples, System.IO.UnixFileMode.None);
         try
         {
-            await using var app = global::PLang.Tests.Root.Make(root).Testing();
+            await using var app = new global::app.@this(root).Testing();
             var context = app.actor.list.User.Context;
             await context.Variable.Set(new global::app.data.@this("action", app.Module("file")!["read"]!, context: context));
             async Task<global::app.data.@this> Render(string template) => await new global::app.module.ui.code.Fluid().Render(
@@ -164,7 +164,7 @@ public class ModulePageTests
         System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "read.guide.md"), "A path can be a URL too.\n");
         try
         {
-            await using var app = global::PLang.Tests.Root.Make(root).Testing();
+            await using var app = new global::app.@this(root).Testing();
             var context = app.actor.list.User.Context;
             await context.Variable.Set(new global::app.data.@this("module", app.Module("file")!, context: context));
             var render = new Render(context)
@@ -194,7 +194,7 @@ public class ModulePageTests
     // A module's learner page rendered through the template, line by line.
     private static async Task<string[]> Page(string module)
     {
-        await using var os = global::PLang.Tests.Root.Make(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
+        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
         var context = os.actor.list.User.Context;
         await context.Variable.Set(new global::app.data.@this("module", os.Module(module)!, context: context));
         var render = new Render(context)
