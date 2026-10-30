@@ -1,1 +1,1 @@
-Bind a goal call to run before or after an event — reached by its path, e.g. the app starting (`%!app.on.start%`), each goal starting (`%!app.type.goal.on.start%`), an action starting, a channel writing, reading or asking. Answers the event it bound (keep it to `on.unbind` it later).
+Bind a goal call to run before or after an event: the app starting, a goal starting (each goal, or one goal by its name), an action starting, a variable being set, a channel writing, reading or asking. Answers the event it bound (keep it to `on.unbind` it later).

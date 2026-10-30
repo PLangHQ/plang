@@ -69,19 +69,21 @@
                 "name": "on",
                 "template": "plang"
               },
-              "value": "%!app.type.goal.on.start%",
+              "value": "%!app.goal[\"Process\"].on.start%",
               "variable": [
                 {
-                  "text": "%!app.type.goal.on.start%",
+                  "text": "%!app.goal[\"Process\"].on.start%",
                   "code": [
                     {
                       "variable": "!app"
                     },
                     {
-                      "property": "type"
+                      "property": "goal"
                     },
                     {
-                      "property": "goal"
+                      "index": {
+                        "text": "Process"
+                      }
                     },
                     {
                       "property": "on"
@@ -120,15 +122,96 @@
                 ]
               }
             }
+          ],
+          "default": [
+            {
+              "name": "sub",
+              "type": {
+                "name": "choice",
+                "kind": "sub"
+              },
+              "value": "inherit"
+            }
           ]
         }
       ]
     },
     {
       "index": 2,
-      "text": "call Process, as system",
+      "text": "call Other",
       "line": {
         "number": 6,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Other"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %count% equals 0, \"a goal other than Process doesn't run the event\"",
+      "line": {
+        "number": 7,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%count%",
+              "variable": [
+                {
+                  "text": "%count%",
+                  "code": [
+                    {
+                      "variable": "count"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "a goal other than Process doesn't run the event"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "call Process, as system",
+      "line": {
+        "number": 8,
         "indent": 0
       },
       "code": [
@@ -156,10 +239,10 @@
       ]
     },
     {
-      "index": 3,
+      "index": 5,
       "text": "assert %count% equals 0, \"the system's run doesn't see the user's event\"",
       "line": {
-        "number": 7,
+        "number": 9,
         "indent": 0
       },
       "code": [
@@ -204,10 +287,10 @@
       ]
     },
     {
-      "index": 4,
+      "index": 6,
       "text": "call Process",
       "line": {
-        "number": 8,
+        "number": 10,
         "indent": 0
       },
       "code": [
@@ -227,10 +310,10 @@
       ]
     },
     {
-      "index": 5,
+      "index": 7,
       "text": "assert %count% equals 1, \"the user's run does\"",
       "line": {
-        "number": 9,
+        "number": 11,
         "indent": 0
       },
       "code": [
@@ -284,7 +367,7 @@
           "index": 0,
           "text": "set %done% = \"yes\"",
           "line": {
-            "number": 13,
+            "number": 15,
             "indent": 0
           },
           "code": [
@@ -334,6 +417,63 @@
       "hash": "07529295c5bdbe920f102f495362a4d4fcfb8fe1c1a7354d0aa9b5f8ca21e532"
     },
     {
+      "name": "Other",
+      "comment": "A goal the event is not bound on.",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %other% = \"yes\"",
+          "line": {
+            "number": 19,
+            "indent": 0
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%other%",
+                  "variable": [
+                    {
+                      "text": "%other%",
+                      "code": [
+                        {
+                          "variable": "other"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "yes"
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "visibility": "Private",
+      "hash": "283b4ff72fa87d7ed413931cd93d64485ad93848968673e3f152c9e2757d78c4"
+    },
+    {
       "name": "Count",
       "comment": "The event's call.",
       "step": [
@@ -341,7 +481,7 @@
           "index": 0,
           "text": "set %count% = %count% + 1",
           "line": {
-            "number": 17,
+            "number": 23,
             "indent": 0
           },
           "code": [
@@ -459,5 +599,5 @@
   ],
   "visibility": "Public",
   "file": "OtherActorDoesntSee.test.goal",
-  "hash": "e6227c974d61b73a3206bd833647855733fbf906263b6ed77fc26328d178287e"
+  "hash": "a6b3a6debf9774f729f677b55cee0bbac64fdc6c187f1e251f9990e4f2518381"
 }
