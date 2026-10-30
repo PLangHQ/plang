@@ -167,7 +167,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         }
         if (!outer.TryGetProperty("result", out var result) || !result.TryGetProperty("value", out var value))
             return context.Ok();
-        return context.Ok(new global::app.type.item.serializer.json(context).Parse(value.Clone()));
+        return context.Ok(context.Json.Parse(value.Clone()));
     }
 
     /// <summary>Closes: its page closes, and with it the window.</summary>

@@ -21,8 +21,8 @@ public abstract record @this(string Name, string TypeName)
 
     /// <summary>
     /// Emits this property's resolution inside <c>Resolve()</c> — decode the .pr
-    /// parameter's <c>%var%</c>/literal form (async) into a local, which the object
-    /// initializer then binds to the fresh instance's init property. Default: nothing
+    /// parameter's <c>%var%</c>/literal form (async) into a local, which Resolve's own
+    /// constructor then takes. Default: nothing
     /// ([Code]/markers are set post-construction in <c>Attach()</c>).
     /// </summary>
     public virtual void EmitResolveLocal(StringBuilder sb) { }

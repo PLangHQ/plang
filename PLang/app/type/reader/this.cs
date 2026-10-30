@@ -94,22 +94,18 @@ public abstract class @this
 
     // The whole-payload decode these readers hold for the type and kind, in the precedence Of names.
     private protected virtual Read? Payload(string typeName, string? kind)
-        => Find(_runtime, Shipped.Payloads, k => (typeName, k), kind);
+        => Find(_runtime, Shipped.Payloads, (typeName, string.IsNullOrEmpty(kind) ? AnyKind : kind!), (typeName, AnyKind));
 
     // The token reader these readers hold for the type, kind and view, in the precedence Typed names.
     private protected virtual ITypeReader? Token(string typeName, string? kind, View? view)
-        => Find(_runtimeTyped, Shipped.Tokens, k => (typeName, k, view), kind);
+        => Find(_runtimeTyped, Shipped.Tokens, (typeName, string.IsNullOrEmpty(kind) ? AnyKind : kind!, view), (typeName, AnyKind, view));
 
-    // The entry under the key a kind makes, in the one precedence both tables are read by: runtime-exact →
-    // shipped-exact → runtime-"*" → shipped-"*".
-    private T? Find<TKey, T>(ConcurrentDictionary<TKey, T> runtime, Dictionary<TKey, T> shipped,
-        Func<string, TKey> key, string? kind) where TKey : notnull where T : class
-    {
-        var exact = key(string.IsNullOrEmpty(kind) ? AnyKind : kind!);
-        var any = key(AnyKind);
-        return runtime.GetValueOrDefault(exact) ?? shipped.GetValueOrDefault(exact)
-            ?? runtime.GetValueOrDefault(any) ?? shipped.GetValueOrDefault(any);
-    }
+    // The entry under the exact key, else the wildcard one, in the one precedence both tables are read by:
+    // runtime-exact → shipped-exact → runtime-"*" → shipped-"*".
+    private T? Find<TKey, T>(ConcurrentDictionary<TKey, T> runtime, Dictionary<TKey, T> shipped, TKey exact, TKey any)
+        where TKey : notnull where T : class
+        => runtime.GetValueOrDefault(exact) ?? shipped.GetValueOrDefault(exact)
+           ?? runtime.GetValueOrDefault(any) ?? shipped.GetValueOrDefault(any);
 
     /// <summary>
     /// The reader for a value of <paramref name="typeName"/>/<paramref name="kind"/> —

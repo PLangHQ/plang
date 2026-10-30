@@ -23,7 +23,33 @@ public class TypeReadTests
         for (var i = 0; i < 20; i++) await Read();
         var born = (System.GC.GetAllocatedBytesForCurrentThread() - from) / 20;
 
-        // 9,936 bytes on this machine; 24,608 with a type made to ask the list for each
-        await Assert.That(born).IsLessThan(10_300L).Because("a read finds its types through the list, it makes none to ask");
+        // 9,840 bytes on this machine; 24,608 with a type made to ask the list for each
+        await Assert.That(born).IsLessThan(10_100L).Because("a read finds its types through the list, it makes none to ask");
+    }
+
+    // a reader is found by its two keys, the exact one and the wildcard: nothing is made to ask
+    [Test]
+    public async Task AReaderLookup_MakesNothing()
+    {
+        await using var app = new global::app.@this("/kinded", global::PLang.Tests.Parent.Actor).Testing();
+        var readers = app.type.list.Reader;
+        readers.Of("text", "md");
+
+        var from = System.GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 200; i++) readers.Of("text", "md");
+        var born = (System.GC.GetAllocatedBytesForCurrentThread() - from) / 200;
+
+        // 0 bytes on this machine; 264 with a closure and a function made to build the keys
+        await Assert.That(born).IsLessThan(16L).Because("a reader lookup takes its keys, it makes no function");
+    }
+
+    // a context keeps one json reader: every read in it reads with the same one
+    [Test]
+    public async Task AContext_KeepsOneJsonReader()
+    {
+        await using var app = new global::app.@this("/kinded", global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+
+        await Assert.That(context.Json).IsSameReferenceAs(context.Json);
     }
 }

@@ -258,7 +258,7 @@ public sealed class @this : browser.@this
         {
             using var json = JsonDocument.Parse(line);
             if (json.RootElement.ValueKind == JsonValueKind.Object)
-                return new global::app.data.@this("!data", new global::app.type.item.serializer.json(context).Parse(json.RootElement.Clone()), context: context);
+                return new global::app.data.@this("!data", context.Json.Parse(json.RootElement.Clone()), context: context);
         }
         catch (JsonException) { }
         return new global::app.data.@this("!data", line, context.App.type.list["text"], context: context);

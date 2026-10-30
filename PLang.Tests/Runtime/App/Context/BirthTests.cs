@@ -278,6 +278,45 @@ public class BirthTests
         await Assert.That(fresh).IsLessThan(400L).Because("a child layer with nothing of its own reads through to the kept answer");
     }
 
+    // a kept answer holds only while nothing changes: an option set elsewhere in the chain (the actor's layer) is the
+    // next answer, from the context and from a child of it
+    [Test]
+    public async Task AKeptOption_IsAnsweredAgain_AfterASetElsewhereInTheChain()
+    {
+        await using var app = new global::app.@this("/birth", global::PLang.Tests.Parent.Actor).Testing();
+        var user = app.actor.list.User;
+        var context = user.Context;
+        var child = context.Child(user, System.Threading.CancellationToken.None);
+        var parent = global::PLang.Tests.Parent.Actor.Context;
+        var action = Make.Action(parent, "variable", "set", Make.Param(parent, "Name", "x", "variable"), ("Value", "1"));
+        await Assert.That((await child.Setting.Get(action, "type")).IsInitialized).IsFalse();
+
+        user.Setting.Set($"{action.Address}.type", "text");
+
+        await Assert.That((await context.Setting.Get(action, "type")).IsInitialized).IsTrue();
+        await Assert.That((await child.Setting.Get(action, "type")).IsInitialized).IsTrue();
+        child.Dispose();
+    }
+
+    // an action started again makes its run's handler once: the catalog keeps the one that resolves, and the run's
+    // handler is born with what Resolve worked out (no fallback made for it, nothing made for an absent row)
+    [Test]
+    public async Task AnActionStartedAgain_BirthsItsHandlerOnce()
+    {
+        await using var app = new global::app.@this("/birth", global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        var parent = global::PLang.Tests.Parent.Actor.Context;
+        var action = Make.Action(parent, "math", "add", ("A", "1"), ("B", "2"));
+        for (var i = 0; i < 20; i++) await (await action.Start(context)).IsSuccess();
+
+        var from = System.GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 100; i++) await action.Start(context);
+        var born = (System.GC.GetAllocatedBytesForCurrentThread() - from) / 100;
+
+        // 11,488 bytes on this machine; 13,560 with a shell made per run, 14,272 with the initializers run twice
+        await Assert.That(born).IsLessThan(12_000L).Because("an action's run births one handler, from what Resolve worked out");
+    }
+
     // a shortcut's name is its file's, kept at its birth: matching a key reads it, making nothing
     [Test]
     public async Task AShortcutsMatch_MakesNothing()

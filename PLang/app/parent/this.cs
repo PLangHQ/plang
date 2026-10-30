@@ -70,7 +70,7 @@ public sealed class @this : global::app.type.item.@this
             if (reply.TryGetProperty("error", out var error) && error.ValueKind != JsonValueKind.Null)
                 return context.Error(new global::app.error.@this($"{goal} in the parent app: {Text(error)}", "ParentGoalFailed", 500));
             return reply.TryGetProperty("result", out var result) && result.ValueKind != JsonValueKind.Null
-                ? context.Ok(new global::app.type.item.serializer.json(context).Parse(result.Clone()))
+                ? context.Ok(context.Json.Parse(result.Clone()))
                 : context.Ok();
         }
         catch (TimeoutException)

@@ -72,5 +72,18 @@ private global::app.error.list.@this? _errors;
   context: a new member on a locked surface); the `Func<string, (…View)>` (not found by its text; its stack asked of
   the codeanalyzer).
 
+## Stage 4 — the generator (Ingi: idea 4 is (B) "no static", idea 5 "yes", the context's json reader "yes")
+- Idea 4 (B): the catalog element keeps `Resolver`, one handler of its class made at the class's first run with its
+  module's own app's System context, which never runs; `Instance()` answers it. The unknown-property check is judged
+  once per loaded action (`_unknown`, a list, empty when none).
+- Idea 5 (`PLang.Generators/Emission/…`): no primary ctor and no property initializers; `X(context)` sets each
+  fallback (the resolver, C# composition); a private `X(context, …every parameter)` is Resolve's; an absent row costs
+  nothing (`action?[name]?.Data(ctx).As<T>() is { HasValue: true }`, "given" unchanged).
+- `context.Json`: the json reader a context keeps; the 16 `new serializer.json(X)` sites ask it.
+- Folded in: `type/reader` `Find` takes its two keys (no closure); a pin that a kept option is answered again after a
+  set elsewhere; `goal.list._found`'s writers note. The frame's five lazies were already one idiom (2b).
+- Pins: `AnActionStartedAgain_BirthsItsHandlerOnce` 11,488 B (13,560 without idea 4, 14,272 without idea 5);
+  `AReaderLookup_MakesNothing` 264 → 0; `AContext_KeepsOneJsonReader`; `AKeptOption_IsAnsweredAgain_AfterASetElsewhereInTheChain`.
+
 ## Next
-- The codeanalyzer measures stage 3; then stage 4 (the generator).
+- The codeanalyzer measures stage 4; then stage 5 (the property bag), which it measures first.

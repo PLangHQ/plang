@@ -18,7 +18,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             if (member != "clipboard") { reader.Skip(); continue; }
             content = reader.Peek() == global::app.type.format.TokenKind.String
                 ? (global::app.type.item.text.@this)reader.String()
-                : global::app.type.item.@this.Create(new global::app.type.item.serializer.json(ctx.Context).Read(ref reader, ctx), ctx.Context);
+                : global::app.type.item.@this.Create(ctx.Context.Json.Read(ref reader, ctx), ctx.Context);
         }
         reader.EndObject();
         return new global::app.type.item.clipboard.@this(content ?? throw new FormatException("a clipboard line holds what was copied: {\"clipboard\": …}"));
