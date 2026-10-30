@@ -21,7 +21,7 @@ internal sealed class attachment
     /// <summary>The properties a program added — made, holding <paramref name="type"/>, the first time they are asked
     /// for; the first made is the one kept.</summary>
     public global::app.type.item.property.list.@this Property(global::app.type.@this type)
-        => System.Threading.LazyInitializer.EnsureInitialized(ref _property, () => new(type));
+        => _property ?? System.Threading.Interlocked.CompareExchange(ref _property, new(type), null) ?? _property;
     private global::app.type.item.property.list.@this? _property;
 
     /// <summary>Whether a program added any property — asked without making the list.</summary>
@@ -37,6 +37,7 @@ internal sealed class attachment
         _property = property;
     }
 
-    /// <summary>A copy for a new variable over the same value.</summary>
-    public attachment Copy() => new(_properties?.Clone(), _property?.Copy());
+    /// <summary>A copy for a new variable over the same value; none when it carries nothing (most values), so the copy
+    /// starts with nothing too.</summary>
+    public attachment? Copy() => HasProperties || HasProperty ? new(_properties?.Clone(), _property?.Copy()) : null;
 }

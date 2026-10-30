@@ -127,7 +127,15 @@ public sealed class @this : System.Collections.Generic.IReadOnlyList<Property>
 
     /// <summary>The property named <paramref name="name"/>, or null.</summary>
     public Property? this[string name]
-        => Rows.FirstOrDefault(p => string.Equals(p.Name, name, System.StringComparison.OrdinalIgnoreCase));
+    {
+        get
+        {
+            // walked, nothing made: every parameter of every run asks
+            foreach (var property in Rows)
+                if (string.Equals(property.Name, name, System.StringComparison.OrdinalIgnoreCase)) return property;
+            return null;
+        }
+    }
 
     public Property this[int index] => Rows[index];
     public int Count => Rows.Count;

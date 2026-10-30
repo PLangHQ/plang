@@ -170,9 +170,12 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>This type's empty value — what a value of it holds before anything is in it: the value
     /// class's own parameterless construction (an empty list or dict, 0, "", false). A type with none
     /// (a goal, an item, a host) answers its typed null: still null, still this type.</summary>
-    public item.@this Empty(global::app.actor.context.@this context)
+    public item.@this Empty(global::app.actor.context.@this context) => _empty is { } empty ? empty() : First();
+
+    // The first empty value this type is asked for: how it makes one is found here, once, and kept (the captures live
+    // in this method, so a later ask makes nothing to answer).
+    private item.@this First()
     {
-        if (_empty is { } empty) return empty();
         var clr = ClrType;
         const System.Reflection.BindingFlags any = System.Reflection.BindingFlags.Instance
             | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;

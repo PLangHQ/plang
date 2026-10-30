@@ -246,8 +246,10 @@ public class BirthTests
         for (var i = 0; i < 20; i++) await goal.Start(context);
         var born = (System.GC.GetAllocatedBytesForCurrentThread() - from) / 20;
 
-        // 189,072 bytes on this machine; 227,552 with a number type made per count and depth
-        await Assert.That(born).IsLessThan(195_000L).Because("a count and a depth are of the app's number types, found, not made");
+        // 101,512 bytes on this machine (stages 3 and 4 since); 103,672 with a type's empty and an action's unknown check
+        // making their closures per ask, 107,528 with a property found by a Func and every copy's attachment made;
+        // 227,552 with a number type made per count and depth
+        await Assert.That(born).IsLessThan(102_500L).Because("a count and a depth are of the app's number types, found, not made");
     }
 
     // an option the step didn't give is answered once and kept, by the scope that answers: asked again, or first asked
@@ -313,8 +315,9 @@ public class BirthTests
         for (var i = 0; i < 100; i++) await action.Start(context);
         var born = (System.GC.GetAllocatedBytesForCurrentThread() - from) / 100;
 
-        // 11,488 bytes on this machine; 13,560 with a shell made per run, 14,272 with the initializers run twice
-        await Assert.That(born).IsLessThan(12_000L).Because("an action's run births one handler, from what Resolve worked out");
+        // 10,744 bytes on this machine; 10,960 with the closures per ask, 11,272 with a property found by a Func;
+        // 13,560 with a shell made per run, 14,272 with the initializers run twice
+        await Assert.That(born).IsLessThan(10_900L).Because("an action's run births one handler, from what Resolve worked out");
     }
 
     // a shortcut's name is its file's, kept at its birth: matching a key reads it, making nothing

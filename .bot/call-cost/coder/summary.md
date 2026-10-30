@@ -85,5 +85,14 @@ private global::app.error.list.@this? _errors;
 - Pins: `AnActionStartedAgain_BirthsItsHandlerOnce` 11,488 B (13,560 without idea 4, 14,272 without idea 5);
   `AReaderLookup_MakesNothing` 264 → 0; `AContext_KeepsOneJsonReader`; `AKeptOption_IsAnsweredAgain_AfterASetElsewhereInTheChain`.
 
+## The cleanup (stage 5 dropped, stage 6 held)
+- `type.Empty`: the memoized ask captures nothing (`First()` holds the building and its captures).
+- `action.Unknown`: the same; `Judged(element)` holds the capture.
+- `type.property.list[name]`: a walk, no Func (the second `Func<property,bool>`: every parameter's `action[name]`
+  and `Default[name]`).
+- `data.attachment.Copy()`: none when it carries nothing; `Property(type)` captures nothing on its kept ask.
+- Pins: a goal run again 101,512 B (103,672 / 107,528 without the pairs); an action start 10,744 B.
+
 ## Next
-- The codeanalyzer measures stage 4; then stage 5 (the property bag), which it measures first.
+- The review line: tester (stages 3, 4 and the cleanup), security (the kept settings answers across actors and sub
+  apps), auditor, docs.

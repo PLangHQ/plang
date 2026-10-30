@@ -391,10 +391,13 @@ public partial class @this
 
     // The properties this action holds that its catalog element doesn't (a .pr built before a property went): a fact of
     // this loaded action against the catalog, judged once; empty when none.
-    private List<global::app.type.property.@this> Unknown(@this element)
-        => _unknown ?? System.Threading.Interlocked.CompareExchange(ref _unknown,
-            Property.Where(p => element.Property[p.Name] == null).ToList(), null) ?? _unknown;
+    private List<global::app.type.property.@this> Unknown(@this element) => _unknown ?? Judged(element);
     private List<global::app.type.property.@this>? _unknown;
+
+    // The judgement Unknown keeps, made the first time (its capture lives here, so a later ask makes nothing).
+    private List<global::app.type.property.@this> Judged(@this element)
+        => System.Threading.Interlocked.CompareExchange(ref _unknown,
+            Property.Where(p => element.Property[p.Name] == null).ToList(), null) ?? _unknown!;
 
     /// <summary>The handler of this catalog action's class that resolves its runs (<c>Resolve</c> answers each run's own,
     /// its parameters bound): made at the class's first run, with its module's own app's System context — never a run's,
