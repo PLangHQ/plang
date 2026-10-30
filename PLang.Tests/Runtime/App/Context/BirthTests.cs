@@ -163,6 +163,58 @@ public class BirthTests
         await Assert.That(born).IsLessThan(1_475_000L).Because("a setting class's path and members are its code's facts, read once per code");
     }
 
+    // a sub app that never caches makes no step cache (a .NET MemoryCache, ~47 KB): it is made at its first ask
+    [Test]
+    public async Task ASubAppsStepCache_IsMadeAtItsFirstAsk()
+    {
+        var born = Bytes(() =>
+        {
+            var app = new global::app.@this("/birth", global::PLang.Tests.Parent.Actor);
+            _ = app.DisposeAsync();
+            return app;
+        });
+
+        // 39,008 bytes on this machine; 86,036 with the cache made at birth
+        await Assert.That(born).IsLessThan(60_000L).Because("the step cache is made at its first ask");
+    }
+
+    // a frame pushed and popped that nothing writes to makes no variable store, tags or errors
+    [Test]
+    public async Task AFrameNothingWritesTo_MakesNoStoreTagsOrErrors()
+    {
+        await using var app = new global::app.@this("/birth", global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        var setting = await context.call.Setting();
+        var goal = Make.Goal(global::PLang.Tests.Parent.Actor.Context, "Frame");
+
+        var born = Bytes(() =>
+        {
+            var frame = context.call.Push(goal, setting);
+            _ = frame.DisposeAsync();
+            return frame;
+        });
+
+        // 1,544 bytes on this machine; 2,592 with the three made at the push
+        await Assert.That(born).IsLessThan(2_000L).Because("a frame's store, tags and errors are made at their first write");
+    }
+
+    // a goal started again judges no broken steps again: it was judged at its first start
+    [Test]
+    public async Task AGoalStartedAgain_JudgesItsStepsOnce()
+    {
+        await using var app = new global::app.@this("/birth", global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        var goal = Make.Goal(global::PLang.Tests.Parent.Actor.Context, "Again");
+        for (var i = 0; i < 3; i++) await (await goal.Start(context)).IsSuccess();
+
+        var from = System.GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 20; i++) await goal.Start(context);
+        var born = (System.GC.GetAllocatedBytesForCurrentThread() - from) / 20;
+
+        // 4,136 bytes on this machine; 4,376 with its steps judged at every start
+        await Assert.That(born).IsLessThan(4_256L).Because("a goal's broken steps are judged once, at its first start");
+    }
+
     [Test]
     public async Task AnActorsPermissionView_IsOneView()
     {

@@ -391,16 +391,21 @@ public partial class @this
 
     // Why this goal cannot start: it holds steps the build could not fix. Its own message names the goal's path and
     // the steps' indexes; each broken step's error rides whole as a cause — its text and its reasons are there.
-    // Null when every step built.
+    // Null when every step built. Judged at its first start and kept: a loaded goal's steps don't change, so every
+    // start, in every app, gets the same answer.
     private global::app.error.@this? Broken()
     {
+        if (System.Threading.Volatile.Read(ref _judged)) return _broken;
         var steps = Step.Items().Where(s => s.Error != null).ToList();
-        if (steps.Count == 0) return null;
-        return new global::app.error.@this(
+        _broken = steps.Count == 0 ? null : new global::app.error.@this(
             $"goal '{Path}' has {steps.Count} broken step(s): {string.Join(", ", steps.Select(s => s.Index))}",
             "GoalBroken", 400)
         { Goal = this, list = steps.Select(s => s.Error!).ToList(), FixSuggestion = "fix the words and build again" };
+        System.Threading.Volatile.Write(ref _judged, true);
+        return _broken;
     }
+    private global::app.error.@this? _broken;
+    private bool _judged;
 
     /// <summary>
     /// Parses .goal file text into a list of Child.

@@ -194,9 +194,11 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public global::app.type.item.path.file.filesystem.@this filesystem { get; }
 
     /// <summary>
-    /// Pluggable step cache. Default: in-memory. Swap via: - use 'redis.dll' for caching
+    /// Pluggable step cache. Default: in-memory, made at its first ask (on.cache, the signing nonce): an app that never
+    /// caches pays for none. Swap via: - use 'redis.dll' for caching
     /// </summary>
-    public ICache Cache { get; internal set; } = new global::app.module.cache.Memory();
+    public ICache Cache => _cache.Value;
+    private readonly Lazy<ICache> _cache = new(() => new global::app.module.cache.Memory());
 
     /// <summary>
     /// The app's store — <c>.data/data.sqlite</c> (in memory while testing, a database of its own). One per
@@ -589,7 +591,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         await KeepAlive.DisposeAsync();
         // The store lets its database go; one never asked for holds nothing.
         if (_store.IsValueCreated) _store.Value.Dispose();
-        // The step cache lets its entries and their expiry timers go.
-        Cache.Dispose();
+        // The step cache lets its entries and their expiry timers go; one never asked for holds nothing.
+        if (_cache.IsValueCreated) _cache.Value.Dispose();
     }
 }
