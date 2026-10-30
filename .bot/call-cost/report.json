@@ -29,6 +29,25 @@
         "health": "good",
         "notes": "the codeanalyzer measures each stage before and after"
       }
+    },
+    {
+      "id": "a3c9e5f1-7b24-4d68-8e0a-5f1d2b6c9a47",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-30T08:00:00Z",
+      "timestamp_end": "2026-10-30T09:00:00Z",
+      "intent": "Measure and review call-cost stage 1 (77add2895..4dcfa3f36): birth, request and a goal run again, before and after.",
+      "before": { "assumptions": "The step cache made lazily saves ~47 KB per app (idea 10).", "risk": "Lazy pieces read through the property make them early." },
+      "plan": ".bot/call-cost/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/call-cost/codeanalyzer/review.md", ".bot/call-cost/codeanalyzer/v1/verdict.json", "Tools/Bench/record.md"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "PASS: sub birth 101 -> 54 KB, sub request 441 -> 371, a goal run again 227 -> 201 KB, held flat; four lows (lazy idiom written four times, stale cache-swap comment, Broken judged once vs a mutable step Error, Children/property still eager)."
+        }
+      ],
+      "after": { "status": "PASS sent to the architect, tester next", "health": "tree clean after commit", "notes": "no mutations" }
     }
   ]
 }

@@ -56,6 +56,8 @@ per birth + dispose; a request app is born, a goal loaded and run, disposed, × 
 | Date | Branch | Commit | Load | Sub birth | Root birth | Sub request | Root request | Held, sub (MB) | Held, root (MB) | `plang --test` | C# sweep | Build, clean | Build, incr. |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 <!-- rows -->
+| 2026-10-30 | call-cost | 4dcfa3f36 (call-cost-stage1) | 7.42 | 0.13 ms, 54 KB | 15.19 ms, 2195 KB | 1.42 ms, 371 KB | 33.22 ms, 3832 KB | 1.5 → 2.0 → 2.0 → 2.0 | 0.1 → 2.0 → 2.0 → 2.0 | - | - | - | - |
+| 2026-10-30 | call-cost | 77add2895 (call-cost-before) | 9.81 | 0.27 ms, 101 KB | 19.37 ms, 2260 KB | 1.76 ms, 441 KB | 24.14 ms, 3897 KB | 1.6 → 2.2 → 2.2 → 2.2 | 0.1 → 2.1 → 2.0 → 2.1 | - | - | - | - |
 | 2026-10-29 | event-action | 86d90db97 (stage8) | 7.20 | 0.18 ms, 101 KB | 16.13 ms, 2267 KB | 1.48 ms, 441 KB | 21.96 ms, 3898 KB | 1.6 → 2.2 → 2.2 → 2.2 | 0.1 → 2.1 → 2.1 → 2.1 | - | - | - | - |
 | 2026-10-29 | event-action | 2d10af80f (event-action-4f960bba3) | 11.06 | 0.15 ms, 103 KB | 14.49 ms, 2366 KB | 1.60 ms, 524 KB | 23.33 ms, 4434 KB | 1.6 → 2.2 → 2.2 → 2.2 | 0.1 → 2.1 → 2.1 → 2.1 | - | - | - | - |
 | 2026-10-29 | event-action | 3266637da (event-action-3266637da) | 17.09 | 0.23 ms, 102 KB | 31.31 ms, 2361 KB | 6.34 ms, 549 KB | 57.14 ms, 4429 KB | 1.6 → 2.2 → 2.2 → 2.2 | 0.1 → 2.1 → 2.1 → 2.1 | - | - | - | - |
