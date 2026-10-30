@@ -41,4 +41,4 @@ own name recurses until the call-stack depth guard stops it (an error, not a han
 ## Known faults
 
 - The list is read once: a shortcut goal built mid-run is not one until the app starts again.
-- A read costs one goal call (~0.2 ms, against ~0.03 ms for a value held in memory).
+- A read costs one goal call, not a value held in memory. A name that is no shortcut costs one comparison per shortcut against its `Name`, which the shortcut keeps from its birth (`shortcut/this.cs:20,40`); nothing is built per ask.

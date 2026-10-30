@@ -177,7 +177,7 @@ CreateUser
 - log "Created user %user.id%"
 ```
 
-The Runtime resolves `%name%`, `%age%`, and `%user.id%` by calling `Variables.Get()` with dot-notation path navigation. The source generator emits a `partial class` extension on the action record itself; properties resolve `%var%` lazily on first access via `Action.GetParameter(name).As<T>(Context)` (typed slots) or `.AsCanonical(Context)` (plain `Data` slots that operate on the live variable directly).
+The Runtime resolves `%name%`, `%age%`, and `%user.id%` by calling `Variables.Get()` with dot-notation path navigation. The source generator emits a `partial class` extension on the action handler itself; `Resolve` works each parameter out as a `Data<T>` from `action[name].Data(context).As<T>()` (`PLang.Generators/Emission/Property/Data/this.cs:167`), and the `%var%` inside it is read when the handler asks for `Value()`. A plain `Data` slot is handed over as it is (`:149-157`), so the action works on the live variable.
 
 ## Relationships
 
