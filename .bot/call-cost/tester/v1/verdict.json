@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "suites green (C# 5,749; plang 322/323 +1 skip); 8 probes pass; parallel first-ask race is unguarded by shipped tests (probes P-A/P-B catch the mutation)" }

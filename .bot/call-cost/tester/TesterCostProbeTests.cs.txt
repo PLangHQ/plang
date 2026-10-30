@@ -1,0 +1,162 @@
+namespace PLang.Tests.App.Context;
+
+// tester probes for call-cost stages 1-2 (never merged)
+public class TesterCostProbeTests
+{
+    [global::app.Attributes.PlangType("costprobe")]
+    public sealed class CostProbe : global::app.type.item.@this
+    {
+        public CostProbe(global::app.type.@this type) : base(type) { }
+    }
+
+    private sealed class CostKind(global::app.type.@this owner) : global::app.type.kind.@this("webpx", owner);
+
+    private static global::app.goal.@this OneStep(string name)
+    {
+        var parent = global::PLang.Tests.Parent.Actor.Context;
+        return Make.Goal(parent, name, Make.Step("set %x% = 1",
+            Make.Action(parent, "variable", "set", Make.Param(parent, "Name", "x", "variable"), ("Value", "1"))));
+    }
+
+    private static global::app.goal.step.@this BrokenStep(global::app.goal.@this goal, int index)
+        => new(global::PLang.Tests.Parent.Actor.Context.App.type.list)
+        {
+            Goal = goal, Index = index, Text = "broken",
+            Line = new global::app.goal.step.line.@this { Indent = 0 },
+            Error = new global::app.error.@this("refused", "Refused", 400),
+        };
+
+    // P-A: 64 branches write the frame's first local at once
+    [Test]
+    public async Task P_A_ParallelFirstLocals_AllLand()
+    {
+        await using var app = new global::app.@this("/cost", global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        var goal = Make.Goal(global::PLang.Tests.Parent.Actor.Context, "Frame");
+        await using var frame = context.call.Push(goal, await context.call.Setting());
+        using var gate = new System.Threading.Barrier(64);
+        await Task.WhenAll(Enumerable.Range(0, 64).Select(i => Task.Run(() =>
+        {
+            gate.SignalAndWait();
+            frame.Set($"v{i}", new global::app.data.@this($"v{i}", i, context: context));
+        })));
+        var missing = Enumerable.Range(0, 64).Where(i => !frame.Holds($"v{i}")).ToList();
+        await Assert.That(missing).IsEmpty();
+    }
+
+    // P-B: a frame read with nothing written; its lazies are one object each
+    [Test]
+    public async Task P_B_ReadNothing_AnswersEmpty_AndOneObjectPerLazy()
+    {
+        await using var app = new global::app.@this("/cost", global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        var goal = Make.Goal(global::PLang.Tests.Parent.Actor.Context, "Frame");
+        await using var frame = context.call.Push(goal, await context.call.Setting());
+        await Assert.That(frame.Holds("nope")).IsFalse();
+        await Assert.That(frame.TryGet("nope", out _)).IsFalse();
+        await Assert.That(frame.Error).IsNull();
+        using var gate = new System.Threading.Barrier(32);
+        var tags = await Task.WhenAll(Enumerable.Range(0, 32).Select(_ => Task.Run(() => { gate.SignalAndWait(); return (object)frame.Tags; })));
+        await Assert.That(tags.Distinct().Count()).IsEqualTo(1);
+        await Assert.That(frame.Parameter).IsSameReferenceAs(frame.Parameter);
+        await Assert.That(frame.Errors).IsSameReferenceAs(frame.Errors);
+        await Assert.That(frame.Errors.Count()).IsEqualTo(0);
+    }
+
+    // P-B2: an error recorded on a frame whose Errors was never asked is the frame's Error
+    [Test]
+    public async Task P_B2_RecordOnAFreshFrame_IsItsError_Once()
+    {
+        await using var app = new global::app.@this("/cost", global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        var goal = Make.Goal(global::PLang.Tests.Parent.Actor.Context, "Frame");
+        await using var frame = context.call.Push(goal, await context.call.Setting());
+        var error = new global::app.error.@this("boom", "Boom", 500);
+        frame.Record(error, context);
+        frame.Record(error, context);
+        await Assert.That(frame.Error).IsSameReferenceAs(error);
+        await Assert.That(frame.Errors.Count()).IsEqualTo(1);
+    }
+
+    // P-C1: the steps replaced after a start
+    [Test]
+    public async Task P_C1_StepListReplacedAfterAStart_IsJudgedAgain()
+    {
+        await using var app = new global::app.@this("/cost", global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        var goal = OneStep("Replaced");
+        await (await goal.Start(context)).IsSuccess();
+
+        var steps = new global::app.goal.step.list.@this(goal.Step.Type);
+        steps.Add(BrokenStep(goal, 0));
+        goal.Step = steps;
+
+        await Assert.That((await goal.Start(context)).Error?.Key).IsEqualTo("GoalBroken");
+    }
+
+    // P-C2: a broken step added after a start
+    [Test]
+    public async Task P_C2_BrokenStepAddedAfterAStart_IsJudgedAgain()
+    {
+        await using var app = new global::app.@this("/cost", global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        var goal = OneStep("Added");
+        await (await goal.Start(context)).IsSuccess();
+
+        goal.Step.Add(BrokenStep(goal, 1));
+
+        await Assert.That((await goal.Start(context)).Error?.Key).IsEqualTo("GoalBroken");
+    }
+
+    // P-C3: refused, then fixed: it starts again
+    [Test]
+    public async Task P_C3_RefusedThenFixed_StartsAgain()
+    {
+        await using var app = new global::app.@this("/cost", global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        var goal = OneStep("Fixed");
+        await (await goal.Start(context)).IsSuccess();
+        goal.Step.Items().First().Error = new global::app.error.@this("refused", "Refused", 400);
+        await Assert.That((await goal.Start(context)).Error?.Key).IsEqualTo("GoalBroken");
+        goal.Step.Items().First().Error = null;
+        await (await goal.Start(context)).IsSuccess();
+    }
+
+    // P-D1: one kinded number type per identity, across a root and a sub app
+    [Test]
+    public async Task P_D1_KindedNumberType_IsOneObject_AcrossRootAndSub()
+    {
+        await using var parent = new global::app.@this("/parent").Testing();
+        await using var child = new global::app.@this("/parent/child", parent.actor.list.User).Testing();
+        var kind = parent.type.list[typeof(global::app.type.item.number.@this)];
+        var a = kind.Kinded(kind.kind["int"] ?? throw new System.Exception("no int kind"));
+        var b = kind.Kinded(kind.kind["int"]!);
+        var c = child.type.list[typeof(global::app.type.item.number.@this)].Kinded(kind.kind["int"]!);
+        await Assert.That(a).IsSameReferenceAs(b);
+        await Assert.That(c).IsSameReferenceAs(a);
+        var n = new global::app.type.item.number.@this(kind, 5);
+        await Assert.That(n.Type).IsSameReferenceAs(a);
+    }
+
+    // P-D2: a sub app's own type with a kind of its own: the kinded type follows its layer, and a sibling's is its own
+    [Test]
+    public async Task P_D2_SubAppsKindedType_FollowsItsLayer()
+    {
+        await using var parent = new global::app.@this("/parent").Testing();
+        await using var one = new global::app.@this("/parent/one", parent.actor.list.User).Testing();
+        await using var two = new global::app.@this("/parent/two", parent.actor.list.User).Testing();
+        await one.type.list.Add(typeof(CostProbe), one.actor.list.System.Context).IsSuccess();
+        await two.type.list.Add(typeof(CostProbe), two.actor.list.System.Context).IsSuccess();
+        var typeOne = one.type.list["costprobe"];
+        var typeTwo = two.type.list["costprobe"];
+        var kindOne = new CostKind(typeOne);
+        one.type.list.Add([kindOne]);
+
+        var kinded = typeOne.Kinded(typeOne.kind["webpx"]!);
+        await Assert.That(kinded.kind.Name).IsEqualTo("webpx");
+        await Assert.That(kinded.kind).IsSameReferenceAs(typeOne.kind["webpx"]).Because("the kinded type holds the layer's own kind");
+        await Assert.That(kinded).IsSameReferenceAs(typeOne.Kinded(typeOne.kind["webpx"]!));
+        await Assert.That(typeTwo.kind["webpx"]).IsNull().Because("a sibling never has it");
+        await Assert.That(parent.type.list.Contains("costprobe")).IsFalse();
+    }
+}
