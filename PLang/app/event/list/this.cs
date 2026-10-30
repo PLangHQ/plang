@@ -162,7 +162,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.s
     }
 
     // The load, answered on done: what this actor takes in from its maker's (a sub app's), then its system events — the
-    // maker's are bound first, so they run first. The app's System loads first: every goal is read as it, so a goal
+    // maker's are bound first, so they run first. A system event file is there to bind: what it binds is the actor's,
+    // what it sets stays in the load's own context, so the program's state never depends on when the first ask came. The app's System loads first: every goal is read as it, so a goal
     // another actor's load reads finds System's events standing — and System's own load, reading the same file, never
     // waits on this one.
     private async System.Threading.Tasks.Task Load(System.Threading.Tasks.TaskCompletionSource done)
