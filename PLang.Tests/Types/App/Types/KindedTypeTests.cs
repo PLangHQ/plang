@@ -28,4 +28,29 @@ public class KindedTypeTests
         await Assert.That(new global::app.type.item.number.@this(number, 5).Type).IsSameReferenceAs(kinded);
         await Assert.That(number.Kinded(null)).IsSameReferenceAs(number);
     }
+
+    // a kinded type asked for another kind answers its family's: {number, int} and long is the one {number, long}
+    [Test]
+    public async Task AKindedType_AskedForAnotherKind_AnswersItsFamilysKindedType()
+    {
+        await using var app = new global::app.@this("/kinded", global::PLang.Tests.Parent.Actor).Testing();
+        var number = app.type.list[typeof(global::app.type.item.number.@this)];
+
+        await Assert.That(number.Kinded("int").Kinded("long")).IsSameReferenceAs(number.Kinded("long"));
+        await Assert.That(number.Kinded("int").Kinded(null)).IsSameReferenceAs(number);
+    }
+
+    // a kind whose reader is registered under a name no type answers is of that name's bare identity, as before:
+    // asking for it throws nothing
+    [Test]
+    public async Task AKindReadUnderANameNoTypeAnswers_IsThatNamesBareType()
+    {
+        await using var app = new global::app.@this("/kinded", global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        app.type.list.Reader.Register("ghosttype", "ghostkind", (raw, kind, ctx) => raw);
+
+        var type = new global::app.type.kind.@this("ghostkind").type(context);
+
+        await Assert.That(type.Name).IsEqualTo("ghosttype");
+    }
 }

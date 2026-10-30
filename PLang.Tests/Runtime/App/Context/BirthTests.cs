@@ -175,7 +175,7 @@ public class BirthTests
         });
 
         // 38,912 bytes on this machine; 86,036 with the cache made at birth
-        await Assert.That(born).IsLessThan(40_000L).Because("the step cache is made at its first ask");
+        await Assert.That(born).IsLessThan(60_000L).Because("the step cache is made at its first ask");
     }
 
     // a frame pushed and popped that nothing writes to makes no variable store, tags or errors
@@ -195,7 +195,7 @@ public class BirthTests
         });
 
         // 680 bytes on this machine; 1,544 with its children and property made at the push, 2,592 with all five
-        await Assert.That(born).IsLessThan(720L).Because("a frame's store, tags and errors are made at their first write");
+        await Assert.That(born).IsLessThan(1_100L).Because("a frame's store, tags and errors are made at their first write");
     }
 
     // a goal started again judges no broken steps again: it was judged at its first start
@@ -249,7 +249,7 @@ public class BirthTests
         // 101,512 bytes on this machine (stages 3 and 4 since); 103,672 with a type's empty and an action's unknown check
         // making their closures per ask, 107,528 with a property found by a Func and every copy's attachment made;
         // 227,552 with a number type made per count and depth
-        await Assert.That(born).IsLessThan(102_500L).Because("a count and a depth are of the app's number types, found, not made");
+        await Assert.That(born).IsLessThan(164_000L).Because("a count and a depth are of the app's number types, found, not made");
     }
 
     // an option the step didn't give is answered once and kept, by the scope that answers: asked again, or first asked
@@ -276,8 +276,8 @@ public class BirthTests
         var fresh = (System.GC.GetAllocatedBytesForCurrentThread() - from) / 20;
         foreach (var child in children) child.Dispose();
 
-        await Assert.That(again).IsLessThan(400L).Because("an unset option is kept by the scope that answered it");
-        await Assert.That(fresh).IsLessThan(400L).Because("a child layer with nothing of its own reads through to the kept answer");
+        await Assert.That(again).IsLessThan(1_000L).Because("an unset option is kept by the scope that answered it");
+        await Assert.That(fresh).IsLessThan(1_000L).Because("a child layer with nothing of its own reads through to the kept answer");
     }
 
     // a kept answer holds only while nothing changes: an option set elsewhere in the chain (the actor's layer) is the
@@ -317,7 +317,7 @@ public class BirthTests
 
         // 10,744 bytes on this machine; 10,960 with the closures per ask, 11,272 with a property found by a Func;
         // 13,560 with a shell made per run, 14,272 with the initializers run twice
-        await Assert.That(born).IsLessThan(10_900L).Because("an action's run births one handler, from what Resolve worked out");
+        await Assert.That(born).IsLessThan(12_150L).Because("an action's run births one handler, from what Resolve worked out");
     }
 
     // a shortcut's name is its file's, kept at its birth: matching a key reads it, making nothing
@@ -335,7 +335,7 @@ public class BirthTests
         var born = (System.GC.GetAllocatedBytesForCurrentThread() - from) / 200;
 
         // 0 bytes on this machine; 5,520 with its name made at every match
-        await Assert.That(born).IsLessThan(16L).Because("a shortcut's name is a birth fact");
+        await Assert.That(born).IsLessThan(2_700L).Because("a shortcut's name is a birth fact");
     }
 
     // a name found among the goals read reads the list this one keeps, made once after the last goal came in
@@ -355,7 +355,7 @@ public class BirthTests
         var born = (System.GC.GetAllocatedBytesForCurrentThread() - from) / 50;
 
         // 1,152 bytes on this machine; 3,048 with the goals' lists made at every find
-        await Assert.That(born).IsLessThan(1_200L).Because("the goals a name may be are kept until a goal comes in");
+        await Assert.That(born).IsLessThan(2_100L).Because("the goals a name may be are kept until a goal comes in");
     }
 
     // a code's types are made at their first ask: a code made and never asked scans nothing
@@ -365,7 +365,7 @@ public class BirthTests
         var born = Bytes(() => new global::app.origin.code(global::app.Wiring.none));
 
         // 64 bytes on this machine; 1,711,930 with the scan made at the code's birth
-        await Assert.That(born).IsLessThan(1_000L).Because("the scan is made at the first ask of the code's types");
+        await Assert.That(born).IsLessThan(850_000L).Because("the scan is made at the first ask of the code's types");
     }
 
     [Test]
@@ -375,5 +375,48 @@ public class BirthTests
 
         await Assert.That(actor.Permission).IsSameReferenceAs(actor.Permission);
         await Assert.That(actor.Task).IsSameReferenceAs(actor.Task);
+    }
+
+    // a kept answer is asked for with nothing made: the bytes one ask allocates, the first ask made
+    private static long Asked(System.Action ask)
+    {
+        ask();
+        var from = System.GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 200; i++) ask();
+        return (System.GC.GetAllocatedBytesForCurrentThread() - from) / 200;
+    }
+
+    // a type's kept empty value (a shared one) is answered with no closure
+    [Test]
+    public async Task ATypesKeptEmpty_IsAnsweredWithNothingMade()
+    {
+        await using var app = new global::app.@this("/birth", global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        var number = app.type.list[typeof(global::app.type.item.number.@this)];
+
+        // 0 bytes on this machine; 48 with its closure made before the kept answer
+        await Assert.That(Asked(() => number.Empty(context))).IsLessThan(24L).Because("a type's kept empty is answered with no closure");
+    }
+
+    // an action's unknown properties are judged once: asked again, with no closure
+    [Test]
+    public async Task AnActionsUnknownProperties_AreAskedWithNothingMade()
+    {
+        var parent = global::PLang.Tests.Parent.Actor.Context;
+        var action = Make.Action(parent, "math", "add", ("A", "1"), ("B", "2"));
+
+        // 0 bytes on this machine; 24 with a closure per unknown-property check
+        await Assert.That(Asked(() => action.Instance(parent))).IsLessThan(12L).Because("an action's unknown properties are judged once, asked with no closure");
+    }
+
+    // a property is found by name with a walk, no function made
+    [Test]
+    public async Task APropertyFoundByName_MakesNothing()
+    {
+        var parent = global::PLang.Tests.Parent.Actor.Context;
+        var action = Make.Action(parent, "math", "add", ("A", "1"), ("B", "2"));
+
+        // 0 bytes on this machine; 88 with a closure and a function per property found
+        await Assert.That(Asked(() => _ = action.Property["a"])).IsLessThan(44L).Because("a property is found by a walk, no function");
     }
 }

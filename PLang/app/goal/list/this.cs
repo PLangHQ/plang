@@ -266,8 +266,8 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
 
     // The goals a name may be, as this list holds them now: made at the first find after a goal comes in (Add lets it go
     // whole), kept for every find until then — made under the gate Add takes, so it is never made from the goals before
-    // an Add and kept after it. Any writer of this list's goals (one that adds, replaces or removes a goal) lets it go,
-    // under the same gate.
+    // an Add and kept after it. Add (which adds a goal, and replaces the one held from the same .pr) is the one writer of
+    // this list's goals, and lets it go under that gate.
     private found Found
     {
         get

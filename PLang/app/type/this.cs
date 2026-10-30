@@ -876,12 +876,12 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// reading the variables it holds); null for a type that is its identity alone.</summary>
     internal list.@this? Types => _list ?? Family._list;
 
-    /// <summary>This type with the kind named <paramref name="kind"/> ({number} and int → {number, int}; none, the type
-    /// itself), marked <paramref name="template"/> when one is given: made once, by the list that made this type, and
+    /// <summary>This type's family with the kind named <paramref name="kind"/> ({number} or {number, int} and long →
+    /// {number, long}; none, the family itself), marked <paramref name="template"/> when one is given: made once, by the list that made this type, and
     /// kept there — the object that list answers for that identity. A type no list made (its identity alone) makes it
     /// here, as an operator's birth does.</summary>
     internal @this Kinded(string? kind, global::app.type.item.template.kind.@this? template = null)
-        => Types?.Made(this, Name, kind, Strict, template ?? Template) ?? new(Name, ClrType, kind, Strict, template ?? Template);
+        => Types?.Made(Family, Name, kind, Strict, template ?? Template) ?? new(Name, ClrType, kind, Strict, template ?? Template);
 
     // The members of the class this type describes — the type list's one list per class, which a value of that class
     // reads its members from too. A class under it that is no kind of its own (an error's subclass) is read by its
