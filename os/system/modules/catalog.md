@@ -89,6 +89,11 @@ the signature doesn't. "Stores a value" on `variable.set` is noise; "Stores a va
 the named key in the current variable scope" teaches. `module.description.md` is the
 one-line module sentence (rendered once per module).
 
+A description says what the action does, in words. Paths and forms go in the examples: the
+writer reaches for the first path a description shows, whatever the step names. `on.event`'s
+description names its moments in words (the app starting, a goal starting, a variable being set)
+and its examples hold the paths.
+
 ## Writing good Notes
 
 Notes is the file you'll touch most — the rulebook for **this specific action**: the
