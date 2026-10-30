@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "call-cost stages 3-4 at 5f22f6b79: suites green, 13 of 16 probes pass (3 GC-held probes inconclusive), settings/Find/Resolver mutations caught; one redundant guard (IsRead) no test can turn red" }

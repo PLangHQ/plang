@@ -164,7 +164,7 @@ public sealed class @this : screen.@this
     private static global::app.data.@this Payload(JsonObject e, global::app.actor.context.@this context)
     {
         using var json = JsonDocument.Parse(e.ToJsonString());
-        return new global::app.data.@this("!data", new global::app.type.item.serializer.json(context).Parse(json.RootElement.Clone()), context: context);
+        return new global::app.data.@this("!data", context.Json.Parse(json.RootElement.Clone()), context: context);
     }
 
     private protected override bool IsClosed => false;
@@ -286,7 +286,7 @@ public sealed class @this : screen.@this
             {
                 using var named = parameters.EnumerateObject();
                 foreach (var p in named)
-                    bound.Add(new global::app.data.@this(p.Name, new global::app.type.item.serializer.json(context).Parse(p.Value.Clone()), context: context));
+                    bound.Add(new global::app.data.@this(p.Name, context.Json.Parse(p.Value.Clone()), context: context));
             }
             // its parameters are its goal frame's own variables
             var ran = await goal.Start(context, bound);

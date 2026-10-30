@@ -37,13 +37,13 @@ public sealed partial class @this
 
     // Gives a result its type: one of this number's kind (or the other operand's) holds that one's type, the
     // app's. A result whose kind climbed (int → long) holds the app's {number, <kind>}, found through this number's
-    // family — a type object per result (the list keys its types by entry, not by (entry, kind)). An
-    // operator-born operand (a type built from the class, no app) leaves the result the operator's birth.
+    // family, the kinded type its list keeps. An operator-born operand (a type built from the class, no app) leaves the
+    // result the operator's birth.
     private @this Retype(@this result, @this? other = null)
         => ReferenceEquals(result, this) || ReferenceEquals(result, other) ? result
          : string.Equals(result.Kind.Name, Kind.Name, System.StringComparison.OrdinalIgnoreCase) ? new(Type, result)
          : other != null && string.Equals(result.Kind.Name, other.Kind.Name, System.StringComparison.OrdinalIgnoreCase) ? new(other.Type, result)
-         : Type.Family.kind[result.Kind.Name] is kind.@this climbed ? new(new global::app.type.@this(Type.Family, climbed, false, null), result)
+         : Type.Family.kind[result.Kind.Name] is kind.@this climbed ? new(Type.Family.Kinded(climbed.Name), result)
          : result;
 
     // A pure numeric op returns its VALUE and THROWS a keyed AppException on error. It has no

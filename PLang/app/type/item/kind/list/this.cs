@@ -90,7 +90,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
             return ctx.Error(new global::app.error.ServiceError(
                 $"cannot convert {source.Type?.Name} into list — source is not json", "ConvertFailed", 400));
 
-        object? parsed = new global::app.type.item.serializer.json(ctx).Parse(element);
+        object? parsed = ctx.Json.Parse(element);
         return ctx.Ok(parsed);
     }
 }

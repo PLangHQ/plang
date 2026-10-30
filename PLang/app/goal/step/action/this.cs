@@ -333,7 +333,7 @@ public partial class @this
         var (code, error) = Instance(context);
         if (error != null) return context.Error(error);
 
-        // `code` is the throwaway registry shell; Resolve builds the fresh, populated instance
+        // `code` is the catalog element's kept resolver (it never runs); Resolve builds the fresh, populated instance
         // that runs. `real` is kept for the catch path's parameter snapshot.
         module.ICodeGenerated? real = null;
         global::app.data.@this result;
@@ -378,16 +378,34 @@ public partial class @this
     {
         if (Module[Name] is not { } element)
             return (null, global::app.error.ActionError.NotFound($"Action '{Module}.{Name}'"));
-        if (Property.FirstOrDefault(p => element.Property[p.Name] == null) is { } unknown)
+        if (Unknown(element) is [var unknown, ..])
             return (null, new global::app.error.ActionError(
                 $"{Module}.{Name} has no property {unknown.Name}; rebuild the goal", "UnknownProperty", 400));
 
-        var code = Module.Create(Name, context);
+        var code = element.Resolver;
         return code == null
             ? (null, new global::app.error.ActionError(
                 $"Action '{Module}.{Name}' does not implement ICodeGenerated", "ActionError", 500))
             : (code, null);
     }
+
+    // The properties this action holds that its catalog element doesn't (a .pr built before a property went): a fact of
+    // this loaded action against the catalog, judged once; empty when none.
+    private List<global::app.type.property.@this> Unknown(@this element) => _unknown ?? Judged(element);
+    private List<global::app.type.property.@this>? _unknown;
+
+    // The judgement Unknown keeps, made the first time (its capture lives here, so a later ask makes nothing).
+    private List<global::app.type.property.@this> Judged(@this element)
+        => System.Threading.Interlocked.CompareExchange(ref _unknown,
+            Property.Where(p => element.Property[p.Name] == null).ToList(), null) ?? _unknown!;
+
+    /// <summary>The handler of this catalog action's class that resolves its runs (<c>Resolve</c> answers each run's own,
+    /// its parameters bound): made at the class's first run, with its module's own app's System context — never a run's,
+    /// so no sub app is held — and kept; it never runs itself. Null when the class isn't code-generated.</summary>
+    internal module.ICodeGenerated? Resolver
+        => _resolver ?? System.Threading.Interlocked.CompareExchange(ref _resolver,
+            Module.Create(Name, Module.App.actor.list.System.Context), null) ?? _resolver;
+    private module.ICodeGenerated? _resolver;
 
     /// <summary>What a value the build wrote in a type its option no longer is answers — the step's own (file.read's
     /// <c>Template</c> written <c>true</c>, a choice now) or a default it froze (list.split's <c>Empty</c>): rebuild the

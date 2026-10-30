@@ -72,6 +72,9 @@ public sealed partial class @this : global::app.type.item.@this
     /// <summary>The app's property list type — what a program adds to a frame is of it.</summary>
     internal global::app.type.@this Properties => _types[typeof(global::app.type.item.property.list.@this)];
 
+    /// <summary>The app's number type — a frame's depth is of it.</summary>
+    internal global::app.type.@this Number => _types[typeof(global::app.type.item.number.@this)];
+
     /// <summary>A context's calls, of the app's <paramref name="types"/>, reading what they capture through its
     /// <paramref name="settings"/>.</summary>
     public @this(global::app.type.list.@this types, Func<global::app.actor.setting.@this> settings) : base(types[typeof(@this)])
@@ -216,10 +219,10 @@ public sealed partial class @this : global::app.type.item.@this
     {
         if (_current.Value is { } caller)
         {
-            if (caller.Depth >= MaxDepth) throw new CallStackOverflowException(MaxDepth);
+            if (caller._depth >= MaxDepth) throw new CallStackOverflowException(MaxDepth);
             if (!System.Runtime.CompilerServices.RuntimeHelpers.TryEnsureSufficientExecutionStack())
-                throw new CallStackOverflowException((int)caller.Depth,
-                    $"Call stack overflow: the thread's stack ran short at {caller.Depth} frames");
+                throw new CallStackOverflowException(caller._depth,
+                    $"Call stack overflow: the thread's stack ran short at {caller._depth} frames");
         }
         return Enter(make(this, state), setting);
     }

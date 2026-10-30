@@ -14,7 +14,7 @@ public static class Default
     /// </summary>
     public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
     {
-        var type = ctx.Context.App.type.list[new global::app.type.@this("image", kind), ctx.Context];
+        var type = ctx.Context.App.type.list[typeof(global::app.type.item.image.@this)].Kinded(kind);
         // bytes the wire names no kind for are the kind their magic bytes name
         if (raw is byte[] bytes)
             return (kind == null ? global::app.type.item.image.@this.FromBytes(bytes, ctx.Context) : null)

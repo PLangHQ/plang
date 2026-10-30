@@ -20,7 +20,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         if (!string.IsNullOrEmpty(kind) && ctx.Context.App.type.list["size"].kind[kind!] is not null)
         {
             var carrier = new global::app.data.@this("", context: ctx.Context);
-            return ctx.Context.App.type.list[new global::app.type.@this("size", kind), ctx.Context].Make(text, carrier)
+            return ctx.Context.App.type.list["size"].Kinded(kind).Make(text, carrier)
                 ?? throw new global::app.error.DeclinedException(carrier.Error
                     ?? new global::app.error.@this($"'{text}' is not a size in {kind}.", "SizeInvalid", 400));
         }

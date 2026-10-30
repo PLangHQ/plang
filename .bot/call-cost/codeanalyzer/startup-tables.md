@@ -1,0 +1,64 @@
+# The type list's tables made at build time — a scoped proposal (for the architect, then Ingi)
+
+Pattern: a birth fact, not a search (5); the first asker loads it (11). The type list is the locked core (the type system) and the generator is Ingi's; nothing here is built before his yes. I read and measure; the coder builds.
+
+## What it replaces (measured, cold root app, quiet machine, `Bench cold root`)
+`origin.code` makes `new type.list.@this(this)`, whose `Scan()` builds `Code.Library` by reflection over the whole PLang assembly (`type/list/Code.cs:141–181`):
+| part | ms (JIT in it) |
+|---|---|
+| `assembly.GetTypes()` | ~10 (8) |
+| per class `FamilyOf` / `NameOf` → `Item`, `Subclasses` | ~25 (6) |
+| `Kind` classes (`IsAssignableFrom`, `GetConstructor`) | ~3 (1) |
+| `new Mark(t)` for every class → `Marks` | ~18 (8) |
+| `Readers` (serializer folders: ITypeReader ctors, static `Read`) | ~10 (5) |
+| the rest of `Scan()`: entries made from those tables | ~38 (24) |
+So ~105 ms of a ~210 ms cold root app (the CLI's one app) is this scan; a second root app in the same process still rescans (~30–60 ms).
+
+## The shape
+The generator (a new `Emission/Library/this.cs`, beside `Action` and `Property`) writes, for the assembly it compiles, one static class holding the Library's six lists as data: `Item` (name, class), `Subclasses` (class, family, kind, reader), `Kind` (class, owner), `Marks` (the classes that have a codec, are a list, or are a choice), `Tokens` (serializer folder, reader class), `Payloads` (folder, kind, static `Read`). Each is derived from the same facts the reflection reads today (`FamilyOf`, `NameOf`, `[Format]`, `[PlangType]`, namespaces ending `.serializer`), at compile time, from Roslyn symbols.
+`Library` keeps one shape. The PLang assembly's `Library` is born from the generated tables; an assembly a package adds (`code.dll`) is still scanned by reflection into the same type. That is the one fork to name: two births for one type (a type-switch-free one: `Library.Of(assembly)` asks the assembly for its generated tables, else scans). The per-class `Class` facts (aliases, owned CLR types, defaults) stay lazy, as they are.
+
+## And lazy (Ingi: "and lazy ofc") — the first asker loads it (11)
+Tables made at build time remove the reflection; lazy removes the work nobody asked for. Both belong in one stage:
+- **Each of the six lists is read at its first ask**, not when the list is made. A lookup by name asks `Item` (a name → class index; a dictionary built from the generated names only when the first name is looked up), not the readers or the marks. `Readers` are read when the first value is read from a format; `Marks` when the first codec, list or choice is asked.
+- **An entry is made when its name is first asked**, not at `Scan()`: today the ~38 ms after the Library makes an entry for every class. A hello world asks for a few dozen types; the others (the other formats, the module types) are made if and when a goal reaches them. This is the same shape as the per-actor event list: made by the first asker, kept after.
+- What this must not break: an enumeration that wants every type (`%!app.type.list%`, the catalog, a snapshot) asks all of them, and that ask makes them all; nothing else does. A pin lists a fresh list's types and compares with the eager one's.
+- With both, the cold root app's type list should cost the generated-table read plus the few types a goal asks for; the ~105 ms of scan and the entry-making should mostly go, not the 60–90 ms the tables alone would take. Not measured: arithmetic until a prototype exists.
+
+## Why it is not free
+- A generated table of thousands of `typeof(X)` entries is one large straight-line method; its JIT may cost tens of ms. Mitigation to measure first: emit the six lists as separate small static arrays, or by namespace, and read each at its first ask; or emit names only and bind `Type` lazily. A prototype of the emitted file (copied by hand into a scratch project) would give the number before the generator is written.
+- Tables alone leave the ~38 ms of making entries; lazy is what removes it, and it is the riskier half (anything that assumed every type is present at birth). A lazy list makes the pin above essential.
+- Expected saving: tables alone ~60–90 ms of ~210 ms cold root birth; tables and lazy more (most of the ~105 ms, and the JIT of the scan methods); the CLI start ~600 → ~500 ms or better. Not measured; arithmetic on the table above.
+
+## How it stays honest
+A C# pin builds the reflection `Library` and the generated one for the PLang assembly and asserts the six lists equal (same entries, same order). A class added later cannot make them drift; the pin names it. A surface golden re-pins `type.list`'s new internal member with the decision that approved it.
+
+## Asked of Ingi
+Whether the generator may emit the Library's tables (a locked-core addition), and whether it goes into call-cost or its own branch.
+
+---
+
+# Prototype numbers and the DLL check (architect asked: measure first; no second birth)
+
+Prototype: a scratch bench mode (`prototype/emit.cs.txt`) reads the real `Library` of the PLang assembly and writes what a generator would emit; a second mode (`prototype/tables.cs.txt`) loads it in a fresh process, each list on its own (a lazy read). Nothing is in production; the scratch modes are reverted. Load was 11–22 during these runs (other bots building): times are inflated, JIT time and counts are not.
+
+## What the assembly gives (the tables are small)
+`Library` scans **3,521 classes** and keeps **308 entries**: Item 140, Subclasses 36, Kind 33, Marks 43, Tokens 43, Payloads 13. The scan reads 3,521 to keep 308.
+
+## Cold cost, fresh process, best of 5
+| variant | wall | JIT | notes |
+|---|---|---|---|
+| reflection scan today (`new Library(assembly)` alone) | 220–300 ms (load ~21) | 46–60 ms | inside a cold root app on a quiet machine the Library is ~66 ms and the rest of `Scan()` ~38 ms |
+| tables as `typeof(...)` arrays (the six lists) | **39–43 ms** | 39–43 ms | Item alone 20 ms (140 `typeof` load 140 types), the others 4–6 ms each |
+| tables as **names only** (five lists, strings) | **1.4–2.3 ms** | 1.4–2.3 ms | a string array JITs in ~0.5 ms |
+| + resolve **40 asked classes** by name (`assembly.GetType`) | **6.0–10.2 ms** | 3–5 ms | the cost of loading those types; paid anyway when a goal uses them |
+
+So a `typeof` table is not free: ~40 ms cold, all of it JIT and type loading, which would eat most of the scan it replaces (~66 ms): a net of ~25 ms. A table of **names, with a class resolved at its first ask** is ~2 ms plus ~6–10 ms for the few dozen types a hello world asks. That is the lazy shape Ingi asked for, and it is what to build: the generator writes names (or metadata names with the namespace a type lives in), never `typeof` in a table.
+
+## What it saves, honestly
+In a cold root app (unloaded machine, ~210 ms): the Library (~66 ms) becomes ~2 ms + ~8 ms; the ~38 ms of making an entry for every class becomes the entries asked (a few dozen). Expected: **~85–95 ms off ~210 ms** (the CLI start ~600 → ~510 ms). Not integrated; the prototype measures the tables and the asks, not the whole. Not in the prototype: the `Codec` delegates (`Mark` makes `Encode`/`Decode` delegates by `MakeGenericMethod`, part of the 18 ms): emitted as direct `T.Encode` delegates they are made at the first ask of that kind.
+
+## The DLL check — the claim "no assembly outside PLang brings plang types" is not true today
+- **Tests load DLLs that bring plang types and were not built with the generator.** `PLang.Tests/Types/App/Types/TypeProviderDllRoundtripTests.cs:18` (`TypeProvider.dll`, a `Money` type), `RuntimeTypeLoadingTests.cs:73,116` (`IdentityShadow.dll`, `CallbackInferredShadow.dll`), and the fixtures `EmptyProvider.dll`, `NoCtorProvider.dll`, `TestProvider.dll` in `PLang.Tests/Shared/Fixtures/dlls/` (committed binaries, no source or csproj in the repo). `ChoiceSetNameTests.cs:15–27` builds an assembly at run time with `PersistedAssemblyBuilder` (a `[PlangType]` `[Choice]` enum) and loads it with `AssemblyLoadContext.LoadFromStream`: it cannot have been built with the generator. All go through `types.Add(assembly, context)` → `code[assembly]` (`Registry.cs:105,298`, `reader/this.cs:63`).
+- **The product loads them too:** `type/item/path/file/this.Operations.cs:34` does `Assembly.LoadFrom(Absolute)` for a user's DLL (`code.dll` add/load). A user's DLL of *types* (no actions) compiles today without the generator; the backlog's "No module DLL outside PLang compiles" is about *actions* (the generator's internal calls), not types.
+- So "generated tables are the only door" needs one of: (a) a package's types carry tables the generator writes (the user DLL references the generator; the fixtures are rebuilt with it; `ChoiceSetNameTests` gets a different way to bring a type, since a run-time-built assembly cannot carry generated tables), or (b) a small, named reflection door kept for an assembly that has none, and that is the fork. I recommend (a) as the architect asked, with the cost named: six fixture DLLs need sources and a build, and `ChoiceSetNameTests` changes.

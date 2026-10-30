@@ -1,25 +1,29 @@
 namespace app.origin;
 
 /// <summary>
-/// The code an app is made from — its facts and the entries made from them: the types the scan finds (with path's
-/// schemes) and, born with the app it is made for, the actions. A new one for each app, so nothing in it is another
-/// app's; what the app changes under its layers is its own. It has no goals.
+/// The code a root app is made from — its facts and the entries made from them: the types the scan finds (with path's
+/// schemes), made at their first ask, and, born with the app it is made for, the actions. Each root app is made with a
+/// code of its own, so nothing in it is another app's; what the app changes under its layers is its own. It has no
+/// goals.
 /// </summary>
 internal sealed class code : @this
 {
     /// <summary>The code, its types scanned from its facts on first ask, path's schemes among them; the app it is made
     /// for born wired as <paramref name="wiring"/> says.</summary>
-    internal code(Wiring wiring)
+    internal code(Wiring wiring) => _wiring = wiring;
+
+    // The code's types, made at the first ask: the scan of its facts, then path's schemes, each a kind of path that
+    // builds its own path subclass — added as one.
+    private global::app.type.list.@this Types()
     {
-        _wiring = wiring;
-        type = new global::app.type.list.@this(this);
-        // path's schemes, each a kind of path that builds its own path subclass — added as one
-        var path = type[typeof(global::app.type.item.path.@this)];
-        type.Add([
+        var types = new global::app.type.list.@this(this);
+        var path = types[typeof(global::app.type.item.path.@this)];
+        types.Add([
             new global::app.type.item.path.scheme.@this("file", path, (raw, context) => global::app.type.item.path.file.@this.Resolve(raw, context)),
             new global::app.type.item.path.scheme.@this("http", path, (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)),
             new global::app.type.item.path.scheme.@this("https", path, (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)),
         ]);
+        return types;
     }
 
     public System.Threading.CancellationTokenSource Shutdown() => new();
@@ -33,7 +37,16 @@ internal sealed class code : @this
 
     public bool Testing => false;
 
-    public global::app.type.list.@this type { get; }
+    public global::app.type.list.@this type
+    {
+        get
+        {
+            if (System.Threading.Volatile.Read(ref _type) is { } types) return types;
+            lock (_making) return _type ??= Types();
+        }
+    }
+    private global::app.type.list.@this? _type;
+    private readonly object _making = new();
 
     // the actions, born with the app the code is made for: that app answers for them
     public global::app.module.@this Module(global::app.@this app) => new global::app.module.@this(app);

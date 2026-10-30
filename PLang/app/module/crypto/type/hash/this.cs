@@ -116,7 +116,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             characters = characters[(colon + 1)..];
         }
         // born holding the asker's {hash, <algorithm>}
-        var typed = context.App.type.list[new global::app.type.@this("hash", algorithm?.Name), context];
+        var typed = context.App.type.list["hash"].Kinded(algorithm?.Name);
         if (characters.Length > 0 && characters.Length % 2 == 0 && (length is null || characters.Length == length * 2)
             && characters.All(System.Uri.IsHexDigit))
             return new @this(System.Convert.FromHexString(characters), algorithm, typed);

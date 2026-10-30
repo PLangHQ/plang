@@ -330,7 +330,7 @@ public abstract class View
         // The Data row a saved object is (the json serializer's own read, its value left unread); null for one that isn't.
         private global::app.data.@this? Row(System.Text.Json.JsonElement element, global::app.actor.context.@this context)
             => element.ValueKind != System.Text.Json.JsonValueKind.Object ? null
-                : new global::app.type.item.serializer.json(context).Typed(System.Text.Encoding.UTF8.GetBytes(element.GetRawText()),
+                : context.Json.Typed(System.Text.Encoding.UTF8.GetBytes(element.GetRawText()),
                     new global::app.type.reader.ReadContext(context) { View = this });
 
         // Whether a type chooses what this view shows of it (any [Snapshot] member): read once per type.

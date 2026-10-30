@@ -48,7 +48,7 @@ public sealed class @this : global::app.store.@this
     /// Nothing is opened here — the first verb opens it.
     /// </summary>
     public @this(global::app.type.item.path.@this? file, bool memory, actor.context.@this context)
-        : base(context.App.type.list[new global::app.type.@this("store", "sqlite"), context])
+        : base(context.App.type.list["store"].Kinded("sqlite"))
     {
         _file = file;
         _memory = memory;

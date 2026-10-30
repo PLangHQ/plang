@@ -170,7 +170,11 @@ public sealed partial class @this
     /// one.</summary>
     internal app.type.@this Of(global::app.type.kind.@this kind, actor.context.@this context,
         global::app.type.item.template.kind.@this? template = null)
-        => this[new app.type.@this(kind.Owner?.Name ?? "binary", kind.IsEmpty ? null : kind.Name, template: template), context];
+    {
+        var name = kind.Owner?.Name ?? "binary";
+        var entry = Named(name);
+        return (entry?.Types ?? this).Made(entry, name, kind.IsEmpty ? null : kind.Name, template: template);
+    }
 
     /// <summary>
     /// The full type for a value's type — its identity (name, kind, strict, template) with the
@@ -236,19 +240,25 @@ public sealed partial class @this
         // a full type is made by the list that made its entry (one object in every app over that list); a name no type
         // answers to, by this one
         var entry = Named(type.Name);
-        return (entry?.Types ?? this).Made(entry, type, name);
+        return (entry?.Types ?? this).Made(entry, type.Name, name, type.Strict, type.Template);
     }
 
-    // The full type this list makes for its own entry (or for no entry), kept: a kinded type is one object here.
-    private app.type.@this Made(app.type.@this? entry, app.type.@this type, string? name)
+    /// <summary>The full type this list makes for its own entry (or for no entry) of <paramref name="name"/>, with the
+    /// kind named <paramref name="kind"/>, strict and template, kept: a kinded type is one object here, whichever door
+    /// asks (a reader's identity, a class, <see cref="app.type.@this.Kinded"/>). Nothing is made to ask it.</summary>
+    internal app.type.@this Made(app.type.@this? entry, string name, string? kind, bool strict = false,
+        global::app.type.item.template.kind.@this? template = null)
     {
-        var kind = name == null ? null
-            : entry?.kind[name] is { } match ? (match.IsEmpty ? null : match)
-            : entry?.kind.Coin(name) ?? new global::app.type.kind.@this(name);
-        if (entry != null && kind == null && !type.Strict && type.Template == null) return entry;
-        return _full.GetOrAdd((entry, type.Name, kind?.Name, type.Strict, type.Template?.Name), _ => entry == null
-            ? new app.type.@this(type.Name, kind?.Name, type.Strict, type.Template) { kind = kind }
-            : new app.type.@this(entry, kind, type.Strict, type.Template));
+        var made = kind == null ? null
+            : entry?.kind[kind] is { } match ? (match.IsEmpty ? null : match)
+            : entry?.kind.Coin(kind) ?? new global::app.type.kind.@this(kind);
+        if (entry != null && made == null && !strict && template == null) return entry;
+        // kept: answered with nothing made
+        var key = (entry, name, made?.Name, strict, template?.Name);
+        if (_full.TryGetValue(key, out var kept)) return kept;
+        return _full.GetOrAdd(key, _ => entry == null
+            ? new app.type.@this(name, made?.Name, strict, template) { kind = made }
+            : new app.type.@this(entry, made, strict, template));
     }
 
     // The full types made, one per entry, kind, strict and template: a kinded type is one object in this app.

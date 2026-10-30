@@ -91,7 +91,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
 
     /// <summary>Every event is of the event type (<c>event</c>), whichever its kind: what a snapshot writes where one is
     /// pointed at is read back by the event type's own reader, from its key.</summary>
-    protected internal override global::app.type.@this Type => new(typeof(@this));
+    protected internal override global::app.type.@this Type => Actor.App.type.list[typeof(@this)];
 
     /// <summary>An event holds its actor and what it is bound on: a copy of the Data holding it shares it.</summary>
     protected internal override global::app.type.item.@this Clone() => this;

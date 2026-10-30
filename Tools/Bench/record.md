@@ -56,6 +56,13 @@ per birth + dispose; a request app is born, a goal loaded and run, disposed, × 
 | Date | Branch | Commit | Load | Sub birth | Root birth | Sub request | Root request | Held, sub (MB) | Held, root (MB) | `plang --test` | C# sweep | Build, clean | Build, incr. |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 <!-- rows -->
+| 2026-10-30 | call-cost | 615f8a5b2 (call-cost-615f8a5b2) | 7.06 | 0.14 ms, 54 KB | 14.98 ms, 2179 KB | 1.17 ms, 238 KB | 21.20 ms, 3597 KB | 1.5 → 2.0 → 2.0 → 2.0 | 0.1 → 2.0 → 2.0 → 2.0 | - | - | - | - |
+| 2026-10-30 | call-cost | 9a96736d1 (call-cost-stage4) | 7.58 | 0.13 ms, 54 KB | 14.15 ms, 2203 KB | 1.00 ms, 246 KB | 20.79 ms, 3647 KB | 1.5 → 2.0 → 2.0 → 2.1 | 0.1 → 2.0 → 2.0 → 2.0 | - | - | - | - |
+| 2026-10-30 | call-cost | b274f0406 (call-cost-stage3) | 5.70 | 0.13 ms, 54 KB | 14.42 ms, 2194 KB | 1.05 ms, 284 KB | 21.29 ms, 3713 KB | 1.5 → 2.1 → 2.0 → 2.0 | 0.1 → 2.0 → 2.0 → 2.0 | - | - | - | - |
+| 2026-10-30 | call-cost | a62c2da21 (call-cost-a62c2da21) | 4.82 | 0.13 ms, 54 KB | 13.78 ms, 2206 KB | 1.06 ms, 306 KB | 21.14 ms, 3729 KB | 1.5 → 2.0 → 2.0 → 2.0 | 0.1 → 2.0 → 2.0 → 2.0 | - | - | - | - |
+| 2026-10-30 | call-cost | 1878bef03 (call-cost-stage2) | 17.80 | 0.33 ms, 54 KB | 29.41 ms, 2205 KB | 1.47 ms, 313 KB | 43.12 ms, 3743 KB | 1.5 → 2.0 → 2.0 → 2.0 | 0.1 → 2.0 → 2.0 → 2.0 | - | - | - | - |
+| 2026-10-30 | call-cost | 4dcfa3f36 (call-cost-stage1) | 7.42 | 0.13 ms, 54 KB | 15.19 ms, 2195 KB | 1.42 ms, 371 KB | 33.22 ms, 3832 KB | 1.5 → 2.0 → 2.0 → 2.0 | 0.1 → 2.0 → 2.0 → 2.0 | - | - | - | - |
+| 2026-10-30 | call-cost | 77add2895 (call-cost-before) | 9.81 | 0.27 ms, 101 KB | 19.37 ms, 2260 KB | 1.76 ms, 441 KB | 24.14 ms, 3897 KB | 1.6 → 2.2 → 2.2 → 2.2 | 0.1 → 2.1 → 2.0 → 2.1 | - | - | - | - |
 | 2026-10-29 | event-action | 86d90db97 (stage8) | 7.20 | 0.18 ms, 101 KB | 16.13 ms, 2267 KB | 1.48 ms, 441 KB | 21.96 ms, 3898 KB | 1.6 → 2.2 → 2.2 → 2.2 | 0.1 → 2.1 → 2.1 → 2.1 | - | - | - | - |
 | 2026-10-29 | event-action | 2d10af80f (event-action-4f960bba3) | 11.06 | 0.15 ms, 103 KB | 14.49 ms, 2366 KB | 1.60 ms, 524 KB | 23.33 ms, 4434 KB | 1.6 → 2.2 → 2.2 → 2.2 | 0.1 → 2.1 → 2.1 → 2.1 | - | - | - | - |
 | 2026-10-29 | event-action | 3266637da (event-action-3266637da) | 17.09 | 0.23 ms, 102 KB | 31.31 ms, 2361 KB | 6.34 ms, 549 KB | 57.14 ms, 4429 KB | 1.6 → 2.2 → 2.2 → 2.2 | 0.1 → 2.1 → 2.1 → 2.1 | - | - | - | - |

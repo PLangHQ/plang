@@ -19,7 +19,9 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     {
         // Token-parse the descriptor {name, kind?, strict?, template?} — the symmetric mirror of
         // type.@this.Write; no STJ, no per-type converter. Field names are written lowercase.
-        if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("type", kind), ctx.Context]);
+        // the app's type of types by reference, with the kind the reader is handed (none: the type itself)
+        var types = ctx.Context.App.type.list[typeof(global::app.type.@this)];
+        if (reader.Null()) return new global::app.type.item.@null.@this(types.Kinded(kind));
         // a type written as its name (`"path"`) is the type that name names
         if (reader.Peek() == global::app.type.format.TokenKind.String)
             return ctx.Context.App.type.list[new global::app.type.@this(reader.String()), ctx.Context];
@@ -42,7 +44,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             }
         }
         reader.EndObject();
-        if (name == null) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("type", kind), ctx.Context]);
+        if (name == null) return new global::app.type.item.@null.@this(types.Kinded(kind));
         // Born through the types: an alias (string) canonicalises and the type carries its class; a
         // name no type answers to stays as written, for the reader of the type to judge. The template is the kind
         // its name names; a name that is no kind of template is refused here, saying the kinds.

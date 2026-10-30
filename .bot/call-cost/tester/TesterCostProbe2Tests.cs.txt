@@ -1,0 +1,303 @@
+namespace PLang.Tests.App.Context;
+
+// tester probes for call-cost stages 3-4 (never merged)
+public class TesterCostProbe2Tests
+{
+    private static global::app.actor.context.@this Parent => global::PLang.Tests.Parent.Actor.Context;
+
+    private static global::app.goal.step.action.@this SetX()
+        => Make.Action(Parent, "variable", "set", Make.Param(Parent, "Name", "x", "variable"), ("Value", "1"));
+
+    private static async Task<bool> IsSet(global::app.actor.context.@this context, global::app.goal.step.action.@this action, string option)
+        => (await context.Setting.Get(action, option)).IsInitialized;
+
+    // S1: set, then clear (null): the answer goes back; context and child both
+    [Test]
+    public async Task S1_SetThenClear_AnswersBack()
+    {
+        await using var app = new global::app.@this("/probe", global::PLang.Tests.Parent.Actor).Testing();
+        var user = app.actor.list.User;
+        var child = user.Context.Child(user, System.Threading.CancellationToken.None);
+        var action = SetX();
+        await Assert.That(await IsSet(user.Context, action, "type")).IsFalse();
+        await Assert.That(await IsSet(child, action, "type")).IsFalse();
+        user.Setting.Set($"{action.Address}.type", "text");
+        await Assert.That(await IsSet(child, action, "type")).IsTrue();
+        user.Setting.Set($"{action.Address}.type", null);
+        await Assert.That(await IsSet(user.Context, action, "type")).IsFalse();
+        await Assert.That(await IsSet(child, action, "type")).IsFalse();
+        child.Dispose();
+    }
+
+    // S2: a child's own value answers for the child alone; its sibling and its parent keep "not set"; clearing it, back
+    [Test]
+    public async Task S2_AChildsOwnValue_AnswersForTheChildAlone()
+    {
+        await using var app = new global::app.@this("/probe", global::PLang.Tests.Parent.Actor).Testing();
+        var user = app.actor.list.User;
+        var a = user.Context.Child(user, System.Threading.CancellationToken.None);
+        var b = user.Context.Child(user, System.Threading.CancellationToken.None);
+        var action = SetX();
+        await IsSet(user.Context, action, "type"); await IsSet(a, action, "type"); await IsSet(b, action, "type");
+        a.Setting.Set($"{action.Address}.type", "text");
+        await Assert.That(await IsSet(a, action, "type")).IsTrue();
+        await Assert.That(await IsSet(b, action, "type")).IsFalse();
+        await Assert.That(await IsSet(user.Context, action, "type")).IsFalse();
+        a.Setting.Set($"{action.Address}.type", null);
+        await Assert.That(await IsSet(a, action, "type")).IsFalse();
+        // a grandchild of a layer with a value reads that value
+        a.Setting.Set($"{action.Address}.type", "text");
+        var grand = a.Child(user, System.Threading.CancellationToken.None);
+        await Assert.That(await IsSet(grand, action, "type")).IsTrue();
+        a.Dispose(); b.Dispose(); grand.Dispose();
+    }
+
+    // S3: across actors: the user's value never answers for the system's; the system's answers for the user's (falls back)
+    [Test]
+    public async Task S3_AcrossActors_UserNeverAnswersForSystem_SystemFallsBackToUser()
+    {
+        await using var app = new global::app.@this("/probe", global::PLang.Tests.Parent.Actor).Testing();
+        var user = app.actor.list.User;
+        var system = app.actor.list.System;
+        var action = SetX();
+        await Assert.That(await IsSet(user.Context, action, "type")).IsFalse();
+        await Assert.That(await IsSet(system.Context, action, "type")).IsFalse();
+        user.Setting.Set($"{action.Address}.type", "text");
+        await Assert.That(await IsSet(user.Context, action, "type")).IsTrue();
+        await Assert.That(await IsSet(system.Context, action, "type")).IsFalse();
+        user.Setting.Set($"{action.Address}.type", null);
+        system.Setting.Set($"{action.Address}.type", "text");
+        await Assert.That(await IsSet(system.Context, action, "type")).IsTrue();
+        await Assert.That(await IsSet(user.Context, action, "type")).IsTrue();
+    }
+
+    // S4: a sub app's settings are its own: the maker's value never answers there, nor the sub app's here
+    [Test]
+    public async Task S4_ASubApp_KeepsItsOwnAnswers()
+    {
+        await using var root = new global::app.@this("/probe", global::PLang.Tests.Parent.Actor).Testing();
+        await using var sub = new global::app.@this("/probe/sub", root.actor.list.User).Testing();
+        var action = SetX();
+        await Assert.That(await IsSet(root.actor.list.User.Context, action, "type")).IsFalse();
+        await Assert.That(await IsSet(sub.actor.list.User.Context, action, "type")).IsFalse();
+        root.actor.list.User.Setting.Set($"{action.Address}.type", "text");
+        await Assert.That(await IsSet(root.actor.list.User.Context, action, "type")).IsTrue();
+        await Assert.That(await IsSet(sub.actor.list.User.Context, action, "type")).IsFalse();
+        sub.actor.list.User.Setting.Set($"{action.Address}.other", "x");
+        root.actor.list.User.Setting.Set($"{action.Address}.type", null);
+        await Assert.That(await IsSet(root.actor.list.User.Context, action, "type")).IsFalse();
+        await Assert.That(await IsSet(sub.actor.list.User.Context, action, "other")).IsTrue();
+        await Assert.That(await IsSet(root.actor.list.User.Context, action, "other")).IsFalse();
+    }
+
+    // S5: a setting set between two runs of the same action changes the parameter an absent step row takes; cleared, the default
+    [Test]
+    public async Task S5_AnAbsentParameter_FollowsTheSetting_ThenTheDefault()
+    {
+        await using var app = new global::app.@this("/probe", global::PLang.Tests.Parent.Actor).Testing();
+        var user = app.actor.list.User;
+        var action = Make.Action(Parent, "math", "round", ("Value", "3.14159"));
+        async Task<string> Run() => (await (await action.Start(user.Context)).Value())?.ToString() ?? "";
+        await Assert.That(await Run()).IsEqualTo("3");
+        user.Setting.Set($"{action.Address}.decimals", 2);
+        await Assert.That(await Run()).IsEqualTo("3.14");
+        user.Setting.Set($"{action.Address}.decimals", null);
+        await Assert.That(await Run()).IsEqualTo("3");
+        // a step's own row beats the setting; given 0 is given
+        var given = Make.Action(Parent, "math", "round", ("Value", "3.14159"), ("Decimals", 0));
+        user.Setting.Set($"{given.Address}.decimals", 2);
+        await Assert.That((await (await given.Start(user.Context)).Value())?.ToString()).IsEqualTo("3");
+    }
+
+    // F1: a goal added after a Find kept its candidates is found: beside the caller, and anywhere
+    [Test]
+    public async Task F1_AGoalAddedAfterAFind_IsFound()
+    {
+        await using var app = new global::app.@this("/probe", global::PLang.Tests.Parent.Actor).Testing();
+        var caller = Make.Goal(Parent, "Caller", "/area/Caller.goal");
+        app.goal.list.Add(caller);
+        app.goal.list.Add(Make.Goal(Parent, "Other", "/area/Other.goal"));
+        var miss = await app.goal.list.Find("Late", caller);
+        System.Console.WriteLine($"MISS success={miss.Success} err={miss.Error?.Key} {miss.Error?.Message}");
+        await Assert.That((await app.goal.list.Find("Other", caller)).Success).IsTrue();
+        var late = Make.Goal(Parent, "Late", "/area/Late.goal");
+        app.goal.list.Add(late);
+        var found = await app.goal.list.Find("Late", caller);
+        await Assert.That(found.Success).IsTrue();
+        await Assert.That(await found.Value()).IsSameReferenceAs(late);
+        // another folder, asked first, kept; then a goal comes in there
+        var far = Make.Goal(Parent, "Far", "/elsewhere/Far.goal");
+        app.goal.list.Add(far);
+        var farCaller = Make.Goal(Parent, "FarCaller", "/elsewhere/FarCaller.goal");
+        app.goal.list.Add(farCaller);
+        await Assert.That((await (await app.goal.list.Find("Twin", farCaller)).Value()) is null).IsTrue();
+        var twinHere = Make.Goal(Parent, "Twin", "/elsewhere/Twin.goal");
+        var twinThere = Make.Goal(Parent, "Twin", "/area/Twin.goal");
+        app.goal.list.Add(twinThere);
+        await Assert.That(await (await app.goal.list.Find("Twin", farCaller)).Value()).IsSameReferenceAs(twinThere);
+        app.goal.list.Add(twinHere);
+        await Assert.That(await (await app.goal.list.Find("Twin", farCaller)).Value()).IsSameReferenceAs(twinHere);
+    }
+
+    // F4: beside-the-caller wins over a newer goal elsewhere, also for goals that came in after a find kept its candidates
+    [Test]
+    public async Task F4_ABesideGoalAddedAfterAFind_StillBeatsANewerFarOne()
+    {
+        await using var app = new global::app.@this("/probe", global::PLang.Tests.Parent.Actor).Testing();
+        var caller = Make.Goal(Parent, "Caller", "/near/Caller.goal");
+        app.goal.list.Add(caller);
+        app.goal.list.Add(Make.Goal(Parent, "Warm", "/near/Warm.goal"));
+        await Assert.That((await app.goal.list.Find("Warm", caller)).Success).IsTrue();
+        var near = Make.Goal(Parent, "Twin", "/near/Twin.goal");
+        app.goal.list.Add(near);
+        app.goal.list.Add(Make.Goal(Parent, "Twin", "/far/Twin.goal"));
+        await Assert.That(await (await app.goal.list.Find("Twin", caller)).Value()).IsSameReferenceAs(near);
+    }
+
+    // F2: a goal replaced (same .pr) after a Find: the find answers the new one, never the one that gave way
+    [Test]
+    public async Task F2_AGoalReplacedAfterAFind_IsTheNewOne()
+    {
+        await using var app = new global::app.@this("/probe", global::PLang.Tests.Parent.Actor).Testing();
+        var caller = Make.Goal(Parent, "Caller", "/area/Caller.goal");
+        app.goal.list.Add(caller);
+        var first = Make.Goal(Parent, "Same", "/area/Same.goal");
+        app.goal.list.Add(first);
+        await Assert.That(await (await app.goal.list.Find("Same", caller)).Value()).IsSameReferenceAs(first);
+        var second = Make.Goal(Parent, "Same", "/area/Same.goal");
+        app.goal.list.Add(second);
+        await Assert.That(await (await app.goal.list.Find("Same", caller)).Value()).IsSameReferenceAs(second);
+    }
+
+    // F3: finds racing adds: never an exception, and the last find after the adds sees every goal
+    [Test]
+    public async Task F3_FindsRacingAdds_EndSeeingEveryGoal()
+    {
+        await using var app = new global::app.@this("/probe", global::PLang.Tests.Parent.Actor).Testing();
+        var caller = Make.Goal(Parent, "Caller", "/area/Caller.goal");
+        app.goal.list.Add(caller);
+        using var gate = new System.Threading.Barrier(33);
+        var tasks = Enumerable.Range(0, 32).Select(i => Task.Run(async () =>
+        {
+            gate.SignalAndWait();
+            if (i % 2 == 0) app.goal.list.Add(Make.Goal(Parent, $"G{i}", $"/area/G{i}.goal"));
+            else for (var k = 0; k < 50; k++) await app.goal.list.Find($"G{i - 1}", caller);
+        })).ToList();
+        gate.SignalAndWait();
+        await Task.WhenAll(tasks);
+        for (var i = 0; i < 32; i += 2)
+            await Assert.That((await app.goal.list.Find($"G{i}", caller)).Success).IsTrue();
+    }
+
+    // R1: an action started in a sub app's context runs in the sub app (its memory), and the maker's catalog element holds no sub app
+    [Test]
+    public async Task R1_ASubAppRun_UsesTheSubAppsContext_AndIsNotHeld()
+    {
+        await using var root = new global::app.@this("/probe", global::PLang.Tests.Parent.Actor).Testing();
+        var weak = await RunInASub(root);
+        for (var i = 0; i < 4; i++) { System.GC.Collect(); System.GC.WaitForPendingFinalizers(); }
+        await Assert.That(weak.TryGetTarget(out _)).IsFalse().Because("the kept resolver holds no sub app");
+        await Assert.That(await root.actor.list.User.Context.Variable.GetValue("viaSub")).IsNull();
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static async Task<System.WeakReference<global::app.@this>> RunInASub(global::app.@this root, bool run = true)
+    {
+        var sub = new global::app.@this("/probe/sub", root.actor.list.User).Testing();
+        var ctx = sub.actor.list.User.Context;
+        var set = Make.Action(Parent, "variable", "set", Make.Param(Parent, "Name", "viaSub", "variable"), ("Value", "7"));
+        if (run)
+        {
+            for (var i = 0; i < 3; i++) await (await set.Start(ctx)).IsSuccess();
+            var read = await ctx.Variable.GetValue("viaSub");
+            if (read?.ToString() != "7") throw new Exception("sub app run did not write the sub app's memory: " + read);
+        }
+        var weak = new System.WeakReference<global::app.@this>(sub);
+        await sub.DisposeAsync();
+        return weak;
+    }
+
+    [Test]
+    [Arguments("round")]
+    [Arguments("setonly")]
+    public async Task R1d_WhichRunHoldsTheSub(string mode)
+    {
+        await using var root = new global::app.@this("/probe", global::PLang.Tests.Parent.Actor).Testing();
+        var weak = await RunMode(root, mode);
+        for (var i = 0; i < 4; i++) { System.GC.Collect(); System.GC.WaitForPendingFinalizers(); }
+        await Assert.That(weak.TryGetTarget(out _)).IsFalse().Because("mode " + mode);
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static async Task<System.WeakReference<global::app.@this>> RunMode(global::app.@this root, string mode)
+    {
+        var sub = new global::app.@this("/probe/sub", root.actor.list.User).Testing();
+        var ctx = sub.actor.list.User.Context;
+        var action = mode == "round" ? Make.Action(Parent, "math", "round", ("Value", "2.5"))
+            : Make.Action(Parent, "variable", "set", Make.Param(Parent, "Name", "viaSub", "variable"), ("Value", "7"));
+        await (await action.Start(ctx)).IsSuccess();
+        var weak = new System.WeakReference<global::app.@this>(sub);
+        await sub.DisposeAsync();
+        return weak;
+    }
+
+    // the resolver is the module's own app's System context, and is the same object before and after a sub app runs
+    [Test]
+    public async Task R1e_TheResolver_IsTheModulesAppsSystem_NotASubApps()
+    {
+        await using var root = new global::app.@this("/probe", global::PLang.Tests.Parent.Actor).Testing();
+        await using var sub = new global::app.@this("/probe/sub", root.actor.list.User).Testing();
+        var action = Make.Action(Parent, "math", "round", ("Value", "2.5"));
+        var element = action.Module["round"]!;
+        await (await action.Start(sub.actor.list.User.Context)).IsSuccess();
+        var resolver = element.Resolver!;
+        await (await action.Start(root.actor.list.User.Context)).IsSuccess();
+        await Assert.That(element.Resolver).IsSameReferenceAs(resolver);
+        var context = ((dynamic)resolver).Context as global::app.actor.context.@this;
+        await Assert.That(context).IsNotNull();
+        await Assert.That(context!.App).IsSameReferenceAs(action.Module.App);
+        await Assert.That(context.App).IsNotSameReferenceAs(sub);
+        await Assert.That(context.App).IsNotSameReferenceAs(root);
+    }
+
+    [Test]
+    public async Task R1c_Control_ASubAppNeverRun_IsItHeld()
+    {
+        await using var root = new global::app.@this("/probe", global::PLang.Tests.Parent.Actor).Testing();
+        var weak = await RunInASub(root, run: false);
+        for (var i = 0; i < 4; i++) { System.GC.Collect(); System.GC.WaitForPendingFinalizers(); }
+        await Assert.That(weak.TryGetTarget(out _)).IsFalse().Because("control: no action ever run");
+    }
+
+    // R2: two threads at a class's first run: both run, both answer the same, one resolver
+    [Test]
+    public async Task R2_TwoThreadsAtAClassesFirstRun_BothAnswer()
+    {
+        await using var app = new global::app.@this("/probe", global::PLang.Tests.Parent.Actor).Testing();
+        var ctx = app.actor.list.User.Context;
+        var actions = Enumerable.Range(0, 32).Select(_ => Make.Action(Parent, "math", "round", ("Value", "2.71828"), ("Decimals", 2))).ToList();
+        using var gate = new System.Threading.Barrier(32);
+        var answers = await Task.WhenAll(actions.Select(a => Task.Run(async () =>
+        {
+            gate.SignalAndWait();
+            return (await (await a.Start(ctx)).Value())?.ToString();
+        })));
+        await Assert.That(answers.Distinct().Single()).IsEqualTo("2.72");
+    }
+
+    // R3: an action whose property the catalog lacks is refused, every run (the judgement kept holds the refusal)
+    [Test]
+    public async Task R3_AnUnknownProperty_IsRefusedEveryRun()
+    {
+        await using var app = new global::app.@this("/probe", global::PLang.Tests.Parent.Actor).Testing();
+        var ctx = app.actor.list.User.Context;
+        var action = Make.Action(Parent, "math", "round", ("Value", "1.5"));
+        action.Property.Add(Make.Row(Parent, null, "Nonesuch", "x"));
+        for (var i = 0; i < 2; i++)
+        {
+            var result = await action.Start(ctx);
+            await Assert.That(result.Success).IsFalse();
+            await Assert.That(result.Error?.Key).IsEqualTo("UnknownProperty");
+        }
+    }
+}

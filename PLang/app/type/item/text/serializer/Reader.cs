@@ -17,8 +17,10 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
-        => reader.Null()
-            ? new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("text", kind), ctx.Context])
-            : new global::app.type.item.text.@this(reader.String(),
-                ctx.Context.App.type.list[new global::app.type.@this("text", kind, false, ctx.Template), ctx.Context], ctx.Variable);
+    {
+        // the app's text type by reference, with the kind and the template the read is handed
+        var texts = ctx.Context.App.type.list[typeof(global::app.type.item.text.@this)];
+        if (reader.Null()) return new global::app.type.item.@null.@this(texts.Kinded(kind));
+        return new global::app.type.item.text.@this(reader.String(), texts.Kinded(kind, ctx.Template), ctx.Variable);
+    }
 }

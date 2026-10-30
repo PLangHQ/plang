@@ -71,7 +71,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             {
                 using var document = System.Text.Json.JsonDocument.Parse(text);
                 return document.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object
-                    ? new global::app.type.item.serializer.json(data.Context).Parse(document.RootElement.Clone()) as @this
+                    ? data.Context.Json.Parse(document.RootElement.Clone()) as @this
                     : null;
             }
             catch (System.Text.Json.JsonException) { return null; }

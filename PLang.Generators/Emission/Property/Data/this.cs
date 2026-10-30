@@ -29,14 +29,21 @@ public sealed record @this(
         // [NotNull] tells flow analysis the truth so `await Mime.Value()` doesn't trip CS8602.
         if (IsNullable)
             sb.AppendLine("    [System.Diagnostics.CodeAnalysis.NotNull]");
-        // Backing-free: the `field` keyword's compiler store — no hand-written field, no
-        // flag / fallback / reset machinery. The field-initializer covers an absent slot
-        // (Uninitialized / [Default] literal); Resolve() binds the value via the object initializer.
-        sb.AppendLine($"    public partial {TypeName}{nullable} {Name} {{ get => field!; init => field = value; }} = {Fallback};");
+        // Backing-free: the `field` keyword's compiler store — no hand-written field, no flag / fallback / reset
+        // machinery, and no initializer: each constructor sets it (the context one to its fallback, Resolve's to what
+        // it worked out), so a birth makes each parameter's Data once.
+        sb.AppendLine($"    public partial {TypeName}{nullable} {Name} {{ get => field!; init => field = value; }}");
         sb.AppendLine();
     }
 
-    /// <summary>Field-initializer / absent-slot value: Uninitialized, or the [Default] literal
+    /// <summary>The context constructor's line for this parameter: its fallback.</summary>
+    public string FallbackAssign => $"{Name} = {Fallback};";
+
+    /// <summary>Resolve's constructor's parameter for this property, and its line.</summary>
+    public string ResolvedParameter => $"{TypeName} {Name}";
+    public string ResolvedAssign => $"this.{Name} = {Name};";
+
+    /// <summary>Absent-slot value: Uninitialized, or the [Default] literal
     /// born WITH context. The default rides as its raw literal through the (sync) As&lt;T&gt;
     /// door under __ctx — so a context-needing inner type (path) borns its value with a real
     /// context, never through a context-less cast operator.</summary>
@@ -73,8 +80,6 @@ public sealed record @this(
     /// <summary>Local variable name the resolved Data lands in inside Resolve().</summary>
     private string Local => $"__{Name}";
 
-    /// <summary>Object-initializer fragment binding the resolved local to the init property.</summary>
-    public string InitAssignment => $"{Name} = {Local}";
 
     // ── Raw-args ctor (C# composition): `new request(context, url: …, method: POST)` ──
 
@@ -134,8 +139,7 @@ public sealed record @this(
     /// <summary>
     /// Emits this param's resolution inside Resolve(): decode the .pr parameter's
     /// %var%/literal form (async, in this execution's context) into a local. A resolution
-    /// failure short-circuits Resolve with the prefixed error. The object initializer
-    /// then binds <see cref="InitAssignment"/> onto the fresh instance.
+    /// failure short-circuits Resolve with the prefixed error. Resolve's own constructor then takes the local.
     /// </summary>
     public override void EmitResolveLocal(StringBuilder sb)
     {
@@ -158,25 +162,24 @@ public sealed record @this(
         var settingGet = $"await context.Setting.Get(action, \"{ParamName}\")";
 
         sb.AppendLine($"        {TypeName} {Local};");
+        // The step's row, read once (null when the step doesn't hold it, so an absent row costs nothing): what the
+        // cascade below takes, and what a slot with no fallback answers when it is given but holds nothing.
+        sb.AppendLine($"        var __d{Name} = action?[\"{ParamName}\"]?.Data(context).As<{InnerType}>();");
         // A C#-composed Seed's SET value passes through untouched (no As<T> round-trip); only an
         // UNSET slot falls to the step value → setting → [Default] cascade below.
         sb.AppendLine($"        if (__seed?.{Name} is {{ IsInitialized: true }} __sv{Name}) {Local} = __sv{Name};");
         // step value → setting → frozen default (.pr) → [Default]: an explicit setting beats what
         // the build froze; a runtime change of [Default] never does. "Was it given" is presence
         // (HasValue), never truthiness: a written false or 0 is given (list.split's Empty=false stays false).
-        sb.AppendLine("        else");
-        sb.AppendLine("        {");
-        sb.AppendLine($"            var __d = __View<{InnerType}>(action, \"{ParamName}\", context);");
-        sb.AppendLine($"            if (__d.HasValue) {Local} = __d;");
-        sb.AppendLine($"            else if ({settingGet} is {{ IsInitialized: true }} __s) {Local} = __s.As<{InnerType}>();");
-        sb.AppendLine($"            else if (__Default<{InnerType}>(action, \"{ParamName}\", context) is var __f && __f.HasValue) {Local} = __f;");
+        sb.AppendLine($"        else if (__d{Name} is {{ HasValue: true }}) {Local} = __d{Name};");
+        sb.AppendLine($"        else if ({settingGet} is {{ IsInitialized: true }} __s{Name}) {Local} = __s{Name}.As<{InnerType}>();");
+        sb.AppendLine($"        else if (action?.Default[\"{ParamName}\"]?.Data(context).As<{InnerType}>() is {{ HasValue: true }} __f{Name}) {Local} = __f{Name};");
         if (IsNullable)
-            sb.AppendLine($"            else {Local} = global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\", context);");
+            sb.AppendLine($"        else {Local} = global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\", context);");
         else if (DefaultValue != null)
-            sb.AppendLine($"            else {Local} = {Defaulted("context")};");
+            sb.AppendLine($"        else {Local} = {Defaulted("context")};");
         else
-            sb.AppendLine($"            else {Local} = __d;");
-        sb.AppendLine("        }");
+            sb.AppendLine($"        else {Local} = __d{Name} ?? global::app.data.@this.NotFound(\"{ParamName}\", context).As<{InnerType}>();");
         sb.AppendLine($"        if (!{Local}.Success) return (null, __PrefixActionContext({Local}.Error!, action));");
         // [Default] also fires when the step value resolves to null (`mime: %unsetVar%`).
         if (DefaultValue != null)

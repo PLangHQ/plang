@@ -97,8 +97,7 @@ public sealed partial class @this : global::app.type.item.path.@this
 
     // The app's type for a url — {path, http} or {path, https}, as its scheme is.
     private static global::app.type.@this Typed(string url, actor.context.@this context)
-        => context.App.type.list[new global::app.type.@this("path",
-            global::app.type.item.path.scheme.@this.ParseScheme(url).ToLowerInvariant()), context];
+        => context.App.type.list["path"].Kinded(global::app.type.item.path.scheme.@this.ParseScheme(url).ToLowerInvariant());
 
     [Out, Store] public override string Scheme => _uri.Scheme.ToLowerInvariant();
 
@@ -183,7 +182,7 @@ public sealed partial class @this : global::app.type.item.path.@this
     public override async Task<data.@this> Read(actor.context.@this context, global::app.type.item.template.kind.@this? template = null)
     {
         // born with its template: the url type makes the reference from this location, as it declares
-        return await context.App.type.list[new global::app.type.@this("url", (string?)null, template: template), context]
+        return await context.App.type.list["url"].Kinded(null, template)
             .Create(this, context, "url");
     }
 

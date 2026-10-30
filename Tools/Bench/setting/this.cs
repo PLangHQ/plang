@@ -24,8 +24,8 @@ internal sealed class @this
     internal string Root { get; } = Environment.GetEnvironmentVariable("BENCH_ROOT")
         ?? Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../test"));
 
-    /// <summary>The goal a request app loads and runs.</summary>
-    internal string Goal => "/module/condition/if/basic/Condition.test.goal";
+    /// <summary>The goal a request app loads and runs (<c>BENCH_GOAL</c>; the condition test when not given).</summary>
+    internal string Goal => Environment.GetEnvironmentVariable("BENCH_GOAL") ?? "/module/condition/if/basic/Condition.test.goal";
 
     /// <summary>How many times a mode repeats (<c>BENCH_N</c>), <paramref name="otherwise"/> when not given.</summary>
     internal int Count(int otherwise) => int.TryParse(Environment.GetEnvironmentVariable("BENCH_N"), out var count) ? count : otherwise;

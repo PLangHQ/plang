@@ -17,11 +17,10 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         where TReader : global::app.type.format.IReader, allows ref struct
     {
         if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("list", kind), ctx.Context]);
-        var parser = new global::app.type.item.serializer.json(ctx.Context);
+        var parser = ctx.Context.Json;
         // An authored list (ctx carries "plang") is born a template and re-resolves its `%ref%` string
         // leaves on read — list.@this.Value → Resolve. A runtime-ingest read (ctx.Template null) stays literal.
-        var list = new global::app.type.item.list.@this(
-            ctx.Context.App.type.list[new global::app.type.@this("list", null, false, ctx.Template), ctx.Context]);
+        var list = new global::app.type.item.list.@this(ctx.Context.App.type.list[typeof(global::app.type.item.list.@this)].Kinded(null, ctx.Template));
         // The element type rides as this list's kind (list<action> = {list, kind:action}). A bare element
         // reads ITSELF through the element type's reader — its own (a .pr's action → its params), else as
         // a record its Create makes (a list of messages holds messages). An element the list wrote as its

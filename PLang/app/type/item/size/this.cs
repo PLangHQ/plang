@@ -35,7 +35,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// <summary>A count of bytes with no standard of its own: a <c>{size, count}</c>, written in the one its asker's
     /// setting names.</summary>
     public static @this Create(long bytes, global::app.actor.context.@this context)
-        => new global::app.type.item.size.count.@this(bytes, context.App.type.list[new global::app.type.@this("size", "count"), context]);
+        => new global::app.type.item.size.count.@this(bytes, context.App.type.list["size"].Kinded("count"));
 
     // raw as a size: a count made by its asker's standard, a text the standard its suffix names
     private static @this? Read(object? raw, global::app.actor.context.@this context)
@@ -60,7 +60,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     {
         // asked for in a standard (`as si`): that standard makes it, from a count or a text in its own form only
         if (type?.kind is { IsEmpty: false } asked && data.Context.App.type.list["size"].kind[asked.Name] is global::app.type.kind.@this<@this> standard)
-            return data.Context.App.type.list[new global::app.type.@this("size", standard.Name), data.Context].Make(value, data) as @this;
+            return data.Context.App.type.list["size"].Kinded(standard.Name).Make(value, data) as @this;
         if (Read(value, data.Context) is { } size) return size;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
             ? new global::app.error.@this($"Cannot read '{s}' as a size — expected a number and its unit: IEC (500 KiB, 95.4 MiB) or SI (512 kB, 100 MB).", "SizeParseFailed", 400)

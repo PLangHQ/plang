@@ -106,7 +106,7 @@ public sealed partial class @this : global::app.type.item.path.@this
         if (global::app.type.item.path.scheme.@this.ParseScheme(rawPath).Equals("file", StringComparison.OrdinalIgnoreCase)
             && Uri.TryCreate(rawPath, UriKind.Absolute, out var url) && url.IsFile)
             return new @this(Canonicalize(url.LocalPath), context);
-        var type = context.App.type.list[new global::app.type.@this("path", "file"), context];
+        var type = context.App.type.list["path"].Kinded("file");
 
         var resolved = rawPath;
 
@@ -150,7 +150,7 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// never the install root: "/x" under the app root, "/system/x" in the runtime's system
     /// folder, "//x" (or "c:/x") anywhere else. The context is not kept.</summary>
     private @this(string absolute, actor.context.@this context)
-        : this(absolute, context.App.type.list[new global::app.type.@this("path", "file"), context])
+        : this(absolute, context.App.type.list["path"].Kinded("file"))
     {
         var relative = Relative(context).Raw;
         if (!string.Equals(relative, Absolute, StringComparison.Ordinal)) Raw = relative;

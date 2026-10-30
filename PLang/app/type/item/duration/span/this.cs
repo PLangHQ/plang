@@ -14,7 +14,7 @@ public sealed class @this : duration.@this, global::app.type.item.ICreate<@this>
     protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         var standard = (await writer.Context.Setting.Get<setting.@this>()).Standard.Value;
-        await (writer.Context.App.type.list[new global::app.type.@this("duration", standard.Name), writer.Context]
+        await (writer.Context.App.type.list["duration"].Kinded(standard.Name)
                 .Make(Value, new global::app.data.@this("", context: writer.Context)) as duration.@this
             ?? throw new System.InvalidOperationException($"the duration standard {standard.Name} made no span of {Value}.")).Write(writer);
     }

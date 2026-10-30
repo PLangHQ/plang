@@ -33,8 +33,19 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     // The operator's birth (the 15 CLR lifts, Parse with no type in hand, a kind's Create/Read, a result whose kind
     // climbed): no app to ask, so it holds {number, <kind>} built from the class, carrying the kind.
-    private @this(object value, kind.@this kind)
-        : base(new global::app.type.@this("number", typeof(@this)) { kind = kind }) => _value = value;
+    private @this(object value, kind.@this kind) : this((global::app.type.@this?)null, value, kind) { }
+
+    /// <summary>A number of <paramref name="value"/>, born holding <paramref name="number"/>'s kinded type for its
+    /// kind (the app's {number, int}); with no app's number type in hand, as the operator births one.</summary>
+    internal @this(global::app.type.@this? number, int value) : this(number, value, @int) { }
+
+    /// <summary>A number of <paramref name="value"/>, born holding <paramref name="number"/>'s kinded type for its
+    /// kind (the app's {number, long}); with no app's number type in hand, as the operator births one.</summary>
+    internal @this(global::app.type.@this? number, long value) : this(number, value, @long) { }
+
+    // The value answers its kind, the app's number type its kinded type; none in hand, the operator's {number, kind}.
+    private @this(global::app.type.@this? number, object value, kind.@this kind)
+        : base(number?.Kinded(kind.Name) ?? new global::app.type.@this("number", typeof(@this)) { kind = kind }) => _value = value;
 
     /// <summary>The number <paramref name="source"/> is, born holding <paramref name="type"/> — the app's
     /// <c>{number, &lt;its kind&gt;}</c>, handed in by its maker (the courier, a reader, a derived result).</summary>
@@ -202,7 +213,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         // gives a number made here the app's {number, <its kind>}, as the binding's asker names the app (a binding with
         // no context, the operator's, keeps the operator's birth)
         @this Retype(@this number) => data.Context is { } context
-            ? new(context.App.type.list[new global::app.type.@this("number", number.Kind.Name), context], number)
+            ? new(context.App.type.list["number"].Kinded(number.Kind.Name), number)
             : number;
     }
 

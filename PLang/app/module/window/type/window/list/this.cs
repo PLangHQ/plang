@@ -163,7 +163,7 @@ public sealed class @this(Browser browser) : global::app.type.item.@this
                 await global::app.module.on.code.Gate.Run(async () =>
                 {
                     using var json = JsonDocument.Parse(e.ToJsonString());
-                    var happened = new global::app.data.@this("!data", new global::app.type.item.serializer.json(ctx).Parse(json.RootElement.Clone()), context: ctx);
+                    var happened = new global::app.data.@this("!data", ctx.Json.Parse(json.RootElement.Clone()), context: ctx);
                     if (about != null) await (await ctx.Actor!.@event.On(about))[what]!.after.Start(about, happened, ctx);
                     await (await ctx.Actor!.@event.On(this))[what]!.after.Start(this, happened, ctx);
                 }, ctx);

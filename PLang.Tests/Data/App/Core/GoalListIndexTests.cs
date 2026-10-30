@@ -56,4 +56,23 @@ public class GoalListIndexTests
 
         await Assert.That(app.goal.list[goal.Pr!]).IsNull();
     }
+
+    // the goals a name may be are kept between finds; a goal that comes in after a find is found, and one beside the
+    // caller still wins over a newer one elsewhere
+    [Test]
+    public async Task AGoalBesideTheCaller_AddedAfterAFind_StillBeatsANewerFarOne()
+    {
+        await using var app = new global::app.@this("/goal-index", global::PLang.Tests.Parent.Actor).Testing();
+        var parent = global::PLang.Tests.Parent.Actor.Context;
+        var caller = Make.Goal(parent, "Caller", "/near/Caller.goal");
+        app.goal.list.Add(caller);
+        app.goal.list.Add(Make.Goal(parent, "Warm", "/near/Warm.goal"));
+        await Assert.That((await app.goal.list.Find("Warm", caller)).Success).IsTrue();
+
+        var near = Make.Goal(parent, "Twin", "/near/Twin.goal");
+        app.goal.list.Add(near);
+        app.goal.list.Add(Make.Goal(parent, "Twin", "/far/Twin.goal"));
+
+        await Assert.That(await (await app.goal.list.Find("Twin", caller)).Value()).IsSameReferenceAs(near);
+    }
 }

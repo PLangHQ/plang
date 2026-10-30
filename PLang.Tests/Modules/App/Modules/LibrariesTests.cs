@@ -195,19 +195,26 @@ public class LibrariesTests : System.IAsyncDisposable
         await Assert.That(result).IsTypeOf<MockCodeGenHandler>();
     }
 
+    // the catalog keeps one handler of the class to resolve its runs; each run's handler is the one Resolve makes
     [Test]
-    public async Task GetCodeGenerated_TypeBased_CreatesNewInstance()
+    public async Task GetCodeGenerated_TypeBased_ResolvesANewHandlerPerRun()
     {
         await using var engine = new global::app.@this("/app").Testing();
+        var context = engine.actor.list.User.Context;
 
         // variable.set is type-registered (discovered via [Action] attribute)
-        var (action1, _) = (new PrAction(engine.type.list) { Module = engine.Module("variable"), Name = "set" }).Instance(app.actor.list.User.Context);
-        var (action2, _) = (new PrAction(engine.type.list) { Module = engine.Module("variable"), Name = "set" }).Instance(app.actor.list.User.Context);
+        var one = Make.Action(context, "variable", "set", Make.Param(context, "Name", "x", "variable"), ("Value", "1"));
+        var two = Make.Action(context, "variable", "set", Make.Param(context, "Name", "y", "variable"), ("Value", "2"));
+        var (resolver1, _) = one.Instance(context);
+        var (resolver2, _) = two.Instance(context);
+        var (run1, _) = await one.Bind(context);
+        var (run2, _) = await two.Bind(context);
 
-        // Per-call instantiation — different instances each time
-        await Assert.That(action1).IsNotNull();
-        await Assert.That(action2).IsNotNull();
-        await Assert.That(ReferenceEquals(action1, action2)).IsFalse();
+        await Assert.That(resolver1).IsNotNull();
+        await Assert.That(resolver2).IsSameReferenceAs(resolver1);
+        await Assert.That(run1).IsNotNull();
+        await Assert.That(run2).IsNotSameReferenceAs(run1);
+        await Assert.That(run1).IsNotSameReferenceAs(resolver1);
     }
 
     #endregion

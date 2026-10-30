@@ -142,19 +142,19 @@ public class GeneratorValidationTests
 
         // Lazy resolution: the property resolves its slot to this run's typed VIEW
         // (conversion/errors surface later, at the value door) — not an eager
-        // materialize-and-clone.
-        await Assert.That(stringPlainSrc).Contains("__View<global::app.type.item.text.@this>(action,");
-        await Assert.That(intPlainSrc).Contains("__View<global::app.type.item.number.@this>(action,");
+        // materialize-and-clone. The step's row is read once, made only when the step holds it.
+        await Assert.That(stringPlainSrc).Contains("= action?[\"path\"]?.Data(context).As<global::app.type.item.text.@this>();");
+        await Assert.That(intPlainSrc).Contains("?.Data(context).As<global::app.type.item.number.@this>();");
     }
 
     [Test]
     public async Task GeneratedPropertyBody_MakesTheRunsOwnDataFromTheProperty()
     {
-        var generated = ReadAnyGeneratedHandler();
+        var generated = File.ReadAllText(Path.Combine(GeneratedDir, "app.module.matrix.plain.StringPlain.Action.g.cs"));
         // The program holds properties: each run makes its own first Data from one, born with the
-        // run's context — the step's property, then (a separate door) the frozen default.
-        await Assert.That(generated).Contains("action?[name]?.Data(context).As<T>()");
-        await Assert.That(generated).Contains("action?.Default[name]?.Data(context).As<T>()");
+        // run's context — the step's property, then (a separate read) the frozen default; neither when it isn't there.
+        await Assert.That(generated).Contains("action?[\"path\"]?.Data(context).As<");
+        await Assert.That(generated).Contains("action?.Default[\"path\"]?.Data(context).As<");
         await Assert.That(generated.Contains("data.Context = context")).IsFalse();
     }
 
@@ -162,8 +162,8 @@ public class GeneratorValidationTests
     public async Task Generator_DoesNotEmitOldHelperFamily()
     {
         // The old helper family was: __TryConvert, __FormatValue, __HasParam,
-        // __StripPercent, __Resolve<T>. All are gone — only __Copy / __View remain
-        // (the run's own copy / view of a parameter row).
+        // __StripPercent, __Resolve<T>. All are gone — only __Copy remains
+        // (the run's own copy of a plain parameter row).
         var generated = ReadAnyGeneratedHandler();
         await Assert.That(generated.Contains("__TryConvert")).IsFalse();
         await Assert.That(generated.Contains("__FormatValue")).IsFalse();

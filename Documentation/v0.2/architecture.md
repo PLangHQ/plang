@@ -229,7 +229,9 @@ Namespace:            app.module.{module}       -> module.variable
 Registry key:         {module}.{record}         -> variable.set
 ```
 
-The source generator emits a partial-class extension on the action record itself — resolves `%var%` references in parameters lazily at property access time, wires capability interfaces (`IContext`, `IChannel`, `IStep`), eagerly resolves `[Code]`s, and emits `__SnapshotParams` for error reporting. No separate `*__Generated` records — the action record IS the partial class.
+The source generator emits a partial-class extension on the action handler itself. `Resolve(action, context)` works each parameter out once as a `Data<T>` (a `%var%` inside it is read at `Value()`) and makes the handler through one private constructor that takes every parameter; the catalog keeps one `Resolver` handler per class (`goal/step/action/this.cs:405`) to call `Resolve` on. It wires capability interfaces (`IContext`, `IChannel`, `IStep`), eagerly resolves `[Code]`s, and emits `__SnapshotParams` for error reporting. No separate `*__Generated` records — the action record IS the partial class.
+
+A parameter the step does not give falls to the settings, then to the frozen default, then to `[Default]` (`PLang.Generators/Emission/Property/Data/this.cs:171-182`). The settings answer through `actor.setting.Get(action, option)` (`actor/setting/this.cs:109`): this run's value at the action's address, then the module's, the closest scope first; else the saved rows, the action's before the module's. The scope that answers keeps the answer by (module, action, option) at the store's version, so the same ask is one dictionary read while nothing is set, saved or removed anywhere in the chain (`:111-122`). A scope with no value or rows of its own (a goal call's) reads through to its parent's kept answer (`:144`).
 
 ### Source-generator OBP shape
 

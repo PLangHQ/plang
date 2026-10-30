@@ -14,7 +14,7 @@ public sealed class @this : size.@this, global::app.type.item.ICreate<@this>
     public override async System.Threading.Tasks.ValueTask<string> Text(global::app.actor.context.@this context)
     {
         var standard = (await context.Setting.Get<setting.@this>()).Standard.Value;
-        return await (context.App.type.list[new global::app.type.@this("size", standard.Name), context]
+        return await (context.App.type.list["size"].Kinded(standard.Name)
                 .Make(Value, new global::app.data.@this("", context: context)) as size.@this
             ?? throw new System.InvalidOperationException($"the size standard {standard.Name} made no size of {Value} bytes.")).Text(context);
     }

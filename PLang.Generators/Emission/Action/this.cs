@@ -39,7 +39,7 @@ public static class @this
 
             namespace {{info.Namespace}};
 
-            partial class {{info.ClassName}}(global::app.actor.context.@this __ctx) : global::app.module.ICodeGenerated, global::app.module.IClass
+            partial class {{info.ClassName}} : global::app.module.ICodeGenerated, global::app.module.IClass
             {
 
             """);
@@ -47,6 +47,7 @@ public static class @this
         EmitMarkers(sb, info);
         EmitInstanceState(sb);
         EmitProperties(sb, info);
+        EmitCtors(sb, info);
         EmitRawArgsCtor(sb, info);
         EmitDataAndErrorHelpers(sb, info);
         EmitGiven(sb, info);
@@ -69,7 +70,7 @@ public static class @this
         // Context is universal — every action runs inside one, and any value the handler
         // produces borns with it (Data() -> Context.Ok). Emitted unconditionally.
         sb.Append("""
-                public global::app.actor.context.@this Context { get; set; } = __ctx;
+                public global::app.actor.context.@this Context { get; set; }
 
             """);
         if (info.ImplementsIChannel)
@@ -111,11 +112,34 @@ public static class @this
     }
 
     /// <summary>
+    /// The two births: one with <c>__ctx</c> alone, each parameter at its fallback (unset, or its [Default]) — what the
+    /// catalog keeps to resolve with, and a C#-composed action's start; and Resolve's own, private, which takes each
+    /// parameter as Resolve worked it out, so no fallback is made for it. A class with no parameters has the first only.
+    /// </summary>
+    private static void EmitCtors(StringBuilder sb, ActionClassInfo info)
+    {
+        var props = info.Properties.OfType<DataProperty>().ToList();
+        sb.AppendLine($"    public {info.ClassName}(global::app.actor.context.@this __ctx)");
+        sb.AppendLine("    {");
+        sb.AppendLine("        Context = __ctx;");
+        foreach (var p in props) sb.AppendLine($"        {p.FallbackAssign}");
+        sb.AppendLine("    }");
+        sb.AppendLine();
+        if (props.Count == 0) return;
+        sb.AppendLine($"    private {info.ClassName}(global::app.actor.context.@this __ctx, {string.Join(", ", props.Select(p => p.ResolvedParameter))})");
+        sb.AppendLine("    {");
+        sb.AppendLine("        Context = __ctx;");
+        foreach (var p in props) sb.AppendLine($"        {p.ResolvedAssign}");
+        sb.AppendLine("    }");
+        sb.AppendLine();
+    }
+
+    /// <summary>
     /// A C#-composition ctor: params as raw, typed, named optional args wrapped with __ctx
     /// (born-with-context). Required = non-nullable + no [Default] (compiler forces it); the rest
     /// are optional and resolve through the seam (setting → [Default]) when omitted. Required args
     /// come first (C# requires non-default params before defaulted). Skipped when there are no
-    /// params (the primary ctor already covers `new X(context)`).
+    /// params (the context ctor already covers `new X(context)`).
     /// </summary>
     private static void EmitRawArgsCtor(StringBuilder sb, ActionClassInfo info)
     {
@@ -251,22 +275,10 @@ public static class @this
 
         sb.AppendLine();
 
-        // Construct the fresh instance, binding resolved params via the object initializer.
-        if (dataProps.Count == 0)
-        {
-            sb.AppendLine($"        var __instance = new {info.ClassName}(context);");
-        }
-        else
-        {
-            sb.AppendLine($"        var __instance = new {info.ClassName}(context)");
-            sb.AppendLine("        {");
-            for (int i = 0; i < dataProps.Count; i++)
-            {
-                var comma = i < dataProps.Count - 1 ? "," : "";
-                sb.AppendLine($"            {dataProps[i].InitAssignment}{comma}");
-            }
-            sb.AppendLine("        };");
-        }
+        // The fresh instance, born with what Resolve worked out (Resolve's own constructor: no fallback is made for it).
+        sb.AppendLine(dataProps.Count == 0
+            ? $"        var __instance = new {info.ClassName}(context);"
+            : $"        var __instance = new {info.ClassName}(context, {string.Join(", ", dataProps.Select(p => $"__{p.Name}"))});");
 
         sb.Append("""
 
@@ -447,21 +459,11 @@ public static class @this
         sb.Append("""
                 // The program holds properties, shared by every run — a run makes its own first Data
                 // from one, born with the running context. A plain slot takes the step's property,
-                // then the frozen default; a typed slot asks the step's (__View) and the frozen
-                // default (__Default, action.Default's) separately, so a setting can sit between them.
+                // then the frozen default; a typed slot reads the step's and the frozen default
+                // (action.Default's) in Resolve itself, so a setting can sit between them.
                 private static global::app.data.@this __Copy(
                     global::app.goal.step.action.@this? action, string name, global::app.actor.context.@this context)
                     => (action?[name] ?? action?.Default[name])?.Data(context) ?? global::app.data.@this.NotFound(name, context);
-
-                private static global::app.data.@this<T> __View<T>(
-                    global::app.goal.step.action.@this? action, string name, global::app.actor.context.@this context)
-                    where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-                    => action?[name]?.Data(context).As<T>() ?? global::app.data.@this.NotFound(name, context).As<T>();
-
-                private static global::app.data.@this<T> __Default<T>(
-                    global::app.goal.step.action.@this? action, string name, global::app.actor.context.@this context)
-                    where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-                    => action?.Default[name]?.Data(context).As<T>() ?? global::app.data.@this.NotFound(name, context).As<T>();
 
                 // Wraps a resolution error with the action's module.action context so the
                 // reader can locate the failing call site. The raw error from Data<T>.As<T>

@@ -38,7 +38,7 @@ public class Default : IArchive
             using var packed = new MemoryStream();
             var (result, held) = await format.Pack(packing, value!, packed, level, context);
             return result.Success
-                ? context.Ok(new Archive(packed.ToArray(), held!, context.App.type.list[new global::app.type.@this("archive", format.Name), context]))
+                ? context.Ok(new Archive(packed.ToArray(), held!, context.App.type.list["archive"].Kinded(format.Name)))
                 : result;
         }
 

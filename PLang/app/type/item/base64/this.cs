@@ -56,7 +56,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             var slash = mime.IndexOf('/');
             var kind = slash >= 0 ? mime[(slash + 1)..] : null;
             return new @this(payload, kind is null or "octet-stream" ? type
-                : context.App.type.list[new global::app.type.@this("base64", kind), context]);
+                : context.App.type.list["base64"].Kinded(kind));
         }
         if (!System.Buffers.Text.Base64.IsValid(raw))
             throw new System.FormatException("not a valid base64 payload.");

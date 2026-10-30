@@ -27,9 +27,15 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // element, its variables, what a program added, its tags, the error in play and its caller, so a frame writes the
     // chain it stands in; the event running in it is the app's answer, never saved. Its children are never written.
 
-    /// <summary>What a program adds to the call (<c>%!call.scope.retries%</c>) — kept as long as the call lives.</summary>
+    /// <summary>What a program adds to the call (<c>%!call.scope.retries%</c>) — kept as long as the call lives. Made at
+    /// its first ask: most calls get nothing added.</summary>
     [Store, global::app.Snapshot, global::app.LlmBuilder]
-    public global::app.type.item.property.list.@this property { get; private set; }
+    public global::app.type.item.property.list.@this property
+    {
+        get => _property ?? System.Threading.Interlocked.CompareExchange(ref _property, new(_stack.Properties), null) ?? _property;
+        private set => _property = value;
+    }
+    private global::app.type.item.property.list.@this? _property;
 
     private Stopwatch? _stopwatch;
     private readonly global::app.call.list.@this _stack;
@@ -87,10 +93,12 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// Errors observed at this scope. Populated by App.Run when the handler returns a
     /// failure or throws. <see cref="Handled"/> tracks recovery outcome independently —
     /// the error stays in the list either way (audit trail). See <see cref="error.@this"/>
-    /// for thread-safety semantics.
+    /// for thread-safety semantics. Made at its first ask: most frames never fail.
     /// </summary>
     [Out, Debug, global::app.LlmBuilder]
-    public global::app.error.list.@this Errors { get; }
+    public global::app.error.list.@this Errors
+        => _errors ?? System.Threading.Interlocked.CompareExchange(ref _errors, new(_stack.Errors), null) ?? _errors;
+    private global::app.error.list.@this? _errors;
 
     /// <summary>
     /// Flipped <c>true</c> by on.error's Wrap on recovery success. Renderers use this to
@@ -107,16 +115,18 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     [Store, global::app.Snapshot]
     public global::app.error.@this? Error
     {
-        get => _handled ? null : Errors.Newest;
+        get => _handled ? null : _errors?.Newest;
         private set { if (value != null) Errors.Add(value); }
     }
 
     /// <summary>
     /// Live siblings under this Call. Owns its own lock + FIFO eviction policy — see
-    /// <see cref="child.list.@this"/>. Allocated lazily via the constructor below so the
-    /// back-reference to the parent CallStack is set before any Add can land.
+    /// <see cref="child.list.@this"/>. Made at its first ask, with the back-reference to the stack it is of: a call
+    /// nothing is pushed under (an action's) has none.
     /// </summary>
-    public child.list.@this Children { get; }
+    public child.list.@this Children
+        => _children ?? System.Threading.Interlocked.CompareExchange(ref _children, new(_stack), null) ?? _children;
+    private child.list.@this? _children;
 
     // --- Timing tier (null when Flags.Timing off) ---
     // When it ran is a value of its stack's datetime type, how long a span, written in the standard its asker's setting
@@ -147,10 +157,16 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // --- Tag tier ---
     /// <summary>
     /// Free-form tags written through <see cref="Tag"/> — a plang dict, read as any dict
-    /// (<c>%!callStack.Current.Caller.Tags.foo%</c>). Always allocated, so no lazy-init race.
+    /// (<c>%!callStack.Current.Caller.Tags.foo%</c>). Made at its first ask, once: parallel branches asking at once get
+    /// the same dict.
     /// </summary>
     [Store, Out, Debug, global::app.Snapshot, global::app.LlmBuilder]
-    public global::app.type.item.dict.@this Tags { get; private set; }
+    public global::app.type.item.dict.@this Tags
+    {
+        get => _tags ?? System.Threading.Interlocked.CompareExchange(ref _tags, new(_stack.Dict), null) ?? _tags;
+        private set => _tags = value;
+    }
+    private global::app.type.item.dict.@this? _tags;
 
     // Parallel branches tag one caller's frame; the frame serializes the merge into its dict.
     private readonly object _tagging = new();
@@ -240,11 +256,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         _previousCurrent = previous;
         _store = store;
         _call = call;
-        Tags = new global::app.type.item.dict.@this(stack.Dict);
-        Errors = new global::app.error.list.@this(stack.Errors);
-        property = new(stack.Properties);
-        Children = new child.list.@this(stack);
-        _parameter = new(stack.Properties);
         foreach (var name in names ?? [])
             if (name != null && !string.IsNullOrEmpty(name.Name)) Born(name.Name, name);
     }
@@ -290,7 +301,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public bool TryGet(string name, out global::app.data.@this value)
     {
         for (var frame = this; frame != null; frame = frame.Caller)
-            if (frame._parameter[name] is { } variable) { value = variable; return true; }
+            if (frame._parameter?[name] is { } variable) { value = variable; return true; }
         value = null!;
         return false;
     }
@@ -300,23 +311,23 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>This frame's own variables, each the Data whole under its name (<c>%!call.scope.parameter.order%</c>) —
     /// the list itself, so what is written through it is the frame's. Kept, they come back as names it is born with,
-    /// as a goal call's parameters are: a write to one lands here again.</summary>
+    /// as a goal call's parameters are: a write to one lands here again. Made at its first ask: most frames hold none.</summary>
     [Store, global::app.Snapshot, global::app.LlmBuilder]
     public global::app.type.item.property.list.@this Parameter
     {
-        get => _parameter;
+        get => _parameter ?? System.Threading.Interlocked.CompareExchange(ref _parameter, new(_stack.Properties), null) ?? _parameter;
         private set
         {
             _parameter = value;
             foreach (var (name, _) in value.Members) _arguments.Add(name);
         }
     }
-    private global::app.type.item.property.list.@this _parameter;
+    private global::app.type.item.property.list.@this? _parameter;
 
     // A name this frame is born with: bound here, and one of the names it was born with (last wins on a duplicate).
     private void Born(string name, global::app.data.@this variable)
     {
-        _parameter.Add(name, variable);
+        Parameter.Add(name, variable);
         _arguments.Add(name);
     }
 
@@ -326,16 +337,17 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         get
         {
             for (var frame = this; frame != null; frame = frame.Caller)
-                foreach (var (name, _) in frame._parameter.Members) yield return name;
+                if (frame._parameter is { } parameter)
+                    foreach (var (name, _) in parameter.Members) yield return name;
         }
     }
 
     /// <summary>Writes <paramref name="value"/> into this frame under <paramref name="name"/> (the frame
     /// <see cref="Keeper"/> chose).</summary>
-    public void Set(string name, global::app.data.@this value) => _parameter.Add(name, value);
+    public void Set(string name, global::app.data.@this value) => Parameter.Add(name, value);
 
     /// <summary>True if this frame itself (not its callers) holds <paramref name="name"/>.</summary>
-    public bool Holds(string name) => _parameter[name] != null;
+    public bool Holds(string name) => _parameter?[name] != null;
 
     /// <summary>
     /// A change of <paramref name="store"/>: when it is the store this frame captures, the diff lands here —
@@ -416,7 +428,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// caller's. PLang tests can <c>assert %!callStack.Current.Depth% equals 2</c>.
     /// </summary>
     [Out, Debug, global::app.LlmBuilder]
-    public global::app.type.item.number.@this Depth => _depth;
+    public global::app.type.item.number.@this Depth => new(_stack.Number, _depth);
 
     /// <summary>The frame records an error against itself — the one door. Stamps what the error does
     /// not carry yet: the failing chain, the context of the run it met here, and — when the error keeps
@@ -428,7 +440,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public void Record(global::app.error.@this error, actor.context.@this context)
     {
         error.At(this, context);
-        if (Errors.Any(x => ReferenceEquals(x, error))) return;
+        if (_errors?.Any(x => ReferenceEquals(x, error)) == true) return;
         Errors.Add(error);
         _stack.Audit.Add(error);
     }

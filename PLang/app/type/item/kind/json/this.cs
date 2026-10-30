@@ -31,7 +31,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
         object raw, global::app.actor.context.@this ctx)
         // The content carries THIS kind as the format its raw is in — the object the raw was decoded by, so a
         // re-declaration keeps it and asks it to Parse directly (never a kind-name lookup across the app).
-        => new(ctx.Ok(Make(raw, ctx.App.type.list[new global::app.type.@this("item", "json"), ctx], null)));
+        => new(ctx.Ok(Make(raw, ctx.App.type.list["item"].Kinded("json"), null)));
 
     /// <summary>json content, unread: its characters already are json, so a json document pastes them.</summary>
     public override global::app.type.item.source Make(object raw, global::app.type.@this type, global::app.type.item.path.@this? origin,

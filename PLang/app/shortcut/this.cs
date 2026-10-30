@@ -17,12 +17,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     internal @this(global::app.type.item.path.@this path, global::app.type.@this type) : base(type)
     {
         Path = path;
+        Name = path.Stem.ToString();
         IsSystem = path.ToString().StartsWith("/system/shortcut/", StringComparison.OrdinalIgnoreCase);
     }
 
-    /// <summary>Its name — its file's (<c>goal.goal</c> → <c>goal</c>), read as <c>%!goal%</c>.</summary>
+    /// <summary>Its name — its file's (<c>goal.goal</c> → <c>goal</c>), read as <c>%!goal%</c>: a birth fact, as its
+    /// file's name never changes.</summary>
     [global::app.Out]
-    public string Name => Path.Stem.ToString();
+    public string Name { get; }
 
     /// <summary>Its <c>.goal</c> file — the goal a read starts is the one built from it.</summary>
     public global::app.type.item.path.@this Path { get; }

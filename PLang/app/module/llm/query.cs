@@ -65,7 +65,7 @@ public partial class query : IContext
     {
         if (Message.Peek() is not global::app.type.item.source { HasVariable: true } row)
             return context.Ok(await Message.Value());
-        var plain = context.App.type.list[new global::app.type.@this("list", template: row.Type.Template), context];
+        var plain = context.App.type.list[typeof(global::app.type.item.list.@this)].Kinded(null, row.Type.Template);
         var read = new global::app.data.@this("message", row.Declared(plain), context: context);
         if (await read.Value() is not global::app.type.item.list.@this rendered || !read.Success) return read;
         // each rendered element asked as a message, its type's own birth: a text is the user's message, a dict its record

@@ -1,0 +1,98 @@
+{
+  "branch": "call-cost",
+  "sessions": [
+    {
+      "id": "6d845060-9ee9-4739-a405-4b96d72165ad",
+      "bot": "architect",
+      "timestamp_start": "2026-10-30T01:07:02Z",
+      "timestamp_end": "2026-10-30T01:07:02Z",
+      "intent": "Plan the call-cost branch: the measured speed and memory fixes Ingi agreed",
+      "before": {
+        "assumptions": "the codeanalyzer's measurements on event-action hold on runtime2 7bf093245",
+        "risk": "estimates shrink once built; stage 4 touches the locked generator shape"
+      },
+      "plan": ".bot/call-cost/architect/plan/start.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/call-cost/architect/plan/start.md",
+            ".bot/call-cost/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "five stages from the codeanalyzer's ideas 1-7, 10, 12 and the property bag; ReadyToRun left out (Ingi: not yet)"
+        }
+      ],
+      "after": {
+        "status": "plan written; stage 1 to the coder",
+        "health": "good",
+        "notes": "the codeanalyzer measures each stage before and after"
+      }
+    },
+    {
+      "id": "a3c9e5f1-7b24-4d68-8e0a-5f1d2b6c9a47",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-30T08:00:00Z",
+      "timestamp_end": "2026-10-30T09:00:00Z",
+      "intent": "Measure and review call-cost stage 1 (77add2895..4dcfa3f36): birth, request and a goal run again, before and after.",
+      "before": { "assumptions": "The step cache made lazily saves ~47 KB per app (idea 10).", "risk": "Lazy pieces read through the property make them early." },
+      "plan": ".bot/call-cost/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/call-cost/codeanalyzer/review.md", ".bot/call-cost/codeanalyzer/v1/verdict.json", "Tools/Bench/record.md"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "PASS: sub birth 101 -> 54 KB, sub request 441 -> 371, a goal run again 227 -> 201 KB, held flat; four lows (lazy idiom written four times, stale cache-swap comment, Broken judged once vs a mutable step Error, Children/property still eager)."
+        }
+      ],
+      "after": { "status": "PASS sent to the architect, tester next", "health": "tree clean after commit", "notes": "no mutations" }
+    },
+    {
+      "id": "b8d4f2a6-3e19-4c75-9a0b-6e2c7d1f8b53",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-30T09:30:00Z",
+      "timestamp_end": "2026-10-30T10:30:00Z",
+      "intent": "Measure and review call-cost stage 2 (4dcfa3f36..1878bef03): birth, request and a goal run again; the new-type sites left.",
+      "before": { "assumptions": "Number's operator type found, not made, takes ~23% off a run (the trial).", "risk": "Types reached by reference may be null for a type born with no app." },
+      "plan": ".bot/call-cost/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/call-cost/codeanalyzer/review.md", ".bot/call-cost/codeanalyzer/v2/verdict.json", "Tools/Bench/record.md"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "PASS: a goal run again 201 -> 145 KB, sub request 371 -> 313, births flat, held flat; list.Count throws for a bare-typed list (probed, reverted); 127 new-type sites left, the hot ones listed."
+        }
+      ],
+      "after": { "status": "PASS sent to the architect, tester next", "health": "tree clean after commit", "notes": "one reverted probe, no production edits kept" }
+    },
+    {
+      "id": "c5e1a7d3-9f42-4b86-a0d8-2b7f3c6e1a94",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-30T11:00:00Z",
+      "timestamp_end": "2026-10-30T13:00:00Z",
+      "intent": "Prototype the type list's build-time tables (stage 6), check which DLLs bring plang types, and measure and review call-cost stage 3 (a62c2da21..b274f0406).",
+      "before": { "assumptions": "A generated table beats the reflection scan; no DLL outside PLang brings plang types.", "risk": "typeof tables may cost JIT; test fixtures load non-generator DLLs." },
+      "plan": ".bot/call-cost/codeanalyzer/v3/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/call-cost/codeanalyzer/startup-tables.md", ".bot/call-cost/codeanalyzer/prototype/emit.cs.txt", ".bot/call-cost/codeanalyzer/prototype/tables.cs.txt"],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Prototype in a scratch bench: typeof tables ~40 ms cold (JIT), names-only ~2 ms + ~8 ms asked, vs a ~66 ms Library; 3,521 classes scanned for 308 entries. DLL check: six fixture DLLs and a PersistedAssemblyBuilder test load non-generator assemblies bringing plang types."
+        },
+        {
+          "paths": [".bot/call-cost/codeanalyzer/review.md", ".bot/call-cost/codeanalyzer/v3/verdict.json", "Tools/Bench/record.md"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "PASS: a goal run again 145 -> 109 KB, sub request 306 -> 284, births flat; four lows; the per-call Func site named (type/reader/this.cs:101)."
+        }
+      ],
+      "after": { "status": "stage 3 PASS and the prototype sent to the architect and coder", "health": "tree clean after commit", "notes": "no production edits kept" }
+    }
+  ]
+}

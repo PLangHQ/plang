@@ -130,6 +130,12 @@ public sealed class @this : IDisposable
     public global::app.actor.setting.@this Setting
         => _setting ?? System.Threading.LazyInitializer.EnsureInitialized(ref _setting, () => new(this, Parent?.Setting ?? Actor.Setting));
 
+    /// <summary>The json reader this context reads with — it holds only the context, so one serves every read here:
+    /// made at its first ask.</summary>
+    internal global::app.type.item.serializer.json Json
+        => _json ?? System.Threading.Interlocked.CompareExchange(ref _json, new(this), null) ?? _json;
+    private global::app.type.item.serializer.json? _json;
+
     /// <summary>
     /// What this context's file paths read and write once their gate has passed: the one it was born with,
     /// else its parent's, else the app's disk. A build checks a goal in a context born with the build's overlay.
