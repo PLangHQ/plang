@@ -1,0 +1,18 @@
+/ %!app.event% reads the running actor's events: the user binds two, and its list grows by both, the last bound last.
+/ (A test run binds the test runner's own C# events on the same actor first, so the list starts with those.)
+Start
+- set %before% = %!app.event.list.count%
+- before goal Process, call Log
+- after goal Process, call Log
+- set %events% = %!app.event.list%
+- set %added% = %events.count% - %before%
+- assert %added% equals 2, "the user's two events joined its list"
+- assert %events.last.when% equals "after", "in the order bound: the after was bound last"
+
+/ A goal the events are bound on.
+Process
+- set %done% = "yes"
+
+/ The events' call.
+Log
+- set %logged% = "yes"

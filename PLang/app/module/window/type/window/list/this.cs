@@ -103,7 +103,7 @@ public sealed class @this(Browser browser) : global::app.type.item.@this
         // is not about the window
         var what = e["window"] is JsonValue said && said.TryGetValue<string>(out var happened) ? happened
             : Request.FirstOrDefault(e.ContainsKey);
-        if (what == null || !on.Names.Contains(what, StringComparer.OrdinalIgnoreCase)) return;
+        if (what == null || (await context.Actor!.@event.On(this))[what] is null) return;
         // the window it is about, before what happened changes the list (a closed one leaves it)
         Raise(what, ById(id), e, context);
         if (e["window"] is null) return;
@@ -164,8 +164,8 @@ public sealed class @this(Browser browser) : global::app.type.item.@this
                 {
                     using var json = JsonDocument.Parse(e.ToJsonString());
                     var happened = new global::app.data.@this("!data", new global::app.type.item.serializer.json(ctx).Parse(json.RootElement.Clone()), context: ctx);
-                    if (about != null) await about.on[what]!.After(about, happened, ctx);
-                    await on[what]!.After(this, happened, ctx);
+                    if (about != null) await (await ctx.Actor!.@event.On(about))[what]!.after.Start(about, happened, ctx);
+                    await (await ctx.Actor!.@event.On(this))[what]!.after.Start(this, happened, ctx);
                 }, ctx);
         });
     }

@@ -77,6 +77,35 @@ public class CacheWrapTests
         await Assert.That((await (await Ctx.Variable.Get("y")).Value())!.IsTruthy()).IsFalse();
     }
 
+    // The actor's before events run before an action's own clauses (decision 11): a policy check runs even when the
+    // cache holds the answer, and the actor's after events see the cached answer once the cache has had its turn.
+    [Test]
+    public async Task Wrap_CacheHit_StillRanTheAppsBeforeEvent_AndItsAfterSeesTheCachedAnswer()
+    {
+        await Ctx.App!.Cache.SetAsync("policy-key", Ctx.Ok("cached-value"),
+            new CacheSettings { DurationMs = 60_000, Sliding = false });
+        var ran = new List<string>();
+        var user = _app.actor.list.User;
+        await user.@event.Add(new global::app.@event.code.@this(_app.type.list["action"], "start", global::app.@event.When.before,
+            (_, result, ctx) => { ran.Add("policy"); return Task.FromResult(ctx.Ok()); }, user, global::app.@event.code.@this.Always));
+        await user.@event.Add(new global::app.@event.code.@this(_app.type.list["action"], "start", global::app.@event.When.after,
+            async (_, result, ctx) => { ran.Add($"after {await result.Value()}"); return result; }, user, global::app.@event.code.@this.Always));
+        var action = global::PLang.Tests.Shared.Make.With(new PrAction(_app.type.list)
+        {
+            Module = _app.actor.list.User.Context.App.Module("variable"), Name = "set",
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
+            {
+                new("name", "%z%", new global::app.type.@this("variable"), context: _app.actor.list.User.Context), new("value", "fresh-value", context: _app.actor.list.User.Context)
+            })
+        }, CacheModifier(60_000, "policy-key"));
+
+        var result = await action.Start(Ctx);
+
+        await result.IsSuccess();
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("cached-value");
+        await Assert.That(ran).IsEquivalentTo(new[] { "policy", "after cached-value" }, TUnit.Assertions.Enums.CollectionOrdering.Matching);
+    }
+
     [Test]
     public async Task Wrap_ActionFailure_DoesNotCache()
     {

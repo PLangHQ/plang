@@ -194,11 +194,37 @@ public sealed partial class @this
     {
         get
         {
+            // asked before, while no list it read changed since: the type it answered
+            var version = Version;
+            if (_classes.TryGetValue(clrType, out var kept) && kept.Version == version) return kept.Type;
             // The name comes from PlangName — the same step the facts name through, so the
             // entity's face and the facts can never disagree. A kinded family is born here with
             // its kind (already the canonical name); every other name is the named entity.
             var (name, kind) = PlangName(clrType);
-            return kind == null ? this[name] : Full(new app.type.@this(name), kind);
+            var type = kind == null ? this[name] : Full(new app.type.@this(name), kind);
+            _classes[clrType] = (version, type);
+            return type;
+        }
+    }
+
+    // Each class's type as this list answered it, with the version of the lists it read then: kept in this list (a
+    // sub app's in its own layer), so a class's naming — a walk of the types, its attributes, its kind — is done once,
+    // not at every lookup. The types it answers are the ones the lists made (one object per class in every app over
+    // them); a type or a kind that comes in anywhere below changes the version, and the class is named again (a raw C#
+    // class a type that came in later owns among them).
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, (int Version, app.type.@this Type)> _classes = new();
+
+    // How often this list took a type or a kind (Admit, Put).
+    private int _changes;
+
+    // This list's changes and every list's under it: what a kept answer was read against.
+    private int Version
+    {
+        get
+        {
+            var version = System.Threading.Volatile.Read(ref _changes);
+            foreach (var under in Under) version += under.Version;
+            return version;
         }
     }
 

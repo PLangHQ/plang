@@ -1,0 +1,349 @@
+{
+  "branch": "event-action",
+  "sessions": [
+    {
+      "id": "7c1e9a24-3b58-4f0d-a6e2-91d4c5b8f017",
+      "bot": "architect",
+      "timestamp_start": "2026-10-29T09:00:00Z",
+      "timestamp_end": "2026-10-29T16:00:00Z",
+      "intent": "Merge the scattered next-work lists into one, cut event-action from runtime2 and plan it from snapshot's decisions and the code.",
+      "before": {
+        "assumptions": "Snapshot's branch-event-action.md describes the branch; the saved move patch applies.",
+        "risk": "The write-up predates snapshot 245-271; the event surface is locked."
+      },
+      "plan": ".bot/event-action/architect/plan/start.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/architect/backlog.md",
+            ".bot/item-doors/architect/backlog.md",
+            ".bot/snapshot/architect/plan/later.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "One list replaces two; done items dropped, the old files point to the new one."
+        },
+        {
+          "paths": [
+            "PLang/app/event/",
+            "PLang/app/module/on/event.cs",
+            "PLang/app/module/on/unbind.cs",
+            "PLang/app/goal/this.cs",
+            "PLang/app/goal/step/this.cs",
+            "PLang/app/goal/step/action/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read the event system whole; found the write-up stale against snapshot 245, 248, 251, 271 and the patch no longer applying."
+        },
+        {
+          "paths": [
+            ".bot/event-action/architect/plan/start.md",
+            ".bot/event-action/architect/plan/start.goal",
+            ".bot/event-action/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "medium",
+          "context": "Five stages; Level's new name is Ingi's; stage 2's navigation shape comes from the coder."
+        },
+        {
+          "paths": [
+            ".bot/event-action/architect/summary.md",
+            ".bot/event-action/architect/plan/start.md",
+            ".bot/event-action/architect/plan/start.goal",
+            ".bot/event-action/architect/plan/expected.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Decisions 3\u201318 with Ingi: events (not bindings) live on the actor that bound them; each goal, step and action makes its lists on its first run; one question, item.Is(type); clauses in the list at fixed places; on holds its moments; system events load from /system/event by default; a call finds its goal in the app its caller belongs to (reverses snapshot 265). Level, Scope, IsSystem and the walk go. The plan rewritten to eight stages."
+        },
+        {
+          "paths": [
+            ".bot/event-action/architect/briefs/coder-start.md",
+            ".bot/architect/backlog.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "The coder's brief (sent after Ingi cleared its context); plang-tester briefed on the variable hole; the early-return rule to plang-codeanalyzer; the cache-key bug and a future setting on the list."
+        }
+      ],
+      "after": {
+        "status": "Plan sent to plang-coder (decision 19); plang-tester measuring variable events.",
+        "health": "No production code changed.",
+        "notes": "Next: the coder's pushback and four shapes; the tester's write-up."
+      }
+    },
+    {
+      "id": "13758eee-8d7c-4a2d-acc2-d73b6af7c9e3",
+      "bot": "coder",
+      "timestamp_start": "2026-10-29T00:00:00Z",
+      "intent": "Place the event-action plan, push back to the architect, then build stage 1 (the word and the folders).",
+      "before": {
+        "assumptions": "Decisions 3-18 are Ingi's; the core surface is locked beyond them.",
+        "risk": "Stage 1 renames touch the event core, on.event/unbind, the teaching and three goldens; re-pins must be read before committing."
+      },
+      "plan": ".bot/event-action/coder/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/event-action/architect/plan/",
+            "PLang/app/event/",
+            "PLang/app/module/on/"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read the plan and today's event code; sent six pushback points and four shapes to the architect before any code."
+        },
+        {
+          "paths": [
+            "test/plan/event-action/"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Placed the plan (start.md, start.goal) and the stage 1 test UnbindTakesTheEvent."
+        },
+        {
+          "paths": [
+            "PLang/app/event/",
+            "PLang/app/module/on/event.cs",
+            "PLang/app/module/on/unbind.cs"
+          ],
+          "type": "move",
+          "category": "code",
+          "confidence": "high",
+          "context": "binding -> event kinds (call, clause, code, inherited); the moment classes collapse into one on with before/after and named moments; on/list -> event/list; %!event% is the bound event, keyed {action, n}; dedupe against inherited events one for one."
+        },
+        {
+          "paths": [
+            "PLang/app/test/",
+            "PLang/app/module/debug/",
+            "PLang/app/module/on/",
+            "PLang/app/type/",
+            "PLang/app/this.cs",
+            "PLang/app/origin/",
+            "PLang/app/actor/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Call sites renamed to the new types."
+        },
+        {
+          "paths": [
+            "os/system/modules/on/"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Teaching: binding -> event, !result -> !data."
+        },
+        {
+          "paths": [
+            "PLang.Tests/",
+            "PLang.Tests/Wire/App/Surface/surface_golden.txt",
+            "PLang.Tests/Wire/App/Decider/pick_golden.json"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Tests renamed; three dedupe pins added; surface and pick goldens re-pinned (diffs reviewed: rename and teaching only)."
+        }
+      ],
+      "timestamp_end": "2026-10-29T23:59:00Z",
+      "after": {
+        "status": "stage 1 done",
+        "health": "C# all green (Modules 1486 = baseline + 3 pins); plang 311 pass, 0 fail, 1 stale (the new stage 1 test, unbuilt: needs the decider key)",
+        "notes": "plang-builder builds UnbindTakesTheEvent and refreshes 14 .pr whose Event records type event. Stage 2 next."
+      }
+    },
+    {
+      "id": "cddf23fe-8387-48e5-a33f-125921dbf3c5",
+      "bot": "coder",
+      "timestamp_start": "2026-10-29T17:40:00+00:00",
+      "timestamp_end": "2026-10-29T19:00:26.712295+00:00",
+      "intent": "Stage 5: system events and the actor's events loaded lazily on first ask (rulings 53-59)",
+      "before": {
+        "assumptions": "type.Create keeps its signature; one async door per list",
+        "risk": "load cycles between actors; sync callers"
+      },
+      "plan": ".bot/event-action/coder/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/event/list/this.cs",
+            "PLang/app/type/this.cs",
+            "PLang/app/snapshot/this.cs",
+            "PLang/app/origin/",
+            "PLang/app/actor/this.cs",
+            "PLang/app/event/setting/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "medium",
+          "context": "lazy load; System loads first (a cycle on one .pr read otherwise); snapshot read loads before it binds; On(name) one answer"
+        },
+        {
+          "paths": [
+            "PLang/app/goal/",
+            "PLang/app/channel/this.cs",
+            "PLang/app/type/item/",
+            "PLang/app/module/",
+            "PLang/app/test/",
+            "PLang/Executor.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "callers on the async door; test session opens before any set"
+        },
+        {
+          "paths": [
+            "PLang/app/event/Scope.cs"
+          ],
+          "type": "delete",
+          "category": "code",
+          "confidence": "high",
+          "context": "start.md:72"
+        },
+        {
+          "paths": [
+            "PLang.Tests/"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "pins for stage 5; awaited bare sets; surface re-pinned (53, 54, start.md:72)"
+        },
+        {
+          "paths": [
+            "test/module/on/event/afteraction/EventAfterAction.test.goal",
+            "test/plan/event-action/app/event/AfterEachLlmQuery/AfterEachLlmQuery.test.goal"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "comments reworded (57)"
+        }
+      ],
+      "after": {
+        "status": "stage 5 committed; two pins open with the architect",
+        "health": "C# green but the two AMakersLaterEvent pins; plang 314/320 before the builder's rebuilds",
+        "notes": "see summary.md Next"
+      }
+    },
+    {
+      "id": "c0d3a7e1-5b29-4f68-9a14-2e6b8d1f4a73",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-29T18:00:00Z",
+      "timestamp_end": "2026-10-29T21:30:00Z",
+      "intent": "Review event-action 6703697fb..3266637da by OBP patterns 11 and 12 and the return-early rule, and bench it against its parent.",
+      "before": {
+        "assumptions": "The parent row is runtime2 6703697fb; set.cs joins at 89202009b.",
+        "risk": "Per-actor lazy lists could move the request bytes."
+      },
+      "plan": ".bot/event-action/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/event-action/codeanalyzer/review.md",
+            ".bot/event-action/codeanalyzer/v1/verdict.json"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "FAIL: sub request +53 KB and root +589 KB from the system-events load every request app pays; set.cs half-applied read-once; moment-name answered at three sites"
+        },
+        {
+          "paths": [
+            "Tools/Bench/Program.cs",
+            "Tools/Bench/record.md"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "BENCH_MAKER binds through the actor's events; mode `events` measures the first-ask load per app; rows for 6703697fb and 3266637da"
+        }
+      ],
+      "after": {
+        "status": "review sent to the architect, FAIL",
+        "health": "tree clean",
+        "notes": "call-cost job queued after the review"
+      }
+    },
+    {
+      "id": "b7d2e0c4-5a1f-4e3b-8c96-tester-varevents",
+      "bot": "tester",
+      "timestamp_start": "2026-10-29T13:00:00Z",
+      "timestamp_end": "2026-10-29T14:00:00Z",
+      "intent": "Measure how a variable set finds its events and suggest a shape under the event-action plan",
+      "before": {
+        "assumptions": "Named() parses per set only when something is bound",
+        "risk": "a list per variable object would grow memory"
+      },
+      "plan": ".bot/event-action/tester/variable-events.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/event-action/tester/variable-events.md",
+            ".bot/event-action/tester/named-cache.patch",
+            ".bot/event-action/tester/VariableEventsMeasure.cs.txt"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "medium",
+          "context": "bytes per set 5.0K nothing bound vs 35K bound (28.7K is Named parse); per-variable lists hold 1.46K each; recommend by-name placement at bind. Measured via Variables.Set in C#, not a built goal. Prototype reverted."
+        }
+      ],
+      "after": {
+        "status": "done",
+        "health": "n/a",
+        "notes": "no production change kept"
+      }
+    },
+    {
+      "id": "e4b7c2a9-6d13-4a85-b0f1-3c9a5d7e2810",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-29T22:45:00Z",
+      "timestamp_end": "2026-10-29T23:20:00Z",
+      "intent": "Review event-action 5d0ac4382..86d90db97 (stages 6-8, variable events on one store, equality sweep) by OBP patterns and the value-answers-equality tell, and bench it.",
+      "before": { "assumptions": "The parent row is runtime2 6703697fb; last branch row 2d10af80f.", "risk": "The goal.Find door and the per-set variable could move the request bytes." },
+      "plan": ".bot/event-action/codeanalyzer/v4/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/event-action/codeanalyzer/review.md", ".bot/event-action/codeanalyzer/v4/verdict.json", "Tools/Bench/record.md"],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "FAIL narrow: the caller-or-none goal find written twice and a second door beside goal.Find; bench in band (sub request 441 KB, root 3898, held flat); seven lows"
+        }
+      ],
+      "after": { "status": "review sent to the architect, FAIL narrow", "health": "tree clean after commit", "notes": "no mutations; the 3.5 KB set and 720 B parse figures not re-run" }
+    },
+    {
+      "id": "f1a8d3b6-2c47-4e90-9b15-7d0e6a4c3f29",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-30T00:10:00Z",
+      "timestamp_end": "2026-10-30T00:30:00Z",
+      "intent": "Recheck v4 findings 1 and 3 and the lows at 100305adb (88).",
+      "before": { "assumptions": "The coder's 88 collapses the goal find to the list door.", "risk": "Remove dropping lists a running goal holds." },
+      "plan": ".bot/event-action/codeanalyzer/v5/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/event-action/codeanalyzer/review.md", ".bot/event-action/codeanalyzer/v5/verdict.json"],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "PASS: one door, Remove without a type test, lows closed; two low notes (Names widened to any hop, no null guard; a dropped list a running goal holds). No bench, no mutations."
+        }
+      ],
+      "after": { "status": "PASS sent to the architect, tester next", "health": "tree clean after commit", "notes": "" }
+    }
+  ]
+}

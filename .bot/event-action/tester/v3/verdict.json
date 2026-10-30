@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "suite green (C# 5686, plang 319/320 +1 baseline skip); a plain-Add variable event never fires; after-load join untested (mutation survives)" }

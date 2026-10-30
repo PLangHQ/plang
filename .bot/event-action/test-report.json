@@ -1,0 +1,12 @@
+{
+  "tester": "tester", "branch": "event-action", "timestamp": "2026-10-29T00:00:00Z", "tested_version": "v3",
+  "test_run": { "csharp": { "total": 5686, "passed": 5686, "failed": 0, "skipped": 0 }, "plang": { "total": 320, "passed": 319, "failed": 0, "skipped": 1 } },
+  "coverage": { "changed_files_covered": 0, "changed_files_total": 0, "uncovered_files": [] },
+  "findings": [
+    { "id": 1, "severity": "major", "type": "missing-coverage", "test_file": "PLang.Tests/Data/App/VariablesTests/VariableEventsTests.cs", "code_file": "PLang/app/event/list/this.cs", "issue": "a variable event bound by plain Add (on.event) never fires; On(name) reads only _named", "impact": "after %count.on.set% binds and never runs", "suggestion": "one door for a variable's bind; probe P1 red" },
+    { "id": 2, "severity": "major", "type": "false-green", "test_file": "PLang.Tests/Data/App/VariablesTests/VariableEventsTests.cs", "code_file": "PLang/app/event/list/this.cs", "issue": "no test binds after a name's list loaded; deleting _variable from Made keeps every test green", "impact": "a later bind missed by loaded names", "suggestion": "add P4" },
+    { "id": 3, "severity": "minor", "type": "edge-case", "test_file": "", "code_file": "PLang/app/event/list/this.cs", "issue": "first ask from a sub app / Restore / goal start untested", "impact": "load race or order bug", "suggestion": "add per caller kind" }
+  ],
+  "verdict": "needs-fixes",
+  "summary": "Suites green, no new red. Two majors: a plain-Add variable event never fires, and the after-load join is unguarded (mutation survives)."
+}

@@ -39,9 +39,15 @@ internal interface @this
     /// actor's app's, so a provider its app holds — one registered in-process too — is found in the sub app.</summary>
     global::app.module.code.@this? Code { get; }
 
-    /// <summary>The events the app is born holding the bindings of: the code, none; an actor's app's, each of its
-    /// bindings taken in by the sub app as its own.</summary>
-    global::app.@event.on.list.@this? @event { get; }
+    /// <summary>The events the app's actor in <paramref name="role"/> takes in when it loads its own: the code, none; an
+    /// actor, its app's actor in that role's (loaded first, it alone) that reach a sub app, each asked
+    /// (<c>Sub=none</c> keeps one in its own app), each taken in as the sub app's actor's own.</summary>
+    System.Threading.Tasks.ValueTask<IEnumerable<global::app.@event.@this>> @event(global::app.actor.role.@this role);
+
+    /// <summary>The folders <paramref name="app"/> reads its system events from, in order: the code, the app's own
+    /// system/event/ then the os's; an actor, the sub app's own only (its maker's came with the events it took in), and
+    /// none for a sub app over its maker's folder.</summary>
+    IEnumerable<global::app.type.item.path.@this> Events(global::app.@this app);
 
     /// <summary>The goal at <paramref name="source"/> as <paramref name="app"/> takes it from what it is made from —
     /// the code has none; an actor's app's, while <paramref name="app"/> holds no code of its own and shares its folder.

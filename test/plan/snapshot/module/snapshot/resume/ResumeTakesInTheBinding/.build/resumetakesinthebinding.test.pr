@@ -175,7 +175,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 1 uses condition.if, which the decider was not sure of (0.79)"
+          "message": "step 2 uses condition.if, which the decider was not sure of (0.73)"
         }
       ]
     },
@@ -224,7 +224,7 @@
             {
               "name": "Event",
               "type": {
-                "name": "event",
+                "name": "on",
                 "template": "plang"
               },
               "value": "%!app.type.goal.on.start%",
@@ -278,16 +278,6 @@
                 ]
               }
             }
-          ],
-          "default": [
-            {
-              "name": "scope",
-              "type": {
-                "name": "choice",
-                "kind": "scope"
-              },
-              "value": "actor"
-            }
           ]
         }
       ]
@@ -328,7 +318,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 6 uses snapshot.resume, which the decider was not sure of (0.88)"
+          "message": "step 7 uses snapshot.resume, which the decider was not sure of (0.94)"
         }
       ]
     },
@@ -592,7 +582,7 @@
           "warning": [
             {
               "key": "Unsure",
-              "message": "step 0 uses variable.set, which the decider was not sure of (0.83)"
+              "message": "step 0 uses variable.set, which the decider was not sure of (0.76)"
             }
           ]
         }

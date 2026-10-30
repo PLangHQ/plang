@@ -8,14 +8,13 @@ public class HoldTests
     private static global::app.@this Child(global::app.@this parent, string folder)
         => new global::app.@this(folder, parent.actor.list.User).Testing();
 
-    // what a program's on.event step does: binds `call` on `event`, for the actor or the app
-    private static async Task<global::app.@event.binding.@this> Bind(global::app.actor.context.@this ctx, string @event,
-        global::app.goal.step.action.@this call, string scope)
+    // what a program's on.event step does: binds `call` on `event`, for the actor
+    private static async Task<global::app.@event.@this> Bind(global::app.actor.context.@this ctx, string @event,
+        global::app.goal.step.action.@this call)
     {
-        var bound = await Make.Action(ctx, "on", "event", ("Event", @event), ("When", "before"), ("Action", call),
-            ("Scope", scope)).Start(ctx);
+        var bound = await Make.Action(ctx, "on", "event", ("Event", @event), ("When", "before"), ("Action", call)).Start(ctx);
         await bound.IsSuccess();
-        return (global::app.@event.binding.@this)bound.Peek();
+        return (global::app.@event.@this)bound.Peek();
     }
 
     // one step run as a goal of its own in `app`, as its user: the step type's start fires
@@ -32,7 +31,7 @@ public class HoldTests
     {
         var child = Child(parent, "/parent/bound");
         var ctx = child.actor.list.User.Context;
-        await Bind(ctx, "%!app.type.step.on.start%", Make.Call(ctx, "Log"), "app");
+        await Bind(ctx, "%!app.type.step.on.start%", Make.Call(ctx, "Log"));
         await child.DisposeAsync();
         return new System.WeakReference(child);
     }
@@ -41,17 +40,19 @@ public class HoldTests
     public async Task ABindingGoesWithItsApp()
     {
         await using var parent = new global::app.@this("/parent").Testing();
-        var step = parent.type.list["step"];
 
         var child = await Bound(parent);
-        for (var i = 0; i < 3 && child.IsAlive; i++)
+        // the child's events load through file reads, whose continuations ran on pool threads: those let go of what
+        // they ran in a moment, so a collection is tried for a while; a real hold keeps it alive throughout
+        for (var i = 0; i < 40 && child.IsAlive; i++)
         {
             System.GC.Collect();
             System.GC.WaitForPendingFinalizers();
+            await Task.Delay(50);
         }
 
         await Assert.That(child.IsAlive).IsFalse().Because("nothing the app bound keeps it after it is gone");
-        await Assert.That(step.on.start.before.Count).IsEqualTo(0).Because("the shared entry holds nothing it bound");
+        await Assert.That(parent.actor.list.User.@event.Bound()).IsEmpty().Because("the parent's actors hold nothing it bound");
     }
 
     [Test]
@@ -62,7 +63,7 @@ public class HoldTests
         await using var sibling = Child(parent, "/parent/sibling");
         var ctx = binding.actor.list.User.Context;
         // a call to a goal the sibling doesn't have: fired there, its step would fail
-        await Bind(ctx, "%!app.type.step.on.start%", Make.Call(ctx, "OnlyInTheBindingApp"), "app");
+        await Bind(ctx, "%!app.type.step.on.start%", Make.Call(ctx, "OnlyInTheBindingApp"));
 
         await (await Run(sibling)).IsSuccess();
     }
@@ -73,13 +74,13 @@ public class HoldTests
         await using var parent = new global::app.@this("/parent").Testing();
         await using var app = Child(parent, "/parent/app");
         var ctx = app.actor.list.User.Context;
-        var binding = await Bind(ctx, "%!app.type.step.on.start%", Make.Call(ctx, "Log"), "app");
-        var events = app.@event.Add(app.type.list["step"]);
+        var binding = await Bind(ctx, "%!app.type.step.on.start%", Make.Call(ctx, "Log"));
+        var events = (await app.actor.list.User.@event.On(app.type.list["step"]));
         await Assert.That(events.start.before.Count).IsEqualTo(1);
 
         var unbound = await new global::app.module.on.OnUnbind(ctx)
         {
-            Binding = new global::app.data.@this<global::app.@event.binding.@this>("Binding", binding, context: ctx),
+            Event = new global::app.data.@this<global::app.@event.@this>("Event", binding, context: ctx),
         }.Start();
 
         await unbound.IsSuccess();
@@ -97,7 +98,7 @@ public class HoldTests
             Make.Action(user, "variable", "set", Make.Param(user, "Name", "seen", "variable"), ("Value", true))));
         app.goal.list.Add(watch);
         app.goal.list.Add(Make.Goal(user, "Target"));
-        await Bind(user, "%!app.goal[\"/Target\"].on.start%", Make.Call(user, "Watch"), "actor");
+        await Bind(user, "%!app.goal[\"/Target\"].on.start%", Make.Call(user, "Watch"));
 
         var system = app.actor.list.System.Context;
         await Make.Call(user, "Target").Start(system);

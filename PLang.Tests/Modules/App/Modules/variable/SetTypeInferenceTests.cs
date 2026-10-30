@@ -315,7 +315,7 @@ public class SetTypeInferenceTests
         var context = _app.actor.list.User.Context;
         var x = new global::app.type.item.list.@this(context.App.type.list["list"]);
         x.Add(new Data("", 1L, context: context)); x.Add(new Data("", 2L, context: context));
-        context.Variable.Set("x", x);
+        await context.Variable.Set("x", x);
 
         var alias = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%y%", "variable"), ("value", "%x%"));
         await (await alias.Start(context)).IsSuccess();
@@ -337,7 +337,7 @@ public class SetTypeInferenceTests
     public async Task Set_Alias_PropertyWrite_LandsOnAliasOnly()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("x", "payload");
+        await context.Variable.Set("x", "payload");
 
         var alias = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%y%", "variable"), ("value", "%x%"));
         await (await alias.Start(context)).IsSuccess();

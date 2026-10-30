@@ -72,7 +72,7 @@ public class MaterialiseErrorPathTests
     {
         await using var app = NewApp();
         var ctx = app.actor.list.User.Context;
-        ctx.Variable.Set(MalformedJson(ctx, "cfg"));
+        await ctx.Variable.Set(MalformedJson(ctx, "cfg"));
 
         var result = new global::app.type.item.variable.@this("cfg.host", ctx.App.type.list).Set("value", ctx);
 
@@ -88,7 +88,7 @@ public class MaterialiseErrorPathTests
     {
         await using var app = NewApp();
         var ctx = app.actor.list.User.Context;
-        ctx.Variable.Set(MalformedJson(ctx, "cfg"));
+        await ctx.Variable.Set(MalformedJson(ctx, "cfg"));
 
         var result = new global::app.type.item.variable.@this("cfg.a.host", ctx.App.type.list).Set("value", ctx);
 

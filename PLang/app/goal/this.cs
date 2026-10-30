@@ -18,9 +18,10 @@ public enum Visibility
 }
 
 /// <summary>
-/// Represents a goal (a .goal file or sub-goal) for App.
+/// Represents a goal (a .goal file or sub-goal) for App. A kind of goal that runs its own way (a pattern of goals) is its
+/// own class.
 /// </summary>
-public sealed partial class @this
+public partial class @this
 {
 
     // A goal is an item (this.Item.cs): plang carries it as itself, written and read through its
@@ -38,14 +39,23 @@ public sealed partial class @this
 
     /// <summary>A goal, born holding its type and its step, child, tag and property lists from <paramref name="types"/>, the
     /// app's type list (read at birth, never kept).</summary>
-    public @this(global::app.type.list.@this types) : base(types[typeof(@this)])
+    public @this(global::app.type.list.@this types) : this(types, null) { }
+
+    /// <summary>A goal of <paramref name="app"/>, the app whose goal list read it from its own folder — none for a goal read
+    /// from the os's folder (mapped into every app, no app's own) or made outside a list.</summary>
+    internal @this(global::app.type.list.@this types, global::app.@this? app) : base(types[typeof(@this)])
     {
         _step = new(types[typeof(global::app.goal.step.list.@this)]);
         Child = new(this, types[typeof(child.@this)]);
         Tag = new(types[typeof(global::app.goal.tag.list.@this)]);
         Warning = new(types);
         property = new(types[typeof(global::app.type.item.property.list.@this)]);
+        App = app;
     }
+
+    /// <summary>The app this goal is: the one whose list read it from its own folder (its <c>system/</c> copy too), wherever
+    /// it runs. None for the os's goals, which belong to no app, and a goal made outside a list.</summary>
+    internal global::app.@this? App { get; }
 
     private global::app.goal.step.list.@this _step;
     [Store, Out, LlmBuilder, Debug, Default]
@@ -112,10 +122,6 @@ public sealed partial class @this
         return sb.ToString();
     }
 
-    /// <summary>Where it runs, when that is another app's (<c>%!app.parent.goal["Claude"]%</c>): its run goes
-    /// there with the call's arguments, and what comes back is its result. Null for a goal of this app — its steps run.</summary>
-    internal global::app.parent.@this? Elsewhere { get; init; }
-
     /// <summary>The goal's .goal file — where its .pr is found. A sub-goal is in its parent's file. In a snapshot it is
     /// part of what finds the goal: the goal list loads it from there.</summary>
     [Debug, LlmBuilder, Snapshot]
@@ -178,6 +184,9 @@ public sealed partial class @this
     [Debug]
     public bool IsSystem => Under("system");
 
+    /// <summary>A goal is named by a pattern when its address matches the pattern's glob.</summary>
+    internal override bool Is(global::app.goal.pattern.@this pattern) => pattern.Matches(this);
+
     /// <summary>A test goal — its file is a <c>.test.goal</c>.</summary>
     [Debug]
     public bool IsTest => Where.EndsWith(".test.goal", StringComparison.OrdinalIgnoreCase);
@@ -223,7 +232,11 @@ public sealed partial class @this
     /// <summary>The name a call from <paramref name="caller"/> writes for this goal — its <see cref="Address"/>,
     /// or null when the call keeps the name it was written with: a goal in the caller's own file (a child, or
     /// the file's root) stays bare, it wins by rule and can't be shadowed.</summary>
-    public string? Reference(@this? caller) => Equals(Path, caller?.Path) ? null : Address;
+    public string? Reference(@this? caller)
+    {
+        if (Path is null) return caller?.Path is null ? null : Address;
+        return Path.Equals(caller?.Path) ? null : Address;
+    }
 
     /// <summary>
     /// Merges LLM-derived fields from an existing built goal onto this freshly-parsed goal.
@@ -334,26 +347,16 @@ public sealed partial class @this
     // A goal by its location, as item's ILoad door asks it: the app's goals load it.
     public static Task<data.@this> Load(global::app.type.item.path.@this source, global::app.@this app) => app.goal.list.Load(source);
 
-    /// <summary>A goal starts through the goal type's events, then its own. A goal of plang's own (<see cref="IsSystem"/>)
-    /// is none of the app's goals, so it starts through its own events alone: "each goal" never hears it, a binding on
-    /// it by name does.</summary>
-    protected internal override global::app.type.item.@this? Level(int depth, actor.context.@this context) => depth switch
-    {
-        0 => IsSystem ? this : context.App.goal.type,
-        1 when !IsSystem => this,
-        _ => null,
-    };
-
     /// <summary>
-    /// Starts this goal through its <c>on.start</c>: what is bound before it, then its steps, then what is bound
-    /// after it (<see cref="Level"/>). A before that fails or cancels is the result: the steps don't start, every
-    /// after still runs on it. Context travels as parameter — goals may be cached/shared.
+    /// Starts this goal through its moments for the running actor: what is bound before it, then its steps, then what is
+    /// bound after it. A before that fails or cancels is the result: the steps don't start, every after still runs on it.
+    /// Context travels as parameter — goals may be cached/shared.
     /// </summary>
     public Task<data.@this> Start(actor.context.@this context) => Start(context, null);
 
     /// <summary>Starts this goal with its frame born with <paramref name="parameters"/> — a goal call's: they are this
     /// run's variables, for as long as it runs.</summary>
-    public async Task<data.@this> Start(actor.context.@this context, IEnumerable<data.@this>? parameters)
+    public virtual async Task<data.@this> Start(actor.context.@this context, IEnumerable<data.@this>? parameters)
     {
         if (context.CancellationToken.IsCancellationRequested)
             return context.Error(new global::app.error.@this("Operation was cancelled", "Cancelled", 499));
@@ -375,9 +378,15 @@ public sealed partial class @this
         }
         await using var _frame = frame;
 
-        var answer = await on.start.Before(this, context);
-        var result = answer is { Success: false } or { Handled: true } ? answer : await Enter(context);
-        return await on.start.After(this, result, context);
+        // its moments, the actor's events loaded first: a load that fails is this start's answer, a wait cancelled too
+        global::app.@event.on.@this on;
+        try { on = await context.Actor!.@event.On(this, context.CancellationToken); }
+        catch (global::app.error.AppException ex) { return context.Error(ex.Error); }
+        catch (System.OperationCanceledException) { return context.Error(global::app.error.GoalError.Cancelled(context)); }
+        // its steps, a return made in them ending as the frame counts it down
+        var answer = await on.before.Start(this, context);
+        var result = answer is { Success: false } or { Handled: true } ? answer : frame.Leave(await Step.Start(context));
+        return await on.after.Start(this, result, context);
     }
 
     // Why this goal cannot start: it holds steps the build could not fix. Its own message names the goal's path and
@@ -391,26 +400,6 @@ public sealed partial class @this
             $"goal '{Path}' has {steps.Count} broken step(s): {string.Join(", ", steps.Select(s => s.Index))}",
             "GoalBroken", 400)
         { Goal = this, list = steps.Select(s => s.Error!).ToList(), FixSuggestion = "fix the words and build again" };
-    }
-
-    // Starts the steps, and folds a return that ends here — or, for a goal of another app, runs it there.
-    private async Task<data.@this> Enter(actor.context.@this context)
-    {
-        if (Elsewhere is { } app) return await app.Run(Name, context);
-        return Leave(await Step.Start(context));
-    }
-
-    /// <summary>The answer as it leaves this goal: a return made in it ends here (a return of more levels goes on, one
-    /// fewer). A goal started and a goal's frame gone on from a snapshot leave the same way.</summary>
-    internal data.@this Leave(data.@this result)
-    {
-        if (result.Returned)
-        {
-            result.ReturnDepth--;
-            if (result.ReturnDepth <= 0)
-                result.Returned = false;
-        }
-        return result;
     }
 
     /// <summary>

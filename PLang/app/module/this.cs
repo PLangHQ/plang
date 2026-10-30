@@ -218,6 +218,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                 { Module = this, Name = actionName, Cacheable = cacheable, Class = clr, Property = new(this, actionName) };
     }
 
+    /// <summary>An event bound on a module runs for the module and for each of its actions (each http action).</summary>
+    internal override bool Has(global::app.type.item.@this item) => base.Has(item) || _action.Values.Contains(item);
+
+    /// <summary>A module stands for each of its actions.</summary>
+    internal override bool IsMany => true;
+
     /// <summary>The module's actions as the NATIVE plang list — step actions and clauses alike (the type
     /// IS the role). Filterable by the list module, renderable by templates.</summary>
     [LlmBuilder]

@@ -268,6 +268,35 @@ public class MatchTests
         await Assert.That(result.Error!.Message).DoesNotContain("%Name% is in the step");
     }
 
+    // The answer names the step's variable by its path through the app's variables: the path selects `count`, so the
+    // step's %count% is in the answer, though its text isn't.
+    [Test]
+    public async Task AStepsVariable_NamedByItsPathThroughTheAppsVariables_IsCovered()
+    {
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing().Building();
+        var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("after %count% is set, call Log"));
+        await Picked(goal, app.actor.list.System.Context, (0, "on.event"));
+
+        var result = await Match(goal, """[0] on.event(Event=%!app.variable["count"].on.set%, When="after", Action=goal.call(Name="Log"))""",
+            app.actor.list.System.Context);
+
+        await result.IsSuccess();
+    }
+
+    // a variable that is not the step's, though it starts like it, is refused, its nearest told
+    [Test]
+    public async Task AnAnswersVariableThatOnlyStartsLikeTheSteps_IsRefused_WithItsNearest()
+    {
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing().Building();
+        var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("set %count% to 1"));
+        await Picked(goal, app.actor.list.System.Context, (0, "variable.set"));
+
+        var result = await Match(goal, "[0] variable.set(Name=%counts%, Value=1)", app.actor.list.System.Context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Message).Contains("%count% is in the step but not in your answer: the step writes `%count%`; your answer has `%counts%`");
+    }
+
     // A duration answers itself in its own words (1000 ms is 1s): the step's number is held by the span it is in one
     // of its units, so `sleep 1000 ms` builds as `sleep 2 seconds` does; a number it isn't in any unit is still missing.
     [Test]
@@ -586,7 +615,7 @@ public class MatchTests
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains(
-            "the step has nothing indented below it, so what the step does when the condition holds goes inside the if's `{ }`");
+            "the if runs nothing: write what it runs in the step itself, or as a step indented below it (in formal, inside the if's `{ }`)");
         await Assert.That(result.Error.Message).Contains("condition.else isn't one of step 4's actions (condition.if, goal.call)");
     }
 

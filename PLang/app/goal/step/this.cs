@@ -120,19 +120,9 @@ public sealed partial class @this
     [JsonIgnore]
     public global::app.goal.step.list.@this List { get; internal set; } = null!;
 
-    /// <summary>A step starts through the step type's events, then its own. A step of one of plang's own goals
-    /// (<see cref="global::app.goal.@this.IsSystem"/>) is none of the app's, so it starts through its own events alone;
-    /// a step composed with no goal is the app's.</summary>
-    protected internal override global::app.type.item.@this? Level(int depth, actor.context.@this context) => depth switch
-    {
-        0 => Goal is { IsSystem: true } ? this : context.App.step,
-        1 when Goal is not { IsSystem: true } => this,
-        _ => null,
-    };
-
     /// <summary>
-    /// Starts this step through its <c>on.start</c>: what is bound before it, then its actions, then what is
-    /// bound after it (<see cref="Level"/>). A before that fails or cancels is the result: the actions don't
+    /// Starts this step through its moments for the running actor: what is bound before it, then its actions, then what
+    /// is bound after it. A before that fails or cancels is the result: the actions don't
     /// start, every after still runs on it. Error handling, caching, and timeouts are per-action modifiers, not
     /// step-level.
     /// </summary>
@@ -149,10 +139,11 @@ public sealed partial class @this
         }
         await using var _frame = frame;
 
-        var answer = await on.start.Before(this, context);
+        var on = await context.Actor!.@event.On(this);
+        var answer = await on.before.Start(this, context);
         // action.list owns the chain loop, its fire, and a program's error that travels as an exception
         var result = answer is { Success: false } or { Handled: true } ? answer : await Code.Start(context);
-        return await on.start.After(this, result, context);
+        return await on.after.Start(this, result, context);
     }
 
 

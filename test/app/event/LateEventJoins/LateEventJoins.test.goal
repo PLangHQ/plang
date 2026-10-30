@@ -1,0 +1,16 @@
+/ A goal's list loads on its first run; an event bound after that joins it: Process runs once with nothing bound, then
+/ "before goal Process" is bound, and Process's next start runs it.
+Start
+- set %count% = 0
+- call Process
+- before goal Process, call Count
+- call Process
+- assert %count% equals 1, "the event bound after Process's first run ran at its next start"
+
+/ The goal the event joins.
+Process
+- set %done% = "yes"
+
+/ The event's call.
+Count
+- set %count% = %count% + 1

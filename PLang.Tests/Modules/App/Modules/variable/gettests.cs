@@ -17,7 +17,7 @@ public class GetTests
     public async Task Get_ReturnsRawValue()
     {
         var (context, _) = CreateContext();
-        context.Variable.Set("testVar", "testValue");
+        await context.Variable.Set("testVar", "testValue");
 
         var action = new Get(context) { Name = new app.type.item.variable.@this("testVar", context.App.type.list) };
         var result = await action.Start();

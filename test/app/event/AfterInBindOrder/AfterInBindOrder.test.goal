@@ -1,0 +1,20 @@
+/ After runs in the order bound too: "after goal Process, call XX" then "after goal Process, call YY", so XX runs before
+/ YY.
+Start
+- set %ran% = ""
+- after goal Process, call XX
+- after goal Process, call YY
+- call Process
+- assert %ran% equals "xx,yy,", "the first bound runs first after Process"
+
+/ The goal both events run after.
+Process
+- set %done% = "yes"
+
+/ The first event's call.
+XX
+- set %ran% = "%ran%xx,"
+
+/ The second event's call.
+YY
+- set %ran% = "%ran%yy,"

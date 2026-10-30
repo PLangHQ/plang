@@ -17,29 +17,29 @@ public class SecurityFixTests
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();
 
-    #region HIGH-1: a binding leaves its re-entrance guard even when its handler throws
+    #region HIGH-1: an event's run leaves the flow even when it throws
 
     [Test]
-    public async Task Binding_HandlerThrows_ExitEventStillCalled()
+    public async Task AnEventWhoseRunThrows_StillLeavesTheFlow()
     {
         var context = _app.actor.list.User.Context;
         var step = new Step(_app.type.list) { Index = 0, Text = "s" };
 
-        // A binding whose handler throws the first time it fires
+        // An event whose run throws the first time
         var callCount = 0;
-        var fragile = _app.@event.Add(_app.type.list["step"]).Add("start")[global::app.@event.When.before].Add(side => new global::app.@event.binding.@this(side, (_, result, _) =>
+        await _app.actor.list.User.@event.Add(new global::app.@event.code.@this(_app.type.list["step"], "start", global::app.@event.When.before, (_, result, _) =>
         {
             callCount++;
             if (callCount == 1) throw new InvalidOperationException("first call fails");
             return Task.FromResult(result);
-        }, _app.actor.list.User, global::app.@event.binding.Scope.actor, global::app.@event.binding.@this.Always));
+        }, _app.actor.list.User, global::app.@event.code.@this.Always));
+        var before = (await context.Actor!.@event.On(step)).before;
 
-        try { await fragile.Start(step, context.Ok(), context); }
+        try { await before.Start(step, context); }
         catch (InvalidOperationException) { }
 
-        // Had the guard been left entered, the second firing would answer a silent success without running
-        var result = await fragile.Start(step, context.Ok(), context);
-        await result.IsSuccess();
+        // Had its run stayed entered, the second would be passed by without running
+        await (await before.Start(step, context))!.IsSuccess();
         await Assert.That(callCount).IsEqualTo(2);
     }
 

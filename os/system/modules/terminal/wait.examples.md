@@ -1,5 +1,5 @@
 Step text: `wait for %container%`
-Properties: `{"Process": "%container%"}`
+Formal: `terminal.wait(Process=%container%)`
 
 Step text: `wait until %build% exits, write to %exitCode%`
-Properties: `{"Process": "%build%"}`
+Formal: `terminal.wait(Process=%build%)`

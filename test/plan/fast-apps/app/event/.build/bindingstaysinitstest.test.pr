@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "comment": "a binding a test makes while it runs is its own: bound app-wide on every step's start, it fires for this test's steps.",
+  "comment": "an event a test binds while it runs is its own: bound on every step's start, it runs for this test's steps.",
   "step": [
     {
       "index": 0,
@@ -53,7 +53,7 @@
     },
     {
       "index": 1,
-      "text": "on %!app.type.step.on.start%, before, call Seen, scope app",
+      "text": "on %!app.type.step.on.start%, before, call Seen",
       "line": {
         "number": 4,
         "indent": 0
@@ -66,7 +66,7 @@
             {
               "name": "Event",
               "type": {
-                "name": "event",
+                "name": "on",
                 "template": "plang"
               },
               "value": "%!app.type.step.on.start%",
@@ -119,16 +119,14 @@
                   }
                 ]
               }
-            },
-            {
-              "name": "Scope",
-              "type": {
-                "name": "choice",
-                "kind": "scope"
-              },
-              "value": "app"
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 1 uses on.event, which the decider was not sure of (0.97)"
         }
       ]
     },
@@ -183,7 +181,7 @@
     },
     {
       "index": 3,
-      "text": "assert %seen% is greater than 0, \"the binding fired for this test's own steps\"",
+      "text": "assert %seen% is greater than 0, \"the event ran for this test's own steps\"",
       "line": {
         "number": 6,
         "indent": 0
@@ -223,7 +221,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "the binding fired for this test's own steps"
+              "value": "the event ran for this test's own steps"
             }
           ]
         }
@@ -345,7 +343,7 @@
           "warning": [
             {
               "key": "Unsure",
-              "message": "step 0 uses math.add, which the decider was not sure of (0.96)"
+              "message": "step 0 uses math.add, which the decider was not sure of (0.95)"
             }
           ]
         }
@@ -356,5 +354,5 @@
   ],
   "visibility": "Public",
   "file": "BindingStaysInItsTest.test.goal",
-  "hash": "d14d716aaa0815a5126cd08eb5e5cd51b022010a749acf03cf5c51d533d8bb93"
+  "hash": "92b2db3a8a7182a3e34e23d367993fa63858529fb0e790ed31565b792252854e"
 }

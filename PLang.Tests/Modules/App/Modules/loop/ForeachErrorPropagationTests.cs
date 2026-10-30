@@ -32,7 +32,7 @@ public class ForeachErrorPropagationTests
     public async Task Foreach_BodyGoalCallFails_PropagatesError()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("items", new List<object?> { "a", "b", "c" });
+        await context.Variable.Set("items", new List<object?> { "a", "b", "c" });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(context, "MissingGoalRunner",
             Make.Step("foreach %items%, call NonExistentGoal item=%item%",
@@ -64,7 +64,7 @@ public class ForeachErrorPropagationTests
     public async Task Foreach_BodyInnerGoalFailsInsideConditionIf_PropagatesError()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("items", new List<object?> { "a", "b", "c" });
+        await context.Variable.Set("items", new List<object?> { "a", "b", "c" });
 
         // Inner goal with a single step: a condition whose body calls a goal that doesn't exist
         var innerCondAction = await context.Action("condition.if(Left=true, Operator=\"==\", Right=true) { goal.call(Name=\"MissingGoal\") }");
@@ -112,7 +112,7 @@ public class ForeachErrorPropagationTests
     public async Task Foreach_BodySucceeds_CompletesAllIterations()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("items", new List<object?> { "a", "b", "c" });
+        await context.Variable.Set("items", new List<object?> { "a", "b", "c" });
 
         _app.goal.list.Add(new Goal(_app.type.list) { Name = "Noop", Path = global::app.type.item.path.@this.Resolve("/Noop.goal", _app.actor.list.User.Context), Step = new GoalSteps(_app.type.list) });
 

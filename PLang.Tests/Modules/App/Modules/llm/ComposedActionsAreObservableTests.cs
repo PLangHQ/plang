@@ -7,8 +7,8 @@ namespace PLang.Tests.App.Modules.llm;
 // output.ask) runs as an action, so a binding on the action's start sees it — the mock a program puts there.
 public class ComposedActionsAreObservableTests
 {
-    private static void Watch(global::app.@this app, string module, string action, List<string> seen)
-        => app.@event.Add(app.type.list["action"]).Add("start")[global::app.@event.When.before].Add(side => new global::app.@event.binding.@this(side, (item, _, ctx) =>
+    private static async Task Watch(global::app.@this app, string module, string action, List<string> seen)
+        => await app.actor.list.System.@event.Add(new global::app.@event.code.@this(app.type.list["action"], "start", global::app.@event.When.before, (item, _, ctx) =>
         {
             if (item is global::app.goal.step.action.@this started && started.Module.Name == module && started.Name == action)
             {
@@ -16,7 +16,7 @@ public class ComposedActionsAreObservableTests
                 return Task.FromResult(ctx.Error(new global::app.error.@this("stopped by the watcher", "Watched", 400)));
             }
             return Task.FromResult(ctx.Ok());
-        }, app.actor.list.System, global::app.@event.binding.Scope.app, global::app.@event.binding.@this.Always));
+        }, app.actor.list.System, global::app.@event.code.@this.Always));
 
     // llm's call to the model goes through http.request as an action: a before-binding there sees it.
     [Test] public async Task LlmsHttpCall_IsSeenByABindingOnHttpRequest()
@@ -25,7 +25,7 @@ public class ComposedActionsAreObservableTests
         LlmTestHelper.SetupMockHttp(app);
         var ctx = app.actor.list.System.Context;
         var seen = new List<string>();
-        Watch(app, "http", "request", seen);
+        await Watch(app, "http", "request", seen);
 
         var query = new query(ctx)
         {
@@ -36,6 +36,27 @@ public class ComposedActionsAreObservableTests
         await Assert.That(seen).Contains("http.request");
     }
 
+    // The same call made inside one of plang's own goals (the builder's): under event.setting.goal app, the actor's event
+    // on http.request doesn't run there — an action's list is its catalog action's, shared, so the run decides.
+    [Test] public async Task LlmsHttpCall_InsideASystemGoal_IsNotSeen_UnderApp()
+    {
+        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "composed-" + Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
+        LlmTestHelper.SetupMockHttp(app);
+        var ctx = app.actor.list.System.Context;
+        var seen = new List<string>();
+        await Watch(app, "http", "request", seen);
+        var builder = Make.Goal(ctx, "Build", "/system/builder/Build.goal");
+
+        var query = new query(ctx)
+        {
+            Message = new List<LlmMessage> { new LlmMessage { Role = "user", Content = "composed " + Guid.NewGuid() } }.ToListData<LlmMessage>(ctx),
+        };
+        await using (ctx.call.Push(builder, await ctx.call.Setting()))
+            _ = await new global::app.goal.step.action.composed.@this(query, ctx).Start(ctx);
+
+        await Assert.That(seen).IsEmpty();
+    }
+
     // The consent door asks the actor's own input — its channel's on.ask fires there — never as an output.ask action:
     // a binding on output.ask (which could answer in the actor's place) never sees it.
     [Test] public async Task TheConsentDoorsAsk_GoesToTheActorsInput_NotThroughOutputAsk()
@@ -43,7 +64,7 @@ public class ComposedActionsAreObservableTests
         await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var seen = new List<string>();
-        Watch(app, "output", "ask", seen);
+        await Watch(app, "output", "ask", seen);
         var input = new Asked(ctx.Actor!.Channel, ctx);
         app.actor.list.User.Channel.Register(input);
         var request = global::app.type.item.permission.@this.Request(ctx.Actor!, "/elsewhere", global::app.type.item.permission.Verb.write);

@@ -39,6 +39,67 @@ public class SavedBindingsTests
             ("Action", action ?? Make.Call(context, "Log"))));
     }
 
+    // Log, Inner and G, G binding before each goal with Sub as given (null: the step names none, the default)
+    private static Goal Programs(global::app.@this app, string? sub)
+    {
+        var context = app.actor.list.User.Context;
+        Program(app, "Log", Make.Action(context, "variable", "set", Make.Param(context, "Name", "logged", "variable"), ("Value", "yes")));
+        Program(app, "Inner", Make.Action(context, "variable", "set", Make.Param(context, "Name", "inner", "variable"), ("Value", "ran")));
+        var on = sub == null
+            ? Make.Action(context, "on", "event", ("Event", "%!app.type.goal.on.start%"), ("When", "before"), ("Action", Make.Call(context, "Log")))
+            : Make.Action(context, "on", "event", ("Event", "%!app.type.goal.on.start%"), ("When", "before"), ("Action", Make.Call(context, "Log")), ("Sub", sub));
+        return Program(app, "G", on);
+    }
+
+    // whether a goal run in `app` as its user runs the binding (Log sets %logged%)
+    private static async Task<bool> Logged(global::app.@this app, global::app.@this owner)
+    {
+        var context = app.actor.list.User.Context;
+        await (await owner.goal.list.Items().OfType<Goal>().First(goal => goal.Name == "Inner").Start(context)).IsSuccess();
+        return (await context.Variable.Get("logged")).IsInitialized;
+    }
+
+    // Sub=none keeps the event in the app that bound it; bound by default (or inherit), a sub app takes it in, and a sub
+    // app's own sub app follows its source
+    [Test]
+    [Arguments(null, true)]
+    [Arguments("inherit", true)]
+    [Arguments("none", false)]
+    public async Task ASubApp_TakesInAnEvent_AsItsSubSays_AndItsOwnSubAppFollows(string? sub, bool taken)
+    {
+        var root = Root();
+        await using var maker = App(root);
+        await Bind(maker, Programs(maker, sub));
+        await using var child = new global::app.@this(root, maker.actor.list.User);
+        await using var grandchild = new global::app.@this(root, child.actor.list.User);
+
+        await Assert.That(await Logged(maker, maker)).IsTrue();
+        await Assert.That(await Logged(child, maker)).IsEqualTo(taken);
+        await Assert.That(await Logged(grandchild, maker)).IsEqualTo(taken);
+    }
+
+    // a snapshot keeps the event's Sub, and the fresh app's event read back answers the same: none stays in its app
+    [Test]
+    public async Task ASnapshot_KeepsSub_AndTheResumedEventAnswersTheSame()
+    {
+        var root = Root();
+        await using var app = App(root);
+        var context = app.actor.list.User.Context;
+        await Bind(app, Programs(app, "none"));
+        var snapshot = await app.Snapshot(context).Saved();
+
+        await using var fresh = App(root);
+        Programs(fresh, "none");
+        await fresh.Restore(snapshot, fresh.actor.list.User.Context);
+        var restored = fresh.actor.list.User.@event.Items().OfType<global::app.@event.call.@this>().Single();
+        await using var child = new global::app.@this(root, fresh.actor.list.User);
+
+        await Assert.That(await snapshot.Text(context)).Contains("\"sub\"");
+        await Assert.That(restored.IsInheritable).IsFalse();
+        await Assert.That(await Logged(fresh, fresh)).IsTrue();
+        await Assert.That(await Logged(child, fresh)).IsFalse();
+    }
+
     // G's step 0 run, as a program runs it: the binding is made.
     private static async Task Bind(global::app.@this app, Goal goal)
     {
@@ -62,9 +123,9 @@ public class SavedBindingsTests
 
         var text = await sub.Snapshot(context).Saved().Text(context);
 
-        await Assert.That(sub.@event[sub.type.list["goal"]]?.start.before.Count).IsEqualTo(1);
+        await Assert.That((await sub.actor.list.User.@event.On(sub.type.list["goal"]))?.start.before.Count).IsEqualTo(1);
         await Assert.That(text).DoesNotContain("\"before\"");
-        await Assert.That(sub.@event.list.Items(context).Count()).IsEqualTo(0);
+        await Assert.That(sub.actor.list.User.@event.Items().Count(@event => @event.IsSaved)).IsEqualTo(0);
     }
 
     // a binding calls the goal it names as seen from the goal its step sits in (/a/G names /a/Log), wherever the event
@@ -124,7 +185,7 @@ public class SavedBindingsTests
         var into = fresh.actor.list.User.Context;
         await fresh.Restore(snapshot, into);
 
-        await Assert.That(fresh.@event[fresh.type.list["goal"]]?.start.before.Count).IsEqualTo(1);
+        await Assert.That((await fresh.actor.list.User.@event.On(fresh.type.list["goal"]))?.start.before.Count).IsEqualTo(1);
         await (await fresh.goal.list.Items().OfType<Goal>().First(goal => goal.Name == "Inner").Start(into)).IsSuccess();
         await Assert.That(await into.Variable.GetValue("logged")).IsEqualTo("yes");
     }
@@ -187,7 +248,7 @@ public class SavedBindingsTests
         Programs(fresh, "%!app.on.start%", null);
         await fresh.Restore(snapshot, fresh.actor.list.User.Context);
 
-        await Assert.That(fresh.@event[fresh]?.start.before.Count).IsEqualTo(1);
+        await Assert.That((await fresh.actor.list.User.@event.On(fresh))?.start.before.Count).IsEqualTo(1);
     }
 
     // a cold app, its settings on disk and not yet read: the snapshot's read loads the app's name before it reads what
@@ -204,7 +265,7 @@ public class SavedBindingsTests
         Programs(cold, "%!app.on.start%", null);
         await cold.Restore(snapshot, cold.actor.list.User.Context);
 
-        await Assert.That(cold.@event[cold]?.start.before.Count).IsEqualTo(1);
+        await Assert.That((await cold.actor.list.User.@event.On(cold))?.start.before.Count).IsEqualTo(1);
     }
 
     // a module's own action (its catalog element) is written as what finds it, its module and name, and read back as it
@@ -220,7 +281,7 @@ public class SavedBindingsTests
         Programs(fresh, "%!app.module.file.read.on.start%", null);
         await fresh.Restore(snapshot, fresh.actor.list.User.Context);
 
-        await Assert.That(fresh.@event[fresh.Module("file")["read"]!]?.start.before.Count).IsEqualTo(1);
+        await Assert.That((await fresh.actor.list.User.@event.On(fresh.Module("file")["read"]!))?.start.before.Count).IsEqualTo(1);
     }
 
     [Test]
@@ -229,14 +290,14 @@ public class SavedBindingsTests
         var root = Root();
         await using var app = App(root);
         var user = app.actor.list.User;
-        app.@event.Add(app.type.list["goal"]).Add("start").before.Add(side => new global::app.@event.binding.@this(side,
-            (_, _, ctx) => Task.FromResult(ctx.Ok()), user, global::app.@event.binding.Scope.actor, global::app.@event.binding.@this.Always));
+        await user.@event.Add(new global::app.@event.code.@this(app.type.list["goal"], "start", global::app.@event.When.before,
+            (_, _, ctx) => Task.FromResult(ctx.Ok()), user, global::app.@event.code.@this.Always));
         var snapshot = await app.Snapshot(user.Context).Saved();
 
         await using var fresh = App(root);
         await fresh.Restore(snapshot, fresh.actor.list.User.Context);
 
-        await Assert.That(fresh.@event[fresh.type.list["goal"]]).IsNull();
+        await Assert.That(fresh.actor.list.User.@event.Bound()).IsEmpty();
     }
 
     [Test]
@@ -250,7 +311,7 @@ public class SavedBindingsTests
         var taken = await app.Snapshot(context);
 
         await taken.IsFailure();
-        await Assert.That(taken.Error!.Key).IsEqualTo("SnapshotBindingVariable");
+        await Assert.That(taken.Error!.Key).IsEqualTo("SnapshotEventVariable");
     }
 
     [Test]
@@ -317,5 +378,87 @@ public class SavedBindingsTests
 
         await control.IsSuccess();
         await Assert.That((await control.Value())?.ToString()).IsEqualTo("1");
+    }
+
+    // a resume restores the run as it stood: G's step ran twice, so it made two events on the same moment, and both come
+    // back — the second is no copy of the first
+    [Test]
+    public async Task OneStep_BoundTwiceOnOneMoment_ComesBackAsTwo()
+    {
+        var root = Root();
+        await using var app = App(root);
+        var context = app.actor.list.User.Context;
+        var bound = Programs(app, "%!app.type.goal.on.start%", null);
+        await Bind(app, bound);
+        await Bind(app, bound);
+        var snapshot = await app.Snapshot(context).Saved();
+
+        await using var fresh = App(root);
+        Programs(fresh, "%!app.type.goal.on.start%", null);
+        await fresh.Restore(snapshot, fresh.actor.list.User.Context);
+
+        await Assert.That((await fresh.actor.list.User.@event.On(fresh.type.list["goal"]))?.start.before.Count).IsEqualTo(2);
+    }
+
+    // one step binds two moments ("before each goal starts and loads, call Log"): its two on.event actions made one event
+    // on each, and both come back, each on its own moment
+    [Test]
+    public async Task OneStep_BindingTwoMoments_ComesBackWithBoth()
+    {
+        var root = Root();
+        await using var app = App(root);
+        var bound = TwoMoments(app);
+        var context = app.actor.list.User.Context;
+        var setting = await context.call.Setting();
+        await using (context.call.Push(bound, setting))
+        await using (context.call.Push(bound.Step[0], setting))
+            foreach (var action in bound.Step[0].Code.Items())
+                await (await action.Start(context)).IsSuccess();
+        var snapshot = await app.Snapshot(context).Saved();
+
+        await using var fresh = App(root);
+        TwoMoments(fresh);
+        await fresh.Restore(snapshot, fresh.actor.list.User.Context);
+
+        var on = (await fresh.actor.list.User.@event.On(fresh.type.list["goal"]));
+        await Assert.That(on?.start.before.Count).IsEqualTo(1);
+        await Assert.That(on?.load.before.Count).IsEqualTo(1);
+    }
+
+    // Log, and G, whose one step binds Log before each goal's start and before each goal's load
+    private static Goal TwoMoments(global::app.@this app)
+    {
+        var context = app.actor.list.User.Context;
+        Program(app, "Log", Make.Action(context, "variable", "set", Make.Param(context, "Name", "logged", "variable"), ("Value", "yes")));
+        var goal = new Goal(app.type.list) { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", context) };
+        var step = new Step(app.type.list) { Goal = goal, List = goal.Step, Index = 0, Text = "before each goal starts and loads, call Log" };
+        foreach (var moment in new[] { "start", "load" })
+            step.Code.Add(Make.Action(context, "on", "event", ("Event", $"%!app.type.goal.on.{moment}%"), ("When", "before"),
+                ("Action", Make.Call(context, "Log"))).In(step));
+        goal.Step.Add(step);
+        app.goal.list.Add(goal);
+        return goal;
+    }
+
+    // each event the resuming app takes in from its maker stands for one saved event of the same action, never more: the
+    // maker holds one of G's events and the save two, so the resumed app holds two — the one taken in, and one read back
+    [Test]
+    public async Task AMakersOne_AndASavesTwo_ComeBackAsTwo()
+    {
+        var root = Root();
+        await using var app = App(root);
+        var context = app.actor.list.User.Context;
+        var bound = Programs(app, "%!app.type.goal.on.start%", null);
+        await Bind(app, bound);
+        await Bind(app, bound);
+        var snapshot = await app.Snapshot(context).Saved();
+        (await app.actor.list.User.@event.On(app.type.list["goal"]))!.start.before[1].Remove();
+
+        await using var sub = new global::app.@this(root, app.actor.list.User);
+        await sub.Restore(snapshot, sub.actor.list.User.Context);
+
+        var before = (await sub.actor.list.User.@event.On(sub.type.list["goal"]))!.start.before;
+        await Assert.That(before.Count).IsEqualTo(2);
+        await Assert.That(before.OfType<global::app.@event.inherited.@this>().Count()).IsEqualTo(1);
     }
 }

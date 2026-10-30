@@ -1,0 +1,312 @@
+using System.Collections.Concurrent;
+
+namespace app.@event.list;
+
+/// <summary>
+/// An actor's events — <c>%!app.event%</c>: every event it bound, in the order bound, and each item's list of the ones
+/// that run for it. Lazy: the first ask or add loads them — the actor's system events (each file of system/event/ run as
+/// this actor), then, in a sub app, what its maker's actor of its role had bound, each taken in as its own
+/// (<see cref="inherited.@this"/>); a snapshot's read loads them before it binds what it kept. An item's list (a goal's, a step's, a catalog action's, a
+/// type's, a channel's) is made on its first ask with every event whose Item has it
+/// (<see cref="global::app.type.item.@this.Has"/>), in the order bound; an event bound later is added to every list made.
+/// A variable's list is an item's like any (a variable equals another by its name), made when something asks for it
+/// (<c>%count.on%</c>) or when a set of it finds an event bound on it (<see cref="Moments"/>); a set of a variable nothing
+/// is bound on makes none. A goal run as another actor reads that actor's events, never these. A
+/// list is held as long as the actor is, one per item that stays around (a goal, a step, a catalog action, a type, a
+/// channel, the app).
+/// </summary>
+public sealed class @this : global::app.type.item.@this, global::app.type.item.setting.ISetting<setting.@this>
+{
+    private readonly global::app.actor.@this _actor;
+    private readonly object _gate = new();
+    private global::app.@event.@this[] _events = [];
+
+    // each item's list for this actor, made on its first ask: none until then, by the item's own equality (a type by its
+    // name), held as long as the actor is — a list for an item a sub app shares with its maker dies with the sub app
+    private readonly ConcurrentDictionary<global::app.type.item.@this, on.@this> _on = new();
+
+    // the load, once: started by the first ask or add, every other asker awaiting the same
+    private System.Threading.Tasks.TaskCompletionSource? _load;
+
+    // the flow that is loading: the system/event goals it runs ask the door themselves, and go on with what is loaded so far
+    private readonly System.Threading.AsyncLocal<bool> _loading = new();
+
+    /// <summary>The events of <paramref name="actor"/>: loaded on their first use.</summary>
+    internal @this(global::app.actor.@this actor, global::app.type.@this type) : base(type) => _actor = actor;
+
+    /// <summary>The event in play for the asker — <c>%!app.event.current%</c>, which <c>%!event%</c> reads: the running
+    /// event's call's Data whole, its value the event, its properties what it ran for (<c>!item</c>) and the value so far
+    /// (<c>!data</c>). Unset where no event's call is running.</summary>
+    [global::app.LlmBuilder]
+    public global::app.data.@this current(global::app.actor.context.@this context)
+        => context.call.Event ?? context.NotFound("current");
+
+    /// <summary>Every event this actor bound, in the order bound, as they stand (<c>%!app.event</c> loads them first).</summary>
+    [global::app.LlmBuilder]
+    public global::app.type.item.list.@this<global::app.@event.@this> list
+        => new(_events, _actor.App.type.list[typeof(global::app.type.item.list.@this<global::app.@event.@this>)]);
+
+    /// <summary>The list of <paramref name="item"/> for this actor, its events loaded first if they never were: made on
+    /// the first ask with every event whose Item has it, in the order bound; the same after that. Once loaded (or inside
+    /// the flow that is loading) it answers at once, nothing awaited. An asker whose <paramref name="cancel"/> fires
+    /// while the events load stops waiting; the load goes on.</summary>
+    internal System.Threading.Tasks.ValueTask<on.@this> On(global::app.type.item.@this item, System.Threading.CancellationToken cancel = default)
+    {
+        var loaded = Loaded(cancel);
+        if (!loaded.IsCompletedSuccessfully) return Awaited(loaded, item);
+        if (_on.TryGetValue(item, out var on)) return new(on);
+        lock (_gate) return new(_on.GetOrAdd(item, List));
+    }
+
+    // The first ask of an actor whose events never loaded: they load, then the list.
+    private async System.Threading.Tasks.ValueTask<on.@this> Awaited(System.Threading.Tasks.ValueTask loaded, global::app.type.item.@this item)
+    {
+        await loaded;
+        return await On(item);
+    }
+
+    /// <summary>The moments a set or a remove of <paramref name="variable"/> runs, the events loaded first: the variable's
+    /// list when one is made or an event is bound on it (which makes it, the variable type's events in it too), else the
+    /// variable type's — a set of a variable nothing is bound on makes no list. An asker whose <paramref name="cancel"/>
+    /// fires while the events load stops waiting.</summary>
+    internal System.Threading.Tasks.ValueTask<on.@this> Moments(global::app.type.item.variable.@this variable,
+        System.Threading.CancellationToken cancel = default)
+    {
+        var loaded = Loaded(cancel);
+        if (!loaded.IsCompletedSuccessfully) return Awaited(loaded, variable);
+        if (_on.TryGetValue(variable, out var on)) return new(on);
+        foreach (var @event in _events)
+            if (@event.Item.Equals(variable)) return On(variable);
+        return On(_actor.App.variable.type);
+    }
+
+    // The first ask of an actor whose events never loaded: they load, then the variable's moments.
+    private async System.Threading.Tasks.ValueTask<on.@this> Awaited(System.Threading.Tasks.ValueTask loaded,
+        global::app.type.item.variable.@this variable)
+    {
+        await loaded;
+        return await Moments(variable);
+    }
+
+    // A list for item: every event whose Item has it, in the order bound.
+    private on.@this List(global::app.type.item.@this item)
+    {
+        var on = new on.@this(item, this);
+        foreach (var @event in _events)
+            if (@event.Item.Has(item)) on.Add(@event);
+        return on;
+    }
+
+    // Every list made.
+    private IEnumerable<on.@this> Made => _on.Values;
+
+    /// <summary>Binds <paramref name="event"/>, the events loaded first: it joins this actor's events, and every list made
+    /// that it runs for. A list not made yet gets it when it is. Answers it.</summary>
+    internal async System.Threading.Tasks.ValueTask<T> Add<T>(T @event) where T : global::app.@event.@this
+    {
+        await Loaded();
+        Join(@event);
+        return @event;
+    }
+
+    // Binds event as the events stand: it joins this actor's events, and every list made that it runs for. Each side it
+    // joins is found first: a list whose item has no moment of its name refuses it (NoEvent) before it joins anything.
+    private void Join(global::app.@event.@this @event)
+    {
+        lock (_gate)
+        {
+            var sides = Made.Where(on => @event.Item.Has(on.item!)).Select(on => on.Add(@event.Name)[@event.When]).ToList();
+            _events = [.. _events, @event];
+            foreach (var side in sides) side.Add(@event);
+        }
+    }
+
+    /// <summary>Takes <paramref name="event"/> off: out of the list and every list made it was in. A list left with no
+    /// events is dropped, and made again on its next ask; one still holding events (a goal's "each goal" ones, a
+    /// variable's its type's) stays, so a run holding it sees what is bound later.</summary>
+    internal void Remove(global::app.@event.@this @event)
+    {
+        lock (_gate)
+        {
+            _events = [.. _events.Except([@event])];
+            foreach (var (item, on) in _on)
+            {
+                if (!@event.Item.Has(item)) continue;
+                on.Remove(@event);
+                if (on.IsEmpty) _on.TryRemove(item, out _);
+            }
+        }
+    }
+
+    /// <summary>Every event this actor bound, in the order bound, as they stand.</summary>
+    internal IEnumerable<global::app.@event.@this> Items() => _events;
+
+    /// <summary>The events <paramref name="action"/> (an <c>on.event</c> step's) made, in the order bound — what an
+    /// event's key numbers it among.</summary>
+    internal IEnumerable<global::app.@event.@this> Of(global::app.goal.step.action.@this action)
+        => _events.Where(@event => action.Equals(@event.action));
+
+    // ---- the load ----
+
+    /// <summary>This actor's events, loaded: at once when they are, or inside the flow that is loading them (which goes on
+    /// with what is loaded so far); else the one load, started by whoever asks first — claimed, never under a lock, so
+    /// its first part runs with nothing held. A load that failed is let go, so the next ask loads again. An asker whose
+    /// <paramref name="cancel"/> fires stops waiting; the load is the actor's and goes on.</summary>
+    internal System.Threading.Tasks.ValueTask Loaded(System.Threading.CancellationToken cancel = default)
+    {
+        if (_load is { Task.IsCompletedSuccessfully: true } || _loading.Value) return default;
+        var load = new System.Threading.Tasks.TaskCompletionSource();
+        if (System.Threading.Interlocked.CompareExchange(ref _load, load, null) is { } started) return new(started.Task.WaitAsync(cancel));
+        _ = Load(load);
+        return new(load.Task.WaitAsync(cancel));
+    }
+
+    // The load, answered on done: what this actor takes in from its maker's (a sub app's), then its system events — the
+    // maker's are bound first, so they run first. A system event file is there to bind: what it binds is the actor's,
+    // what it sets stays in the load's own context, so the program's state never depends on when the first ask came. The app's System loads first: every goal is read as it, so a goal
+    // another actor's load reads finds System's events standing — and System's own load, reading the same file, never
+    // waits on this one.
+    private async System.Threading.Tasks.Task Load(System.Threading.Tasks.TaskCompletionSource done)
+    {
+        _loading.Value = true;
+        // where the events stood: only the load joins any until it is done (an add waits for it)
+        var before = _events.Length;
+        try
+        {
+            if (_actor.App.actor.list.System is { } system && !system.Equals(_actor)) await system.@event.Loaded();
+            // the actor's own, under its lifetime: no flow's cancellation reaches it, so one asker that stops waiting
+            // never fails the load the others await
+            using var context = _actor.Context.Child(_actor, _actor.CancellationToken);
+            var files = await Files(context);
+            foreach (var @event in await _actor.App.origin.@event(_actor.Role))
+                if (!files.Exists(@event.IsBoundIn))
+                    Join(new inherited.@this(@event, _actor.App));
+            await Run(files, context);
+            done.SetResult();
+        }
+        // a load that failed isn't kept, all or nothing: what it joined comes off (out of the lists made too), its askers
+        // get its failure, and the next ask loads again — binding each event once
+        catch (System.Exception ex)
+        {
+            foreach (var @event in _events[before..]) Remove(@event);
+            System.Threading.Interlocked.CompareExchange(ref _load, null, done);
+            done.SetException(ex);
+        }
+    }
+
+    // The system/event/ files this actor runs, in order, each as its plang address (/system/event/<stem>): from the
+    // folders the app's origin names (the root: its own then the os's; a sub app: its own only), each address once. None
+    // under event.setting.system skip, or with no folder of its own (a sub app over its maker's). Nothing is run: a sub
+    // app's own file replaces what its maker bound in the goal at that address.
+    private async System.Threading.Tasks.Task<List<string>> Files(global::app.actor.context.@this context)
+    {
+        var addresses = new List<string>();
+        var folders = context.App.origin.Events(context.App).ToList();
+        if (folders.Count == 0 || (await context.Setting.Get<setting.@this>()).System.Value == setting.System.skip) return addresses;
+        foreach (var folder in folders)
+        {
+            if (!await (await folder.Exists(context)).ToBooleanAsync()) continue;
+            var listed = await folder.List("*.goal", recursive: false, context);
+            if (!listed.Success || await listed.Value() is not { } files) continue;
+            foreach (var file in files.Items())
+            {
+                var address = "/system/event/" + file.Stem;
+                if (!addresses.Contains(address, StringComparer.OrdinalIgnoreCase)) addresses.Add(address);
+            }
+        }
+        return addresses;
+    }
+
+    // Runs the system/event/ files at the addresses as this actor, each loaded as the goal list finds it (the app's own
+    // copy first, else the os's), so it is one of plang's own goals. A file that doesn't load or doesn't run fails the
+    // load with its Error, whole: thrown to the load, which takes off what it joined. A run cancelled meanwhile is the
+    // cancellation, never the file's failure.
+    private async System.Threading.Tasks.Task Run(List<string> files, global::app.actor.context.@this context)
+    {
+        foreach (var address in files)
+        {
+            var goal = await context.App.goal.list.Load(global::app.type.item.path.@this.Resolve(address + ".goal", context));
+            var started = goal.Success && await goal.Value() is global::app.goal.@this bound ? await bound.Start(context) : goal;
+            if (started.Success) continue;
+            context.CancellationToken.ThrowIfCancellationRequested();
+            throw new global::app.error.AppException(started.Error!);
+        }
+    }
+
+    // ---- what a snapshot keeps ----
+
+    /// <summary>What a snapshot keeps of this actor's events: for each item a program bound an event on, its moments
+    /// holding those events, which write the item and them. Read back, each row binds its events again
+    /// (<see cref="Read"/>).</summary>
+    [global::app.Snapshot]
+    internal global::app.type.item.list.@this on
+    {
+        get => new(_events.Where(@event => @event.IsSaved).GroupBy(@event => @event.Item)
+                .Select(bound =>
+                {
+                    var on = new on.@this(bound.Key);
+                    foreach (var @event in bound) on.Add(@event);
+                    return (global::app.type.item.@this)on;
+                }).ToList(),
+            _actor.App.type.list[typeof(global::app.type.item.list.@this)]);
+        private set
+        {
+            var context = _actor.Context;
+            var type = _actor.App.type.list[typeof(on.@this)];
+            foreach (var row in value.Items(context))
+                global::app.View.Snapshot.Make(type, row.Peek(), context);
+        }
+    }
+
+    /// <summary>The events a snapshot kept of one item (<c>{item, start: {before: [event]}}</c>), bound here — the
+    /// snapshot's read loads this actor's events first, so they bind after its system events and its maker's: the item
+    /// read as what it says it is, then each saved event on its moment and side. Each event this actor took in from its
+    /// maker stands for one saved event of the same action on the same moment — the same program's, which runs once — and
+    /// absorbs at most one; every other saved event is bound, so a step that bound twice comes back twice. A record that
+    /// doesn't read is refused, thrown to the read boundary. Answers the moments read.</summary>
+    internal on.@this Read(global::app.type.item.dict.@this record, global::app.actor.context.@this context)
+    {
+        if (record.Get("item", context) is not { } slot
+            || global::app.View.Snapshot.Make(slot.Type ?? context.App.type.list[typeof(global::app.type.item.@this)], slot.Peek(), context)
+                is not { } item)
+            throw global::app.@event.@this.Unread("a saved on's row names no item it is the moments of");
+        var read = new on.@this(item);
+        var choices = context.App.type.list[typeof(global::app.type.item.choice.@this<When>)];
+        foreach (var moment in record.Rows(context))
+        {
+            if (string.Equals(moment.Name, "item", StringComparison.OrdinalIgnoreCase)) continue;
+            if (read[moment.Name] == null) throw new global::app.error.DeclinedException(read.NoEvent(moment.Name));
+            if (moment.Peek() is not global::app.type.item.dict.@this sides)
+                throw global::app.@event.@this.Unread($"a saved on's '{moment.Name}' holds no sides");
+            foreach (var side in sides.Rows(context))
+            {
+                // the side reads itself as its When; a name that is no side is refused
+                When when = global::app.type.item.choice.@this<When>.Create(side.Name, choices)
+                    ?? throw global::app.@event.@this.Unread($"a saved event '{moment.Name}' holds '{side.Name}', which is no side of its events");
+                if (side.Peek() is not global::app.type.item.list.@this rows)
+                    throw global::app.@event.@this.Unread($"a saved event '{moment.Name}' holds '{side.Name}', which is no list of events");
+                var inherited = _events.OfType<inherited.@this>()
+                    .Where(@event => Equals(@event.Item, item) && string.Equals(@event.Name, moment.Name, StringComparison.OrdinalIgnoreCase)
+                                     && @event.When.Value == when).ToList();
+                foreach (var entry in rows.Items(context))
+                {
+                    var saved = new call.@this(item, read.Add(moment.Name).Name, when, entry.Peek() as global::app.type.item.dict.@this
+                        ?? throw global::app.@event.@this.Unread($"a saved event on '{moment.Name}' is no record"), context);
+                    var index = inherited.FindIndex(@event => saved.action.Equals(@event.action));
+                    if (index >= 0) { inherited.RemoveAt(index); continue; }
+                    Join(saved);
+                }
+            }
+        }
+        return read;
+    }
+
+    /// <summary>The actor's events written: each as it writes itself, in the order bound.</summary>
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+    {
+        var events = _events;
+        writer.BeginArray(events.Length);
+        foreach (var @event in events) await @event.Output(writer);
+        writer.EndArray();
+    }
+}

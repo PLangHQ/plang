@@ -158,8 +158,8 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
         ctx.PushCancellation(cts);
         try
         {
-            var ask = new global::app.module.output.ask(ctx) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "name?", context: ctx) };
-            var result = await ask.Start();
+            // through the action's door, as a step runs it
+            var result = await (await ctx.Action("output.ask(Question=\"name?\")")).Start(ctx);
             await result.IsFailure();
             await Assert.That(cts.IsCancellationRequested).IsTrue();
         }
@@ -341,11 +341,11 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
         var ch = StreamChannel.Memory(app.actor.list.User.Channel, "output");
         app.actor.list.User.Channel.Register(ch);
         string? seen = null;
-        app.@event.Add(ch).Add("write")[global::app.@event.When.before].Add(side => new global::app.@event.binding.@this(side, async (_, data, ctx) =>
+        await app.actor.list.User.@event.Add(new global::app.@event.code.@this(ch, "write", global::app.@event.When.before, async (_, data, ctx) =>
         {
             seen = (await data.Value())?.ToString();
             return ctx.Ok();
-        }, app.actor.list.User, global::app.@event.binding.Scope.actor, global::app.@event.binding.@this.Always));
+        }, app.actor.list.User, global::app.@event.code.@this.Always));
 
         await ch.WriteText("  Saved Start");
 

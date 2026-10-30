@@ -50,7 +50,7 @@ public class TypePageTests
     {
         await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os"), global::PLang.Tests.Parent.Actor).Testing();
         var context = os.actor.list.User.Context;
-        context.Variable.Set(new global::app.data.@this("type", os.type.list[type], context: context));
+        await context.Variable.Set(new global::app.data.@this("type", os.type.list[type], context: context));
         var render = new Render(context)
         {
             Template = (global::app.type.item.text.@this)System.IO.File.ReadAllText(

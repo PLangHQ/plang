@@ -104,7 +104,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         if (await App.origin.Goal(source, App) is not { } loaded) return null;
         if (!loaded.Success || await loaded.Value() is not goal.@this inherited) return loaded;
         Add(inherited);
-        return await inherited.on.load.After(inherited, context.Ok(inherited), context);
+        return await (await context.Actor!.@event.On(inherited)).load.after.Start(inherited, context.Ok(inherited), context);
     }
 
     // The read of `pr` — one at a time for each .pr: a load that finds one in flight awaits it. Whoever takes the slot
@@ -127,12 +127,12 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         finally { _reading.TryRemove(new KeyValuePair<global::app.type.item.path.@this, Task<data.@this>>(pr, ours.Task)); }
     }
 
-    // One .pr decoded into a goal and held here, through the goal's load: what is bound before a goal loads is the goal
-    // type's (its own, and each actor's hold), handed the .pr (there is no goal yet), and a failure or a Handled answer
-    // is the load's answer with nothing read; what is bound after it runs across the goal's levels, handed the goal.
+    // One .pr decoded into a goal and held here, through the goal's load: what the asker bound before a goal loads is the
+    // goal type's, handed the .pr (there is no goal yet), and a failure or a Handled answer is the load's answer with
+    // nothing read; what is bound after it runs on the goal's own moments, handed the goal.
     private async Task<data.@this> Decode(global::app.type.item.path.@this pr, actor.context.@this context)
     {
-        if (await App.goal.type.Before("load", pr, context, context.Ok()) is { } answer
+        if (await (await context.Actor!.@event.On(App.goal.type)).load.before.Start(pr, context, context.Ok()) is { } answer
             && (!answer.Success || answer.Handled))
             return answer;
         try
@@ -151,7 +151,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
             // the stamp holds the .pr the goal itself has
             Add(goal, stat.Success && await stat.Value() is { } info && goal.Pr is { } path
                 ? new stamp.stat(path, info) : new stamp.unknown());
-            return await goal.on.load.After(goal, read, context);
+            return await (await context.Actor!.@event.On(goal)).load.after.Start(goal, read, context);
         }
         // a refused .pr names itself — its reader was born knowing the file
         catch (Exception ex)
@@ -196,10 +196,13 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     /// may live in a sibling's), then from the app root. Each is resolved from its plang form, so a
     /// <c>/system/</c> goal is the app's own before the os's. An app-absolute name (<c>/system/builder/X</c>) skips
     /// the caller's folders. A miss (NotFound) when no goal answers to the name; a <c>.goal</c> with no <c>.pr</c>
-    /// answers <c>GoalNotBuilt</c>; one whose <c>.pr</c> doesn't load answers why.
+    /// answers <c>GoalNotBuilt</c>; one whose <c>.pr</c> doesn't load answers why. A caller that is another app's goal
+    /// (a maker's goal running in a sub app) is answered in its own app: a call finds its goal in the app its caller goal
+    /// is, never redirected by the app it runs in; a caller of no app (the os's, one made outside a list) here.
     /// </summary>
     public async Task<data.@this<goal.@this>> Find(string name, goal.@this? caller = null, CancellationToken cancellationToken = default)
     {
+        if (caller?.App is { } home && home != App) return await home.goal.list.Find(name, caller, cancellationToken);
         var context = App.actor.list.System.Context;
         if (string.IsNullOrEmpty(name)) return data.@this<goal.@this>.From(context.NotFound(name));
         // A name never climbs out of the folder it is written for: whoever writes the name (an input, an llm's
@@ -208,6 +211,8 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
             return context.Error<goal.@this>(new Error(
                 $"'{name}' climbs out of its folder ('..'): a goal is called by its name from where it is written, never above it",
                 "GoalNameClimbs", 400));
+        // a name with a wildcard names goals, never one: the pattern of them, so a goal loaded later is named too
+        if (name.IndexOfAny(['*', '?']) >= 0) return context.Ok<goal.@this>(new goal.pattern.@this(name, caller?.Folder, App.type.list, context));
 
         if (Chain(caller).FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) is { } near)
             return context.Ok(near);
@@ -217,7 +222,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         var folder = caller?.Folder;
         // the goals a name may be: every one read, newest first, but a setup goal — made once for the whole find
         var goals = Items().Where(g => !g.IsSetup).Reverse().ToList();
-        if (folder != null && Goal(name, goals.Where(g => Equals(g.Folder, folder)).ToList()) is { } beside) return context.Ok(beside);
+        if (folder != null && Goal(name, goals.Where(g => folder.Equals(g.Folder)).ToList()) is { } beside) return context.Ok(beside);
 
         var source = name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase) ? name : name + ".goal";
         if (!source.StartsWith('/') && !source.StartsWith('\\') && folder != null)
@@ -252,7 +257,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         async Task<string?> Spelled(global::app.type.item.path.@this at)
         {
             await foreach (var file in Beside(at.Parent, context))
-                if (string.Equals(file.Stem.ToString(), at.Stem.ToString(), StringComparison.OrdinalIgnoreCase))
+                if (file.Stem.Equals(at.Stem))
                     return file.Name.ToString();
             return null;
         }
@@ -353,7 +358,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var source in wants.Os.Value ? _app.Concat(_system) : _app)
         {
-            if (!seen.Add(source.ToString()!) || goals.Any(g => Equals(g.Path, source))) continue;
+            if (!seen.Add(source.Raw) || goals.Any(g => source.Equals(g.Path))) continue;
             var loaded = await Load(source);
             if (!loaded.Success)
             {

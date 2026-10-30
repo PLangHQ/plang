@@ -155,12 +155,12 @@ public class SubAppFullPassProbeTests : System.IAsyncDisposable
 
     // ---- the hold (26) ----
 
-    private static async Task<global::app.@event.binding.@this> Bind(global::app.actor.context.@this ctx, string @event,
-        global::app.goal.step.action.@this call, string scope)
+    private static async Task<global::app.@event.@this> Bind(global::app.actor.context.@this ctx, string @event,
+        global::app.goal.step.action.@this call)
     {
-        var bound = await Make.Action(ctx, "on", "event", ("Event", @event), ("When", "before"), ("Action", call), ("Scope", scope)).Start(ctx);
+        var bound = await Make.Action(ctx, "on", "event", ("Event", @event), ("When", "before"), ("Action", call)).Start(ctx);
         await bound.IsSuccess();
-        return (global::app.@event.binding.@this)bound.Peek();
+        return (global::app.@event.@this)bound.Peek();
     }
 
     private static async Task<global::app.data.@this> Work(global::app.@this app)
@@ -171,14 +171,16 @@ public class SubAppFullPassProbeTests : System.IAsyncDisposable
         return await goal.Start(ctx);
     }
 
-    // the maker binds app-wide on the step type every app over its code shares: a sub's step never fires it
+    // the maker binds on the step type every app over its code shares, after its sub's events first loaded (the sub's
+    // first run): a sub's step never runs it
     [Test]
-    public async Task H_AMakersAppWideBinding_NeverFiresInItsSub()
+    public async Task H_AMakersEvent_BoundAfterItsSubsFirstAsk_NeverRunsInIt()
     {
         var maker = Maker();
         var sub = SubOf(maker.actor.list.User);
+        await (await Work(sub)).IsSuccess();
         var ctx = maker.actor.list.User.Context;
-        await Bind(ctx, "%!app.type.step.on.start%", Make.Call(ctx, "OnlyInTheMaker"), "app");
+        await Bind(ctx, "%!app.type.step.on.start%", Make.Call(ctx, "OnlyInTheMaker"));
 
         await (await Work(sub)).IsSuccess();
     }
@@ -191,12 +193,12 @@ public class SubAppFullPassProbeTests : System.IAsyncDisposable
         var sub = SubOf(maker.actor.list.User);
         var cousin = SubOf(maker.actor.list.User, System.IO.Directory.CreateDirectory(System.IO.Path.Combine(maker.filesystem.root.Absolute, "c")).FullName);
         var ctx = sub.actor.list.User.Context;
-        await Bind(ctx, "%!app.type.step.on.start%", Make.Call(ctx, "OnlyInTheSub"), "app");
+        await Bind(ctx, "%!app.type.step.on.start%", Make.Call(ctx, "OnlyInTheSub"));
 
         await (await Work(cousin)).IsSuccess();
         await (await Work(maker)).IsSuccess();
-        await Assert.That(maker.type.list["step"].on.start.before.Count).IsEqualTo(0);
-        await Assert.That(maker.@event[maker.type.list["step"]]?.start.before.Count ?? 0).IsEqualTo(0);
+        await Assert.That(maker.actor.list.User.@event.Bound()).IsEmpty();
+        await Assert.That((await maker.actor.list.User.@event.On(maker.type.list["step"])).before.Count).IsEqualTo(0);
     }
 
     // an actor-scoped binding of the sub's System never fires for the maker's or the sub's User
@@ -206,7 +208,7 @@ public class SubAppFullPassProbeTests : System.IAsyncDisposable
         var maker = Maker();
         var sub = SubOf(maker.actor.list.User);
         var ctx = sub.actor.list.System.Context;
-        await Bind(ctx, "%!app.type.step.on.start%", Make.Call(ctx, "OnlyInTheSub"), "actor");
+        await Bind(ctx, "%!app.type.step.on.start%", Make.Call(ctx, "OnlyInTheSub"));
 
         await (await Work(maker)).IsSuccess();
     }

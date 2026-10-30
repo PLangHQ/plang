@@ -21,9 +21,9 @@ public class Stage2_SetRebindTests
         var vars = app.actor.list.User.Context.Variable;
         await using var frame = vars.Context.call.Push((IEnumerable<Data>?)null, await vars.Context.call.Setting());
 
-        vars.Set("x", "a");
+        await vars.Set("x", "a");
         var dataA = await vars.Get("x");
-        vars.Set("x", "b");
+        await vars.Set("x", "b");
         var dataB = await vars.Get("x");
 
         await Assert.That(ReferenceEquals(dataA, dataB)).IsFalse();
@@ -40,9 +40,9 @@ public class Stage2_SetRebindTests
         await using var app = NewApp();
         var vars = app.actor.list.User.Context.Variable;
 
-        vars.Set("x", "a");
+        await vars.Set("x", "a");
         var dataA = await vars.Get("x");
-        vars.Set("x", "b");
+        await vars.Set("x", "b");
         var dataB = await vars.Get("x");
 
         await Assert.That(ReferenceEquals(dataA, dataB)).IsFalse();

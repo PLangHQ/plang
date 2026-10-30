@@ -20,17 +20,18 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public System.Threading.Tasks.ValueTask<@this?> Match(string key)
         => System.Threading.Tasks.ValueTask.FromResult(string.Equals(Name, key, System.StringComparison.OrdinalIgnoreCase) ? this : null);
 
+    /// <summary>The variable a key names — <c>%!app.variable["count"]%</c> is the variable <c>count</c>, whether or not it
+    /// holds anything yet (a variable is a name; its value reads "not set" until a set), so a program binds on a
+    /// variable before its first set. Any other value names none.</summary>
+    public static System.Threading.Tasks.ValueTask<global::app.data.@this<@this>?> Select(global::app.type.item.@this key,
+        global::app.actor.context.@this asker)
+        => System.Threading.Tasks.ValueTask.FromResult(key is global::app.type.item.text.@this name
+            && new parser.@this(name.ToString(), asker.App.type.list).Whole is { } variable
+                ? asker.Ok<@this>(variable) : null);
+
     /// <summary>The variables belong to an actor, not to the app: there is no app-wide list of them.</summary>
     public static global::app.type.item.list.@this<@this> List(global::app.@this app)
         => throw new System.InvalidOperationException("a variable list belongs to an actor: use context.Variable");
-
-    /// <summary>A variable is set and removed through the variable type's events, then its own.</summary>
-    protected internal override global::app.type.item.@this? Level(int depth, global::app.actor.context.@this context) => depth switch
-    {
-        0 => context.App.variable.type,
-        1 => this,
-        _ => null,
-    };
 
     /// <summary>The variables the asker sees — its actor's memory.</summary>
     public static global::app.type.item.list.@this<@this>? Of(global::app.actor.context.@this context)
@@ -92,6 +93,32 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// store takes while callers still hand it names.</summary>
     [global::app.LlmBuilder]
     public string Name => Text.Length >= 2 ? Text[1..^1] : Text;
+
+    /// <summary>A variable is the name it reads (a variable object is made anew at every set): two that name the same are
+    /// equal, as the memory compares names.</summary>
+    public override bool Equals(object? obj)
+        => obj is @this other && global::app.type.item.variable.list.@this.Comparer.Equals(Name, other.Name);
+
+    public override int GetHashCode() => global::app.type.item.variable.list.@this.Comparer.GetHashCode(Name);
+
+    /// <summary>Whether this variable names <paramref name="variable"/>: it is that one (as variables compare, by name),
+    /// or it is a path (<c>%!app.variable["count"].on.set%</c>) whose hops, each only a lookup, reach that variable — the
+    /// app's variables answering what their key selects. A path whose root runs a goal of plang's (a shortcut) is never
+    /// read to answer this.</summary>
+    internal async System.Threading.Tasks.ValueTask<bool> Names(@this variable, global::app.actor.context.@this context)
+    {
+        if (Equals(variable)) return true;
+        if (!Code.IsLookup || await Code.Root.Runs(context)) return false;
+        global::app.data.@this? at = null;
+        foreach (var hop in Code.Items())
+        {
+            at = await hop.Start(at, context);
+            if (!at.Success || !at.IsInitialized) return false;
+            // the walk ends at the first variable it reaches, never read on into its moments (which load an actor's events)
+            if (at.Peek() is @this reached) return reached.Equals(variable);
+        }
+        return false;
+    }
 
     /// <summary>Runs the code: what the variable holds.</summary>
     public System.Threading.Tasks.ValueTask<global::app.data.@this> Start(actor.context.@this context)

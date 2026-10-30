@@ -17,8 +17,8 @@ public class ClearTests
     public async Task Clear_ClearsAllVariables()
     {
         var (context, memory) = CreateContext();
-        memory.Set("var1", "value1");
-        memory.Set("var2", "value2");
+        await memory.Set("var1", "value1");
+        await memory.Set("var2", "value2");
 
         var action = new Clear(context);
         var result = await action.Start();
@@ -32,7 +32,7 @@ public class ClearTests
     public async Task Clear_PreservesSystemVariables()
     {
         var (context, memory) = CreateContext();
-        memory.Set("userVar", "value");
+        await memory.Set("userVar", "value");
 
         var action = new Clear(context);
         await action.Start();

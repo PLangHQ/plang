@@ -1,0 +1,17 @@
+/ A pattern names the goals under a folder, from the folder of the goal whose step names it (as a plang path does):
+/ "each goal in api/*" runs for the two goals in the api/ folder beside this one and not for the one outside it.
+Start
+- set %ran% = 0
+- before each goal in api/*, call Count
+- call api/One
+- call api/Two
+- call Outside
+- assert %ran% equals 2, "Count ran for the two goals in api/ and not for the one outside it"
+
+/ The goal outside the folder.
+Outside
+- set %done% = "yes"
+
+/ The event's call.
+Count
+- add 1 to %ran%, write to %ran%

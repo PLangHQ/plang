@@ -16,7 +16,7 @@ public class GoalStepFluidRenderTests
     {
         var ctx = app.actor.list.System.Context;
         var goal = Make.Goal(ctx, "MyGoal", Make.Step("first thing"), Make.Step("second thing"));
-        ctx.Variable.Set(new global::app.data.@this("goal", goal, context: ctx));
+        await ctx.Variable.Set(new global::app.data.@this("goal", goal, context: ctx));
         var action = new Render(ctx)
         {
             Template = (global::app.type.item.text.@this)template,

@@ -23,7 +23,7 @@ public class BuildAndRunGoalTests
         await Assert.That(setType!.Namespace).IsEqualTo("app.module.variable");
 
         // And the engine handed-off Variables registry resolves through the new types.
-        app.actor.list.User.Context.Variable.Set("greeting", "hello");
+        await app.actor.list.User.Context.Variable.Set("greeting", "hello");
         await Assert.That((await (await app.actor.list.User.Context.Variable.Get("greeting")).Value())?.ToString()).IsEqualTo("hello");
     }
 

@@ -77,7 +77,6 @@ public abstract class @this : IAsyncDisposable, IDisposable
     public bool IsOpen { get; protected set; }
     public DateTime Created { get; }
     public IDictionary<string, object> Metadata { get; }
-    public Channel.Events.@this Events { get; }          // per-channel bindings + recursion guard
 
     public virtual bool CanRead  { get; }                // IsOpen && Direction != Output
     public virtual bool CanWrite { get; }                // IsOpen && Direction != Input
@@ -184,9 +183,9 @@ VerbBasedAnswerer
 
 The Logger one-liner above works because it reads `%!data%` exactly once.
 
-#### `Channel.Events.@this`
+#### A channel's events
 
-Per-channel binding list with its own lock and an AsyncLocal "this binding is already firing" recursion guard. The cross-source firing orchestration (per-channel → per-actor → app-level) lives on `Channel.@this`; this type owns the per-channel slice. Same shape spirit as `Goal.Events` / `Step.Events`: the type that owns the data also owns its access rules.
+A channel has no events of its own. An event bound on a channel's moment (`%!channel.audit.on.write%`) lives on the actor that bound it (`events.md`), and the channel's list of them is made on its first ask. An event does not run inside its own run in a flow (`context.Enter`).
 
 ## The four default-named channels
 
@@ -363,6 +362,6 @@ Every read enters through one verb on the base channel. `StampReadAsync(byte[] r
 
 - The channels registry uses [Serializers](serializers.md) for content-type routing on `Stream` channels.
 - All channel I/O returns [`Data`](goal-result.md) — `Success`/`Error`, never throws across the boundary.
-- Channel events plug into the same [event](events.md) lifecycle that goal/step events use; bindings live on the per-actor Context Events list and on per-app Events, with per-channel bindings on `Channel.Events`.
+- Channel events plug into the same [event](events.md) events that goal/step events use; an event on a channel's moment (`%!channel.audit.on.write%`) lives on the actor that bound it, in `actor.event`, and the channel's list of them is made on its first ask.
 - Each [Actor](contexts.md) owns one `Channels` instance; goal-channels capture the actor at register time so events run with the right `Context`.
 - The Console.* discipline rule for production C# lives in `Documentation/v0.2/good_to_know.md` "Console.* Is Banned in Production C#".

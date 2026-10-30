@@ -75,7 +75,7 @@ App
 Each `Actor` owns:
 - A `PLangContext` — execution state (current goal, step, error, events, callstack)
 - A `Variables` — variable storage (`%varName%` resolution)
-- An `EventScope` with `User.Events` and `System.Events` — event binding registries
+- Its events (`actor.event`) — every event it bound, loaded on the first ask (`events.md`)
 
 Actors are created lazily and live for the app's lifetime.
 
@@ -167,65 +167,10 @@ app.execute returns Data result to run.pr
 
 ---
 
-## 5. Events: Registration and Execution
+## 5. Events
 
-### Registration (event.on)
+An event lives on the actor that bound it, loads on the first ask, and runs around an item's moment (a goal's start, a step's, an action's). How events are bound, loaded and run is in `events.md`.
 
-When user code says `on before step, call TrackStep`:
-
-1. `event.on` action runs (typically on User context)
-2. Creates an `EventBinding` with type=BeforeStep, handler=GoalCall
-3. Registers on `targetActor.Context.User.Events` (by default, User actor)
-4. Binding includes a `Handler` lambda: `ctx => app.RunGoalAsync(goalToCall, targetActor.Context)`
-
-### Where events live
-
-```
-User.Context
-  ├─ .System.Events  (system-level bindings — not used much)
-  └─ .User.Events    (user-level bindings — where event.on registers)
-```
-
-Events are registered on `User.Context.User.Events`. The `PLangContext.LifecycleFor(step)` method queries this registry and caches the result.
-
-### How run.pr fires events
-
-run.pr's RunStep has:
-```
-foreach before events → call RunEvent, item=%event%
-  ...step execution...
-foreach after events → call RunEvent, item=%event%
-```
-
-The `%step.events.before%` and `%step.events.after%` are resolved via Data navigation — `step` → `.events` → `.before`, which hits `PLangContext.GetEventBindings(step, EventPhase.Before)`.
-
-**RunEvent** calls `goal.call` to execute the event handler goal.
-
-### The problem: which context do events run on?
-
-**run.pr executes on System.Context.** So when RunEvent fires, it's dispatching from System context. The event goal needs to see user variables (e.g., `%stepCount%`), but those live on User.Variables.
-
-**Current solution:** `goal.call` has an `Actor` parameter. RunEvent calls `goal %event% as "user"`, which means `goal.call` resolves Actor to User and runs on `User.Context`.
-
-### Action-level events: the gap
-
-Step-level events (BeforeStep/AfterStep) are fired by `run.pr`'s RunStep — they're PLang loops.
-
-**Action-level events (BeforeAction/AfterAction) don't fire from PLang.** They would need to fire from inside `app.execute`'s `ExecuteActions` method, which is a C# loop over `step.Actions`. Currently, `ExecuteActions` does:
-
-```csharp
-foreach (var action in Step.Actions)
-{
-    result = await app.Run(action, execContext);
-    if (!result.Success) break;
-}
-```
-
-There's no event firing here. To add action events, the C# `ExecuteActions` would need to:
-1. Query `execContext.LifecycleFor(action)` for before/after bindings
-2. Fire each binding before/after `app.Run(action, ...)`
-
-This is the one place where "everything in PLang" is hard — the action dispatch loop is per-action within a step, and it's C#.
 
 ---
 

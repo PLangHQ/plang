@@ -30,7 +30,7 @@ public class NamePropagationTests
     public async Task Name_FullVarMatch_PropagatesLiveVariableName()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set(new global::app.data.@this("products", global::PLang.Tests.Shared.Make.List(new List<object?> { "a" }, context), context: context));
+        await context.Variable.Set(new global::app.data.@this("products", global::PLang.Tests.Shared.Make.List(new List<object?> { "a" }, context), context: context));
 
         var paramData = PLang.Tests.Shared.Make.Built(context, "List", "%products%");
         var result = paramData.As<global::app.type.item.list.@this>(await paramData.Value<global::app.type.item.list.@this>());
@@ -57,7 +57,7 @@ public class NamePropagationTests
     public async Task Name_PartialInterpolation_KeepsSlotName()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set(new global::app.data.@this<global::app.type.item.text.@this>("name", "world", context: context));
+        await context.Variable.Set(new global::app.data.@this<global::app.type.item.text.@this>("name", "world", context: context));
 
         var paramData = PLang.Tests.Shared.Make.Built(context, "Greeting", "hello %name%!");
         var result = paramData.As<global::app.type.item.text.@this>(await paramData.Value<global::app.type.item.text.@this>());
@@ -85,7 +85,7 @@ public class NamePropagationTests
     public async Task Name_NestedListResolution_PreservesSlotName()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set(new global::app.data.@this<global::app.type.item.text.@this>("b", "expanded", context: context));
+        await context.Variable.Set(new global::app.data.@this<global::app.type.item.text.@this>("b", "expanded", context: context));
 
         var paramData = TemplateStamp.Container("Items", new List<object?> { "a", "%b%", "c" }, context);
         var result = paramData.As<global::app.type.item.list.@this>(await paramData.Value<global::app.type.item.list.@this>());
@@ -101,8 +101,8 @@ public class NamePropagationTests
     public async Task Name_FullMatch_StoredVarRef_PropagatesImmediateName_NoChain()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set(new global::app.data.@this<global::app.type.item.number.@this>("b", 42, context: context));
-        context.Variable.Set(new global::app.data.@this<global::app.type.item.text.@this>("a", "%b%", context: context));
+        await context.Variable.Set(new global::app.data.@this<global::app.type.item.number.@this>("b", 42, context: context));
+        await context.Variable.Set(new global::app.data.@this<global::app.type.item.text.@this>("a", "%b%", context: context));
 
         var paramData = PLang.Tests.Shared.Make.Built(context, "Slot", "%a%");
         var result = paramData.As<global::app.type.item.text.@this>(await paramData.Value<global::app.type.item.text.@this>());

@@ -50,7 +50,7 @@ public class ScalarAccessTests : System.IAsyncDisposable
         await using var app = new global::app.@this(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-scalarvar-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
-        ctx.Variable.Set("cfg", global::PLang.Tests.Shared.Make.FromRaw("{\"port\":8080}", ctx.App.type.list[new type("item", "json"), ctx], ctx, "cfg"));
+        await ctx.Variable.Set("cfg", global::PLang.Tests.Shared.Make.FromRaw("{\"port\":8080}", ctx.App.type.list[new type("item", "json"), ctx], ctx, "cfg"));
 
         await Assert.That(await ctx.Rendered("%cfg%")).IsEqualTo("{\"port\":8080}");
         await Assert.That(await ctx.Rendered("%cfg.port%")).IsEqualTo("8080");

@@ -170,7 +170,7 @@ public class GoalCallTests
     [Test]
     public async Task Call_NullActor_UsesCurrentContext()
     {
-        _app.actor.list.User.Context.Variable.Set("marker", "fromCaller");
+        await _app.actor.list.User.Context.Variable.Set("marker", "fromCaller");
         var action = new Call(_app.actor.list.User.Context) { Name = Named("TestGoal"), Actor = null };
         var result = await action.Start();
 

@@ -2,7 +2,7 @@ namespace app.goal;
 
 // The goal judges itself: each step and each sub-goal gives its own verdict, and the goal gathers
 // them into one error. Pure judgement — it runs after construction and changes nothing.
-public sealed partial class @this
+public partial class @this
 {
     /// <summary>What is wrong with this goal, or null when nothing is.</summary>
     public async System.Threading.Tasks.Task<global::app.error.@this?> Validate(

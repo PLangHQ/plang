@@ -140,7 +140,7 @@ public class Stage5MessagesEndToEndTests
         // Replace the DynamicData NowUtc with a static Data (the DynamicData's
         // override Value getter ignores `_value`, so Set("NowUtc", offset)
         // would be a no-op — we must replace with a fresh Data instance).
-        app2.actor.list.User.Context.Variable.Set(
+        await app2.actor.list.User.Context.Variable.Set(
             new global::app.data.@this("NowUtc", DateTimeOffset.UtcNow.AddMinutes(10),
                 app2.actor.list.User.Context.App.type.list["datetime"], context: app2.actor.list.User.Context));
 

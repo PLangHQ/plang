@@ -133,7 +133,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         var user = app.actor.list.User.Context;
         Begin();
-        global::app.@event.binding.@this[] watching = [app.test.list.Report.Coverage.Watch(user), .. await Time(user)];
+        // bound inside the run's try: an app whose events fail to load fails this test, and what was bound comes off
+        global::app.@event.@this[] watching = [];
 
         var setting = await context.Setting.Get<global::app.test.setting.@this>();
         // its llm questions answered from the file beside it, unless the run asks live: registered on its own app, whose
@@ -152,6 +153,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         var timedOut = () => cts.IsCancellationRequested && !context.CancellationToken.IsCancellationRequested;
         try
         {
+            watching = [await app.test.list.Report.Coverage.Watch(user)];
+            watching = [.. watching, .. await Time(user)];
             var loaded = await app.goal.Load(Goal.Path!.ToString());
             var result = loaded.Success
                 ? await ((await loaded.Value()) as global::app.goal.@this)!.Start(user)
@@ -174,29 +177,29 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         {
             user.PopCancellation();
             Stdout = app.test.list.Session?.Text;
-            foreach (var binding in watching) binding.Remove();
+            foreach (var @event in watching) @event.Remove();
         }
     }
 
     // Times each of this test's goal's own steps into Timings. A test always reports its step times, so its App's
-    // call stacks time their frames; the step type's after-binding runs inside the step's frame, whose Duration
-    // is then the step's whole time. Answers the binding.
-    private async System.Threading.Tasks.Task<global::app.@event.binding.@this[]> Time(global::app.actor.context.@this context)
+    // call stacks time their frames; the step type's after event runs inside the step's frame, whose Duration
+    // is then the step's whole time. Answers the event.
+    private async System.Threading.Tasks.Task<global::app.@event.@this[]> Time(global::app.actor.context.@this context)
     {
         var system = context.App.actor.list.System;
         system.Setting.Set(system.Setting.Address(typeof(global::app.call.setting.@this), "timing"), true);
 
-        var entry = Goal.Path?.ToString();
-        bool Tested(global::app.goal.step.@this step) => string.Equals(step.Goal.Path?.ToString(), entry, System.StringComparison.Ordinal);
+        var entry = Goal.Path;
+        bool Tested(global::app.goal.step.@this step) => entry is { } path ? path.Equals(step.Goal.Path) : step.Goal.Path is null;
         var actor = context.Actor!;
         return
         [
-            context.App.@event.Add(context.App.type.list["step"]).Add("start").after.Add(side => new global::app.@event.binding.@this(side, (item, _, ctx) =>
+            await actor.@event.Add(new global::app.@event.code.@this(context.App.type.list["step"], "start", global::app.@event.When.after, (item, _, ctx) =>
             {
                 if (item is global::app.goal.step.@this step && Tested(step) && ctx.call.Current?.Duration is { } elapsed)
                     Timings.Add(new global::app.test.timing.@this { Step = step, Elapsed = elapsed });
                 return System.Threading.Tasks.Task.FromResult(ctx.Ok());
-            }, actor, global::app.@event.binding.Scope.actor, global::app.@event.binding.@this.Always)),
+            }, actor, global::app.@event.code.@this.Always)),
         ];
     }
 

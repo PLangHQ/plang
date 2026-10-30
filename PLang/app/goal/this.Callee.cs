@@ -1,6 +1,6 @@
 namespace app.goal;
 
-public sealed partial class @this
+public partial class @this
 {
     /// <summary>Every goal this goal reaches through its calls — the goals its actions call, the goals
     /// those call, and so on, each once, in the order first reached. This goal itself is never among them,

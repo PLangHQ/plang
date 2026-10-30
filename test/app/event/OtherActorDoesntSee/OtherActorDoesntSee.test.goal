@@ -1,0 +1,17 @@
+/ An event lives on the actor that bound it: the user binds before goal Process, and Process run as the system doesn't
+/ run it; run as the user, it does.
+Start
+- set %count% = 0
+- before goal Process, call Count
+- call Process, as system
+- assert %count% equals 0, "the system's run doesn't see the user's event"
+- call Process
+- assert %count% equals 1, "the user's run does"
+
+/ The goal the event is bound on.
+Process
+- set %done% = "yes"
+
+/ The event's call.
+Count
+- set %count% = %count% + 1

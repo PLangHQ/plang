@@ -5,7 +5,7 @@ namespace app.goal.step.action;
 // ("list", element) entity. The engine reads the typed internals directly (Module, Property, …); the
 // item faces are the boundary layer only. The action writes itself (Output) and reads itself back
 // (serializer/Reader.cs).
-[global::app.Attributes.PlangType("action")]
+[global::app.Attributes.PlangType("action"), global::app.Attributes.Kinds]
 public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>An action passes through; anything else is declined. The one way in is its reader

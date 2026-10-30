@@ -107,6 +107,10 @@ namespace PLang
 
 			var userVars = app.actor.list.User.Context.Variable;
 
+			// Test mode's session first, on the actor test's setting names: the app is testing from here, so what a set loads
+			// (the actors' events, their settings' store) opens in memory
+			if (On("test")) await app.test.list.Open();
+
 			// The line's values are the user's variables; its flags are the app's settings, not variables
 			foreach (var property in start.property.Items().Where(property => !property.IsFlag))
 				await userVars.Set(property.Name, property.Value);
@@ -118,17 +122,12 @@ namespace PLang
 				if (await app.Debug.Activate() is { } refused) return await Refused(app.actor.list.System.Context.Error(refused));
 			}
 
-			// Test mode: its setting names the actor the run's session opens on. What it tests is the positional (a folder
-			// or a .test.goal), unless a path= is given; neither, the whole folder it starts in.
-			if (On("test"))
-			{
-				// a folder or test named on the command line is the starting folder's, resolved once here
-				// none named, the root the app landed on — the build and the test runner compare paths with it
-				if (!start.property.Has("path"))
-					await userVars.Set("path", start.Goal == null ? app.filesystem.root
-						: global::app.type.item.path.@this.Resolve("/" + start.Goal.TrimStart('/', '\\'), app.actor.list.User.Context));
-				await app.test.list.Open();
-			}
+			// Test mode: what it tests is the positional (a folder or a .test.goal), unless a path= is given; neither, the
+			// whole folder it starts in — the starting folder's, resolved once here: the build and the test runner compare
+			// paths with it.
+			if (On("test") && !start.property.Has("path"))
+				await userVars.Set("path", start.Goal == null ? app.filesystem.root
+					: global::app.type.item.path.@this.Resolve("/" + start.Goal.TrimStart('/', '\\'), app.actor.list.User.Context));
 
 			// Build mode (`plang build` normalizes the subcommand to `--build`).
 			if (On("build"))

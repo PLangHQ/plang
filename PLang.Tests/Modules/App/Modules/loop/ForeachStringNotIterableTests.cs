@@ -27,7 +27,7 @@ public class ForeachStringNotIterableTests
     public async Task Foreach_StringCollection_RunsBodyExactlyOnce()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("s", "hello");
+        await context.Variable.Set("s", "hello");
 
         // Body goal runs once per iteration.
         _app.goal.list.Add(new Goal(_app.type.list) { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", _app.actor.list.User.Context), Step = new GoalSteps(_app.type.list) });
@@ -53,7 +53,7 @@ public class ForeachStringNotIterableTests
     public async Task Foreach_StringCollection_BodyReceivesWholeString()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("s", "hello");
+        await context.Variable.Set("s", "hello");
 
         _app.goal.list.Add(new Goal(_app.type.list) { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", _app.actor.list.User.Context), Step = new GoalSteps(_app.type.list) });
 
@@ -76,7 +76,7 @@ public class ForeachStringNotIterableTests
     public async Task Foreach_NumberCollection_RunsBodyOnceWithNumber()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("n", 42);
+        await context.Variable.Set("n", 42);
 
         _app.goal.list.Add(new Goal(_app.type.list) { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", _app.actor.list.User.Context), Step = new GoalSteps(_app.type.list) });
 

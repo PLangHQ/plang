@@ -64,7 +64,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         this.Path = Path;
         this.Verbs = Verbs;
         this.Match = Match;
+        _glob = Match == Match.glob ? new global::app.type.item.path.Glob(Path, Comparison) : null;
     }
+
+    // a glob grant's pattern, made once at its birth
+    private readonly global::app.type.item.path.Glob? _glob;
 
     /// <summary>Every verb — the "fully granted" set an "a"/"y" answer mints.</summary>
     public static IReadOnlySet<Verb> AllVerbs { get; } =
@@ -97,7 +101,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private bool PathMatches(string requestPath) => Match switch
     {
         Match.exact => string.Equals(Path, requestPath, Comparison),
-        Match.glob  => Glob(requestPath),
+        Match.glob  => _glob!.Matches(requestPath),
         _ => false,
     };
 
@@ -105,59 +109,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         => global::app.type.item.path.scheme.@this.ParseScheme(Path) is "" or "file"
             ? global::app.type.item.path.@this.RootComparison
             : StringComparison.Ordinal;
-
-    /// <summary>
-    /// Whether the grant's glob <see cref="Path"/> covers <paramref name="candidate"/>, for file paths
-    /// (<c>/apps/*/file.txt</c>) and URLs (<c>https://api.example.com/*</c>) alike. <c>*</c> is any run within one
-    /// part; <c>**</c> any run across parts; <c>?</c> one character of a part. A part ends at each of the OS's
-    /// separators (<c>/</c> on Linux; <c>\</c> and <c>/</c> on Windows). The literal runs between wildcards compare
-    /// with the grant's <see cref="Comparison"/>, the exact grant's own, so a glob never folds case wider than it.
-    /// One pass per piece of the glob over the places the candidate has reached: no backtracking.
-    /// </summary>
-    private bool Glob(string candidate)
-    {
-        var comparison = Comparison;
-        var reach = new bool[candidate.Length + 1];
-        reach[0] = true;
-        for (int at = 0; at < Path.Length;)
-        {
-            var next = new bool[candidate.Length + 1];
-            if (Path[at] == '*' && at + 1 < Path.Length && Path[at + 1] == '*')
-            {
-                // across parts: every place from the first one reached
-                var from = System.Array.IndexOf(reach, true);
-                if (from < 0) return false;
-                for (int p = from; p <= candidate.Length; p++) next[p] = true;
-                at += 2;
-            }
-            else if (Path[at] == '*')
-            {
-                // within a part: a reached place, or one more character that isn't a separator
-                for (int p = 0; p <= candidate.Length; p++)
-                    next[p] = reach[p] || (p > 0 && next[p - 1] && !IsSeparator(candidate[p - 1]));
-                at++;
-            }
-            else if (Path[at] == '?')
-            {
-                for (int p = 0; p < candidate.Length; p++)
-                    if (reach[p] && !IsSeparator(candidate[p])) next[p + 1] = true;
-                at++;
-            }
-            else
-            {
-                var end = Path.IndexOfAny(['*', '?'], at);
-                var literal = Path.AsSpan(at, (end < 0 ? Path.Length : end) - at);
-                for (int p = 0; p + literal.Length <= candidate.Length; p++)
-                    if (reach[p] && candidate.AsSpan(p, literal.Length).Equals(literal, comparison)) next[p + literal.Length] = true;
-                at += literal.Length;
-            }
-            reach = next;
-        }
-        return reach[candidate.Length];
-
-        static bool IsSeparator(char c)
-            => c == global::app.Utils.PathHelper.DirectorySeparatorChar || c == global::app.Utils.PathHelper.AltDirectorySeparatorChar;
-    }
 
     /// <summary>A grant writes its own form in every view.</summary>
     /// <summary>

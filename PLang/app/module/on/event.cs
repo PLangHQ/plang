@@ -1,35 +1,35 @@
 namespace app.module.on;
 
 /// <summary>
-/// Binds a call on an event: <see cref="Action"/> runs <see cref="When"/> (before or after) <see cref="Event"/> —
-/// an item's event, reached by its path: <c>%!app.type.goal.on.start%</c> (each goal starting),
-/// <c>%!app.module.file.read.on.start%</c> (each file.read), <c>%!channels.audit.on.write%</c> (a channel writing).
-/// The call reads <c>%!event%</c>: the event, with <c>%!event!item%</c> (what it fired for) and
-/// <c>%!event!result%</c> (the result so far) — its own, for as long as it runs. Bound for this actor unless
-/// <see cref="Scope"/> is app. Answers the binding — <c>on.unbind</c> takes it off.
+/// Binds a call on a moment: <see cref="Action"/> runs <see cref="When"/> (before or after) <see cref="Event"/> — an
+/// item's moment, reached by its path: <c>%!app.type.goal.on.start%</c> (each goal starting),
+/// <c>%!app.module.file.read.on.start%</c> (each file.read), <c>%!channel.audit.on.write%</c> (a channel writing).
+/// The call reads <c>%!event%</c>: the event, with <c>%!event!item%</c> (what it ran for) and <c>%!event!data%</c> (the
+/// value so far; a failure is <c>%!error%</c>) — its own, for as long as it runs. Bound for this actor: a goal run as
+/// another actor never runs it. Answers the event — <c>on.unbind</c> takes it off.
 /// </summary>
 [Action("event", Cacheable = false)]
 public partial class OnEvent : IContext
 {
-    /// <summary>The event it binds on — an item's, by its path (<c>…on.start</c>, <c>…on.write</c>).</summary>
+    /// <summary>The moment it binds on — an item's, by its path (<c>…on.start</c>, <c>…on.write</c>).</summary>
     [IsNotNull]
-    public partial data.@this<global::app.@event.@this> Event { get; init; }
+    public partial data.@this<global::app.@event.on.@this> Event { get; init; }
 
-    /// <summary>Before the event, or after it.</summary>
+    /// <summary>Before the moment, or after it.</summary>
     [IsNotNull]
     public partial data.@this<global::app.type.item.choice.@this<global::app.@event.When>> When { get; init; }
 
-    /// <summary>The call run when it fires — a <c>goal.call</c> action, held whole.</summary>
+    /// <summary>The call run when it comes — a <c>goal.call</c> action, held whole.</summary>
     [IsNotNull]
     public partial data.@this<global::app.goal.step.action.@this> Action { get; init; }
 
-    /// <summary>Whose the binding is: this actor's (it fires while this actor runs), or the app's.</summary>
-    [Default(global::app.@event.binding.Scope.actor)]
-    public partial data.@this<global::app.type.item.choice.@this<global::app.@event.binding.Scope>> Scope { get; init; }
+    /// <summary>Whether a sub app takes the event in — it does, unless the step keeps it to this app (none).</summary>
+    [Default(global::app.@event.Sub.inherit)]
+    public partial data.@this<global::app.type.item.choice.@this<global::app.@event.Sub>> Sub { get; init; }
 
     /// <summary>
-    /// Build-time check: the event's path is walked hop by hop. A name the item's events refuse (<c>…on.before</c>)
-    /// is the answer — every item has the same events, so it can never bind. Any other hop that reaches nothing
+    /// Build-time check: the moment's path is walked hop by hop. A name the item's moments refuse (<c>…on.before</c>)
+    /// is the answer — every item has the same moments, so it can never bind. Any other hop that reaches nothing
     /// surfaces a warning on Channel("builder") naming it — the item may only exist at run (a channel a step before
     /// it creates).
     /// </summary>
@@ -52,30 +52,30 @@ public partial class OnEvent : IContext
         return Context.Ok();
     }
 
-    public async Task<data.@this<global::app.@event.binding.@this>> Start()
+    public async Task<data.@this<global::app.@event.@this>> Start()
     {
-        // The path navigates event ← its on ← the item. An item nothing is bound on answers the shared empty
-        // events, which don't know their item: the item is the navigation's, and it binds on its own events. A name
-        // the events refuse is that refusal; an item that isn't there is unreached; a path ending at something
-        // other than an event names no event.
+        // The path navigates to an item's moment, which knows its item. A name the moments refuse is that refusal; an
+        // item that isn't there is unreached; a path ending at something other than a moment names no event.
         var path = Event.Peek()?.ToString() ?? Event.Name;
         var reached = await Event.Follow(Context);
-        if (!reached.Success) return Context.Error<global::app.@event.binding.@this>(reached.Error!);
+        if (!reached.Success) return Context.Error<global::app.@event.@this>(reached.Error!);
         if (!reached.IsInitialized)
-            return Context.Error<global::app.@event.binding.@this>(new global::app.error.@this(
+            return Context.Error<global::app.@event.@this>(new global::app.error.@this(
                 $"on.event: '{path}' reaches nothing — the item isn't there to bind on", "EventUnreached", 404));
-        if (reached.Peek() is not global::app.@event.@this named || reached.Parent?.Parent?.Peek() is not global::app.type.item.@this item)
-            return Context.Error<global::app.@event.binding.@this>(global::app.@event.on.empty.Of(typeof(global::app.type.item.@this)).NoEvent(path));
+        // something other than a moment: the item reached refuses the path, naming the moments it has
+        if (reached.Peek() is not global::app.@event.on.@this { item: { } item } moment)
+            return Context.Error<global::app.@event.@this>((await Context.Actor!.@event.On(reached.Peek())).NoEvent(path));
 
         // each carrier is opened through its door: the first that doesn't resolve (a %variable% holding nothing, a
-        // name that is none of the choice's) is the answer, and nothing is held for it. Added to this app's events, never
-        // on the item: it fires in this app (and the sub apps it makes after) and goes with it. The binding holds this
-        // action, whose Action it runs when the event fires, and the actor that bound it.
-        return data.@this<global::app.@event.binding.@this>.From(await When.Use(when => Scope.Use(scope => Action.Use(_ =>
+        // name that is none of the choice's) is the answer, and nothing is held for it. Bound on this actor's events,
+        // never on the item: it runs while this actor runs (and in the sub apps it makes after, unless Sub keeps it here)
+        // and goes with it. The event holds this action, whose Action it runs when its moment comes, the actor that bound
+        // it, and whether a sub app takes it in.
+        return data.@this<global::app.@event.@this>.From(await When.Use(when => Action.Use(_ => Sub.Use(async sub =>
         {
-            var @event = Context.App.@event.Add(item).Add(named.Name);
-            return Task.FromResult<data.@this>(Context.Ok<global::app.@event.binding.@this>(@event[when.Value].Add(side =>
-                new global::app.@event.binding.action.@this(side, @event, __action!, Context.Actor!, scope.Value))));
+            var @event = await Context.Actor!.@event.Add(
+                new global::app.@event.call.@this(item, moment.Name, when.Value, __action!, Context.Actor!, sub.Value));
+            return (data.@this)Context.Ok<global::app.@event.@this>(@event);
         }))));
     }
 }

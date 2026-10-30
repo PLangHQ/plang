@@ -113,7 +113,7 @@ Notes are split across the topic docs below. Each section title maps to its doc 
 - The app's anchors are paths — `app.filesystem.root` / `app.filesystem.os` (`%!app.filesystem.root%`) → `bans.md`, `filesystem-permission.md`
 - An app is made from an origin (the code or an actor); its type list, module registry and goals are layers over it → `apps.md`
 - A sub app is made in its maker's folder or under it, never in its maker's stores folder; a sub app of a testing app tests from birth → `apps.md`
-- A binding made while a program runs is held on its actor (`actor.on`); `Own()` serves only read-time clauses → `apps.md`
+- An event bound while a program runs is held on its actor (`actor.event`), loaded on the first ask → `events.md`, `apps.md`
 - A run never writes an object its app shares; a type takes no history → `apps.md`
 - A birth makes only what's asked; each part at its first use, pinned by a bytes test → `apps.md`
 - `Tools/Bench` and its speed record; the packages and the SDK; the rebase trap → `apps.md`

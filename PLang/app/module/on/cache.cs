@@ -20,11 +20,10 @@ public partial class OnCache : IContext, IClause
 
     public void Bind(global::app.goal.step.action.@this clause, global::app.goal.step.action.@this action, global::app.@event.on.@this on)
     {
-        var start = on.Add("start");
-        start.before.Add(side => new global::app.@event.binding.clause.@this(
-            side, clause, action, (handler, _, result, context) => ((OnCache)handler).Begin(result, context)));
-        start.after.Add(side => new global::app.@event.binding.clause.@this(
-            side, clause, action, (handler, _, result, context) => ((OnCache)handler).End(result, context)));
+        on.Add(new global::app.@event.clause.@this("start", global::app.@event.When.before,
+            clause, action, (handler, _, result, context) => ((OnCache)handler).Begin(result, context)));
+        on.Add(new global::app.@event.clause.@this("start", global::app.@event.When.after,
+            clause, action, (handler, _, result, context) => ((OnCache)handler).End(result, context)));
     }
 
     // What this attempt's lookup found, held on the action's frame from before its start to after it.

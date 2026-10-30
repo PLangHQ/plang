@@ -14,7 +14,7 @@ public class RenderStoreViewTests
         var goal = Make.Goal(ctx, "MyGoal",
             Make.Step("write out \"Hello %name%\"",
                 Make.Action(ctx, "output", "write", ("Data", "Hello %name%"))));
-        ctx.Variable.Set(new global::app.data.@this("goal", goal, context: ctx));
+        await ctx.Variable.Set(new global::app.data.@this("goal", goal, context: ctx));
         var action = new Render(ctx)
         {
             Template = (global::app.type.item.text.@this)template,

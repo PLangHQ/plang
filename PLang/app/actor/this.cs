@@ -44,6 +44,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// folders.</summary>
     internal role.@this Role { get; }
 
+    /// <summary>The events this actor bound, and each item's moments for it — reached by plang only as the asker's,
+    /// <c>%!app.event%</c>: a goal run as another actor never sees them. A snapshot keeps the ones a program bound.</summary>
+    [global::app.Snapshot]
+    internal global::app.@event.list.@this @event { get; }
+
     /// <summary>The key this actor's row for the setting at <paramref name="address"/> is kept under in the settings'
     /// store (<c>user!app.test.setting</c>).</summary>
     internal string Row(string address) => $"{Name.ToLowerInvariant()}!{address}";
@@ -144,6 +149,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             : CancellationTokenSource.CreateLinkedTokenSource(parentToken);
         Context = new context.@this(app, this, parentToken: _cts.Token);
         _channels = new global::app.channel.list.@this(app, this, console);
+        @event = new(this, app.type.list[typeof(global::app.@event.list.@this)]);
         // %MyIdentity% and %Identity% are not set here: the memory is born holding them (variable.list), computed from
         // whoever asks, so an actor born at any time has them at once and no set — nor anything bound to one — runs.
     }
@@ -201,7 +207,21 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     global::app.module.code.@this? global::app.origin.@this.Code => App.Code;
 
-    global::app.@event.on.list.@this? global::app.origin.@this.@event => App.@event;
+    // this app's actor in the role, its events loaded first: the ones that reach a sub app, each asked, are what the sub
+    // app's actor of that role takes in
+    async ValueTask<IEnumerable<global::app.@event.@this>> global::app.origin.@this.@event(global::app.actor.role.@this role)
+    {
+        var actor = role.In(App.actor.list);
+        await actor.@event.Loaded();
+        return actor.@event.Items().Where(@event => @event.IsInheritable).ToList();
+    }
+
+    // a sub app reads only its own system/event/: its maker's system events came with the events it took in. A sub app
+    // over its maker's folder has none of its own — the folder's files are the maker's, already run there; read again
+    // they would bind twice
+    IEnumerable<global::app.type.item.path.@this> global::app.origin.@this.Events(global::app.@this app)
+        => app.filesystem.root.Equals(App.filesystem.root)
+            ? [] : [app.filesystem.root.Combine("system").Combine("event")];
 
     int global::app.origin.@this.Depth => App.Depth + 1;
 
@@ -209,7 +229,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     // types when it is read, so a goal its app reads reaches only its app's) and shares its folder (a .pr is then the same
     // file in both)
     async Task<global::app.data.@this?> global::app.origin.@this.Goal(global::app.type.item.path.@this source, global::app.@this app)
-        => app.HasCode || !Equals(app.filesystem.root, App.filesystem.root) ? null : await App.goal.list.Load(source);
+        => app.HasCode || !app.filesystem.root.Equals(App.filesystem.root) ? null : await App.goal.list.Load(source);
 
     Identity? global::app.origin.@this.Identity(global::app.@this app) => Identity ?? DefaultIdentity;
 

@@ -38,7 +38,12 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx, global::app.goal.@this? parent = null)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        var goal = new global::app.goal.@this(ctx.Context.App.type.list) { Parent = parent };
+        // the app it is: the reading app's for a file in the app's own folder (its system/ copy too), none for one the
+        // os's folder holds — judged by where the .pr lies, never by its plang address (both read /system/x); a sub-goal
+        // is its parent's
+        var app = parent != null ? parent.App
+            : ctx.Origin is { } read && read.IsUnder(ctx.Context.App.filesystem.os).Value ? null : ctx.Context.App;
+        var goal = new global::app.goal.@this(ctx.Context.App.type.list, app) { Parent = parent };
         var step = new global::app.goal.step.serializer.Reader(goal, goal.Step);   // born holding this goal and its steps
 
         var named = false;

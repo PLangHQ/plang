@@ -1,0 +1,14 @@
+/ An event bound after llm.query sits on llm.query's own list: the two questions below both ask the llm, so ShowCost
+/ runs twice.
+Start
+- set %count% = 0
+- after action llm.query, call ShowCost
+- [llm] user: 'What is 2+2? Reply with just the number'
+    write to %first%
+- [llm] user: 'What is 3+3? Reply with just the number'
+    write to %second%
+- assert %count% equals 2, "ShowCost ran after each llm.query step"
+
+/ The event's call.
+ShowCost
+- set %count% = %count% + 1

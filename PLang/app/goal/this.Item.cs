@@ -6,7 +6,7 @@ namespace app.goal;
 // the step/goal children); its serializer/Reader.cs reads itself back.
 [global::app.Attributes.PlangType("goal")]
 [global::app.Attributes.Format("", "application/plang-goal", ".pr", Store = true)]
-public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
+public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>, global::app.type.item.ILoad<@this>,
     global::app.type.item.IList<@this, global::app.goal.list.@this>, global::app.type.item.IEncode<@this>,
     global::app.type.item.IDecode<@this>, global::app.type.item.property.IOwner
@@ -87,8 +87,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public static bool IsSelected => true;
 
     /// <summary>The goal a text names, as seen from the goal the asker is running — its own chain, its folder, then
-    /// the app (<see cref="global::app.goal.list.@this.Find"/>); a goal not read yet loads. Any other value names
-    /// none.</summary>
+    /// the app (<see cref="global::app.goal.list.@this.Find"/>, in that goal's app); a goal not read yet loads. Any other
+    /// value names none.</summary>
     public static async System.Threading.Tasks.ValueTask<global::app.data.@this<@this>?> Select(global::app.type.item.@this key,
         global::app.actor.context.@this asker)
         => key is global::app.type.item.text.@this name

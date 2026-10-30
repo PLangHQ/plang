@@ -18,11 +18,10 @@ public partial class OnTimeout : IContext, IClause
 
     public void Bind(global::app.goal.step.action.@this clause, global::app.goal.step.action.@this action, global::app.@event.on.@this on)
     {
-        var start = on.Add("start");
-        start.before.Add(side => new global::app.@event.binding.clause.@this(
-            side, clause, action, (handler, _, result, context) => ((OnTimeout)handler).Begin(result, context)));
-        start.after.Add(side => new global::app.@event.binding.clause.@this(
-            side, clause, action, (handler, _, result, context) => ((OnTimeout)handler).End(result, context)));
+        on.Add(new global::app.@event.clause.@this("start", global::app.@event.When.before,
+            clause, action, (handler, _, result, context) => ((OnTimeout)handler).Begin(result, context)));
+        on.Add(new global::app.@event.clause.@this("start", global::app.@event.When.after,
+            clause, action, (handler, _, result, context) => ((OnTimeout)handler).End(result, context)));
     }
 
     // This attempt's deadline, held on the action's frame from before its start to after it; its after takes it

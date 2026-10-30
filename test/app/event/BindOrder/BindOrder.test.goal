@@ -1,0 +1,20 @@
+/ "before each goal" and "before goal Process" both run for Process, in the order they were bound. Each is the
+/ "each goal" event's call and One the named one's; One is a goal too, so the "each goal" event runs before it as well.
+Start
+- set %ran% = ""
+- before each goal, call Each
+- before goal Process, call One
+- call Process
+- assert %ran% equals "each,each,one,", "each goal first, then the one bound on Process, in the order bound"
+
+/ The goal both events run before.
+Process
+- set %done% = "yes"
+
+/ The "each goal" event's call.
+Each
+- set %ran% = "%ran%each,"
+
+/ The "before goal Process" event's call.
+One
+- set %ran% = "%ran%one,"

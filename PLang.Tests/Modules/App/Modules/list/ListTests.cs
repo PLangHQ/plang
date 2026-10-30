@@ -43,7 +43,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Add_AppendsToExistingList()
     {
         var (context, memory) = CreateContext();
-        memory.Set("myList", new List<object?> { "a", "b" });
+        await memory.Set("myList", new List<object?> { "a", "b" });
 
         var action = new Add(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Value = new global::app.data.@this("", "c", context: context)};
         var result = await action.Start();
@@ -58,7 +58,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Add_InsertsAtIndex()
     {
         var (context, memory) = CreateContext();
-        memory.Set("myList", new List<object?> { "a", "c" });
+        await memory.Set("myList", new List<object?> { "a", "c" });
 
         var action = new Add(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Value = new global::app.data.@this("", "b", context: context), At = (global::app.type.item.number.@this)1 };
         var result = await action.Start();
@@ -79,8 +79,8 @@ public class ListTests : System.IAsyncDisposable
         aList.Add(new global::app.data.@this("", 10L, context: context)); aList.Add(new global::app.data.@this("", 20L, context: context));
         var bList = new global::app.type.item.list.@this(context.App.type.list["list"]);
         bList.Add(new global::app.data.@this("", 50L, context: context)); bList.Add(new global::app.data.@this("", 60L, context: context));
-        memory.Set("a", aList);
-        memory.Set("b", bList);
+        await memory.Set("a", aList);
+        await memory.Set("b", bList);
 
         var action = new Add(context) { ListName = new app.type.item.variable.@this("a", context.App.type.list), Value = await memory.Get("b") };
         await (await action.Start()).IsSuccess();
@@ -105,7 +105,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Remove_ByValue()
     {
         var (context, memory) = CreateContext();
-        memory.Set("myList", new List<object?> { "a", "b", "c" });
+        await memory.Set("myList", new List<object?> { "a", "b", "c" });
 
         var action = new Remove(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Value = new global::app.data.@this("", "b", context: context)};
         var result = await action.Start();
@@ -119,7 +119,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Remove_ByIndex()
     {
         var (context, memory) = CreateContext();
-        memory.Set("myList", new List<object?> { "a", "b", "c" });
+        await memory.Set("myList", new List<object?> { "a", "b", "c" });
 
         var action = new Remove(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), At = (global::app.type.item.number.@this)0 };
         var result = await action.Start();
@@ -135,7 +135,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Get_ReturnsItemAtIndex()
     {
         var (context, memory) = CreateContext();
-        memory.Set("myList", new List<object?> { "a", "b", "c" });
+        await memory.Set("myList", new List<object?> { "a", "b", "c" });
 
         var action = new Get(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Index = (global::app.type.item.number.@this)1 };
         var result = await action.Start();
@@ -148,7 +148,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Get_OutOfRange_Fails()
     {
         var (context, memory) = CreateContext();
-        memory.Set("myList", new List<object?> { "a" });
+        await memory.Set("myList", new List<object?> { "a" });
 
         var action = new Get(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Index = (global::app.type.item.number.@this)5 };
         var result = await action.Start();
@@ -162,7 +162,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Get_WithNoIndex_IsAnError_NotACrash()
     {
         var (context, memory) = CreateContext();
-        memory.Set("myList", new List<object?> { "a" });
+        await memory.Set("myList", new List<object?> { "a" });
 
         var action = new Get(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Index = global::app.data.@this<global::app.type.item.number.@this>.Uninitialized("index", context) };
         var result = await action.Start();
@@ -176,7 +176,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Count_OfAText_IsNotAList()
     {
         var (context, memory) = CreateContext();
-        memory.Set("word", "abc");
+        await memory.Set("word", "abc");
 
         var result = await new Count(context) { ListName = new app.type.item.variable.@this("word", context.App.type.list) }.Start();
 
@@ -191,7 +191,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Count_ReturnsList()
     {
         var (context, memory) = CreateContext();
-        memory.Set("myList", new List<object?> { "a", "b" });
+        await memory.Set("myList", new List<object?> { "a", "b" });
 
         var action = new Count(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list) };
         var result = await action.Start();
@@ -206,7 +206,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Contains_ReturnsTrue()
     {
         var (context, memory) = CreateContext();
-        memory.Set("myList", new List<object?> { "a", "b" });
+        await memory.Set("myList", new List<object?> { "a", "b" });
 
         var action = new Contains(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Value = new global::app.data.@this("", "a", context: context)};
         var result = await action.Start();
@@ -219,7 +219,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Contains_ReturnsFalse()
     {
         var (context, memory) = CreateContext();
-        memory.Set("myList", new List<object?> { "a", "b" });
+        await memory.Set("myList", new List<object?> { "a", "b" });
 
         var action = new Contains(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Value = new global::app.data.@this("", "z", context: context)};
         var result = await action.Start();
@@ -233,7 +233,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task First_ReturnsFirstItem()
     {
         var (context, memory) = CreateContext();
-        memory.Set("myList", new List<object?> { "x", "y", "z" });
+        await memory.Set("myList", new List<object?> { "x", "y", "z" });
 
         var action = new First(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list) };
         var result = await action.Start();
@@ -245,7 +245,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Last_ReturnsLastItem()
     {
         var (context, memory) = CreateContext();
-        memory.Set("myList", new List<object?> { "x", "y", "z" });
+        await memory.Set("myList", new List<object?> { "x", "y", "z" });
 
         var action = new Last(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list) };
         var result = await action.Start();
@@ -259,7 +259,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task IndexOf_FindsItem()
     {
         var (context, memory) = CreateContext();
-        memory.Set("myList", new List<object?> { "a", "b", "c" });
+        await memory.Set("myList", new List<object?> { "a", "b", "c" });
 
         var action = new IndexOf(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Value = new global::app.data.@this("", "b", context: context)};
         var result = await action.Start();
@@ -273,7 +273,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Sort_SortsAscending()
     {
         var (context, memory) = CreateContext();
-        memory.Set("myList", new List<object?> { "c", "a", "b" });
+        await memory.Set("myList", new List<object?> { "c", "a", "b" });
 
         // the Sort door (list.sort action replaced by list.query) — it answers a NEW sorted list
         var listValue = (global::app.type.item.list.@this)(await (await context.Variable.Get("myList")).Value())!;
@@ -291,7 +291,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Join_JoinsWithSeparator()
     {
         var (context, memory) = CreateContext();
-        memory.Set("myList", new List<object?> { "a", "b", "c" });
+        await memory.Set("myList", new List<object?> { "a", "b", "c" });
 
         var action = new Join(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Separator = new global::app.type.item.separator.@this("-", context.App.type.list[typeof(global::app.type.item.separator.@this)]) };
         var result = await action.Start();
@@ -320,7 +320,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Reverse_ReversesOrder()
     {
         var (context, memory) = CreateContext();
-        memory.Set("myList", new List<object?> { 1, 2, 3 });
+        await memory.Set("myList", new List<object?> { 1, 2, 3 });
 
         var action = new Reverse(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list) };
         var result = await action.Start();
@@ -336,7 +336,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Unique_RemovesDuplicates()
     {
         var (context, memory) = CreateContext();
-        memory.Set("myList", new List<object?> { "a", "b", "a", "c", "b" });
+        await memory.Set("myList", new List<object?> { "a", "b", "a", "c", "b" });
 
         var listValue = (global::app.type.item.list.@this)(await (await context.Variable.Get("myList")).Value())!;
         var result = await listValue.Unique(context);   // the Unique door (list.unique action replaced by list.query)
@@ -370,7 +370,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Any_MatchFound_ReturnsTrue()
     {
         var (context, memory) = CreateContext();
-        memory.Set("items", new List<object?>
+        await memory.Set("items", new List<object?>
         {
             new Dictionary<string, object?> { ["level"] = "low" },
             new Dictionary<string, object?> { ["level"] = "high" }
@@ -396,7 +396,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Where_OnAList_KeepsTheElementsWhoseFieldHolds()
     {
         var (context, memory) = CreateContext();
-        memory.Set("users", new List<object?>
+        await memory.Set("users", new List<object?>
         {
             new Dictionary<string, object?> { ["name"] = "a", ["age"] = 30L },
             new Dictionary<string, object?> { ["name"] = "b", ["age"] = 10L },
@@ -416,7 +416,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Where_And_Any_OverAMixedList_OnlyAFieldThatHoldsCounts()
     {
         var (context, memory) = CreateContext();
-        memory.Set("mixed", new List<object?>
+        await memory.Set("mixed", new List<object?>
         {
             new Dictionary<string, object?> { ["age"] = 30L },
             5L,
@@ -458,7 +458,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Where_AFieldNoItemHas_IsAnError_NamingItAndTheFieldsThereAre()
     {
         var (context, memory) = CreateContext();
-        memory.Set("users", new List<object?>
+        await memory.Set("users", new List<object?>
         {
             new Dictionary<string, object?> { ["name"] = "a", ["age"] = 30L },
             new Dictionary<string, object?> { ["name"] = "b" },
@@ -484,7 +484,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Where_AFieldSomeItemsHave_FiltersByTheItemsThatHaveIt()
     {
         var (context, memory) = CreateContext();
-        memory.Set("users", new List<object?>
+        await memory.Set("users", new List<object?>
         {
             new Dictionary<string, object?> { ["name"] = "a", ["age"] = 30L },
             new Dictionary<string, object?> { ["name"] = "b" },
@@ -522,7 +522,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Contains_AnUnsetVariable_IsAnError()
     {
         var (context, memory) = CreateContext();
-        memory.Set("items", new List<object?> { "%needle%", "b" });
+        await memory.Set("items", new List<object?> { "%needle%", "b" });
 
         var goal = await RealGoalLoad.Read(context.App, BuiltStep("list.contains %items% %needle%", "contains",
             Reference("ListName", "variable", "items"), Reference("Value", "item", "needle")));
@@ -537,8 +537,8 @@ public class ListTests : System.IAsyncDisposable
     public async Task Where_OnAnEmptyList_KeepsNothing_AndOnADictWithoutTheField_IsAnError()
     {
         var (context, memory) = CreateContext();
-        memory.Set("nobody", new List<object?>());
-        memory.Set("user", new Dictionary<string, object?> { ["age"] = 30L });
+        await memory.Set("nobody", new List<object?>());
+        await memory.Set("user", new Dictionary<string, object?> { ["age"] = 30L });
 
         var empty = await WhereOf(context, "nobody", "agee", "==", 30L);
         await empty.IsSuccess();
@@ -554,7 +554,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Where_OnADict_KeepsItOrNothing()
     {
         var (context, memory) = CreateContext();
-        memory.Set("user", new Dictionary<string, object?> { ["age"] = 30L });
+        await memory.Set("user", new Dictionary<string, object?> { ["age"] = 30L });
 
         var kept = await WhereOf(context, "user", "age", ">", 20L);
         var dropped = await WhereOf(context, "user", "age", "<", 20L);
@@ -570,7 +570,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Remove_OutOfRange_IsIndexOutOfRange()
     {
         var (context, memory) = CreateContext();
-        memory.Set("myList", new List<object?> { "a" });
+        await memory.Set("myList", new List<object?> { "a" });
 
         var result = await new Remove(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list),
             Value = new global::app.data.@this("", null, context: context), At = (global::app.type.item.number.@this)5 }.Start();
@@ -588,7 +588,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Any_NoMatch_ReturnsFalse()
     {
         var (context, memory) = CreateContext();
-        memory.Set("items", new List<object?>
+        await memory.Set("items", new List<object?>
         {
             new Dictionary<string, object?> { ["level"] = "low" },
             new Dictionary<string, object?> { ["level"] = "medium" }
@@ -609,7 +609,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Any_EmptyList_ReturnsFalse()
     {
         var (context, memory) = CreateContext();
-        memory.Set("items", new List<object?>());
+        await memory.Set("items", new List<object?>());
 
         var action = new Any(context) { ListName = new app.type.item.variable.@this("items", context.App.type.list),
             Key = (global::app.type.item.text.@this)"level",
@@ -626,7 +626,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Any_NotEquals_ReturnsTrue()
     {
         var (context, memory) = CreateContext();
-        memory.Set("items", new List<object?>
+        await memory.Set("items", new List<object?>
         {
             new Dictionary<string, object?> { ["status"] = "active" },
             new Dictionary<string, object?> { ["status"] = "inactive" }
@@ -649,7 +649,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Group_GroupsByKey()
     {
         var (context, memory) = CreateContext();
-        memory.Set("orders", new List<object?>
+        await memory.Set("orders", new List<object?>
         {
             new Dictionary<string, object?> { ["customer"] = "Alice", ["total"] = 50 },
             new Dictionary<string, object?> { ["customer"] = "Bob", ["total"] = 30 },
@@ -683,7 +683,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Group_EmptyList_ReturnsEmpty()
     {
         var (context, memory) = CreateContext();
-        memory.Set("items", new List<object?>());
+        await memory.Set("items", new List<object?>());
 
         var result = await GroupOf(context, "items", "category");
 
@@ -696,7 +696,7 @@ public class ListTests : System.IAsyncDisposable
     public async Task Group_MissingKey_GroupsUnderEmpty()
     {
         var (context, memory) = CreateContext();
-        memory.Set("items", new List<object?>
+        await memory.Set("items", new List<object?>
         {
             new Dictionary<string, object?> { ["name"] = "Alice" },
             new Dictionary<string, object?> { ["name"] = "Bob" }
@@ -718,7 +718,7 @@ public class ListTests : System.IAsyncDisposable
     {
         var (context, memory) = CreateContext();
         var nested = new List<object?> { 1, new List<object?> { 2, 3 }, new List<object?> { 4, new List<object?> { 5 } } };
-        memory.Set("myList", nested);
+        await memory.Set("myList", nested);
 
         var action = new Flatten(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list) };
         var result = await action.Start();

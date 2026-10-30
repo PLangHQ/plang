@@ -1,0 +1,88 @@
+/ event-action: what an event runs is an event, held by the actor that bound it, in lists each goal, step and action
+/ makes on its first run. This goal is the plan's index and its proof: each comment a behaviour, the test under it
+/ proves it. The text is start.md.
+Start
+- call Stage1
+- call Stage2
+- call Stage3
+- call Stage4
+- call Stage5
+- call Stage6
+- call Stage7
+- call Stage8
+- call BoyScout
+
+Stage1
+/ on.event answers the event; on.unbind takes it off, and it no longer runs — plang test
+/ /plan/event-action/module/on/UnbindTakesTheEvent
+- call /plan/event-action/module/on/UnbindTakesTheEvent
+/ the surface golden and the decider fixtures are re-pinned under this decision — C#
+
+Stage2
+/ "before each goal" and "before goal Process" both run for Process, in the order they were bound — plang test
+/ /plan/event-action/app/event/BindOrder
+- call /plan/event-action/app/event/BindOrder
+/ "after each goal, call XX" then "after each goal, call YY": XX runs before YY — plang test
+/ /plan/event-action/app/event/AfterInBindOrder
+- call /plan/event-action/app/event/AfterInBindOrder
+/ a goal run as the system doesn't run the user's events — plang test
+/ /plan/event-action/app/event/OtherActorDoesntSee
+- call /plan/event-action/app/event/OtherActorDoesntSee
+/ an app's "before each goal" doesn't run for a system/ goal — plang test
+/ /plan/event-action/app/event/SystemGoalsLeftAlone
+- call /plan/event-action/app/event/SystemGoalsLeftAlone
+/ "after llm.query" runs for each llm.query step — plang test
+/ /plan/event-action/app/event/AfterEachLlmQuery
+- call /plan/event-action/app/event/AfterEachLlmQuery
+/ an event bound after a goal's first run joins its list and runs at its next start — plang test
+/ /plan/event-action/app/event/LateEventJoins
+- call /plan/event-action/app/event/LateEventJoins
+/ "before each http action" runs for http.get and http.post, not for file.read — C#
+/ "before each goal in api/*, call CheckIdentity" runs for /api/Orders, not for /Process — plang test
+/ /plan/event-action/app/event/PatternApi
+- call /plan/event-action/app/event/PatternApi
+/ under event.setting.goal=app a loop of 1,000 that reads %!error% runs Log once; under all, 1,001 times — C#
+/ the tester's four variable tests: a watch miss near the nothing-bound bytes; 10,000 distinct names hold no more;
+/ an event on count fires on its next set; unbinding the last one removes the entry — C#
+/ %!app.event% lists the running actor's events — plang test
+/ /plan/event-action/app/event/ListsTheActorsEvents
+- call /plan/event-action/app/event/ListsTheActorsEvents
+
+Stage3
+/ on a cache hit the app's before events still ran — C#
+/ "on error ignore" never puts an empty result in the cache — C#
+/ the step's own "on error" takes a failure before the app's "on error" event sees it — C#
+
+Stage4
+/ the debug watch, the test runner's timing, coverage and a mock each still run, and none is in a snapshot — C#
+
+Stage5
+/ the os's /system/event/Hello.goal event fires at an app's start, and not with event.setting.system=skip — C#
+/ (a plang test runs in a sub app, whose app object isn't the root's, so it can't see the root's start)
+/ a sub app's own system/event/Hello.goal replaces the inherited Hello: only its own fires — C#
+
+Stage6
+/ an event bound with Sub=none doesn't run in a sub app; one bound without it does — plang test
+/ /plan/event-action/app/event/SubNoneStaysHome
+- call /plan/event-action/app/event/SubNoneStaysHome
+/ a snapshot keeps an event's Sub, and a resumed app's sub app honours it — C#
+
+Stage7
+/ "return false, 2 levels" ends two goals, and the caller of the second goes on — plang test
+/ /plan/event-action/app/goal/ReturnTwoLevels
+- call /plan/event-action/app/goal/ReturnTwoLevels
+/ a parent app's goal call goes up the link with its parameters — C#
+
+Stage8
+/ a platform's event calls Meter, Meter calls Record: inside an uploaded sub app with its own Record.goal, the
+/ platform's Record runs — plang test
+/ /plan/event-action/app/goal/CallerAppFindsTheGoal
+- call /plan/event-action/app/goal/CallerAppFindsTheGoal
+/ an app's own system/…/Record.goal still replaces the os's for an os goal's call — plang test
+/ /plan/event-action/app/goal/AppOverridesOsGoal
+- call /plan/event-action/app/goal/AppOverridesOsGoal
+/ a sub app's own system/event/Hello.goal replaces only the inherited Hello — C#
+
+BoyScout
+/ after on.unbind takes the last event off an item, %!app.event% no longer lists that item — C#
+/ two events made by one on.event step both run after a resume — C#

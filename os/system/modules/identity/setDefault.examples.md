@@ -1,2 +1,2 @@
 Step text: `set default identity to 'alice'`
-Properties: `{"Name": "alice"}`
+Formal: `identity.setDefault(Name="alice")`

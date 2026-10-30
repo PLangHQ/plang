@@ -1,4 +1,4 @@
-/ after action captures that action fired
+/ An event bound after output.write runs CaptureWrite once the write is done.
 Start
 - set %actionFired% = false
 - after action output.write call CaptureWrite

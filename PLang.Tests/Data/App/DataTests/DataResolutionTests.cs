@@ -23,9 +23,9 @@ public class DataResolutionTests
     {
         var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "v", "%x%");
 
-        _app.actor.list.User.Context.Variable.Set("x", "first");
+        await _app.actor.list.User.Context.Variable.Set("x", "first");
         var first = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
-        _app.actor.list.User.Context.Variable.Set("x", "second");
+        await _app.actor.list.User.Context.Variable.Set("x", "second");
         var second = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
         await Assert.That((await first.Value())?.ToString()).IsEqualTo("first");
@@ -41,7 +41,7 @@ public class DataResolutionTests
         var seen = new List<string?>();
         for (int i = 0; i < 3; i++)
         {
-            _app.actor.list.User.Context.Variable.Set("i", $"value-{i}");
+            await _app.actor.list.User.Context.Variable.Set("i", $"value-{i}");
             seen.Add((await data.Value<global::app.type.item.text.@this>())?.Clr<string>());
         }
 
@@ -56,11 +56,11 @@ public class DataResolutionTests
     public async Task SubGoalCall_EachGoalSeesOwnResolvedView()
     {
         var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "v", "%scope%");
-        _app.actor.list.User.Context.Variable.Set("scope", "parent");
+        await _app.actor.list.User.Context.Variable.Set("scope", "parent");
         var parentView = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
         await using var subApp = new global::app.@this("/sub", global::PLang.Tests.Parent.Actor).Testing();
-        subApp.actor.list.User.Context.Variable.Set("scope", "sub");
+        await subApp.actor.list.User.Context.Variable.Set("scope", "sub");
         // A Data resolves its template against its own Context — the sub scope reads a copy
         // born in it, the way a goal call hands the value to the sub-goal.
         var inSub = data.Copy(subApp.actor.list.User.Context);
@@ -77,7 +77,7 @@ public class DataResolutionTests
     [Test]
     public async Task FullVarMatch_VariableHoldsData_UnwrappedCleanly()
     {
-        _app.actor.list.User.Context.Variable.Set("count", 42);
+        await _app.actor.list.User.Context.Variable.Set("count", 42);
         var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "c", "%count%");
 
         var result = data.As<global::app.type.item.number.@this>(await data.Value<global::app.type.item.number.@this>());
@@ -94,11 +94,11 @@ public class DataResolutionTests
         };
         var data = TemplateStamp.Container("messages", raw, _app.actor.list.User.Context);
 
-        _app.actor.list.User.Context.Variable.Set("comment", "value1");
+        await _app.actor.list.User.Context.Variable.Set("comment", "value1");
         var first = data.As<global::app.type.item.list.@this<global::app.module.llm.type.message.@this>>(await data.Value<global::app.type.item.list.@this<global::app.module.llm.type.message.@this>>());
         await Assert.That(first.GetValue<List<global::app.module.llm.type.message.@this>>()![0].Content).IsEqualTo("value1");
 
-        _app.actor.list.User.Context.Variable.Set("comment", "value2");
+        await _app.actor.list.User.Context.Variable.Set("comment", "value2");
         var second = data.As<global::app.type.item.list.@this<global::app.module.llm.type.message.@this>>(await data.Value<global::app.type.item.list.@this<global::app.module.llm.type.message.@this>>());
         await Assert.That(second.GetValue<List<global::app.module.llm.type.message.@this>>()![0].Content).IsEqualTo("value2");
     }
@@ -107,7 +107,7 @@ public class DataResolutionTests
     [Test]
     public async Task ConcurrentAsT_OnSharedParameterData_NoRace()
     {
-        _app.actor.list.User.Context.Variable.Set("x", "value");
+        await _app.actor.list.User.Context.Variable.Set("x", "value");
         var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "v", "%x%");
 
         var tasks = Enumerable.Range(0, 50).Select(_ => Task.Run(async () =>

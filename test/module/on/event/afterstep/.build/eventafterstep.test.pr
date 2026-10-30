@@ -6,7 +6,8 @@
       "index": 0,
       "text": "set %afterCount% = 0",
       "line": {
-        "number": 3
+        "number": 3,
+        "indent": 0
       },
       "code": [
         {
@@ -61,7 +62,8 @@
       "index": 1,
       "text": "after step call TrackAfterStep",
       "line": {
-        "number": 4
+        "number": 4,
+        "indent": 0
       },
       "code": [
         {
@@ -71,7 +73,7 @@
             {
               "name": "Event",
               "type": {
-                "name": "event",
+                "name": "on",
                 "template": "plang"
               },
               "value": "%!app.type.step.on.start%",
@@ -120,22 +122,18 @@
                     "type": {
                       "name": "goal"
                     },
-                    "value": "TrackAfterStep"
+                    "value": "/module/on/event/afterstep/TrackAfterStep"
                   }
                 ]
               }
             }
-          ],
-          "default": [
-            {
-              "name": "scope",
-              "type": {
-                "name": "choice",
-                "kind": "scope"
-              },
-              "value": "actor"
-            }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 1's saved code no longer holds — rebuilt: step 1 'after step call TrackAfterStep': on.event: the default frozen for 'scope' is no option of this action any more."
         }
       ]
     },
@@ -143,7 +141,8 @@
       "index": 2,
       "text": "set %value% = \"hello\"",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -198,7 +197,8 @@
       "index": 3,
       "text": "set %value2% = \"world\"",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -253,7 +253,8 @@
       "index": 4,
       "text": "assert %afterCount% is greater than 0",
       "line": {
-        "number": 7
+        "number": 7,
+        "indent": 0
       },
       "code": [
         {
@@ -290,9 +291,7 @@
       ]
     }
   ],
-  "child": [],
   "visibility": "Public",
-  "path": "/module/on/event/afterstep/EventAfterStep.test.goal",
-  "prPath": "/module/on/event/afterstep/.build/eventafterstep.test.pr",
+  "file": "EventAfterStep.test.goal",
   "hash": "9569890aff276c99ededb565ab780471f3b97e360710a71407c88b4cf517358c"
 }

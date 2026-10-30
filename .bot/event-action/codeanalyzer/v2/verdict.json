@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "2d10af80f: findings 2-7 closed; finding 1 half closed: sub request 549 -> 524 KB against 496 (+28, band 10): 13 KB of type/kind minting in the actors first-ask load, 13 KB of per-actor lists (decision 10)" }

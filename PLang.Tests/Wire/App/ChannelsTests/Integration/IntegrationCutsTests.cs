@@ -52,17 +52,17 @@ public class IntegrationCutsTests
         app.actor.list.User.Channel.Register(metrics);
 
         // Before a write to audit: refuse a value containing "REJECT" — the refusal is the write's answer.
-        app.@event.Add(audit).Add("write")[global::app.@event.When.before].Add(side => new global::app.@event.binding.@this(side, (_, payload, ctx) =>
+        await app.actor.list.User.@event.Add(new global::app.@event.code.@this(audit, "write", global::app.@event.When.before, (_, payload, ctx) =>
             Task.FromResult(payload.Peek()?.ToString() is { } s && s.Contains("REJECT")
                 ? ctx.Error(new global::app.error.@this("rejected by approval", "Rejected", 400))
-                : ctx.Ok()), app.actor.list.User, global::app.@event.binding.Scope.actor, global::app.@event.binding.@this.Always));
+                : ctx.Ok()), app.actor.list.User, global::app.@event.code.@this.Always));
 
         // After a write to audit (it runs on every result): count the writes that went through.
-        app.@event.Add(audit).Add("write")[global::app.@event.When.after].Add(side => new global::app.@event.binding.@this(side, async (_, result, ctx) =>
+        await app.actor.list.User.@event.Add(new global::app.@event.code.@this(audit, "write", global::app.@event.When.after, async (_, result, ctx) =>
         {
             if (result.Success) await metrics.WriteAsync(app.Ok("+1"));
             return ctx.Ok();
-        }, app.actor.list.User, global::app.@event.binding.Scope.actor, global::app.@event.binding.@this.Always));
+        }, app.actor.list.User, global::app.@event.code.@this.Always));
 
         var ok = await audit.WriteAsync(app.Ok("ok-payload"));
         var bad = await audit.WriteAsync(app.Ok("REJECT-this"));

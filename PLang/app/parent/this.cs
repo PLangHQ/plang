@@ -43,25 +43,23 @@ public sealed class @this : global::app.type.item.@this
                 new goals(this, parent.Context.App.type.list[typeof(goals)]), parent: parent))
             : base.Get(parent, key);
 
-    /// <summary>Runs the parent's goal <paramref name="goal"/> with the call's own arguments (not its callers'): up to the parent,
-    /// back with its result. A goal call that waits as long as a goal may (ten minutes).</summary>
-    internal async Task<global::app.data.@this> Run(string goal, global::app.actor.context.@this context)
+    /// <summary>Runs the parent's goal <paramref name="goal"/> with its call's own <paramref name="arguments"/> (not its
+    /// callers'): up to the parent, back with its result. A goal call that waits as long as a goal may (ten minutes).</summary>
+    internal async Task<global::app.data.@this> Run(string goal, IEnumerable<global::app.data.@this> arguments,
+        global::app.actor.context.@this context)
     {
         if (Link is not { } link)
             return context.Error(new global::app.error.@this(
                 $"There is no app to call {goal} in: nothing links this plang to it", "NoParent", 404));
         var parameters = new JsonObject();
-        // the goal's own frame: born with what its call passed
-        if (context.call.Scope is { } frame)
-            foreach (var name in frame.Arguments)
-                if (frame.TryGet(name, out var argument))
-                {
-                    // an argument that can't be written (a %variable% inside it that holds nothing) is the answer:
-                    // half of it must not go up as if it were the whole
-                    var (json, failed) = await Json(await argument.Follow(context), context);
-                    if (failed != null) return failed;
-                    parameters[name] = json;
-                }
+        foreach (var argument in arguments)
+        {
+            // an argument that can't be written (a %variable% inside it that holds nothing) is the answer: half of it
+            // must not go up as if it were the whole
+            var (json, failed) = await Json(await argument.Follow(context), context);
+            if (failed != null) return failed;
+            parameters[argument.Name] = json;
+        }
         var id = Guid.NewGuid().ToString("N")[..12];
         var answer = new TaskCompletionSource<JsonElement>(TaskCreationOptions.RunContinuationsAsynchronously);
         waiting[id] = answer;
@@ -110,6 +108,6 @@ public sealed class @this : global::app.type.item.@this
 
         public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this data, string key)
             => System.Threading.Tasks.ValueTask.FromResult(new global::app.data.@this(key,
-                new global::app.goal.@this(data.Context.App.type.list) { Name = key, Elsewhere = parent }, parent: data));
+                new global::app.parent.goal.@this(key, parent, data.Context.App.type.list), parent: data));
     }
 }

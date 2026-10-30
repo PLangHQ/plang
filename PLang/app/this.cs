@@ -134,10 +134,14 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     [global::app.LlmBuilder]
     public global::app.data.@this? data(global::app.actor.context.@this context) => context.Variable.Peek("!data");
 
-    /// <summary>This app's events — <c>%!app.event%</c>: what was bound on each item while its programs ran, its maker's
-    /// taken in at its birth. A snapshot keeps the bindings this app made.</summary>
-    [global::app.LlmBuilder, global::app.Snapshot]
-    public global::app.@event.on.list.@this @event { get; }
+    /// <summary>The events of <paramref name="context"/>'s actor — <c>%!app.event%</c> answers as its asker, loaded first:
+    /// its system events, what its maker's actor of its role had bound when they first loaded, and what it bound.</summary>
+    [global::app.LlmBuilder]
+    public async System.Threading.Tasks.ValueTask<global::app.@event.list.@this> @event(global::app.actor.context.@this context)
+    {
+        await context.Actor!.@event.Loaded();
+        return context.Actor!.@event;
+    }
 
     /// <summary>
     /// When the app was started.
@@ -355,8 +359,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // the code providers, the built-ins registered at the registry's first use
         // a sub app's, a layer over its maker's
         Code = new AppCode(actor.list.System.Context, origin.Code);
-        // this app's events, born holding its maker's bindings, each taken in as its own
-        @event = new(this, origin.@event);
         // the actions, a layer of its own over the ones the origin answers
         module = new(this, origin.Module(this));
         goal = new(this);
@@ -564,9 +566,10 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // User code executes under the User actor's context — the app starts running through its on.start: a
         // before that fails or cancels is the answer and the goal doesn't start; every after runs on the result.
         var user = actor.list.User.Context;
-        var answer = await on.start.Before(this, user);
+        var on = await actor.list.User.@event.On(this);
+        var answer = await on.before.Start(this, user);
         var result = answer is { Success: false } or { Handled: true } ? answer : await goal.Start(user);
-        return await on.start.After(this, result, user);
+        return await on.after.Start(this, result, user);
     }
 
     public async ValueTask DisposeAsync()

@@ -224,19 +224,20 @@ public class ErrorHandleTests
 
     // An action whose every attempt is `attempt`: a binding before its start answers in the dispatch's place
     // (a success cancels the dispatch; a failure is the attempt's) — each retry is another attempt.
-    private PrAction Attempting(Func<Task<global::app.data.@this>> attempt, params PrAction[] clauses)
+    private async Task<PrAction> Attempting(Func<Task<global::app.data.@this>> attempt, params PrAction[] clauses)
     {
         var action = new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("variable"), Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>()),
         };
-        _app.@event.Add(action).Add("start")[global::app.@event.When.before].Add(side => new global::app.@event.binding.@this(side, async (_, _, _) =>
+        // an action's list is its catalog action's: the mock is bound there, for this action alone
+        await _app.actor.list.User.@event.Add(new global::app.@event.code.@this(action.Module[action.Name]!, "start", global::app.@event.When.before, async (_, _, _) =>
         {
             var answer = await attempt();
             if (answer.Success) answer.Handled = true;
             return answer;
-        }, _app.actor.list.User, global::app.@event.binding.Scope.actor, global::app.@event.binding.@this.Always));
+        }, _app.actor.list.User, (fired, _) => fired == action));
         return global::PLang.Tests.Shared.Make.With(action, clauses);
     }
 
@@ -253,7 +254,7 @@ public class ErrorHandleTests
                 new global::app.error.ServiceError("persistent failure", "TransientError", 503), Ctx));
         };
 
-        var result = await Attempting(persistentlyFailing, ErrorHandler(("retryCount", 2), ("order", "RetryFirst"))).Start(Ctx);
+        var result = await (await Attempting(persistentlyFailing, ErrorHandler(("retryCount", 2), ("order", "RetryFirst")))).Start(Ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).IsEqualTo("persistent failure");
@@ -272,7 +273,7 @@ public class ErrorHandleTests
                 new global::app.error.ServiceError("failure", "TransientError", 503), Ctx));
         };
 
-        var result = await Attempting(persistentlyFailing, ErrorHandler(("retryCount", 1), ("order", "GoalFirst"))).Start(Ctx);
+        var result = await (await Attempting(persistentlyFailing, ErrorHandler(("retryCount", 1), ("order", "GoalFirst")))).Start(Ctx);
 
         await result.IsFailure();
         await Assert.That(callCount).IsEqualTo(2); // 1 initial + 1 retry
@@ -290,8 +291,8 @@ public class ErrorHandleTests
                 new global::app.error.ServiceError("intentional failure", "TransientError", 503), Ctx));
         };
 
-        var result = await Attempting(persistentlyFailing,
-            ErrorHandler(("retryCount", 2), ("order", "GoalFirst"), ("ignore", true))).Start(Ctx);
+        var result = await (await Attempting(persistentlyFailing,
+            ErrorHandler(("retryCount", 2), ("order", "GoalFirst"), ("ignore", true)))).Start(Ctx);
 
         await result.IsSuccess();
         await Assert.That(callCount).IsEqualTo(3); // 1 initial + 2 retries, then ignored
@@ -306,8 +307,8 @@ public class ErrorHandleTests
         var fix = global::PLang.Tests.Shared.Make.Action(Ctx, "variable", "set",
             global::PLang.Tests.Shared.Make.Param(Ctx, "Name", "fixed", "variable"), ("Value", true));
 
-        var result = await Attempting(persistentlyFailing, global::PLang.Tests.Shared.Make.Action(Ctx, "on", "error",
-            ("retryCount", 1), ("order", "GoalFirst"), global::PLang.Tests.Shared.Make.Recovery(Ctx, fix))).Start(Ctx);
+        var result = await (await Attempting(persistentlyFailing, global::PLang.Tests.Shared.Make.Action(Ctx, "on", "error",
+            ("retryCount", 1), ("order", "GoalFirst"), global::PLang.Tests.Shared.Make.Recovery(Ctx, fix)))).Start(Ctx);
 
         await result.IsSuccess();
         await Assert.That((await Ctx.Variable.Get("fixed")).IsInitialized).IsTrue();
@@ -325,7 +326,7 @@ public class ErrorHandleTests
                 new global::app.error.ServiceError("always fails", "TransientError", 503), Ctx));
         };
 
-        var result = await Attempting(persistentlyFailing, ErrorHandler(("retryCount", 3))).Start(Ctx);
+        var result = await (await Attempting(persistentlyFailing, ErrorHandler(("retryCount", 3)))).Start(Ctx);
 
         await result.IsFailure();
         await Assert.That(callCount).IsEqualTo(4); // 1 initial + 3 retries
@@ -346,7 +347,7 @@ public class ErrorHandleTests
             return Task.FromResult(Ctx.Ok());
         };
 
-        var result = await Attempting(statefulNext, ErrorHandler(("retryCount", 3))).Start(Ctx);
+        var result = await (await Attempting(statefulNext, ErrorHandler(("retryCount", 3)))).Start(Ctx);
 
         await result.IsSuccess();
         await Assert.That(callCount).IsEqualTo(2);
@@ -406,7 +407,7 @@ public class ErrorHandleTests
                 : global::app.data.@this.FromError(new global::app.error.ServiceError("not fixed yet", "NotFixed", 404), Ctx);
         };
 
-        var result = await Attempting(needsFix, ErrorHandlerCalling("Fix", ("order", "GoalFirst"), ("retryCount", 1))).Start(Ctx);
+        var result = await (await Attempting(needsFix, ErrorHandlerCalling("Fix", ("order", "GoalFirst"), ("retryCount", 1)))).Start(Ctx);
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("done after fix");

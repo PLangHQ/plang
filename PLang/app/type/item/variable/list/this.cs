@@ -109,10 +109,11 @@ public partial class @this
         // The name is a variable's root; a write deeper in is the variable's own (variable.Set).
 
         // What is bound before the set answers first: a refusal or a cancel is the answer, nothing written.
-        if (await Before("set", name, value) is { } refused) return refused;
+        var variable = Named(name);
+        if (await Before("set", variable, name, value) is { } refused) return refused;
 
         var (stored, changed, before) = Bind(name, value);
-        return changed ? await After(name, before, stored) : stored;
+        return changed ? await After(variable, name, before, stored) : stored;
     }
 
     // Binds `name` to `value`: the Data stored, whether the name changed (the same Data set again doesn't),
@@ -188,29 +189,38 @@ public partial class @this
     // The variable type — once the app has it: the actors' stores are born before the app's types.
     private global::app.type.@this? type => _context.App.variable?.type;
 
-    // What is bound before `name` changes to `value` (the variable type's event `event`): null to go on — nothing bound,
-    // or nothing refused — else a failure or a Handled answer, which is the write's answer. The variable is made only
-    // when something is bound on the variable type, its own or in the app's events.
-    private System.Threading.Tasks.ValueTask<data.@this?> Before(string @event, string name, object? value)
-        => type is { } variable && variable.IsBoundAt(@event, global::app.@event.When.before, _context)
-            ? Before(variable.on[@event]!, name, value as data.@this ?? new data.@this(name, value, context: _context)) : default;
+    // The variable named `name`, as a set or a remove asks the actor's events with it and its events are handed it — made
+    // from its bare name at once (no reading hop by hop); none before the app has its types.
+    private global::app.type.item.variable.@this? Named(string name)
+        => type is null ? null : new parser.@this(name, _context.App.type.list).Whole;
 
-    private async System.Threading.Tasks.ValueTask<data.@this?> Before(global::app.@event.@this @event, string name, data.@this about)
+    // The moments a set or a remove of `variable` runs for this memory's actor, as its events answer for it.
+    private async System.Threading.Tasks.ValueTask<global::app.@event.on.@this?> Moments(global::app.type.item.variable.@this? variable)
+        => _context.Actor is not { } actor || variable is null ? null : await actor.@event.Moments(variable, _context.CancellationToken);
+
+    // What is bound before `variable` changes to `value` (the moment `moment`): null to go on — nothing bound, or nothing
+    // refused — else a failure or a Handled answer, which is the write's answer; a load of the actor's events that fails
+    // is too.
+    private async System.Threading.Tasks.ValueTask<data.@this?> Before(string moment, global::app.type.item.variable.@this? variable,
+        string name, object? value)
     {
-        var answer = await @event.Before(Named(name), _context, about);
+        global::app.@event.on.@this? moments;
+        try { moments = await Moments(variable); }
+        catch (global::app.error.AppException ex) { return _context.Error(ex.Error); }
+        catch (System.OperationCanceledException) { return _context.Error(global::app.error.GoalError.Cancelled(_context)); }
+        if (moments?[moment] is not { before.Count: > 0 } on) return null;
+        var answer = await on.before.Start(variable!, _context, value as data.@this ?? new data.@this(name, value, context: _context));
         return answer is { Success: false } or { Handled: true } ? answer : null;
     }
 
     // `name` changed from `before` (null: it was new) to `stored`: the call stack records it for its history, then
     // what is bound after the set starts on the stored Data — its answer is the set's.
-    private System.Threading.Tasks.ValueTask<data.@this> After(string name, object? before, data.@this stored)
+    private async System.Threading.Tasks.ValueTask<data.@this> After(global::app.type.item.variable.@this? variable, string name,
+        object? before, data.@this stored)
     {
         _context.call.Record(this, name, before);
-        return type is { } variable && variable.IsBoundAt("set", global::app.@event.When.after, _context) ? variable.on.set.After(Named(name), stored, _context) : new(stored);
+        return (await Moments(variable))?.set is { after.Count: > 0 } set ? await set.after.Start(variable!, stored, _context) : stored;
     }
-
-    // The variable named `name`, as its events are handed it.
-    private global::app.type.item.variable.@this Named(string name) => new parser.@this($"%{name}%", _context.App.type.list).Variable.Single();
 
     /// <summary>What <paramref name="name"/> holds — or, when it holds nothing, the value
     /// <paramref name="value"/> gives birth to, stored under it in one step: runs asking at once all answer
@@ -227,10 +237,11 @@ public partial class @this
         if (_context.call.Current?.Keeper(name) != null)
             return await Set(name, item);
 
-        if (await Before("set", name, item) is { } refused) return refused;
+        var variable = Named(name);
+        if (await Before("set", variable, name, item) is { } refused) return refused;
         data.@this? stored = null;
         var binding = Rows.GetOrAdd(name, _ => stored = new data.@this(name, item, context: _context));
-        return ReferenceEquals(binding, stored) ? await After(name, null, binding) : binding;
+        return ReferenceEquals(binding, stored) ? await After(variable, name, null, binding) : binding;
     }
 
     /// <summary>What <paramref name="name"/> holds, as this run's own to change in place: held where a write to it lands
@@ -261,7 +272,8 @@ public partial class @this
     public async System.Threading.Tasks.ValueTask<data.@this> Replace(string name, data.@this expected, global::app.type.item.@this value)
     {
         if (ReferenceEquals(expected.Peek(), value)) return expected;
-        if (await Before("set", name, value) is { } refused) return refused;
+        var variable = Named(name);
+        if (await Before("set", variable, name, value) is { } refused) return refused;
 
         // the frame a write lands in reads what it holds outward — a frame with memory of its own (a task's run) reading
         // its caller's — and the write lands in it: the caller's stays as it was
@@ -274,7 +286,7 @@ public partial class @this
         var rebound = new data.@this(name, value, context: _context);
         if (frame != null) frame.Set(name, rebound);
         else if (!Rows.TryUpdate(name, rebound, expected)) return await Get(name);
-        return await After(name, expected.Peek(), rebound);
+        return await After(variable, name, expected.Peek(), rebound);
     }
 
 
@@ -348,9 +360,11 @@ public partial class @this
     public async System.Threading.Tasks.ValueTask<data.@this> Remove(string name)
     {
         if (!_variables.TryGetValue(name, out var binding)) return _context.NotFound(name);
-        if (await Before("remove", name, binding) is { } refused) return refused;
+        var variable = Named(name);
+        if (await Before("remove", variable, name, binding) is { } refused) return refused;
         if (!Rows.TryRemove(name, out var removed)) return _context.NotFound(name);
-        return type is { } variable && variable.IsBoundAt("remove", global::app.@event.When.after, _context) ? await variable.on.remove.After(Named(name), removed, _context) : removed;
+        return (await Moments(variable))?.remove is { after.Count: > 0 } remove
+            ? await remove.after.Start(variable!, removed, _context) : removed;
     }
 
     /// <summary>The variables this memory holds, as a list — <c>%!app.variable.list%</c>: one variable per

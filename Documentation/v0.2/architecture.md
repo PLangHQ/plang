@@ -100,13 +100,12 @@ Context
   .CallStack            optional frame tracking
   .Goal                 currently executing goal
   .Step                 currently executing step
-  .Events               context-specific event bindings
   .CancellationToken    from actor (with timeout stack on top)
   .Parent               for nested execution (child contexts)
   .ConfigScope          goal-scoped settings
   .Setup                during setup execution (run-once semantics)
   .Test                 test context when --test flag active
-  .Event                current event context (in event handlers)
+  .Event                the event whose call is running (`%!event%`)
   .Trace                per-execution diagnostic identity (see trace.md)
 ```
 
@@ -358,20 +357,18 @@ OnCacheHit / OnCacheMiss
 ### Execution flow
 
 ```
-goal lifecycle.Before -> run bindings
-  step lifecycle.Before -> run bindings
-    action lifecycle.Before -> run bindings
-    action -> handler.ExecuteAsync(action, app, context)
-    action lifecycle.After -> run bindings
-  step lifecycle.After -> run bindings
-goal lifecycle.After -> run bindings
+goal: before events
+  step: before events
+    action: before events
+    action
+    action: after events
+  step: after events
+goal: after events
 ```
 
-Events don't call methods — they call goals via `GoalCall`. Event handlers are PLang code, integrated into the execution flow.
+A bound call runs a goal, so an event handler is PLang code in the execution flow. Each side runs the actor's list for the item in bind order. An actor's events are lazy: the first ask loads them, and an item's list is made on its first ask (`events.md`).
 
-Context caches lifecycle resolution per goal/step/action. `InvalidateEventCache()` clears it when events are registered during execution.
-
-Re-entrancy protection: `TryEnterEvent` / `ExitEvent` prevents recursive event handler execution.
+An event does not run inside its own run in a flow: `context.Enter(event)` answers null when it already runs there (`actor/context/this.cs:279–292`).
 
 ---
 
@@ -550,14 +547,13 @@ app/
     setup/
       this.cs                 run-once setup system
   
-  events/
-    this.cs                   event registry
-    lifecycle/
-      this.cs                 before/after bindings
-      bindings/
-        this.cs               binding collection
-        binding/
-          this.cs             single event binding
+  event/
+    this.cs                   an event: its item's moment, its side, what it runs
+    call/ clause/ code/       the kinds: a goal call, an action's clause, C#
+    inherited/                a maker's event a sub app took in
+    list/                     an actor's events (actor.event), loaded on the first ask
+    on/                       an item's moments, their before and after sides
+    setting/                  event.setting.goal, event.setting.system
   
   channels/
     this.cs                   channel registry

@@ -62,8 +62,8 @@ public class AssertionErrorVariablesTests
     public async Task EqualsHandler_OnFailure_PopulatesVariablesFromSnapshot()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("score", 42);
-        context.Variable.Set("label", "foo");
+        await context.Variable.Set("score", 42);
+        await context.Variable.Set("label", "foo");
 
         var result = await new global::app.goal.step.action.composed.@this(new AssertEquals(context) { Expected = D(1), Actual = D(2) }, context).Start(context);
 
@@ -81,7 +81,7 @@ public class AssertionErrorVariablesTests
     public async Task APlainError_WithoutDebug_KeepsNoVariables_AnAssertionDoes()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("secret", "s3cr3t");
+        await context.Variable.Set("secret", "s3cr3t");
         await using var frame = context.call.Push(global::PLang.Tests.App.CallStackTests.CallStackTestHelpers.MakeAction(context, "Goal"), await context.call.Setting());
 
         var plain = new global::app.error.@this("boom", "Boom", 500);
@@ -100,7 +100,7 @@ public class AssertionErrorVariablesTests
     public async Task EqualsHandler_OnSuccess_VariablesNotPopulated()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("x", 1);
+        await context.Variable.Set("x", 1);
 
         var action = new AssertEquals(context) { Expected = D(5), Actual = D(5) };
         await action.Attach(null, context);
@@ -119,7 +119,7 @@ public class AssertionErrorVariablesTests
     public async Task AllAssertHandlers_OnFailure_ConsistentlyPopulateVariables()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("watched", "sentinel");
+        await context.Variable.Set("watched", "sentinel");
 
         // Through the production door: the dispatch binds each handler and its frame records the failure.
         async Task<Data> AR(global::app.module.ICodeGenerated a) => await new global::app.goal.step.action.composed.@this(a, context).Start(context);

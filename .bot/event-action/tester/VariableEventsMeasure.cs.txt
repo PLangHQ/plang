@@ -1,0 +1,105 @@
+using When = global::app.@event.When;
+using Scope = global::app.@event.binding.Scope;
+
+namespace PLang.Tests.App.VariablesTests;
+
+// EXPERIMENT (event-action-tester, never merged): what a variable set costs, with nothing bound, with a binding on the
+// variable type, with a name-filtered watch like the debug watch's.
+public class VariableEventsMeasure : System.IAsyncDisposable
+{
+    private readonly global::app.@this app = new global::app.@this("/tmp/VarMeasure-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
+    private static void Out(string line) => System.IO.File.AppendAllText("/tmp/varmeasure.txt", line + "\n");
+
+    private async Task Run(string label, int n, System.Func<int, string> name, System.Action? bind = null)
+    {
+        var vars = new Variables(app.actor.list.User.Context);
+        bind?.Invoke();
+        // warm up
+        for (var i = 0; i < 200; i++) await vars.Set(name(i), (long)i);
+        System.GC.Collect(); System.GC.WaitForPendingFinalizers(); System.GC.Collect();
+        var a0 = System.GC.GetAllocatedBytesForCurrentThread();
+        var g0 = System.GC.CollectionCount(0);
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        for (var i = 0; i < n; i++) await vars.Set(name(i), (long)(i + 1000));
+        sw.Stop();
+        var a1 = System.GC.GetAllocatedBytesForCurrentThread();
+        Out($"{label,-46} n={n} {sw.Elapsed.TotalMilliseconds * 1000 / n,8:F2} us/set  {(a1 - a0) / (double)n,9:F0} B/set  gen0={System.GC.CollectionCount(0) - g0}");
+    }
+
+    private int fired;
+
+    private void BindAny(When when, string ev) =>
+        app.@event.Add(app.variable.type).Add(ev)[when].Add(side => new global::app.@event.binding.@this(side,
+            (_, _, ctx) => { fired++; return Task.FromResult(ctx.Ok()); }, app.actor.list.User, Scope.app, global::app.@event.binding.@this.Always));
+
+    private void BindWatch(string watched) =>
+        app.@event.Add(app.variable.type).Add("set").after.Add(side => new global::app.@event.binding.@this(side,
+            (_, _, ctx) => { fired++; return Task.FromResult(ctx.Ok()); }, app.actor.list.User, Scope.actor,
+            (item, _) => item is global::app.type.item.variable.@this v && string.Equals(v.Name, watched, System.StringComparison.OrdinalIgnoreCase)));
+
+    [Test]
+    public async Task Nothing_Bound_SameName() => await Run("nothing bound, one name x1000", 1000, _ => "count");
+
+    [Test]
+    public async Task Nothing_Bound_ManyNames() => await Run("nothing bound, 1000 distinct names", 1000, i => "v" + i);
+
+    [Test]
+    public async Task AfterSet_Any_SameName() => await Run("after set bound (any), one name", 1000, _ => "count", () => BindAny(When.after, "set"));
+
+    [Test]
+    public async Task AfterSet_Any_ManyNames() => await Run("after set bound (any), 1000 names", 1000, i => "v" + i, () => BindAny(When.after, "set"));
+
+    [Test]
+    public async Task BeforeSet_Any_SameName() => await Run("before set bound (any), one name", 1000, _ => "count", () => BindAny(When.before, "set"));
+
+    [Test]
+    public async Task Watch_Hit() => await Run("watch 'count' (debug-style), sets 'count'", 1000, _ => "count", () => BindWatch("count"));
+
+    [Test]
+    public async Task Watch_Miss() => await Run("watch 'count' (debug-style), sets other names", 1000, i => "v" + i, () => BindWatch("count"));
+
+    // what a list per variable object would hold: N variable objects alone, then each with its set event's two lists made
+    [Test]
+    public async Task Held_PerVariableObject()
+    {
+        const int n = 20000;
+        long Held(System.Func<object[]> make)
+        {
+            System.GC.Collect(); System.GC.WaitForPendingFinalizers(); System.GC.Collect();
+            var before = System.GC.GetTotalMemory(true);
+            var keep = make();
+            System.GC.Collect(); System.GC.WaitForPendingFinalizers(); System.GC.Collect();
+            var after = System.GC.GetTotalMemory(true);
+            System.GC.KeepAlive(keep);
+            return (after - before) / n;
+        }
+        var alone = Held(() => Enumerable.Range(0, n).Select(i => (object)new global::app.type.item.variable.parser.@this("%v" + i + "%", app.type.list).Variable.Single()).ToArray());
+        var withLists = Held(() => Enumerable.Range(0, n).Select(i =>
+        {
+            var v = new global::app.type.item.variable.parser.@this("%v" + i + "%", app.type.list).Variable.Single();
+            app.@event.Add(v).Add("set"); // the app registry's entry for this variable: the set event with its two lists
+            return (object)v;
+        }).ToArray());
+        var baseline = Held(() => Enumerable.Range(0, n).Select(i => (object)("v" + i)).ToArray());
+        Out($"{"held per variable object (alone)",-46} {alone} B   (a name string alone: {baseline} B)");
+        Out($"{"held per variable object + its set event lists",-46} {withLists} B");
+        await Task.CompletedTask;
+    }
+
+    [Test]
+    public async Task Cost_OfNamed_Alone()
+    {
+        var ctx = app.actor.list.User.Context;
+        for (var i = 0; i < 200; i++) _ = new global::app.type.item.variable.parser.@this("%count%", app.type.list).Variable.Single();
+        System.GC.Collect();
+        var a0 = System.GC.GetAllocatedBytesForCurrentThread();
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        object? keep = null;
+        for (var i = 0; i < 1000; i++) keep = new global::app.type.item.variable.parser.@this("%count%", app.type.list).Variable.Single();
+        sw.Stop();
+        Out($"{"Named() alone (parse %count% -> variable)",-46} n=1000 {sw.Elapsed.TotalMilliseconds:F2} us/call  {(System.GC.GetAllocatedBytesForCurrentThread() - a0) / 1000.0,9:F0} B/call");
+        _ = keep; _ = ctx;
+    }
+}

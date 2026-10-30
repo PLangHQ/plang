@@ -37,7 +37,7 @@ public class ListAddIdentityTests
         var existing = new global::app.type.item.list.@this(_app.type.list["list"]);
         existing.Add(new Data("", "a", context: context));
         existing.Add(new Data("", "b", context: context));
-        vars.Set("products", existing);
+        await vars.Set("products", existing);
 
         var action = new Add(context) { ListName = new app.type.item.variable.@this("products", context.App.type.list),
             Value = new Data("", "c", context: context)
@@ -63,7 +63,7 @@ public class ListAddIdentityTests
         var live = new global::app.type.item.list.@this(_app.type.list["list"]);
         live.Add(new Data("", 1, context: context));
         live.Add(new Data("", 2, context: context));
-        vars.Set("products", live);
+        await vars.Set("products", live);
 
         var action = new Add(context) { ListName = new app.type.item.variable.@this("products", context.App.type.list),
             Value = new Data("", 3, context: context)
@@ -81,11 +81,11 @@ public class ListAddIdentityTests
     public async Task ListAdd_ItemAsLiveVarRef_AppendsCurrentValue()
     {
         var (context, vars) = Ctx();
-        vars.Set("products", new global::app.type.item.list.@this(_app.type.list["list"]));
+        await vars.Set("products", new global::app.type.item.list.@this(_app.type.list["list"]));
 
         // C# direct-composition path bypasses the .pr resolver, so we wrap "hello"
         // explicitly the same way the variable %item% follows to its Data.
-        vars.Set("item", "hello");
+        await vars.Set("item", "hello");
         var liveItem = await vars.Get("item");
 
         var action = new Add(context) { ListName = new app.type.item.variable.@this("products", context.App.type.list),
@@ -110,12 +110,12 @@ public class ListAddIdentityTests
         var (context, vars) = Ctx();
         var orphan = new global::app.type.item.list.@this(_app.type.list["list"]);
         orphan.Add(new Data("", "x", context: context));
-        vars.Set("products", orphan);
+        await vars.Set("products", orphan);
 
         // Replace under the same name — variable.set's Variables.Set replaces the binding.
         var fresh = new global::app.type.item.list.@this(_app.type.list["list"]);
         fresh.Add(new Data("", "y", context: context));
-        vars.Set("products", fresh);
+        await vars.Set("products", fresh);
 
         var action = new Add(context) { ListName = new app.type.item.variable.@this("products", context.App.type.list),
             Value = new Data("", "z", context: context)

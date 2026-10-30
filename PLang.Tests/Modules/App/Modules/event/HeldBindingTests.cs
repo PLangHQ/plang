@@ -14,14 +14,14 @@ public class HeldBindingTests
         var ctx = binding.actor.list.User.Context;
 
         var bound = await Make.Action(ctx, "on", "event", ("Event", "%!app.type.step.on.start%"), ("When", "before"),
-            ("Action", Make.Call(ctx, "Log")), ("Scope", "app")).Start(ctx);
+            ("Action", Make.Call(ctx, "Log"))).Start(ctx);
         await bound.IsSuccess();
 
-        await Assert.That(sibling.type.list["step"].on.start.before.Count).IsEqualTo(0)
-            .Because("a sibling's step entry carries nothing another app bound");
+        await Assert.That(sibling.actor.list.User.@event.Bound()).IsEmpty()
+            .Because("a sibling's actor holds nothing another app bound");
         await binding.DisposeAsync();
-        await Assert.That(parent.type.list["step"].on.start.before.Count).IsEqualTo(0)
-            .Because("nothing an app bound is left behind it on what its parent shares");
+        await Assert.That(parent.actor.list.User.@event.Bound()).IsEmpty()
+            .Because("nothing an app bound is left behind it on its parent");
         await sibling.DisposeAsync();
     }
 }

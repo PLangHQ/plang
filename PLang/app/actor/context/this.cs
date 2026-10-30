@@ -276,24 +276,28 @@ public sealed class @this : IDisposable
         return (data.@this<T>)data;
     }
 
-    // The bindings running in this context's current flow: a binding doesn't fire inside its own handler, while a
-    // parallel flow on the same context (its own async flow) fires it too. Set per flow: a flow forked from one
-    // running a binding inherits the set, and leaving a handler restores what the flow held before it.
-    private readonly AsyncLocal<System.Collections.Immutable.ImmutableHashSet<object>?> _runningBindings = new();
+    // The events running in this context's current flow: an event doesn't run inside its own run, while a parallel flow
+    // on the same context (its own async flow) runs it too. Set per flow: a flow forked from one running an event inherits
+    // the set, and an event's run ending restores what the flow held before it.
+    private readonly AsyncLocal<System.Collections.Immutable.ImmutableHashSet<global::app.@event.@this>?> _running = new();
 
-    /// <summary>True, marking it running in this flow, when <paramref name="binding"/> is not already running in it.</summary>
-    internal bool TryEnterEvent(object binding)
+    /// <summary>Marks <paramref name="event"/> running in this flow for as long as the answer is held: the run, which
+    /// ends when disposed; null when the event already runs in this flow (what it starts may reach its moment again).</summary>
+    internal IDisposable? Enter(global::app.@event.@this @event)
     {
-        var running = _runningBindings.Value ?? System.Collections.Immutable.ImmutableHashSet.Create<object>(ReferenceEqualityComparer.Instance);
-        if (running.Contains(binding)) return false;
-        _runningBindings.Value = running.Add(binding);
-        return true;
+        var running = _running.Value ?? System.Collections.Immutable.ImmutableHashSet<global::app.@event.@this>.Empty;
+        if (running.Contains(@event)) return null;
+        _running.Value = running.Add(@event);
+        return new Entry(this, @event);
     }
 
-    /// <summary>Marks <paramref name="binding"/> as no longer running in this flow.</summary>
-    internal void ExitEvent(object binding)
+    // An event's entry into this flow: disposing it takes the event out of the flow's running set.
+    private sealed class Entry(@this context, global::app.@event.@this @event) : IDisposable
     {
-        if (_runningBindings.Value is { } running) _runningBindings.Value = running.Remove(binding);
+        public void Dispose()
+        {
+            if (context._running.Value is { } running) context._running.Value = running.Remove(@event);
+        }
     }
 
     /// <summary>

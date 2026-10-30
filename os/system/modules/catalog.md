@@ -106,24 +106,26 @@ things not visible from the signature and not general enough for `Properties.llm
 ## Writing good Examples
 
 `<action>.examples.md` is one example per paragraph (blank-line separated). Each is a
-**natural-language step line** and the **properties** it should produce for the main
-action:
+**natural-language step line** and the **formal** the writer should answer for it, in the
+same notation the writer answers in (`Properties.llm`):
 
 ```
 Step text: `read file.txt, write to %content%`
-Properties: `{"Path": "file.txt"}` — the trailing `write to %content%` is its own action.
+Formal: `file.read(Path="file.txt"); variable.set(Name=%content%, Value=%!data%)` — the trailing `write to %content%` is its own action.
 
 Step text: `read 'config/settings.json'`
-Properties: `{"Path": "config/settings.json"}`
+Formal: `file.read(Path="config/settings.json")`
 ```
 
 - `Step text:` is how a developer would actually write the step (any human language is
   valid elsewhere, but write examples in plain English).
-- `Properties:` is a JSON object of the parameter values for **this** action — names match
-  the C# properties (`Path`, `Data`, `Left`, …), values written as the step gives them.
-- The implicit `variable.set` of a trailing `write to %x%`, a surrounding condition/loop,
-  and clauses are **not** inlined into `Properties:` — note them in prose if they matter;
-  they're their own actions, decided elsewhere.
+- `Formal:` is the step's line as the writer answers it: `module.action(Name=value, …)`,
+  untyped, values written as the step gives them, actions separated by `;`. A clause
+  (`on.error`, `on.cache`, `on.timeout`) follows its step's action; a condition's body goes
+  in its `{ }`.
+- Take a line from a build, never write it by hand: build the step text in a scratch goal
+  (`cache: skip`) and use the formal only when the `.pr`'s actions are right. A step that
+  doesn't build right stays out of the file and is reported as a builder finding.
 
 How the two prompts consume examples: the decider State extracts just the `Step text:`
 lines as `e.g. \`…\`` recall hints; the writer's user message shows the action's full

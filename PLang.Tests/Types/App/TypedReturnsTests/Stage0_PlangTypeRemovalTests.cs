@@ -50,7 +50,7 @@ public class Stage0_PlangTypeRemovalTests
         await Assert.That(_app.type.list["text"].Namespace).IsEqualTo("app.type.item.text");
         await Assert.That(_app.type.list["app.type.item.text"].Name).IsEqualTo("text");
         await Assert.That(_app.type.list.Contains("event")).IsTrue();
-        await Assert.That(new global::app.type.@this(typeof(global::app.@event.on.@this)).Name).IsEqualTo("app.event.on");
+        await Assert.That(new global::app.type.@this(typeof(global::app.@event.list.@this)).Name).IsEqualTo("app.event.list");
     }
 
     // Every word, alias and namespace names one type.

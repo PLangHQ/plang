@@ -25,6 +25,41 @@ public class SetTests
         await Assert.That((await context.Variable.GetValue("testVar"))).IsEqualTo("testValue");
     }
 
+    // a set reads its reference once: `%!goal%` is a shortcut, a goal of plang's run for each read, so a second read
+    // would run it twice
+    [Test]
+    public async Task Set_OfAShortcut_RunsItsGoalOnce()
+    {
+        var context = _app.actor.list.User.Context;
+        var started = 0;
+        await _app.actor.list.User.@event.Add(new global::app.@event.code.@this(_app.type.list["goal"], "start", global::app.@event.When.before,
+            (item, result, _) => { if (((global::app.goal.@this)item).Name == "Goal") started++; return Task.FromResult(result); },
+            _app.actor.list.User, global::app.@event.code.@this.Always));
+        await global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%!app.event.setting.goal%", "variable"), ("Value", "all")).Start(context);
+
+        var set = await global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%seen%", "variable"), ("Value", "%!goal%")).Start(context);
+
+        await set.IsSuccess();
+        await Assert.That(started).IsEqualTo(1);
+    }
+
+    // the typed write goes through the variable's own door, as the untyped one does: a member path sets the member
+    [Test]
+    public async Task Set_AMember_AsATypedValue_SetsTheMember()
+    {
+        var context = _app.actor.list.User.Context;
+        await context.Variable.Set("x", global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?> { ["b"] = "kept" }, context));
+
+        var set = await global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%x.a%", "variable"),
+            ("Value", "1"), ("Type", context.App.type.list["number"])).Start(context);
+
+        await set.IsSuccess();
+        var a = await new global::app.type.item.variable.parser.@this("%x.a%", context.App.type.list).Variable.Single().Start(context);
+        await Assert.That(a.Peek()).IsTypeOf<global::app.type.item.number.@this>();
+        await Assert.That(a.Peek()?.ToString()).IsEqualTo("1");
+        await Assert.That((await context.Variable.Get("a")).IsInitialized).IsFalse();
+    }
+
     [Test]
     public async Task Set_BangPath_WritesSetting_NotVariable()
     {
@@ -74,7 +109,7 @@ public class SetTests
         var context = _app.actor.list.User.Context;
         var births = new List<string>();
         foreach (var name in new[] { "path", "number" })
-            _app.@event.Add(_app.type.list[name]).Add("create")[global::app.@event.When.after].Add(side => new global::app.@event.binding.@this(side, (_, data, c) => { births.Add(data.Type.Name); return Task.FromResult(data); }, _app.actor.list.User, global::app.@event.binding.Scope.actor, global::app.@event.binding.@this.Always));
+            await _app.actor.list.User.@event.Add(new global::app.@event.code.@this(_app.type.list[name], "create", global::app.@event.When.after, (_, data, c) => { births.Add(data.Type.Name); return Task.FromResult(data); }, _app.actor.list.User, global::app.@event.code.@this.Always));
 
         var asPath = await global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%p%", "variable"), ("value", "a.txt"), ("type", "path")).Start(context);
         var asNumber = await global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%n%", "variable"), ("value", 42), ("type", new global::app.type.@this("number", "int"))).Start(context);
@@ -90,7 +125,7 @@ public class SetTests
         var context = _app.actor.list.User.Context;
         var births = new List<string>();
         var number = _app.type.list["number"];
-        _app.@event.Add(number).Add("create")[global::app.@event.When.after].Add(side => new global::app.@event.binding.@this(side, (_, data, c) => { births.Add(data.Type.Name); return Task.FromResult(data); }, _app.actor.list.User, global::app.@event.binding.Scope.actor, global::app.@event.binding.@this.Always));
+        await _app.actor.list.User.@event.Add(new global::app.@event.code.@this(number, "create", global::app.@event.When.after, (_, data, c) => { births.Add(data.Type.Name); return Task.FromResult(data); }, _app.actor.list.User, global::app.@event.code.@this.Always));
         var unread = number.Make("42", context);
 
         var result = await number.Create(unread, context, "n");

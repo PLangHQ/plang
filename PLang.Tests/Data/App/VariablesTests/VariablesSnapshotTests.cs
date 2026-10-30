@@ -10,8 +10,8 @@ public class VariablesSnapshotTests : System.IAsyncDisposable
     {
         // Set %x%=1 and %obj%={a:1}; Capture; Restore into fresh Variables; deep-equal.
         var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
-        src.actor.list.User.Context.Variable.Set("x", 1);
-        src.actor.list.User.Context.Variable.Set("obj", new Dictionary<string, object?> { ["a"] = 1 });
+        await src.actor.list.User.Context.Variable.Set("x", 1);
+        await src.actor.list.User.Context.Variable.Set("obj", new Dictionary<string, object?> { ["a"] = 1 });
 
         var snap = (await src.Snapshot(src.actor.list.User.Context).Saved());
         var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
@@ -38,8 +38,8 @@ public class VariablesSnapshotTests : System.IAsyncDisposable
         // by construction — no special-case needed.
         var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
         var vars = src.actor.list.User.Context.Variable;
-        vars.Set("user", "alice");        // user var — survives
-        vars.Set("!myInfra", "infra");    // !-prefixed — skipped
+        await vars.Set("user", "alice");        // user var — survives
+        await vars.Set("!myInfra", "infra");    // !-prefixed — skipped
 
         var snap = (await src.Snapshot(src.actor.list.User.Context).Saved());
         var captured = (await snap.Node(SnapshotPathExtensions.UserVariable)).Rows(snap.Context).ToList();   // each captured variable is its own entry

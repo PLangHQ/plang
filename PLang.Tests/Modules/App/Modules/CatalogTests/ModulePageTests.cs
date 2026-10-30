@@ -96,7 +96,7 @@ public class ModulePageTests
         {
             await using var app = new global::app.@this(root).Testing();
             var context = app.actor.list.User.Context;
-            context.Variable.Set(new global::app.data.@this("module", app.Module("file")!, context: context));
+            await context.Variable.Set(new global::app.data.@this("module", app.Module("file")!, context: context));
             var render = new Render(context)
             {
                 Template = (global::app.type.item.text.@this)System.IO.File.ReadAllText(
@@ -132,7 +132,7 @@ public class ModulePageTests
         {
             await using var app = new global::app.@this(root).Testing();
             var context = app.actor.list.User.Context;
-            context.Variable.Set(new global::app.data.@this("action", app.Module("file")!["read"]!, context: context));
+            await context.Variable.Set(new global::app.data.@this("action", app.Module("file")!["read"]!, context: context));
             async Task<global::app.data.@this> Render(string template) => await new global::app.module.ui.code.Fluid().Render(
                 new Render(context) { Template = (global::app.type.item.text.@this)template, IsFile = (global::app.type.item.@bool.@this)false });
 
@@ -166,7 +166,7 @@ public class ModulePageTests
         {
             await using var app = new global::app.@this(root).Testing();
             var context = app.actor.list.User.Context;
-            context.Variable.Set(new global::app.data.@this("module", app.Module("file")!, context: context));
+            await context.Variable.Set(new global::app.data.@this("module", app.Module("file")!, context: context));
             var render = new Render(context)
             {
                 Template = (global::app.type.item.text.@this)System.IO.File.ReadAllText(
@@ -196,7 +196,7 @@ public class ModulePageTests
     {
         await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
         var context = os.actor.list.User.Context;
-        context.Variable.Set(new global::app.data.@this("module", os.Module(module)!, context: context));
+        await context.Variable.Set(new global::app.data.@this("module", os.Module(module)!, context: context));
         var render = new Render(context)
         {
             Template = (global::app.type.item.text.@this)System.IO.File.ReadAllText(

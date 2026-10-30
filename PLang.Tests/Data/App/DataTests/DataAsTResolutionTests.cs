@@ -28,7 +28,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_FullVarMatch_ReturnsVariableValue()
     {
-        _app.actor.list.User.Context.Variable.Set("path", "/tmp/x.txt");
+        await _app.actor.list.User.Context.Variable.Set("path", "/tmp/x.txt");
         var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "p", "%path%");
 
         var result = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
@@ -54,7 +54,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_Interpolation_CallsResolve()
     {
-        _app.actor.list.User.Context.Variable.Set("name", "world");
+        await _app.actor.list.User.Context.Variable.Set("name", "world");
         var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "greeting", "Hello %name%");
 
         var result = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
@@ -66,7 +66,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_ListWithNestedVars_DeepResolvesAndTypes()
     {
-        _app.actor.list.User.Context.Variable.Set("greeting", "hello");
+        await _app.actor.list.User.Context.Variable.Set("greeting", "hello");
         var raw = new List<object?> { "%greeting%", "world" };
         var data = TemplateStamp.Container("list", raw, _app.actor.list.User.Context);
 
@@ -82,7 +82,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_DictWithNestedVars_DeepResolvesAndTypes()
     {
-        _app.actor.list.User.Context.Variable.Set("prompt", "You are a compiler");
+        await _app.actor.list.User.Context.Variable.Set("prompt", "You are a compiler");
         var raw = new Dictionary<string, object?> { ["role"] = "system", ["content"] = "%prompt%" };
         var data = TemplateStamp.Container("dict", raw, _app.actor.list.User.Context);
 
@@ -122,13 +122,13 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_CalledTwice_FreshResolutionEachCall()
     {
-        _app.actor.list.User.Context.Variable.Set("x", "first");
+        await _app.actor.list.User.Context.Variable.Set("x", "first");
         var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "v", "%x%");
 
         var first = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
         await Assert.That((await first.Value())?.ToString()).IsEqualTo("first");
 
-        _app.actor.list.User.Context.Variable.Set("x", "second");
+        await _app.actor.list.User.Context.Variable.Set("x", "second");
         var second = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
         await Assert.That((await second.Value())?.ToString()).IsEqualTo("second");
 
@@ -140,7 +140,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_DoesNotMutateOriginalDataValue()
     {
-        _app.actor.list.User.Context.Variable.Set("x", "resolved");
+        await _app.actor.list.User.Context.Variable.Set("x", "resolved");
         var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "v", "%x%");
 
         var resolved = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
@@ -158,8 +158,8 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_StoredFullVarRef_ReturnedVerbatim_NoChain()
     {
-        _app.actor.list.User.Context.Variable.Set("a", "%b%");
-        _app.actor.list.User.Context.Variable.Set("b", "%a%");
+        await _app.actor.list.User.Context.Variable.Set("a", "%b%");
+        await _app.actor.list.User.Context.Variable.Set("b", "%a%");
         var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "ref", "%a%");
 
         var result = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
@@ -175,7 +175,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_StoredSelfRef_ReturnedVerbatim()
     {
-        _app.actor.list.User.Context.Variable.Set("x", "%x%");
+        await _app.actor.list.User.Context.Variable.Set("x", "%x%");
         var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "ref", "%x%");
 
         var result = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
@@ -191,7 +191,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_PartialMatchInterpolatesOncesThenStops()
     {
-        _app.actor.list.User.Context.Variable.Set("x", "%x%");
+        await _app.actor.list.User.Context.Variable.Set("x", "%x%");
         var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "greeting", "hello %x%");
 
         var result = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
@@ -208,8 +208,8 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_StoredVarRefWithSurroundingText_NotReResolved()
     {
-        _app.actor.list.User.Context.Variable.Set("a", "X-%b%");
-        _app.actor.list.User.Context.Variable.Set("b", "Y-%a%");
+        await _app.actor.list.User.Context.Variable.Set("a", "X-%b%");
+        await _app.actor.list.User.Context.Variable.Set("b", "Y-%a%");
         var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "ref", "%a%");
 
         var result = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
@@ -225,11 +225,11 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_DeepChain_NoTransitiveResolution()
     {
-        _app.actor.list.User.Context.Variable.Set("a", "%b%");
-        _app.actor.list.User.Context.Variable.Set("b", "%c%");
-        _app.actor.list.User.Context.Variable.Set("c", "%d%");
-        _app.actor.list.User.Context.Variable.Set("d", "%e%");
-        _app.actor.list.User.Context.Variable.Set("e", "leaf-value");
+        await _app.actor.list.User.Context.Variable.Set("a", "%b%");
+        await _app.actor.list.User.Context.Variable.Set("b", "%c%");
+        await _app.actor.list.User.Context.Variable.Set("c", "%d%");
+        await _app.actor.list.User.Context.Variable.Set("d", "%e%");
+        await _app.actor.list.User.Context.Variable.Set("e", "leaf-value");
         var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "chain", "%a%");
 
         var result = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
@@ -251,8 +251,8 @@ public class DataAsTResolutionTests
     public async Task AsT_TypedContainerSlot_StoredLeavesNotReResolved()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("x", "BUILDER-X");
-        context.Variable.Set("y", "BUILDER-Y");
+        await context.Variable.Set("x", "BUILDER-X");
+        await context.Variable.Set("y", "BUILDER-Y");
 
         // Mirrors what variable.set produces after walking [{Content: "%goalForLlm%"}]:
         // Content holds the rendered template's literal text, with embedded %var% as bytes.
@@ -286,8 +286,8 @@ public class DataAsTResolutionTests
     public async Task AsT_ListObjectSlot_AsListLlmMessage_StoredLeavesNotReResolved()
     {
         var context = _app.actor.list.User.Context;
-        context.Variable.Set("goal", new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase) { ["Name"] = "BuildGoal" });
-        context.Variable.Set("buildStart", 999_999_999L);
+        await context.Variable.Set("goal", new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase) { ["Name"] = "BuildGoal" });
+        await context.Variable.Set("buildStart", 999_999_999L);
 
         // Mirrors what variable.set's MintTyped stores after walking the literal list.
         // Each element is a Dictionary<string, object?>, with Content carrying literal %var%.
