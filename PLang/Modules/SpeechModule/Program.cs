@@ -9,7 +9,7 @@ using System.Text;
 
 namespace PLang.Modules.SpeechModule
 {
-	public record SpeechResult(string FilePath, string Format, int SampleRate, double DurationSeconds, long SizeInBytes, string Model, string Voice);
+	public record SpeechResult(string FilePath, string Format, int SampleRate, double DurationSeconds, long SizeInBytes, string Model, string Voice, long InputTokens, long OutputTokens);
 
 	[Description("Text to speech with Google Gemini. Turns text into a spoken audio file, Icelandic and many other languages. The api key is read from the app settings by the module, the step never carries it")]
 	public class Program : BaseProgram
@@ -83,7 +83,10 @@ namespace PLang.Modules.SpeechModule
 					return (null, new ProgramError($"Gemini returned {(int)response.StatusCode}: {Explain(response.StatusCode, responseBody)}", goalStep, function));
 				}
 
-				var inline = JObject.Parse(responseBody).SelectToken("candidates[0].content.parts[0].inlineData");
+				var parsed = JObject.Parse(responseBody);
+				var inputTokens = parsed.SelectToken("usageMetadata.promptTokenCount")?.Value<long>() ?? -1;
+				var outputTokens = parsed.SelectToken("usageMetadata.candidatesTokenCount")?.Value<long>() ?? -1;
+				var inline = parsed.SelectToken("candidates[0].content.parts[0].inlineData");
 				var data = inline?["data"]?.ToString();
 				if (string.IsNullOrEmpty(data))
 				{
@@ -104,7 +107,7 @@ namespace PLang.Modules.SpeechModule
 				}
 				await fileSystem.File.WriteAllBytesAsync(fullPath, wav);
 
-				return (new SpeechResult(fullPath, "wav", rate, Math.Round(pcmLength / 2.0 / rate, 2), wav.Length, model, voice), null);
+				return (new SpeechResult(fullPath, "wav", rate, Math.Round(pcmLength / 2.0 / rate, 2), wav.Length, model, voice, inputTokens, outputTokens), null);
 			}
 			catch (TaskCanceledException ex)
 			{
