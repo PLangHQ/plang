@@ -32,6 +32,11 @@ namespace PLang.Models
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMember]
 		[System.Text.Json.Serialization.JsonIgnore]
+		public LlmUsage? Usage { get; set; }
+
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMember]
+		[System.Text.Json.Serialization.JsonIgnore]
 		public Building.Model.GoalStep? Step { get; set; }
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMember]

@@ -436,6 +436,9 @@ public class Program : BaseProgram
 
 		(var response, var queryError) = await llmServiceFactory.CreateHandler().Query(llmQuestion, typeof(object));
 
+		var usage = llmQuestion.Usage;
+		context.AddVariable(new LlmCallUsage(llmQuestion.model, usage?.InputTokens ?? 0, usage?.OutputTokens ?? 0, usage == null), variableName: "llmUsage");
+
 		if (queryError != null) return (null, queryError, properties);
 		if (response == null) return (null, new ProgramError("Response was empty", goalStep), properties);
 

@@ -10,6 +10,10 @@ namespace PLang.Models
 
 	public record LlmUsage(long InputTokens, long OutputTokens);
 
+	// What an [llm] step used, written to %llmUsage% after the call so a goal can record it.
+	// Cached is true when the answer came from the local cache and nothing was billed.
+	public record LlmCallUsage(string Model, long InputTokens, long OutputTokens, bool Cached);
+
 	// One round trip: everything the service sent back, as items in the provider's own shape (so a
 	// reasoning item can be handed back on the next request), plus the parsed parts the loop needs.
 	public record LlmChatResult(List<object> Items, string? Text, List<LlmToolCall> ToolCalls, LlmUsage Usage);

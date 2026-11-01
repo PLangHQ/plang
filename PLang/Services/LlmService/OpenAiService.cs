@@ -275,6 +275,12 @@ namespace PLang.Services.OpenAi
 					}
 
 					question.RawResponse = json.choices[0].message.content.ToString();
+					if (json.usage != null)
+					{
+						long promptTokens = json.usage.prompt_tokens != null ? (long)json.usage.prompt_tokens : 0;
+						long completionTokens = json.usage.completion_tokens != null ? (long)json.usage.completion_tokens : 0;
+						question.Usage = new LlmUsage(promptTokens, completionTokens);
+					}
 
 					var obj = extractor.Extract(question.RawResponse, responseType, question.Tools);
 					if (question.caching)
