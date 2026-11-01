@@ -14,8 +14,8 @@ namespace PLang.Modules.SpeechModule
 	[Description("Text to speech with Google Gemini. Turns text into a spoken audio file, Icelandic and many other languages. The api key is read from the app settings by the module, the step never carries it")]
 	public class Program : BaseProgram
 	{
-		private const string DefaultModel = "gemini-2.5-flash-preview-tts";
-		private const string DefaultVoice = "Kore";
+		private const string DefaultModel = "gemini-3.8-flash-tts";
+		private const string DefaultVoice = "Puck";
 		private const int SampleRate = 24000;
 
 		public Program() : base() { }
@@ -90,9 +90,11 @@ namespace PLang.Modules.SpeechModule
 					return (null, new ProgramError($"Gemini answered without audio. The model may have refused the text or answered with text only: {Shorten(responseBody)}", goalStep, function));
 				}
 
-				var rate = ParseRate(inline?["mimeType"]?.ToString());
-				var pcm = Convert.FromBase64String(data);
-				var wav = AddWavHeader(pcm, rate);
+				var audio = Convert.FromBase64String(data);
+				var alreadyWav = audio.Length > 12 && Encoding.ASCII.GetString(audio, 0, 4) == "RIFF";
+				var rate = alreadyWav ? BitConverter.ToInt32(audio, 24) : ParseRate(inline?["mimeType"]?.ToString());
+				var pcmLength = alreadyWav ? audio.Length - 44 : audio.Length;
+				var wav = alreadyWav ? audio : AddWavHeader(audio, rate);
 
 				var fullPath = GetPath(filePath);
 				var directory = fileSystem.Path.GetDirectoryName(fullPath);
@@ -102,7 +104,7 @@ namespace PLang.Modules.SpeechModule
 				}
 				await fileSystem.File.WriteAllBytesAsync(fullPath, wav);
 
-				return (new SpeechResult(fullPath, "wav", rate, Math.Round(pcm.Length / 2.0 / rate, 2), wav.Length, model, voice), null);
+				return (new SpeechResult(fullPath, "wav", rate, Math.Round(pcmLength / 2.0 / rate, 2), wav.Length, model, voice), null);
 			}
 			catch (TaskCanceledException ex)
 			{
@@ -114,32 +116,14 @@ namespace PLang.Modules.SpeechModule
 			}
 		}
 
-		// The tts models take no language parameter, they detect it from the text. A direction in front of the
-		// text is how Gemini is told how to read it, so it is only added when the step asked for one.
+		// The tts models take no language parameter, they detect it from the text. A "Say in Icelandic:" in front
+		// of the text was read aloud by gemini-3.8-flash-tts (checked by transcribing the audio), so language is
+		// accepted but never sent. A style direction goes in front only when the step asked for one.
 		private static string BuildPrompt(string text, string? language, string? style)
 		{
-			var direction = new List<string>();
-			if (!string.IsNullOrEmpty(language)) direction.Add($"in {LanguageName(language)}");
-			if (!string.IsNullOrEmpty(style)) direction.Add(style);
-			if (direction.Count == 0) return text;
+			if (string.IsNullOrEmpty(style)) return text;
 
-			return $"Say {string.Join(", ", direction)}: {text}";
-		}
-
-		private static string LanguageName(string language)
-		{
-			return language.ToLowerInvariant() switch
-			{
-				"is" or "is-is" => "Icelandic",
-				"en" or "en-us" or "en-gb" => "English",
-				"da" => "Danish",
-				"sv" => "Swedish",
-				"nb" or "no" => "Norwegian",
-				"de" => "German",
-				"fr" => "French",
-				"es" => "Spanish",
-				_ => language
-			};
+			return $"Say {style}: {text}";
 		}
 
 		// audio/L16;codec=pcm;rate=24000
