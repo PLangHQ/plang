@@ -186,6 +186,7 @@ namespace PLang.Modules.SpeechModule
 			{
 				400 => "the request was refused, check the model and voice name",
 				401 or 403 => "the key was refused, check the GeminiKey setting",
+				402 => "the prepaid credits on the Google AI Studio project are used up, top up at https://ai.studio/projects",
 				404 => "the model was not found for this key",
 				429 => "rate limited or out of quota",
 				>= 500 => "Google is having trouble, it is worth retrying",
