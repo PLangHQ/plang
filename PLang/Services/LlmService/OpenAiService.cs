@@ -213,7 +213,7 @@ namespace PLang.Services.OpenAi
 					}
 				}
 			}
-			var usage = new LlmUsage(json["usage"]?["input_tokens"]?.ToObject<long>() ?? 0, json["usage"]?["output_tokens"]?.ToObject<long>() ?? 0);
+			var usage = new LlmUsage(json["usage"]?["input_tokens"]?.ToObject<long>() ?? 0, json["usage"]?["output_tokens"]?.ToObject<long>() ?? 0, json["usage"]?["input_tokens_details"]?["cached_tokens"]?.ToObject<long>() ?? 0);
 			return (new LlmChatResult(items, text, toolCalls, usage), null);
 		}
 
@@ -279,7 +279,8 @@ namespace PLang.Services.OpenAi
 					{
 						long promptTokens = json.usage.prompt_tokens != null ? (long)json.usage.prompt_tokens : 0;
 						long completionTokens = json.usage.completion_tokens != null ? (long)json.usage.completion_tokens : 0;
-						question.Usage = new LlmUsage(promptTokens, completionTokens);
+						long cachedTokens = json.usage.prompt_tokens_details?.cached_tokens != null ? (long)json.usage.prompt_tokens_details.cached_tokens : 0;
+						question.Usage = new LlmUsage(promptTokens, completionTokens, cachedTokens);
 					}
 
 					var obj = extractor.Extract(question.RawResponse, responseType, question.Tools);

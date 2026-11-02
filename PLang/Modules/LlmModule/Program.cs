@@ -35,7 +35,7 @@ public class Program : BaseProgram
 		this.appContext = appContext;
 	}
 
-	public record AgentRun(string? Answer, int Rounds, int ToolCalls, int ToolErrors, long InputTokens, long OutputTokens, bool StoppedAtMaxRounds);
+	public record AgentRun(string? Answer, int Rounds, int ToolCalls, int ToolErrors, long InputTokens, long OutputTokens, bool StoppedAtMaxRounds, long CachedTokens = 0);
 
 	[Description(@"Runs an agent: sends messages and tools to the llm, runs each tool the llm asks for by calling the tool's goal with the arguments as parameters, appends the results to messages and repeats until the llm answers with text. messages is the conversation and is updated in place. tools is a list of {name, description, parameters (json schema), call (goal path)}. Events: onProgress runs once per round that has tool calls, before them, with %text% (what the llm wrote alongside the calls, may be empty), %round% and %toolCallCount%; onToolCall runs before a tool with %toolCall%; onToolResult runs after it with %toolCall% and %toolResult% and may return a replacement result; onRoundEnd runs after the round's tools with %round%. reasoning: none|low|medium|high. Returns {Answer, Rounds, ToolCalls, ToolErrors, InputTokens, OutputTokens, StoppedAtMaxRounds}")]
 	public async Task<(AgentRun? Run, IError? Error)> RunAgent([HandlesVariable] string messages, List<AgentTool>? tools = null,
@@ -53,7 +53,7 @@ public class Program : BaseProgram
 		var callGoal = GetProgramModule<CallGoalModule.Program>();
 
 		int toolCalls = 0, toolErrors = 0;
-		long inputTokens = 0, outputTokens = 0;
+		long inputTokens = 0, outputTokens = 0, cachedTokens = 0;
 		for (int round = 1; round <= maxRounds; round++)
 		{
 			var request = new LlmChatRequest()
@@ -72,10 +72,11 @@ public class Program : BaseProgram
 			foreach (var item in turn.Items) AddToHistory(history, item);
 			inputTokens += turn.Usage.InputTokens;
 			outputTokens += turn.Usage.OutputTokens;
+			cachedTokens += turn.Usage.CachedTokens;
 
 			if (turn.ToolCalls.Count == 0)
 			{
-				return (new AgentRun(turn.Text, round, toolCalls, toolErrors, inputTokens, outputTokens, false), null);
+				return (new AgentRun(turn.Text, round, toolCalls, toolErrors, inputTokens, outputTokens, false, cachedTokens), null);
 			}
 
 			if (onProgress != null)
@@ -155,7 +156,7 @@ public class Program : BaseProgram
 				if (endError != null) return (null, endError);
 			}
 		}
-		return (new AgentRun($"Stopped after {maxRounds} rounds", maxRounds, toolCalls, toolErrors, inputTokens, outputTokens, true), null);
+		return (new AgentRun($"Stopped after {maxRounds} rounds", maxRounds, toolCalls, toolErrors, inputTokens, outputTokens, true, cachedTokens), null);
 	}
 
 	private async Task<IError?> RunEvent(CallGoalModule.Program callGoal, GoalToCallInfo eventGoal, Dictionary<string, object?> parameters)
@@ -437,7 +438,7 @@ public class Program : BaseProgram
 		(var response, var queryError) = await llmServiceFactory.CreateHandler().Query(llmQuestion, typeof(object));
 
 		var usage = llmQuestion.Usage;
-		context.AddVariable(new LlmCallUsage(llmQuestion.model, usage?.InputTokens ?? 0, usage?.OutputTokens ?? 0, usage == null), variableName: "llmUsage");
+		context.AddVariable(new LlmCallUsage(llmQuestion.model, usage?.InputTokens ?? 0, usage?.OutputTokens ?? 0, usage == null, usage?.CachedTokens ?? 0), variableName: "llmUsage");
 
 		if (queryError != null) return (null, queryError, properties);
 		if (response == null) return (null, new ProgramError("Response was empty", goalStep), properties);
