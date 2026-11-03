@@ -1,0 +1,13 @@
+after EvA: %!app.module.output.write.on.start% %!app.on.start% %!app.on.start%
+after EvB: %!app.module.output.write.on.start% %!app.type.step.on.start% %!app.type.step.on.start%
+after EvC: %!app.module.output.write.on.start% %!app.type.step.on.start% %!app.type.step.on.start%
+after EvD: %!app.output.write.on.start% %!app.module.output.write.on.start% %!app.module.output.write.on.start%
+after EvE: %!app.type.step.on.start% %!app.type.step.on.start% %!app.type.step.on.start%
+after EvF: %!app.module.http.get.on.start% %!app.module.http.get.on.start% %!app.module.http.get.on.start%
+after EvG: %!app.module.output.write.on.start% %!app.output.write.on.start% %!app.type.step.on.start%
+after EvH: %!app.module.file.read.on.start% %!app.module.file.read.on.start% %!app.module.file.read.on.start%
+after EvI: %!app.module.output.write.on.start% %!app.type.step.on.start% %!app.type.step.on.start%
+after EvJ: %!event% %!app.type.step.on.start% %!app.type.step.on.start%
+after EvK: %!app.type.step.on.start% %!app.type.step.on.start% %!app.type.goal.on.start%
+after EvL: %!app.on.start% %!app.on.start% %!app.on.start%
+after Mark: %!app.type.step.on.start% %!app.module.output.write.on.start% %!app.type.step.on.start% %!app.type.step.on.start% %!app.type.step.on.start%

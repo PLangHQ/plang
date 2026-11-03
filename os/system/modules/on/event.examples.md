@@ -1,3 +1,18 @@
+Step text: `before action file.read call OverrideFileRead`
+Formal: `on.event(Event=%!app.module.file.read.on.start%, When="before", Action=goal.call(Name="OverrideFileRead"))` — an action the step names as module.action is its own start, `%!app.module.<module>.<action>.on.start%`, whatever the called goal is named.
+
+Step text: `after action output.write, call Record`
+Formal: `on.event(Event=%!app.module.output.write.on.start%, When="after", Action=goal.call(Name="Record"))` — comma or not, the same path; not `%!app.type.step%`, which is every step.
+
+Step text: `before action http.get, call Throttle`
+Formal: `on.event(Event=%!app.module.http.get.on.start%, When="before", Action=goal.call(Name="Throttle"))`
+
+Step text: `before action variable.set call Trace`
+Formal: `on.event(Event=%!app.module.variable.set.on.start%, When="before", Action=goal.call(Name="Trace"))`
+
+Step text: `after action llm.query, call ShowCost`
+Formal: `on.event(Event=%!app.module.llm.query.on.start%, When="after", Action=goal.call(Name="ShowCost"))` — not `%!app.type.action%`, which is every action.
+
 Step text: `after %count% is set, call Log`
 Formal: `on.event(Event=%!app.variable["count"].on.set%, When="after", Action=goal.call(Name="Log"))` — a variable the step names is `%!app.variable["count"]%`: its own moments, not its value's (`%count.on…%`).
 
@@ -16,9 +31,6 @@ Formal: `on.event(Event=%!app.goal["Process"].on.start%, When="before", Action=g
 Step text: `before the app starts, call Say`
 Formal: `on.event(Event=%!app.on.start%, When="before", Action=goal.call(Name="Say"))` — the app itself is `%!app%`; its start is `%!app.on.start%`.
 
-Step text: `after action llm.query, call ShowCost`
-Formal: `on.event(Event=%!app.module.llm.query.on.start%, When="after", Action=goal.call(Name="ShowCost"))` — an action the step names as module.action is `%!app.module.<module>.<action>%`, not `%!app.type.action%`, which is every action.
-
 Step text: `after step call TrackAfterStep`
 Formal: `on.event(Event=%!app.type.step.on.start%, When="after", Action=goal.call(Name="TrackAfterStep"))`
 
@@ -27,12 +39,6 @@ Formal: `on.event(Event=%!app.module.file.on.start%, When="before", Action=goal.
 
 Step text: `after each http action, call Meter`
 Formal: `on.event(Event=%!app.module.http.on.start%, When="after", Action=goal.call(Name="Meter"))`
-
-Step text: `before action file.read call OverrideFileRead`
-Formal: `on.event(Event=%!app.module.file.read.on.start%, When="before", Action=goal.call(Name="OverrideFileRead"))`
-
-Step text: `after action output.write call CaptureWrite`
-Formal: `on.event(Event=%!app.module.output.write.on.start%, When="after", Action=goal.call(Name="CaptureWrite"))`
 
 Step text: `after each goal call LogAfter, level="info"`
 Formal: `on.event(Event=%!app.type.goal.on.start%, When="after", Action=goal.call(Name="LogAfter", Parameter=[{level: "info"}]))`

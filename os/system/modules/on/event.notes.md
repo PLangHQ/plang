@@ -1,6 +1,6 @@
 `on.event` is the action behind a step that LEADS with "before …", "after …" or "on <event> …" and names what to call when it happens ("before each step call X", "after write on 'audit' channel call Y"). It binds an event: the call runs when the event fires, not now. A step that leads with `call` is `goal.call`, even when a name in it says "event", "before" or "after". An "on error …" clause after an action is `on.error`, not this.
 
-`Event` is the event itself, written as the path that reaches it: what it belongs to, then `.on.`, then its name. Read both off the step:
+`Event` is the event itself, written as the path that reaches it: what it belongs to, then `.on.`, then its name. It comes only from what the step says before `call`; the goal after `call` is the Action, whatever it is named, and never decides the Event. A step that names a `module.action` ("before action output.write", "after action file.read", "before action http.get") binds that action's own start, `%!app.module.<module>.<action>.on.start%` (`%!app.module.output.write.on.start%`): never `%!app.type.step.on.start%` (every step), never `%!app.on.start%` (the app), even with a comma. Read both off the step:
 - what it belongs to:
   - a channel the step names ("on "input" channel", "the audit channel") → `%!channel.input%`, `%!channel.audit%` (the asker's actor's channels, picked by name)
   - an action the step names as module.action ("action file.read", "action variable.set") → `%!app.module.file.read%`, `%!app.module.variable.set%` — not `%!app.type.action%`, which is every action

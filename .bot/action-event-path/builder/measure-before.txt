@@ -1,0 +1,13 @@
+before EvA: %!app.on.start% %!app.on.start% %!app.on.start%
+before EvB: %!app.type.step.on.start% %!app.on.start% %!app.on.start%
+before EvC: %!app.on.start% %!app.on.start% %!app.type.step.on.start%
+before EvD: %!app.module.output.write.on.start% %!app.module.output.write.on.start% %!app.module.output.write.on.start%
+before EvE: %!app.type.step.on.start% %!app.type.step.on.start% %!app.type.step.on.start%
+before EvF: %!app.type.step.on.start% %!event% %!event%
+before EvG: %!app.on.start% %!app.type.step.on.start% %!app.output.write.on.start%
+before EvH: %!app.module.file.read.on.start% %!app.module.file.read.on.start% %!app.module.file.read.on.start%
+before EvI: %!app.on.start% %!app.on.start% %!app.on.start%
+before EvJ: %!app.type.step.on.start% %!event% %!app.on.start%
+before EvK: %!app.type.step.on.start% %!app.type.step.on.start% %!app.type.step.on.start%
+before EvL: %!app.on.start% %!app.on.start% %!app.on.start%
+before Mark: %!app.type.step.on.start% %!app.type.step.on.start% %!app.type.step.on.start% %!app.type.step.on.start% %!app.type.step.on.start%
