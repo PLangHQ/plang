@@ -122,13 +122,65 @@
       "timestamp_start": "2026-11-03T12:40:00Z",
       "timestamp_end": "2026-11-03T13:10:00Z",
       "intent": "v2: Part divides by what the settled modules leave; the parser places and reads the step's variables",
-      "before": { "assumptions": "a share no module claims is doubt", "risk": "Placed() reading at each place differs from Scan on a reference that doesn't parse" },
+      "before": {
+        "assumptions": "a share no module claims is doubt",
+        "risk": "Placed() reading at each place differs from Scan on a reference that doesn't parse"
+      },
       "plan": ".bot/set-add-order/coder/v2/plan.md",
       "actions": [
-        { "paths": ["PLang/app/goal/step/pick/list/this.cs"], "type": "modify", "category": "code", "confidence": "high", "context": "Part = share / (1 - settled shares); Placed via parser.Read(at); Assigned via Literal regex or parser.Read(0); AssignsOne removed" },
-        { "paths": ["PLang.Tests/Wire/App/Decider/ModulePartTests.cs"], "type": "modify", "category": "test", "confidence": "high", "context": "ARemoveAnsweredWithoutProbabilities_StaysPossible, red on f3d89adf6" }
+        {
+          "paths": [
+            "PLang/app/goal/step/pick/list/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Part = share / (1 - settled shares); Placed via parser.Read(at); Assigned via Literal regex or parser.Read(0); AssignsOne removed"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Wire/App/Decider/ModulePartTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "ARemoveAnsweredWithoutProbabilities_StaysPossible, red on f3d89adf6"
+        }
       ],
-      "after": { "status": "done", "health": "C# 5779 green; plang 323 total, 322 pass, 1 skipped; PLNG001/002 0; no pin moved", "notes": "" }
+      "after": {
+        "status": "done",
+        "health": "C# 5779 green; plang 323 total, 322 pass, 1 skipped; PLNG001/002 0; no pin moved",
+        "notes": ""
+      }
+    },
+    {
+      "id": "665c16ae-d2a8-4793-ba83-8865786e9dc9",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-11-03T12:24:35.139Z",
+      "timestamp_end": "2026-11-03T12:24:35.139Z",
+      "intent": "Re-check set-add-order v2 d30db6c03: Part, parser Read in Placed/Assigned, the broken-reference difference",
+      "before": {
+        "assumptions": "v2 fixes finding 1 and 3",
+        "risk": "rewritten Assigned/Placed unpinned"
+      },
+      "plan": ".bot/set-add-order/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/goal/step/pick/list/this.cs",
+            "PLang.Tests/Wire/App/Decider/ModulePartTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Code right. Mutations M1 (Placed skip) and M2 (Assigned whole-rest check) survive 8 test classes: tests needed. Broken-reference difference does not matter (hints only). Both reverted, tree clean."
+        }
+      ],
+      "after": {
+        "status": "NEEDS WORK narrow (tests)",
+        "health": "fixtures green",
+        "notes": "review.md v2 section, v2/verdict.json"
+      }
     }
   ]
 }

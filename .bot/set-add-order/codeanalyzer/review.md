@@ -87,3 +87,49 @@ must not assume the distribution is whole.
 ## Verdict: NEEDS WORK
 One blocking finding (1), with a smaller replacement and a test; the rest minor (3 is required by the boy scout rule, 4–5
 tracked). Next: coder, then back to me.
+
+---
+
+# v2 — d30db6c03 (merged as 983bc7b38) — NEEDS WORK, narrow (tests only)
+
+Scope: `pick/list/this.cs` whole again; `ModulePartTests.cs`. Fixtures green at the merge: ModulePartTests 3, PickListTests 8,
+PickOptionTests 18, ConfirmTemplateTests 2, LineTwinTests 1, KeptStepTests 8, PrefillTests 5, KindFollowUpTests 2. `pick_golden.json`
+is not in the v1→v2 diff: the three moved picks stay Certain under the new `Part`. Bench: skipped (build-time listing).
+
+## v1 findings
+- **1 (blocking) — fixed.** `Part` = share / (1 − the settled shares), 0 when nothing is left (`:504-512`). My no-probabilities
+  probe is now `ARemoveAnsweredWithoutProbabilities_StaysPossible` (`{file 0.56}` alone: 0.56 Possible). The dead guard is gone.
+  `ranked.Single(...)` is safe: a pick through a module comes from `Asked`, which reads `Ranked`; a missing module would throw,
+  loudly, not silently.
+- **3 (boy scout) — fixed.** `AssignsOne` and its `%\S+%` are gone; `Placed()` asks `parser.Read(at)` at each place; `Assigned()` reads
+  the rest through `Literal` or one bare variable spanning it. Remaining regexes (`Assigns`, `Literal`) hold no `%…%`.
+
+## The coder's question: a reference that opens but doesn't parse
+Old `Scan` (`parser/this.cs:118-130`) jumps to the closing `%` of a broken reference (`i = close`); `Placed` tries the next place, so
+`%x.%y%` now yields `y`. **It does not matter for behaviour:** `Placed` feeds `First`, `Target` and `Assigned`, which are hints for the
+starting line; the formal Reader re-reads that line and "knows nothing" if it does not read, and a malformed reference is refused
+through the parser's own `Error` elsewhere. One cost: for malformed text `Placed` and `parser.Variable` now answer differently about
+which variables a step has. The one answer is a parser member that carries each variable's position; a parser addition goes to the
+architect first, so: a proposal for the backlog, not a fix here.
+
+## New findings
+### 7. Deletion test — the two rewritten lines of `Assigned`/`Placed` are pinned by no test — NEEDS WORK (coder: tests)
+Announced, reverted mutations (tree clean after each):
+- **M2:** drop `&& one.Text.Length == value.Length` (`:138`, "one bare variable, the whole of what follows"). PrefillTests 5, KindFollowUpTests 2,
+  PickOptionTests 18 all green. Consequence: for `set %x% = %x% + 1` (this branch's step) `Assigned()` would answer
+  `(%x%, "%x% + 1")` and the known code would be `variable.set(Name=%x%, Value=%x% + 1)`. Nothing fails. (The old `\s*$` anchored it,
+  also untested; v2 rewrote the line, so v2 pins it.)
+- **M1:** drop `at += v.Text.Length - 1` (`:114`), so a reference's inside is read again as places. PickListTests 8, PickOptionTests 18,
+  KeptStepTests 8, ModulePartTests 3, PrefillTests 5, KindFollowUpTests 2 green. `%a[%b%]%` would yield `b` as a second place.
+- **Tests to add (each red on its mutation):** `Pick.Known` for `set %x% = %x% + 1` holds no `Value=%x% + 1` (variable.set without that value or no
+  Name+Value set); `set %x% = %y%` holds `variable.set(Name=%x%, Value=%y%)`; a step whose first reference nests another
+  (`set %a[%b%]% = 5`) yields one place.
+
+## Other checks (v2 diff and the file whole)
+- Return early: none nested in the touched methods. `Placed`: a guard `continue`, then the work.
+- Comments state what is; no history. `Part`'s says what the share is of.
+- Patterns 3 and 11 (v1 #4, #5): on the backlog, as ruled.
+
+## Verdict v2: NEEDS WORK (narrow)
+The code is right; two changed lines of the headline step's known-code path hold no test. Coder adds the tests (no production change
+expected); then PASS and the tester.
