@@ -14,6 +14,21 @@
         { "paths": [".bot/set-add-order/architect/plan/start.md", ".bot/set-add-order/architect/summary.md"], "type": "create", "category": "doc", "confidence": "high", "context": "One-stage plan: a module's share of the open work, read by Sure" }
       ],
       "after": { "status": "plan sent to the coder", "health": "", "notes": "" }
+    },
+    {
+      "id": "b3d0c6f2-6a41-4f7e-9c58-2e1a7d4b9f60",
+      "bot": "coder",
+      "timestamp_start": "2026-11-03T11:40:00Z",
+      "timestamp_end": "2026-11-03T12:15:00Z",
+      "intent": "Stage 1: an action picked through its module reads the module's share of the open work",
+      "before": { "assumptions": "Settled is the right notion of answered work", "risk": "moved decider pins" },
+      "plan": ".bot/set-add-order/coder/v1/plan.md",
+      "actions": [
+        { "paths": ["PLang/app/goal/step/pick/list/this.cs"], "type": "modify", "category": "code", "confidence": "high", "context": "Part(module) replaces the split stage-1 share in the certainty check; local Sure renamed Certain" },
+        { "paths": ["PLang.Tests/Wire/App/Decider/ModulePartTests.cs"], "type": "create", "category": "test", "confidence": "high", "context": "(a) red by revert, (b) guard green both ways" },
+        { "paths": ["PLang.Tests/Wire/App/Decider/pick_golden.json"], "type": "modify", "category": "test", "confidence": "high", "context": "re-pinned via AcceptTheFixture: checkout s3/s5 error.throw and loop s2 goal.call Possible -> Certain" }
+      ],
+      "after": { "status": "done", "health": "C# 5778 green; plang 323 total, 322 pass, 1 skipped; PLNG001/002 0", "notes": "" }
     }
   ]
 }

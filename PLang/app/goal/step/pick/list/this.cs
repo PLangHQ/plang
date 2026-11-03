@@ -284,18 +284,18 @@ public sealed class @this
         var popular = Popular();
         foreach (var (name, score) in popular)
             if (shown.All(p => p.Name != name)) shown.Add((name, score));
-        // an action picked through its module is certain only when its module is too: its score is its certainty
-        // within the module, and a module the decider is unsure of leaves the step's words to decide
+        // an action picked through its module is certain only when its module is too: its score answers whether the
+        // step uses the module (or which of its actions), and a module the decider is unsure of leaves the step's
+        // words to decide
         bool Through(string name) => _items.FirstOrDefault(i => i.Name == name)?.From is From.YesNo or From.Choice;
-        bool Sure(string name) => !Through(name)
-            || (_module.GetValueOrDefault(name.Split('.')[0]) ?? (number)0.0) >= (number)Near;
+        bool Certain(string name) => !Through(name) || Part(name.Split('.')[0]) >= (number)Near;
         // most certain first; equal scores keep their order
         var listing = new List<listed.@this>();
         foreach (var p in shown.OrderByDescending(p => p.Score))
             listing.Add(new listed.@this
             {
                 Name = p.Name, Score = p.Score,
-                Mark = p.Score >= (number)Near && Sure(p.Name) ? listed.Mark.Certain
+                Mark = p.Score >= (number)Near && Certain(p.Name) ? listed.Mark.Certain
                      : popular.ContainsKey(p.Name) && !(_items.FirstOrDefault(i => i.Name == p.Name)?.Score is { } score && score >= (number)Possible)
                          ? listed.Mark.Popular
                      : listed.Mark.Possible,
@@ -497,6 +497,19 @@ public sealed class @this
     // The modules a near-certain common action already answers.
     private HashSet<string> Settled =>
         _named.Where(a => a.Value is { } p && p >= (number)Near).Select(a => a.Key.Split('.')[0]).ToHashSet();
+
+    // A module's share of the work no near-certain common action answers: its stage-1 share over the summed shares of
+    // the modules not settled. Stage 1's choice is one-of, so a step of two modules splits it; the share a settled
+    // module takes is work already answered, not doubt about this one. 0 when the module is settled or nothing is open.
+    private number Part(string module)
+    {
+        var settled = Settled;
+        var open = Ranked().Where(m => !settled.Contains(m.Module)).ToList();
+        if (open.All(m => m.Module != module)) return 0.0;
+        var sum = open.Select(m => m.Share).Aggregate((total, share) => total + share);
+        if (sum <= (number)0.0) return 0.0;
+        return open.Single(m => m.Module == module).Share / sum;
+    }
 
     // The modules stage 2 asks the action of: the main one and a runner-up at or above Runner, each
     // unless settled.
