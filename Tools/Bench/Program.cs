@@ -13,6 +13,10 @@
 //   cold       one fresh process: the first of everything and the JIT's share, then the same again
 //   loadtypes  allocation ticks by type of a birth, and with BENCH_LOAD=1 of its goal's load
 //   repeat     one app and one load, the goal run BENCH_N times: the bytes per run and the GC's share
+//   resolve    what shell.Resolve of a set action is made of, best of 7 rounds each
+//   jit        one fresh process: the methods the JIT compiled, by namespace, with each group's time
+//   copy       what data.Copy costs for a value with no bag, an empty bag, and a property
+//   closure    which classes hold the compiler closure BENCH_CLOSURE names, and what each captures
 //
 // Env: BENCH_ROOT (the folder of the app; default <repo>/test), BENCH_N, BENCH_REST (seconds to rest before the
 // last heap count; 0 = none), BENCH_MAKER (bindings the maker holds), BENCH_NOTEST, BENCH_LOAD, BENCH_TICKS. One line
@@ -23,7 +27,7 @@
 var setting = new Bench.setting.@this(args);
 if (Bench.mode.list.@this.Find(setting) is not { } mode)
 {
-    Console.Error.WriteLine("usage: Bench <birth|request|steps|index|events|alloc|phases|cold|loadtypes|repeat> <root|child>");
+    Console.Error.WriteLine("usage: Bench <birth|request|steps|index|events|alloc|phases|cold|loadtypes|repeat|resolve|jit|copy|closure> <root|child>");
     return 2;
 }
 return await mode.Run();

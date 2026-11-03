@@ -2,7 +2,7 @@ using System.Reflection;
 
 namespace Bench.mode.closure;
 
-/// <summary>SCRATCH (not committed): which classes hold a compiler closure of the name the allocation ticks showed
+/// <summary>Which classes hold a compiler closure of the name the allocation ticks showed
 /// (BENCH_CLOSURE, e.g. <c>&lt;&gt;c__DisplayClass32_0</c>), with what each captures and the methods that make it.</summary>
 internal sealed class @this(setting.@this setting) : mode.@this(setting)
 {
