@@ -34,7 +34,9 @@ Plan: `.bot/set-add-order/architect/plan/start.md`.
 
 | 14 | **Accepted v3** 37b2995fa (tests only). M2 → `ASetOfASum_KnowsTheCapture` (what M2 loses is the capture's `Value=%!data%`; the formal reader already refuses `Value=%x% + 1`). M1 → `ASetOfOneVariable_KnowsItAsTheValue`, `AVariablesPlace_EndsWhereItsTextEnds` (the End shift). The skip side (`%a[%b%]%`) can't be shown through a production door, so it goes with the backlog's parser-place item. The tester started on d30db6c03 in parallel (production code final) | each rewritten line pinned | coder |
 
+| 15 | **Codeanalyzer PASS** on v3 (1de7b8380): M2 and the M1 End shift are caught; the M1 skip alone has no production door (backlog). Security starts beside the tester (the code is final). Its question: can the looser certainty pre-fill a destructive action the words didn't name, when a settled module raises another's part? | the line | architect |
+
 Stage status:
 | Stage | What | Status |
 |---|---|---|
-| 1 | The module's share of the open work | codeanalyzer re-check of v3, tester running |
+| 1 | The module's share of the open work | tester and security running |
