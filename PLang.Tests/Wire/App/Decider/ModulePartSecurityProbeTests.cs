@@ -1,5 +1,8 @@
 namespace PLang.Tests.App.Decider;
 
+// Security probes (set-add-order). Each W test asserts TODAY'S edge (F1, Low accepted risk, ruled B at 74bf815d1): it flips to Possible when
+// the backlog item A lands (the settled share removed only when the settled action is >= 0.9 on its own probability).
+//
 // Security probes (set-add-order): `Part` divides a module's stage-1 share by 1 less the shares of the modules a near-certain
 // common action settles. Which destructive or sensitive action becomes Certain (so on the starting line, and a build that leaves
 // it out is refused by Agree) where the plain share, the 09-30 rule, said Possible?
