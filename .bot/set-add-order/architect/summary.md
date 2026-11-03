@@ -41,7 +41,9 @@ Plan: `.bot/set-add-order/architect/plan/start.md`.
 
 | 18 | **Security on A:** the argmax alone doesn't close F1 (`remove %x%, write to %y%` really uses remove and set, and a one-of choice may answer set). A reads the choice's **probabilities**: the settled module's share is removed only when its settled action is ≥ Near on its own probability, and a mixed choice falls back to the plain share (fails safe to Possible). A confidently wrong decider is B's residual. The rule: the window is reached in a real wording → A (with probabilities) + the probes; never reached → B, Low accepted risk, the probes as the pin, A on the backlog. Put to Ingi | security's bar | architect, security |
 
+| 19 | **F1 ruled B** (the builder's 74bf815d1): 7 real wordings ×3 on the final binary, none in the window. The closest is `remove %x%, write to %y%` (file 0.90, variable.set 0.84–0.86, nothing settled); the delete/path/file wordings give file 0.98–1.00, and the list remove gives list 0.99. The control `set %x% = %x% + 1`: math 0.52–0.59, lifted by `Part`, add-then-set 3/3, which also closes the tester's note 2. F1 is Low accepted risk, security's `ModulePartSecurityProbeTests` are the pin (merged with the branch), and A (with the choice's probabilities) goes on the backlog. Side finding: `clear %x%, write to %y%` builds an extra output.write (backlog). The auditor starts | the rule in 18 | architect |
+
 Stage status:
 | Stage | What | Status |
 |---|---|---|
-| 1 | The module's share of the open work | security F1: the builder measures the window |
+| 1 | The module's share of the open work | auditor |
