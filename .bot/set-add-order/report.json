@@ -181,6 +181,34 @@
         "health": "fixtures green",
         "notes": "review.md v2 section, v2/verdict.json"
       }
+    },
+    {
+      "id": "eb25bda9-9c67-48d7-864e-7843bb4a1521",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-11-03T12:36:02.674Z",
+      "timestamp_end": "2026-11-03T12:36:02.675Z",
+      "intent": "Re-check set-add-order v3 37b2995fa: the three pinning tests against the v2 mutations",
+      "before": {
+        "assumptions": "tests go red on M1 and M2",
+        "risk": "skip-only side unreachable"
+      },
+      "plan": ".bot/set-add-order/codeanalyzer/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Wire/App/Decider/ModulePartTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "M2 red (1/6), M1 End-shift red (2/6), skip-only survives: no production door, backlog. PASS."
+        }
+      ],
+      "after": {
+        "status": "PASS, tester next",
+        "health": "6/6; tree clean",
+        "notes": "review.md v3 section"
+      }
     }
   ]
 }

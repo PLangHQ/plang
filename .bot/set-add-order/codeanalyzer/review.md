@@ -133,3 +133,18 @@ Announced, reverted mutations (tree clean after each):
 ## Verdict v2: NEEDS WORK (narrow)
 The code is right; two changed lines of the headline step's known-code path hold no test. Coder adds the tests (no production change
 expected); then PASS and the tester.
+
+---
+
+# v3 — 37b2995fa — PASS (tester next)
+
+Tests only (`ModulePartTests` +37 lines, 6/6); no production change. Re-ran the v2 mutations (announced, reverted, tree clean):
+- **M2** (drop `&& one.Text.Length == value.Length`): `ASetOfASum_KnowsTheCapture` red (1 of 6). The coder pinned what M2 loses
+  (the capture's `Value=%!data%`); my "no `Value=%x% + 1`" form would have survived, since the formal reader refuses that line.
+- **M1, End shift** (`yield return (v, at + 1)` without the `at +=`): `ASetOfOneVariable_KnowsItAsTheValue` and
+  `AVariablesPlace_EndsWhereItsTextEnds` red (2 of 6).
+- **M1, skip only** (`yield return (v, at + v.Text.Length)`, End still right): 6/6 green. Agreed with the architect: the inner-variable
+  skip has no production door; it goes with the backlog item "the parser answers each variable's place". The `at +=` line is
+  pinned for its End; only its skip side waits.
+- Return early, comments: unchanged and clean. `KnownSet` helper builds a real stage-1 answer; tests state what they pin.
+No bench (build-time).
