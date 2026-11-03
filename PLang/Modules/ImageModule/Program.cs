@@ -8,6 +8,8 @@ using PLang.Modules.ImageModule.QrCode;
 using PLang.Runtime;
 using QRCoder;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 using System.ComponentModel;
 
 namespace PLang.Modules.ImageModule
@@ -105,6 +107,238 @@ namespace PLang.Modules.ImageModule
 			{
 				return (null, new ProgramError($"Failed to generate QR code: {ex.Message}", goalStep, function, Exception: ex), null);
 			}
+		}
+
+		[Description("Resizes an image file to fit a width and height and writes the result to a new file. The mode says how the image meets the box: fit keeps the aspect ratio and fits inside the box (may enlarge), shrink-only is fit that never enlarges a smaller image, fill covers the whole box and crops the overflow, exact and stretch force the exact size and distort, pad keeps the aspect ratio and pads the rest of the box with the background color. The format is taken from the target file extension (jpg, png, webp) unless format is given")]
+		[Example("resize photo.jpg by 685x420, shrink only, quality 100, write to out.jpg",
+			@"sourcePath=""photo.jpg"", width=685, height=420, targetPath=""out.jpg"", mode=""shrink-only"", quality=100")]
+		[Example("resize %file% to 80x80 and save as /thumbs/%name%.jpg",
+			@"sourcePath=%file%, width=80, height=80, targetPath=""/thumbs/%name%.jpg""")]
+		[Example("make a thumbnail of banner.png 300 wide, write to small.webp, quality 80",
+			@"sourcePath=""banner.png"", width=300, height=0, targetPath=""small.webp"", quality=80")]
+		[Example("resize cover.jpg to 500x500, fill, sharpen, write to square.jpg",
+			@"sourcePath=""cover.jpg"", width=500, height=500, targetPath=""square.jpg"", mode=""fill"", sharpen=true")]
+		[Example("resize logo.png by 400x400, pad with white background, write to padded.jpg",
+			@"sourcePath=""logo.png"", width=400, height=400, targetPath=""padded.jpg"", mode=""pad"", backgroundColor=""white""")]
+		[Example("breyta stærð á mynd.jpg í 230x400, aldrei stækka, vista sem lítil.jpg",
+			@"sourcePath=""mynd.jpg"", width=230, height=400, targetPath=""lítil.jpg"", mode=""shrink-only""")]
+		public async Task<(ImageResult?, IError?)> Resize(
+			[Description("Path of the image file to resize")] string sourcePath,
+			[Description("Width of the box in pixels. 0 means it follows from the height and the aspect ratio. At least one of width and height must be above 0")] int width,
+			[Description("Height of the box in pixels. 0 means it follows from the width and the aspect ratio")] int height,
+			[Description("Path of the file to write. Its extension decides the format unless format is given. It may be the same as the source path")] string targetPath,
+			[Description("fit, shrink-only, fill, exact, stretch or pad. Use shrink-only when the step says never enlarge, only shrink or do not enlarge. Use fill when it says cover, crop or fill. Use fit when nothing is said")] string mode = "fit",
+			[Description("Quality 1 to 100 for jpeg and webp. Ignored for png")] int quality = 90,
+			[Description("jpeg, png or webp. Empty means the target file extension")] string? format = null,
+			[Description("Background color for pad mode and for flattening transparency when the target is jpeg, for example white, black or #ff0000. Empty means white for jpeg and transparent for png and webp")] string? backgroundColor = null,
+			[Description("true when the step says sharpen")] bool sharpen = false,
+			[Description("true when the step says center on a canvas of exactly width x height, so the result has the box size and the resized image sits in the middle on the background color")] bool center = false)
+		{
+			if (width < 0 || height < 0 || (width == 0 && height == 0))
+			{
+				return (null, new ProgramError($"Width and height must be positive and at least one above 0, got {width}x{height}", goalStep, function));
+			}
+			if (quality < 1 || quality > 100)
+			{
+				return (null, new ProgramError($"Quality must be between 1 and 100, got {quality}", goalStep, function));
+			}
+
+			var source = GetPath(sourcePath);
+			var target = GetPath(targetPath);
+			if (!fileSystem.File.Exists(source))
+			{
+				return (null, new ProgramError($"Image file not found: {sourcePath}", goalStep, function, StatusCode: 404));
+			}
+
+			var (encoder, formatName, formatError) = GetEncoder(format, target, quality);
+			if (formatError != null) return (null, formatError);
+
+			try
+			{
+				byte[] bytes = await fileSystem.File.ReadAllBytesAsync(source);
+				using var image = SixLabors.ImageSharp.Image.Load(bytes);
+				image.Mutate(x => x.AutoOrient());
+
+				var result = new ImageResult { SourceWidth = image.Width, SourceHeight = image.Height, Format = formatName };
+				var background = ParseBackground(backgroundColor, formatName);
+
+				var (newWidth, newHeight, resizeMode) = CalculateSize(image.Width, image.Height, width, height, mode);
+				if (newWidth != image.Width || newHeight != image.Height)
+				{
+					image.Mutate(x => x.Resize(new ResizeOptions
+					{
+						Size = new SixLabors.ImageSharp.Size(newWidth, newHeight),
+						Mode = ResizeMode.Stretch,
+						Sampler = KnownResamplers.Bicubic
+					}));
+				}
+
+				if (resizeMode == "fill" && width > 0 && height > 0 && (image.Width != width || image.Height != height))
+				{
+					int cropX = Math.Max(0, (image.Width - width) / 2);
+					int cropY = Math.Max(0, (image.Height - height) / 2);
+					int cropW = Math.Min(width, image.Width);
+					int cropH = Math.Min(height, image.Height);
+					image.Mutate(x => x.Crop(new SixLabors.ImageSharp.Rectangle(cropX, cropY, cropW, cropH)));
+				}
+
+				bool padToBox = (resizeMode == "pad" || center) && width > 0 && height > 0;
+				if (padToBox && (image.Width != width || image.Height != height))
+				{
+					var canvas = new SixLabors.ImageSharp.Image<Rgba32>(width, height, background.ToPixel<Rgba32>());
+					var point = new SixLabors.ImageSharp.Point((width - image.Width) / 2, (height - image.Height) / 2);
+					using var top = image.CloneAs<Rgba32>();
+					canvas.Mutate(x => x.DrawImage(top, point, 1f));
+					image.Dispose();
+					return await Save(canvas, encoder, target, formatName!, sharpen, background, result);
+				}
+
+				return await Save(image, encoder, target, formatName!, sharpen, background, result);
+			}
+			catch (SixLabors.ImageSharp.UnknownImageFormatException)
+			{
+				return (null, new ProgramError($"The file is not an image that can be read: {sourcePath}", goalStep, function, StatusCode: 400));
+			}
+			catch (SixLabors.ImageSharp.InvalidImageContentException ex)
+			{
+				return (null, new ProgramError($"The image is damaged and cannot be read: {sourcePath}. {ex.Message}", goalStep, function, Exception: ex, StatusCode: 400));
+			}
+			catch (Exception ex)
+			{
+				return (null, new ProgramError($"Failed to resize {sourcePath}: {ex.Message}", goalStep, function, Exception: ex));
+			}
+		}
+
+		[Description("Converts an image file to another format (jpeg, png or webp) without changing its size and writes it to a new file")]
+		[Example("convert photo.png to jpg, quality 85, write to photo.jpg",
+			@"sourcePath=""photo.png"", targetPath=""photo.jpg"", quality=85")]
+		[Example("convert %file% to webp and save as out.webp",
+			@"sourcePath=%file%, targetPath=""out.webp""")]
+		public async Task<(ImageResult?, IError?)> ConvertImage(
+			[Description("Path of the image file to convert")] string sourcePath,
+			[Description("Path of the file to write. Its extension decides the format unless format is given")] string targetPath,
+			[Description("Quality 1 to 100 for jpeg and webp")] int quality = 90,
+			[Description("jpeg, png or webp. Empty means the target file extension")] string? format = null,
+			[Description("Background color used to flatten transparency when the target is jpeg. Empty means white")] string? backgroundColor = null)
+		{
+			var source = GetPath(sourcePath);
+			if (!fileSystem.File.Exists(source))
+			{
+				return (null, new ProgramError($"Image file not found: {sourcePath}", goalStep, function, StatusCode: 404));
+			}
+			var probe = SixLabors.ImageSharp.Image.Identify(await fileSystem.File.ReadAllBytesAsync(source));
+			return await Resize(sourcePath, probe.Width, probe.Height, targetPath, "exact", quality, format, backgroundColor);
+		}
+
+		[Description("Reads the width, height and format of an image file without changing it")]
+		[Example("get image info of %file%, write to %info%", @"sourcePath=%file%")]
+		public async Task<(ImageResult?, IError?)> GetImageInfo([Description("Path of the image file")] string sourcePath)
+		{
+			var source = GetPath(sourcePath);
+			if (!fileSystem.File.Exists(source))
+			{
+				return (null, new ProgramError($"Image file not found: {sourcePath}", goalStep, function, StatusCode: 404));
+			}
+			try
+			{
+				var bytes = await fileSystem.File.ReadAllBytesAsync(source);
+				var info = SixLabors.ImageSharp.Image.Identify(bytes);
+				var name = SixLabors.ImageSharp.Image.DetectFormat(bytes)?.Name?.ToLowerInvariant();
+				if (name == "jpg") name = "jpeg";
+				return (new ImageResult { FilePath = source, Width = info.Width, Height = info.Height, SourceWidth = info.Width, SourceHeight = info.Height, Bytes = bytes.Length, Format = name }, null);
+			}
+			catch (SixLabors.ImageSharp.UnknownImageFormatException)
+			{
+				return (null, new ProgramError($"The file is not an image that can be read: {sourcePath}", goalStep, function, StatusCode: 400));
+			}
+			catch (Exception ex)
+			{
+				return (null, new ProgramError($"Failed to read {sourcePath}: {ex.Message}", goalStep, function, Exception: ex));
+			}
+		}
+
+		private async Task<(ImageResult?, IError?)> Save(SixLabors.ImageSharp.Image image, SixLabors.ImageSharp.Formats.IImageEncoder encoder, string target, string formatName, bool sharpen, SixLabors.ImageSharp.Color background, ImageResult result)
+		{
+			if (sharpen) image.Mutate(x => x.GaussianSharpen());
+
+			if (formatName == "jpeg")
+			{
+				using var flat = image.CloneAs<Rgba32>();
+				var white = new SixLabors.ImageSharp.Image<Rgba32>(flat.Width, flat.Height, background.ToPixel<Rgba32>());
+				white.Mutate(x => x.DrawImage(flat, 1f));
+				image.Dispose();
+				return await Write(white, encoder, target, result);
+			}
+			return await Write(image, encoder, target, result);
+		}
+
+		private async Task<(ImageResult?, IError?)> Write(SixLabors.ImageSharp.Image image, SixLabors.ImageSharp.Formats.IImageEncoder encoder, string target, ImageResult result)
+		{
+			using (image)
+			{
+				var directory = fileSystem.Path.GetDirectoryName(target);
+				if (!string.IsNullOrEmpty(directory) && !fileSystem.Directory.Exists(directory))
+				{
+					fileSystem.Directory.CreateDirectory(directory);
+				}
+				using var ms = new MemoryStream();
+				await image.SaveAsync(ms, encoder);
+				await fileSystem.File.WriteAllBytesAsync(target, ms.ToArray());
+				result.FilePath = target;
+				result.Width = image.Width;
+				result.Height = image.Height;
+				result.Bytes = ms.Length;
+			}
+			return (result, null);
+		}
+
+		private (SixLabors.ImageSharp.Formats.IImageEncoder, string?, IError?) GetEncoder(string? format, string target, int quality)
+		{
+			var name = (format ?? "").Trim().TrimStart('.').ToLowerInvariant();
+			if (name == "") name = Path.GetExtension(target).TrimStart('.').ToLowerInvariant();
+			switch (name)
+			{
+				case "jpg":
+				case "jpeg":
+					return (new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder { Quality = quality }, "jpeg", null);
+				case "png":
+					return (new SixLabors.ImageSharp.Formats.Png.PngEncoder(), "png", null);
+				case "webp":
+					return (new SixLabors.ImageSharp.Formats.Webp.WebpEncoder { Quality = quality }, "webp", null);
+				default:
+					return (null!, null, new ProgramError($"Unsupported image format '{name}'. Use jpeg, png or webp, or give the target file one of those extensions", goalStep, function, StatusCode: 400));
+			}
+		}
+
+		private SixLabors.ImageSharp.Color ParseBackground(string? backgroundColor, string? formatName)
+		{
+			if (!string.IsNullOrWhiteSpace(backgroundColor) && SixLabors.ImageSharp.Color.TryParse(backgroundColor.Trim(), out var color)) return color;
+			return formatName == "jpeg" ? SixLabors.ImageSharp.Color.White : SixLabors.ImageSharp.Color.Transparent;
+		}
+
+		private static (int, int, string) CalculateSize(int sourceWidth, int sourceHeight, int width, int height, string? mode)
+		{
+			var m = (mode ?? "fit").Trim().ToLowerInvariant().Replace('_', '-').Replace(' ', '-');
+			if (m == "shrink" || m == "shrinkonly") m = "shrink-only";
+			if (m == "crop" || m == "cover") m = "fill";
+			if (m == "stretch") m = "exact";
+
+			if (m == "exact")
+			{
+				int w = width > 0 ? width : (int)Math.Round(sourceWidth * (height / (double)sourceHeight), MidpointRounding.AwayFromZero);
+				int h = height > 0 ? height : (int)Math.Round(sourceHeight * (width / (double)sourceWidth), MidpointRounding.AwayFromZero);
+				return (Math.Max(w, 1), Math.Max(h, 1), "exact");
+			}
+
+			var scales = new List<double>();
+			if (width > 0) scales.Add(width / (double)sourceWidth);
+			if (height > 0) scales.Add(height / (double)sourceHeight);
+			double scale = m == "fill" ? scales.Max() : scales.Min();
+			if (m == "shrink-only") scale = Math.Min(scale, 1d);
+
+			int newWidth = Math.Max((int)Math.Round(sourceWidth * scale, MidpointRounding.AwayFromZero), 1);
+			int newHeight = Math.Max((int)Math.Round(sourceHeight * scale, MidpointRounding.AwayFromZero), 1);
+			return (newWidth, newHeight, m == "fill" ? "fill" : m == "pad" ? "pad" : "fit");
 		}
 
 		private void GenerateAscii(QRCodeData qrCodeData, QrCodeRequest request, QrCodeResult result, Properties props)
