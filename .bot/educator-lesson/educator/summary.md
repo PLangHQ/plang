@@ -19,7 +19,7 @@ Both projects are confidential. Only script text goes to Google TTS, and the ima
 - **Heilsumynd** (`/shared/educator/animations/heilsumynd-admin/`):
   - New lessons 3-calendar to 14-ai-usage, built from the bot's screenshots and notes. Each was built from 2-tests as template and checked in Chromium at 420 px.
   - 3-calendar is voiced and in the Heilsumynd repo.
-  - The rest wait for the daily TTS quota (100 clips per day). A background script retries every 30 minutes.
+  - 4-customers to 15-mottaka (Reception, in Icelandic) are voiced through OpenRouter (Ingi approved; no daily cap) and checked by transcription. Calendar and Customers are on prod. The rest are handed to the Heilsumynd bot to wire up and deploy.
 - **Next:**
   - Once the audio is in, tell the Heilsumynd bot which lessons can deploy.
   - Have someone listen to the flagged words. Hópkaup: bíð svars, Seldu, Á dagskrá, þemadagana. Heilsumynd: the Icelandic labels Puck reads in English text.
