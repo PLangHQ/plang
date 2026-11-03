@@ -20,7 +20,10 @@ Plan: `.bot/set-add-order/architect/plan/start.md`.
 | 4 | A module's certainty is its stage-1 share of the open work: divided by the summed shares of the `Ranked()` modules not `Settled`; 0 when nothing is open. One private member, read by `Sure`; the prompt's shares stay as stage 1 gave them | pattern 12; refines the 09-30 guard, keeps `remove %x%` unsure (≈0.61) | architect, Ingi's go |
 | 5 | The line: coder → codeanalyzer → tester (with the builder's builds) → security → auditor → docs & merge, run by the architect | Ingi: "take it all the way through" | Ingi |
 
+| 6 | **Accepted** f3d89adf6: private `Part(module)` (open = `Ranked()` minus `Settled`; 0 when the module isn't open or the sum is 0), read by the local `Certain` (was `Sure`, which shadowed the const). Tests `ModulePartTests` (the set-of-a-sum red on revert; the remove guard green). `pick_golden.json` re-pinned, 3 prompt C lines, each Possible → Certain and right: checkout s3 and s5 (if + throw; condition settled by condition.if; the two picks fb14118e0 lost) and loop s2 (foreach + call; loop settled). Gate green, plang 322/323 with 1 skipped, PLNG 0 | the plan held | coder |
+| 7 | The builder measures fresh builds while the codeanalyzer reviews (in parallel): set+add ×5, remove ×5, the edge ×3, the Mark example | independent; saves a round | architect |
+
 Stage status:
 | Stage | What | Status |
 |---|---|---|
-| 1 | The module's share of the open work | pending |
+| 1 | The module's share of the open work | in review (f3d89adf6) |
