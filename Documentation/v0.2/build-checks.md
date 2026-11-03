@@ -61,7 +61,11 @@ the step may do. (A step written directly in formal was asked of no decider, so 
 refuses:
 
 - an action the decider is **certain** of that the code leaves out (a certain action may sit
-  anywhere in the step — inside a recovery, a callback);
+  anywhere in the step — inside a recovery, a callback). An action scored on its own is certain at
+  0.9; one the decider picks *through its module* is certain only when its own score is ≥ 0.9 **and**
+  the module's share of the work the settled modules leave (`Part`, `pick/list/this.cs:508`) is ≥ 0.9
+  too — a module is settled when a common action of it scores ≥ 0.9, in practice `variable.set` —
+  so `set %x% = %x% + 1` is built `math.add(…)` then `variable.set(… Value=%!data%)`;
 - an **option** the decider says the step gives that the chosen action leaves out — unless the
   value is the option's default, which the code holds by leaving it out;
 - an option of a **closed** choice (`kind.IsClosed`) the decider says the step does **not** give,

@@ -27,7 +27,7 @@ The forms the `on` module teaches (`os/system/modules/on/event.description.md`):
 - `before action file.read call X`
 - a channel writing, reading or asking: `before write on "audit" channel call X`
 
-Of these only `before action output.write` and `after each goal` were run for this page. `test/module/on/event` has 3 tests that pass (subfolders for before/after step, before/after action, priority, override, remove and wildcard exist); which forms they cover was not checked.
+Of these only `after each goal` was run for this page. `before action output.write call Mark` is built wrong today: the builder writes the event as the step's start (`%!app.type.step.on.start%`) instead of the action's, so the example above is not run and shows no output. `test/module/on/event` has 3 tests that pass (subfolders for before/after step, before/after action, priority, override, remove and wildcard exist); which forms they cover was not checked.
 
 ## Each goal, each step, each action
 
