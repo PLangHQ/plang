@@ -79,7 +79,7 @@ Scratch apps `p1`, `p2`, `p3` were built with the decider key saved and run with
 | 65 | errors | separate `on error retry 2 times` and `on error ignore` lines: `%attempts%` = 3 | p2 output `attempts: 3` | pass |
 | 66 | errors | both clauses on one line fail to build (`StepsBroken`, Order not given) | p2 first build | pass |
 | 67 | errors | `module/on/error` has 14 passing tests (chains, GoalFirst, nested) | test run 14/14 | pass |
-| 68 | events | `before action output.write call Mark` runs Mark before writes (`marks: 2`) | p3 output | pass; why 2 and not 3 not traced |
+| 68 | events | `before action output.write call Mark` runs Mark before writes (`marks: 2`) | p3 output | not reproduced: an earlier run printed `marks: 2`; by the code (`goal/step/action/this.cs`, the before events run before the action reads `%marks%`) it should be 3. A fresh build of `set %x% = %x% + 1` is on the architect's backlog as built wrong; the builder is to build the example and read Mark's .pr. The page shows no output until then |
 | 69 | events | `before each goal call X` hears the app's goals, not plang's own `/system/` goals | the built test `EachGoalIsTheAppsOwn` run in a scratch copy: 1 of 1 pass; `goal/this.cs:392-397`, `step/this.cs:118-123`, `action/this.cs:156-158` | pass (page rewritten; the earlier observation was of a build before this rule) |
 | 70 | events | the other bind forms | `os/system/modules/on/event.description.md`; `module/on/event` 3/3 | pass for the text and the tests; which forms the tests bind not checked |
 | 71 | events | `on.unbind` removes a binding | `os/system/modules/on/unbind.description.md` only | unverified |
