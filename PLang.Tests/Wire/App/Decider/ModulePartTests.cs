@@ -57,6 +57,43 @@ public class ModulePartTests : System.IAsyncDisposable
         await Assert.That(step.Pick.Formal ?? "").DoesNotContain("file.delete");
     }
 
+    // The known code's variable.set of a step whose set stage 1 is certain of, as Name=…, Value=… (null when the known
+    // code holds no set).
+    private async Task<string?> KnownSet(string text, params (string Id, object Value)[] more)
+    {
+        var step = Step(text);
+        await step.Pick.Take(Answer(
+            [("s0_variable.set", Yes(0.98)),
+            ("s0_@module", Choice("variable", 0.95, new Dictionary<string, object?> { ["variable"] = 0.95, ["math"] = 0.05 })), .. more]), [], Ctx);
+        return step.Pick.Known.Items().Where(a => a.Module.Name == "variable" && a.Name == "set")
+            .Select(a => $"Name={a["Name"]?.Value}, Value={a["Value"]?.Value}").SingleOrDefault();
+    }
+
+    // a sum after the = is not one variable: the set is the capture of the decider's chosen Name, keeping the step's
+    // answer (%!data%), never a set of the sum's words
+    [Test]
+    public async Task ASetOfASum_KnowsTheCapture()
+    {
+        await Assert.That(await KnownSet("set %x% = %x% + 1", ("s0_@option.variable.set.Name", Choice("%x%"))))
+            .IsEqualTo("Name=x, Value=%!data%");
+    }
+
+    // one bare variable after the = is the set's value
+    [Test]
+    public async Task ASetOfOneVariable_KnowsItAsTheValue()
+    {
+        await Assert.That(await KnownSet("set %x% = %y%")).IsEqualTo("Name=x, Value=%y%");
+    }
+
+    // a variable's place ends where its text ends, so the = after it is read and a literal is the set's value; a
+    // variable inside another (%a[%b%]%) is no bare target of its own
+    [Test]
+    public async Task AVariablesPlace_EndsWhereItsTextEnds()
+    {
+        await Assert.That(await KnownSet("set %x% = 5")).IsEqualTo("Name=x, Value=5");
+        await Assert.That(await KnownSet("set %a[%b%]% = 5")).IsNull();
+    }
+
     // stage 1 answering its choice without probabilities names one module at its confidence: the share no module
     // claims (0.44) stays doubt, so file.delete stays Possible
     [Test]
