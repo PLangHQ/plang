@@ -199,6 +199,9 @@ Equality asked from outside, as strings, where the value has its own `Equals` (e
 
 ### Tests, tooling, runs
 
+- **`./dev.sh test` skips the suites on a teaching-only change** (plang-tester, action-event-path, 950903427): its cache keys on the C# roots, so a commit touching only `os/system/modules/**/*.md` or `os/system/type/**/*.md` runs none of the decider fixtures the teaching-edit rule names, unless `--force`. Its cache key takes the teaching folders too.
+- **Two committed fixture .prs bind the old wrong event path** (plang-tester, action-event-path): `test/module/on/event/override/Start.goal` (`before action file.read` → `%!app.type.step.on.start%`; its test is `.test.goal2`, disabled) and `basic/Start.goal` (`before action variable.set` → `%!app.type.action.on.start%`; no test uses that step). No test reads them, so they're rebuilt when their goals are, not by force.
+
 - **Done plans' tests move into the concept tree** (CLAUDE.md "Running plang Tests"): `test/plan/` still holds app-systems, bugs, decider-key, fast-apps, item-doors, json-lines, kind-is-type, snapshot, windows (and list-query, task). The builder rebuilds the moved `.pr`s.
 - **The decision guard** (doc2): `scripts/verify-decisions.sh` fails `variable-ref-binds-instance` (it greps a moved file); `core.hooksPath` is unset so `.githooks/pre-commit` never runs. The architect's.
 - **The Windows runs** (item-doors 8, bugs, windows): LinkSpotTests, StoresFolderTests, RealPathGateReCheckProbeTests, the sub app containment probes on a case-blind disk, APatchBeforeTheFirstFrame, a stores probe for a case variant (`.DATA\setting`). No full Windows sweep was run at windows' final tip.
