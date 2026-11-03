@@ -36,7 +36,10 @@ Plan: `.bot/set-add-order/architect/plan/start.md`.
 
 | 15 | **Codeanalyzer PASS** on v3 (1de7b8380): M2 and the M1 End shift are caught; the M1 skip alone has no production door (backlog). Security starts beside the tester (the code is final). Its question: can the looser certainty pre-fill a destructive action the words didn't name, when a settled module raises another's part? | the line | architect |
 
+| 16 | **Tester PASS** (e25a46435, on d98920480): the sweep green against runtime2 by name (Wire 641 → 647), plang 322/323 with 1 skipped (runtime2's), mutations A–D caught. E ("nothing left" answers 1) is left: it's equivalent for shares summing to ≤ 1. The builder's set+add on the final binary comes with its F1 run (control) | the line | tester |
+| 17 | **Security PASS with F1, Medium** (46caa3172): with variable.set settled, `Part` removes variable's whole share, so file.delete is Certain at file 0.58 / variable 0.36 (probe), and `Agree` (`:217`) then refuses a build without it. Shares alone can't tell this from set+add (math 0.67 / variable 0.33): only the decider knows what variable's share was for. Not taken: a floor on the plain share (it would sit between 0.58 and 0.67), dropping Agree's refusal for this Certain (a fork). Weighing: (A) when removing a settled module's share changes the verdict, stage 2 asks that module's action choice, and the share is removed only if it answers the settled action; (B) ship with the probes pinned if real wordings never reach the window. The builder measures seven wordings first | security's bar | architect |
+
 Stage status:
 | Stage | What | Status |
 |---|---|---|
-| 1 | The module's share of the open work | tester and security running |
+| 1 | The module's share of the open work | security F1: the builder measures the window |
