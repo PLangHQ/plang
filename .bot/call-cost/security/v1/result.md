@@ -22,3 +22,7 @@ Patterns: 11 (the first ask loads, and what is kept stays honest by its version)
 ## Probes
 
 `PLang.Tests/Runtime/App/Context/CallCostSecurityProbeTests.cs`: 7 green (S1–S3, R1, R2, T1, F1). No production edit, no mutation test.
+
+## B1 follow-up (auditor's note, after merge at 36c559831)
+
+Probe `B1_Pinned_…` (green, pins the edge): a kept answer is one Data; `As<T>()` makes a face that shares the answer's properties bag, so a property written on one run's face is read by another run's `Setting.Get` (`leaked=from-run-A`, same Data, context = the keeper's, not the run's). Reach: I grepped every production writer of `Data.Properties` (`Properties[..] =`, `.Set`, `.Add`): each writes onto a result the handler made (http, terminal, llm, test report, event call), none onto a parameter it was given, and a plang step cannot name a handler's parameter Data. So no run can write onto it, and no run state is read through it, today. Rating: Low, latent (a handler that tags its own parameter would leak across runs of one actor). A run value was already shared before the branch; a saved row's answer is new. Fix when wanted: the keeper hands out `answer.Copy(name)` (its own properties, per BirthTests `AFaceOfAValue_SharesItsProperties_AndACopyTakesItsOwn`), or the keeper keeps the value and the run births its Data. The architect's call; the verdict stays PASS.
