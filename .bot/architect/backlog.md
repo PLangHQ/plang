@@ -4,7 +4,9 @@ The one list of work after runtime2's merges (Ingi, 2026-10-29: "yes merge into 
 
 ## Now
 
-- **event-action**, cut 2026-10-29 from runtime2 6cfe782d7 (Ingi: "lets do the event-action"). What an event runs is an action: the `binding` folders become `event/action/`, `app.event` reached by path, each binding chooses whether it reaches sub apps, the C# handler its own kind, one event class. Plan: `.bot/event-action/architect/plan/start.md`.
+- **action-event-path** (cut 2026-11-03 from runtime2 4fb4d5043; the builder): `before action X call Y` builds the action's moment. Teaching only. Plan: `.bot/action-event-path/architect/plan/start.md`.
+- **Next: stores per actor and an app per request** (Ingi, 2026-11-03: "I think we should do #4 next, the actor, it´s a tricky one, but it´s if fundimental"). The architect designs it with Ingi first. In its scope: F4 (a bare goal name falls through) and the channel list reached through another actor, since a server hosting others' goals is the setup where they become live.
+- **Beside it: build-bugs** (Ingi, 2026-11-03: "yes", in parallel; the builder after action-event-path, the coder where a fix is C#). The build bugs a developer hits today: a bare `remove %x%` → file.delete; `clear %x%, write to %y%` + output.write; doc2's A–G (re-checked first; from 10-25); a variable inside quoted text; two on-error clauses on a line; `- make it better`'s NullReferenceException; the ✓ lines; StepsBroken naming a variable the step never says. And **text-culture** (Ingi: "yes"): its route is a locked addition, brought to Ingi when the branch reaches it (windows 28: i, IDecode handed its kind; ii, a decode per format; iii, the base kind.Decode hands the culture on).
 
 ## Ingi's order (2026-10-25: "I agree on the order")
 
