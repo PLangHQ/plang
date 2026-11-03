@@ -1,60 +1,37 @@
-# educator: summary
+# Educator — summary
 
-**Version:** v4 (2026-10-01 → 2026-10-03), the short-lesson curriculum. Plan: `v4/plan.md`; curriculum:
-`/shared/educator/course/CURRICULUM.md`.
+**Version:** v5
 
 ## What this is
+Ingi asked (through the plang-me and peer bots, 2026-11-03) for in-app help on every admin page of two customer projects:
+- **Hópkaup**: a live tour in Icelandic. It drives the real UI while Puck speaks, one short audio "bút" per sentence.
+- **Heilsumynd**: step lessons in English in the "?" slider. Each step is a cropped screenshot with a highlight and voice.
 
-Teaching material for developers new to plang: short, one-idea lessons, each written as text plus code that
-was built and run for real, then animated with narration and exported to mp4.
-- **course** (`/shared/educator/course/<track>/`): `lesson.md` plus `code/<lesson>/` (Start.goal, data, `output.txt`, `.build`).
-- **studio** (`/shared/educator/studio`): a plang app that voices a lesson (Gemini TTS via OpenRouter) and writes its
-  page, plus the JS animation engine. Node + Playwright check and export.
-- **course page**: `/shared/educator/index.html` (Windows `C:\Dev\claude\shared\educator\index.html`), written by `studio/Hub.goal`.
+Both projects are confidential. Only script text goes to Google TTS, and the images use only fake data.
 
-## State
-
-| Track | Lessons on the course page | Held |
-|---|---|---|
-| intro | 1 what is plang, 2 first program, 3 OBP, 4 OBP smells | — |
-| A holding data | A1–A6 | — |
-| B deciding and repeating | B1–B5 | B6 sleep (builder issue 19) |
-| C files | C1–C4 | — |
-| D the outside world | D1–D5 | D6 llm at run time (coder: Conversation misread, template in the message, ask-once key flow, decision 598); D7 database (no db module) |
-| E making it solid | — | not started |
-
-Also:
-- **Module pages:** `docs/Modules.goal` writes `os/system/modules/{file,condition,loop}/start.md`. It saves through
-  `/system/…` (decision 522) and is on app-systems as 7460cdd94. The hand-written `docs/modules/{file,condition,loop}.md`
-  were removed (Ingi, e5073b0ef). The loop page's regeneration for foreach's `Parallel` is held: both new parallel
-  examples fail (run-time `%item%` error; the build crashes on `wait for %task%`). It's with plang-75.
-- **Friction review** (Ingi's ask: a user's review of the builder): `.bot/app-systems/educator/friction.md`, on this branch.
-
-## Key decisions
-
-- Every lesson claim is built in fresh folders (2–6×) and run. The `.pr` is checked, not just the output. Probes
-  look like the lesson code, with no explaining comments (a comment steers the builder).
-- When a step builds wrong, trace what the model was given before reporting:
-  `--debug={"llm":{"system":true,"user":true,"response":true},"goal":"NoSuchGoalX","length":{"max":50000}}`.
-- Track D uses api.frankfurter.app and httpbin.org (Ingi OK'd). Never a secret to httpbin. D6 teaches nothing about
-  keys (plang asks once, decision 598).
-- Pushing to app-systems needs Ingi's yes each time (fast-forward, no force).
+## What was done
+- **Hópkaup** (`/shared/hopkaup/hjalp/`, scripts in `tools/kaflar.js`, then `node tools/smida.js` and `python3 tools/tal.py <mappa>`):
+  - Audio is finished for all CRM chapters.
+  - New CRM chapters 07 póstsamskipti, 09 tilboð, 10 tilboð sem renna út and 15 tvítekningar, written from the hopkaup bot's descriptions.
+  - New product chapters vorur-01-skra, vorur-02-breyta and vorur-03-texti. They use the sample page `opna: vara-synishorn`.
+  - Every kafli.json now carries `sida`.
+  - Chapters 08 and 13 stay off prod until mail sending is connected.
+- **Heilsumynd** (`/shared/educator/animations/heilsumynd-admin/`):
+  - New lessons 3-calendar to 14-ai-usage, built from the bot's screenshots and notes. Each was built from 2-tests as template and checked in Chromium at 420 px.
+  - 3-calendar is voiced and in the Heilsumynd repo.
+  - The rest wait for the daily TTS quota (100 clips per day). A background script retries every 30 minutes.
+- **Next:**
+  - Once the audio is in, tell the Heilsumynd bot which lessons can deploy.
+  - Have someone listen to the flagged words. Hópkaup: bíð svars, Seldu, Á dagskrá, þemadagana. Heilsumynd: the Icelandic labels Puck reads in English text.
 
 ## Code example
-
-The shape every short lesson's code takes (D2):
-```plang
-Start
-- get https://api.frankfurter.app/latest?from=EUR&to=USD, write to %rates%
-- write out "1 euro is %rates.rates.USD% dollars, on %rates.date%"
+A Heilsumynd step (in index.html):
+```js
+{ img: '08.png', hl: [391, 26, 266, 50], tap: true, title: 'Move a booking',
+  text: 'To move a booking, call the customer first. Then pick a free slot in Move to, and press Move. ...',
+  notes: '05: form in bookingCard.html, posts to /admin/calendar/day/move ...' },
 ```
-and its "what plang wrote", read from `.build/start.pr`:
+A Hópkaup bút (in kaflar.js):
+```js
+['renn-04', 'Takkarnir +1, +7, +14 og +30 setja næsta samband ...', [{ blikka: 'rennur-ut.naest' }], [spurningar], [ord]],
 ```
-http.request    Url: https://api.frankfurter.app/latest?from=EUR&to=USD
-variable.set    Name: %rates%   Value: %!data%
-```
-
-## Next
-
-- D6 when the coder's three changes land. Then the loop page (re-pin its golden) when the parallel examples run.
-- Track E. A6's optional `0.1 + 0.2` line and C1's one-step exists at their next re-export.
