@@ -27,7 +27,10 @@ Plan: `.bot/set-add-order/architect/plan/start.md`.
 | 9 | **Codeanalyzer v1 NEEDS WORK** (b172d5123). Ruled: **1 (blocking) fix**: `Part` divides by 1 less the settled modules' shares, not by the open sum (stage 1 without probabilities gave file share/share = 1.0, Certain; probed), with a no-probabilities test red on f3d89adf6. **2 with 1** (the `open` list's unreachable guard goes). **3 fix in branch** (boy scout: `AssignsOne`'s `%\S+%` and `Placed()`'s IndexOf scan go to the parser; anything added to the parser comes to me first). **4 and 5 backlog** (on the one list, not obp-cleanup.md). **6 name stays `Part`**: `Left` reads like condition's `Left` operand, which this file's lines show | rule every finding | architect |
 | 10 | Replaces 4's arithmetic: the open work is 1 − the settled shares, not the sum of the open shares; `remove %x%` is 0.56, not ≈0.61 (same verdict) | 9 | architect |
 
+| 11 | **Accepted v2** d30db6c03 (merged 983bc7b38): `Part` = share / (1 − the settled shares), 0 when nothing is left; `Placed()` asks `parser.Read(at)` at each place; `Assigned()` reads a `Literal` or one bare variable spanning the rest; `AssignsOne` is gone; nothing added to the parser. The no-probabilities test is red on f3d89adf6. No pin moved. Gate green, plang 322/323 | the fix holds for every answer stage 1 can give | coder |
+| 12 | **The event path's cause** (builder's trace, 483dbb7f4): the writer copies an `action module.name` example only when the step's whole text matches it, called goal's name included. Otherwise it takes the nearest example's path (`step.on.start`, or `app.on.start` with a comma): 0/37 right on other shapes, 3/3 on the example texts. Not the decider (0.98), not on-event-examples' words. Fix: teaching only (varied examples, the rule first); not C# (no matching on step text). To Ingi: this branch or its own | right for the wrong reason must not stand in doc/events.md | builder, architect |
+
 Stage status:
 | Stage | What | Status |
 |---|---|---|
-| 1 | The module's share of the open work | v2 at the coder (codeanalyzer 1 and 3) |
+| 1 | The module's share of the open work | v2 at the codeanalyzer (d30db6c03) |
