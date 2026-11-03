@@ -1,0 +1,19 @@
+{
+  "branch": "set-add-order",
+  "sessions": [
+    {
+      "id": "6f1c2a9e-3b7d-4e52-9a10-5d8e2c7b4f31",
+      "bot": "architect",
+      "timestamp_start": "2026-11-03T00:00:00Z",
+      "timestamp_end": "",
+      "intent": "Fix set %x% = %x% + 1 building set-before-add, and run the line to merge",
+      "before": { "assumptions": "The builder's trace is right: Sure reads the one-of main-work share", "risk": "The refined guard lets an either/or step through (remove %x%); the builder measures it" },
+      "plan": ".bot/set-add-order/architect/plan/start.md",
+      "actions": [
+        { "paths": ["PLang/app/goal/step/pick/list/this.cs", "PLang/app/goal/step/action/keep/this.cs"], "type": "review", "category": "code", "confidence": "high", "context": "Read Sure, Picks, Asked, Settled, Prefill and the keep's placement; confirmed the builder's cause" },
+        { "paths": [".bot/set-add-order/architect/plan/start.md", ".bot/set-add-order/architect/summary.md"], "type": "create", "category": "doc", "confidence": "high", "context": "One-stage plan: a module's share of the open work, read by Sure" }
+      ],
+      "after": { "status": "plan sent to the coder", "health": "", "notes": "" }
+    }
+  ]
+}
