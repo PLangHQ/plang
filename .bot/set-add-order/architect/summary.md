@@ -32,7 +32,9 @@ Plan: `.bot/set-add-order/architect/plan/start.md`.
 
 | 13 | **Codeanalyzer v2 NEEDS WORK, narrow** (afce1c940): v1's 1 and 3 fixed; the broken-reference difference doesn't matter (Placed only hints the starting line, which the formal reader re-reads). Ruled: **fix** the three tests pinning v2's rewritten lines (M2 at `:138`, the whole-rest check; M1 at `:114`, the skip past a variable), each red on its mutation. **Backlog**: the parser answering each variable's place (a locked addition) | rule every finding | architect |
 
+| 14 | **Accepted v3** 37b2995fa (tests only). M2 → `ASetOfASum_KnowsTheCapture` (what M2 loses is the capture's `Value=%!data%`; the formal reader already refuses `Value=%x% + 1`). M1 → `ASetOfOneVariable_KnowsItAsTheValue`, `AVariablesPlace_EndsWhereItsTextEnds` (the End shift). The skip side (`%a[%b%]%`) can't be shown through a production door, so it goes with the backlog's parser-place item. The tester started on d30db6c03 in parallel (production code final) | each rewritten line pinned | coder |
+
 Stage status:
 | Stage | What | Status |
 |---|---|---|
-| 1 | The module's share of the open work | v3 at the coder (tests only) |
+| 1 | The module's share of the open work | codeanalyzer re-check of v3, tester running |
