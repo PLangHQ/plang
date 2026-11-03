@@ -30,7 +30,9 @@ Plan: `.bot/set-add-order/architect/plan/start.md`.
 | 11 | **Accepted v2** d30db6c03 (merged 983bc7b38): `Part` = share / (1 − the settled shares), 0 when nothing is left; `Placed()` asks `parser.Read(at)` at each place; `Assigned()` reads a `Literal` or one bare variable spanning the rest; `AssignsOne` is gone; nothing added to the parser. The no-probabilities test is red on f3d89adf6. No pin moved. Gate green, plang 322/323 | the fix holds for every answer stage 1 can give | coder |
 | 12 | **The event path's cause** (builder's trace, 483dbb7f4): the writer copies an `action module.name` example only when the step's whole text matches it, called goal's name included. Otherwise it takes the nearest example's path (`step.on.start`, or `app.on.start` with a comma): 0/37 right on other shapes, 3/3 on the example texts. Not the decider (0.98), not on-event-examples' words. Fix: teaching only (varied examples, the rule first); not C# (no matching on step text). To Ingi: this branch or its own | right for the wrong reason must not stand in doc/events.md | builder, architect |
 
+| 13 | **Codeanalyzer v2 NEEDS WORK, narrow** (afce1c940): v1's 1 and 3 fixed; the broken-reference difference doesn't matter (Placed only hints the starting line, which the formal reader re-reads). Ruled: **fix** the three tests pinning v2's rewritten lines (M2 at `:138`, the whole-rest check; M1 at `:114`, the skip past a variable), each red on its mutation. **Backlog**: the parser answering each variable's place (a locked addition) | rule every finding | architect |
+
 Stage status:
 | Stage | What | Status |
 |---|---|---|
-| 1 | The module's share of the open work | v2 at the codeanalyzer (d30db6c03) |
+| 1 | The module's share of the open work | v3 at the coder (tests only) |

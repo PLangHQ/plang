@@ -38,6 +38,8 @@ The one list of work after runtime2's merges (Ingi, 2026-10-29: "yes merge into 
 
 ### Types, data and the serializer (locked: each addition is Ingi's)
 
+- **The variable parser answers each variable's place** (codeanalyzer, set-add-order v2 re-check): the decider's `pick/list/this.cs` `Placed()` asks `parser.Read(at)` at every place to know where each variable ends, while `parser.Variable` walks them its own way. On a malformed reference (`%x.%y%`) the two answer differently (Placed finds y). The one answer: the parser's variables carry where they stand in the text. A locked addition (variable memory): Ingi's yes.
+
 - **`type.list.Of(name, kind, …)` by parts** (item-doors 198, Ingi: "sounds good"; never built): 96 sites still write `new global::app.type.@this("…")`. With it, F2.
 - **A read's origin is lost below a container** (snapshot 28–29): a template inside a container read from a file with load vars comes back literal (`type/this.cs:469,475`, `type/item/wire/this.cs:49`, `type/item/serializer/json.cs:103,197`). Suggestion: carry the origin; proven on `read file`. Ingi's.
 - **No module DLL outside PLang compiles** (snapshot): the generator emits `data.As<T>()`, internal on Data (`data/this.cs:629,656`). Find every internal a generated action reaches, then one public door. Snapshot's proof that a resumed frame calls a run-time module's action waits on it.
