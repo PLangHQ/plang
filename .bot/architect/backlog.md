@@ -224,6 +224,8 @@ Equality asked from outside, as strings, where the value has its own `Equals` (e
   - **Security:** compiled code has a DLL's power. The compile runs plang's own analyzers at error (PLNG002 no System.IO, no Console), so what it runs goes through path's verbs and AuthGate like any action. Code from a goal or an llm is the actor's to allow; code plang generates is plang's.
   - **Memory:** each compile is an assembly; it loads collectible and unloads with its app (the same need as "Sub apps own their code" (b)). Roslyn (`Microsoft.CodeAnalysis.CSharp`, large) loads only on the first compile.
 
+- **`app.diagnostic`: a measuring tool inside plang** (Ingi, 2026-11-03: "lets write that down as future branch idea"). Draft by plang-codeanalyzer, Ingi's ask: `.bot/bench-notes/codeanalyzer/diagnostic.md` (654ac322b; proposal, not built). Off by default; on, it collects time, cpu, memory (bytes, heap, GCs, held after a forced GC), jit, lock contention and exceptions per goal, step and action, plus named spans placed in C# (`app.diagnostic.csharp["shell.Resolve"]`), readable by a plang developer and good enough for ~90% of what `Tools/Bench` does. It handles the traps the codeanalyzer hit measuring by hand: JIT tiering (a per-run series), sampler bias, the thread-local allocation counter across awaits, machine load, its own overhead. **To check when picked up** (pattern 11): the draft picks `diagnostic.off`/`on` at app birth from the setting; whether that kind is chosen at the first ask instead. `app` is locked, so `app.diagnostic` is Ingi's yes (or a module owns it).
+
 ## Very far backlog (never offered as next work)
 
 Ingi, 2026-10-25: "very far into future (this is not something you should suggest taking when I ask)".
