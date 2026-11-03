@@ -9,7 +9,7 @@ Right = Event is the action's own start (`%!app.module.<m>.<a>.on.start%`).
 
 | | before (runtime2 binary) | after1 (rule first, varied examples) | after2/4 (+ action examples first) | after5 (final: + description names a named action first) |
 |---|---|---|---|---|
-| A-I x3 (27 builds), action's start | 6/27 (D 3, H 3) | 3 or 6/27 | 16/27 and 13/27 | 17/27 (A3 B1 C0 D3 E3 F3 G1 H3 I0) |
+| A-I x3 (27 builds), action's start | 6/27 (D 3, H 3) | 7/27 | 16/27 and 13/27 | 17/27 (A3 B1 C0 D3 E3 F3 G1 H3 I0) |
 | Mark x5 | 0/5 (step 5/5) | - | 1/5 | 3/5 |
 | J `after step`: step.on.start | 1/3 | 3/3 | 3/3 and 2/3 | 3/3 |
 | K `before each goal`: goal.on.start | 0/3 | 1/3 | 1/3 and 1/3 | 0/3 (before: 0/3 too) |
