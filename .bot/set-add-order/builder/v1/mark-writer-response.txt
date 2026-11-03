@@ -1,0 +1,7 @@
+=== LLM RESPONSE ===
+[0] variable.set(Name=%marks%, Value=0, Default=false)
+[1] on.event(Event=%!app.type.step.on.start%, When="before", Action=goal.call(Name="Mark"))
+[2] output.write(Data="one")
+[3] output.write(Data="two")
+[4] output.write(Data="marks: %marks%")
+=== END LLM RESPONSE ===
