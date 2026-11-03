@@ -1,0 +1,225 @@
+=== LLM USER ===
+Goal, as written:
+  Start
+  [0] - set %marks% = 0 => decider: variable.set 0.99 [Name=%marks%, Default=false] => formal: variable.set(Value, Name=%marks%, Default=false)
+  [1] - before action output.write call Mark => decider: on.event 0.98 (module on 0.98) => formal: on.event(Event, When, Action)
+  [2] - write out "one" => decider: output.write 0.99 => formal: output.write(Data)
+  [3] - write out "two" => decider: output.write 0.99 => formal: output.write(Data)
+  [4] - write out "marks: %marks%" => decider: output.write 0.99 => formal: output.write(Data) => types: %marks% number<long>
+
+Types
+- text — Textual content. Kind is set from the file extension (md, txt, csv, html, ...). Kind is a hint by default; strict is a no-op for text (plain vs markdown is not detectable from content). (e.g. Hello, world)
+- number — A number, whole or decimal, of any size. Its kind is the precision it is held in (int, long, decimal, double, …). (e.g. 42)
+- bool — True or false. (e.g. true)
+- list — An ordered list of values. `a list of X` is a list whose element type is X; each item is born that type at its first read. (e.g. [1, 2, 3])
+- dict — Named values: each key holds a value of any type. A dict is the parsed form of named values, which `from json` lands. (e.g. {"name":"Ada","age":36})
+- variable — A variable, named between % signs, that holds a value. (e.g. %user%)
+- item — Any value is an item. Its kinds are forms a value takes, among them `json`: json text carried unread until a use reads it.
+- type
+- on
+- choice<when> — one of: before, after
+- action (e.g. goal.call(Name="Show"))
+- choice<sub> — one of: inherit, none
+- goal — A goal: a named list of steps, called by its name. (e.g. Show)
+- choice<actor> — one of: system, user
+- parallel — Whether work runs side by side, and how many at once: "in parallel" or "in parallel(cpu: 2)"; left out means not parallel. (e.g. in parallel(cpu: 2))
+
+## variable.set(Name: variable, Value: item, Type?: type, Default?: bool = false)
+Assign a value to a named variable, optionally coercing to a type or setting only when unset
+Name — the variable to set, with its % signs. A `(<kind>)` written after it is not part of the name: it is the Type.
+Value — the value as the step writes it (a single-quoted text is written in double quotes, its inner double quotes escaped: `'{"a": 1}'` → `Value="{\"a\": 1}"`), written whole, as a quoted ISO datetime (`2026-01-01T10:00:00Z`), ISO date (`2026-01-01`), time (`10:30`) or ISO duration (`PT30S`) stands (the build types those four by their form); any other quoted text, a label or "42", stays the text the step wrote. After another action in the same step it is %!data%.
+Type — only when the step forces a type: `as <type>` or `(<kind>)`. A kind rides under its type, asked after it: `as json` / `type=json` coerces to `item` (a json value is a kind of item — keeping the literal json text, never parsed into a `dict` by the coercion); `as decimal` → `number`; `as iso` → `duration`; `as list of path` → `list` (its element `path` asked next).
+Default — true when the step says "set default", "default to" or "only if unset"; the variable keeps a value it already has
+
+- `set %x% = …` is one variable.set.
+- `<action>, write to %x%` is that action followed by variable.set(Name=%x%, Value=%!data%) — its own action, never a modifier, and without a Type.
+- `set %x% as list of <type> = [...]`: the type is `list`, and its element type is asked next (`as list of path` → element `path`), giving `list<path>` — never a bare `list` with no element. Each item is born the element type at its first read.
+- `convert %x% from json, write to %dict%` reads the json text in `%x%` INTO a structure: `variable.set(Name=%dict%, Value=%x%, Type=dict)` (Type `list` when the json is an array). This is the OPPOSITE of `as json`/`type=json`: `as json` keeps a value as json text, `from json` parses json text into a dict/list. The source `%x%` is the Value — NEVER drop it — and Type is the target structure that does the parse.
+
+Examples (a step, and its formal):
+Step text: `set %x% = 5`
+Formal: `variable.set(Name=%x%, Value=5)` — no `Type`; the value is plainly a number.
+
+Step text: `set default %enabled% = true`
+Formal: `variable.set(Name=%enabled%, Value=true, Default=true)` — "default" is what `Default` means.
+
+Step text: `set %birthday% = "2026-01-01"`
+Formal: `variable.set(Name=%birthday%, Value="2026-01-01", Type={"name": "date"})` — read as a date from its ISO form.
+
+Step text: `set %timeout% = "PT30S"`
+Formal: `variable.set(Name=%timeout%, Value="PT30S", Type={"name": "duration"})`
+
+Step text: `set %version% = "2.0"`
+Formal: `variable.set(Name=%version%, Value="2.0")` — a version label stays text though it looks numeric.
+
+Step text: `set %iso%(duration) = "PT5M"`
+Formal: `variable.set(Name=%iso%, Value="PT5M", Type={"name": "duration"})` — the `(duration)` token is not part of the name; it forces the type. The name is `%iso%`, never `%iso%(duration)`.
+
+Step text: `set %doc% = "2026-01-01" as text`
+Formal: `variable.set(Name=%doc%, Value="2026-01-01", Type={"name": "text"})` — `as` forces text over the date reading.
+
+Step text: `set %img% = "real.gif" as image/gif strict`
+Formal: `variable.set(Name=%img%, Value="real.gif", Type={"name": "image", "kind": "gif", "strict": true})`
+
+Step text: `set %n% = "42" as int`
+Formal: `variable.set(Name=%n%, Value="42", Type={"name": "number", "kind": "int"})` — `int` is a kind of `number`, never a name of its own.
+
+Step text: `set %files% as list of path = ["a.txt", "b.txt"]`
+Properties: `{"Name": "%files%", "Value": ["a.txt", "b.txt"], "Type": "list<path>"}` — `as list of <type>` keeps the element type: Type is the whole `list<path>`, never a bare `list`; each element is born the element type.
+
+Step text: `set %cfg% = '{"port": 8080}', type=json`
+Formal: `variable.set(Name=%cfg%, Value="{\"port\": 8080}", Type={"name": "json"})` — `type=json` (or `as json`) keeps the value as text of kind json, written exactly as the step's literal; never parsed into a dict, and `Type` is `json`, never `dict`.
+
+Step text: `convert %json% from json, write to %dict%`
+Formal: `variable.set(Name=%dict%, Value=%json%, Type={"name": "dict"})` — `from json` parses the json text in `%json%` into a dict; the source `%json%` is the Value (never dropped), and `Type` is the target structure that parses it. The opposite of `as json`, which keeps a value as json text.
+
+Step text: `get 'https://example.com/rates.json', write to %rates%`
+
+Step text: `hash %password%, write to %passwordHash%`
+
+Step text: `call GetUser id=%userId%, write to %user%`
+
+Step text: `sort %names%, write to %sortedNames%`
+
+## on.event(Event: on, When: choice<when>, Action: action, Sub?: choice<sub> = inherit)
+Bind a goal call to run before or after an event: the app starting, a goal starting (each goal, or one goal by its name), an action starting, a variable being set, a channel writing, reading or asking. Answers the event it bound (keep it to `on.unbind` it later).
+`on.event` is the action behind a step that LEADS with "before …", "after …" or "on <event> …" and names what to call when it happens ("before each step call X", "after write on 'audit' channel call Y"). It binds an event: the call runs when the event fires, not now. A step that leads with `call` is `goal.call`, even when a name in it says "event", "before" or "after". An "on error …" clause after an action is `on.error`, not this.
+
+`Event` is the event itself, written as the path that reaches it: what it belongs to, then `.on.`, then its name. Read both off the step:
+- what it belongs to:
+  - a channel the step names ("on "input" channel", "the audit channel") → `%!channel.input%`, `%!channel.audit%` (the asker's actor's channels, picked by name)
+  - an action the step names as module.action ("action file.read", "action variable.set") → `%!app.module.file.read%`, `%!app.module.variable.set%` — not `%!app.type.action%`, which is every action
+  - one goal by name ("goal Process") → `%!app.goal["Process"]%` (the bare name); the goals under a folder beside the goal whose step names it ("each goal in api/") → `%!app.goal["api/*"]%`; from the app root ("each goal in /api/") → `%!app.goal["/api/*"]%`; every action of a module → `%!app.module.http%`
+  - only when the step says "each" / "every" (no name): "each goal" / "each step" / "each action" → `%!app.type.goal%`, `%!app.type.step%`, `%!app.type.action%`
+- its event: a goal, step or action's is `start` ("before each step" → `%!app.type.step.on.start%`; "after action output.write" is that action's start, not a write); a channel's is `write`, `read` or `ask` ("before write on … channel" → `%!channel.audit.on.write%`). An item's moments are `start` and its own named ones: a variable's `set`/`remove`, a type's `create`, a channel's `write`/`read`/`ask`, an element's `click`, and `error`. The event name is **never `before`, `after` or `end`**: those are the moment, carried by `When`, not part of the path. "before each step" → Event=`%!app.type.step.on.start%`, When="before"; "before a goal ends" / "when each goal ends" → Event=`%!app.type.goal.on.start%`, When="after" (there is no `.on.end`/`.on.after`/`.on.before`).
+
+`When` is `before` or `after`.
+
+Sub — whether the app's sub apps take the event in: `inherit` (the default, left out) or `none` (→ `Sub="none"`; left out when the step says nothing about sub apps.)
+
+The called goal reads `%!event%` (the event: `%!event.name%`, `%!event.when%`), `%!event!item%` (what it fired for) and `%!event!data%` (the value so far, after it; a failure is `%!error%`). A call bound before an event can cancel it with `on.cancel`.
+
+`on input call X` — "input" with no channel, event or "before/after" — is `on.input` (listen to this app's input line by line), not this.
+
+An event the step names one of — "goal X", "action module.name" — is that one item's path (`%!app.goal["X"].on.start%`, `%!app.module.<module>.<action>.on.start%`), not the type of all of them (`%!app.type.goal%`, `%!app.type.action%`): a type only for "each". A variable the step names ("%count% is set", "is removed") is `%!app.variable["count"]%` (its own moments); `%count.on…%` is its value's moments (a list's `add`).
+
+Examples (a step, and its formal):
+Step text: `after %count% is set, call Log`
+Formal: `on.event(Event=%!app.variable["count"].on.set%, When="after", Action=goal.call(Name="Log"))` — a variable the step names is `%!app.variable["count"]%`: its own moments, not its value's (`%count.on…%`).
+
+Step text: `before each goal call LogBefore`
+Formal: `on.event(Event=%!app.type.goal.on.start%, When="before", Action=goal.call(Name="LogBefore"))`
+
+Step text: `before each goal, call Audit, not in sub apps`
+Formal: `on.event(Event=%!app.type.goal.on.start%, When="before", Sub="none", Action=goal.call(Name="Audit"))` — the event stays in this app; its sub apps don't take it in.
+
+Step text: `before each goal in api/*, call Count`
+Formal: `on.event(Event=%!app.goal["api/*"].on.start%, When="before", Action=goal.call(Name="Count"))` — the goals under the `api/` folder beside the goal this step is in; `/api/*` would be from the app's root.
+
+Step text: `before goal Process, call Prepare`
+Formal: `on.event(Event=%!app.goal["Process"].on.start%, When="before", Action=goal.call(Name="Prepare"))` — a goal the step names is `%!app.goal["Name"]%` (its bare name), not `%!app.type.goal%`, which is every goal.
+
+Step text: `before the app starts, call Say`
+Formal: `on.event(Event=%!app.on.start%, When="before", Action=goal.call(Name="Say"))` — the app itself is `%!app%`; its start is `%!app.on.start%`.
+
+Step text: `after action llm.query, call ShowCost`
+Formal: `on.event(Event=%!app.module.llm.query.on.start%, When="after", Action=goal.call(Name="ShowCost"))` — an action the step names as module.action is `%!app.module.<module>.<action>%`, not `%!app.type.action%`, which is every action.
+
+Step text: `after step call TrackAfterStep`
+Formal: `on.event(Event=%!app.type.step.on.start%, When="after", Action=goal.call(Name="TrackAfterStep"))`
+
+Step text: `before each file action, call Count`
+Formal: `on.event(Event=%!app.module.file.on.start%, When="before", Action=goal.call(Name="Count"))` — each action of a module the step names is that module's start, `%!app.module.<module>.on.start%`; not each step.
+
+Step text: `after each http action, call Meter`
+Formal: `on.event(Event=%!app.module.http.on.start%, When="after", Action=goal.call(Name="Meter"))`
+
+Step text: `before action file.read call OverrideFileRead`
+Formal: `on.event(Event=%!app.module.file.read.on.start%, When="before", Action=goal.call(Name="OverrideFileRead"))`
+
+Step text: `after action output.write call CaptureWrite`
+Formal: `on.event(Event=%!app.module.output.write.on.start%, When="after", Action=goal.call(Name="CaptureWrite"))`
+
+Step text: `after each goal call LogAfter, level="info"`
+Formal: `on.event(Event=%!app.type.goal.on.start%, When="after", Action=goal.call(Name="LogAfter", Parameter=[{level: "info"}]))`
+
+Step text: `before write on "audit" channel call ApprovalGoal`
+Formal: `on.event(Event=%!channel.audit.on.write%, When="before", Action=goal.call(Name="ApprovalGoal"))`
+
+Step text: `on ask on "input" channel call CaptchaGoal, write to %event%`
+Formal: `on.event(Event=%!channel.input.on.ask%, When="before", Action=goal.call(Name="CaptchaGoal"))` — the trailing `write to %event%` is its own action.
+
+Step text: `on click on #window.bot, call ShowClaude`
+Formal: `on.event(Event=%!screen.element["#window.bot"].on.click%, When="after", Action=goal.call(Name="ShowClaude"))` — `#…` in a step is an element of the screen in play, `%!screen.element["#…"]%`: a window's own part (`#window.bot` is its ☰, `#window.save` its save tool) or a page's id. The call reads `%!event!item%` (the element) and `%!event!data%` (the click: its window, where).
+
+## output.write(Data: item, channel?: text)
+Write Data to a named channel — defaults to the actor's output channel.
+Data — what to write, as the step writes it: a quoted text (with or without %variables% in it) is text, a bare %variable% is item.
+channel — the name of a registered channel to write to, only when the step names one (`to "log" channel`, `on X channel`, `via X`, or a bare `to <name>` — `write 'x' to echo` → channel "echo"). The name after `to`/`on`/`via` is the channel even unquoted; never drop it. Left out otherwise: the actor's output.
+
+- Naming a channel routes the output; it never registers one (that is channel.set).
+
+Examples (a step, and its formal):
+Step text: `write out "Welcome back, %user.name%"`
+
+Step text: `show %message% to the user`
+
+Step text: `print %result%`
+
+Step text: `write 'hello' to echo`
+Formal: `output.write(Data="hello", channel="echo")` — a bare `to <name>` routes to that channel; the unquoted `echo` is the channel name, never dropped.
+
+Step text: `write %error.Message% to "errors" channel`
+
+## goal.call(Name: goal, Parameter?: list, Actor?: choice<actor>, Parallel?: parallel)
+Call a named goal, injecting parameters into its context, optionally on a different actor
+Name — the goal to call: the one token right after `call` (or `call goal`), copied exactly as a quoted text — a bare word (`Name="Finalize"`), a `Folder/Goal`, or a `/path/name` (`Name="/system/builder/EmitBuildEvent"`). Never bare (`Name=Finalize`), never an action name like `goal.call`. Only that first token is the name; everything after it is arguments, never the name.
+Parameter — the arguments: every `name=value` after the goal name is one argument, its value as written — never part of the name, **even when the value is a dotted variable**: `call goal Render source=%!a.b.c%` → `Name="Render", Parameter=[{source: %!a.b.c%}]`, never `Name=%!a.b.c%`. The word **before** `=` is the argument's name and MUST be kept, **even when it is a plang word** such as `module`, `file` or `goal`: `call goal Render module=%!a.b.c%` → `Parameter=[{module: %!a.b.c%}]` — never a bare `Parameter=%!a.b.c%` (a value with no name binds nothing) and never dropped. Left out only when the step passes no arguments.
+Actor — the actor the goal runs on, only when the step names one (`on actor "system"`, `as user`). Not because the goal is a system goal, a sub-goal or a recovery.
+Parallel — run this call beside the step, answering a task at once (`in parallel` / `don't wait` / `in the background` / `and go on` → `Parallel=true`; `in parallel(cpu: N)` → `Parallel={cpu: N}`; left out when the step waits for the call. (There is no `Wait` property; "don't wait" is `Parallel=true`.))
+
+- The arguments belong to the called goal; they are never properties of goal.call.
+- `foreach %list%, call X item=%y%` is loop.foreach, then goal.call with `item` as its argument.
+- `call X` is always goal.call, and X is the goal's name even when the name reads like an action — a goal whose name begins with a verb (`SendReceipt`, `SaveDraft`, `RunNightly`) is still a goal to invoke, never the module action the word resembles. The token after `call` names a goal; a verb inside that name is never a reason to pick an action by the same verb.
+- `call goal X` and `call the goal X` call X: the leading `goal` / `the goal` is only a word, never part of the name or an argument — the same whether X is a bare name, a `Folder/Goal`, or a `/path/name`. `call goal Unmatched action=%item%` → goal.call(Name="Unmatched", Parameter=[{action: %item%}]); `call goal /builder/Build` → goal.call(Name="/builder/Build") (the path is the whole name, `goal` dropped). A name that itself starts with Goal keeps it: `call goal GoalSetup` → Name="GoalSetup".
+
+Examples (a step, and its formal):
+`goal.call` runs another goal. It is the action behind `call X` wherever that clause appears — on its own, as the body of a condition, as the body of a loop, or inside an error handler. `Name` is the goal; each named argument after it is one row in `Parameter`.
+
+Step text: `call Finalize`
+Formal: `goal.call(Name="Finalize")`
+
+Step text: `call ProcessOrder id=%orderId%, retries=3`
+Formal: `goal.call(Name="ProcessOrder", Parameter=[{id: %orderId%}, {retries: 3}])`
+
+Step text: `call /system/builder/EmitBuildEvent kind="done"`
+Formal: `goal.call(Name="/system/builder/EmitBuildEvent", Parameter=[{kind: "done"}])` — a path-qualified name is still just the name.
+
+Step text: `call goal Render source=%!a.b.c%`
+Formal: `goal.call(Name="Render", Parameter=[{source: %!a.b.c%}])` — the name is the token right after `call goal`; `source=%!a.b.c%` is an argument even though its value is a dotted variable — the variable never becomes the Name.
+
+Step text: `call goal Render module=%!a.b.c%`
+Formal: `goal.call(Name="Render", Parameter=[{module: %!a.b.c%}])` — the word before `=` is the argument's name and is kept even when it is a plang word (`module`, `file`, `goal`); never a bare `Parameter` value with no name, never dropped.
+
+Step text: `if %total% > 5, call MarkBig`
+Formal: `goal.call(Name="MarkBig")` — the condition is its own action; this one is only the call.
+
+Step text: `foreach %items%, call HandleItem item=%item%`
+Formal: `goal.call(Name="HandleItem", Parameter=[{item: %item%}])` — the loop is its own action.
+
+Step text: `read 'config.json', on error call HandleReadError`
+Formal: `goal.call(Name="HandleReadError")` — a goal called inside an error handler is an ordinary call (the read is its own action; the call is in on.error's Recovery).
+
+Step text: `call Turn content=%content%, don't wait`
+Properties: `{"Name": "Turn", "Parameter": [{"name": "content", "value": "%content%"}], "Parallel": true}` — "don't wait" / "in the background" / "and go on" is `Parallel=true`: the call runs beside the step and answers a task at once. There is no `Wait` property.
+
+Step text: `call Backup in parallel`
+Properties: `{"Name": "Backup", "Parallel": true}` — `in parallel` is the parallel value; `in parallel(cpu: 2)` is `{"cpu": 2}`.
+
+Step text: `call Process, as system`
+Formal: `goal.call(Name="Process", Actor="system")` — `as system` / `as user` / `on actor "system"` names the actor the goal runs on: it is `Actor`, never dropped, never part of the name.
+
+Step text: `call goal Claude in %!app.parent%, message=%text%, write to %reply%`
+Formal: `goal.call(Name=%!app.parent.goal["Claude"]%, Parameter=[{message: %text%}])` — a goal of the app that started this one (`%!app.parent%`), picked by name: it runs there, and its result comes back.
+
+=== END LLM USER ===

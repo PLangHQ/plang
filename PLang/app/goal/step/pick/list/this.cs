@@ -100,18 +100,19 @@ public sealed class @this
     // literal (quoted text, a number, true/false) or one variable. The variables are the parser's;
     // the `=` is the symbol around them — no English word is read.
     private static readonly System.Text.RegularExpressions.Regex Assigns = new(@"^\s*=(?!=)");
-    private static readonly System.Text.RegularExpressions.Regex AssignsOne =
-        new(@"^\s*=\s*(""(?:[^""\\]|\\.)*""|-?\d+(?:\.\d+)?|true|false|%\S+%)\s*$");
+    private static readonly System.Text.RegularExpressions.Regex Literal = new(@"^(""(?:[^""\\]|\\.)*""|-?\d+(?:\.\d+)?|true|false)$");
 
-    // The step's variables in the order its words write them, each with where it ends in the words.
+    // The step's variables in the order its words write them, each with where it ends in the words: the parser reads
+    // the one that opens at each place.
     private IEnumerable<(global::app.type.item.variable.@this Variable, int End)> Placed()
     {
         var text = _step.Text;
-        int from = 0;
-        foreach (var v in new global::app.type.item.variable.parser.@this(text, _step.Type.Types!).Variable)
+        var parser = new global::app.type.item.variable.parser.@this(text, _step.Type.Types!);
+        for (int at = 0; at < text.Length; at++)
         {
-            from = text.IndexOf(v.Text, from, StringComparison.Ordinal) + v.Text.Length;
-            yield return (v, from);
+            if (parser.Read(at) is not { } v) continue;
+            at += v.Text.Length - 1;
+            yield return (v, at + 1);
         }
     }
 
@@ -128,11 +129,13 @@ public sealed class @this
     {
         foreach (var (v, end) in Placed())
         {
-            if (!v.IsBare || AssignsOne.Match(_step.Text[end..]) is not { Success: true } m) continue;
-            var value = m.Groups[1].Value;
-            if (value.StartsWith('%')
-                && new global::app.type.item.variable.parser.@this(value, _step.Type.Types!).Whole is not { IsBare: true }) continue;
-            return (v.Text, value);
+            var rest = _step.Text[end..];
+            if (!v.IsBare || Assigns.Match(rest) is not { Success: true } assign) continue;
+            var value = rest[assign.Length..].Trim();
+            if (Literal.IsMatch(value)) return (v.Text, value);
+            // one bare variable, the whole of what follows
+            if (new global::app.type.item.variable.parser.@this(value, _step.Type.Types!).Read(0) is { IsBare: true } one
+                && one.Text.Length == value.Length) return (v.Text, value);
         }
         return null;
     }
@@ -284,18 +287,18 @@ public sealed class @this
         var popular = Popular();
         foreach (var (name, score) in popular)
             if (shown.All(p => p.Name != name)) shown.Add((name, score));
-        // an action picked through its module is certain only when its module is too: its score is its certainty
-        // within the module, and a module the decider is unsure of leaves the step's words to decide
+        // an action picked through its module is certain only when its module is too: its score answers whether the
+        // step uses the module (or which of its actions), and a module the decider is unsure of leaves the step's
+        // words to decide
         bool Through(string name) => _items.FirstOrDefault(i => i.Name == name)?.From is From.YesNo or From.Choice;
-        bool Sure(string name) => !Through(name)
-            || (_module.GetValueOrDefault(name.Split('.')[0]) ?? (number)0.0) >= (number)Near;
+        bool Certain(string name) => !Through(name) || Part(name.Split('.')[0]) >= (number)Near;
         // most certain first; equal scores keep their order
         var listing = new List<listed.@this>();
         foreach (var p in shown.OrderByDescending(p => p.Score))
             listing.Add(new listed.@this
             {
                 Name = p.Name, Score = p.Score,
-                Mark = p.Score >= (number)Near && Sure(p.Name) ? listed.Mark.Certain
+                Mark = p.Score >= (number)Near && Certain(p.Name) ? listed.Mark.Certain
                      : popular.ContainsKey(p.Name) && !(_items.FirstOrDefault(i => i.Name == p.Name)?.Score is { } score && score >= (number)Possible)
                          ? listed.Mark.Popular
                      : listed.Mark.Possible,
@@ -497,6 +500,19 @@ public sealed class @this
     // The modules a near-certain common action already answers.
     private HashSet<string> Settled =>
         _named.Where(a => a.Value is { } p && p >= (number)Near).Select(a => a.Key.Split('.')[0]).ToHashSet();
+
+    // A module's share of the work the settled modules leave: its stage-1 share over 1 less the settled modules' shares.
+    // Stage 1's choice is one-of, so a step of two modules splits it; the share a settled module takes is work already
+    // answered, not doubt about this one, while a share no module claims stays doubt. 0 when the settled modules leave
+    // nothing.
+    private number Part(string module)
+    {
+        var ranked = Ranked();
+        var settled = Settled;
+        var left = ranked.Where(m => settled.Contains(m.Module)).Aggregate((number)1, (rest, m) => rest - m.Share);
+        if (left <= (number)0) return 0;
+        return ranked.Single(m => m.Module == module).Share / left;
+    }
 
     // The modules stage 2 asks the action of: the main one and a runner-up at or above Runner, each
     // unless settled.

@@ -1,0 +1,214 @@
+{
+  "branch": "set-add-order",
+  "sessions": [
+    {
+      "id": "6f1c2a9e-3b7d-4e52-9a10-5d8e2c7b4f31",
+      "bot": "architect",
+      "timestamp_start": "2026-11-03T00:00:00Z",
+      "timestamp_end": "",
+      "intent": "Fix set %x% = %x% + 1 building set-before-add, and run the line to merge",
+      "before": {
+        "assumptions": "The builder's trace is right: Sure reads the one-of main-work share",
+        "risk": "The refined guard lets an either/or step through (remove %x%); the builder measures it"
+      },
+      "plan": ".bot/set-add-order/architect/plan/start.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/goal/step/pick/list/this.cs",
+            "PLang/app/goal/step/action/keep/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read Sure, Picks, Asked, Settled, Prefill and the keep's placement; confirmed the builder's cause"
+        },
+        {
+          "paths": [
+            ".bot/set-add-order/architect/plan/start.md",
+            ".bot/set-add-order/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "One-stage plan: a module's share of the open work, read by Sure"
+        }
+      ],
+      "after": {
+        "status": "plan sent to the coder",
+        "health": "",
+        "notes": ""
+      }
+    },
+    {
+      "id": "b3d0c6f2-6a41-4f7e-9c58-2e1a7d4b9f60",
+      "bot": "coder",
+      "timestamp_start": "2026-11-03T11:40:00Z",
+      "timestamp_end": "2026-11-03T12:15:00Z",
+      "intent": "Stage 1: an action picked through its module reads the module's share of the open work",
+      "before": {
+        "assumptions": "Settled is the right notion of answered work",
+        "risk": "moved decider pins"
+      },
+      "plan": ".bot/set-add-order/coder/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/goal/step/pick/list/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Part(module) replaces the split stage-1 share in the certainty check; local Sure renamed Certain"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Wire/App/Decider/ModulePartTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "(a) red by revert, (b) guard green both ways"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Wire/App/Decider/pick_golden.json"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "re-pinned via AcceptTheFixture: checkout s3/s5 error.throw and loop s2 goal.call Possible -> Certain"
+        }
+      ],
+      "after": {
+        "status": "done",
+        "health": "C# 5778 green; plang 323 total, 322 pass, 1 skipped; PLNG001/002 0",
+        "notes": ""
+      }
+    },
+    {
+      "id": "0497b772-77b5-47bc-99fc-902dc321b4cd",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-11-03T12:13:41.594Z",
+      "timestamp_end": "2026-11-03T12:13:41.594Z",
+      "intent": "Review set-add-order f3d89adf6 (Part replaces Sure) by OBP pattern; judge the three moved golden picks",
+      "before": {
+        "assumptions": "Part is a sound renormalisation of stage 1 shares",
+        "risk": "09-30 guard weakened"
+      },
+      "plan": ".bot/set-add-order/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/goal/step/pick/list/this.cs",
+            "PLang.Tests/Wire/App/Decider/ModulePartTests.cs",
+            "PLang.Tests/Wire/App/Decider/pick_golden.json"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Probe (deleted): remove %x% with no probabilities is Certain at f3d89adf6, Possible on runtime2. FAIL; fix by dividing by 1 less the settled shares. Golden picks right. Bench skipped (build-time)."
+        }
+      ],
+      "after": {
+        "status": "FAIL, coder next",
+        "health": "fixtures green; one blocking finding",
+        "notes": "review.md, v1/verdict.json"
+      }
+    },
+    {
+      "id": "c71e4a90-2d85-4b3f-8e16-9a4f0b7d3c25",
+      "bot": "coder",
+      "timestamp_start": "2026-11-03T12:40:00Z",
+      "timestamp_end": "2026-11-03T13:10:00Z",
+      "intent": "v2: Part divides by what the settled modules leave; the parser places and reads the step's variables",
+      "before": {
+        "assumptions": "a share no module claims is doubt",
+        "risk": "Placed() reading at each place differs from Scan on a reference that doesn't parse"
+      },
+      "plan": ".bot/set-add-order/coder/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/goal/step/pick/list/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Part = share / (1 - settled shares); Placed via parser.Read(at); Assigned via Literal regex or parser.Read(0); AssignsOne removed"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Wire/App/Decider/ModulePartTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "ARemoveAnsweredWithoutProbabilities_StaysPossible, red on f3d89adf6"
+        }
+      ],
+      "after": {
+        "status": "done",
+        "health": "C# 5779 green; plang 323 total, 322 pass, 1 skipped; PLNG001/002 0; no pin moved",
+        "notes": ""
+      }
+    },
+    {
+      "id": "665c16ae-d2a8-4793-ba83-8865786e9dc9",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-11-03T12:24:35.139Z",
+      "timestamp_end": "2026-11-03T12:24:35.139Z",
+      "intent": "Re-check set-add-order v2 d30db6c03: Part, parser Read in Placed/Assigned, the broken-reference difference",
+      "before": {
+        "assumptions": "v2 fixes finding 1 and 3",
+        "risk": "rewritten Assigned/Placed unpinned"
+      },
+      "plan": ".bot/set-add-order/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/goal/step/pick/list/this.cs",
+            "PLang.Tests/Wire/App/Decider/ModulePartTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Code right. Mutations M1 (Placed skip) and M2 (Assigned whole-rest check) survive 8 test classes: tests needed. Broken-reference difference does not matter (hints only). Both reverted, tree clean."
+        }
+      ],
+      "after": {
+        "status": "NEEDS WORK narrow (tests)",
+        "health": "fixtures green",
+        "notes": "review.md v2 section, v2/verdict.json"
+      }
+    },
+    {
+      "id": "eb25bda9-9c67-48d7-864e-7843bb4a1521",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-11-03T12:36:02.674Z",
+      "timestamp_end": "2026-11-03T12:36:02.675Z",
+      "intent": "Re-check set-add-order v3 37b2995fa: the three pinning tests against the v2 mutations",
+      "before": {
+        "assumptions": "tests go red on M1 and M2",
+        "risk": "skip-only side unreachable"
+      },
+      "plan": ".bot/set-add-order/codeanalyzer/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Wire/App/Decider/ModulePartTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "M2 red (1/6), M1 End-shift red (2/6), skip-only survives: no production door, backlog. PASS."
+        }
+      ],
+      "after": {
+        "status": "PASS, tester next",
+        "health": "6/6; tree clean",
+        "notes": "review.md v3 section"
+      }
+    }
+  ]
+}

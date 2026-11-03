@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "v2 code is right (Part, parser Read, no AssignsOne); two rewritten lines (Assigned whole-rest check, Placed skip) are pinned by no test: mutations survive 8 classes; coder adds tests" }
