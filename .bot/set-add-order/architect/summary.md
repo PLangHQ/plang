@@ -43,7 +43,9 @@ Plan: `.bot/set-add-order/architect/plan/start.md`.
 
 | 19 | **F1 ruled B** (the builder's 74bf815d1): 7 real wordings ×3 on the final binary, none in the window. The closest is `remove %x%, write to %y%` (file 0.90, variable.set 0.84–0.86, nothing settled); the delete/path/file wordings give file 0.98–1.00, and the list remove gives list 0.99. The control `set %x% = %x% + 1`: math 0.52–0.59, lifted by `Part`, add-then-set 3/3, which also closes the tester's note 2. F1 is Low accepted risk, security's `ModulePartSecurityProbeTests` are the pin (merged with the branch), and A (with the choice's probabilities) goes on the backlog. Side finding: `clear %x%, write to %y%` builds an extra output.write (backlog). The auditor starts | the rule in 18 | architect |
 
+| 20 | **Auditor PASS** (e4bc32ef0): the sweep matches the tester; pattern 12 holds; nothing added to the locked core. Security v2 PASS (8263522de, F1 Low accepted). A1 (`Part`'s `ranked.Single` throws if the module isn't ranked; use `SingleOrDefault` → 0) **not taken**: a through-module pick comes from `Asked`, which reads `Ranked`, so a miss means plang itself is broken, and a plain throw is what the error rule asks for there; answering 0 would hide it. A2 noted. Docs merges set-add-order and security-set-add-order (Ingi: "take it all the way through") | the line's end | architect |
+
 Stage status:
 | Stage | What | Status |
 |---|---|---|
-| 1 | The module's share of the open work | auditor |
+| 1 | The module's share of the open work | complete; docs merges |
