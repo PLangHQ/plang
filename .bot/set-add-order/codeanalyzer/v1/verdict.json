@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "Part divides by the open shares: with no stage-1 probabilities remove %x% turns Certain (probe), breaking the 09-30 guard; divide by 1 less the settled shares instead; minor: dead guard, regex for %..%" }
