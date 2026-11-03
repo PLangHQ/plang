@@ -100,18 +100,19 @@ public sealed class @this
     // literal (quoted text, a number, true/false) or one variable. The variables are the parser's;
     // the `=` is the symbol around them — no English word is read.
     private static readonly System.Text.RegularExpressions.Regex Assigns = new(@"^\s*=(?!=)");
-    private static readonly System.Text.RegularExpressions.Regex AssignsOne =
-        new(@"^\s*=\s*(""(?:[^""\\]|\\.)*""|-?\d+(?:\.\d+)?|true|false|%\S+%)\s*$");
+    private static readonly System.Text.RegularExpressions.Regex Literal = new(@"^(""(?:[^""\\]|\\.)*""|-?\d+(?:\.\d+)?|true|false)$");
 
-    // The step's variables in the order its words write them, each with where it ends in the words.
+    // The step's variables in the order its words write them, each with where it ends in the words: the parser reads
+    // the one that opens at each place.
     private IEnumerable<(global::app.type.item.variable.@this Variable, int End)> Placed()
     {
         var text = _step.Text;
-        int from = 0;
-        foreach (var v in new global::app.type.item.variable.parser.@this(text, _step.Type.Types!).Variable)
+        var parser = new global::app.type.item.variable.parser.@this(text, _step.Type.Types!);
+        for (int at = 0; at < text.Length; at++)
         {
-            from = text.IndexOf(v.Text, from, StringComparison.Ordinal) + v.Text.Length;
-            yield return (v, from);
+            if (parser.Read(at) is not { } v) continue;
+            at += v.Text.Length - 1;
+            yield return (v, at + 1);
         }
     }
 
@@ -128,11 +129,13 @@ public sealed class @this
     {
         foreach (var (v, end) in Placed())
         {
-            if (!v.IsBare || AssignsOne.Match(_step.Text[end..]) is not { Success: true } m) continue;
-            var value = m.Groups[1].Value;
-            if (value.StartsWith('%')
-                && new global::app.type.item.variable.parser.@this(value, _step.Type.Types!).Whole is not { IsBare: true }) continue;
-            return (v.Text, value);
+            var rest = _step.Text[end..];
+            if (!v.IsBare || Assigns.Match(rest) is not { Success: true } assign) continue;
+            var value = rest[assign.Length..].Trim();
+            if (Literal.IsMatch(value)) return (v.Text, value);
+            // one bare variable, the whole of what follows
+            if (new global::app.type.item.variable.parser.@this(value, _step.Type.Types!).Read(0) is { IsBare: true } one
+                && one.Text.Length == value.Length) return (v.Text, value);
         }
         return null;
     }
@@ -498,17 +501,17 @@ public sealed class @this
     private HashSet<string> Settled =>
         _named.Where(a => a.Value is { } p && p >= (number)Near).Select(a => a.Key.Split('.')[0]).ToHashSet();
 
-    // A module's share of the work no near-certain common action answers: its stage-1 share over the summed shares of
-    // the modules not settled. Stage 1's choice is one-of, so a step of two modules splits it; the share a settled
-    // module takes is work already answered, not doubt about this one. 0 when the module is settled or nothing is open.
+    // A module's share of the work the settled modules leave: its stage-1 share over 1 less the settled modules' shares.
+    // Stage 1's choice is one-of, so a step of two modules splits it; the share a settled module takes is work already
+    // answered, not doubt about this one, while a share no module claims stays doubt. 0 when the settled modules leave
+    // nothing.
     private number Part(string module)
     {
+        var ranked = Ranked();
         var settled = Settled;
-        var open = Ranked().Where(m => !settled.Contains(m.Module)).ToList();
-        if (open.All(m => m.Module != module)) return 0.0;
-        var sum = open.Select(m => m.Share).Aggregate((total, share) => total + share);
-        if (sum <= (number)0.0) return 0.0;
-        return open.Single(m => m.Module == module).Share / sum;
+        var left = ranked.Where(m => settled.Contains(m.Module)).Aggregate((number)1, (rest, m) => rest - m.Share);
+        if (left <= (number)0) return 0;
+        return ranked.Single(m => m.Module == module).Share / left;
     }
 
     // The modules stage 2 asks the action of: the main one and a runner-up at or above Runner, each

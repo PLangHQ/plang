@@ -115,6 +115,20 @@
         "health": "fixtures green; one blocking finding",
         "notes": "review.md, v1/verdict.json"
       }
+    },
+    {
+      "id": "c71e4a90-2d85-4b3f-8e16-9a4f0b7d3c25",
+      "bot": "coder",
+      "timestamp_start": "2026-11-03T12:40:00Z",
+      "timestamp_end": "2026-11-03T13:10:00Z",
+      "intent": "v2: Part divides by what the settled modules leave; the parser places and reads the step's variables",
+      "before": { "assumptions": "a share no module claims is doubt", "risk": "Placed() reading at each place differs from Scan on a reference that doesn't parse" },
+      "plan": ".bot/set-add-order/coder/v2/plan.md",
+      "actions": [
+        { "paths": ["PLang/app/goal/step/pick/list/this.cs"], "type": "modify", "category": "code", "confidence": "high", "context": "Part = share / (1 - settled shares); Placed via parser.Read(at); Assigned via Literal regex or parser.Read(0); AssignsOne removed" },
+        { "paths": ["PLang.Tests/Wire/App/Decider/ModulePartTests.cs"], "type": "modify", "category": "test", "confidence": "high", "context": "ARemoveAnsweredWithoutProbabilities_StaysPossible, red on f3d89adf6" }
+      ],
+      "after": { "status": "done", "health": "C# 5779 green; plang 323 total, 322 pass, 1 skipped; PLNG001/002 0; no pin moved", "notes": "" }
     }
   ]
 }

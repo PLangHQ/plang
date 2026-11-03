@@ -1,6 +1,18 @@
 # set-add-order — coder summary
 
-**Version:** v1
+**Version:** v2
+
+**v2 after review.** The codeanalyzer found that `Part` divided by the open modules' summed shares. When stage 1 answers
+without probabilities, that is the module's own share, so `remove %x%` went Certain. `Part` now divides by what the
+settled modules leave (1 − their shares), so the share no module claims stays doubt:
+```csharp
+var left = ranked.Where(m => settled.Contains(m.Module)).Aggregate((number)1, (rest, m) => rest - m.Share);
+if (left <= (number)0) return 0;
+return ranked.Single(m => m.Module == module).Share / left;
+```
+Boy scout: `Placed()` asks `parser.Read(at)` for each variable's place (it was an `IndexOf` scan), and `Assigned()`
+reads a variable value through the parser; only the literal pattern stays a regex. New test:
+`ARemoveAnsweredWithoutProbabilities_StaysPossible`. No pin moved.
 
 **What this is.** `set %x% = %x% + 1` built `variable.set; math.add`: the set ran first and the sum was lost. The pick
 list marked math.add only Possible because `Sure` read math's share of stage 1's one-of "main work" choice (0.67). A

@@ -56,4 +56,19 @@ public class ModulePartTests : System.IAsyncDisposable
         await Assert.That(step.Pick.Listed.Single(l => l.Name == "file.delete").Mark).IsEqualTo(global::app.goal.step.pick.listed.Mark.Possible);
         await Assert.That(step.Pick.Formal ?? "").DoesNotContain("file.delete");
     }
+
+    // stage 1 answering its choice without probabilities names one module at its confidence: the share no module
+    // claims (0.44) stays doubt, so file.delete stays Possible
+    [Test]
+    public async Task ARemoveAnsweredWithoutProbabilities_StaysPossible()
+    {
+        var step = Step("remove %x%");
+        await step.Pick.Take(Answer(("s0_@module", Choice("file", 0.56))), [], Ctx);
+        await step.Pick.Take(Answer(
+            ("s0_@also.file", Yes(0.99)),
+            ("s0_file", Choice("delete"))), [], Ctx);
+
+        await Assert.That(step.Pick.Listed.Single(l => l.Name == "file.delete").Mark).IsEqualTo(global::app.goal.step.pick.listed.Mark.Possible);
+        await Assert.That(step.Pick.Formal ?? "").DoesNotContain("file.delete");
+    }
 }
