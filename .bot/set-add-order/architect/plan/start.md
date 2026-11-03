@@ -18,17 +18,18 @@ The ordering is not the bug: once math.add is on the line, the keep follows it w
 
 ## The fix
 
-**Pattern 12 (one question, one answer, on the element):** the question `Sure` asks is "is the decider sure this module is in the step?" Stage 1's split mass on a module that a certain common action already answers is not doubt about the other module. That module is in the step already. So a module's certainty is **its share of the work no certain common action answers**: its stage-1 share divided by the summed shares of the modules in `Ranked()` that are not `Settled` (`:498`, the set `Asked` already uses).
+**Pattern 12 (one question, one answer, on the element):** the question `Sure` asks is "is the decider sure this module is in the step?" Stage 1's split mass on a module that a certain common action already answers is not doubt about the other module. That module is in the step already. So a module's certainty is **its share of the work no certain common action answers**: its stage-1 share divided by 1 less the shares of the `Settled` modules in `Ranked()` (`:498`, the set `Asked` already uses), and 0 when nothing is left. Mass no module claims stays as doubt, so a stage 1 that answers without probabilities (one module, its confidence) keeps its plain share (summary 10).
 
 | step | stage 1 | settled | the module's share of the open work | today | after |
 |---|---|---|---|---|---|
-| `set %x% = %x% + 1` | math 0.67, variable 0.33; variable.set 0.98 | variable | math 0.67 / 0.67 = 1.0 | math.add Possible | **Certain**: `math.add(…); variable.set(Name=%x%, Value=%!data%)` |
-| `remove %x%` | file 0.56, variable 0.36 | none | file 0.56 / 0.92 ≈ 0.61 | file.delete Possible | Possible (unchanged) |
+| `set %x% = %x% + 1` | math 0.67, variable 0.33; variable.set 0.98 | variable | math 0.67 / (1 − 0.33) = 1.0 | math.add Possible | **Certain**: `math.add(…); variable.set(Name=%x%, Value=%!data%)` |
+| `remove %x%` | file 0.56, variable 0.36 (or file 0.56 alone, no probabilities) | none | file 0.56 / 1 = 0.56 | file.delete Possible | Possible (unchanged) |
 | `set %x% = 5` | variable 0.95; variable.set 0.98 | variable | none asked | as today | as today |
 
 - One private member on the pick list answers the module's share of the open work. `Sure` reads it; nothing else changes. No new threshold, no new question to the decider, no prompt text change.
 - The prompt's "(module math 0.67, …)" beside a picked action stays stage 1's answer as given (it reports what the decider said; it isn't the judgement).
-- No modules unsettled, or a zero sum: the share is 0 (unsure), never a division by zero.
+- Nothing left (the settled shares sum to 1 or more): the share is 0 (unsure), never a division by zero.
+- Boy scout (codeanalyzer 3): `AssignsOne`'s `%\S+%` arm and `Placed()`'s IndexOf scan read through the variable parser.
 - The builder's other option (sure when the main module's `@also` confirms) is not taken: it is the 09-30 bug again (file was main, `@also.file` 0.99).
 - Known edge, for the builder's measurement: a settled module's stage-1 mass might be for another of its own actions (`remove %x%, write to %y%`: variable settled by the capture, while variable's share was for variable.remove). It's rare; the builder probes it once.
 
@@ -41,7 +42,7 @@ One stage.
 ## Tests (each red without the change)
 
 - **C#, the bug:** stage-1 and stage-2 answers as recorded for `set %x% = %x% + 1` (variable.set 0.98; @module math 0.67, variable 0.33; @also.math 0.98; math → add). math.add is listed Certain, and the starting line is `math.add(…); variable.set(…Value=%!data%)` in that order.
-- **C#, the guard stays:** `remove %x%` (file 0.56, variable 0.36; @also.file 0.99; file → delete). file.delete is still Possible, and the starting line doesn't hold it.
+- **C#, the guard stays:** `remove %x%` (file 0.56, variable 0.36; @also.file 0.99; file → delete). file.delete is still Possible, and the starting line doesn't hold it. The same with stage 1 answering without probabilities (file 0.56 alone): red on f3d89adf6.
 - **The decider fixtures:** `PickListTests`, `ConfirmTemplateTests`, `LineTwinTests`, `PickOptionTests`, `KeptStepTests`. A pin that moves is re-pinned through the Explicit `AcceptTheFixture`, and each moved pick is read and listed in the report (which step, Possible → Certain, why it's right).
 - **The builder, not a test (reported):** fresh builds, cache skipped, against the new binary. `set %x% = %x% + 1` builds add-then-set 5/5. `remove %x%` builds variable.remove (09-30: 5/6). The edge `remove %x%, write to %y%` is probed once. `doc/events.md`'s Mark example is built and run, and its output is reported to docs.
 
@@ -64,4 +65,4 @@ Nothing is removed. **Stays:** the 09-30 guard (refined, not dropped), `@also`, 
 
 ## Collision check
 
-Decisions 1–4 (summary.md) read against each other and against fb14118e0's rule: 4 refines 09-30's guard (the share is now of the open work), and nothing is replaced.
+Decisions 1–10 (summary.md) read against each other and against fb14118e0's rule: 4 refines 09-30's guard, and 10 replaces 4's arithmetic (written in the Replaced table). This file says only what holds.

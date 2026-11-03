@@ -6,7 +6,7 @@ Plan: `.bot/set-add-order/architect/plan/start.md`.
 
 | replaced | by | what changed |
 |---|---|---|
-| — | — | none |
+| 4's arithmetic (share / the open shares' sum) | 10 | share / (1 − the settled shares): a stage 1 without probabilities made the open sum the module's own share |
 
 ## 2026-11-03 — the cause, and the plan
 
@@ -23,7 +23,11 @@ Plan: `.bot/set-add-order/architect/plan/start.md`.
 | 6 | **Accepted** f3d89adf6: private `Part(module)` (open = `Ranked()` minus `Settled`; 0 when the module isn't open or the sum is 0), read by the local `Certain` (was `Sure`, which shadowed the const). Tests `ModulePartTests` (the set-of-a-sum red on revert; the remove guard green). `pick_golden.json` re-pinned, 3 prompt C lines, each Possible → Certain and right: checkout s3 and s5 (if + throw; condition settled by condition.if; the two picks fb14118e0 lost) and loop s2 (foreach + call; loop settled). Gate green, plang 322/323 with 1 skipped, PLNG 0 | the plan held | coder |
 | 7 | The builder measures fresh builds while the codeanalyzer reviews (in parallel): set+add ×5, remove ×5, the edge ×3, the Mark example | independent; saves a round | architect |
 
+| 8 | **The builder's measurement** (b2d52c720, binary f3d89adf6): set+add add-then-set 5/5 (was 1/5). A bare `remove %x%` builds file.delete 5/5, but stage 1 gives file 0.94 and nothing is asked through, so the fix isn't the cause (both rules say Certain); it goes on the backlog. The edge `remove %x%, write to %y%` is the same (file.delete; variable.set) 3/3. The Mark example prints `marks: 3` 5/5, but `before action output.write` builds `%!app.type.step.on.start%`: right for the wrong reason. On the backlog; the builder traces it read only, and the fix waits for Ingi. doc/events.md stays without output | measured | builder |
+| 9 | **Codeanalyzer v1 NEEDS WORK** (b172d5123). Ruled: **1 (blocking) fix**: `Part` divides by 1 less the settled modules' shares, not by the open sum (stage 1 without probabilities gave file share/share = 1.0, Certain; probed), with a no-probabilities test red on f3d89adf6. **2 with 1** (the `open` list's unreachable guard goes). **3 fix in branch** (boy scout: `AssignsOne`'s `%\S+%` and `Placed()`'s IndexOf scan go to the parser; anything added to the parser comes to me first). **4 and 5 backlog** (on the one list, not obp-cleanup.md). **6 name stays `Part`**: `Left` reads like condition's `Left` operand, which this file's lines show | rule every finding | architect |
+| 10 | Replaces 4's arithmetic: the open work is 1 − the settled shares, not the sum of the open shares; `remove %x%` is 0.56, not ≈0.61 (same verdict) | 9 | architect |
+
 Stage status:
 | Stage | What | Status |
 |---|---|---|
-| 1 | The module's share of the open work | in review (f3d89adf6) |
+| 1 | The module's share of the open work | v2 at the coder (codeanalyzer 1 and 3) |
