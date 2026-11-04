@@ -26,3 +26,8 @@ Blocked on: screenshots and notes (Heilsumynd), and page descriptions (hopkaup).
 - Heilsumynd: 3-calendar is done and tested in the dev slider by the Heilsumynd bot. 4-customers (step 12 has no audio), 5-products and 6-upsell are built and checked in Chromium; their audio waits for tomorrow's TTS quota.
 - Waiting with screenshots: marketing, shipments, visits, locations, overview. Still to come: mail, gervigreind, sysadmin.
 - Helpers: scratchpad make_lesson.py (template = 2-tests) and shoot.js (Chromium 420 px per step).
+
+## 2026-11-04
+- TTS tone direction (Ingi approved after a before/after test): `instructions` field in both tal.py; cache keyed on text only, so only new or changed búts get it.
+- Heilsumynd customer help 16-minar-sidur (Icelandic, 12 steps) built from the Heilsumynd bot's test-user screenshots; voiced, transcription-checked, stepped through in Chromium; handed to the Heilsumynd bot to wire.
+- Hópkaup rename (Hugmynd / Uppkast / Vara): on hold until Ingi approves; affected búts listed to the hopkaup bot.
