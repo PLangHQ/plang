@@ -79,7 +79,10 @@ namespace PLang.Modules.WebserverModule
 					var docs = new RouteDocs(
 						routing => GetGoalBuildDirPath(routing, request).Item1,
 						subGoalPath => prParser.GetGoal(fileSystem.Path.Join(fileSystem.RootDirectory, subGoalPath).AdjustPathToOs()),
-						goal => ReadGoalDescription(goal));
+						goal => ReadGoalDescription(goal),
+						goal => new GoalEffects(
+							prPath => prParser.GetGoal(fileSystem.Path.Join(fileSystem.RootDirectory, prPath).AdjustPathToOs()),
+							(fileName, goalFolder) => ReadSqlFile(fileName, goalFolder)).Analyze(goal));
 					var markdown = docs.Build(webserverProperties.Routings, request.Path.Value ?? "/");
 
 					httpContext.Response.StatusCode = 200;
@@ -411,6 +414,15 @@ namespace PLang.Modules.WebserverModule
 			}
 
 			return verifiedSignatureResult;
+		}
+
+		private string? ReadSqlFile(string fileName, string goalFolder)
+		{
+			var inGoalFolder = fileSystem.Path.Join(goalFolder, fileName).AdjustPathToOs();
+			if (fileSystem.File.Exists(inGoalFolder)) return fileSystem.File.ReadAllText(inGoalFolder);
+
+			var inRoot = fileSystem.Path.Join(fileSystem.RootDirectory, fileName).AdjustPathToOs();
+			return fileSystem.File.Exists(inRoot) ? fileSystem.File.ReadAllText(inRoot) : null;
 		}
 
 		private string? ReadGoalDescription(Goal goal)

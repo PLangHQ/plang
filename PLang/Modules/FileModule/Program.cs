@@ -37,6 +37,7 @@ using static PLang.Modules.FileModule.CsvHelper;
 namespace PLang.Modules.FileModule
 {
 	[Description("Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads files, such as text, llm, csv, xls, pdf files and raw stream")]
+	[Effect(Effects.None)]
 	public class Program : BaseProgram, IDisposable
 	{
 		private readonly IPseudoRuntime pseudoRuntime;
@@ -322,6 +323,7 @@ namespace PLang.Modules.FileModule
 			return returnValues;
 		}
 
+		[Effect(Effects.WritesFiles)]
 		public async Task WriteExcelFile(string path, object variableToWriteToExcel, string sheetName = "Sheet1",
 				bool printHeader = true, [Description("true when the step says to overwrite or replace the file. false when it says to append, or says nothing about an existing file")] bool overwrite = false)
 		{
@@ -368,6 +370,7 @@ namespace PLang.Modules.FileModule
 
 
 
+		[Effect(Effects.WritesFiles)]
 		public async Task WriteCsvFile(string path, [HandlesVariable] object variableToWriteToCsv, bool appendToFile = false,
 			CsvOptions? csvOptions = null, bool createDirectoryAutomatically = true)
 		{
@@ -493,6 +496,7 @@ namespace PLang.Modules.FileModule
 		//public record FileInfo(string Path, string AbsolutePath, string Content, string FileName, DateTime Created, DateTime LastWriteTime, string FolderPath);
 
 
+		[Effect(Effects.WritesFiles)]
 		public async Task SaveMultipleFiles(List<FileInfo> files, bool loadVariables = false,
 			[Description("true when the step says the variable should simply be empty if the file is missing, e.g. `empty variable if not found`. false otherwise")] bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
@@ -692,6 +696,7 @@ namespace PLang.Modules.FileModule
 			return (JsonConvert.DeserializeObject(jsonString), null);
 		}
 
+		[Effect(Effects.WritesFiles)]
 		public async Task WriteBase64ToFile(string path, string base64, [Description("true when the step says to overwrite or replace the file. false when it says to append, or says nothing about an existing file")] bool overwrite = false)
 		{
 			if (base64.Contains(","))
@@ -702,6 +707,7 @@ namespace PLang.Modules.FileModule
 			await WriteBytesToFile(path, bytes, overwrite);
 		}
 
+		[Effect(Effects.WritesFiles)]
 		public async Task WriteBytesToFile(string path, byte[] content, [Description("true when the step says to overwrite or replace the file. false when it says to append, or says nothing about an existing file")] bool overwrite = false)
 		{
 			var absolutePath = GetPath(path);
@@ -720,6 +726,7 @@ namespace PLang.Modules.FileModule
 			}
 			await fileSystem.File.WriteAllBytesAsync(absolutePath, content);
 		}
+		[Effect(Effects.WritesFiles)]
 		public async Task<IError?> WriteToFile(string path, object content, [Description("true when the step says to overwrite or replace the file. false when it says to append, or says nothing about an existing file")] bool overwrite = false,
 			[Description("true only when the step says in words that the %variables% inside the content should be replaced with their values before it is written. A content that merely contains variables is not a reason: `content: {\"a\": %x%}` writes the variable through as it stands, which is the normal case and false")]
 			bool loadVariables = false, [Description("true when the step says the variable should simply be empty if the file is missing, e.g. `empty variable if not found`. false otherwise")] bool emptyVariableIfNotFound = false, string encoding = "utf-8")
@@ -771,6 +778,7 @@ namespace PLang.Modules.FileModule
 
 
 		[Description("Replaces an exact piece of text in a file with another, like a coding assistant's targeted edit. oldText must match the file content exactly and must appear exactly once, otherwise it errors, so it never changes more than intended. Include enough surrounding text to make oldText unique. Returns 1 on success.")]
+		[Effect(Effects.WritesFiles)]
 		public async Task<(int Replacements, IError? Error)> ReplaceInFile(string path, string oldText, string newText, string encoding = "utf-8")
 		{
 			if (string.IsNullOrEmpty(path)) return (0, new ProgramError("Path cannot be empty.", goalStep));
@@ -807,6 +815,7 @@ namespace PLang.Modules.FileModule
 			return (1, null);
 		}
 
+		[Effect(Effects.WritesFiles)]
 		public async Task AppendToFile(string path, string content, string? seperator = null,
 				[Description("true only when the step says in words that the %variables% inside the content should be replaced with their values before it is written. A content that merely contains variables is not a reason: `content: {\"a\": %x%}` writes the variable through as it stands, which is the normal case and false")]
 			bool loadVariables = false, [Description("true when the step says the variable should simply be empty if the file is missing, e.g. `empty variable if not found`. false otherwise")] bool emptyVariableIfNotFound = false, string encoding = "utf-8")
@@ -824,6 +833,7 @@ namespace PLang.Modules.FileModule
 			await fileSystem.File.AppendAllTextAsync(absolutePath, content + seperator, encoding: FileHelper.GetEncoding(encoding));
 		}
 
+		[Effect(Effects.WritesFiles)]
 		public async Task CopyFiles(string directoryPath, string destinationPath, string searchPattern = "*", string[]? excludePatterns = null,
 			bool includeSubfoldersAndFiles = false, bool overwriteFiles = false)
 		{
@@ -840,6 +850,7 @@ namespace PLang.Modules.FileModule
 
 		}
 
+		[Effect(Effects.WritesFiles)]
 		public async Task MoveFile(string sourceFileName, string destFileName, bool createDirectoryIfNotExisting = false, bool overwriteFile = false)
 		{
 			sourceFileName = GetPath(sourceFileName);
@@ -851,6 +862,7 @@ namespace PLang.Modules.FileModule
 			fileSystem.File.Move(sourceFileName, destFileName, overwriteFile);
 		}
 
+		[Effect(Effects.WritesFiles)]
 		public async Task CopyFile(string sourceFileName, string destFileName, bool createDirectoryIfNotExisting = false, bool overwriteFile = false)
 		{
 			sourceFileName = GetPath(sourceFileName);
@@ -861,6 +873,7 @@ namespace PLang.Modules.FileModule
 			}
 			fileSystem.File.Copy(sourceFileName, destFileName, overwriteFile);
 		}
+		[Effect(Effects.WritesFiles)]
 		public async Task DeleteFile(string fileName, bool throwErrorOnNotFound = false)
 		{
 			var absoluteFileName = GetPath(fileName);
@@ -883,6 +896,7 @@ namespace PLang.Modules.FileModule
 		}
 
 
+		[Effect(Effects.WritesFiles)]
 		public async Task<string> CreateDirectory(string directoryPath, bool incrementalNaming = false)
 		{
 			var absoluteDirectoryPath = GetPath(directoryPath);
@@ -906,6 +920,7 @@ namespace PLang.Modules.FileModule
 			}
 			return absoluteDirectoryPath;
 		}
+		[Effect(Effects.WritesFiles)]
 		public async Task DeleteDirectory(string directoryPath, bool recursive = true, bool throwErrorOnNotFound = false)
 		{
 			var absoluteDirectoryPath = GetPath(directoryPath);

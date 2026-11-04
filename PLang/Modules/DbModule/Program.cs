@@ -52,6 +52,7 @@ using static PLang.Utils.VariableHelper;
 namespace PLang.Modules.DbModule
 {
 	[Description("Database access, select, insert, update, delete and execute raw sql, on a table of any name. A step naming a datasource, e.g. `ds: \"dev\"`, is database access. Handles transactions. Sets and create datasources. Isolated data pattern (idp)")]
+	[Effect(Effects.None)]
 	public class Program : BaseProgram, IDisposable
 	{
 		//public static string DbConnectionContextKey = "DbConnection";
@@ -562,6 +563,7 @@ namespace PLang.Modules.DbModule
 		}
 
 		/*
+		[Effect(Effects.WritesData)]
 		public async Task<(int, IError?)> InsertEventSourceData(long id, string data, string keyHash)
 		{
 			var dataSource = goalStep.GetVariable<DataSource>();
@@ -574,6 +576,7 @@ namespace PLang.Modules.DbModule
 			return await eventSourceRepository.AddEventSourceData(connection, id, data, keyHash, transaction);
 		}*/
 		[Description("Executes a sql file")]
+		[Effect(Effects.WritesData)]
 		public async Task<(long, IError?)> ExecuteSqlFile([HandlesVariable] string dataSourceName, string fileName, List<string> tableAllowList)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
@@ -593,6 +596,7 @@ namespace PLang.Modules.DbModule
 		}
 
 		[Description("Executes a sql statement that is fully dynamic or from a %variable%. Since this is pure and dynamic execution on database, user MUST to define list of tables that are allowed to be updated")]
+		[Effect(Effects.WritesData)]
 		public async Task<(long, IError?)> ExecuteDynamicSql([HandlesVariable] string dataSourceName, string sql, List<string> tableAllowList, List<ParameterInfo>? parameters = null)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
@@ -602,6 +606,7 @@ namespace PLang.Modules.DbModule
 		}
 
 		[Description("Execute sql by connection string")]
+		[Effect(Effects.WritesData)]
 		public async Task<(long, IError?)> ExecuteSqlByConnectionString([HandlesVariable] string pathToSql, string sql, List<string> tableAllowList, List<ParameterInfo>? parameters = null)
 		{
 			pathToSql = memoryStack.LoadVariables(pathToSql).ToString();
@@ -622,6 +627,7 @@ namespace PLang.Modules.DbModule
 		// the variable as the whole list rather than one entry in it, which is not that type: the
 		// query runs with nothing bound and returns everything or nothing.
 		[Example(@"query sql/lookup.sql, kt=%kt%, table: ""people"", write to %person%", @"fileName=""lookup.sql"", parameters=[{""TypeFullName"":""System.Object"",""ParameterName"":""@kt"",""VariableNameOrValue"":""%kt%""}], tableAllowList=[""people""], ReturnValues=""%person%""")]
+		[Effect(Effects.FromSql)]
 		public async Task<(object?, IError?, Properties?)> QuerySqlFile([HandlesVariable] List<string> dataSourceNames, string fileName, List<string> tableAllowList,
 			[Description("One entry per named value the sql file expects. The step writes each as name=value, with or without the word parameters in front, e.g. `kt=%kt%` is one entry. ParameterName is that name with an @ in front, VariableNameOrValue is the value. This is always a list, never the bare value: parameters=\"%kt%\" binds nothing")]
 			List<ParameterInfo>? parameters = null, int? rowsToReturn = null)
@@ -651,6 +657,7 @@ namespace PLang.Modules.DbModule
 
 		[Description("Query sql statement that is fully from a %variable%. Since this is pure and dynamic execution on database, user MUST to define list of tables that are allowed to be queried")]
 		[Example(@"execute query %sql%, ds: %dataSource%, tables: users, products, write to %result%", @"sql=%sql%, dataSouceName=%dataSource%, tableAllowList=[""users"", ""products""]")]
+		[Effect(Effects.FromSql)]
 		public async Task<(Table?, IError?, Properties?)> QueryDynamicSql([HandlesVariable] List<string> dataSourceNames, string sql, List<string> tableAllowList, List<ParameterInfo>? parameters = null)
 		{
 
@@ -666,6 +673,7 @@ namespace PLang.Modules.DbModule
 			return await Execute(dataSource, sql, tableAllowList, parameters);
 		}
 		[Description("Executes a sql statement that defined by user, such as `create index ..`, `drop ..`. Preferable not for select,update,insert statements. This statement will be validated. Since this is pure and dynamic execution on database, user MUST to define list of tables that are allowed to be updated")]
+		[Effect(Effects.WritesData)]
 		public async Task<(long RowsAffected, IError? Error)> Execute([HandlesVariable] string dataSourceName, string sql, List<string> tableAllowList, List<ParameterInfo>? parameters = null)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
@@ -675,6 +683,7 @@ namespace PLang.Modules.DbModule
 		}
 
 		[Description("Execute sql statement on specific connection string")]
+		[Effect(Effects.WritesData)]
 		public async Task<(long RowsAffected, IError? Error)> ExecuteByConnectionString(string sql, string connectionString, string dbType = "sqlite", List<ParameterInfo>? parameters = null)
 		{
 			if (dbType != "sqlite") return (0, new ProgramError($"Database type {dbType} is not supported. {ErrorReporting.CreateIssueNotImplemented}"));
@@ -685,6 +694,7 @@ namespace PLang.Modules.DbModule
 
 		}
 		[Description("Reference as db.Execute(%sql%, %parameters%)")]
+		[Effect(Effects.WritesData)]
 		public async Task<(long RowsAffected, IError? Error)> ExecutePlang(string sql, List<ObjectValue>? parameters = null)
 		{
 			List<ParameterInfo>? sqlParameters = null;
@@ -777,6 +787,7 @@ namespace PLang.Modules.DbModule
 		}
 
 		[Description("When user does not define a primary key, add it to the create statement as id column not null, when KeepHistory is set to false, make the column auto increment. When renaming a table and dropping, include  PRAGMA foreign_keys=OFF; at start and PRAGMA foreign_keys=ON; PRAGMA foreign_key_check; at the end")]
+		[Effect(Effects.WritesData)]
 		public async Task<(long, IError?)> CreateTable(string sql)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(goal.DataSourceName, goalStep);
@@ -1141,6 +1152,7 @@ namespace PLang.Modules.DbModule
 		}
 
 		[Description("Allows user to send in json of columns to update. The json can be a %variable%. allowColums is the columns that are allowed to be updated. example: ` update table users with %json% where %id%, allowed columns: name, phone`")]
+		[Effect(Effects.WritesData)]
 		public async Task<(long, IError?)> UpdateWithJsonColumns([HandlesVariable] string dataSourceName, string table, string jsonOfColumns, List<string> allowColumns, string? whereStatment = null, List<ParameterInfo>? whereParameter = null)
 		{
 
@@ -1181,6 +1193,7 @@ Clearly define which columns are allowed to be updated.
 		}
 
 
+		[Effect(Effects.WritesData)]
 		public async Task<(long, IError?)> Update([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null, bool validateAffectedRows = true)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
@@ -1223,6 +1236,7 @@ For example:
 			}
 
 		}
+		[Effect(Effects.WritesData)]
 		public async Task<(long, IError?)> Delete([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null, bool validateAffectedRows = true)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
@@ -1265,6 +1279,7 @@ For example:
 		}
 
 		[Description("Insert or update table(Upsert). Will return affected row count. Choose when user doesn't write result into %variable%")]
+		[Effect(Effects.WritesData)]
 		public async Task<(long rowsAffected, IError? error)> InsertOrUpdate([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null, bool validateAffectedRows = true)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
@@ -1276,6 +1291,7 @@ For example:
 
 
 		[Description("Insert into table. Will return affected row count. Choose when user doesn't write result into %variable%")]
+		[Effect(Effects.WritesData)]
 		public async Task<(long rowsAffected, IError? error)> Insert([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null, bool validateAffectedRows = true)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
@@ -1326,6 +1342,7 @@ For example:
 		}
 
 		[Description("Insert or update table(Upsert). Will return the id/primary key of the affected row. Used when user intends to write into a %id%")]
+		[Effect(Effects.WritesData)]
 		public async Task<(object? rowsAffected, IError? error)> InsertOrUpdateAndSelectIdOfRow([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
@@ -1335,6 +1352,7 @@ For example:
 		}
 
 		[Description("Insert statement that will return the id of the inserted row.  Used when user intends to write into a %id%")]
+		[Effect(Effects.WritesData)]
 		public async Task<(object?, IError?)> InsertAndSelectIdOfInsertedRow([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null, bool validateAffectedRows = true)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
@@ -1439,6 +1457,7 @@ For example:
 			return null;
 		}
 		[Description("ONLY When inserting list of items(%variables% is plural). Insert a list(bulk) into database, return number of rows inserted. columnMapping maps which variable should match with a column. User will define that he is using bulk insert.")]
+		[Effect(Effects.WritesData)]
 		public async Task<(long, IError?)> InsertBulk([HandlesVariable] string dataSourceName, string tableName, List<object> itemsToInsert, [HandlesVariable] Dictionary<string, object>? columnMapping = null, bool ignoreContraintOnInsert = false)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);

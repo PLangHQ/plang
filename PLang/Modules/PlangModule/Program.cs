@@ -27,6 +27,7 @@ using static PLang.Modules.BaseBuilder;
 namespace PLang.Modules.PlangModule
 {
 	[Description(@"get apps available, compiles plang code, gets goals and steps from .goal files, method descriptions and class scheme. Runtime Engine for plang, can run goal and step(s) in plang")]
+	[Effect(Effects.Opaque)]
 	public class Program : BaseProgram
 	{
 		private readonly ILogger logger;

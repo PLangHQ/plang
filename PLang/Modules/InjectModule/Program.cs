@@ -3,6 +3,7 @@
 namespace PLang.Modules.InjectModule
 {
 	[Description("Dependancy injection")]
+	[PLang.Attributes.Effect(PLang.Attributes.Effects.Opaque)]
 	public class Program : BaseProgram
 	{
 		public Program() : base()

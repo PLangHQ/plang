@@ -15,6 +15,7 @@ using System.ComponentModel;
 namespace PLang.Modules.ImageModule
 {
 	[Description("Image generation and manipulation including QR codes, barcodes, and image processing")]
+	[Effect(Effects.WritesFiles)]
 	public class Program : BaseProgram
 	{
 		public Program() : base() { }
@@ -232,6 +233,7 @@ namespace PLang.Modules.ImageModule
 
 		[Description("Reads the width, height and format of an image file without changing it")]
 		[Example("get image info of %file%, write to %info%", @"sourcePath=%file%")]
+		[Effect(Effects.None)]
 		public async Task<(ImageResult?, IError?)> GetImageInfo([Description("Path of the image file")] string sourcePath)
 		{
 			var source = GetPath(sourcePath);

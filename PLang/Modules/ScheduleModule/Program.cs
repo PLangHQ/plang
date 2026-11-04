@@ -25,6 +25,7 @@ using static PLang.Modules.ScheduleModule.Program;
 namespace PLang.Modules.ScheduleModule
 {
 	[Description("Wait, Sleep and time delay. Cron scheduler")]
+	[Effect(Effects.None)]
 	public class Program : BaseProgram
 	{
 		private readonly IPseudoRuntime pseudoRuntime;

@@ -11,6 +11,7 @@ using System.Diagnostics;
 namespace PLang.Modules.AssertModule
 {
 	[Description("Assert object/variable/text or other entity to be what is epxected. For unit testing")]
+	[Effect(Effects.None)]
 	public class Program : BaseProgram
 	{
 

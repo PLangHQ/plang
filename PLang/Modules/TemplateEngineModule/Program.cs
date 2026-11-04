@@ -34,6 +34,7 @@ namespace PLang.Modules.TemplateEngineModule
 - render %content% to #main / will render the variable into the element #main
 - render products.html, %products%, write to %result%
 ```")]
+	[PLang.Attributes.Effect(PLang.Attributes.Effects.None)]
 	public class Program : BaseProgram
 	{
 

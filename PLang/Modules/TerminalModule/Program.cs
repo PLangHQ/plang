@@ -20,6 +20,7 @@ using System.Text;
 namespace PLang.Modules.TerminalModule
 {
 	[Description("Terminal/Console access to run external applications")]
+	[Effect(Effects.Opaque)]
 	public class Program : BaseProgram
 	{
 		private readonly ILogger logger;

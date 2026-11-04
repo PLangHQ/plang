@@ -21,6 +21,7 @@ using Newtonsoft.Json.Linq;
 namespace PLang.Modules.IdentityModule
 {
 	[Description("Handles Identity in plang. Sign content and verifies signature with the identity.")]
+	[PLang.Attributes.Effect(PLang.Attributes.Effects.None)]
 	public class Program : BaseProgram
 	{
 		private readonly IPLangIdentityService identityService;

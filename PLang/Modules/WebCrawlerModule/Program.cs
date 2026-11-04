@@ -42,6 +42,7 @@ namespace PLang.Modules.WebCrawlerModule
 	}
 
 	[Description("Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content")]
+	[PLang.Attributes.Effect(PLang.Attributes.Effects.External)]
 	public sealed class Program : BaseProgram, IAsyncConstructor, IDisposable
 	{
 

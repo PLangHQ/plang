@@ -27,6 +27,7 @@ using static PLang.Modules.CryptographicModule.ModuleSettings;
 namespace PLang.Modules.CryptographicModule
 {
 	[Description("Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token")]
+	[Effect(Effects.None)]
 	public class Program : BaseProgram, IDisposable
 	{
 		private readonly string CurrentBearerToken = "PLang.Modules.CryptographicModule.CurrentBearerToken";

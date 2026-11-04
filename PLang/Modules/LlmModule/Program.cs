@@ -18,6 +18,7 @@ using static PLang.Modules.BaseBuilder;
 namespace PLang.Modules.LlmModule;
 
 [Description("Ask LLM a question and recieve and answer")]
+[Effect(Effects.Costs)]
 public class Program : BaseProgram
 {
 	private readonly ILlmServiceFactory llmServiceFactory;

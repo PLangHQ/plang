@@ -11,6 +11,7 @@ using UglyToad.PdfPig.Graphics;
 namespace PLang.Modules.ConvertModule
 {
 	[Description("Convert object from one to another. html => md, md => html, string => keyvalue list")]
+	[PLang.Attributes.Effect(PLang.Attributes.Effects.None)]
 	public class Program : BaseProgram
 	{
 

@@ -23,6 +23,7 @@ using static PLang.Modules.ConditionalModule.ConditionEvaluator;
 namespace PLang.Modules.LoopModule
 {
 	[Description("While, for, foreach, loops, repeat, go through a list and call a goal")]
+	[Effect(Effects.None)]
 	public class Program : BaseProgram
 	{
 		private readonly ILogger logger;

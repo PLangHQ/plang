@@ -22,6 +22,7 @@ using System.Linq;
 namespace PLang.Modules.HtmlModule
 {
 	[Description("Parse html text, extract from css selectors")]
+	[Effect(Effects.None)]
 	public class Program : BaseProgram
 	{
 

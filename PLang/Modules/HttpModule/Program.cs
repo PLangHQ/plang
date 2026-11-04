@@ -21,6 +21,7 @@ using static System.Net.WebRequestMethods;
 namespace PLang.Modules.HttpModule
 {
 	[Description("Make Http request. Mare sure to format Bearer authentication correctly in headers variable")]
+	[PLang.Attributes.Effect(PLang.Attributes.Effects.None)]
 	public class Program(IPLangFileSystem fileSystem, IHttpClientFactory httpClientFactory,
 		Modules.ProgramFactory programFactory, VariableHelper variableHelper) : BaseProgram()
 	{
@@ -30,6 +31,7 @@ namespace PLang.Modules.HttpModule
 		public record HttpRequest(string Url, string Method = "GET", object? Data = null, Dictionary<string, object?>? Headers = null, string Encoding = "utf-8", string ContentType = "text/html", int TimeoutInSeconds = 30, bool SignRequest = true);
 
 
+		[PLang.Attributes.Effect(PLang.Attributes.Effects.WritesFiles)]
 		public async Task<(string Path, IError? Error, Properties? Properties)> DownloadFile(string url, string pathToSaveTo,
 			bool overwriteFile = false,
 			Dictionary<string, object>? headers = null, bool createPathToSaveTo = true, bool doNotDownloadIfFileExists = false)
@@ -101,14 +103,17 @@ namespace PLang.Modules.HttpModule
 			}
 		}
 
+		[PLang.Attributes.Effect(PLang.Attributes.Effects.External)]
 		public async Task<(object? Data, IError? Error, Properties Properties)> Request(HttpRequest request)
 		{
 			return await Request(request.Url, request.Method, request.Data, !request.SignRequest, request.Headers, request.Encoding, request.ContentType, request.TimeoutInSeconds);
 		}
+		[PLang.Attributes.Effect(PLang.Attributes.Effects.External)]
 		public async Task<(object? Data, IError? Error, Properties Properties)> Post(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "POST", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
+		[PLang.Attributes.Effect(PLang.Attributes.Effects.External)]
 		public async Task<(object? Data, IError? Error, Properties Properties)> Patch(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "PATCH", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
@@ -125,16 +130,19 @@ namespace PLang.Modules.HttpModule
 		{
 			return await Request(url, "HEAD", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
+		[PLang.Attributes.Effect(PLang.Attributes.Effects.External)]
 		public async Task<(object? Data, IError? Error, Properties Properties)> Put(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "PUT", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
+		[PLang.Attributes.Effect(PLang.Attributes.Effects.External)]
 		public async Task<(object? Data, IError? Error, Properties Properties)> Delete(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "DELETE", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
 
 		[Description("Send binary file to server. Make sure to set correct headers on correct header variable, requestHeaders or contentHeader")]
+		[PLang.Attributes.Effect(PLang.Attributes.Effects.External)]
 		public async Task<(object? Data, IError? Error, Properties Properties)> SendBinaryOfFile(string url, string filePath, string httpMethod = "POST",
 			Dictionary<string, object>? requestHeaders = null, Dictionary<string, object>? contentHeaders = null,
 			string encoding = "utf-8", int timeoutInSeconds = 30)
@@ -204,6 +212,7 @@ namespace PLang.Modules.HttpModule
 		}
 
 		[Description("Post a FileStream to url. When a variable is defined with @ sign, it defines that it should be a FileStream. data may contain something like file=@%fileName%;type=%fileType%, then keep as one value for the file parameter. The function will parse the file and type")]
+		[PLang.Attributes.Effect(PLang.Attributes.Effects.External)]
 		public async Task<(object? Data, IError? Error, Properties? Properties)> PostMultipartFormData(string url, object data, string httpMethod = "POST",
 			bool doNotSignRequest = false, Dictionary<string, object>? headers = null,
 			string encoding = "utf-8", int timeoutInSeconds = 30)
@@ -396,6 +405,7 @@ namespace PLang.Modules.HttpModule
 			return (mediaType.Contains("application/xml") || mediaType.Contains("text/xml") || mediaType.Contains("application/rss+xml"));
 		}
 
+		[PLang.Attributes.Effect(PLang.Attributes.Effects.External)]
 		public virtual async Task<(object? Data, IError? Error, Properties Properties)> Request(string url, string method, object? data = null, bool doNotSignRequest = false,
 			Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{

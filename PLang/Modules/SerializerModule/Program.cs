@@ -20,6 +20,7 @@ using System.Xml.Serialization;
 
 namespace PLang.Modules.SerializerModule
 {
+	[PLang.Attributes.Effect(PLang.Attributes.Effects.None)]
 	public class Program : BaseProgram
 	{
 		private readonly ProgramFactory programFactory;

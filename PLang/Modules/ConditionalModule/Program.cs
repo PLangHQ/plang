@@ -28,6 +28,7 @@ namespace PLang.Modules.ConditionalModule
 if statement can throw an error, e.g. `if %isValid% is false, then throw error 'Not valid'`
 
 ")]
+	[Effect(Effects.None)]
 	public class Program : BaseProgram
 	{
 		private readonly IEngine engine;

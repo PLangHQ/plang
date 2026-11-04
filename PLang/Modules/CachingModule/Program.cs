@@ -5,6 +5,7 @@ using System.ComponentModel;
 namespace PLang.Modules.CachingModule
 {
 	[Description("Handles caching of objects, set, get and remove. object can be can be cached with sliding or fixed period")]
+	[Effect(Effects.None)]
 	public class Program : BaseProgram
 	{
 		private readonly IAppCache appCache;

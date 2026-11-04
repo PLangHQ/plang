@@ -26,6 +26,7 @@ using static PLang.Modules.DbModule.Program;
 namespace PLang.Modules.VariableModule
 {
 	[Description("Set, Get & Return variable(s). Set(NOT if statement) on variable includes condition such as empty or null, and a fallback written as `, default is X`, `, or X if empty` or `?? X`. A step that starts with `set %variable% =` belongs here, never to the database module, even when the word default appears. Bind onCreate, onChange, onRemove events to variable. Trim variable for llm. Use this module on `- return %variable`. Modify datetime (%now%, etc.)")]
+	[Effect(Effects.None)]
 	public class Program : BaseProgram
 	{
 		private readonly ISettings settings;

@@ -30,6 +30,7 @@ namespace PLang.Modules.FilterModule
 - join %tags% with "", "", write to %tagText%
 ```
 ")]
+	[PLang.Attributes.Effect(PLang.Attributes.Effects.None)]
 	public class Program : BaseProgram
 	{
 

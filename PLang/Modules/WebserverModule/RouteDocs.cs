@@ -14,11 +14,14 @@ namespace PLang.Modules.WebserverModule
 
 		private readonly Func<Goal, string?> getDescription;
 
-		public RouteDocs(Func<Routing, Goal?> getGoal, Func<string, Goal?> getSubGoal, Func<Goal, string?> getDescription)
+		private readonly Func<Goal, EffectSummary> getEffects;
+
+		public RouteDocs(Func<Routing, Goal?> getGoal, Func<string, Goal?> getSubGoal, Func<Goal, string?> getDescription, Func<Goal, EffectSummary> getEffects)
 		{
 			this.getGoal = getGoal;
 			this.getSubGoal = getSubGoal;
 			this.getDescription = getDescription;
+			this.getEffects = getEffects;
 		}
 
 		public string Build(List<Routing> routings, string requestPath)
@@ -85,6 +88,16 @@ namespace PLang.Modules.WebserverModule
 				}
 				sb.AppendLine();
 			}
+
+			var effects = getEffects(goal);
+			sb.AppendLine("## Effects: " + effects.Tag());
+			foreach (var write in effects.DbWrites) sb.AppendLine($"- writes database: {write}");
+			foreach (var item in effects.Files) sb.AppendLine($"- writes files: {item}");
+			foreach (var item in effects.External) sb.AppendLine($"- external call: {item}");
+			foreach (var item in effects.Costs) sb.AppendLine($"- costs money: {item}");
+			foreach (var item in effects.Opaque) sb.AppendLine($"- opaque, can do anything: {item}");
+			foreach (var item in effects.Unknown) sb.AppendLine($"- not declared: {item}");
+			sb.AppendLine();
 
 			var description = getDescription(goal);
 			if (!string.IsNullOrWhiteSpace(description))
@@ -164,7 +177,8 @@ namespace PLang.Modules.WebserverModule
 			var methods = string.Join("/", routing.RequestProperties?.Methods ?? ["GET"]);
 			var goal = getGoal(routing);
 			var summary = Summary(goal == null ? null : getDescription(goal));
-			sb.AppendLine($"- {methods} {routing.Path}" + (summary == "" ? "" : ": " + summary));
+			var tag = goal == null ? "" : $" [{getEffects(goal).Tag()}]";
+			sb.AppendLine($"- {methods} {routing.Path}{tag}" + (summary == "" ? "" : ": " + summary));
 		}
 
 		private static string Summary(string? description)

@@ -24,6 +24,7 @@ using Parameter = PLang.Modules.BaseBuilder.Parameter;
 namespace PLang.Modules.CodeModule
 {
 	[Description("Generate or Run existing c# code from user description. Only use if no other module is found or if [code] is defined.")]
+	[Effect(Effects.Opaque)]
 	public class Program : BaseProgram
 	{
 		private readonly IPLangFileSystem fileSystem;

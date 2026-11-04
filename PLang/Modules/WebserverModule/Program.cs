@@ -43,6 +43,7 @@ using System.Threading.Tasks.Dataflow;
 namespace PLang.Modules.WebserverModule;
 
 [Description("Start webserver, add route, set certificate, read/write to Header, Cookie, send file to client")]
+[Effect(Effects.None)]
 public class Program : BaseProgram, IDisposable
 {
 	private readonly IEventRuntime eventRuntime;

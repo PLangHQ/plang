@@ -14,6 +14,7 @@ namespace PLang.Modules.CallGoalModule
 {
 	
 	[Description("Call a Goal, e.g. `call goal Process`, `call Visits`")]
+	[Effect(Effects.None)]
 	public class Program(IPseudoRuntime pseudoRuntime, IEngine engine, PrParser prParser, IPLangContextAccessor contextAccessor) : BaseProgram()
 	{
 		public PLangContext Context { get { return context; } }

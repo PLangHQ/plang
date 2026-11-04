@@ -14,6 +14,7 @@ using static PLang.Modules.MockModule.Program;
 namespace PLang.Modules.EnvironmentModule;
 
 [Description("Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install")]
+[Effect(Effects.None)]
 public class Program : BaseProgram
 {
 	private readonly ISettings settings;
