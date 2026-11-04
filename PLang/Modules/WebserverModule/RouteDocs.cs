@@ -7,6 +7,16 @@ namespace PLang.Modules.WebserverModule
 	public class RouteDocs
 	{
 		private const int MaxSummaryLength = 160;
+
+		private static readonly Dictionary<string, string> EffectMeaning = new()
+		{
+			["read"] = "changes nothing",
+			["changes data"] = "creates, updates or deletes data, or writes files",
+			["external"] = "contacts something outside the system, for example sends an email or calls another service",
+			["costs"] = "uses a paid service such as an AI model",
+			["opaque"] = "can do anything, be careful",
+			["unknown"] = "what it does is not declared"
+		};
 		private const int MaxSubGoalDepth = 3;
 
 		private readonly Func<Routing, Goal?> getGoal;
@@ -91,12 +101,10 @@ namespace PLang.Modules.WebserverModule
 
 			var effects = getEffects(goal);
 			sb.AppendLine("## Effects: " + effects.Tag());
-			foreach (var write in effects.DbWrites) sb.AppendLine($"- writes database: {write}");
-			foreach (var item in effects.Files) sb.AppendLine($"- writes files: {item}");
-			foreach (var item in effects.External) sb.AppendLine($"- external call: {item}");
-			foreach (var item in effects.Costs) sb.AppendLine($"- costs money: {item}");
-			foreach (var item in effects.Opaque) sb.AppendLine($"- opaque, can do anything: {item}");
-			foreach (var item in effects.Unknown) sb.AppendLine($"- not declared: {item}");
+			foreach (var tag in effects.Tag().Split("; "))
+			{
+				if (EffectMeaning.TryGetValue(tag, out var meaning)) sb.AppendLine($"- {tag}: {meaning}");
+			}
 			sb.AppendLine();
 
 			var description = getDescription(goal);

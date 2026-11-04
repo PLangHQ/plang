@@ -19,8 +19,7 @@ namespace PLang.Modules.WebserverModule
 		public string Tag()
 		{
 			var tags = new List<string>();
-			if (DbWrites.Count > 0) tags.Add("writes " + string.Join(", ", DbWrites.Select(w => w.Split(' ')[0]).Distinct()));
-			if (Files.Count > 0) tags.Add("writes files");
+			if (Writes) tags.Add("changes data");
 			if (External.Count > 0) tags.Add("external");
 			if (Costs.Count > 0) tags.Add("costs");
 			if (Opaque.Count > 0) tags.Add("opaque");
