@@ -61,7 +61,7 @@ namespace PLang.Modules.WebserverModule
 				(var signedMessage, error) = await VerifySignature(requestEngine, context);
 				if (error != null)
 				{
-					(var requestObjectValue2, error) = await ParseRequest(context);
+					(var requestObjectValue2, var parseError) = await ParseRequest(context);
 
 					// put "request" object into memory
 					context.MemoryStack.Put(requestObjectValue2);
@@ -69,7 +69,26 @@ namespace PLang.Modules.WebserverModule
 				}
 
 
-				// this should be below 
+				if (IsRouteDocsRequest(request))
+				{
+					if (signedMessage == null)
+					{
+						return (false, null, new UnauthorizedError("Route documentation requires a signed request (X-Signature)."));
+					}
+
+					var docs = new RouteDocs(
+						routing => GetGoalBuildDirPath(routing, request).Item1,
+						subGoalPath => prParser.GetGoal(fileSystem.Path.Join(fileSystem.RootDirectory, subGoalPath).AdjustPathToOs()),
+						goal => ReadGoalDescription(goal));
+					var markdown = docs.Build(webserverProperties.Routings, request.Path.Value ?? "/");
+
+					httpContext.Response.StatusCode = 200;
+					httpContext.Response.ContentType = "text/markdown; charset=utf-8";
+					await httpContext.Response.WriteAsync(markdown);
+					return (false, signedMessage.Identity, null);
+				}
+
+				// this should be below
 				(var requestObjectValue, error) = await ParseRequest(context);
 				if (error != null) return (false, signedMessage?.Identity, error);
 
@@ -392,6 +411,22 @@ namespace PLang.Modules.WebserverModule
 			}
 
 			return verifiedSignatureResult;
+		}
+
+		private string? ReadGoalDescription(Goal goal)
+		{
+			// PrParser drops Description from the loaded goal to save memory, so it is read from the .pr file here.
+			// Only used for the route documentation, never on a normal request.
+			if (string.IsNullOrEmpty(goal.AbsolutePrFilePath) || !fileSystem.File.Exists(goal.AbsolutePrFilePath)) return null;
+			var pr = JObject.Parse(fileSystem.File.ReadAllText(goal.AbsolutePrFilePath));
+			return pr["Description"]?.ToString();
+		}
+
+		private static bool IsRouteDocsRequest(HttpRequest request)
+		{
+			if (request.Method != "GET") return false;
+			var rawTarget = request.HttpContext.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpRequestFeature>()?.RawTarget;
+			return rawTarget != null && rawTarget.EndsWith("?") && !rawTarget.Contains("?plang");
 		}
 
 		private async Task<byte[]?> GetRawBody(HttpRequest request)

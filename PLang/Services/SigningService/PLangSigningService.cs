@@ -311,7 +311,7 @@ namespace PLang.Services.SigningService
 				return (clientSignedMessage, null);
 			}
 
-			return (null, new ServiceError("Signature is invalid", GetType(), "InvalidSignature"));
+			return (null, new ServiceError("Signature is invalid", GetType(), "InvalidSignature", StatusCode: 401));
 
 		}
 
