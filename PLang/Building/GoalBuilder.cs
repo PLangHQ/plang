@@ -576,7 +576,10 @@ namespace PLang.Building
 		private async Task<(Goal, IBuilderError?)> CreateDescriptionForGoal(Goal goal, Goal? oldGoal)
 		{
 
-			if (!string.IsNullOrEmpty(goal.Description) && goal.GetGoalAsString() == oldGoal?.GetGoalAsString())
+			// PLangRedescribe=1 writes the description again for goals whose text has not changed, for when
+			// the way descriptions are written changes. Without it a description is only made when the goal changes.
+			var redescribe = Environment.GetEnvironmentVariable("PLangRedescribe") == "1";
+			if (!redescribe && !string.IsNullOrEmpty(goal.Description) && goal.GetGoalAsString() == oldGoal?.GetGoalAsString())
 			{
 				return (goal, null);
 			}
@@ -596,6 +599,11 @@ namespace PLang.Building
 			promptMessage.Add(new LlmMessage("system", $@"
 You will receive a code written in Plang programming language
 Your job is to write a description for this Goal called {goal.GoalName} and find out what variables are needed for the execution of the code.
+
+The description is written for the person or program that calls this goal, not for the programmer who maintains it.
+The FIRST sentence says what the caller gets or what changes for them, in plain terms of the business, for example ""Marks all unhandled incoming mail of a company as handled."" It never says how the goal does it: no files, SQL, variables, templates or step order in that sentence.
+When the goal starts with a comment (a line starting with /), that comment is the author's own statement of what the goal is for: use it as the first sentence, close to word for word.
+After the first sentence add the details.
 
 Use the comments and steps to build the description,
 Goal works like a function for programming language Plang. 
