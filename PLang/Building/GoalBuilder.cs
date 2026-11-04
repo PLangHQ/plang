@@ -573,6 +573,17 @@ namespace PLang.Building
 
 		public record GoalDescription(string Description, Dictionary<string, string>? IncomingVariablesRequired = null);
 
+		// The comment above a goal is the author's own first sentence of its description. It goes in front
+		// word for word, and any copy of it the model wrote into the details is taken out.
+		public static string WithAuthorComment(Goal goal, string description)
+		{
+			var comment = goal.Comment?.Trim();
+			if (string.IsNullOrEmpty(comment)) return description;
+
+			var details = description.Replace("/ " + comment, "").Replace(comment, "").Trim();
+			return details.Length == 0 ? comment : comment + " " + details;
+		}
+
 		private async Task<(Goal, IBuilderError?)> CreateDescriptionForGoal(Goal goal, Goal? oldGoal)
 		{
 
@@ -588,7 +599,7 @@ namespace PLang.Building
 			var batched = deciderCache.ForGoal(goal).Description(goal.GetGoalAsString());
 			if (batched != null)
 			{
-				goal.Description = batched.Value.Description;
+				goal.Description = WithAuthorComment(goal, batched.Value.Description);
 				goal.IncomingVariablesRequired = batched.Value.Incoming;
 				return (goal, null);
 			}
@@ -602,8 +613,7 @@ Your job is to write a description for this Goal called {goal.GoalName} and find
 
 The description is written for the person or program that calls this goal, not for the programmer who maintains it.
 The FIRST sentence says what the caller gets or what changes for them, in plain terms of the business, for example ""Marks all unhandled incoming mail of a company as handled."" It never says how the goal does it: no files, SQL, variables, templates or step order in that sentence.
-When the goal starts with a comment (a line starting with /), that comment is the author's own statement of what the goal is for: use it as the first sentence, close to word for word.
-After the first sentence add the details.
+When the goal starts with a comment (a line starting with /), that comment is the author's own first sentence and is put in front of your text for you: write only the details that come after it, and never repeat it or put a slash in front of anything.
 
 Use the comments and steps to build the description,
 Goal works like a function for programming language Plang. 
@@ -635,7 +645,7 @@ Be concise
 				return (goal, new GoalBuilderError("Could not create description for goal", goal));
 			}
 
-			goal.Description = goalDescription.Description;
+			goal.Description = WithAuthorComment(goal, goalDescription.Description);
 			goal.IncomingVariablesRequired = goalDescription.IncomingVariablesRequired;
 			logger.LogDebug($" - Done creating desription for goal {goal.GoalName}");
 			return (goal, null);

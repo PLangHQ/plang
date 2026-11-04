@@ -135,7 +135,7 @@ A note in parentheses after a step says what that step's method does not permit;
 	// The goal description question, from GoalBuilder.CreateDescriptionForGoal. It is asked of the
 	// same material the properties are asked of, the goal's steps, so it rides in the same request.
 	private const string DescriptionRules = @"Also describe the goal as a whole, in the same answer.
-Description: written for the person or program that calls this goal, not for the programmer who maintains it. The FIRST sentence says what the caller gets or what changes for them, in plain terms of the business, for example ""Marks all unhandled incoming mail of a company as handled."" It never says how the goal does it: no files, SQL, variables, templates or step order in that sentence. When a comment (a line starting with /) comes right after the goal name or before the first step, it is the author's own statement of what the goal is for: use it as the first sentence, close to word for word. After the first sentence add the details, concise: a goal works like a function, it defines one or more steps, and a step that writes into a variable creates it. Describe the conditions that depend on a variable and what value sends it down which path.
+Description: written for the person or program that calls this goal, not for the programmer who maintains it. The FIRST sentence says what the caller gets or what changes for them, in plain terms of the business, for example ""Marks all unhandled incoming mail of a company as handled."" It never says how the goal does it: no files, SQL, variables, templates or step order in that sentence. When a line starting with ""goal comment:"" is given, it is the author's own first sentence and is put in front of your text for you: write only the details that come after it, and never repeat it or put a slash in front of anything. After the first sentence add the details, concise: a goal works like a function, it defines one or more steps, and a step that writes into a variable creates it. Describe the conditions that depend on a variable and what value sends it down which path.
 IncomingVariablesRequired: the variables that must be handed to this goal for it to work, as {""%name%"": ""what it is""}. Name each one exactly as the step writes it, so %request.body.q% and not %request%. A variable a step creates is not one of them, and neither is a setting such as %Settings.ApiKey%. Empty when it needs none.
 Escape a %variable% written inside the Description text as \%variable\%. That escaping is for the Description only: the keys of IncomingVariablesRequired are written plainly, %name%, never escaped.";
 
@@ -278,7 +278,7 @@ Escape a %variable% written inside the Description text as \%variable\%. That es
 		text.AppendLine("Answer with json: {\"Steps\": [{\"Number\": <n>, \"WaitForExecution\": true, \"LoggerLevel\": null, \"ErrorHandlers\": null, \"CachingHandler\": null}], \"Description\": \"...\", \"IncomingVariablesRequired\": {\"%name%\": \"...\"}}");
 		text.AppendLine();
 		text.AppendLine($"goal: {goal.GoalName}");
-		if (!string.IsNullOrWhiteSpace(goal.Comment)) text.AppendLine($"/ {goal.Comment}");
+		if (!string.IsNullOrWhiteSpace(goal.Comment)) text.AppendLine($"goal comment: {goal.Comment}");
 		text.AppendLine();
 		foreach (var plan in planned)
 		{
@@ -334,7 +334,7 @@ Escape a %variable% written inside the Description text as \%variable\%. That es
 			// model escaped the dictionary keys too and one came back as "\0request.body.q\0c".
 			var incoming = answer.IncomingVariablesRequired?
 				.ToDictionary(p => "%" + p.Key.Trim('%', '\\', '\0') + "%", p => p.Value);
-			cached.SetDescription(goal, goal.GetGoalAsString(), answer.Description, incoming);
+			cached.SetDescription(goal, goal.GetGoalAsString(), GoalBuilder.WithAuthorComment(goal, answer.Description), incoming);
 		}
 
 		logger.Value.LogDebug($"Built the properties of {cached.PropertyCount} steps of {goal.GoalName}, and its description, in one request");
