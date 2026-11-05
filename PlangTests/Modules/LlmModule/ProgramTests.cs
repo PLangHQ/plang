@@ -35,7 +35,7 @@ namespace PLangTests.Modules.LlmModule
 				return (response, default(IError));
 			});
 			llmServiceFactory.CreateHandler().Returns(llmService);
-			p = new Program(llmServiceFactory, identityService, settings, logger, appContext);
+			p = new Program(llmServiceFactory, identityService, settings, logger, appContext, NSubstitute.Substitute.For<PLang.Building.IBuilderDecider>());
 			p.Init(container, null, null, null, null);
 		}
 

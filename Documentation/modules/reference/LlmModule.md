@@ -49,6 +49,27 @@ When user intent is to write the result into a %variable% it MUST have ReturnVal
 - `continuePrevConversation` *Boolean*, default `False`
 - `tools` *PLang.Modules.LlmModule.Program+Tools*, default `null` — (see Type information in SupportingObjects)
 
+### Decide
+
+```
+Decide(Object state, String question, Dictionary<String, String> options) : String
+```
+
+Decides which one of a closed set of options fits a text. Answers the option, never free text. Use it when the answer is a choice (kind, status, yes or no), use AskLlm when the answer is text to write or extract. `%x%` is the option, `%x!Confidence%` how sure it is, `%x!Probabilities%` each option's share.
+
+Runs on Typesafe System One with the key `%Settings.TypeSafeApiKey%`. A missing key comes back as the error `MissingTypeSafeApiKey`, which `on error` can handle.
+
+- `state` *Object* — the text the question is about
+- `question` *String* — what is being decided
+- `options` *Dictionary<String, String>* — option and what it means (the meaning may be null)
+
+```plang
+- decide which kind of email %email% is, options: invoice, order, spam, write to %kind%
+- if %kind% == "spam" then
+    - end goal
+- write out "%kind!Confidence%"
+```
+
 ### GetLlmIdentity
 
 ```

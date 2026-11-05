@@ -26,14 +26,16 @@ public class Program : BaseProgram
 	private readonly ISettings settings;
 	private readonly ILogger logger;
 	private readonly PLangAppContext appContext;
+	private readonly PLang.Building.IBuilderDecider decider;
 
-	public Program(ILlmServiceFactory llmServiceFactory, IPLangIdentityService identityService, ISettings settings, ILogger logger, PLangAppContext appContext) : base()
+	public Program(ILlmServiceFactory llmServiceFactory, IPLangIdentityService identityService, ISettings settings, ILogger logger, PLangAppContext appContext, PLang.Building.IBuilderDecider decider) : base()
 	{
 		this.llmServiceFactory = llmServiceFactory;
 		this.identityService = identityService;
 		this.settings = settings;
 		this.logger = logger;
 		this.appContext = appContext;
+		this.decider = decider;
 	}
 
 	public record AgentRun(string? Answer, int Rounds, int ToolCalls, int ToolErrors, long InputTokens, long OutputTokens, bool StoppedAtMaxRounds, long CachedTokens = 0);
@@ -307,6 +309,27 @@ public class Program : BaseProgram
 	public async Task<List<LlmMessage>?> GetPreviousMessages()
 	{
 		return context.GetVariable<List<LlmMessage>>(PreviousConversationKey) ?? new();
+	}
+
+	[Description("Decides which one of a closed set of options fits a text. Answers the option, never free text. Use it when the answer is a choice (kind, status, yes or no), use AskLlm when the answer is text to write or extract. %x% is the option, %x!Confidence% how sure it is, %x!Probabilities% each option's share.")]
+	[Example("decide which kind of email %email% is, options: invoice, order, spam, write to %kind%",
+		@"state=""%email%"", question=""which kind of email is this"", options={""invoice"": null, ""order"": null, ""spam"": null}")]
+	[Example("decide if %message% asks for a reply, options: yes means a question waits for an answer, no means nothing waits, write to %needsReply%",
+		@"state=""%message%"", question=""does the message ask for a reply"", options={""yes"": ""a question waits for an answer"", ""no"": ""nothing waits for an answer""}")]
+	[Example("decide the status of %company% from %mail%, options: open, waiting, closed, write to %status%",
+		@"state=""%mail%"", question=""what should the status of the company be"", options={""open"": null, ""waiting"": null, ""closed"": null}")]
+	public async Task<(string? Choice, IError? Error, Properties? Properties)> Decide(
+		object state, string question, Dictionary<string, string> options)
+	{
+		var (answers, error) = await decider.Choose(GetObjectRepresentation(state) ?? "",
+			new() { ["choice"] = new DeciderQuestion(question, options) });
+		if (error != null) return (null, error, null);
+
+		var answer = answers!["choice"];
+		var properties = new Properties();
+		properties.Add(new ObjectValue("Confidence", answer.Confidence));
+		properties.Add(new ObjectValue("Probabilities", answer.Probabilities));
+		return (answer.Choice, null, properties);
 	}
 
 	[Description("a Goal is object Goal.Path = %goal.path%")]
