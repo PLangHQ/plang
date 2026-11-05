@@ -454,7 +454,16 @@ namespace PLang.Modules.WebserverModule
 
 			var markdown = docs.Build(webserverProperties.Routings, path,
 				goal => decisions.TryGetValue(goal.RelativeGoalFolderPath, out var allowed) && allowed);
-			if (markdown == null) return new Error("You may not run any of the routes under this path.", Key: "Forbidden", StatusCode: 403);
+			if (markdown == null)
+			{
+				var baseUrl = $"{request.Scheme}://{request.Host}";
+				var forbidden = new Error($"You may not run any of the routes under this path. Your key ({context.Identity}) is either not registered to a user or that user has no access here. " +
+					$"Ask an administrator to register this public key for you. {baseUrl}/? explains how a key is made and registered.", Key: "Forbidden", StatusCode: 403);
+				httpContext.Response.StatusCode = 403;
+				httpContext.Response.ContentType = "text/markdown; charset=utf-8";
+				await httpContext.Response.WriteAsync(forbidden.Message);
+				return new ErrorHandled(forbidden);
+			}
 
 			httpContext.Response.StatusCode = 200;
 			httpContext.Response.ContentType = "text/markdown; charset=utf-8";
