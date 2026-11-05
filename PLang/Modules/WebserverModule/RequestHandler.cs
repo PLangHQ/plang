@@ -74,7 +74,10 @@ namespace PLang.Modules.WebserverModule
 				{
 					if (signedMessage == null)
 					{
-						return (false, null, new UnauthorizedError("Route documentation requires a signed request (X-Signature)."));
+						httpContext.Response.StatusCode = 401;
+					httpContext.Response.ContentType = "text/markdown; charset=utf-8";
+					await httpContext.Response.WriteAsync(RouteDocs.ConnectInstructions($"{request.Scheme}://{request.Host}"));
+					return (false, null, new ErrorHandled(new UnauthorizedError("Route documentation requires a signed request (X-Signature).")));
 					}
 
 					routeDocs = true;
