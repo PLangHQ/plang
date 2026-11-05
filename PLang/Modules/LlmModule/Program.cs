@@ -17,7 +17,7 @@ using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Modules.LlmModule;
 
-[Description("Ask LLM a question and recieve and answer")]
+[Description("Ask LLM a question and recieve and answer. Also decide: when a step says decide, or picks one option out of a list of options (kind, status, yes or no) for a text, it is Decide, answered by the decider with a confidence")]
 [Effect(Effects.Costs)]
 public class Program : BaseProgram
 {
@@ -319,7 +319,9 @@ public class Program : BaseProgram
 	[Example("decide the status of %company% from %mail%, options: open, waiting, closed, write to %status%",
 		@"state=""%mail%"", question=""what should the status of the company be"", options={""open"": null, ""waiting"": null, ""closed"": null}")]
 	public async Task<(string? Choice, IError? Error, Properties? Properties)> Decide(
-		object state, string question, Dictionary<string, string> options)
+		[Description("The text or variable the decision is about, e.g. %email%")] object state,
+		[Description("What is being decided, short, e.g. which kind of email is this")] string question,
+		[Description("The options. Key is the option, value is what it means (null when the option explains itself). The step lists them after options:")] Dictionary<string, string> options)
 	{
 		var (answers, error) = await decider.Choose(GetObjectRepresentation(state) ?? "",
 			new() { ["choice"] = new DeciderQuestion(question, options) });
