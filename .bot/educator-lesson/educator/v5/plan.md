@@ -31,3 +31,9 @@ Blocked on: screenshots and notes (Heilsumynd), and page descriptions (hopkaup).
 - TTS tone direction (Ingi approved after a before/after test): `instructions` field in both tal.py; cache keyed on text only, so only new or changed búts get it.
 - Heilsumynd customer help 16-minar-sidur (Icelandic, 12 steps) built from the Heilsumynd bot's test-user screenshots; voiced, transcription-checked, stepped through in Chromium; handed to the Heilsumynd bot to wire.
 - Hópkaup rename (Hugmynd / Uppkast / Vara): on hold until Ingi approves; affected búts listed to the hopkaup bot.
+
+## 2026-11-05
+- Dog scanner video v2 voiced in both languages. Choppy starts and ends traced to our own trim and dynamic loudnorm; new processing keeps the raw take, cuts only outer silence, one even gain, fades, padding. Ingi confirmed it by ear.
+- Hópkaup CRM help rebuilt from scratch on Ingi's approval of the text: 29 chapters, 173 búts, in new folders, voiced with the tone direction and the new processing, transcription-checked. Handed to the hopkaup bot for dev test; prod only on Ingi's word.
+- Heilsumynd lessons stay as they are (Ingi).
+- Keys moved to /secrets and Bitwarden (aac).
