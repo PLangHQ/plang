@@ -587,6 +587,86 @@ namespace PLang.Modules.WebserverModule
 			return false;
 		}
 
+		/// <summary>
+		/// Reads a single byte range off the request, so a browser can seek in a video and
+		/// Safari on iOS can play one at all (it refuses a video unless the server answers
+		/// Range with 206).
+		/// </summary>
+		/// <remarks>
+		/// Returns false when the whole file should be sent instead, which RFC 9110 allows
+		/// for anything the server does not want to handle: no header, a unit other than
+		/// bytes, several ranges, a malformed spec, or an If-Range that no longer matches.
+		/// The ETag is weak, and If-Range only matches a strong one, so only the date form
+		/// of If-Range can match here.
+		/// </remarks>
+		private static bool TryGetRange(HttpRequest request, DateTimeOffset lastModified, long length, out long start, out long end, out bool unsatisfiable)
+		{
+			start = 0;
+			end = length - 1;
+			unsatisfiable = false;
+
+			var header = request.Headers[HeaderNames.Range].ToString();
+			if (string.IsNullOrEmpty(header) || !header.StartsWith("bytes=", StringComparison.OrdinalIgnoreCase)) return false;
+
+			var ifRange = request.Headers[HeaderNames.IfRange].ToString();
+			if (!string.IsNullOrEmpty(ifRange))
+			{
+				if (!DateTimeOffset.TryParse(ifRange, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out var ifRangeDate)
+					|| ifRangeDate != lastModified) return false;
+			}
+
+			var spec = header.Substring("bytes=".Length).Trim();
+			if (spec.Contains(',')) return false;
+
+			var dash = spec.IndexOf('-');
+			if (dash < 0) return false;
+			var first = spec.Substring(0, dash).Trim();
+			var last = spec.Substring(dash + 1).Trim();
+
+			if (first.Length == 0)
+			{
+				if (!long.TryParse(last, NumberStyles.None, CultureInfo.InvariantCulture, out var suffix)) return false;
+				if (suffix == 0 || length == 0)
+				{
+					unsatisfiable = true;
+					return true;
+				}
+				start = Math.Max(0, length - suffix);
+				end = length - 1;
+				return true;
+			}
+
+			if (!long.TryParse(first, NumberStyles.None, CultureInfo.InvariantCulture, out start)) return false;
+			if (last.Length == 0)
+			{
+				end = length - 1;
+			}
+			else if (!long.TryParse(last, NumberStyles.None, CultureInfo.InvariantCulture, out end) || end < start)
+			{
+				return false;
+			}
+
+			if (start >= length)
+			{
+				unsatisfiable = true;
+				return true;
+			}
+			if (end >= length) end = length - 1;
+			return true;
+		}
+
+		private static async Task CopyBytesAsync(Stream source, Stream destination, long count)
+		{
+			var buffer = new byte[81920];
+			while (count > 0)
+			{
+				var read = await source.ReadAsync(buffer.AsMemory(0, (int)Math.Min(buffer.Length, count)));
+				if (read == 0) break;
+				await destination.WriteAsync(buffer.AsMemory(0, read));
+				count -= read;
+			}
+		}
+
 		/// <summary>Removes one `vN` path segment, or null if there is none.</summary>
 		private static string? StripVersionSegment(string path)
 		{
@@ -661,6 +741,7 @@ namespace PLang.Modules.WebserverModule
 				httpContext.Response.Headers[HeaderNames.ETag] = etag;
 				httpContext.Response.Headers[HeaderNames.LastModified] = lastModified.ToString("R");
 				httpContext.Response.Headers[HeaderNames.CacheControl] = "no-cache";
+				httpContext.Response.Headers[HeaderNames.AcceptRanges] = "bytes";
 			}
 
 			if (IsNotModified(httpContext.Request, etag, lastModified))
@@ -678,6 +759,28 @@ namespace PLang.Modules.WebserverModule
 			try
 			{
 				await using var stream = fileSystem.File.OpenRead(filePath);
+
+				if (!httpContext.Response.HasStarted && TryGetRange(httpContext.Request, lastModified, stream.Length, out var rangeStart, out var rangeEnd, out var unsatisfiable))
+				{
+					if (unsatisfiable)
+					{
+						httpContext.Response.StatusCode = StatusCodes.Status416RangeNotSatisfiable;
+						httpContext.Response.Headers[HeaderNames.ContentRange] = $"bytes */{stream.Length}";
+						httpContext.Response.Headers.Remove(HeaderNames.ContentLength);
+						await httpContext.Response.CompleteAsync();
+						return null;
+					}
+
+					var count = rangeEnd - rangeStart + 1;
+					httpContext.Response.StatusCode = StatusCodes.Status206PartialContent;
+					httpContext.Response.Headers[HeaderNames.ContentRange] = $"bytes {rangeStart}-{rangeEnd}/{stream.Length}";
+					httpContext.Response.ContentLength = count;
+					httpContext.Response.ContentType = mimeType;
+					stream.Seek(rangeStart, SeekOrigin.Begin);
+					await CopyBytesAsync(stream, httpContext.Response.Body, count);
+					return null;
+				}
+
 				if (httpContext.Response.HasStarted)
 				{
 					int i = 0;
