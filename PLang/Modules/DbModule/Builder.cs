@@ -545,6 +545,9 @@ When the user points to a sql file (a path ending in .sql), the sql lives in tha
 
 		List<DataSource> dataSources = new();
 		var program = GetProgram(step);
+		// A step that lists its datasources names the order itself, and the runtime resolves a table
+		// that is in several of them to the first one listed, so the build does the same.
+		var datasourcesListedByStep = methodsAndTables.DataSourceNames?.Count > 1;
 		if (methodsAndTables.DataSourceNames?.Count > 0)
 		{
 			foreach (var dsName in methodsAndTables.DataSourceNames)
@@ -602,6 +605,8 @@ When the user points to a sql file (a path ending in .sql), the sql lives in tha
 					var table = methodsAndTables.Tables.FirstOrDefault(p => p.Name == tableInfo.Name);
 					if (table != null)
 					{
+						if (table.DataSource != null && datasourcesListedByStep) continue;
+
 						if (table.DataSource != null && !methodsAndTables.ContainsMethod("ExecuteByConnectionString"))
 						{
 							return (null, new StepBuilderError($"At least two datasources have the table '{table.Name}'. They are '{table.DataSource.Name}' and '{dataSource.Name}'", step,
