@@ -34,7 +34,26 @@ namespace PLang.Modules.WebserverModule
 			this.getEffects = getEffects;
 		}
 
-		public string Build(List<Routing> routings, string requestPath)
+		// One goal from each folder that has a route shown for this path. The before events of a goal decide
+		// whether the caller may run it, and an app binds them to folders (a login check on one folder, a
+		// role check on another), so one goal per folder stands for all the goals in it.
+		public List<Goal> GoalsToAuthorize(List<Routing> routings, string requestPath)
+		{
+			var path = NormalizePath(requestPath);
+			var prefix = path == "/" ? "" : path;
+
+			return routings
+				.Where(r => r.Route?.PathRegex?.IsMatch(path) == true || r.Path.StartsWith(prefix + "/", StringComparison.Ordinal))
+				.Select(getGoal)
+				.Where(g => g != null)
+				.Select(g => g!)
+				.GroupBy(g => g.RelativeGoalFolderPath)
+				.Select(g => g.First())
+				.ToList();
+		}
+
+		// Null when the path has routes but the caller may not run any of them.
+		public string? Build(List<Routing> routings, string requestPath, Func<Goal, bool> allowed)
 		{
 			var path = NormalizePath(requestPath);
 			var prefix = path == "/" ? "" : path;
@@ -44,6 +63,17 @@ namespace PLang.Modules.WebserverModule
 				.Where(r => !exact.Contains(r) && r.Path.StartsWith(prefix + "/", StringComparison.Ordinal))
 				.OrderBy(r => r.Path, StringComparer.Ordinal)
 				.ToList();
+
+			bool IsAllowed(Routing routing)
+			{
+				var goal = getGoal(routing);
+				return goal != null && allowed(goal);
+			}
+
+			var existed = exact.Count + children.Count > 0;
+			exact = exact.Where(IsAllowed).ToList();
+			children = children.Where(IsAllowed).ToList();
+			if (existed && exact.Count + children.Count == 0) return null;
 
 			var sb = new StringBuilder();
 			if (exact.Count == 0 && children.Count == 0)

@@ -59,6 +59,7 @@ namespace PLang.Modules.WebserverModule
 
 
 				(var signedMessage, error) = await VerifySignature(requestEngine, context);
+				var routeDocs = false;
 				if (error != null)
 				{
 					(var requestObjectValue2, var parseError) = await ParseRequest(context);
@@ -76,19 +77,8 @@ namespace PLang.Modules.WebserverModule
 						return (false, null, new UnauthorizedError("Route documentation requires a signed request (X-Signature)."));
 					}
 
-					var docs = new RouteDocs(
-						routing => GetGoalBuildDirPath(routing, request).Item1,
-						subGoalPath => prParser.GetGoal(fileSystem.Path.Join(fileSystem.RootDirectory, subGoalPath).AdjustPathToOs()),
-						goal => ReadGoalDescription(goal),
-						goal => new GoalEffects(
-							prPath => prParser.GetGoal(fileSystem.Path.Join(fileSystem.RootDirectory, prPath).AdjustPathToOs()),
-							(fileName, goalFolder) => ReadSqlFile(fileName, goalFolder)).Analyze(goal));
-					var markdown = docs.Build(webserverProperties.Routings, request.Path.Value ?? "/");
+					routeDocs = true;
 
-					httpContext.Response.StatusCode = 200;
-					httpContext.Response.ContentType = "text/markdown; charset=utf-8";
-					await httpContext.Response.WriteAsync(markdown);
-					return (false, signedMessage.Identity, null);
 				}
 
 				// this should be below
@@ -102,6 +92,12 @@ namespace PLang.Modules.WebserverModule
 				{
 					error = await RunOnRequest(requestEngine, webserverProperties.OnRequestBegin, context);
 					if (error != null) return (false, signedMessage?.Identity, error);
+				}
+
+				if (routeDocs)
+				{
+					error = await WriteRouteDocs(requestEngine, context, httpContext, request, webserverProperties);
+					return (false, signedMessage?.Identity, error);
 				}
 
 				if (webserverProperties.OnPollStart != null || webserverProperties.OnPollRefresh != null)
@@ -414,6 +410,53 @@ namespace PLang.Modules.WebserverModule
 			}
 
 			return verifiedSignatureResult;
+		}
+
+		// The documentation of a path is shown only to someone who is allowed to run what is under it: the
+		// before goal events of the goals on that path run first (an app's login and role checks are such
+		// events), and when one of them redirects or fails, that answer is the answer.
+		private async Task<IError?> WriteRouteDocs(IEngine requestEngine, PLangContext context, HttpContext httpContext, HttpRequest request, WebserverProperties webserverProperties)
+		{
+			// The same thing ProcessGoal does before a goal runs. An app loads the logged in user there,
+			// and its checks need that user.
+			if (webserverProperties.OnGoalRequestBegin != null)
+			{
+				var beginError = await RunOnRequest(requestEngine, webserverProperties.OnGoalRequestBegin, context);
+				if (beginError != null) return beginError;
+			}
+
+			var docs = new RouteDocs(
+				routing => GetGoalBuildDirPath(routing, request).Item1,
+				subGoalPath => prParser.GetGoal(fileSystem.Path.Join(fileSystem.RootDirectory, subGoalPath).AdjustPathToOs()),
+				goal => ReadGoalDescription(goal),
+				goal => new GoalEffects(
+					prPath => prParser.GetGoal(fileSystem.Path.Join(fileSystem.RootDirectory, prPath).AdjustPathToOs()),
+					(fileName, goalFolder) => ReadSqlFile(fileName, goalFolder)).Analyze(goal));
+
+			var path = request.Path.Value ?? "/";
+			var decisions = new Dictionary<string, bool>();
+			foreach (var goalToCheck in docs.GoalsToAuthorize(webserverProperties.Routings, path))
+			{
+				var (_, eventError) = await requestEngine.GetEventRuntime().RunGoalEvents(PLang.Events.EventType.Before, goalToCheck);
+				if (httpContext.Response.HasStarted) return null;
+
+				var denied = eventError != null || httpContext.Response.StatusCode is >= 300 and < 400;
+				decisions[goalToCheck.RelativeGoalFolderPath] = !denied;
+				if (denied)
+				{
+					httpContext.Response.StatusCode = 200;
+					httpContext.Response.Headers.Remove("Location");
+				}
+			}
+
+			var markdown = docs.Build(webserverProperties.Routings, path,
+				goal => decisions.TryGetValue(goal.RelativeGoalFolderPath, out var allowed) && allowed);
+			if (markdown == null) return new Error("You may not run any of the routes under this path.", Key: "Forbidden", StatusCode: 403);
+
+			httpContext.Response.StatusCode = 200;
+			httpContext.Response.ContentType = "text/markdown; charset=utf-8";
+			await httpContext.Response.WriteAsync(markdown);
+			return null;
 		}
 
 		private string? ReadSqlFile(string fileName, string goalFolder)

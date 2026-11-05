@@ -22,6 +22,7 @@ A GET whose raw target ends in `?` (nothing after it) returns markdown instead o
 * `GET /admin/crm?` goes one level down. `GET /admin/crm/mail/12/handled?` shows one route in full.
 * All registered routes are visible, but only when that path is explored. This keeps each answer small, so the assistant drills down instead of reading everything.
 * It requires a valid signature (see identity). An unsigned request gets 401.
+* A valid signature is not enough. The documentation goes through the same access checks as running the routes. The app's `on goal begin request` hook runs first (that is where an app loads the logged in user), then the `before each goal` events run for one goal from each folder that has routes under the path (apps bind their login and role checks to folders). A route whose folder the caller may not run is left out of the answer, and a path where nothing is allowed answers 403. Tested with an unknown key (403), a registered user without the admin role (403), an admin (sees everything except the folder that needs a higher role, which answers 403) and an unsigned request (401). Limitation: an event bound to one specific goal name, not a folder, is not seen.
 * Opt in was rejected on purpose: every route is discoverable.
 
 Where the text comes from, all read from the build output (`.pr`) at request time, nothing is parsed from goal text:
