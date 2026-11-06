@@ -132,7 +132,7 @@ namespace PLang.Modules.ScheduleModule
 'every day at 7:30am' => '30 7 * * *'
 'at 11:00 on Monday' => '0 11 * * 1'
 'on 5th of every month at 7am' => '0 7 5 * *'.
-goalName is the goal that should be called, it should be prefixed by ! and be whole word with possible slash(/).")]
+goalName is the goal that should be called, a whole word with possible slash(/), written without a prefix.")]
 		public async Task Schedule(string cronCommand, GoalToCallInfo goalName, DateTime? nextRun = null)
 		{
 			await Schedule(goalStep.AbsolutePrFilePath, cronCommand, goalName, nextRun);
