@@ -32,6 +32,8 @@ public sealed record AskMessage(
 	IReadOnlyDictionary<string, object?>? Properties = null,
 	Dictionary<string, object?>? CallbackData = null, 
 	GoalToCallInfo? OnCallback = null,
+	[property: Description("How many minutes the user has to answer before the form expires and the answer is refused, e.g. `timeout 2 hours` => 120. Leave null when the step does not mention a timeout, then the form never expires for the user because the browser renews it every five minutes")]
+	int? TimeoutInMinutes = null,
 	[param: LlmIgnore]
 	Callback? Callback = null)
 	: OutMessage(

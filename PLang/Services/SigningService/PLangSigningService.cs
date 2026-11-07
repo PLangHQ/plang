@@ -206,7 +206,9 @@ namespace PLang.Services.SigningService
 				return (null, new ServiceError($"Signature expired at {expires}", GetType(), SignatureInvalid, StatusCode: 401));
 			}
 
-			if (clientSignedMessage.Created < SystemTime.OffsetUtcNow().AddMinutes(-5))
+			// A signature that states its own expiry is trusted until then, the five minute window
+			// only applies to signatures without one.
+			if (expires == null && clientSignedMessage.Created < SystemTime.OffsetUtcNow().AddMinutes(-5))
 			{
 				return (null, new ServiceError("The signature is to old.", GetType(), SignatureInvalid, StatusCode: 401));
 			}
@@ -227,7 +229,9 @@ namespace PLang.Services.SigningService
 			{
 				return (null, new ServiceError("Nonce has been used. New request needs to be created", GetType(), SignatureInvalid, StatusCode: 403));
 			}
-			await appCache.Set(cacheKey, true, DateTimeOffset.Now.AddMinutes(5).AddSeconds(5));
+			var nonceKeptUntil = DateTimeOffset.Now.AddMinutes(5).AddSeconds(5);
+			if (expires != null && expires.Value.AddSeconds(5) > nonceKeptUntil) nonceKeptUntil = expires.Value.AddSeconds(5);
+			await appCache.Set(cacheKey, true, nonceKeptUntil);
 			
 			if (clientSignedMessage.Headers != null && clientSignedMessage.Headers.Count > 0)
 			{

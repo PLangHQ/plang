@@ -96,6 +96,14 @@ namespace PLang.Modules.OutputModule
 			return result;
 		}
 
+		// Without a timeout the callback is trusted for five minutes and the browser renews it
+		// on its own when it runs out. A timeout on the step is a hard limit instead: the
+		// callback carries its expiry and an answer after it is refused, not renewed.
+		private static int? CallbackExpiresInSeconds(AskMessage askMessage)
+		{
+			return askMessage.TimeoutInMinutes is > 0 ? askMessage.TimeoutInMinutes.Value * 60 : null;
+		}
+
 		private string GetCallbackPath()
 		{
 			string path = "/";
@@ -125,7 +133,7 @@ namespace PLang.Modules.OutputModule
 			{
 				var path = GetCallbackPath();
 				var url = (HttpContext?.Request.Path.Value ?? "/");
-				var callback = await StepHelper.GetCallback(url, askMessage.CallbackData, memoryStack, goalStep, programFactory);
+				var callback = await StepHelper.GetCallback(url, askMessage.CallbackData, memoryStack, goalStep, programFactory, expiresInSeconds: CallbackExpiresInSeconds(askMessage));
 
 				askMessage = askMessage with { Callback = callback };
 
@@ -222,7 +230,7 @@ namespace PLang.Modules.OutputModule
 
 			if (error != null && error is UserInputError uie2)
 			{
-				var newCallBack = await StepHelper.GetCallback(GetCallbackPath(), askMessage.CallbackData, memoryStack, goalStep, programFactory);
+				var newCallBack = await StepHelper.GetCallback(GetCallbackPath(), askMessage.CallbackData, memoryStack, goalStep, programFactory, expiresInSeconds: CallbackExpiresInSeconds(askMessage));
 				newCallBack.PreviousHash = context.Callback.Hash;
 
 				var errorMessage = uie2.ErrorMessage with { Callback = newCallBack };

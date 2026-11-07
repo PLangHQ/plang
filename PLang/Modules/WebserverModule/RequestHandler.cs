@@ -327,7 +327,7 @@ namespace PLang.Modules.WebserverModule
 			if (string.IsNullOrEmpty(callbackValue)) return (null, goal, null);
 
 			(var callback, var newCallback, var error) = await CallbackHelper.GetCallback(identity, callbackValue);
-			if (newCallback != null) return (null, goal, new StatelessCallbackError(newCallback, statusCode: error?.StatusCode ?? 400));
+			if (newCallback != null) return (null, goal, new StatelessCallbackError(newCallback, message: error?.Message ?? "Callback error", statusCode: error?.StatusCode ?? 400));
 			if (error != null) return (null, goal, error);
 
 			var callbackInfo = callback.CallbackInfo;

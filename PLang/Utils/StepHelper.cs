@@ -55,7 +55,7 @@ namespace PLang.Utils
 		}
 		public record CallbackInfo(string GoalName, string GoalHash, int StepIndex, string? Answer = null);
 		public static async Task<Callback?> GetCallback(string path, Dictionary<string, object?>? callbackData, 
-			Runtime.MemoryStack memoryStack, GoalStep? step, Modules.ProgramFactory programFactory, bool skipNonce = false)
+			Runtime.MemoryStack memoryStack, GoalStep? step, Modules.ProgramFactory programFactory, bool skipNonce = false, int? expiresInSeconds = null)
 		{
 			if (step == null) return null;
 
@@ -131,7 +131,7 @@ namespace PLang.Utils
 					}
 				}
 			}
-			var signed = await programFactory.GetProgram<Modules.IdentityModule.Program>(step).Sign(callBackInfo, skipNonce : skipNonce);
+			var signed = await programFactory.GetProgram<Modules.IdentityModule.Program>(step).Sign(callBackInfo, expiresInSeconds: expiresInSeconds, skipNonce : skipNonce);
 			var callBack = new Callback(path, callbackData, callBackInfo, signed);
 			var hash = HashHelper.Hash(callBack);
 			callBack.Hash = hash;

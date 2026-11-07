@@ -354,6 +354,22 @@ public class Program : BaseProgram, IDisposable
 							context.SystemSink = engine.SystemSink;
 							(poll, identity, error) = await requestHandler.HandleRequestAsync(requestEngine, context, webserverProperties);
 
+							// StatelessCallbackError is IErrorHandled, so the branch below never saw it and an
+							// expired form answer got an empty 200: the answer vanished without a word. It carries
+							// a freshly signed callback, so the user only has to submit again.
+							// A form past its own timeout is refused on purpose, it is not a fault to log.
+							if (error is StatelessCallbackError || error?.Key == "CallbackExpired")
+							{
+								if (!httpContext.Response.HasStarted)
+								{
+									httpContext.Response.StatusCode = error.StatusCode;
+									var encoding = Encoding.GetEncoding(webserverProperties.DefaultResponseProperties.ResponseEncoding);
+									httpContext.Response.ContentType = $"{webserverProperties.DefaultResponseProperties.ContentType}; charset={encoding.BodyName}";
+								}
+								await context.UserSink.SendAsync(new ErrorMessage(error.Message, error.Key, "error", error.StatusCode, Callback: (error as StatelessCallbackError)?.Callback));
+								return;
+							}
+
 							if (error != null && error is not IErrorHandled)
 							{
 								if (!httpContext.Response.HasStarted)
@@ -362,12 +378,6 @@ public class Program : BaseProgram, IDisposable
 
 									var encoding = Encoding.GetEncoding(webserverProperties.DefaultResponseProperties.ResponseEncoding);
 									httpContext.Response.ContentType = $"{webserverProperties.DefaultResponseProperties.ContentType}; charset={encoding.BodyName}";
-								}
-
-								if (error is StatelessCallbackError stc)
-								{
-									await context.UserSink.SendAsync(new ErrorMessage(error.Message, error.Key, "error", error.StatusCode, Callback: stc.Callback));
-									return;
 								}
 								if (error is UserInputError uie)
 								{
