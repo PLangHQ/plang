@@ -331,6 +331,8 @@ public class Program : BaseProgram
 		var properties = new Properties();
 		properties.Add(new ObjectValue("Confidence", answer.Confidence));
 		properties.Add(new ObjectValue("Probabilities", answer.Probabilities));
+		properties.Add(new ObjectValue("InputTokens", answer.InputTokens));
+		properties.Add(new ObjectValue("OutputTokens", answer.OutputTokens));
 		return (answer.Choice, null, properties);
 	}
 

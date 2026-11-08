@@ -235,6 +235,9 @@ namespace PLang.Services.Typesafe
 					answers[question.Key] = new DeciderAnswer(choice, confidence, probabilities);
 					logger.LogDebug("Typesafe chose {Choice} for {Question} with confidence {Confidence}", choice, question.Key, confidence);
 				}
+				var usage = JObject.Parse(responseBody)["usage"];
+				var first = answers.Keys.FirstOrDefault();
+				if (first != null && usage != null) answers[first] = answers[first] with { InputTokens = usage["input_tokens"]?.Value<long>() ?? 0, OutputTokens = usage["output_tokens"]?.Value<long>() ?? 0 };
 				return (answers, null);
 			}
 			catch (Exception ex)

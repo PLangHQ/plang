@@ -9,5 +9,5 @@ namespace PLang.Building.Model
 
 	// One answer: the option key that was chosen, how sure the engine is, and the spread over
 	// every option, which the builder logs when a choice falls under the threshold.
-	public record DeciderAnswer(string Choice, double Confidence, Dictionary<string, double> Probabilities);
+	public record DeciderAnswer(string Choice, double Confidence, Dictionary<string, double> Probabilities, long InputTokens = 0, long OutputTokens = 0);
 }
