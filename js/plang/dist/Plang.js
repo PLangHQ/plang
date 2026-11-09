@@ -1,6 +1,7 @@
 import { HistoryNavigator } from "./navigation/HistoryNavigator.js";
 import { OverrideNavigator } from "./navigation/OverrideNavigator.js";
 import { PollRequest } from "./net/PollRequest.js";
+import { registerNavigationSigner } from "./net/NavigationSigner.js";
 import { ECDSASigner } from "./crypto/ECDSASigner.js";
 import { t as defaultT } from "./i18n/index.js";
 import { ResponseDispatcher } from "./net/ResponseDispatcher.js";
@@ -102,6 +103,7 @@ export class Plang {
         catch (e) {
             this.reportCaught("keyStoreTier", e);
         }
+        void registerNavigationSigner(this.keyStoreTier, (type, err) => this.reportCaught(type, err));
         // plang:ready used to be dispatched at the end of init(), one line after the poll was
         // constructed and while its first request was still in flight. It therefore promised
         // nothing about being able to reach the server, yet every listener calls callGoal or

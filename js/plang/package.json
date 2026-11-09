@@ -1,6 +1,6 @@
 {
   "name": "plang-client",
   "private": true,
-  "scripts": { "build": "tsc" },
+  "scripts": { "build": "tsc && tsc -p tsconfig.sw.json" },
   "devDependencies": { "typescript": "^5.6.0" }
 }
