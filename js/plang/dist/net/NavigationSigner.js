@@ -1,5 +1,14 @@
 const SCRIPT = "/plang-sw.js";
 const UPDATE_EVERY_MS = 5 * 60_000;
+let updatePending = false;
+/**
+ * True once a newer version of the app has taken over this tab. The scripts and styles in the tab
+ * are the old ones, so the next link the visitor follows is a full page load, which brings in the
+ * new ones, instead of a swap inside the old page. The visitor is leaving the page anyway.
+ */
+export function updateIsPending() {
+    return updatePending;
+}
 /**
  * Registers the worker that signs page navigations (src/sw/plang-sw.ts).
  *
@@ -31,16 +40,19 @@ export async function registerNavigationSigner(tier, report) {
                 hadController = true;
                 return;
             }
+            updatePending = true;
             reloadWhenUnnoticed();
         });
         const registration = await navigator.serviceWorker.register(SCRIPT, { scope: "/" });
         let lastCheck = Date.now();
-        document.addEventListener("visibilitychange", () => {
+        const check = () => {
             if (document.visibilityState !== "visible" || Date.now() - lastCheck < UPDATE_EVERY_MS)
                 return;
             lastCheck = Date.now();
             registration.update().catch(() => { });
-        });
+        };
+        document.addEventListener("visibilitychange", check);
+        setInterval(check, UPDATE_EVERY_MS);
     }
     catch (e) {
         report("navigationSigner", e);

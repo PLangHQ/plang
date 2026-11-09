@@ -1,3 +1,4 @@
+import { updateIsPending } from "../net/NavigationSigner.js";
 export class OverrideNavigator {
     constructor(plang) {
         this.plang = plang;
@@ -91,6 +92,8 @@ export class OverrideNavigator {
         if (!href || href === "#" || href.startsWith('#') || href.startsWith("javascript:"))
             return true;
         if (a.target)
+            return true;
+        if (updateIsPending())
             return true;
         if (a.hasAttribute("download"))
             return true;

@@ -39,10 +39,14 @@ the right person at the address that was asked for, with no shell, redirect or w
 
 ### Updating a tab that was left open
 
-The browser checks `plang-sw.js` for a change. A changed file takes over open tabs at once, and the
-tab then reloads, so it gets the new scripts and styles instead of running old ones against the new
-server. The reload waits until the tab is in the background, and is skipped when the visitor has
-typed something into the page that is still there.
+The client asks the browser to check `plang-sw.js` for a change every five minutes while the tab is
+visible, and when a hidden tab becomes visible. A changed file takes over open tabs at once, and the
+tab then gets the new scripts and styles instead of running old ones against the new server:
+
+- the next link the visitor follows is a full page load instead of a swap inside the old page, so
+  the new version arrives when they move on, with nothing lost;
+- a tab in the background is reloaded, unless the visitor has typed something into the page that is
+  still there.
 
 An app makes every deploy visible to this by changing its copy of `plang-sw.js`, for example by
 appending the commit as a comment: `echo "// build $(git rev-parse HEAD)" >> plang-sw.js`.
