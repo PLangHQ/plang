@@ -1,3 +1,4 @@
+import { updateIsPending } from "../net/NavigationSigner.js";
 import type { HandleCtx } from "../net/ResponseDispatcher";
 import type { Plang } from "../Plang";
 import type { BaseMessage } from "../types/messages";
@@ -137,6 +138,7 @@ export class OverrideNavigator {
         const href = a.getAttribute("href") ?? "";
         if (!href || href === "#" || href.startsWith('#') || href.startsWith("javascript:")) return true;
         if (a.target) return true;
+        if (updateIsPending()) return true;
         if (a.hasAttribute("download")) return true;
         const rel = a.getAttribute("rel") ?? "";
         if (rel == 'external') return true;
