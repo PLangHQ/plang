@@ -183,6 +183,7 @@ goalName is the goal that should be called, a whole word with possible slash(/),
 				pseudoRuntime = containerForScheduler.GetInstance<IPseudoRuntime>();
 				fileSystem = containerForScheduler.GetInstance<IPLangFileSystem>();
 				engine.Name = "Scheduler";
+				engine.Environment = this.engine.Environment;
 				Start(settings, engine, prParser, logger, pseudoRuntime, fileSystem);
 
 
