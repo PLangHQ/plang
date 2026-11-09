@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    // Emit syntax old enough for the oldest Safari we serve. lib stays ES2022, those APIs are older than the syntax.
+    "target": "ES2021",
+    "useDefineForClassFields": false,
+    "module": "ESNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "rootDir": "src",
+    "outDir": "dist",
+    "strict": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "noEmitOnError": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "bundler",
+    "allowArbitraryExtensions": true,
+    "composite": true,
+  },
+  "include": ["src"]
+}
