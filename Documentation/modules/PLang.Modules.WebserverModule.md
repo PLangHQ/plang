@@ -116,6 +116,20 @@ WebserverWithSignedRequests
 - write out 'Webserver started with signed request verification'
 ```
 
+## Request Metrics
+
+The webserver counts every request it answers (goal routes, signed plang requests, static files, 404/415 and errors) in memory: one bucket per minute for the last 24 hours, with status classes, max and a latency histogram, and one histogram per route template per hour (at most 200 templates, the rest go to `other`). Nothing about the user is kept: no ip, path, query or identity. Static files are the route `static`, 404 and 415 are `not_found`, and `?plang.poll=1` connections are only counted under `kinds.poll`, not in the percentiles. Percentiles come from the histogram and are accurate to about 12%.
+
+```plang
+RequestMetrics
+- get request metrics from the web server, since=%since%, write to %metrics%
+- write out %metrics%
+```
+
+`since` is optional (ISO time, default the last 60 minutes, at most 24 hours back); a value that is not a date gives status 400. The result has `minutes` (one row per minute that had requests, with `count`, `s2xx` to `s5xx`, `p50_ms`, `p95_ms`, `p99_ms`, `max_ms`), `routes` (the 20 busiest templates over the window, hour granularity) and `kinds` (`goal`, `plang`, `static`, `not_found`, `poll`).
+
+Do not name the variable `%now%` in a goal that builds the answer: it collides with the built-in `%Now%`.
+
 Note: When creating examples, ensure that the natural language used is clear and maps correctly to the corresponding method in the `WebserverModule` class. Variables are used to capture return values and can be referenced in subsequent steps for demonstration purposes.
 
 

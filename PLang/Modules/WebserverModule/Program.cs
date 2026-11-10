@@ -87,6 +87,21 @@ public class Program : BaseProgram, IDisposable
 
 	}
 
+	public async Task<(Dictionary<string, object?>?, IError?)> GetRequestMetrics(string? since = null, int windowMinutes = 60)
+	{
+		var now = DateTime.UtcNow;
+		var from = now.AddMinutes(-1 * Math.Clamp(windowMinutes, 1, RequestMetrics.Minutes));
+		if (!string.IsNullOrWhiteSpace(since))
+		{
+			if (!DateTime.TryParse(since, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var parsed))
+			{
+				return (null, new ProgramError($"since '{since}' is not a date", goalStep, function, StatusCode: 400));
+			}
+			from = parsed < now.AddMinutes(-1 * RequestMetrics.Minutes) ? now.AddMinutes(-1 * RequestMetrics.Minutes) : parsed;
+		}
+		return (RequestMetrics.Snapshot(from, now), null);
+	}
+
 	public async Task<(WebserverProperties?, IError?)> ShutdownWebserver(string webserverName)
 	{
 		var webserverInfo = listeners.FirstOrDefault(p => p.Name == webserverName);
@@ -448,6 +463,20 @@ public class Program : BaseProgram, IDisposable
 						}
 						finally
 						{
+							try
+							{
+								var status = httpContext.Response.StatusCode;
+								var kind = httpContext.Items["!metrics.kind"] as string;
+								if (poll) kind = RequestMetrics.KindPoll;
+								else if (kind == null && status >= 400 && status != 404 && status != 415) kind = RequestMetrics.KindGoal;
+								else if (kind == null || kind == "general") kind = (status == 404 || status == 415) ? RequestMetrics.KindNotFound : RequestMetrics.KindStatic;
+								var route = kind == RequestMetrics.KindNotFound ? "not_found" : kind == RequestMetrics.KindStatic ? "static" : httpContext.Items["!metrics.route"] as string;
+								RequestMetrics.Record(kind, route, status, stopwatch.Elapsed.TotalMilliseconds, DateTime.UtcNow);
+							}
+							catch
+							{
+							}
+
 							if (requestEngine != null)
 							{
 								engine.Return(requestEngine, true);

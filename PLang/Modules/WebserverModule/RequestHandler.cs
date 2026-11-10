@@ -153,6 +153,7 @@ namespace PLang.Modules.WebserverModule
 				var isPlangRequest = acceptedTypes?.StartsWith("application/plang") ?? false;
 				if (isPlangRequest)
 				{
+					httpContext.Items["!metrics.kind"] = RequestMetrics.KindPlang;
 					Console.WriteLine($"{DateTime.Now} - plang: {ip} | {httpContext.Request.Path} | {httpContext.Request.Headers.UserAgent}");
 
 					error = await ProcessPlangRequest(context, webserverInfo, webserverInfo.Routings, requestEngine);
@@ -164,8 +165,11 @@ namespace PLang.Modules.WebserverModule
 
 				if (goal == null)
 				{
+					httpContext.Items["!metrics.kind"] = "general";
 					return await ProcessGeneralRequest(httpContext);
 				}
+				httpContext.Items["!metrics.kind"] = RequestMetrics.KindGoal;
+				httpContext.Items["!metrics.route"] = routing?.Path;
 
 				if (routing == null)
 				{
@@ -352,6 +356,7 @@ namespace PLang.Modules.WebserverModule
 			(var goal, var routing, var slugVariables, var error) = GetGoalByRouting(routings, httpContext.Request);
 
 			if (error != null) return error;
+			httpContext.Items["!metrics.route"] = routing?.Path;
 			if (routing == null) return new NotFoundError($"Routing not found - {httpContext.Request.Path}({httpContext.Request.Method}) - {httpContext.Request.Headers.UserAgent}");
 			if (goal == null) return new NotFoundError($"Goal not found - {httpContext.Request.Path}({httpContext.Request.Method}) - {httpContext.Request.Headers.UserAgent}");
 
