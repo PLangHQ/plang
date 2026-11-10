@@ -2,6 +2,7 @@
 
 using Microsoft.Extensions.Logging;
 using NBitcoin;
+using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Errors;
 using PLang.Errors.Runtime;
@@ -47,6 +48,7 @@ namespace PLang.Modules.TerminalModule
 		[Description("Run an executable and return its output. Parameter strings should not be escaped.")]
 		[Example("terminal git --status, write to %output%", @"appExecutableName=git, parameters=""--status"", ReturnValues = %output%")]
 		[Example("terminal /usr/bin/du, parameters: [%dir%] working dir: \"/srv\", hide terminal, write to %usage%", @"appExecutableName=""/usr/bin/du"", parameters=""%dir%"", pathToWorkingDirInTerminal=""/srv"", hideTerminal=true, ReturnValues = %usage%")]
+		[Example("terminal df, parameters: [\"-P\"], parse with \"/parsers/df.json\", write to %disks%", @"appExecutableName=""df"", parameters=""-P"", parseWith=""/parsers/df.json"", ReturnValues = %disks%")]
 		public async Task<(object?, IError?, Properties?)> RunTerminal(
 			[Description("The program to run, e.g. git in `terminal git --status`, or a full path such as /usr/bin/ffmpeg")] string appExecutableName,
 			[Description("The arguments handed to the program, one entry each, in the order the step writes them")] List<string>? parameters = null,
@@ -60,9 +62,28 @@ namespace PLang.Modules.TerminalModule
 			// keeps binding them.
 			[LlmIgnore] [HandlesVariable] string? variableNameForDeltaOnStandardStream = null,
 			[LlmIgnore] [HandlesVariable] string? variableNameForDeltaOnErrorStream = null,
-			[Description("true when the step says the terminal window should not be shown, e.g. `hide terminal`. false otherwise")] bool hideTerminal = false
+			[Description("true when the step says the terminal window should not be shown, e.g. `hide terminal`. false otherwise")] bool hideTerminal = false,
+			[Description("Path to a JSON template file that turns the program's text output into objects, stated by the step as e.g. `parse with \"/parsers/df.json\"`. Null when the step does not say parse with")] string? parseWith = null
 			)
 		{
+			TerminalParser? parser = null;
+			if (!string.IsNullOrWhiteSpace(parseWith))
+			{
+				var templatePath = GetPath(parseWith);
+				if (!fileSystem.File.Exists(templatePath))
+				{
+					return (null, new ProgramError($"Parse template not found: {parseWith}. Looked for {templatePath}", goalStep, function), null);
+				}
+
+				string? parserError;
+				(parser, parserError) = TerminalParser.Create(fileSystem.File.ReadAllText(templatePath), parseWith);
+				if (parser == null)
+				{
+					return (null, new ProgramError(parserError!, goalStep, function), null);
+				}
+			}
+			var streamSession = parser?.NewSession();
+
 			if (string.IsNullOrWhiteSpace(pathToWorkingDirInTerminal))
 			{
 				if (Goal != null && Goal.IsSystem && context.CallingStep != null)
@@ -178,7 +199,11 @@ namespace PLang.Modules.TerminalModule
 
 				if (!string.IsNullOrEmpty(variableNameForDeltaOnStandardStream))
 				{
-					memoryStack.Put(variableNameForDeltaOnStandardStream, e.Data, goalStep: goalStep);
+					object? delta = parser == null ? e.Data : parser.ParseStreamLine(e.Data, streamSession!);
+					if (delta != null)
+					{
+						memoryStack.Put(variableNameForDeltaOnStandardStream, delta, goalStep: goalStep);
+					}
 				}
 
 				dataOutput.Append(e.Data + Environment.NewLine);
@@ -243,22 +268,31 @@ namespace PLang.Modules.TerminalModule
 			}
 			logger.LogTrace("Done with TerminalModule");
 
+			if (parser != null && goalStep.WaitForExecution)
+			{
+				var parsed = parser.ParseAll(dataOutput.ToString());
+				properties.Add(new ObjectValue("Unmatched", new JArray(parsed.Unmatched)));
+				return (parsed.Value, error, properties);
+			}
+
 			return (dataOutput.ToString(), error, properties);
 		}
 
 		[Description("Run an executable that streams its output while it runs, for a step that names a variable to receive each line as it arrives. A plain `write to %variable%` is the finished output and belongs to RunTerminal, not here: this method is only for a step that names a separate variable for the running output, e.g. `terminal ffmpeg ..., %delta%`.")]
 		[Example("terminal /usr/bin/rsync -av src dst, %line%, %problem%, write to %summary%", @"appExecutableName=""/usr/bin/rsync"", parameters=""-av"",""src"",""dst"", variableNameForDeltaOnStandardStream=""%line%"", variableNameForDeltaOnErrorStream=""%problem%"", ReturnValues = %summary%")]
+		[Example("terminal ffmpeg -i in.mp4 out.mp4, %line%, parse with \"/parsers/ffmpeg.json\", write to %info%", @"appExecutableName=""ffmpeg"", parameters=""-i"",""in.mp4"",""out.mp4"", variableNameForDeltaOnStandardStream=""%line%"", parseWith=""/parsers/ffmpeg.json"", ReturnValues = %info%")]
 		public async Task<(object?, IError?, Properties?)> RunTerminalStreaming(
 			[Description("The program to run, e.g. ffmpeg, or a full path such as /usr/bin/ffmpeg")] string appExecutableName,
 			[Description("The variable that receives standard output line by line as it arrives")] [HandlesVariable] string variableNameForDeltaOnStandardStream,
 			[Description("The arguments handed to the program, one entry each, in the order the step writes them")] List<string>? parameters = null,
 			[Description("The directory the program runs in, stated by the step as e.g. `working dir: \"/srv/app\"`")] string? pathToWorkingDirInTerminal = null,
 			[Description("The variable that receives the error stream line by line, when the step names a second one")] [HandlesVariable] string? variableNameForDeltaOnErrorStream = null,
-			[Description("true when the step says the terminal window should not be shown, e.g. `hide terminal`. false otherwise")] bool hideTerminal = false
+			[Description("true when the step says the terminal window should not be shown, e.g. `hide terminal`. false otherwise")] bool hideTerminal = false,
+			[Description("Path to a JSON template file that turns each output line into an object for the streaming variable, and the whole output into the return value, stated by the step as e.g. `parse with \"/parsers/ffmpeg.json\"`. Null when the step does not say parse with")] string? parseWith = null
 			)
 		{
 			return await RunTerminal(appExecutableName, parameters, pathToWorkingDirInTerminal,
-				variableNameForDeltaOnStandardStream, variableNameForDeltaOnErrorStream, hideTerminal);
+				variableNameForDeltaOnStandardStream, variableNameForDeltaOnErrorStream, hideTerminal, parseWith);
 		}
 
 	}

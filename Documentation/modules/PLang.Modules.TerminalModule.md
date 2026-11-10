@@ -139,6 +139,101 @@ Note: The examples above are based on the provided plang language rules and the 
 
 For a full list of examples, visit [PLang Terminal Examples](https://github.com/PLangHQ/plang/tree/main/Tests/Terminal).
 
+## Parsing the output with a template (`parse with`)
+A program writes text. `parse with "<template file>"` turns that text into plang objects, so the goal does not have to Trim and Split. The template is a JSON file, its path is app relative like other plang file paths. A program that already prints JSON (`--json`) needs no template: plang resolves a JSON string on key paths.
+
+```plang
+- run 'df', parameters: ['-P'], parse with '/parsers/df.json', write to %disks%
+- write out '%disks[0].mount% uses %disks[0].capacity%'
+```
+
+Both `RunTerminal` and `RunTerminalStreaming` take it. A missing file, invalid JSON or an invalid regex stops the step with an error before the program is started.
+
+### Template format
+
+```json
+{
+  "rules": [ ],
+  "skip": 0,
+  "trim": true,
+  "types": "auto",
+  "ignore": "<regex>"
+}
+```
+
+| Key | Meaning |
+|---|---|
+| `rules` | Optional list of rules. A template without `rules` is itself one rule (it carries `mode` and the mode options directly). |
+| `skip` | The first N lines are dropped (a header). Blank lines never reach the parser, so they are not counted. |
+| `trim` | Default `true`: lines are trimmed and empty lines dropped. |
+| `types` | `"auto"` (default): a value that is wholly a number or `true`/`false` becomes a number or bool, `53%` and `00:01:30` stay text, and a value that was quoted and unquoted by `unquote` stays text. `"string"`: everything is text. |
+| `ignore` | Regex. Matching lines are dropped silently, they are not counted as unmatched. |
+
+A rule is `{ "as": "name", "when": "<regex>", "mode": "...", "once": false, ... }`.
+
+- `as`: the name of the result (required when the template has `rules`, names must be unique).
+- `when`: optional regex. The rule only takes lines it matches. Every line is tried against the rules in order, the first rule whose `when` matches (no `when` = always) takes the line. If that rule cannot parse the line, the line is unmatched, the next rule is not tried. So give each rule of a multi rule template a `when`.
+- `once`: `true` merges all lines of the rule into one object (later keys win), otherwise the rule gives a list of objects.
+
+Modes:
+
+- `columns`: `"separator"` is `"whitespace"` (default) or a single character. `"columns"` maps a name to a 1-based index, `{"name": 1, "size": 3}`. `"lastColumnRest": true` makes the last named column take the rest of the line, including spaces. A line with fewer columns than the highest index is unmatched.
+- `match`: `"pattern"` is a .NET regex with named groups. A matching line becomes an object keyed by the group names (a group that did not take part is left out). A non matching line is unmatched.
+- `keyvalue`: `"separator"` (default `=`), `"pairsOn"` is `"line"` (default, one pair per line, split on the first separator) or `"whitespace"` (several pairs on a line, the value of a key runs to the next key, e.g. ffmpeg `frame=  100 fps= 25`). `"trimValues"` (default `true`), `"unquote": true` strips surrounding double quotes, `"blockEnd": "<key>"` closes the current object when that key appears and starts a new one, which gives a list of objects (ffmpeg `-progress pipe:1`).
+
+### Result shape
+
+| Template | Result |
+|---|---|
+| no `rules`, `columns` or `match` | a list of objects |
+| no `rules`, `keyvalue` without `blockEnd` | one object |
+| no `rules`, `keyvalue` with `blockEnd` | a list of objects |
+| `rules` | an object keyed by each rule's `as`: one object for a `once` rule, otherwise a list of objects |
+
+Every parsed object carries `!Raw`, the original line (for a `once` object or a `blockEnd` block, the joined lines of that object). Read it with `%row!Raw%`.
+
+Lines no rule took (and not `ignore`d) are the unmatched lines. They are reachable as `%result!Unmatched%`, a list of strings, for both result shapes. When the result is a list, `!Unmatched` is a property of the variable and is always there (possibly empty). When the result is one object it is a `!Unmatched` member of that object, present only when there are unmatched lines.
+
+Only standard output is parsed. Text on standard error still makes the step return an error, as without `parse with`.
+
+### Streaming
+With `RunTerminalStreaming` (a step that names a variable for the running output) the template applies per line. The variable receives the parsed object of that line, with `!Raw`, and `!Rule` (the rule's `as`) when the template has `rules`. A line no rule took is put as the plain text line. Skipped and ignored lines are not put. `once` and `blockEnd` only apply to the final result, in streaming each line is its own object. The value returned by the step (`write to`) is the parse of the whole output, as above. The streaming goal can use `%line.frame%`:
+
+```plang
+Encode
+- on change %line%, call goal Progress
+- terminal ffmpeg, parameters: ['-i', 'in.mp4', 'out.mp4'], %line%, parse with '/parsers/ffmpeg.json', write to %info%
+
+Progress
+- write out 'frame %line.frame%'
+```
+
+### Example 1: `df -P` (columns)
+`/parsers/df.json`
+```json
+{
+  "mode": "columns",
+  "skip": 1,
+  "lastColumnRest": true,
+  "columns": {"filesystem": 1, "blocks": 2, "used": 3, "available": 4, "capacity": 5, "mount": 6}
+}
+```
+gives `[ {"filesystem": "overlay", "blocks": 1055762868, "used": 108793816, "available": 893265580, "capacity": "11%", "mount": "/", "!Raw": "..."}, ... ]`.
+
+### Example 2: ffmpeg (rules)
+`/parsers/ffmpeg.json`
+```json
+{
+  "rules": [
+    {"as": "input", "when": "^Input #", "mode": "match", "once": true, "pattern": "from '(?<file>[^']+)'"},
+    {"as": "duration", "when": "^Duration:", "mode": "match", "once": true, "pattern": "^Duration: (?<duration>[\\d:.]+), start: (?<start>[\\d.]+), bitrate: (?<bitrate>\\d+) kb/s"},
+    {"as": "streams", "when": "^Stream #", "mode": "match", "pattern": "^Stream #(?<id>[\\d:]+): (?<type>\\w+): (?<codec>[^,]+)"},
+    {"as": "progress", "when": "^frame=", "mode": "keyvalue", "separator": "=", "pairsOn": "whitespace"}
+  ]
+}
+```
+gives `{ "input": {"file": "in.mp4", ...}, "duration": {"duration": "00:01:30.50", "bitrate": 1200, ...}, "streams": [ ... ], "progress": [ {"frame": 100, "fps": 25, "q": 28.0, "size": "256kB", ...}, ... ] }`, so `%info.duration.duration%` and `%info.progress.Count%` work. Note that ffmpeg writes its normal output to standard error, which makes the step return an error today.
+
 ## Step Options
 When writing steps in your plang script, you have several options to enhance functionality and handle different scenarios:
 
