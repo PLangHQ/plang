@@ -194,7 +194,27 @@ Every parsed object carries `!Raw`, the original line (for a `once` object or a 
 
 Lines no rule took (and not `ignore`d) are the unmatched lines. They are reachable as `%result!Unmatched%`, a list of strings, for both result shapes. When the result is a list, `!Unmatched` is a property of the variable and is always there (possibly empty). When the result is one object it is a `!Unmatched` member of that object, present only when there are unmatched lines.
 
-Only standard output is parsed. Text on standard error still makes the step return an error, as without `parse with`.
+### Standard error and exit codes
+
+Without `parse with` nothing is checked beyond the old rule: any text on standard error makes the step return an error, and the exit code is ignored. With `parse with` the template says how the program behaves, through two top level options:
+
+```json
+{
+  "stderr": "output",
+  "okExitCodes": [0]
+}
+```
+
+| Key | Meaning |
+|---|---|
+| `stderr` | `"error"` (default): any text on standard error is an error, exactly as without a template. A non ok exit code is also an error, even with empty standard error. `"output"`: standard error lines are ordinary output lines, they go through the same rules, columns and match as standard output, and stderr text alone never makes an error. `"ignore"`: standard error lines are dropped. |
+| `okExitCodes` | List of whole numbers, default `[0]`. An exit code outside the list is an error. |
+
+With `"output"` and `"ignore"` the step is an error only when the exit code is not in `okExitCodes`. The error message holds the command, the exit code and the last 5 lines of standard error, so the failure can be diagnosed. A value other than `"error"`, `"output"` or `"ignore"` for `stderr`, or an `okExitCodes` that is not a non empty list of whole numbers, stops the step before the program is started, like the other template errors.
+
+With `"output"` the two streams are read on separate threads and share one buffer under a lock, so the order between a standard error line and a standard output line is the order they arrive, not necessarily the order the program wrote them (the order within each stream is always kept). In streaming mode the standard error lines are put to the variable that receives standard output, as parsed objects with `!Raw` and `!Rule`, not to the error variable. With `"ignore"` they are not put anywhere.
+
+The exit code is a property of the result variable, read as `%result!ExitCode%`, for any step that waits for the program (also without `parse with`). It does not exist when the step does not wait for the program (run and forget), and then neither the exit code check nor the parse is done.
 
 ### Streaming
 With `RunTerminalStreaming` (a step that names a variable for the running output) the template applies per line. The variable receives the parsed object of that line, with `!Raw`, and `!Rule` (the rule's `as`) when the template has `rules`. A line no rule took is put as the plain text line. Skipped and ignored lines are not put. `once` and `blockEnd` only apply to the final result, in streaming each line is its own object. The value returned by the step (`write to`) is the parse of the whole output, as above. The streaming goal can use `%line.frame%`:
@@ -232,7 +252,18 @@ gives `[ {"filesystem": "overlay", "blocks": 1055762868, "used": 108793816, "ava
   ]
 }
 ```
-gives `{ "input": {"file": "in.mp4", ...}, "duration": {"duration": "00:01:30.50", "bitrate": 1200, ...}, "streams": [ ... ], "progress": [ {"frame": 100, "fps": 25, "q": 28.0, "size": "256kB", ...}, ... ] }`, so `%info.duration.duration%` and `%info.progress.Count%` work. Note that ffmpeg writes its normal output to standard error, which makes the step return an error today.
+gives `{ "input": {"file": "in.mp4", ...}, "duration": {"duration": "00:01:30.50", "bitrate": 1200, ...}, "streams": [ ... ], "progress": [ {"frame": 100, "fps": 25, "q": 28.0, "size": "256kB", ...}, ... ] }`, so `%info.duration.duration%` and `%info.progress.Count%` work. Note that ffmpeg writes its normal output to standard error, so add `"stderr": "output"` at the top of this template (next to `rules`). Then the step parses ffmpeg's progress and info lines and is an error only when ffmpeg exits with a non zero code:
+```json
+{
+  "stderr": "output",
+  "okExitCodes": [0],
+  "rules": [ ... as above ... ]
+}
+```
+```plang
+- terminal ffmpeg, parameters: ['-i', 'in.mp4', 'out.mp4'], parse with '/parsers/ffmpeg.json', write to %info%
+- write out 'ffmpeg exit code %info!ExitCode%, %info.progress.Count% progress lines'
+```
 
 ## Step Options
 When writing steps in your plang script, you have several options to enhance functionality and handle different scenarios:

@@ -192,21 +192,34 @@ namespace PLang.Modules.TerminalModule
 			StringBuilder? dataOutput = new();
 			StringBuilder? errorOutput = new();
 
-			process.OutputDataReceived += (sender, e) =>
-			{
-				//logger.LogInformation(e.Data);
-				if (string.IsNullOrWhiteSpace(e.Data)) return;
+			var stderrMode = parser?.Stderr ?? TerminalParser.StderrMode.Error;
+			// Both streams are read on their own threads. One lock covers the shared buffer and the parse
+			// session, so with stderr "output" the lines land in the buffer in the order they arrive.
+			// That is arrival order across the two streams, not the order the program wrote them.
+			var gate = new object();
 
+			void TakeOutputLine(string data)
+			{
 				if (!string.IsNullOrEmpty(variableNameForDeltaOnStandardStream))
 				{
-					object? delta = parser == null ? e.Data : parser.ParseStreamLine(e.Data, streamSession!);
+					object? delta = parser == null ? data : parser.ParseStreamLine(data, streamSession!);
 					if (delta != null)
 					{
 						memoryStack.Put(variableNameForDeltaOnStandardStream, delta, goalStep: goalStep);
 					}
 				}
 
-				dataOutput.Append(e.Data + Environment.NewLine);
+				dataOutput.Append(data + Environment.NewLine);
+			}
+
+			process.OutputDataReceived += (sender, e) =>
+			{
+				if (string.IsNullOrWhiteSpace(e.Data)) return;
+
+				lock (gate)
+				{
+					TakeOutputLine(e.Data);
+				}
 
 				logger.LogTrace(e.Data);
 			};
@@ -216,11 +229,19 @@ namespace PLang.Modules.TerminalModule
 			{
 				if (string.IsNullOrWhiteSpace(e.Data)) return;
 
-				if (!string.IsNullOrEmpty(variableNameForDeltaOnErrorStream))
+				lock (gate)
 				{
-					memoryStack.Put(variableNameForDeltaOnErrorStream, e.Data, goalStep: goalStep);
+					errorOutput.Append(e.Data + Environment.NewLine);
+
+					if (stderrMode == TerminalParser.StderrMode.Output)
+					{
+						TakeOutputLine(e.Data);
+					}
+					else if (stderrMode == TerminalParser.StderrMode.Error && !string.IsNullOrEmpty(variableNameForDeltaOnErrorStream))
+					{
+						memoryStack.Put(variableNameForDeltaOnErrorStream, e.Data, goalStep: goalStep);
+					}
 				}
-				errorOutput.Append(e.Data + Environment.NewLine);
 
 				logger.LogTrace(e.Data);
 
@@ -253,7 +274,9 @@ namespace PLang.Modules.TerminalModule
 			if (goalStep.WaitForExecution)
 			{
 				await process.WaitForExitAsync();
-				
+				// WaitForExitAsync can return while the async readers still hold lines. The parameterless
+				// WaitForExit waits until both streams reached end of file.
+				process.WaitForExit();
 			}
 			else
 			{
@@ -261,10 +284,29 @@ namespace PLang.Modules.TerminalModule
 			}
 
 			IError? error = null;
-			if (errorOutput.Length > 0)
+			int? exitCode = goalStep.WaitForExecution ? process.ExitCode : null;
+			if (exitCode != null)
+			{
+				properties.Add(new ObjectValue("ExitCode", exitCode.Value));
+			}
+
+			bool badExitCode = parser != null && exitCode != null && !parser.OkExitCodes.Contains(exitCode.Value);
+			if (parser != null && stderrMode != TerminalParser.StderrMode.Error)
+			{
+				if (badExitCode)
+				{
+					var tail = string.Join("\n", errorOutput.ToString().Split('\n', StringSplitOptions.RemoveEmptyEntries).TakeLast(5).Select(l => l.TrimEnd('\r')));
+					error = new ProgramError($"Command: {string.Join(" ", startInfo.ArgumentList)}\nExit code {exitCode}, expected one of [{string.Join(", ", parser.OkExitCodes)}]\n{tail}", goalStep, function);
+				}
+			}
+			else if (errorOutput.Length > 0)
 			{
 				command = appExecutableName = string.Join(" ", startInfo.ArgumentList);
 				error = new ProgramError($"Command: {command}\n{errorOutput}", goalStep, function);
+			}
+			else if (badExitCode)
+			{
+				error = new ProgramError($"Command: {string.Join(" ", startInfo.ArgumentList)}\nExit code {exitCode}, expected one of [{string.Join(", ", parser!.OkExitCodes)}]", goalStep, function);
 			}
 			logger.LogTrace("Done with TerminalModule");
 

@@ -35,6 +35,12 @@ namespace PLang.Models.ObjectValueExtractors
 					   ?.Value;
 				if (token == null)
 				{
+					// %result!ExitCode% on an object result: a property of the variable (e.g. the terminal's ExitCode), as it is on a list result
+					if (segment.Type == SegmentType.Property)
+					{
+						var propertyValue = parent.Properties.FirstOrDefault(p => p.Name.Equals(segment.Value, StringComparison.OrdinalIgnoreCase));
+						if (propertyValue != null) return propertyValue;
+					}
 					return new ObjectValue(segment.Value, null, Initiated: false, parent: parent, properties: parent.Properties);
 				}
 

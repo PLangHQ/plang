@@ -66,8 +66,37 @@ namespace PLang.Modules.TerminalModule
 		private readonly bool autoTypes;
 		private readonly Regex? ignore;
 
+		/// <summary>How the template wants standard error treated: "error" (default), "output" or "ignore".</summary>
+		public enum StderrMode { Error, Output, Ignore }
+
+		public StderrMode Stderr { get; } = StderrMode.Error;
+		public IReadOnlyList<int> OkExitCodes { get; } = new[] { 0 };
+
 		private TerminalParser(JObject root)
 		{
+			var stderrText = Str(root, "stderr", "template");
+			if (stderrText != null)
+			{
+				if (stderrText.Equals("error", StringComparison.OrdinalIgnoreCase)) Stderr = StderrMode.Error;
+				else if (stderrText.Equals("output", StringComparison.OrdinalIgnoreCase)) Stderr = StderrMode.Output;
+				else if (stderrText.Equals("ignore", StringComparison.OrdinalIgnoreCase)) Stderr = StderrMode.Ignore;
+				else throw new TemplateException($"template: \"stderr\" must be \"error\", \"output\" or \"ignore\", not \"{stderrText}\"");
+			}
+
+			var okToken = root["okExitCodes"];
+			if (okToken != null && okToken.Type != JTokenType.Null)
+			{
+				if (okToken is not JArray okArray || okArray.Count == 0 || okArray.Any(t => t.Type != JTokenType.Integer))
+					throw new TemplateException("template: \"okExitCodes\" must be a non-empty list of whole numbers, e.g. [0, 1]");
+				var codes = new List<int>();
+				foreach (var t in okArray)
+				{
+					try { codes.Add(t.Value<int>()); }
+					catch (OverflowException) { throw new TemplateException("template: \"okExitCodes\" holds a number that is too large"); }
+				}
+				OkExitCodes = codes;
+			}
+
 			skip = Int(root, "skip", 0, "template");
 			trim = Bool(root, "trim", true, "template");
 			var types = Str(root, "types", "template") ?? "auto";
