@@ -690,6 +690,16 @@ namespace PLang.Modules.WebserverModule
 
 			requestedFile = requestedFile.AdjustPathToOs();
 
+			// .db, .data, .build and .git sit inside the app folder, and a .json, .txt or .png in them was
+			// served to anyone who knew the path: chats, drafts, screenshots and the machine snapshot of the
+			// server watcher. Any dot segment is closed, .well-known is the one the web itself asks for.
+			if (requestedFile.Split('/', '\\').Any(s => s.StartsWith('.') && s != ".well-known"))
+			{
+				httpContext.Response.StatusCode = 404;
+				await httpContext.Response.CompleteAsync();
+				return null;
+			}
+
 			var filePath = fileSystem.Path.Join(fileSystem.GoalsPath!, requestedFile);
 			var fileExtension = fileSystem.Path.GetExtension(filePath);
 			var mimeType = GetMimeType(fileExtension);
