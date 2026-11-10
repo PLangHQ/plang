@@ -121,7 +121,10 @@ namespace PLang.Modules.TerminalModule
 				}
 			}
 
-			startInfo.StandardInputEncoding = Encoding.UTF8;
+			// Encoding.UTF8 carries a preamble and Process.Start writes it to the redirected stdin. A
+			// child that finishes first, any `sh -c` of a few commands, closed the pipe and Start itself
+			// threw "Broken pipe", which the try/catch around Close below cannot reach. No preamble, no write.
+			startInfo.StandardInputEncoding = new UTF8Encoding(false);
 			startInfo.StandardOutputEncoding = Encoding.UTF8;
 			startInfo.StandardErrorEncoding = Encoding.UTF8;
 
