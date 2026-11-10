@@ -46,7 +46,20 @@ namespace PLang.Models.ObjectValueExtractors
 			List<object> paramValues = new List<object>();
 			splitParams.ForEach(p => paramValues.Add(p));
 
+			var listParamValues = new List<object>(paramValues);
 			(var methods, obj) = GetMethodsOnType(obj, methodName, paramValues);
+
+			if (list != null && !methods.Any())
+			{
+				(var listMethods, _) = GetMethodsOnType(list, methodName, listParamValues);
+				if (listMethods.Any())
+				{
+					methods = listMethods;
+					obj = list;
+					paramValues = listParamValues;
+					list = null;
+				}
+			}
 
 			AppContext.TryGetSwitch("Builder", out bool isBuilder);
 			if (!methods.Any() && isBuilder)
@@ -60,10 +73,16 @@ namespace PLang.Models.ObjectValueExtractors
 				(methods, obj) = GetMethodsOnDifferentType(obj, methodName, paramValues);
 			}
 
-			foreach (var method in methods)
+			foreach (var candidate in methods)
 			{
 				try
 				{
+					var method = candidate;
+					if (method.IsGenericMethodDefinition)
+					{
+						method = CloseGenericMethod(method, paramValues.Count > 0 ? paramValues[0] : null);
+						if (method == null) continue;
+					}
 					var convertedParams = GetParameters(memoryStack, paramValues, method);
 					if (convertedParams == null) continue;
 					if (list != null)
@@ -105,6 +124,27 @@ namespace PLang.Models.ObjectValueExtractors
 
 			throw new NotImplementedException($"Could not find method '{methodDescription}' on %{parent.Name}.{methodDescription}%");
 
+		}
+
+		private static MethodInfo? CloseGenericMethod(MethodInfo method, object? source)
+		{
+			if (source == null || method.GetGenericArguments().Length != 1) return null;
+
+			var sourceType = source.GetType();
+			var elementType = sourceType.GetInterfaces().Append(sourceType)
+				.Where(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+				.Select(t => t.GetGenericArguments()[0])
+				.FirstOrDefault();
+			if (elementType == null) return null;
+
+			try
+			{
+				return method.MakeGenericMethod(elementType);
+			}
+			catch
+			{
+				return null;
+			}
 		}
 
 		private static List<string> SplitParameters(string parameters)
@@ -299,7 +339,6 @@ namespace PLang.Models.ObjectValueExtractors
 					else if (paramType.IsGenericType && paramType.GetGenericTypeDefinition() == typeof(IEnumerable<>) && paramValues[i] is IEnumerable)
 					{
 						convertedParams[i] = paramValues[i];
-						method = method.MakeGenericMethod(paramValues[i].GetType().GetGenericArguments()[0]);
 					}
 					else
 					{

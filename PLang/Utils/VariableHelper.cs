@@ -818,7 +818,7 @@ namespace PLang.Utils
 			if (string.IsNullOrEmpty(str)) return "";
 
 			str = str.Trim();
-			bool isVariable = IsVariable(str);
+			bool isVariable = IsVariable(str) || (str.Length > 2 && str[0] == '%' && str[^1] == '%' && str.IndexOf('%', 1) == str.Length - 1);
 
 			if (isVariable && str.StartsWith("%")) str = str.Substring(1);
 			if (isVariable && str.EndsWith("%")) str = str.Remove(str.Length - 1);

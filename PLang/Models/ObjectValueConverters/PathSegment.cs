@@ -29,7 +29,7 @@ namespace PLang.Models.ObjectValueConverters
 			if (PathCache.TryGetValue(path, out var pathSegments)) return pathSegments;
 
 			var segments = new List<PathSegment>();
-			var regex = new Regex(@"([.!]?)([^.!\[\]]+)|\[(.+?)\]", RegexOptions.Compiled);
+			var regex = new Regex(@"([.!]?)((?:\((?:""[^""]*""|'[^']*'|[^)""'])*\)|[^.!\[\]])+)|\[(.+?)\]", RegexOptions.Compiled);
 			try
 			{
 				bool propertyStarted = false;
