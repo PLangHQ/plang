@@ -15,7 +15,7 @@ namespace PLang.Modules.TerminalModule
 		public const string RuleKey = "!Rule";
 		public const string UnmatchedKey = "!Unmatched";
 
-		private enum Mode { Columns, Match, KeyValue }
+		private enum Mode { Columns, Match, KeyValue, Lines }
 		private enum Kind { Skipped, Ignored, Unmatched, Parsed }
 
 		private sealed class TemplateException(string message) : Exception(message);
@@ -31,6 +31,7 @@ namespace PLang.Modules.TerminalModule
 			public string Separator = "=";
 			public Dictionary<string, int> Columns = new();
 			public bool LastColumnRest;
+			public List<int> JoinColumns = new();
 
 			public Regex? Pattern;
 
@@ -49,6 +50,7 @@ namespace PLang.Modules.TerminalModule
 			public JObject? Merged;
 			public JObject? Block;
 			public readonly List<string> Raw = new();
+			public readonly List<string> Lines = new();
 		}
 
 		/// <summary>Per run state. Streaming keeps one for the whole run, the final parse makes its own.</summary>
@@ -189,7 +191,11 @@ namespace PLang.Modules.TerminalModule
 				var acc = accumulators[rule];
 				var obj = outcome.Value!;
 
-				if (rule.Mode == Mode.KeyValue && rule.BlockEnd != null)
+				if (rule.Mode == Mode.Lines)
+				{
+					acc.Lines.Add(obj["line"]!.Value<string>()!);
+				}
+				else if (rule.Mode == Mode.KeyValue && rule.BlockEnd != null)
 				{
 					acc.Block ??= new JObject();
 					acc.Raw.Add(line);
@@ -246,12 +252,14 @@ namespace PLang.Modules.TerminalModule
 
 		private bool IsSingle(Rule rule)
 		{
+			if (rule.Mode == Mode.Lines) return false;
 			if (rule.Mode == Mode.KeyValue && rule.BlockEnd != null) return false;
 			return rule.Once || (!hasRules && rule.Mode == Mode.KeyValue);
 		}
 
 		private JToken? RuleValue(Rule rule, Accumulator acc)
 		{
+			if (rule.Mode == Mode.Lines) return new JArray(acc.Lines);
 			if (rule.Mode == Mode.KeyValue && rule.BlockEnd != null) return new JArray(acc.Items);
 			if (IsSingle(rule)) return acc.Merged;
 			return new JArray(acc.Items);
@@ -284,12 +292,22 @@ namespace PLang.Modules.TerminalModule
 				{
 					Mode.Columns => ParseColumns(rule, line),
 					Mode.Match => ParseMatch(rule, line),
+					Mode.Lines => ParseLine(rule, line),
 					_ => ParseKeyValue(rule, line)
 				};
 				return obj == null ? new Outcome(Kind.Unmatched) : new Outcome(Kind.Parsed, rule, obj);
 			}
 
 			return new Outcome(Kind.Unmatched);
+		}
+
+		private static JObject? ParseLine(Rule rule, string line)
+		{
+			if (rule.JoinColumns.Count == 0) return new JObject { ["line"] = line };
+
+			var tokens = Regex_NonSpace.Matches(line).Select(m => m.Value).ToList();
+			if (tokens.Count < rule.JoinColumns.Max()) return null;
+			return new JObject { ["line"] = string.Join(" ", rule.JoinColumns.Select(c => tokens[c - 1])) };
 		}
 
 		private JObject? ParseColumns(Rule rule, string line)
@@ -404,7 +422,7 @@ namespace PLang.Modules.TerminalModule
 			};
 
 			var modeText = Str(obj, "mode", label);
-			if (string.IsNullOrEmpty(modeText)) throw new TemplateException($"{label}: \"mode\" is required, one of \"columns\", \"match\" or \"keyvalue\"");
+			if (string.IsNullOrEmpty(modeText)) throw new TemplateException($"{label}: \"mode\" is required, one of \"columns\", \"match\", \"keyvalue\" or \"lines\"");
 
 			switch (modeText.ToLowerInvariant())
 			{
@@ -451,8 +469,22 @@ namespace PLang.Modules.TerminalModule
 					}
 					break;
 
+				case "lines":
+					rule.Mode = Mode.Lines;
+					if (obj["columns"] is JArray joinCols)
+					{
+						foreach (var col in joinCols)
+						{
+							if (col.Type != JTokenType.Integer || col.Value<int>() < 1)
+								throw new TemplateException($"{label}: \"columns\" for lines must be a list of 1-based numbers, like [2, 1]");
+							rule.JoinColumns.Add(col.Value<int>());
+						}
+					}
+					else if (obj["columns"] != null) throw new TemplateException($"{label}: \"columns\" for lines must be a list of 1-based numbers, like [2, 1]");
+					break;
+
 				default:
-					throw new TemplateException($"{label}: unknown mode \"{modeText}\", use \"columns\", \"match\" or \"keyvalue\"");
+					throw new TemplateException($"{label}: unknown mode \"{modeText}\", use \"columns\", \"match\", \"keyvalue\" or \"lines\"");
 			}
 
 			return rule;

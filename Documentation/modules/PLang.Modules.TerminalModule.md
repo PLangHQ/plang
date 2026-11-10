@@ -181,10 +181,13 @@ Modes:
 - `match`: `"pattern"` is a .NET regex with named groups. A matching line becomes an object keyed by the group names (a group that did not take part is left out). A non matching line is unmatched.
 - `keyvalue`: `"separator"` (default `=`), `"pairsOn"` is `"line"` (default, one pair per line, split on the first separator) or `"whitespace"` (several pairs on a line, the value of a key runs to the next key, e.g. ffmpeg `frame=  100 fps= 25`). `"trimValues"` (default `true`), `"unquote": true` strips surrounding double quotes, `"blockEnd": "<key>"` closes the current object when that key appears and starts a new one, which gives a list of objects (ffmpeg `-progress pipe:1`).
 
+- `lines`: every line is one string, a list of strings instead of objects. Use it when the program already prints what you want to keep, or when a list of plain strings is the format (`sha256sum`, file lists). `"columns": [2, 1]` (optional, 1-based, whitespace separated) builds each string from those columns joined with a single space, `sha256sum` output `<hash> <path>` with `[2, 1]` gives `"<path> <hash>"`. A line with fewer columns than the highest index is unmatched. No output gives an empty list.
+
 ### Result shape
 
 | Template | Result |
 |---|---|
+| no `rules`, `lines` | a list of strings (no `!Raw`, the string is the line) |
 | no `rules`, `columns` or `match` | a list of objects |
 | no `rules`, `keyvalue` without `blockEnd` | one object |
 | no `rules`, `keyvalue` with `blockEnd` | a list of objects |
