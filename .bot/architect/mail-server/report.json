@@ -1,0 +1,58 @@
+{
+  "branch": "architect/mail-server",
+  "sessions": [
+    {
+      "id": "2d671dd6-51e5-4294-a8f3-77efdaa2ff1f",
+      "bot": "architect",
+      "timestamp_start": "2026-11-12T14:48:30Z",
+      "timestamp_end": "2026-11-12T15:20:00Z",
+      "intent": "First-pass v1 plan for a PLang mail server on main: identity -> address model, C# SMTP module boundary, incoming mail -> live push, retention.",
+      "before": {
+        "assumptions": "Design against plang main (v0.1 module system: PLang/Modules/*Module/Program.cs), not runtime2. The researcher's brief on prior art and deliverability is not in yet, so those choices stay open.",
+        "risk": "Deliverability (fresh IP, thousands/day) can sink the send side regardless of design; the requirement says websocket but main has no server websocket."
+      },
+      "plan": ".bot/architect/mail-server/architect/v1/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/architect/mail-server"],
+          "type": "decision",
+          "category": "config",
+          "confidence": "high",
+          "context": "Reset branch architect/mail-server onto origin/main (it had no commits of its own; it sat at the runtime2 tip). Upstream unset so a push never lands on main."
+        },
+        {
+          "paths": [
+            "PLang/Modules/MessageModule/Program.cs",
+            "os/apps/Email/SendEmail.goal",
+            "os/apps/Email/service/email.plang.io/SendEmail.goal",
+            "PLang/Modules/WebserverModule/Program.cs",
+            "PLang/Modules/WebserverModule/RequestHandler.cs",
+            "PLang/Services/OutputStream/Sinks/HttpSink.cs",
+            "PLang/Runtime/Engine.cs",
+            "PLang/Modules/WebSocketModule/Program.cs",
+            "PLang/Modules/IdentityModule/Program.cs",
+            "PLang/Modules/ScheduleModule/Program.cs",
+            "PLang/Interfaces/PLangContext.cs",
+            "PLang/Runtime/PseudoRuntime.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Traced main: send email already routes to os/apps/Email (email.plang.io stub); push is the per-identity live stream (plang.poll), server websocket unsupported; HttpSink needs HttpContext so a background goal can't push to another identity."
+        },
+        {
+          "paths": [".bot/architect/mail-server/architect/v1/plan.md", ".bot/architect/mail-server/architect/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "medium",
+          "context": "v1 plan: one current address per identity (internal or linked), lazy birth, no reuse of retired addresses; C# MailModule = SMTP/MIME only (start mail server, send mail one attempt); plang owns model, inbox, outbox, retries, retention, API; new WebserverModule 'send to identity' for push. Three questions to Ingi; deliverability waits on the research brief."
+        }
+      ],
+      "after": {
+        "status": "v1 plan written; waiting on Ingi's answers and the research brief.",
+        "health": "No code changed.",
+        "notes": "Research brief not yet in /shared/research/. Stages tentative, not carved."
+      }
+    }
+  ]
+}
