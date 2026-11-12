@@ -1,0 +1,52 @@
+{
+  "branch": "research/mail-server",
+  "sessions": [
+    {
+      "id": "c173f525-06de-46e9-b81d-e75c6b4fb9eb",
+      "bot": "research",
+      "timestamp_start": "2026-11-12T14:54:15Z",
+      "timestamp_end": "2026-11-12T14:58:18Z",
+      "intent": "Research whether PLang should build its own mail server (C# SMTP module + PLang goals) vs relay, and hand a brief to the architect.",
+      "before": {
+        "assumptions": "Working branch is main (v0.1.x line, PLang/Modules/...), not runtime2. main has no email module; message.SendEmail routes to an Email app calling email.plang.io. Ingi's list of requirements: custom domain, thousands/day outbound via API, inbound with retention, websocket push, identity-based addressing (1 real email -> many identities). Start time is the moment this file was first written, after the first reading pass.",
+        "risk": "Outbound deliverability is the hard part and is not a code problem. Scaleway pages returned 403 to the fetcher, so Scaleway facts come from search summaries and need verification before they are relied on."
+      },
+      "plan": ".bot/research/mail-server/research/v1/plan.md",
+      "actions": [
+        {
+          "paths": ["PLang/Modules/MessageModule/Program.cs", "PLang/Modules/WebSocketModule/Program.cs", "PLang/Modules/WebserverModule/Program.cs", "PLang/Modules/WebserverModule/RequestHandler.cs", "os/apps/Email/SendEmail.goal", "Tests/Email/Email.goal"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read main to establish what mail, websocket and push code exists: no email module, send seam via message.SendEmail -> Email app, server websocket stubbed, identity-keyed poll stream is the working push."
+        },
+        {
+          "paths": ["/shared/research/mail-server/evidence.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "medium",
+          "context": "MTA options, Google/Yahoo/Microsoft rules, SES enforcement and pricing, Hetzner/Scaleway ports, AgentMail limits. Each fact tagged read / search / internal. Scaleway is search-summary only (403)."
+        },
+        {
+          "paths": ["/shared/research/mail-server/brief.md", "/shared/research/INDEX.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "medium",
+          "context": "Brief for the architect: own inbound, relay outbound. Alternatives considered: wrap Stalwart as sidecar (kept as fallback), webhook-based inbound from a provider, AgentMail (rejected on per-inbox price and retention)."
+        },
+        {
+          "paths": [".bot/research/mail-server/research/summary.md"],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Architect (architect/mail-server) was not in ListAgents, so no message was sent; Ingi is told the start command instead."
+        }
+      ],
+      "after": {
+        "status": "Brief written and indexed as handed-over; architect not running, so not yet delivered.",
+        "health": "good",
+        "notes": "Open: verify Scaleway TEM price/quota/port wording on scaleway.com; confirm what email.plang.io is; Hetzner FAQ page is dated 2024-09-12."
+      }
+    }
+  ]
+}
