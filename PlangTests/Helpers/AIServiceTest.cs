@@ -23,5 +23,10 @@ namespace PLangTests.Helpers
 		{
 			return Task.FromResult<(object?, IError)>(default);
 		}
+
+		public Task<(LlmChatResult? Result, IError? Error)> Chat(LlmChatRequest request)
+		{
+			return Task.FromResult<(LlmChatResult?, IError?)>(default);
+		}
 	}
 }

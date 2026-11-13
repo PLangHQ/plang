@@ -112,9 +112,20 @@ namespace PLang.Modules.DbModule
 
 			public void Attach(string alias, string path)
 			{
-				if (AttachedDbs.Any(p => p.Alias == alias)) return;
+				lock (AttachedDbs)
+				{
+					if (AttachedDbs.Any(p => p.Alias == alias)) return;
 
-				AttachedDbs.Add(new AttachedDb(alias, path));
+					AttachedDbs.Add(new AttachedDb(alias, path));
+				}
+			}
+
+			public List<AttachedDb> AttachedSnapshot()
+			{
+				lock (AttachedDbs)
+				{
+					return AttachedDbs.ToList();
+				}
 			}
 
 		}

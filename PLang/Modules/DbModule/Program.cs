@@ -224,7 +224,7 @@ namespace PLang.Modules.DbModule
 			if (dataSource.AttachedDbs.Count > 0)
 			{
 				using var attachCommand = transaction.Connection.CreateCommand();
-				error = await AttachDb(dataSource, (DbCommand)attachCommand);
+				(_, error) = await AttachDb(dataSource, (DbCommand)attachCommand, false);
 				if (error != null) return error;
 			}
 			
@@ -292,7 +292,7 @@ namespace PLang.Modules.DbModule
 				if (datasource != null && connection != null && datasource.AttachedDbs.Count > 0)
 				{
 					//var cmd = transaction.Connection.CreateCommand();
-					var error = await DetachDb(datasource, connection);
+					var error = await DetachDb(connection, datasource.AttachedSnapshot().Select(p => p.Alias).ToList());
 					connection.Close();
 					if (error != null) return error;
 				}
@@ -888,6 +888,7 @@ namespace PLang.Modules.DbModule
 
 			var con = (DbConnection)prep.connection;
 			await using var cmd = con.CreateCommand();
+			var attached = new List<string>();
 
 			try
 			{
@@ -897,7 +898,8 @@ namespace PLang.Modules.DbModule
 				}
 				else if (dataSource.AttachedDbs.Count > 0)
 				{
-					var error = await AttachDb(dataSource, cmd);
+					var (aliases, error) = await AttachDb(dataSource, cmd, true);
+					attached.AddRange(aliases);
 					if (error != null) return (null, error, properties);
 				}
 
@@ -1012,9 +1014,10 @@ namespace PLang.Modules.DbModule
 				
 				logger.LogDebug($"Rows: {table.Count}");
 				
-				if (prep.transaction == null && dataSource.AttachedDbs.Count > 0)
+				if (attached.Count > 0)
 				{
-					var error = await DetachDb(dataSource, prep.connection);
+					var error = await DetachDb(prep.connection, attached);
+					attached.Clear();
 					if (error != null) return (table, error, properties);
 				}
 
@@ -1023,9 +1026,10 @@ namespace PLang.Modules.DbModule
 			catch (Exception ex)
 			{
 				var sqlError = new SqlError(ex.Message, sql, sqlParameters, goalStep, function, Exception: ex);
-				if (prep.transaction == null && dataSource.AttachedDbs.Count > 0)
+				if (attached.Count > 0)
 				{
-					var error = await DetachDb(dataSource, prep.connection);
+					var error = await DetachDb(prep.connection, attached);
+					attached.Clear();
 					if (error != null)
 					{
 						sqlError.ErrorChain.Add(error);
@@ -1038,102 +1042,91 @@ namespace PLang.Modules.DbModule
 			}
 			finally
 			{
-				
+				if (attached.Count > 0)
+				{
+					await DetachDb(prep.connection, attached);
+				}
+
 				Done(prep.connection, prep.transaction);
 			}
 		}
 
-		private async Task<IError?> AttachDb(DataSource dataSource, DbCommand cmd, int retryCount = 0)
+		private async Task<(List<string> Attached, IError? Error)> AttachDb(DataSource dataSource, DbCommand cmd, bool canDetach)
 		{
-			if (dataSource.AttachedDbs.Count == 0) return null;
-			if (dataSource.AttachedDbs.FirstOrDefault(p => !p.IsAttached) == null)
-			{
-				if (dataSource.AttachedDbs.Count > 0)
-				{
-					Console.WriteLine($"will not Attach  - {goalStep.RelativePrPath}:{goalStep.LineNumber}");
-				}
-				return null;
-			}
-			
+			var attached = new List<string>();
+			var wanted = dataSource.AttachedSnapshot();
+			if (wanted.Count == 0) return (attached, null);
 
-
-			for (int i = 0; i < dataSource.AttachedDbs.Count; i++)
-			{
-				var alias = dataSource.AttachedDbs[i].Alias;
-
-				if (string.Equals(alias, "main", StringComparison.OrdinalIgnoreCase) ||
-					string.Equals(alias, "temp", StringComparison.OrdinalIgnoreCase))
-					throw new InvalidOperationException($"Invalid alias: {alias}");
-
-				var dbAbsolutePath = fileSystem.Path.Join(goalStep.Goal.AbsoluteAppStartupFolderPath, dataSource.AttachedDbs[i].Path);
-				
-				
-				cmd.CommandText += $"ATTACH DATABASE '{dbAbsolutePath}' AS {alias};\n";
-				
-			}
 			try
 			{
-				//Console.WriteLine($"Try to attach {dataSource.Name}, {string.Join(',', dataSource.AttachedDbs.Select(p => p.Alias))} - {goalStep.RelativePrPath}:{goalStep.LineNumber} - Hash:{cmd.Connection.GetHashCode()} - Handle:{((SqliteConnection)cmd.Connection).Handle.DangerousGetHandle()}");
-				await cmd.ExecuteNonQueryAsync();
-				
-			} catch (Exception ex)
-			{
-				if (ex.Message.Contains("already in use"))
+				cmd.CommandText = "PRAGMA database_list;";
+				var present = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+				await using (var reader = await cmd.ExecuteReaderAsync())
 				{
-					if (retryCount < 3)
+					while (await reader.ReadAsync())
 					{
-						logger.LogTrace($"  - {ex.Message}, waiting");
-						await Task.Delay(50);
-						var error = await AttachDb(dataSource, cmd, ++retryCount);
-						if (error != null) return error;
-					} else
-					{
-						return new ProgramError(ex.Message, Exception: ex);
+						present.Add(reader.GetString(1));
 					}
-					
-					//what to do ??
 				}
-				else
+
+				foreach (var db in wanted)
 				{
-					return new ProgramError(ex.Message, Exception: ex);
+					var alias = db.Alias;
+
+					if (string.Equals(alias, "main", StringComparison.OrdinalIgnoreCase) ||
+						string.Equals(alias, "temp", StringComparison.OrdinalIgnoreCase))
+						throw new InvalidOperationException($"Invalid alias: {alias}");
+
+					if (present.Contains(alias))
+					{
+						if (!canDetach) continue;
+
+						cmd.CommandText = $"DETACH DATABASE \"{alias}\";";
+						await cmd.ExecuteNonQueryAsync();
+					}
+
+					var dbAbsolutePath = fileSystem.Path.Join(goalStep.Goal.AbsoluteAppStartupFolderPath, db.Path);
+
+					cmd.CommandText = $"ATTACH DATABASE '{dbAbsolutePath}' AS {alias};";
+					await cmd.ExecuteNonQueryAsync();
+					attached.Add(alias);
+					present.Add(alias);
 				}
 			}
-
-			for (int i = 0; i < dataSource.AttachedDbs.Count; i++)
+			catch (Exception ex)
 			{
-				dataSource.AttachedDbs[i].IsAttached = true;
+				return (attached, new ProgramError(ex.Message, Exception: ex));
 			}
-			cmd.CommandText = "";
+			finally
+			{
+				cmd.CommandText = "";
+			}
 
-			logger.LogTrace($"  - Attached {dataSource.Name} - Attached:{string.Join(",", dataSource.AttachedDbs.Select(p => p.Alias))}");
-			return null;
+			logger.LogTrace($"  - Attached {dataSource.Name} - Attached:{string.Join(",", attached)}");
+			return (attached, null);
 		}
 
-		private async Task<IError?> DetachDb(DataSource dataSource, IDbConnection connection)
+		private async Task<IError?> DetachDb(IDbConnection connection, List<string> aliases)
 		{
-			if (dataSource.AttachedDbs.Count == 0) return null;
+			if (aliases.Count == 0) return null;
 
 			try
 			{
 				using var cmd = connection.CreateCommand();
-				for (int i = 0; i < dataSource.AttachedDbs.Count; i++)
+				foreach (var alias in aliases)
 				{
-					cmd.CommandText = $"DETACH DATABASE \"{dataSource.AttachedDbs[i].Alias}\";";
+					cmd.CommandText = $"DETACH DATABASE \"{alias}\";";
 					cmd.ExecuteNonQuery();
 				}
-				
-				//Console.WriteLine($"Detach {dataSource.Name}, {string.Join(',', dataSource.AttachedDbs.Select(p => p.Alias))} - {goalStep.RelativePrPath}:{goalStep.LineNumber} - Hash:{cmd.Connection.GetHashCode()} - Handle:{((SqliteConnection)cmd.Connection).Handle.DangerousGetHandle()}");
-				for (int i = 0; i < dataSource.AttachedDbs.Count; i++)
-				{
-					dataSource.AttachedDbs[i].IsAttached = false;
-				}
-				logger.LogTrace($"  - Detach {dataSource.Name} - Detached:{string.Join(",", dataSource.AttachedDbs.Select(p => p.Alias))}");
-				dataSource.AttachedDbs.Clear();
 
-
+				logger.LogTrace($"  - Detached:{string.Join(",", aliases)}");
 			}
 			catch (Exception ex)
 			{
+				if (connection is SqliteConnection sqlite)
+				{
+					SqliteConnection.ClearPool(sqlite);
+				}
 				return new ProgramError(ex.Message, Exception: ex);
 			}
 			return null;
@@ -1967,6 +1960,11 @@ For example:
 
 			if (dataSourceNames.Count > 1)
 			{
+				if (dataSource.Transaction == null)
+				{
+					dataSource = dataSource with { AttachedDbs = new() };
+				}
+
 				foreach (var dataSourceName in dataSourceNames[1..])
 				{
 
