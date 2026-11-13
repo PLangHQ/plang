@@ -209,6 +209,28 @@ Attribute: Member is the key in the SetAttribute js method, make sure to convert
 			return layouts.FirstOrDefault(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 		}
 
+		private bool CanRenderMainLayout(IOutputSink sink)
+		{
+			return sink is HttpSink hs && !hs.IsFlushed && !memoryStack.Get<bool>("request!IsAjax");
+		}
+
+		private async Task<(string? Content, IError? Error)> WrapInLayout(string? content, LayoutOptions layoutOptions, bool renderToOutputstream)
+		{
+			var parameters = new Dictionary<string, object?>();
+			parameters.Add(layoutOptions.DefaultRenderVariable, content);
+
+			var templateEngine = GetProgramModule<TemplateEngineModule.Program>();
+			return await templateEngine.RenderFile(layoutOptions.TemplateFile, parameters, renderToOutputstream);
+		}
+
+		public async Task<(string? Content, IError? Error)> RenderInMainLayout(string? content, string actor = "user")
+		{
+			var layoutOptions = CanRenderMainLayout(context.GetSink(actor)) ? GetLayoutOptions() : null;
+			if (layoutOptions == null) return (content, null);
+
+			return await WrapInLayout(content, layoutOptions, false);
+		}
+
 		[Description("Target defines where in the UI to write the content, e.g. a cssSelector when ui is html")]
 		public async Task SetTargetArea(string? target)
 		{
@@ -325,16 +347,13 @@ IsTemplateFile is true when RenderMessage.Content is a file name, which includes
 			if (error != null) return (content, error);
 			logger.LogDebug($"           - Have rendered html - {stopwatch.ElapsedMilliseconds}");
 			var sink = context.GetSink(options.RenderMessage.Actor);
-			if (sink is HttpSink hs && !hs.IsFlushed && !memoryStack.Get<bool>("request!IsAjax") && !options.DontRenderMainLayout)
+			if (!options.DontRenderMainLayout)
 			{
-				var layoutOptions = GetLayoutOptions();
+				var layoutOptions = CanRenderMainLayout(sink) ? GetLayoutOptions() : null;
 
 				if (layoutOptions != null)
 				{
-					var parameters = new Dictionary<string, object?>();
-					parameters.Add(layoutOptions.DefaultRenderVariable, content);
-
-					(content, error) = await templateEngine.RenderFile(layoutOptions.TemplateFile, parameters, options.RenderToOutputstream);
+					(content, error) = await WrapInLayout(content, layoutOptions, options.RenderToOutputstream);
 					logger.LogDebug($"           - Did render layoutOptions and returning - {stopwatch.ElapsedMilliseconds}");
 					if (error != null) return (content, error);
 

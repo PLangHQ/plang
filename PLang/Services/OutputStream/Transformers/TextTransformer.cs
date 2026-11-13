@@ -52,6 +52,18 @@ public class TextTransformer : ITransformer
 
 			}
 
+			if (obj is AskMessage am)
+			{
+				needed = encoding.GetByteCount(am.Content);
+				gate = await TransformerHelper.GetGate(context.SharedItems, ct);
+				span = writer.GetSpan(needed);
+
+				length = encoding.GetBytes(am.Content.AsSpan(), span);
+				writer.Advance(length);
+
+				return (length, null);
+			}
+
 			if (obj is RenderMessage rm)
 			{
 				needed = encoding.GetByteCount(rm.Content);

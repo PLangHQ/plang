@@ -161,6 +161,9 @@ namespace PLang.Modules.OutputModule
 				content = memoryStack.LoadVariables(askMessage.Content)?.ToString();
 			}
 
+			(content, error) = await GetProgramModule<Modules.UiModule.Program>().RenderInMainLayout(content, askMessage.Actor);
+			if (error != null) return (null, error);
+
 			askMessage = askMessage with { Content = content };
 
 			(var answer, error) = await outputStream.AskAsync(askMessage);
