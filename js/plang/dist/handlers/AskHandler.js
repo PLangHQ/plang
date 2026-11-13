@@ -17,7 +17,15 @@ export class AskHandler extends BaseKindHandler {
         }
         if (message.callback) {
             if (message.content.toLowerCase().indexOf('<form') != -1) {
-                message.content = message.content.replace(/<form([^>]*)>/gi, `<form$1><input type="hidden" name="__plang_callback_hash" value="${message.callback.hash}">`);
+                const hashInput = `<input type="hidden" name="__plang_callback_hash" value="${message.callback.hash}">`;
+                const ownsCallback = (inner) => /name\s*=\s*["']callback["']/i.test(inner);
+                const forms = message.content.match(/<form[^>]*>[\s\S]*?<\/form>/gi) ?? [];
+                if (forms.some(ownsCallback)) {
+                    message.content = message.content.replace(/<form([^>]*)>([\s\S]*?)<\/form>/gi, (all, attributes, inner) => ownsCallback(inner) ? `<form${attributes}>${hashInput}${inner}</form>` : all);
+                }
+                else {
+                    message.content = message.content.replace(/<form([^>]*)>/gi, `<form$1>${hashInput}`);
+                }
             }
             else {
                 let form = document.querySelector('form[action="' + message.callback.path + '"]');

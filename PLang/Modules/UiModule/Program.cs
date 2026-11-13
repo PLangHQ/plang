@@ -211,7 +211,7 @@ Attribute: Member is the key in the SetAttribute js method, make sure to convert
 
 		private bool CanRenderMainLayout(IOutputSink sink)
 		{
-			return sink is HttpSink hs && !hs.IsFlushed && !memoryStack.Get<bool>("request!IsAjax");
+			return sink is HttpSink hs && !hs.IsFlushed && !hs.PageStarted && !memoryStack.Get<bool>("request!IsAjax");
 		}
 
 		private async Task<(string? Content, IError? Error)> WrapInLayout(string? content, LayoutOptions layoutOptions, bool renderToOutputstream)

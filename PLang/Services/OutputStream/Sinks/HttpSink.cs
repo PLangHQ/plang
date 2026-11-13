@@ -52,12 +52,55 @@ public sealed class HttpSink : IOutputSink
 		_live = live;
 		_path = context.HttpContext!.Request.Path.Value ?? "/";
 		_transformer = ChooseTransformer(props, context.HttpContext!);
+		if (_transformer is HtmlTransformer) _page = new HtmlPageBuffer();
 	}
+
+	readonly HtmlPageBuffer? _page;
+
+	/// <summary>
+	/// A classic GET holds its page until the request ends. True once a render or ask has started it,
+	/// which is when the layout is already around the content and must not be put around the next one.
+	/// </summary>
+	public bool PageStarted => _page?.Started ?? false;
 
 	public bool IsComplete { get; set; }
 	public ConcurrentDictionary<string, LiveConnection> LiveConnections { get { return _live; } }
 	public async Task<IError?> SendAsync(OutMessage m, CancellationToken ct = default)
 	{
+		if (_page != null && !IsComplete)
+		{
+			if (_page.TryAdd(m)) return null;
+
+			var flushError = await FlushPageAsync(ct);
+			if (flushError != null) return flushError;
+		}
+
+		return await WriteAsync(m, ct);
+	}
+
+	/// <summary>Writes the page the request has built, and the execute messages that go after it. Called when the request ends.</summary>
+	public async Task<IError?> FlushPageAsync(CancellationToken ct = default)
+	{
+		if (_page == null || IsComplete) return null;
+
+		var taken = _page.Take();
+		if (taken == null) return null;
+
+		var error = await WriteAsync(new RenderMessage(taken.Value.Html, StatusCode: _page.StatusCode), ct);
+		if (error != null) return error;
+
+		foreach (var execute in taken.Value.Executes)
+		{
+			error = await WriteAsync(execute, ct);
+			if (error != null) return error;
+		}
+		return null;
+	}
+
+	async Task<IError?> WriteAsync(OutMessage m, CancellationToken ct)
+	{
+		_page?.MarkDirect();
+
 		var (response, wasFlushed, error) = GetResponse();
 		if (error != null) return error;
 		if (response is null || !response.Body.CanWrite || IsComplete) return null;

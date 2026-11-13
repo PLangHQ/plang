@@ -64,6 +64,24 @@ public class TextTransformer : ITransformer
 				return (length, null);
 			}
 
+			if (obj is ExecuteMessage && ContentType.Contains("html", StringComparison.OrdinalIgnoreCase))
+			{
+				var (envelope, envelopeError) = TransformerHelper.BuildEnvelope(obj, context);
+				if (envelopeError != null) return (0, envelopeError);
+
+				var line = Newtonsoft.Json.JsonConvert.SerializeObject(Newtonsoft.Json.JsonConvert.SerializeObject(envelope)).Replace("</", "<\\/");
+				var script = "<script>addEventListener('plang:ready',function(e){e.detail.handleResponse(" + line + ",{isOk:true,url:location.href,options:{method:'GET'},headers:new Headers(),init:{}})},{once:true})</script>";
+
+				needed = encoding.GetByteCount(script);
+				gate = await TransformerHelper.GetGate(context.SharedItems, ct);
+				span = writer.GetSpan(needed);
+
+				length = encoding.GetBytes(script.AsSpan(), span);
+				writer.Advance(length);
+
+				return (length, null);
+			}
+
 			if (obj is RenderMessage rm)
 			{
 				needed = encoding.GetByteCount(rm.Content);

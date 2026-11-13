@@ -338,8 +338,9 @@ public class Program : BaseProgram, IDisposable
 						IError? error = null;
 						bool poll = false;
 						string? identity = null;
-						
-					
+						HttpSink? pageSink = null;
+
+
 						Stopwatch stopwatch = Stopwatch.StartNew();
 						try
 						{
@@ -365,6 +366,7 @@ public class Program : BaseProgram, IDisposable
 							AddToCallStack(requestEngine, httpContext.Request.Path.Value ?? "RequestStart");
 
 							var httpOutputSink = new HttpSink(context, webserverProperties, engine.LiveConnections);
+							pageSink = httpOutputSink;
 							context.UserSink = httpOutputSink;
 							context.SystemSink = engine.SystemSink;
 							(poll, identity, error) = await requestHandler.HandleRequestAsync(requestEngine, context, webserverProperties);
@@ -463,6 +465,15 @@ public class Program : BaseProgram, IDisposable
 						}
 						finally
 						{
+							try
+							{
+								if (pageSink != null) await pageSink.FlushPageAsync();
+							}
+							catch (Exception ex)
+							{
+								Console.WriteLine(ex);
+							}
+
 							try
 							{
 								var status = httpContext.Response.StatusCode;
