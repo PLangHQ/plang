@@ -217,7 +217,8 @@ namespace PLang.Modules.WebCrawlerModule
 
 			browser.SetDefaultTimeout((timoutInSeconds ?? 30) * 1000);
 
-			browserInstance = new BrowserInstance(playwright, browser, TimeSpan.FromMinutes(Math.Max(1, closeAfterIdleMinutes)));
+			browserInstance = new BrowserInstance(playwright, browser,
+				closeAfterIdleMinutes == 0 ? Timeout.InfiniteTimeSpan : TimeSpan.FromMinutes(Math.Max(1, closeAfterIdleMinutes)));
 			data.BrowserInstance = browserInstance;
 			data.LastStart = new BrowserStart(browserType, headless, profileName, kioskMode, argumentOptions, timoutInSeconds, hideTestingMode, closeAfterIdleMinutes);
 
@@ -437,7 +438,7 @@ namespace PLang.Modules.WebCrawlerModule
 		}
 
 
-		[Description("opens a page to a url. browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot. waitAfterInMilliseconds pauses after the page has loaded, for a page whose client script paints the content a moment later, e.g. 'navigate to x, wait 3 seconds' => waitAfterInMilliseconds: 3000. The browser stays open across goals until 'close browser' or until it has been unused for closeAfterIdleMinutes.")]
+		[Description("opens a page to a url. browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot. waitAfterInMilliseconds pauses after the page has loaded, for a page whose client script paints the content a moment later, e.g. 'navigate to x, wait 3 seconds' => waitAfterInMilliseconds: 3000. The browser stays open across goals until 'close browser' or until it has been unused for closeAfterIdleMinutes. closeAfterIdleMinutes=0 means never close it for being idle, e.g. 'never close the browser' or 'keep the browser open' => closeAfterIdleMinutes: 0.")]
 		public async Task NavigateToUrl(string url, string browserType = "Chrome", bool headless = false,
 				string profileName = "", bool kioskMode = false, Dictionary<string, object>? argumentOptions = null,
 				int? timeoutInSeconds = null, bool hideTestingMode = false, int pageIndex = -1, int waitAfterInMilliseconds = 0, int closeAfterIdleMinutes = 10,
