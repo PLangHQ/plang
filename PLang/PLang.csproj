@@ -6,6 +6,7 @@
     <RootNamespace>PLang</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>PLangLibrary</AssemblyName>
     <SelfContained>true</SelfContained>
     <!--<RuntimeIdentifier>win-x64</RuntimeIdentifier>-->
@@ -81,6 +82,7 @@
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.6.0" />
     <PackageReference Include="Microsoft.Net.Http.Headers" Version="9.0.2" />
     <PackageReference Include="Microsoft.Playwright" Version="1.50.0" />
+    <PackageReference Include="N0.IrohNet" Version="0.101.13" />
     <PackageReference Include="MimeKit" Version="4.10.0" />
     <PackageReference Include="MiniExcel" Version="1.38.0" />
     <PackageReference Include="NCalcSync" Version="5.4.2" />

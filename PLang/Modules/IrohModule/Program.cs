@@ -1,0 +1,309 @@
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using PLang.Attributes;
+using PLang.Errors;
+using PLang.Errors.Runtime;
+using PLang.Interfaces;
+using PLang.Models;
+using PLang.Runtime;
+using PLang.Services.SigningService;
+using PLang.Utils;
+using System.Collections.Concurrent;
+using System.ComponentModel;
+using System.Text;
+
+namespace PLang.Modules.IrohModule
+{
+	[Description("Talk to other plang apps over iroh, peer to peer by key and not by ip. Create and print the endpoint key (`create iroh key`), listen for signed commands (`start listening`), connect to a peer by its key (`connect to`) and tell it to run a goal (`tell %peer% to Update`)")]
+	public class Program(IPseudoRuntime pseudoRuntime, IPLangSigningService signingService) : BaseProgram
+	{
+		public const string Alpn = "plang/tell/1";
+		private const string SecretKeyPrefix = "IrohSecretKey_";
+		private const int MaxRequestBytes = 16 * 1024 * 1024;
+
+		private static readonly ConcurrentDictionary<string, IrohEndpoint> Endpoints = new();
+
+		public record IrohKey(string Name, string EndpointId);
+		public record IrohListener(string Name, string EndpointId, string Ticket);
+		public record IrohPeer(string Target, string? EndpointId, IrohConnection Connection);
+
+		[Description("Create the iroh endpoint key with a name, saved in settings, and return its endpoint id to print or share. When the key exists it is returned unchanged, unless replace is true. The secret is never returned")]
+		[Example("create iroh key, write to %key%", "name=\"default\"")]
+		[Example("create iroh key 'kiosk', replace, write to %key%", "name=\"kiosk\", replace=true")]
+		public async Task<IrohKey> CreateKey(string name = "default", bool replace = false)
+		{
+			string settingKey = SecretKeyPrefix + name;
+			string? secret = settings.GetOrDefault<string?>(typeof(Program), settingKey, null);
+			if (replace || string.IsNullOrEmpty(secret))
+			{
+				secret = IrohKeys.Generate().Secret;
+				settings.Set(typeof(Program), settingKey, secret);
+			}
+			return new IrohKey(name, IrohKeys.IdFromSecret(secret));
+		}
+
+		[Description("Get the endpoint id of a named iroh key. The key is created when it does not exist")]
+		[Example("get iroh key, write to %key%", "name=\"default\"")]
+		public async Task<IrohKey> GetKey(string name = "default")
+		{
+			return await CreateKey(name, false);
+		}
+
+		[Description("Start listening for iroh peers. Every incoming command must be signed, an unsigned or badly signed one is declined. The goal in onIncoming is called first with %Identity% (the signer), %goalName%, %parameters% and %EndpointId%, and it decides if the identity is allowed by throwing an error to decline. When it does not fail the requested goal runs and what it returns goes back to the caller. onIncoming is required")]
+		[Example("start listening, on incoming call Allow, write to %listener%", "onIncoming=Allow")]
+		[Example("listen on iroh 'kiosk', on incoming call Allow", "keyName=\"kiosk\", onIncoming=Allow")]
+		public async Task<(IrohListener?, IError?)> Listen(GoalToCallInfo? onIncoming = null, string keyName = "default", bool useRelay = true)
+		{
+			if (onIncoming == null || string.IsNullOrEmpty(onIncoming.Name))
+			{
+				return (null, new ProgramError("A goal that validates who may tell this app what to do is required", goalStep, function,
+					FixSuggestion: "Add 'on incoming call Allow' to the step, e.g. `- start listening, on incoming call Allow`. The goal gets %Identity% and throws an error to decline"));
+			}
+
+			var (endpoint, error) = GetEndpoint(keyName, useRelay);
+			if (error != null) return (null, error);
+
+			var listener = new IrohListener(keyName, endpoint!.Id, endpoint.Ticket());
+
+			var engineRef = engine;
+			var accessorRef = contextAccessor;
+			var rootPath = fileSystem.RootDirectory;
+			_ = Task.Factory.StartNew(() => AcceptLoop(endpoint, onIncoming, engineRef, accessorRef, rootPath), TaskCreationOptions.LongRunning);
+
+			KeepAlive(endpoint, "iroh-listen-" + keyName);
+			return (listener, null);
+		}
+
+		[Description("Connect to a peer by its endpoint id (or a full ticket). Returns the peer to use in tell. onClosed is called when the connection drops, use it to connect again")]
+		[Example("connect to %kioskKey%, on closed call Redial, write to %agent%", "target=%kioskKey%, onClosed=Redial")]
+		[Example("connect to iroh peer %id%, key 'admin', write to %agent%", "target=%id%, keyName=\"admin\"")]
+		public async Task<(IrohPeer?, IError?)> Connect(string target, GoalToCallInfo? onClosed = null, string keyName = "default", bool useRelay = true)
+		{
+			var (endpoint, error) = GetEndpoint(keyName, useRelay);
+			if (error != null) return (null, error);
+
+			IrohConnection connection;
+			try
+			{
+				connection = await Task.Run(() => endpoint!.Connect(target));
+			}
+			catch (Exception ex)
+			{
+				return (null, new ProgramError(ex.Message, goalStep, function));
+			}
+
+			target = target.Trim().Trim('﻿').Trim();
+			string? endpointId = IrohEndpoint.IsTicket(target) ? null : target;
+
+			if (onClosed != null)
+			{
+				var engineRef = engine;
+				var accessorRef = contextAccessor;
+				var rootPath = fileSystem.RootDirectory;
+				var peerInfo = new IrohPeer(target, endpointId, connection);
+				_ = Task.Factory.StartNew(async () =>
+				{
+					connection.WaitUntilClosed();
+					onClosed.Parameters.AddOrReplace("peer", peerInfo);
+					await pseudoRuntime.RunGoal(engineRef, accessorRef, rootPath, onClosed);
+				}, TaskCreationOptions.LongRunning);
+			}
+
+			return (new IrohPeer(target, endpointId, connection), null);
+		}
+
+		[Description("Tell a connected peer to run a goal in its app. The command is signed with your identity, the peer decides if it will run it. Returns what the remote goal returns")]
+		[Example("tell %agent% to Update, version: \"1\", write to %result%", "goalName=\"Update\", parameters={\"version\":\"1\"}")]
+		[Example("tell %agent% to RestartKiosk, timeout 30 seconds, write to %result%", "goalName=\"RestartKiosk\", timeoutInSeconds=30")]
+		public async Task<(object?, IError?)> Tell(IrohPeer peer, string goalName, Dictionary<string, object?>? parameters = null, int timeoutInSeconds = 60, int expiresInSeconds = 120)
+		{
+			if (peer?.Connection == null)
+			{
+				return (null, new ProgramError("You need to connect to a peer first", goalStep, function,
+					FixSuggestion: "Add a step before this one, e.g. `- connect to %key%, write to %agent%`"));
+			}
+			if (string.IsNullOrWhiteSpace(goalName))
+			{
+				return (null, new ProgramError("goalName is empty, say which goal the peer should run", goalStep, function));
+			}
+
+			var payload = new JObject
+			{
+				["goal"] = goalName,
+				["parameters"] = parameters == null ? new JObject() : JObject.FromObject(parameters),
+				["created"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+			};
+			if (peer.EndpointId != null) payload["to"] = peer.EndpointId;
+
+			string payloadJson = payload.ToString(Formatting.None);
+			var signature = await signingService.Sign(payloadJson, null, expiresInSeconds);
+			string request = JsonConvert.SerializeObject(new TellRequest(JsonConvert.SerializeObject(signature), payloadJson));
+
+			byte[] answerBytes;
+			try
+			{
+				answerBytes = await Task.Run(() => peer.Connection.Request(Encoding.UTF8.GetBytes(request), timeoutInSeconds * 1000, MaxRequestBytes));
+			}
+			catch (Exception ex)
+			{
+				return (null, new ProgramError(ex.Message, goalStep, function,
+					FixSuggestion: "The connection may be closed. Connect again and retry the tell"));
+			}
+
+			var answer = JsonConvert.DeserializeObject<TellAnswer>(Encoding.UTF8.GetString(answerBytes));
+			if (answer == null) return (null, new ProgramError("The peer sent an answer that could not be read", goalStep, function));
+			if (!answer.Ok) return (null, new ProgramError(answer.Error ?? "The peer declined", goalStep, function, StatusCode: answer.StatusCode));
+
+			return (answer.Result, null);
+		}
+
+		[Description("Stop listening and close the endpoint of a named key")]
+		[Example("stop iroh, key 'kiosk'", "keyName=\"kiosk\"")]
+		public async Task Close(string keyName = "default")
+		{
+			if (Endpoints.TryRemove(keyName, out var endpoint))
+			{
+				RemoveKeepAlive(endpoint, "iroh-listen-" + keyName);
+				endpoint.Dispose();
+			}
+		}
+
+		private (IrohEndpoint?, IError?) GetEndpoint(string keyName, bool useRelay)
+		{
+			try
+			{
+				var endpoint = Endpoints.GetOrAdd(keyName, _ =>
+				{
+					string settingKey = SecretKeyPrefix + keyName;
+					string? secret = settings.GetOrDefault<string?>(typeof(Program), settingKey, null);
+					if (string.IsNullOrEmpty(secret))
+					{
+						secret = IrohKeys.Generate().Secret;
+						settings.Set(typeof(Program), settingKey, secret);
+					}
+					return IrohEndpoint.Bind(secret, Alpn, useRelay);
+				});
+				return (endpoint, null);
+			}
+			catch (Exception ex)
+			{
+				return (null, new ProgramError("Could not start iroh: " + ex.Message, goalStep, function));
+			}
+		}
+
+		private void AcceptLoop(IrohEndpoint endpoint, GoalToCallInfo onIncoming, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath)
+		{
+			while (true)
+			{
+				IrohConnection? connection = null;
+				try { connection = endpoint.Accept(); } catch { }
+				if (connection == null)
+				{
+					if (!Endpoints.Values.Contains(endpoint)) return;
+					Thread.Sleep(200);
+					continue;
+				}
+
+				var accepted = connection;
+				_ = Task.Factory.StartNew(() => ConnectionLoop(accepted, endpoint, onIncoming, engineRef, accessorRef, rootPath), TaskCreationOptions.LongRunning);
+			}
+		}
+
+		private void ConnectionLoop(IrohConnection connection, IrohEndpoint endpoint, GoalToCallInfo onIncoming, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath)
+		{
+			while (true)
+			{
+				IrohStream? stream = null;
+				try { stream = connection.AcceptStream(); } catch { }
+				if (stream == null) return;
+
+				var accepted = stream;
+				_ = Task.Run(() => HandleStream(accepted, endpoint, onIncoming, engineRef, accessorRef, rootPath));
+			}
+		}
+
+		private async Task HandleStream(IrohStream stream, IrohEndpoint endpoint, GoalToCallInfo onIncoming, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath)
+		{
+			TellAnswer answer;
+			try
+			{
+				answer = await Process(stream.ReadAll(30000, MaxRequestBytes), endpoint, onIncoming, engineRef, accessorRef, rootPath);
+			}
+			catch (Exception ex)
+			{
+				logger?.LogWarning(ex, "iroh: a command could not be processed");
+				answer = new TellAnswer(false, null, "Declined: the command could not be read", 400);
+			}
+
+			try { stream.WriteAndFinish(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(answer))); } catch { }
+		}
+
+		private async Task<TellAnswer> Process(byte[] bytes, IrohEndpoint endpoint, GoalToCallInfo onIncoming, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath)
+		{
+			var request = JsonConvert.DeserializeObject<TellRequest>(Encoding.UTF8.GetString(bytes));
+			if (request == null || string.IsNullOrEmpty(request.Signature) || string.IsNullOrEmpty(request.Payload))
+			{
+				return new TellAnswer(false, null, "Declined: the command is not signed", 401);
+			}
+
+			SignedMessage? signed;
+			try { signed = JsonConvert.DeserializeObject<SignedMessage>(request.Signature); }
+			catch { signed = null; }
+			if (signed == null) return new TellAnswer(false, null, "Declined: the signature could not be read", 401);
+
+			var (verified, error) = await signingService.VerifySignature(signed, null, request.Payload);
+			if (error != null || verified == null)
+			{
+				return new TellAnswer(false, null, "Declined: " + (error?.Message ?? "the signature is not valid"), 401);
+			}
+
+			var payload = JObject.Parse(request.Payload);
+			string? to = payload["to"]?.ToString();
+			if (!string.IsNullOrEmpty(to) && to != endpoint.Id)
+			{
+				return new TellAnswer(false, null, "Declined: the command was signed for another endpoint", 403);
+			}
+
+			string goalName = payload["goal"]?.ToString() ?? "";
+			if (string.IsNullOrWhiteSpace(goalName)) return new TellAnswer(false, null, "Declined: no goal in the command", 400);
+
+			var parameters = (payload["parameters"] as JObject)?.ToObject<Dictionary<string, object?>>() ?? new Dictionary<string, object?>();
+
+			var gate = new GoalToCallInfo(onIncoming.Name, new Dictionary<string, object?>(onIncoming.Parameters)
+			{
+				[ReservedKeywords.Identity] = verified.Identity,
+				["goalName"] = goalName,
+				["parameters"] = parameters,
+				["EndpointId"] = endpoint.Id
+			});
+			var allowed = await pseudoRuntime.RunGoal(engineRef, accessorRef, rootPath, gate);
+			if (allowed.Error != null && allowed.Error is not Return)
+			{
+				return new TellAnswer(false, null, "Declined: " + allowed.Error.Message, 403);
+			}
+
+			parameters[ReservedKeywords.Identity] = verified.Identity;
+			var run = await pseudoRuntime.RunGoal(engineRef, accessorRef, rootPath, new GoalToCallInfo(goalName, parameters));
+
+			if (run.Error is Return ret)
+			{
+				return new TellAnswer(true, ReturnValue(ret), null, 200);
+			}
+			if (run.Error != null) return new TellAnswer(false, null, run.Error.Message, run.Error.StatusCode);
+
+			return new TellAnswer(true, null, null, 200);
+		}
+
+		private static object? ReturnValue(Return ret)
+		{
+			var values = ret.ReturnVariables;
+			if (values == null || values.Count == 0) return null;
+			if (values.Count == 1) return values[0].Value;
+			return values.ToDictionary(p => p.Name, p => p.Value);
+		}
+
+		public record TellRequest(string Signature, string Payload);
+		public record TellAnswer(bool Ok, object? Result, string? Error, int StatusCode);
+	}
+}
