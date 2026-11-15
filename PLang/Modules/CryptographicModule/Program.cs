@@ -282,6 +282,8 @@ namespace PLang.Modules.CryptographicModule
 
 		}
 
+		[Description("The hash of a file's bytes. hashAlgorithm sha256 (default), encoding base64 (default) or hex (lower case, no dashes: the format sha256sum prints). e.g. `get sha256 hash of file \"/out/x.json\", hex, write to %sum%`, `hash file %path% with sha256 as hex`")]
+		[Example("get sha256 hash of file \"/out/x.json\", hex, write to %sum%", "filePath=\"/out/x.json\", hashAlgorithm=\"sha256\", encoding=\"hex\"")]
 		public async Task<(string? Hash, IError? Error)> GetHashOfFile(string filePath, string hashAlgorithm = "sha256", string encoding = "base64")
 		{
 			var absolutePath = GetPath(filePath);
