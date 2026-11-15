@@ -79,20 +79,21 @@ public class Program : BaseProgram
 	[Example("how much disk space is there, write to %disks%", "")]
 	public async Task<(List<PLang.Modules.HostModule.DiskInfo>?, IError?)> GetDisks()
 	{
-		var (text, error) = await PLang.Modules.HostModule.HostCommand.Run(this, goalStep, "df", "-P", "-m", "-x", "tmpfs", "-x", "devtmpfs");
-		if (error != null) return (null, error);
-		return (PLang.Modules.HostModule.HostParsers.ParseDf(text!), null);
+		if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) return (null, NotLinux());
+		return (PLang.Modules.HostModule.ProcReader.ReadDisks(), null);
 	}
+
+	private IError NotLinux() =>
+		new Errors.Runtime.ProgramError($"This reads /proc, a Linux machine's. This one is {RuntimeInformation.OSDescription}", goalStep, Key: "NotSupportedOnThisOs");
 
 	[Description("The memory of this machine in MB: TotalMb, UsedMb, FreeMb, AvailableMb, SwapTotalMb, SwapUsedMb. Linux. e.g. `get memory, write to %memory%`")]
 	[Example("get memory, write to %memory%", "")]
 	[Example("how much memory is free, write to %memory%", "")]
 	public async Task<(PLang.Modules.HostModule.MemoryInfo?, IError?)> GetMemory()
 	{
-		var (text, error) = await PLang.Modules.HostModule.HostCommand.Run(this, goalStep, "free", "-m");
-		if (error != null) return (null, error);
-		var memory = PLang.Modules.HostModule.HostParsers.ParseFree(text!);
-		if (memory == null) return (null, new Errors.Runtime.ProgramError("free gave no Mem: line", goalStep, Key: "UnexpectedOutput"));
+		if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) return (null, NotLinux());
+		var memory = PLang.Modules.HostModule.ProcReader.ReadMemory();
+		if (memory == null) return (null, new Errors.Runtime.ProgramError("/proc/meminfo has no MemTotal", goalStep, Key: "UnexpectedOutput"));
 		return (memory, null);
 	}
 
