@@ -13,7 +13,7 @@ using static PLang.Modules.MockModule.Program;
 
 namespace PLang.Modules.EnvironmentModule;
 
-[Description("Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install")]
+[Description("Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install, disks (size and free space), memory (total, used, free)")]
 [Effect(Effects.None)]
 public class Program : BaseProgram
 {
@@ -72,6 +72,28 @@ public class Program : BaseProgram
 	public async Task<string> GetOSDescription()
 	{
 		return RuntimeInformation.OSDescription;
+	}
+
+	[Description("The disks (mounted file systems) of this machine with size, used, free and percent used, in MB. Each row: Filesystem, Mount, SizeMb, UsedMb, AvailableMb, UsedPercent. Linux. e.g. `get disks, write to %disks%`")]
+	[Example("get disks, write to %disks%", "")]
+	[Example("how much disk space is there, write to %disks%", "")]
+	public async Task<(List<PLang.Modules.HostModule.DiskInfo>?, IError?)> GetDisks()
+	{
+		var (text, error) = await PLang.Modules.HostModule.HostCommand.Run(this, goalStep, "df", "-P", "-m", "-x", "tmpfs", "-x", "devtmpfs");
+		if (error != null) return (null, error);
+		return (PLang.Modules.HostModule.HostParsers.ParseDf(text!), null);
+	}
+
+	[Description("The memory of this machine in MB: TotalMb, UsedMb, FreeMb, AvailableMb, SwapTotalMb, SwapUsedMb. Linux. e.g. `get memory, write to %memory%`")]
+	[Example("get memory, write to %memory%", "")]
+	[Example("how much memory is free, write to %memory%", "")]
+	public async Task<(PLang.Modules.HostModule.MemoryInfo?, IError?)> GetMemory()
+	{
+		var (text, error) = await PLang.Modules.HostModule.HostCommand.Run(this, goalStep, "free", "-m");
+		if (error != null) return (null, error);
+		var memory = PLang.Modules.HostModule.HostParsers.ParseFree(text!);
+		if (memory == null) return (null, new Errors.Runtime.ProgramError("free gave no Mem: line", goalStep, Key: "UnexpectedOutput"));
+		return (memory, null);
 	}
 
 	public async Task<bool> IsInCSharpDebugMode()
