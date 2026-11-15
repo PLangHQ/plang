@@ -9,6 +9,9 @@ namespace PLang.Modules.FileModule
 			switch (encoding)
 			{
 				case "utf-8":
+					// Without a BOM. Encoding.GetEncoding("utf-8") makes File.WriteAllText put EF BB BF first, which strict JSON parsers
+					// refuse and which stays as a character when the file is read back as text. Reading is unaffected: a BOM in a file is still detected.
+					return new UTF8Encoding(false);
 				case "utf-16":
 				case "utf-16BE":
 				case "utf-32LE":
