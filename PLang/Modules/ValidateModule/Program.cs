@@ -246,6 +246,45 @@ namespace PLang.Modules.ValidateModule
 			return new ProgramError("Not implemented");
 		}
 
+		[Description("Checks a json answer (an object, or json text) against a JSON Schema file and returns the problems, one line each: `<path> <what is wrong>`. An empty list means it passes. e.g. `validate %answer% against json schema \"/schema/health.schema.json\", write to %problems%`. Schemas written for draft 2020-12 (with $defs) are read. Not an error when there are problems: look at the list")]
+		public async Task<(List<string>?, IError?)> ValidateJsonSchema(object data, string schemaFile)
+		{
+			if (string.IsNullOrEmpty(schemaFile)) return (null, new ProgramError("schemaFile cannot be empty.", goalStep));
+			var absolutePath = GetPath(schemaFile);
+			if (!fileSystem.File.Exists(absolutePath)) return (null, new ProgramError($"Schema file not found: {schemaFile}", goalStep, Key: "FileNotFound"));
+
+			// NJsonSchema knows "definitions", not draft 2020-12's "$defs".
+			var schemaText = (await fileSystem.File.ReadAllTextAsync(absolutePath)).Replace("\"$defs\"", "\"definitions\"").Replace("#/$defs/", "#/definitions/");
+			NJsonSchema.JsonSchema schema;
+			try { schema = await NJsonSchema.JsonSchema.FromJsonAsync(schemaText, absolutePath); }
+			catch (Exception ex) { return (null, new ProgramError($"The schema {schemaFile} could not be read: {ex.Message}", goalStep)); }
+
+			string json = data is string text ? text : Newtonsoft.Json.JsonConvert.SerializeObject(data);
+			ICollection<NJsonSchema.Validation.ValidationError> errors;
+			try { errors = schema.Validate(json); }
+			catch (Newtonsoft.Json.JsonException ex) { return (null, new ProgramError($"The answer is not json: {ex.Message}", goalStep)); }
+
+			var problems = new List<string>();
+			void Add(NJsonSchema.Validation.ValidationError error)
+			{
+				if (error is NJsonSchema.Validation.ChildSchemaValidationError child && child.Errors.Count > 0)
+				{
+					foreach (var sub in child.Errors.Values.SelectMany(p => p)) Add(sub);
+					return;
+				}
+				string path = "$" + (error.Path ?? "").TrimStart('#').Replace("/", ".");
+				string what = error.Kind switch
+				{
+					NJsonSchema.Validation.ValidationErrorKind.PropertyRequired => "is missing (send null if the app cannot know it)",
+					NJsonSchema.Validation.ValidationErrorKind.NoAdditionalPropertiesAllowed => "is not in the contract",
+					_ => error.Kind.ToString()
+				};
+				problems.Add($"{path} {what}");
+			}
+			foreach (var error in errors) Add(error);
+			return (problems, null);
+		}
+
 		public async Task<IError?> ValidateFileExtension(List<string> allowedExtensions, string fileName)
 		{
 			var extension = Path.GetExtension(fileName)?.ToLowerInvariant();
