@@ -262,7 +262,10 @@ namespace PLang.Modules.CryptographicModule
 			string fileHash = "";
 			if (encoding == "hex")
 			{
-				fileHash = BitConverter.ToString(fileHashBytes);
+				// Lower case, no dashes: what sha256sum, git and every checksum list print. (BitConverter.ToString gave "AB-CD-.."
+				// in upper case, which could never equal the lower-cased expected value below.)
+				fileHash = Convert.ToHexString(fileHashBytes).ToLowerInvariant();
+				return (fileHash.Equals(expectedHash.Replace("-", "").ToLowerInvariant()), null);
 			}
 			else
 			{
@@ -295,7 +298,8 @@ namespace PLang.Modules.CryptographicModule
 			string fileHash = "";
 			if (encoding == "hex")
 			{
-				fileHash = BitConverter.ToString(fileHashBytes);
+				// Lower case, no dashes: the format of sha256sum and of the manifests that hold file hashes.
+				fileHash = Convert.ToHexString(fileHashBytes).ToLowerInvariant();
 			}
 			else
 			{
