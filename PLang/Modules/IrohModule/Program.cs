@@ -20,7 +20,12 @@ namespace PLang.Modules.IrohModule
 	{
 		public const string Alpn = "plang/tell/1";
 		private const string SecretKeyPrefix = "IrohSecretKey_";
-		private const int MaxRequestBytes = 16 * 1024 * 1024;
+		private const int MaxHeaderBytes = 1024 * 1024;
+		private const int MaxAnswerBytes = 16 * 1024 * 1024;
+		private const int ChunkTimeoutMilliseconds = 30000;
+		private const long DefaultMaxFileBytes = 512L * 1024 * 1024;
+		private const string MaxFileBytesSetting = "IrohMaxFileBytes";
+		private const string IncomingFolder = "/.tmp/iroh";
 
 		private static readonly ConcurrentDictionary<string, IrohEndpoint> Endpoints = new();
 
@@ -50,7 +55,7 @@ namespace PLang.Modules.IrohModule
 			return await CreateKey(name, false);
 		}
 
-		[Description("Start listening for iroh peers. Every incoming command must be signed, an unsigned or badly signed one is declined. The goal in onIncoming is called first with %Identity% (the signer), %goalName%, %parameters% and %EndpointId%, and it decides if the identity is allowed by throwing an error to decline. When it does not fail the requested goal runs and what it returns goes back to the caller. onIncoming is required")]
+		[Description("Start listening for iroh peers. Every incoming command must be signed, an unsigned or badly signed one is declined. The goal in onIncoming is called first with %Identity% (the signer), %goalName%, %parameters% and %EndpointId% (and %fileName% and %fileSize% when a file comes with the command, the file is not received until this goal has not failed), and it decides if the identity is allowed by throwing an error to decline. When it does not fail the requested goal runs and what it returns goes back to the caller. onIncoming is required")]
 		[Example("start listening, on incoming call Allow, write to %listener%", "onIncoming=Allow")]
 		[Example("listen on iroh 'kiosk', on incoming call Allow", "keyName=\"kiosk\", onIncoming=Allow")]
 		public async Task<(IrohListener?, IError?)> Listen(GoalToCallInfo? onIncoming = null, string keyName = "default", bool useRelay = true)
@@ -65,6 +70,7 @@ namespace PLang.Modules.IrohModule
 			if (error != null) return (null, error);
 
 			var listener = new IrohListener(keyName, endpoint!.Id, endpoint.Ticket());
+			RemoveOldReceivedFiles(fileSystem.RootDirectory);
 
 			var engineRef = engine;
 			var accessorRef = contextAccessor;
@@ -116,7 +122,10 @@ namespace PLang.Modules.IrohModule
 		[Description("Tell a connected peer to run a goal in its app. The command is signed with your identity, the peer decides if it will run it. Returns what the remote goal returns")]
 		[Example("tell %agent% to Update, version: \"1\", write to %result%", "goalName=\"Update\", parameters={\"version\":\"1\"}")]
 		[Example("tell %agent% to RestartKiosk, timeout 30 seconds, write to %result%", "goalName=\"RestartKiosk\", timeoutInSeconds=30")]
-		public async Task<(object?, IError?)> Tell(IrohPeer peer, string goalName, Dictionary<string, object?>? parameters = null, int timeoutInSeconds = 60, int expiresInSeconds = 120)
+		[Example("tell %agent% to Update, file: %package%, write to %result%", "goalName=\"Update\", file=%package%")]
+		public async Task<(object?, IError?)> Tell(IrohPeer peer, string goalName, Dictionary<string, object?>? parameters = null,
+			[Description("Path of a file to send with the command. Its size and sha256 are in the signed command, the peer checks them and gives the goal the saved path as %file%")] string? file = null,
+			int timeoutInSeconds = 60, int expiresInSeconds = 120)
 		{
 			if (peer?.Connection == null)
 			{
@@ -136,6 +145,23 @@ namespace PLang.Modules.IrohModule
 			};
 			if (peer.EndpointId != null) payload["to"] = peer.EndpointId;
 
+			string? filePath = null;
+			if (!string.IsNullOrWhiteSpace(file))
+			{
+				filePath = GetPath(file);
+				if (!File.Exists(filePath))
+				{
+					return (null, new ProgramError($"The file to send does not exist: {file}", goalStep, function));
+				}
+				var info = new FileInfo(filePath);
+				payload["file"] = new JObject
+				{
+					["name"] = info.Name,
+					["size"] = info.Length,
+					["sha256"] = await Task.Run(() => HashFile(filePath))
+				};
+			}
+
 			string payloadJson = payload.ToString(Formatting.None);
 			var signature = await signingService.Sign(payloadJson, null, expiresInSeconds);
 			string request = JsonConvert.SerializeObject(new TellRequest(JsonConvert.SerializeObject(signature), payloadJson));
@@ -143,7 +169,11 @@ namespace PLang.Modules.IrohModule
 			byte[] answerBytes;
 			try
 			{
-				answerBytes = await Task.Run(() => peer.Connection.Request(Encoding.UTF8.GetBytes(request), timeoutInSeconds * 1000, MaxRequestBytes));
+				answerBytes = await Task.Run(() =>
+				{
+					using Stream? fileStream = filePath == null ? null : new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+					return peer.Connection.Request(Encoding.UTF8.GetBytes(request), fileStream, ChunkTimeoutMilliseconds, timeoutInSeconds * 1000, MaxAnswerBytes);
+				});
 			}
 			catch (Exception ex)
 			{
@@ -226,9 +256,10 @@ namespace PLang.Modules.IrohModule
 		private async Task HandleStream(IrohStream stream, IrohEndpoint endpoint, GoalToCallInfo onIncoming, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath)
 		{
 			TellAnswer answer;
+			string? receivedFolder = null;
 			try
 			{
-				answer = await Process(stream.ReadAll(30000, MaxRequestBytes), endpoint, onIncoming, engineRef, accessorRef, rootPath);
+				(answer, receivedFolder) = await Process(stream, endpoint, onIncoming, engineRef, accessorRef, rootPath);
 			}
 			catch (Exception ex)
 			{
@@ -236,51 +267,115 @@ namespace PLang.Modules.IrohModule
 				answer = new TellAnswer(false, null, "Declined: the command could not be read", 400);
 			}
 
+			if (!answer.Ok && receivedFolder != null)
+			{
+				try { Directory.Delete(receivedFolder, true); } catch { }
+			}
+
 			try { stream.WriteAndFinish(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(answer))); } catch { }
 		}
 
-		private async Task<TellAnswer> Process(byte[] bytes, IrohEndpoint endpoint, GoalToCallInfo onIncoming, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath)
+		private async Task<(TellAnswer Answer, string? ReceivedFolder)> Process(IrohStream stream, IrohEndpoint endpoint, GoalToCallInfo onIncoming, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath)
+		{
+			byte[] lengthBytes = new byte[4];
+			if (!stream.ReadExactly(lengthBytes, 4, ChunkTimeoutMilliseconds))
+			{
+				return (new TellAnswer(false, null, "Declined: the command is not signed", 401), null);
+			}
+			int headerLength = (lengthBytes[0] << 24) | (lengthBytes[1] << 16) | (lengthBytes[2] << 8) | lengthBytes[3];
+			if (headerLength <= 0 || headerLength > MaxHeaderBytes)
+			{
+				return (new TellAnswer(false, null, "Declined: the command header is not valid", 400), null);
+			}
+			byte[] headerBytes = new byte[headerLength];
+			if (!stream.ReadExactly(headerBytes, headerLength, ChunkTimeoutMilliseconds))
+			{
+				return (new TellAnswer(false, null, "Declined: the command header is not valid", 400), null);
+			}
+
+			return await Process(stream, headerBytes, endpoint, onIncoming, engineRef, accessorRef, rootPath);
+		}
+
+		private async Task<(TellAnswer Answer, string? ReceivedFolder)> Process(IrohStream stream, byte[] bytes, IrohEndpoint endpoint, GoalToCallInfo onIncoming, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath)
 		{
 			var request = JsonConvert.DeserializeObject<TellRequest>(Encoding.UTF8.GetString(bytes));
 			if (request == null || string.IsNullOrEmpty(request.Signature) || string.IsNullOrEmpty(request.Payload))
 			{
-				return new TellAnswer(false, null, "Declined: the command is not signed", 401);
+				return (new TellAnswer(false, null, "Declined: the command is not signed", 401), null);
 			}
 
 			SignedMessage? signed;
 			try { signed = JsonConvert.DeserializeObject<SignedMessage>(request.Signature); }
 			catch { signed = null; }
-			if (signed == null) return new TellAnswer(false, null, "Declined: the signature could not be read", 401);
+			if (signed == null) return (new TellAnswer(false, null, "Declined: the signature could not be read", 401), null);
 
 			var (verified, error) = await signingService.VerifySignature(signed, null, request.Payload);
 			if (error != null || verified == null)
 			{
-				return new TellAnswer(false, null, "Declined: " + (error?.Message ?? "the signature is not valid"), 401);
+				return (new TellAnswer(false, null, "Declined: " + (error?.Message ?? "the signature is not valid"), 401), null);
 			}
 
 			var payload = JObject.Parse(request.Payload);
 			string? to = payload["to"]?.ToString();
 			if (!string.IsNullOrEmpty(to) && to != endpoint.Id)
 			{
-				return new TellAnswer(false, null, "Declined: the command was signed for another endpoint", 403);
+				return (new TellAnswer(false, null, "Declined: the command was signed for another endpoint", 403), null);
 			}
 
 			string goalName = payload["goal"]?.ToString() ?? "";
-			if (string.IsNullOrWhiteSpace(goalName)) return new TellAnswer(false, null, "Declined: no goal in the command", 400);
+			if (string.IsNullOrWhiteSpace(goalName)) return (new TellAnswer(false, null, "Declined: no goal in the command", 400), null);
 
 			var parameters = (payload["parameters"] as JObject)?.ToObject<Dictionary<string, object?>>() ?? new Dictionary<string, object?>();
 
-			var gate = new GoalToCallInfo(onIncoming.Name, new Dictionary<string, object?>(onIncoming.Parameters)
+			string? fileName = null;
+			long fileSize = 0;
+			string? fileSha256 = null;
+			if (payload["file"] is JObject fileInfo)
+			{
+				fileName = Path.GetFileName(fileInfo["name"]?.ToString() ?? "");
+				fileSize = fileInfo["size"]?.Value<long>() ?? -1;
+				fileSha256 = fileInfo["sha256"]?.ToString()?.ToLowerInvariant();
+				long maxFileBytes = settings.GetOrDefault(typeof(Program), MaxFileBytesSetting, DefaultMaxFileBytes);
+				if (string.IsNullOrEmpty(fileName) || fileSize < 0 || string.IsNullOrEmpty(fileSha256) || fileSha256.Length != 64)
+				{
+					return (new TellAnswer(false, null, "Declined: the file in the command is not described correctly", 400), null);
+				}
+				if (fileSize > maxFileBytes)
+				{
+					return (new TellAnswer(false, null, $"Declined: the file is {fileSize} bytes, this app takes at most {maxFileBytes}", 413), null);
+				}
+			}
+
+			var gateParameters = new Dictionary<string, object?>(onIncoming.Parameters)
 			{
 				[ReservedKeywords.Identity] = verified.Identity,
 				["goalName"] = goalName,
 				["parameters"] = parameters,
 				["EndpointId"] = endpoint.Id
-			});
-			var allowed = await pseudoRuntime.RunGoal(engineRef, accessorRef, rootPath, gate);
+			};
+			if (fileName != null)
+			{
+				gateParameters["fileName"] = fileName;
+				gateParameters["fileSize"] = fileSize;
+			}
+			var allowed = await pseudoRuntime.RunGoal(engineRef, accessorRef, rootPath, new GoalToCallInfo(onIncoming.Name, gateParameters));
 			if (allowed.Error != null && allowed.Error is not Return)
 			{
-				return new TellAnswer(false, null, "Declined: " + allowed.Error.Message, 403);
+				return (new TellAnswer(false, null, "Declined: " + allowed.Error.Message, 403), null);
+			}
+
+			string? receivedFolder = null;
+			if (fileName != null)
+			{
+				string folderName = Guid.NewGuid().ToString("N");
+				receivedFolder = Path.Join(rootPath, IncomingFolder, folderName);
+				Directory.CreateDirectory(receivedFolder);
+				string savedPath = Path.Join(receivedFolder, fileName);
+
+				string? receiveError = await Task.Run(() => ReceiveFile(stream, savedPath, fileSize, fileSha256!));
+				if (receiveError != null) return (new TellAnswer(false, null, "Declined: " + receiveError, 400), receivedFolder);
+
+				parameters["file"] = IncomingFolder + "/" + folderName + "/" + fileName;
 			}
 
 			parameters[ReservedKeywords.Identity] = verified.Identity;
@@ -288,11 +383,52 @@ namespace PLang.Modules.IrohModule
 
 			if (run.Error is Return ret)
 			{
-				return new TellAnswer(true, ReturnValue(ret), null, 200);
+				return (new TellAnswer(true, ReturnValue(ret), null, 200), receivedFolder);
 			}
-			if (run.Error != null) return new TellAnswer(false, null, run.Error.Message, run.Error.StatusCode);
+			if (run.Error != null) return (new TellAnswer(false, null, run.Error.Message, run.Error.StatusCode), receivedFolder);
 
-			return new TellAnswer(true, null, null, 200);
+			return (new TellAnswer(true, null, null, 200), receivedFolder);
+		}
+
+		private static string? ReceiveFile(IrohStream stream, string savedPath, long size, string expectedSha256)
+		{
+			using var hash = System.Security.Cryptography.IncrementalHash.CreateHash(System.Security.Cryptography.HashAlgorithmName.SHA256);
+			using (var output = new FileStream(savedPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+			{
+				byte[] buffer = new byte[IrohConnection.ChunkBytes];
+				long remaining = size;
+				while (remaining > 0)
+				{
+					int read = stream.Read(buffer, (int)Math.Min(buffer.Length, remaining), ChunkTimeoutMilliseconds);
+					if (read == 0) return "the file ended before all of it arrived";
+					output.Write(buffer, 0, read);
+					hash.AppendData(buffer, 0, read);
+					remaining -= read;
+				}
+			}
+
+			string actual = Convert.ToHexString(hash.GetHashAndReset()).ToLowerInvariant();
+			return actual == expectedSha256 ? null : "the file does not match the sha256 in the signed command";
+		}
+
+		private static void RemoveOldReceivedFiles(string rootPath)
+		{
+			try
+			{
+				string folder = Path.Join(rootPath, IncomingFolder);
+				if (!Directory.Exists(folder)) return;
+				foreach (var old in Directory.GetDirectories(folder).Where(p => Directory.GetCreationTimeUtc(p) < DateTime.UtcNow.AddDays(-1)))
+				{
+					Directory.Delete(old, true);
+				}
+			}
+			catch { }
+		}
+
+		private static string HashFile(string path)
+		{
+			using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+			return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(stream)).ToLowerInvariant();
 		}
 
 		private static object? ReturnValue(Return ret)

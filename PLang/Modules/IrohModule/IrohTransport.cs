@@ -195,8 +195,14 @@ namespace PLang.Modules.IrohModule
 
 		public bool IsDisposed => disposed;
 
-		/// <summary>Opens a stream, writes the request, reads the whole answer. The caller's stream is a single request/answer.</summary>
-		public byte[] Request(byte[] request, int timeoutMilliseconds, int maxAnswerBytes)
+		public const int ChunkBytes = 64 * 1024;
+
+		/// <summary>
+		/// One request/answer per stream. The request is a 4 byte big endian header length, the header, then
+		/// the file bytes when there is a file. The peer may answer and stop reading (declined), so a failed
+		/// write still tries to read the answer before the write error is reported.
+		/// </summary>
+		public byte[] Request(byte[] header, Stream? file, int chunkTimeoutMilliseconds, int answerTimeoutMilliseconds, int maxAnswerBytes)
 		{
 			Connection* conn = (Connection*)connection;
 			SendStream* send = iroh.send_stream_default();
@@ -204,14 +210,45 @@ namespace PLang.Modules.IrohModule
 			var open = iroh.connection_open_bi(&conn, &send, &recv);
 			if (open != EndpointResult.ENDPOINT_RESULT_OK) throw new IrohException("Could not open a stream to the peer: " + open);
 
-			fixed (byte* requestPtr = request)
+			IrohException? writeError = null;
+			try
 			{
-				var written = iroh.send_stream_write(&send, new slice_ref_uint8 { ptr = requestPtr, len = (UIntPtr)request.Length });
-				if (written != EndpointResult.ENDPOINT_RESULT_OK) throw new IrohException("Could not send to the peer: " + written);
+				byte[] length = [(byte)((header.Length >> 24) & 0xFF), (byte)((header.Length >> 16) & 0xFF), (byte)((header.Length >> 8) & 0xFF), (byte)(header.Length & 0xFF)];
+				Write(send, length, length.Length, chunkTimeoutMilliseconds);
+				Write(send, header, header.Length, chunkTimeoutMilliseconds);
+
+				if (file != null)
+				{
+					byte[] buffer = new byte[ChunkBytes];
+					int read;
+					while ((read = file.Read(buffer, 0, buffer.Length)) > 0)
+					{
+						Write(send, buffer, read, chunkTimeoutMilliseconds);
+					}
+				}
 			}
+			catch (IrohException ex) { writeError = ex; }
+
 			iroh.send_stream_finish(send);
 
-			return ReadAll(recv, timeoutMilliseconds, maxAnswerBytes);
+			try
+			{
+				return ReadAll(recv, answerTimeoutMilliseconds, maxAnswerBytes);
+			}
+			catch when (writeError != null)
+			{
+				throw writeError;
+			}
+		}
+
+		private static void Write(SendStream* send, byte[] bytes, int count, int timeoutMilliseconds)
+		{
+			fixed (byte* ptr = bytes)
+			{
+				var written = iroh.send_stream_write_timeout(&send, new slice_ref_uint8 { ptr = ptr, len = (UIntPtr)count }, (ulong)timeoutMilliseconds);
+				if (written == EndpointResult.ENDPOINT_RESULT_TIMEOUT) throw new IrohException("The peer stopped taking data");
+				if (written != EndpointResult.ENDPOINT_RESULT_OK) throw new IrohException("Could not send to the peer: " + written);
+			}
 		}
 
 		/// <summary>Blocks until the peer opens a stream. Null when the connection is closed.</summary>
@@ -259,6 +296,37 @@ namespace PLang.Modules.IrohModule
 		internal IrohStream(nint send, nint recv) { this.send = send; this.recv = recv; }
 
 		public byte[] ReadAll(int timeoutMilliseconds, int maxBytes) => IrohConnection.ReadAll((RecvStream*)recv, timeoutMilliseconds, maxBytes);
+
+		/// <summary>Reads up to count bytes. 0 means the peer finished the stream. A timeout or a broken stream throws.</summary>
+		public int Read(byte[] buffer, int count, int timeoutMilliseconds)
+		{
+			RecvStream* stream = (RecvStream*)recv;
+			fixed (byte* ptr = buffer)
+			{
+				long read = iroh.recv_stream_read_timeout(&stream, new slice_mut_uint8 { ptr = ptr, len = (UIntPtr)count }, (ulong)timeoutMilliseconds);
+				if (read < 0) throw new IrohException("The peer stopped sending");
+				return (int)read;
+			}
+		}
+
+		/// <summary>Fills count bytes. False when the stream ended before the first byte, throws when it ends in the middle.</summary>
+		public bool ReadExactly(byte[] buffer, int count, int timeoutMilliseconds)
+		{
+			int total = 0;
+			byte[] part = new byte[count];
+			while (total < count)
+			{
+				int read = Read(part, count - total, timeoutMilliseconds);
+				if (read == 0)
+				{
+					if (total == 0) return false;
+					throw new IrohException("The peer ended the stream in the middle of a message");
+				}
+				Array.Copy(part, 0, buffer, total, read);
+				total += read;
+			}
+			return true;
+		}
 
 		public void WriteAndFinish(byte[] bytes)
 		{

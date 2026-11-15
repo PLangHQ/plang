@@ -41,13 +41,27 @@ Redial
 
 `tell` waits for the answer (60 seconds by default, `timeout 30 seconds` changes it). `%result%` is what the remote goal returns. A declined command is an error in the step, so `on error` works.
 
+## Send a file with the command
+
+```plang
+SendUpdate
+- tell %agent% to Update, file: %package%, timeout 120 seconds, write to %result%
+
+Update
+- write out "Got %file%"
+- return "scheduled"
+```
+
+The size and sha256 of the file are in the signed command. The receiver calls `on incoming` first (it gets `%fileName%` and `%fileSize%` too) and takes no file bytes until that goal has passed. Then the file is saved under `/.tmp/iroh/<id>/<name>` in the receiving app, its sha256 is checked, and the goal runs with `%file%` set to that path. A file that does not match is deleted and the command is declined. After a successful command the file belongs to the goal, so move it or delete it. Folders older than a day are removed when the app starts listening. The largest file taken is 512 MB, change it with the setting `IrohMaxFileBytes`.
+
 ## Wire format
 
-One bidirectional QUIC stream per `tell`, ALPN `plang/tell/1`. The request is JSON `{ "Signature": <signed message>, "Payload": <string> }` where the payload is `{ goal, parameters, created, to }` and the signature covers the payload text. `to` is the receiver's endpoint id and is checked when the sender connected by id. The answer is `{ Ok, Result, Error, StatusCode }`. The stream is closed after the answer.
+One bidirectional QUIC stream per `tell`, ALPN `plang/tell/1`. The request is a 4 byte big endian header length, the header, then the file bytes when there is a file. The header is JSON `{ "Signature": <signed message>, "Payload": <string> }` where the payload is `{ goal, parameters, created, to, file: { name, size, sha256 } }` and the signature covers the payload text. `to` is the receiver's endpoint id and is checked when the sender connected by id. The file goes in 64 KB chunks, each with a 30 second timeout. The answer is `{ Ok, Result, Error, StatusCode }`. The stream is closed after the answer.
 
 ## Limits to know
 
 - The C interface gives no peer endpoint id on an accepted connection, so the receiver authenticates the sender by the plang signature alone.
 - `on closed` fires when the connection is closed. A peer that disappears without closing is only noticed after the QUIC idle timeout, so a `tell` that fails is the reliable moment to connect again.
 - The signing service refuses a signature older than its expiry and a nonce it has seen, so a replayed command is declined. How long nonces are kept across a restart is not verified.
+- A file that is cut off halfway is not resumed, send it again. A 40 MB file took 2 seconds between two processes on one machine, direct, so the speed over a relay is not measured.
 - The free n0 relays are for development. Make the relay configurable before relying on it in production.
