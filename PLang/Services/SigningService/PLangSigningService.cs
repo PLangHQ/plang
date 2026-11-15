@@ -138,10 +138,9 @@ namespace PLang.Services.SigningService
 				Created = created,
 				Contracts = contracts ?? ["C0"]
 			};
-			if (!string.IsNullOrEmpty(nonce))
-			{
-				signature.Nonce = nonce;
-			}
+			// skipNonce gives an empty nonce. SignedMessage's own default is a new Guid, so leaving it unset kept a nonce
+			// on every signature and skipNonce did nothing.
+			signature.Nonce = nonce;
 
 			if (headers != null && headers.Count > 0)
 			{
@@ -223,16 +222,23 @@ namespace PLang.Services.SigningService
 				}
 			}
 
-			string cacheKey = string.Format(VerifySignatureCacheKey, clientSignedMessage.Nonce);
-			var usedNonce = await appCache.Get(cacheKey);
-			if (usedNonce != null)
+			// A signature made without a nonce (skipNonce, e.g. a signature on a file) is not a request that can be replayed:
+			// there is nothing to remember, and it must verify every time.
+			// The nonce is only remembered after the signature has verified (below). Remembering it first let anyone who knows
+			// an endpoint or url fill the cache with made-up nonces, each kept until a sender-chosen expiry.
+			string? nonceCacheKey = null;
+			DateTimeOffset nonceKeptUntil = DateTimeOffset.Now.AddMinutes(5).AddSeconds(5);
+			if (!string.IsNullOrEmpty(clientSignedMessage.Nonce))
 			{
-				return (null, new ServiceError("Nonce has been used. New request needs to be created", GetType(), SignatureInvalid, StatusCode: 403));
+				nonceCacheKey = string.Format(VerifySignatureCacheKey, clientSignedMessage.Nonce);
+				var usedNonce = await appCache.Get(nonceCacheKey);
+				if (usedNonce != null)
+				{
+					return (null, new ServiceError("Nonce has been used. New request needs to be created", GetType(), SignatureInvalid, StatusCode: 403));
+				}
+				if (expires != null && expires.Value.AddSeconds(5) > nonceKeptUntil) nonceKeptUntil = expires.Value.AddSeconds(5);
 			}
-			var nonceKeptUntil = DateTimeOffset.Now.AddMinutes(5).AddSeconds(5);
-			if (expires != null && expires.Value.AddSeconds(5) > nonceKeptUntil) nonceKeptUntil = expires.Value.AddSeconds(5);
-			await appCache.Set(cacheKey, true, nonceKeptUntil);
-			
+
 			if (clientSignedMessage.Headers != null && clientSignedMessage.Headers.Count > 0)
 			{
 				if (headers == null || headers.Count == 0) return (null, new ServiceError($"No headers is provided in request", GetType(), "InvalidSignature"));
@@ -311,6 +317,7 @@ namespace PLang.Services.SigningService
 
 			if (isValid)
 			{
+				if (nonceCacheKey != null) await appCache.Set(nonceCacheKey, true, nonceKeptUntil);
 				clientSignedMessage.Signature = signature;
 				return (clientSignedMessage, null);
 			}

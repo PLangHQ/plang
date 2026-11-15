@@ -729,13 +729,24 @@ namespace PLang.Modules.FileModule
 		[Effect(Effects.WritesFiles)]
 		public async Task<IError?> WriteToFile(string path, object content, [Description("true when the step says to overwrite or replace the file. false when it says to append, or says nothing about an existing file")] bool overwrite = false,
 			[Description("true only when the step says in words that the %variables% inside the content should be replaced with their values before it is written. A content that merely contains variables is not a reason: `content: {\"a\": %x%}` writes the variable through as it stands, which is the normal case and false")]
-			bool loadVariables = false, [Description("true when the step says the variable should simply be empty if the file is missing, e.g. `empty variable if not found`. false otherwise")] bool emptyVariableIfNotFound = false, string encoding = "utf-8")
+			bool loadVariables = false, [Description("true when the step says the variable should simply be empty if the file is missing, e.g. `empty variable if not found`. false otherwise")] bool emptyVariableIfNotFound = false, string encoding = "utf-8",
+			[Description("Only when the step says to sign the file, e.g. `sign with identity default`. 'default' is the current identity. The signature is written next to the file as <file>.signature and covers the file's name and the sha256 of the bytes written. null when the step does not ask for a signature")] string? identity = null,
+			[Description("Contracts of the signature, e.g. contracts: [\"watcher-agent/1\"]. Only used when identity is set")] List<string>? contracts = null)
 		{
 			if (string.IsNullOrEmpty(path))
 			{
 				return new ProgramError("Path cannot be empty.", FixSuggestion: "Make sure you are sending path in your step, if it's variable then it might be empty.");
 			}
 
+			await WriteToFileInternal(path, content, overwrite, loadVariables, emptyVariableIfNotFound, encoding);
+			if (identity == null) return null;
+
+			var (_, signError) = await GetProgramModule<IdentityModule.Program>().SignFile(path, contracts, null, identity);
+			return signError;
+		}
+
+		private async Task WriteToFileInternal(string path, object content, bool overwrite, bool loadVariables, bool emptyVariableIfNotFound, string encoding)
+		{
 			var absolutePath = GetPath(path);
 			string dirPath = fileSystem.Path.GetDirectoryName(absolutePath);
 			if (!fileSystem.Directory.Exists(dirPath))
@@ -754,12 +765,12 @@ namespace PLang.Modules.FileModule
 			{
 				using var stream = fileSystem.File.Create(absolutePath);
 				await formFile.CopyToAsync(stream);
-				return null;
+				return;
 			}
 			if (content is XmlDocument doc)
 			{
 				doc.Save(absolutePath);
-				return null;
+				return;
 			}
 
 			if (loadVariables && !string.IsNullOrEmpty(content.ToString()))
@@ -772,7 +783,6 @@ namespace PLang.Modules.FileModule
 			}
 
 			await fileSystem.File.WriteAllTextAsync(absolutePath, content?.ToString(), encoding: FileHelper.GetEncoding(encoding));
-			return null;
 		}
 
 

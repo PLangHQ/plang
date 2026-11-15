@@ -117,13 +117,20 @@ namespace PLang.Modules.IdentityModule
 		}
 
 		[Description("Validate a signature. Return the signature when valid, gives error when invalid")]
-		public async Task<(SignedMessage? Signature, IError? Error)> VerifySignature(object? signatureFromUser = null, Dictionary<string, object?>? headers = null, object? body = null, List<string>? contracts = null)
+		public async Task<(SignedMessage? Signature, IError? Error)> VerifySignature(object? signatureFromUser = null, Dictionary<string, object?>? headers = null, object? body = null, List<string>? contracts = null,
+			[Description("true when the step says the signature must cover the body, e.g. `body is required`. Without it a signature that carries no hash of its data is accepted for any body")] bool requireData = false)
 		{
 			if (signatureFromUser == null)
 			{
 				return (null, new ProgramError("Signature is missing"));
 			}
 			SignedMessage? signature = signatureFromUser as SignedMessage;
+			if (signature == null && signatureFromUser is JToken token)
+			{
+				// A signature that came back as JSON (tell, http, a file) is a JObject by the time it gets here.
+				try { signature = token.ToObject<SignedMessage>(); }
+				catch (Exception ex) { return (null, new ProgramError("Signature could not be converted to proper Signature: " + ex.Message, goalStep)); }
+			}
 			if (signature == null && signatureFromUser is string str)
 			{
 				signature = SignatureCreator.Parse(str);
@@ -139,7 +146,70 @@ namespace PLang.Modules.IdentityModule
 				return (null, new ProgramError("Signature could not be converted to proper Signature"));
 			}	
 
+			if (requireData && signature.Data == null)
+			{
+				return (null, new ProgramError("The signature does not cover any data (no data hash), so it proves nothing about the body.", goalStep, Key: "SignatureInvalid"));
+			}
+
 			return await signingService.VerifySignature(signature, headers, body, contracts);
+		}
+
+		public const string SignatureFileExtension = ".signature";
+		public const string FileContract = "file/1";
+
+		/// <summary>What a file signature signs: the file's name and the sha256 of the bytes on disk (a BOM included), nothing else.</summary>
+		private Dictionary<string, object> FileSignatureData(string absolutePath)
+		{
+			using var stream = fileSystem.File.OpenRead(absolutePath);
+			string sha = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(stream)).ToLowerInvariant();
+			return new Dictionary<string, object> { { "file", fileSystem.Path.GetFileName(absolutePath) }, { "sha256", sha } };
+		}
+
+		[Description("Sign a file with the current identity. Writes the signature next to it as <file>.signature. The signature covers the file's name and the sha256 of its bytes. identity is 'default' (the current identity); another name is not supported yet")]
+		[PLang.Attributes.Effect(PLang.Attributes.Effects.WritesFiles)]
+		public async Task<(SignedMessage?, IError?)> SignFile(string path, List<string>? contracts = null, int? expiresInSeconds = null, string identity = "default")
+		{
+			if (string.IsNullOrEmpty(path)) return (null, new ProgramError("Path cannot be empty.", goalStep));
+			if (!string.Equals(identity, "default", StringComparison.OrdinalIgnoreCase))
+			{
+				return (null, new ProgramError($"Signing with identity '{identity}' is not supported yet, only 'default' (the current identity).", goalStep));
+			}
+
+			var absolutePath = GetPath(path);
+			if (!fileSystem.File.Exists(absolutePath)) return (null, new ProgramError($"File not found: {path}", goalStep, Key: "FileNotFound"));
+
+			var data = FileSignatureData(absolutePath);
+			// No nonce: a file signature is checked again every time the file is read, a nonce would make the second check fail.
+			// Without an expiry VerifySignature calls a signature older than 5 minutes too old, so the default is ten years.
+			var signature = await signingService.Sign(data, contracts ?? [FileContract], expiresInSeconds ?? 315360000, null, skipNonce: true);
+
+			// Written under a temporary name and moved, so nobody reads a signature that is half written.
+			var signaturePath = absolutePath + SignatureFileExtension;
+			var tempPath = signaturePath + ".tmp";
+			await fileSystem.File.WriteAllTextAsync(tempPath, JsonConvert.SerializeObject(signature), new System.Text.UTF8Encoding(false));
+			fileSystem.File.Move(tempPath, signaturePath, true);
+			return (signature, null);
+		}
+
+		[Description("Verify a file against its <file>.signature. Returns the signature (its Identity says who signed) when the bytes, the name, the contract and the expiry match; an error otherwise, also when there is no .signature file")]
+		public async Task<(SignedMessage?, IError?)> VerifyFile(string path, List<string>? contracts = null)
+		{
+			if (string.IsNullOrEmpty(path)) return (null, new ProgramError("Path cannot be empty.", goalStep));
+
+			var absolutePath = GetPath(path);
+			if (!fileSystem.File.Exists(absolutePath)) return (null, new ProgramError($"File not found: {path}", goalStep, Key: "FileNotFound"));
+
+			var signaturePath = absolutePath + SignatureFileExtension;
+			if (!fileSystem.File.Exists(signaturePath)) return (null, new ProgramError($"No signature for {path}: {Path.GetFileName(signaturePath)} is missing.", goalStep, Key: "SignatureMissing"));
+
+			SignedMessage? signature;
+			try { signature = JsonConvert.DeserializeObject<SignedMessage>(await fileSystem.File.ReadAllTextAsync(signaturePath)); }
+			catch (Exception ex) { return (null, new ProgramError("The signature file could not be read: " + ex.Message, goalStep, Key: "SignatureInvalid")); }
+			if (signature == null) return (null, new ProgramError("The signature file is empty.", goalStep, Key: "SignatureInvalid"));
+			// VerifySignature only compares the data when the signature carries a hash of it: without one, any file would pass.
+			if (signature.Data == null) return (null, new ProgramError("The signature does not cover the file's content (no data hash).", goalStep, Key: "SignatureInvalid"));
+
+			return await signingService.VerifySignature(signature, null, FileSignatureData(absolutePath), contracts ?? [FileContract]);
 		}
 
 		public async Task<(string?, IError?)> GetPrivateKey()
