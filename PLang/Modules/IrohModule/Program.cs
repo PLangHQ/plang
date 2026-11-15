@@ -19,6 +19,8 @@ namespace PLang.Modules.IrohModule
 	public class Program(IPseudoRuntime pseudoRuntime, IPLangSigningService signingService) : BaseProgram
 	{
 		public const string Alpn = "plang/tell/1";
+		private const string SignatureFileExtension = ".signature";
+		private const int MaxSignatureFileBytes = 16 * 1024;
 		private const string SecretKeyPrefix = "IrohSecretKey_";
 		private const int MaxHeaderBytes = 1024 * 1024;
 		private const int MaxAnswerBytes = 16 * 1024 * 1024;
@@ -160,6 +162,14 @@ namespace PLang.Modules.IrohModule
 					["size"] = info.Length,
 					["sha256"] = await Task.Run(() => HashFile(filePath))
 				};
+
+				// A file that has a signature file (<file>.signature, see `write to file ..., identity: default`) sends it along inside
+				// the signed command; the receiver saves it next to the file so `validate file signature` works there.
+				string sidecar = filePath + SignatureFileExtension;
+				if (File.Exists(sidecar) && new FileInfo(sidecar).Length <= MaxSignatureFileBytes)
+				{
+					payload["fileSignature"] = await File.ReadAllTextAsync(sidecar);
+				}
 			}
 
 			string payloadJson = payload.ToString(Formatting.None);
@@ -374,6 +384,12 @@ namespace PLang.Modules.IrohModule
 
 				string? receiveError = await Task.Run(() => ReceiveFile(stream, savedPath, fileSize, fileSha256!));
 				if (receiveError != null) return (new TellAnswer(false, null, "Declined: " + receiveError, 400), receivedFolder);
+
+				string? fileSignature = payload["fileSignature"]?.ToString();
+				if (!string.IsNullOrEmpty(fileSignature) && fileSignature.Length <= MaxSignatureFileBytes)
+				{
+					await File.WriteAllTextAsync(savedPath + SignatureFileExtension, fileSignature);
+				}
 
 				parameters["file"] = IncomingFolder + "/" + folderName + "/" + fileName;
 			}

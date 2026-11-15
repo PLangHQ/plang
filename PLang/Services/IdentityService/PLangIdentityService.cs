@@ -38,7 +38,9 @@ namespace PLang.Services.IdentityService
 
 		public Identity CreateIdentity(string name, bool setAsDefault = false)
 		{
-			var identities = GetIdentities().ToList();
+			// With private keys, archived ones included: GetIdentities() has the private keys cleared and archived ones filtered out,
+			// and this list is stored back, so building on it erased the private key of every existing identity (and dropped the archived ones).
+			var identities = GetIdentitiesWithPrivateKey().ToList();
 			var identity = identities.FirstOrDefault(p => p.Name == name && !p.IsArchived);
 			if (identity != null)
 			{
@@ -106,6 +108,13 @@ namespace PLang.Services.IdentityService
 			identity = GetIdentitiesWithPrivateKey().Where(p => !p.IsArchived && p.Identifier == identity.Identifier).FirstOrDefault()!;
 			return identity;
 		}
+		public Identity GetIdentityWithPrivateKey(string nameOrIdentifier)
+		{
+			var identity = GetIdentitiesWithPrivateKey().FirstOrDefault(p => !p.IsArchived && (p.Name == nameOrIdentifier || p.Identifier == nameOrIdentifier));
+			if (identity == null) throw new IdentityException($"Identity '{nameOrIdentifier}' not found, or it is archived");
+			return identity;
+		}
+
 		public Identity GetCurrentIdentity()
 		{
 			Identity? identity;

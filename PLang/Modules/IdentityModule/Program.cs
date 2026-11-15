@@ -165,23 +165,20 @@ namespace PLang.Modules.IdentityModule
 			return new Dictionary<string, object> { { "file", fileSystem.Path.GetFileName(absolutePath) }, { "sha256", sha } };
 		}
 
-		[Description("Sign a file with the current identity. Writes the signature next to it as <file>.signature. The signature covers the file's name and the sha256 of its bytes. identity is 'default' (the current identity); another name is not supported yet")]
+		[Description("Sign a file with the current identity. Writes the signature next to it as <file>.signature. The signature covers the file's name and the sha256 of its bytes. identity is 'default' (the current identity) or the name of another identity of this app")]
 		[PLang.Attributes.Effect(PLang.Attributes.Effects.WritesFiles)]
 		public async Task<(SignedMessage?, IError?)> SignFile(string path, List<string>? contracts = null, int? expiresInSeconds = null, string identity = "default")
 		{
 			if (string.IsNullOrEmpty(path)) return (null, new ProgramError("Path cannot be empty.", goalStep));
-			if (!string.Equals(identity, "default", StringComparison.OrdinalIgnoreCase))
-			{
-				return (null, new ProgramError($"Signing with identity '{identity}' is not supported yet, only 'default' (the current identity).", goalStep));
-			}
-
 			var absolutePath = GetPath(path);
 			if (!fileSystem.File.Exists(absolutePath)) return (null, new ProgramError($"File not found: {path}", goalStep, Key: "FileNotFound"));
 
 			var data = FileSignatureData(absolutePath);
 			// No nonce: a file signature is checked again every time the file is read, a nonce would make the second check fail.
 			// Without an expiry VerifySignature calls a signature older than 5 minutes too old, so the default is ten years.
-			var signature = await signingService.Sign(data, contracts ?? [FileContract], expiresInSeconds ?? 315360000, null, skipNonce: true);
+			SignedMessage signature;
+			try { signature = await signingService.Sign(data, contracts ?? [FileContract], expiresInSeconds ?? 315360000, null, skipNonce: true, identityName: identity); }
+			catch (PLang.Services.IdentityService.IdentityException ex) { return (null, new ProgramError(ex.Message, goalStep, Key: "IdentityNotFound")); }
 
 			// Written under a temporary name and moved, so nobody reads a signature that is half written.
 			var signaturePath = absolutePath + SignatureFileExtension;

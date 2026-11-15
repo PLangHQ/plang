@@ -41,6 +41,8 @@ namespace PLang.Interfaces
 
 		public Task<bool> Authenticate(Dictionary<string, string> keyValues);
 		Identity GetCurrentIdentityWithPrivateKey();
+		/// <summary>The identity with this name or identifier, with its private key, so it can sign. Throws when there is none, or it is archived.</summary>
+		Identity GetIdentityWithPrivateKey(string nameOrIdentifier);
 		void UseSharedIdentity(string? appId = null);
 	}
 }

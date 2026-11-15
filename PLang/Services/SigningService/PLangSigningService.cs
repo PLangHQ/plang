@@ -31,7 +31,8 @@ namespace PLang.Services.SigningService
 	{
 		Task<string> GetPublicKey();
 
-		Task<SignedMessage> Sign(object? data, List<string>? contracts = null, int? expiresInSeconds = null, Dictionary<string, object>? headers = null, bool skipNonce = false);
+		/// <param name="identityName">null or "default": the current identity. Another value: the identity with that name (or identifier).</param>
+		Task<SignedMessage> Sign(object? data, List<string>? contracts = null, int? expiresInSeconds = null, Dictionary<string, object>? headers = null, bool skipNonce = false, string? identityName = null);
 
 		Task<(SignedMessage? Signature, IError? Error)> VerifyDictionarySignature(Dictionary<string, object?> signature, Dictionary<string, object?>? headers = null, object? data = null, List<string>? contracts = null);
 		Task<(SignedMessage? Signature, IError? Error)> VerifySignature(SignedMessage signature, Dictionary<string, object?>? headers = null, object? data = null, List<string>? contracts = null);
@@ -60,9 +61,11 @@ namespace PLang.Services.SigningService
 			this.hasher = hasher;
 		}
 
-		public async Task<SignedMessage?> Sign(object? data, List<string>? contracts = null, int? expiresInSeconds = null, Dictionary<string, object?>? headers = null, bool skipNonce = false)
+		public async Task<SignedMessage?> Sign(object? data, List<string>? contracts = null, int? expiresInSeconds = null, Dictionary<string, object?>? headers = null, bool skipNonce = false, string? identityName = null)
 		{
-			var identity = identityService.GetCurrentIdentityWithPrivateKey();
+			var identity = (string.IsNullOrEmpty(identityName) || identityName.Equals("default", StringComparison.OrdinalIgnoreCase))
+				? identityService.GetCurrentIdentityWithPrivateKey()
+				: identityService.GetIdentityWithPrivateKey(identityName);
 			var seed = Convert.FromBase64String(identity.Value!.ToString()!);
 
 			DateTimeOffset? expires = null;
