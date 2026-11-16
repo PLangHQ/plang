@@ -241,11 +241,15 @@ export class Plang {
                 headers: headers,
                 method: options.method ?? 'GET'
             } as RequestInit;
-            const req = new Request(url, requestInit);
-
-            const sigObj = await this.signer.signRequest(req);
-            req.headers.set("X-Signature", JSON.stringify(sigObj));
-            const res = await window.fetch(req);
+            let res = await this.signAndSend(url, requestInit);
+            // A signature lives five minutes. A phone that holds a request longer than that
+            // (locked screen, a stalled connection the browser replays) delivers it expired, or
+            // replays it with a nonce the server has already seen. The server checks the
+            // signature before running anything, so nothing has happened yet and one resend with
+            // a fresh signature is safe, also for a POST.
+            if ((res.status === 401 || res.status === 403) && await this.isStaleSignature(res)) {
+                res = await this.signAndSend(url, requestInit);
+            }
             this.announceReady();
 
             if (UtilHelper.isDownloadResponse(res)) {
@@ -298,6 +302,22 @@ export class Plang {
             // so a network failure there is a real failed action and must still be reported.
             this.reportCaught(url.includes("plang.poll") ? "poll" : "fetch", e);
             throw e;
+        }
+    }
+
+    private async signAndSend(url: string, requestInit: RequestInit): Promise<Response> {
+        const req = new Request(url, requestInit);
+        const sigObj = await this.signer.signRequest(req);
+        req.headers.set("X-Signature", JSON.stringify(sigObj));
+        return await window.fetch(req);
+    }
+
+    private async isStaleSignature(res: Response): Promise<boolean> {
+        try {
+            const text = await res.clone().text();
+            return text.includes("Signature expired") || text.includes("Nonce has been used");
+        } catch {
+            return false;
         }
     }
 

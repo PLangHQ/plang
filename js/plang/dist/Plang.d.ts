@@ -56,6 +56,8 @@ export declare class Plang {
     /** Boot did not get as far as a working connection. Fired once. */
     private announceFailed;
     fetch(url: string, options?: NavigatorOptions | undefined): Promise<any>;
+    private signAndSend;
+    private isStaleSignature;
     getPlangHash(body: any): string | null;
     handleResponse(line: string, ctx: HandleCtx): Promise<void>;
     private setCallback;
