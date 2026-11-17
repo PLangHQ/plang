@@ -27,18 +27,22 @@ namespace PLang.SafeFileSystem
 
 		public bool IsRootApp { get; private set; }
 		public string RelativeAppPath { get; set; }
+		// AppContext.BaseDirectory takes the process wide AppContext lock on every read, and these are
+		// read on every file access check; the base directory never changes, so it is read once.
+		private static readonly string systemDirectory = System.IO.Path.Join(AppContext.BaseDirectory, "system");
+		private static readonly string osDirectory = System.IO.Path.Join(AppContext.BaseDirectory, "os");
 		public string SystemDirectory
 		{
 			get
 			{
-				return Path.Join(AppContext.BaseDirectory, "system");
+				return systemDirectory;
 			}
 		}
 		public string OsDirectory
 		{
 			get
 			{
-				return Path.Join(AppContext.BaseDirectory, "os");
+				return osDirectory;
 			}
 		}
 		public string RootDirectory

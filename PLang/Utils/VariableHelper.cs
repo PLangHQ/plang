@@ -24,26 +24,26 @@ namespace PLang.Utils
 	{
 		private readonly ISettings settings;
 		private readonly ILogger logger;
-		private JsonSerializerOptions jsonSerializerOptions;
-		private JsonSerializerSettings jsonSerializerSettings;
+		// Shared by every VariableHelper. A VariableHelper is created for almost every step, and a new
+		// JsonSerializerOptions takes a process wide lock in its constructor and starts with empty
+		// caches: 38% of the lock contention measured at 100 requests a second. The converters
+		// keep no state, so one instance of each is safe to share.
+		private static readonly JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions
+		{
+			Converters = { new ObjectValueConverter() },
+			ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles, //.Preserve,
+																							 //DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+			IgnoreReadOnlyProperties = true
+		};
+		private static readonly JsonSerializerSettings jsonSerializerSettings = new JsonSerializerSettings
+		{
+			Converters = { new JsonObjectValueConverter() },
+			ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+		};
 		public VariableHelper(ISettings settings, ILogger logger)
 		{
 			this.settings = settings;
 			this.logger = logger;
-
-			jsonSerializerOptions = new JsonSerializerOptions
-			{
-				Converters = { new ObjectValueConverter() },
-				ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles, //.Preserve,
-																								 //DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
-				IgnoreReadOnlyProperties = true
-			};
-
-			jsonSerializerSettings = new JsonSerializerSettings
-			{
-				Converters = { new JsonObjectValueConverter() },
-				ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-			};
 		}
 
 		public static bool IsEmpty(object? value)

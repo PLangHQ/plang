@@ -61,8 +61,11 @@ namespace PLang.Modules
 		protected ISettings settings;
 		protected IEngine engine;
 		protected IPLangContextAccessor contextAccessor;
-		protected bool IsBuilder { get; } = false;
-		protected bool IsDebugMode { get; } = false;
+		// Read when used, not in the constructor: a module is constructed for every step, and each
+		// AppContext.TryGetSwitch takes the process wide AppContext lock (19% of the lock contention
+		// at 100 requests a second), while few modules ever look at these.
+		protected bool IsBuilder => AppContext.TryGetSwitch("Builder", out bool isBuilder) && isBuilder;
+		protected bool IsDebugMode => AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool isDebugMode) && isDebugMode;
 		public HttpContext? HttpContext
 		{
 			get
@@ -76,10 +79,6 @@ namespace PLang.Modules
 		public BaseProgram()
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 		{
-			AppContext.TryGetSwitch("Builder", out bool isBuilder);
-			AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool isDebugMode);
-			IsBuilder = isBuilder;
-			IsDebugMode = isDebugMode;
 		}
 
 		public void Init(IServiceContainer container, Goal goal, GoalStep step, Instruction instruction, IPLangContextAccessor contextAccessor)
