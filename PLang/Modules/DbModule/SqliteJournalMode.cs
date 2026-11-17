@@ -12,6 +12,18 @@ namespace PLang.Modules.DbModule
 	/// </summary>
 	internal static class SqliteJournalMode
 	{
+		private static readonly string[] synchronousNormalPaths = (Environment.GetEnvironmentVariable("PLANG_SQLITE_SYNCHRONOUS_NORMAL") ?? "")
+			.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+			.Select(p => p.Replace('\\', '/'))
+			.ToArray();
+
+		private static bool IsSynchronousNormal(string? file)
+		{
+			if (synchronousNormalPaths.Length == 0 || string.IsNullOrEmpty(file)) return false;
+			var path = file.Replace('\\', '/');
+			return synchronousNormalPaths.Any(p => path.Contains(p, StringComparison.OrdinalIgnoreCase));
+		}
+
 		/// <summary>
 		/// Ma EKKI keyra inni i faerslu. Kalladu strax a eftir Open() og A UNDAN BeginTransaction().
 		/// </summary>
@@ -34,8 +46,11 @@ namespace PLang.Modules.DbModule
 				// SQLite file takes at most about 120 commits a second, and every page view on rafbokin
 				// commits a visit. In WAL, NORMAL syncs at checkpoints instead; a crash of the app loses
 				// nothing, a power loss or OS crash can lose the last commits but never corrupts the file.
+				// That is fine for analytics, not for orders or payments, so it is only used for the
+				// files named in PLANG_SQLITE_SYNCHRONOUS_NORMAL: a comma separated list of path parts,
+				// e.g. ".db/analytics/". Unset (the default) leaves every file on FULL.
 				// Per connection, so it is set every time a connection is opened.
-				if (string.Equals(mode, "wal", StringComparison.OrdinalIgnoreCase))
+				if (string.Equals(mode, "wal", StringComparison.OrdinalIgnoreCase) && IsSynchronousNormal(sqlite.DataSource))
 				{
 					command.CommandText = "PRAGMA synchronous=NORMAL;";
 					command.ExecuteNonQuery();
