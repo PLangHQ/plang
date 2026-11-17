@@ -235,6 +235,16 @@ public class Program : BaseProgram, IDisposable
 		// every visitor until the next restart.
 		var webserverCulture = CultureInfo.CurrentCulture;
 
+		// At most this many requests run goals at the same time; the rest wait here, with await,
+		// for a slot. Every request in flight holds an engine, and an engine is a ServiceContainer
+		// whose LightInject code is compiled per container (about 4 MB that only a full cleanup
+		// gives back). Measured on rafbokin at 100 requests a second without a limit: 970 engines
+		// and 4.2 GB, then the process died. Override with PLANG_MAX_CONCURRENT_REQUESTS.
+		var maxConcurrentRequests = int.TryParse(Environment.GetEnvironmentVariable("PLANG_MAX_CONCURRENT_REQUESTS"), out var configuredMax) && configuredMax > 0
+			? configuredMax
+			: Environment.ProcessorCount * 4;
+		var requestGate = new SemaphoreSlim(maxConcurrentRequests, maxConcurrentRequests);
+
 		var builder = Host.CreateDefaultBuilder()
 			.ConfigureLogging(l => l.ClearProviders())
 			.ConfigureWebHostDefaults(web =>
@@ -339,6 +349,7 @@ public class Program : BaseProgram, IDisposable
 						bool poll = false;
 						string? identity = null;
 						HttpSink? pageSink = null;
+						bool hasRequestSlot = false;
 
 
 						Stopwatch stopwatch = Stopwatch.StartNew();
@@ -346,6 +357,16 @@ public class Program : BaseProgram, IDisposable
 						{
 							logger.LogInformation(" ---------- Request Starts ({0}) ---------- {1}", httpContext.Request.Path.Value, stopwatch.ElapsedMilliseconds);
 
+							try
+							{
+								await requestGate.WaitAsync(httpContext.RequestAborted);
+								hasRequestSlot = true;
+							}
+							catch (OperationCanceledException)
+							{
+								// The client gave up while waiting for a slot, there is nobody to answer.
+								return;
+							}
 
 							requestEngine = await engine.RentAsync(goalStep);
 							requestEngine.Name = "RequestEngine_" + httpContext.Request.Path.Value;
@@ -492,6 +513,7 @@ public class Program : BaseProgram, IDisposable
 							{
 								engine.Return(requestEngine, true);
 							}
+							if (hasRequestSlot) requestGate.Release();
 
 							logger.LogInformation(" ---------- Request Done ({0}) ---------- {1}", httpContext.Request.Path.Value, stopwatch.ElapsedMilliseconds);
 
