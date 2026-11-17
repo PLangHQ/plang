@@ -165,7 +165,9 @@ public static class ProcReader
 	// ---- disks: /proc/mounts for what is mounted, statfs (DriveInfo) for how full
 
 	private static readonly HashSet<string> NotDisks = new() { "tmpfs", "devtmpfs", "proc", "sysfs", "cgroup", "cgroup2", "devpts", "mqueue", "securityfs",
-		"debugfs", "tracefs", "pstore", "bpf", "fusectl", "configfs", "autofs", "hugetlbfs", "binfmt_misc", "ramfs", "rpc_pipefs", "nsfs", "efivarfs", "fuse.lxcfs" };
+		"debugfs", "tracefs", "pstore", "bpf", "fusectl", "configfs", "autofs", "hugetlbfs", "binfmt_misc", "ramfs", "rpc_pipefs", "nsfs", "efivarfs", "fuse.lxcfs",
+		// read-only images (snap packages mount as squashfs and always read 100 percent full): not a disk anyone fills
+		"squashfs", "erofs" };
 
 	private static long Mb(long bytes) => (bytes + 1048575) / 1048576;
 
