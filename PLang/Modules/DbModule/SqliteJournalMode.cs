@@ -28,7 +28,18 @@ namespace PLang.Modules.DbModule
 			{
 				using var command = sqlite.CreateCommand();
 				command.CommandText = "PRAGMA journal_mode=WAL;";
-				command.ExecuteScalar();
+				var mode = command.ExecuteScalar() as string;
+
+				// synchronous=FULL (the default) waits for an fsync on every commit: 8 ms here, so one
+				// SQLite file takes at most about 120 commits a second, and every page view on rafbokin
+				// commits a visit. In WAL, NORMAL syncs at checkpoints instead; a crash of the app loses
+				// nothing, a power loss or OS crash can lose the last commits but never corrupts the file.
+				// Per connection, so it is set every time a connection is opened.
+				if (string.Equals(mode, "wal", StringComparison.OrdinalIgnoreCase))
+				{
+					command.CommandText = "PRAGMA synchronous=NORMAL;";
+					command.ExecuteNonQuery();
+				}
 			}
 			catch (Exception)
 			{
