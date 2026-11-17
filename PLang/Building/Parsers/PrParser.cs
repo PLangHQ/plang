@@ -30,7 +30,9 @@ namespace PLang.Building.Parsers
 
 		ConcurrentDictionary<string, List<Goal>> Events = new();
 		ConcurrentDictionary<string, List<Goal>> SystemEvents = new();
-		private readonly Dictionary<string, Instruction> instructions = new Dictionary<string, Instruction>();
+		// One PrParser is shared by the root engine and every engine it rents out, so requests
+		// read and fill this cache at the same time.
+		private readonly ConcurrentDictionary<string, Instruction> instructions = new();
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ILogger logger;
 		private bool disposed;
@@ -289,6 +291,16 @@ namespace PLang.Building.Parsers
 			if (force)
 			{
 				instructions.Clear();
+				// The name lookups hold Goal objects from the previous load. Engines used to get
+				// a fresh PrParser, so a stale entry lived only as long as that engine; now that
+				// the parser is shared it would outlive every reload.
+				Events.Clear();
+				SystemEvents.Clear();
+
+				// Same for the events files: an engine created after a rebuild used to parse them
+				// again, with one parser they are reloaded here, before EventRuntime.Reload reads them.
+				builderEventsGoals = LoadEventsFiles(true);
+				runtimeEventsGoals = LoadEventsFiles(false);
 			}
 
 			logger.LogDebug($"   -- Done loading all goals - {stopwatch.ElapsedMilliseconds}");
@@ -591,6 +603,11 @@ namespace PLang.Building.Parsers
 			if (builderEventsGoals != null && builder) return builderEventsGoals;
 			if (runtimeEventsGoals != null && !builder) return runtimeEventsGoals;
 
+			return LoadEventsFiles(builder);
+		}
+
+		private IReadOnlyList<Goal> LoadEventsFiles(bool builder)
+		{
 			if (!fileSystem.Directory.Exists(fileSystem.BuildPath))
 			{
 				return [];

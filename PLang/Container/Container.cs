@@ -55,10 +55,24 @@ namespace PLang.Container
 		public static void RegisterForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeAppStartupPath,
 			IErrorHandlerFactory errorHandlerFactory, IErrorSystemHandlerFactory errorSystemHandlerFactory, IEngine parentEngine)
 		{
-			container.RegisterSingleton<PrParser>((factory) => { return parentEngine.PrParser; });
-
-
 			container.RegisterBaseForPLang(absoluteAppStartupPath, relativeAppStartupPath, parentEngine);
+
+			// Share the parent's parsed goals. This registration used to come before
+			// RegisterBaseForPLang, which registers its own PrParser and so replaced it: every
+			// rented engine parsed and held the whole app again, about 20 MB on rafbokin.
+			// Runtime state that is not the same for every request lives in GoalRuntimeState on
+			// the context, not on Goal or GoalStep, which is what makes sharing them safe.
+			container.RegisterSingleton<PrParser>(factory =>
+			{
+				var fileSystem = factory.GetInstance<IPLangFileSystem>();
+				var parentParser = parentEngine?.PrParser;
+				if (parentParser != null && parentEngine!.FileSystem?.RootDirectory == fileSystem.RootDirectory)
+				{
+					return parentParser;
+				}
+				return new PrParser(fileSystem, factory.GetInstance<ILogger>());
+			});
+
 			RegisterModules(container);
 
 
