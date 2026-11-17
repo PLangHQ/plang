@@ -134,6 +134,7 @@ namespace PLang.Runtime
 
 			if (disposed)
 			{
+				GC.Collect(2, GCCollectionMode.Forced, true, true);
 				Process currentProcess = Process.GetCurrentProcess();
 				long privateMemory = currentProcess.PrivateMemorySize64;
 				
