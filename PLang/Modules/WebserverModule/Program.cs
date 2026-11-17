@@ -239,10 +239,18 @@ public class Program : BaseProgram, IDisposable
 		// for a slot. Every request in flight holds an engine, and an engine is a ServiceContainer
 		// whose LightInject code is compiled per container (about 4 MB that only a full cleanup
 		// gives back). Measured on rafbokin at 100 requests a second without a limit: 970 engines
-		// and 4.2 GB, then the process died. Override with PLANG_MAX_CONCURRENT_REQUESTS.
+		// and 4.2 GB, then the process died.
+		// The limit is about engines and memory, not CPU: a request waiting on an outside service
+		// (payment, mail, LLM) holds its slot, so it is well above the core count.
+		// A request that waits longer than PLANG_REQUEST_QUEUE_TIMEOUT_SECONDS gets 503.
+		// Override with PLANG_MAX_CONCURRENT_REQUESTS (default 64) and
+		// PLANG_REQUEST_QUEUE_TIMEOUT_SECONDS (default 10).
 		var maxConcurrentRequests = int.TryParse(Environment.GetEnvironmentVariable("PLANG_MAX_CONCURRENT_REQUESTS"), out var configuredMax) && configuredMax > 0
 			? configuredMax
-			: Environment.ProcessorCount * 4;
+			: 64;
+		var requestQueueTimeout = TimeSpan.FromSeconds(int.TryParse(Environment.GetEnvironmentVariable("PLANG_REQUEST_QUEUE_TIMEOUT_SECONDS"), out var configuredTimeout) && configuredTimeout > 0
+			? configuredTimeout
+			: 10);
 		var requestGate = new SemaphoreSlim(maxConcurrentRequests, maxConcurrentRequests);
 
 		var builder = Host.CreateDefaultBuilder()
@@ -359,12 +367,17 @@ public class Program : BaseProgram, IDisposable
 
 							try
 							{
-								await requestGate.WaitAsync(httpContext.RequestAborted);
-								hasRequestSlot = true;
+								hasRequestSlot = await requestGate.WaitAsync(requestQueueTimeout, httpContext.RequestAborted);
 							}
 							catch (OperationCanceledException)
 							{
 								// The client gave up while waiting for a slot, there is nobody to answer.
+								return;
+							}
+							if (!hasRequestSlot)
+							{
+								httpContext.Response.StatusCode = 503;
+								httpContext.Response.Headers.RetryAfter = "5";
 								return;
 							}
 
