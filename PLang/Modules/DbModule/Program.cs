@@ -752,8 +752,8 @@ namespace PLang.Modules.DbModule
 				}
 
 				var eventSourceRepository = eventSourceFactory.CreateHandler(dataSource);
-				rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, prepare.transaction);
-				
+				rowsAffected = await Write(eventSourceRepository, prepare.connection, prepare.sql, prepare.param, prepare.transaction);
+
 				Done(prepare.connection, prepare.transaction);
 
 
@@ -1208,7 +1208,7 @@ Clearly define which columns are allowed to be updated.
 				long result;
 
 				var eventSourceRepository = eventSourceFactory.CreateHandler(dataSource);
-				result = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, prepare.transaction);
+				result = await Write(eventSourceRepository, prepare.connection, prepare.sql, prepare.param, prepare.transaction);
 				
 				if (validateAffectedRows && result == 0)
 				{
@@ -1249,7 +1249,7 @@ For example:
 				}
 
 				var eventSourceRepository = eventSourceFactory.CreateHandler(dataSource);
-				rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, prepare.transaction);
+				rowsAffected = await Write(eventSourceRepository, prepare.connection, prepare.sql, prepare.param, prepare.transaction);
 				
 
 				if (validateAffectedRows && rowsAffected == 0)
@@ -1304,7 +1304,7 @@ For example:
 			try
 			{
 				var eventSourceRepository = eventSourceFactory.CreateHandler(dataSource);
-				rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, prepare.transaction);
+				rowsAffected = await Write(eventSourceRepository, prepare.connection, prepare.sql, prepare.param, prepare.transaction);
 
 				if (validateAffectedRows && rowsAffected == 0)
 				{
@@ -1376,7 +1376,7 @@ For example:
 				}
 				else
 				{
-					var id = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, prepare.transaction, returnId: true);
+					var id = await Write(eventSourceRepository, prepare.connection, prepare.sql, prepare.param, prepare.transaction, returnId: true);
 					Done(prepare.connection, prepare.transaction);
 
 					if (id != 0)
@@ -1929,6 +1929,23 @@ For example:
 				}
 			}
 			return -1; // Return -1 if no non-digit characters are found
+		}
+
+		/// <summary>Runs a write statement, one writer at a time per SQLite file (SqliteWriteGate).</summary>
+		private static async Task<long> Write(IEventSourceRepository repository, IDbConnection connection, string sql, DynamicParameters? param, IDbTransaction? transaction, bool returnId = false)
+		{
+			var gate = SqliteWriteGate.For(connection, transaction);
+			if (gate == null) return await repository.Add(connection, sql, param, transaction, returnId);
+
+			await gate.WaitAsync();
+			try
+			{
+				return await repository.Add(connection, sql, param, transaction, returnId);
+			}
+			finally
+			{
+				gate.Release();
+			}
 		}
 
 		private void Done(IDbConnection connection, IDbTransaction? transaction)
