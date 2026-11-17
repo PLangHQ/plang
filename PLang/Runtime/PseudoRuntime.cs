@@ -286,6 +286,11 @@ namespace PLang.Runtime
 
 		private static void KeepAlive(IEngine engine, Task<(object? Variables, IError? Error)> task)
 		{
+			lock (Alive.Sync) AddKeepAlive(engine, task);
+		}
+
+		private static void AddKeepAlive(IEngine engine, Task<(object? Variables, IError? Error)> task)
+		{
 			var alives = engine.GetAppContext().GetOrDefault<List<Alive>>("KeepAlive");
 			if (alives == null) alives = new List<Alive>();
 

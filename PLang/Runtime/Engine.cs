@@ -92,6 +92,14 @@ namespace PLang.Runtime
 	}
 	public record Alive(Type Type, string Key, List<object> Instances) : IDisposable
 	{
+		/// <summary>
+		/// Guards the "KeepAlive" list and every Alive.Instances list. Every "dont wait" goal adds
+		/// itself from its own thread while Engine.KeepAlive removes finished ones once a second;
+		/// without a lock the List broke under load (100 requests a second) and KeepAlive read a
+		/// null entry, a NullReferenceException that ended the process.
+		/// </summary>
+		public static readonly object Sync = new();
+
 		public void Dispose()
 		{
 			foreach (var item in Instances)
@@ -1058,9 +1066,12 @@ namespace PLang.Runtime
 			if (alives != null && alives.Count > 0)
 			{
 				logger.LogWarning("Keeping app alive, reasons:");
-				foreach (var alive in alives)
+				lock (Alive.Sync)
 				{
-					logger.LogWarning(" - " + alive.Key);
+					foreach (var alive in alives)
+					{
+						logger.LogWarning(" - " + alive.Key);
+					}
 				}
 
 				while (alives != null && alives.Count > 0)
@@ -1069,6 +1080,7 @@ namespace PLang.Runtime
 
 					alives = appContext.GetOrDefault<List<Alive>>("KeepAlive");
 					if (alives != null && alives.Count > 0)
+					lock (Alive.Sync)
 					{
 						var aliveTaskType = alives.FirstOrDefault(p => p.Key == "WaitForExecution");
 						if (aliveTaskType?.Instances != null)
