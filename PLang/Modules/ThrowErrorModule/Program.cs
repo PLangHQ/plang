@@ -8,6 +8,7 @@ using PLang.Errors.Runtime;
 using PLang.Errors.Types;
 using PLang.Events;
 using PLang.Models;
+using PLang.Runtime;
 using PLang.Services.OutputStream;
 using PLang.Services.OutputStream.Messages;
 using PLang.Utils;
@@ -76,21 +77,24 @@ namespace PLang.Modules.ThrowErrorModule
 			// RetryCount is the attempt number and starts at 1, the first run. With >= no step
 			// could ever be retried with the default maxRetries of 1, the handler threw
 			// "Max retries reached(1)" before a single retry. One retry is allowed per maxRetries.
-			if (error.Step.RetryCount > maxRetries)
+			// The attempt number and the retry flag are kept per request: error.Step is shared by
+			// every engine, so on the step itself one request's retries would count against another's.
+			var retryCount = GoalRuntimeState.GetRetryCount(error.Step);
+			if (retryCount > maxRetries)
 			{
 				if (string.IsNullOrEmpty(maxRetriesReachedMesage))
 				{
-					maxRetriesReachedMesage = $"Max retries reached({error.Step.RetryCount})";
+					maxRetriesReachedMesage = $"Max retries reached({retryCount})";
 				} else if (maxRetriesReachedMesage.Contains("{0}"))
 				{
-					maxRetriesReachedMesage = maxRetriesReachedMesage.Replace("{0}", error.Step.RetryCount.ToString());
+					maxRetriesReachedMesage = maxRetriesReachedMesage.Replace("{0}", retryCount.ToString());
 				}
 
 					return await Throw(maxRetriesReachedMesage, key, statusCode, fixSuggestion, helpfullLinks);
 			}
 
-			error.Step.Retry = true;
-			error.Step.RetryCount++;
+			GoalRuntimeState.RequestRetry(error.Step);
+			GoalRuntimeState.SetRetryCount(error.Step, retryCount + 1);
 			return null;
 		}
 

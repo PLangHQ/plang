@@ -248,7 +248,7 @@ namespace PLang.Building.Parsers
 				goals.Add(currentGoal);
 				if (goals.Count > 1)
 				{
-					currentGoal.ParentGoal = goals[0];
+					currentGoal.SetParsedParentGoal(goals[0]);
 				}
 			}
 			
@@ -308,7 +308,7 @@ namespace PLang.Building.Parsers
 				if (i > 0)
 				{
 					goals[0].SubGoals.Add(goal.RelativePrPath);
-					goal.ParentGoal = goals[0];
+					goal.SetParsedParentGoal(goals[0]);
 				}
 
 				if (!goal.AbsolutePrFilePath.StartsWith("c:") && goal.AbsolutePrFilePath.Contains("c:"))

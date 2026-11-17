@@ -64,7 +64,7 @@ namespace PLang.Utils
 			var goal = step.Goal;
 			string method = goal.GoalName;
 
-			var callBackInfo = new CallbackInfo(goal.GoalName, goal.Hash, goal.CurrentStepIndex);
+			var callBackInfo = new CallbackInfo(goal.GoalName, goal.Hash, Runtime.GoalRuntimeState.GetCurrentStepIndex(goal));
 			//			callbackInfos.Push(new CallbackInfo(goal.GoalName, goal.Hash, goal.CurrentStepIndex));
 
 			/*

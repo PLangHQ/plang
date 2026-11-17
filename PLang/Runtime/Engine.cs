@@ -739,8 +739,11 @@ namespace PLang.Runtime
 			var step = goal.GoalSteps[goalStepIndex];
 			context.CallingStep = step;
 
-			goal.CurrentStepIndex = goalStepIndex;
-			step.Stopwatch = Stopwatch.StartNew();
+			GoalRuntimeState.SetCurrentStepIndex(goal, goalStepIndex);
+			// step is shared by every request, so this run times itself with its own stopwatch;
+			// step.Stopwatch is still set for the debug output that reads it.
+			var stepStopwatch = Stopwatch.StartNew();
+			step.Stopwatch = stepStopwatch;
 			
 			context.CallStack.SetCurrentStep(step, goalStepIndex);
 
@@ -752,23 +755,23 @@ namespace PLang.Runtime
 				if (HasExecuted(step, context)) return (null, null);
 
 				step.UniqueId = Guid.NewGuid().ToString();
-				logger.LogTrace($"     - Load instruction for step: {step.Text.MaxLength(20)} - {step.Stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"     - Load instruction for step: {step.Text.MaxLength(20)} - {stepStopwatch.ElapsedMilliseconds}");
 
 				var error = LoadInstruction(goal, step);
 				if (error != null)
 				{
 					return (null, error);
 				}
-				logger.LogTrace($"     - Have instruction - {step.Stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"     - Have instruction - {stepStopwatch.ElapsedMilliseconds}");
 				if (retryCount == 0)
 				{
-					logger.LogTrace($"     - Before event starts - {step.Stopwatch.ElapsedMilliseconds}");
+					logger.LogTrace($"     - Before event starts - {stepStopwatch.ElapsedMilliseconds}");
 					// Only run event one time, even if step is tried multiple times
 					var stepEventResult = await eventRuntime.RunStepEvents(EventType.Before, goal, step);
 					if (stepEventResult.Error != null) return (null, stepEventResult.Error);
 				}
 
-				logger.LogTrace($"     - ProcessPrFile {step.PrFileName} - {step.Stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"     - ProcessPrFile {step.PrFileName} - {stepStopwatch.ElapsedMilliseconds}");
 
 				result = await ProcessPrFile(goal, step, goalStepIndex, context);
 
@@ -777,7 +780,7 @@ namespace PLang.Runtime
 					result = await HandleStepError(goal, step, goalStepIndex, result.Value.Error, retryCount, context);
 					if (result.Value.Error != null && result.Value.Error is MultipleError me && !me.IsErrorHandled) return result.Value;
 				}
-				logger.LogTrace($"     - Done with ProcessPrFile, doing after events - {step.Stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"     - Done with ProcessPrFile, doing after events - {stepStopwatch.ElapsedMilliseconds}");
 
 				if (retryCount == 0)
 				{
@@ -786,7 +789,7 @@ namespace PLang.Runtime
 					if (stepEventResult.Error != null) return stepEventResult;
 				}
 
-				logger.LogTrace($"     - Done with after events - {step.Stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"     - Done with after events - {stepStopwatch.ElapsedMilliseconds}");
 				return result.Value;
 			}
 			catch (Exception stepException)
@@ -799,10 +802,10 @@ namespace PLang.Runtime
 			}
 			finally
 			{
-				logger.LogTrace($"     - Reset log level - {step.Stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"     - Reset log level - {stepStopwatch.ElapsedMilliseconds}");
 				ResetStepLogLevel(goal);
-				step.Stopwatch.Stop();
-				logger.LogDebug($"     - Step all done - {step.Stopwatch.ElapsedMilliseconds}");
+				stepStopwatch.Stop();
+				logger.LogDebug($"     - Step all done - {stepStopwatch.ElapsedMilliseconds}");
 
 				object? returnValues = null;
 				IError? error = null;
@@ -870,11 +873,11 @@ namespace PLang.Runtime
 				return stepErrorResult;
 			}
 
-			// step.Retry can be step by a goal in RunOnErrorStepEvents
-			if (step.Retry || ShouldRunRetry(errorHandler, false))
+			// retry can be set by a goal in RunOnErrorStepEvents (retry step), kept per request
+			// since step is shared by every request; TakeRetry also resets it
+			bool retryRequested = GoalRuntimeState.TakeRetry(step);
+			if (retryRequested || ShouldRunRetry(errorHandler, false))
 			{
-				// reset the retry property
-				step.Retry = false;
 
 				logger.LogDebug($"Error occurred - After goal to call - Will retry in {errorHandler?.RetryHandler?.RetryDelayInMilliseconds}ms. Attempt nr. {retryCount} of {errorHandler?.RetryHandler?.RetryCount}\nError:{error}");
 				if (errorHandler?.RetryHandler?.RetryDelayInMilliseconds != null && errorHandler.RetryHandler.RetryDelayInMilliseconds > 0)

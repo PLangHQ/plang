@@ -29,6 +29,9 @@ namespace PLang.Interfaces
 			get => _current.Value;
 			set => _current.Value = value;
 		}
+
+		/// <summary>The context of the request running on this thread, for code that has no accessor injected (Goal, GoalStep).</summary>
+		internal static PLangContext? Ambient => _current.Value;
 	}
 
 
@@ -74,6 +77,7 @@ namespace PLang.Interfaces
 		public IOutputSink UserSink { get; set; }
 		public IOutputSink SystemSink { get; set; }
 		public CallStack CallStack { get; set; }
+		public GoalRuntimeState GoalState { get; private set; } = new();
 		public ExecutionMode ExecutionMode { get; set; }
 		public IPLangFileSystem FileSystem { get; internal set; }
 		public DataSource DataSource { get; internal set; }
@@ -237,6 +241,7 @@ namespace PLang.Interfaces
 			context.Identity = this.Identity;
 			context.SignedMessage = this.SignedMessage;
 			context.CallStack = new CallStack();
+			context.GoalState = this.GoalState;
 			foreach (var item in this.Items)
 			{
 				context.Items.TryAdd(item.Key, item.Value);

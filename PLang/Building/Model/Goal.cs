@@ -131,16 +131,38 @@ namespace PLang.Building.Model
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMemberAttribute]
 		[System.Text.Json.Serialization.JsonIgnore]
-		public Goal? ParentGoal { 
+		public Goal? ParentGoal {
 			get
 			{
+				// Inside a request the caller is kept per request (GoalRuntimeState), since this
+				// Goal object is shared by every engine. The field is the value set when the
+				// goal was parsed, or set outside a request.
+				var state = GoalRuntimeState.Current;
+				if (state != null && state.TryGetParentGoal(this, out var requestParentGoal)) return requestParentGoal;
 				return parentGoal;
 			}
 			set
 			{
 				if (value?.Hash != null && value?.Hash == Hash) return;
+
+				var state = GoalRuntimeState.Current;
+				if (state != null)
+				{
+					state.SetParentGoal(this, value);
+					return;
+				}
 				parentGoal = value;
 			}
+		}
+
+		/// <summary>
+		/// Sets the parent the goal has in its goal file (the first goal of the file). That is
+		/// part of what was parsed, not of a request, so it is never kept per request.
+		/// </summary>
+		public void SetParsedParentGoal(Goal? value)
+		{
+			if (value?.Hash != null && value?.Hash == Hash) return;
+			parentGoal = value;
 		}
 
 		[IgnoreWhenInstructed]
@@ -179,8 +201,29 @@ namespace PLang.Building.Model
 		[LlmIgnore]
 		public bool IsEvent { get; set; }
 
+		private RuntimeEvent? runtimeEvent;
 		[LlmIgnore]
-		public RuntimeEvent Event { get; set; }
+		public RuntimeEvent Event
+		{
+			// The event that called the goal, set per request like ParentGoal (GoalRuntimeState):
+			// on the shared Goal one request's event would show on another request's goal.
+			get
+			{
+				var state = GoalRuntimeState.Current;
+				if (state != null && state.TryGetEvent(this, out var requestEvent)) return requestEvent!;
+				return runtimeEvent!;
+			}
+			set
+			{
+				var state = GoalRuntimeState.Current;
+				if (state != null)
+				{
+					state.SetEvent(this, value);
+					return;
+				}
+				runtimeEvent = value;
+			}
+		}
 
 		public static Goal NotFound { get
 			{

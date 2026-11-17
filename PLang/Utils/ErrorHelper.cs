@@ -226,7 +226,7 @@ First we will give you the original error, then each error that occured will sho
 				{
 					if (callStack != null) callStack += "\n\t";
 
-					var currentStep = parentGoal.GoalSteps[parentGoal.CurrentStepIndex];
+					var currentStep = parentGoal.GoalSteps[Runtime.GoalRuntimeState.GetCurrentStepIndex(parentGoal)];
 
 					callStack += $"{parentGoal.GoalName} - {parentGoal.RelativeGoalPath}:{currentStep.LineNumber}";
 					parentGoal = parentGoal.ParentGoal;
