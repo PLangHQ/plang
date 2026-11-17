@@ -415,6 +415,7 @@ namespace PLang.Building
 		private void CleanGoalFiles()
 		{
 			var goals = prParser.ForceLoadAllGoals();
+			var currentGoals = goalParser.GetGoals(force: true);
 
 			List<Goal> goalsToRemove = new List<Goal>();
 			foreach (var goal in goals)
@@ -426,6 +427,17 @@ namespace PLang.Building
 				if (goal.IsSystem) continue;
 
 				if (!fileSystem.File.Exists(goal.AbsoluteGoalPath))
+				{
+					goalsToRemove.Add(goal);
+					continue;
+				}
+
+				// A goal that was deleted or moved out of a .goal file that still exists keeps its .pr folder,
+				// and the file check above never sees it. Only private goals are swept this way: the public goal
+				// shares its folder with the file's other goals, and only files this build parsed are trusted.
+				if (goal.Visibility == Visibility.Private
+					&& currentGoals.Any(p => p.AbsoluteGoalPath == goal.AbsoluteGoalPath)
+					&& !currentGoals.Any(p => p.AbsoluteGoalPath == goal.AbsoluteGoalPath && p.GoalName == goal.GoalName))
 				{
 					goalsToRemove.Add(goal);
 				}

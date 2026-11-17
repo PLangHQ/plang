@@ -832,9 +832,9 @@ namespace PLang.Events
 
 		public bool GoalHasBinding(Goal goal, EventBinding eventBinding)
 		{
+			if (goal.Visibility == Visibility.Private && !eventBinding.IncludePrivate || eventBinding.GoalToBindTo == null) return false;
 			if (!eventBinding.IsLocal)
 			{
-				if (goal.Visibility == Visibility.Private && !eventBinding.IncludePrivate || eventBinding.GoalToBindTo == null) return false;
 				if (goal.IsSystem && !eventBinding.IncludeOsGoals) return false;
 			}
 
