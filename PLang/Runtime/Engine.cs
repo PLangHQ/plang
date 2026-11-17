@@ -1149,7 +1149,8 @@ namespace PLang.Runtime
 
 								foreach (var item in EnginePool.Pool)
 								{
-									item.ReloadGoals();
+									// Rented engines share this parser, reloaded once above.
+									if (item.PrParser != prParser) item.ReloadGoals();
 									item.GetEventRuntime().Reload();
 								}
 
