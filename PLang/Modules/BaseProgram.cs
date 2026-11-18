@@ -418,12 +418,16 @@ namespace PLang.Modules
 			(var answer, var error) = await AskUser.GetAnswer(engine, context, message);
 			if (error != null) return (null, error);
 
-			(var isHandled, error) = await fileAccessHandler.ValidatePathResponse(fa.AppName, fa.Path, answer.ToString(), engine.FileSystem.Id);
+			(var isHandled, error) = await fileAccessHandler.ValidatePathResponse(fa.AppName, fa.Path, answer?.ToString(), engine.FileSystem.Id);
 			if (error != null) return (null, error);
 
 			if (isHandled) return await RunFunction(function);
 
-			return (false, null);
+			// No usable answer, e.g. a daemon whose stdin is closed reads an empty line. The step cannot
+			// run without the access, so it fails instead of leaving its return variable empty.
+			return (null, new ProgramError($"{fa.AppName} is trying to access {fa.Path}, and the question asking for access got no answer.",
+				goalStep, function, Key: "FileAccessNotGranted", StatusCode: 403,
+				FixSuggestion: $"Grant the access in the app before this step, e.g. `- give access to \"{fa.Path}\"` (or a folder above it), or run the app where the question can be answered."));
 		}
 
 		// Reflection on the task type is the same for every call of a method, so it is read once per task type:
