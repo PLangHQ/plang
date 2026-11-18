@@ -173,23 +173,7 @@ namespace PLang.Runtime
 					
 					logger.LogDebug($"               - Create new memory for Task.Run {goalToRun.GoalName} - {stopwatch.ElapsedMilliseconds}");
 					var newMemoryStack = MemoryStack.New(runtimeEngine.Container, runtimeEngine);
-					foreach (var item in memoryStack.GetMemoryStack())
-					{
-						try
-						{
-							if (item.Name == "!Callstack") continue;
-
-							logger.LogDebug($"                 - Deep clone on {item.Name} {goalToRun.GoalName} - {stopwatch.ElapsedMilliseconds}");
-							newMemoryStack.Put(new ObjectValue(item.Name, item.Value.DeepClone(),
-								properties: CloneProperties(item.Properties, item.Name)));
-
-							
-						}
-						catch (Exception ex)
-						{
-							throw;
-						}
-					}
+					CopyVariables(memoryStack, newMemoryStack);
 					logger.LogDebug($"               - Task.Run {goalToRun.GoalName} - {stopwatch.ElapsedMilliseconds}");
 					task = Task.Run(async () =>
 					{
@@ -284,7 +268,21 @@ namespace PLang.Runtime
 			}
 		}
 
-		private static void KeepAlive(IEngine engine, Task<(object? Variables, IError? Error)> task)
+		// A "dont wait" goal gets a copy of the caller's variables. System variables (Now, NowUtc,
+		// GUID, ...) are DynamicObjectValues that the new memory stack already has; copying their
+		// Value would freeze them at the moment of the call.
+		public void CopyVariables(MemoryStack source, MemoryStack target)
+		{
+			foreach (var item in source.GetMemoryStack())
+			{
+				if (item.IsSystemVariable) continue;
+
+				target.Put(new ObjectValue(item.Name, item.Value.DeepClone(),
+					properties: CloneProperties(item.Properties, item.Name)));
+			}
+		}
+
+		public static void KeepAlive(IEngine engine, Task<(object? Variables, IError? Error)> task)
 		{
 			lock (Alive.Sync) AddKeepAlive(engine, task);
 		}
