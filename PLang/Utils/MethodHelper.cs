@@ -484,8 +484,9 @@ public class MethodHelper
 	public (Dictionary<string, object?> Parameters, IError? Error) GetParameterValues(MethodInfo method, IGenericFunction function)
 	{
 		long start = StepClock.Now();
-		var parameterValues = new Dictionary<string, object?>();
 		var parameters = GetCachedParameters(method);
+		// Sized for the parameters: the default dictionary grows 0 -> 4 -> 8 and re-hashes on the way.
+		var parameterValues = new Dictionary<string, object?>(parameters.Length);
 		if (parameters.Length == 0) return (parameterValues, null);
 
 		var step = function.Instruction.Step;
