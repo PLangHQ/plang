@@ -34,20 +34,12 @@ namespace PLang.Services.Typesafe
 			this.logger = logger;
 		}
 
-		// Same home as every other key in plang: %Settings.TypeSafeApiKey%, kept in system.sqlite.
-		// A missing key must never prompt: settings.Get throws MissingSettingsException, which the
-		// engine turns into the ask-user flow, and that has no place inside a build. The miss is
-		// swallowed here and Ask turns it into an error the builder falls back from.
-		private string? GetKey()
+		// Same home as every other key in plang: %Settings.TypeSafeApiKey%, kept in the app's system.sqlite.
+		// A missing key asks for it, like the llm key: settings.Get throws MissingSettingsException, the
+		// builder asks the user, saves the answer in the app's settings and starts the build again.
+		private string GetKey()
 		{
-			try
-			{
-				return settings.Get<string>(this.GetType(), SettingKey, "", "Type in API key for Typesafe.ai");
-			}
-			catch (Exception)
-			{
-				return null;
-			}
+			return settings.Get<string>(this.GetType(), SettingKey, "", "Type in API key for Typesafe.ai");
 		}
 
 		// Set PLANG_TYPESAFE_DUMP to a folder to write every request body there, to read what the
