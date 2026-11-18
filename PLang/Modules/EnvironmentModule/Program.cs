@@ -13,7 +13,11 @@ using static PLang.Modules.MockModule.Program;
 
 namespace PLang.Modules.EnvironmentModule;
 
-[Description("Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install, disks (size and free space), memory (total, used, free)")]
+// One thing running in the app, from the KeepAliveRegistry. Written as JSON the names are snake case: kind, name, goal, called_from, started_utc, running_seconds.
+[Newtonsoft.Json.JsonObject(NamingStrategyType = typeof(Newtonsoft.Json.Serialization.SnakeCaseNamingStrategy))]
+public record RunningTask(string Kind, string Name, string? Goal, string? CalledFrom, DateTime StartedUtc, long RunningSeconds);
+
+[Description("Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install, disks (size and free space), memory (total, used, free), running tasks (dont wait goals, scheduled runs, webservers)")]
 [Effect(Effects.None)]
 public class Program : BaseProgram
 {
@@ -95,6 +99,20 @@ public class Program : BaseProgram
 		var memory = PLang.Modules.HostModule.ProcReader.ReadMemory();
 		if (memory == null) return (null, new Errors.Runtime.ProgramError("/proc/meminfo has no MemTotal", goalStep, Key: "UnexpectedOutput"));
 		return (memory, null);
+	}
+
+	[Description("What keeps the app running now: goals called with `dont wait`, scheduled runs in progress, webservers, the scheduler and other listeners. Each row: Kind (WaitForExecution for a dont wait call, Schedule for a scheduled run, Webserver, Scheduler, ...), Name, Goal (path of the goal that runs, empty for a listener), CalledFrom (path of the goal that called it), StartedUtc, RunningSeconds. e.g. `get running tasks, write to %tasks%`")]
+	[Example("get running tasks, write to %tasks%", "")]
+	[Example("what is running in the app, write to %running%", "")]
+	public async Task<List<RunningTask>> GetRunningTasks()
+	{
+		var now = DateTime.UtcNow;
+		return engine.KeepAliveRegistry.GetSnapshot().Select(entry =>
+		{
+			var plangTask = entry.Instance as PlangTask;
+			return new RunningTask(entry.Kind, entry.Name, plangTask?.Goal.RelativeGoalPath, plangTask?.CallingGoal?.RelativeGoalPath,
+				entry.StartedUtc, (long)(now - entry.StartedUtc).TotalSeconds);
+		}).ToList();
 	}
 
 	public async Task<bool> IsInCSharpDebugMode()
