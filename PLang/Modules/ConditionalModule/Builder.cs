@@ -6,6 +6,7 @@ using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Services.CompilerService;
 using PLang.Utils.Extractors;
+using System.Text.RegularExpressions;
 
 namespace PLang.Modules.ConditionalModule
 {
@@ -70,6 +71,62 @@ statments like `if %!error.Handled% does NOT mean it is false
 
 			return await MakeCode(step, error, errorCount);
 
+		}
+
+		// A condition whose step calls a goal must carry that goal. goalToCallIfTrue and goalToCallIfFalse are
+		// optional parameters, so an answer without them passes every other check and builds a condition that
+		// is evaluated and then does nothing.
+		public async Task<(Instruction, IBuilderError?)> BuilderValidate(GoalStep step, Instruction instruction, IGenericFunction gf)
+		{
+			var message = MissingGoalToCall(step.Text, gf);
+			if (message == null) return (instruction, null);
+
+			return (instruction, new StepBuilderError(message, step,
+				FixSuggestion: "Set goalToCallIfTrue to the goal called after `then` and goalToCallIfFalse to the goal called after `else`, e.g. goalToCallIfTrue={Name=\"HandleOverLimit\"}, goalToCallIfFalse={Name=\"IssueCodeNow\"}"));
+		}
+
+		public static string? MissingGoalToCall(string? stepText, IGenericFunction gf)
+		{
+			if (string.IsNullOrEmpty(stepText) || string.IsNullOrEmpty(gf?.Name)) return null;
+
+			// Only methods that take the goals. RunInlineCode keeps them in its implementation.
+			var takesGoals = typeof(Program).GetMethods().Where(m => m.Name == gf.Name)
+				.Any(m => m.GetParameters().Any(p => p.Name == "goalToCallIfTrue"));
+			if (!takesGoals) return null;
+
+			// Quoted text is a value, not an instruction, and an `on error ... call X` clause is the step's error
+			// handler, not its condition.
+			var text = Regex.Replace(stepText, "\"[^\"]*\"|'[^']*'", "\"\"");
+			var onError = Regex.Match(text, @"\bon\s+error\b", RegexOptions.IgnoreCase);
+			if (onError.Success) text = text.Substring(0, onError.Index);
+
+			if (!Regex.IsMatch(text, @"\bcall\b", RegexOptions.IgnoreCase)) return null;
+
+			bool hasTrue = HasValue(gf, "goalToCallIfTrue");
+			bool hasFalse = HasValue(gf, "goalToCallIfFalse");
+			if (!hasTrue && !hasFalse)
+			{
+				return $"The step calls a goal but {gf.Name} was built with neither goalToCallIfTrue nor goalToCallIfFalse, so the condition would be evaluated and call nothing.";
+			}
+
+			var elseAt = Regex.Match(text, @"\belse\b", RegexOptions.IgnoreCase);
+			if (!elseAt.Success) return null;
+
+			bool callsOnThen = Regex.IsMatch(text.Substring(0, elseAt.Index), @"\bcall\b", RegexOptions.IgnoreCase);
+			bool callsOnElse = Regex.IsMatch(text.Substring(elseAt.Index), @"\bcall\b", RegexOptions.IgnoreCase);
+			if (callsOnThen && callsOnElse && !(hasTrue && hasFalse))
+			{
+				return $"The step calls one goal after `then` and another after `else`, but {gf.Name} was built with only {(hasTrue ? "goalToCallIfTrue" : "goalToCallIfFalse")}. Both goals must be set.";
+			}
+			return null;
+		}
+
+		private static bool HasValue(IGenericFunction gf, string name)
+		{
+			var parameter = gf.Parameters?.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+			if (parameter?.Value == null) return false;
+			if (parameter.Value is Newtonsoft.Json.Linq.JToken token && token.Type == Newtonsoft.Json.Linq.JTokenType.Null) return false;
+			return true;
 		}
 
 		private bool ShouldMakeCode(string functionName)

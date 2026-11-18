@@ -18,7 +18,7 @@ namespace PLang.Building
 	{
 		private readonly ConcurrentDictionary<int, (string Text, ModuleChoice Choice)> modules = new();
 		private readonly ConcurrentDictionary<int, (string Text, MethodChoice Choice)> methods = new();
-		private readonly ConcurrentDictionary<int, (string Text, Modules.BaseBuilder.GenericFunction Function, Models.LlmRequest Request)> functions = new();
+		private readonly ConcurrentDictionary<int, (string Text, string Module, Modules.BaseBuilder.GenericFunction Function, Models.LlmRequest Request)> functions = new();
 
 		public int ModuleCount => modules.Count;
 		public int MethodCount => methods.Count;
@@ -27,11 +27,17 @@ namespace PLang.Building
 		// A whole function, method and parameters and return values together, built for the whole
 		// goal in one llm request. The request itself is kept with it: it is what gets written into
 		// the .pr as the step's LlmRequest, so a step built this way still records what was asked.
-		public void SetFunction(GoalStep step, Modules.BaseBuilder.GenericFunction function, Models.LlmRequest request)
-			=> functions[step.Index] = (step.Text, function, request);
+		//
+		// The function is a method of the module it was planned for, so it is only handed to a step that
+		// is being built with that module. A step built with another one (its previous build's module
+		// kept for a validation fix, or a retry after its module was excluded) would otherwise get a
+		// method its module does not have.
+		public void SetFunction(GoalStep step, string module, Modules.BaseBuilder.GenericFunction function, Models.LlmRequest request)
+			=> functions[step.Index] = (step.Text, module, function, request);
 
 		public (Modules.BaseBuilder.GenericFunction Function, Models.LlmRequest Request)? Function(GoalStep step)
 			=> functions.TryGetValue(step.Index, out var found) && found.Text == step.Text
+				&& string.Equals(found.Module, step.ModuleType, StringComparison.Ordinal)
 				? (found.Function, found.Request) : null;
 
 		// A step whose batched answer did not survive validation must not be handed the same answer

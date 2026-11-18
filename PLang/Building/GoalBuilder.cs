@@ -88,13 +88,25 @@ namespace PLang.Building
 			GroupedBuildErrors groupedBuildErrors = new();
 
 			logger.LogDebug($" - Goal has not change - validating steps {goal.GoalName} - {stopwatch.ElapsedMilliseconds}");
-			var validationError = await ValidateSteps(goal);
+			var realigned = new List<GoalStep>();
+			var validationError = await ValidateSteps(goal, realigned);
 			logger.LogDebug($" - Done validating steps {goal.GoalName} - {stopwatch.ElapsedMilliseconds}");
 
 			var isBuiltResult = await GoalIsBuilt(goal, validationError, container.GetInstance<IEngine>(), context);
 			if (isBuiltResult.Error != null) return isBuiltResult.Error;
 			if (isBuiltResult.IsBuilt)
 			{
+				// Nothing to build, but a step that was listed for another module than its .pr file is
+				// written back with the module of its .pr file.
+				if (realigned.Count > 0)
+				{
+					foreach (var step in realigned)
+					{
+						step.Hash = null;
+						step.Hash = JsonConvert.SerializeObject(step, GoalSerializer.Settings).ComputeHash().Hash;
+					}
+					WriteToGoalPrFile(goal);
+				}
 				return null;
 			}
 
@@ -128,22 +140,29 @@ namespace PLang.Building
 			// cache serves the sequential run from disk and the gain looks like 2.8x instead.
 			var degreeOfParallelism = AppContext.GetData("buildparallel") as int? ?? RegisterStartupParameters.DefaultBuildParallel;
 			var rebuild = ShouldRebuild(goal);
+
+			// An unchanged step that only moved keeps its build under the name for its new position.
+			// It still goes through BuildStep below, which validates it and finds it built, but it is
+			// not asked about in the prefetch: it has its answer.
+			var moved = rebuild ? new List<int>() : StepPrFiles.MoveRenumberedSteps(goal, fileSystem, logger);
+
 			var indexesToBuild = new List<int>();
 			for (int i = 0; i < goal.GoalSteps.Count; i++)
 			{
 				if (!rebuild && !goal.GoalSteps[i].HasChanged && goal.GoalSteps[i].IsValid) continue;
 				indexesToBuild.Add(i);
 			}
+			var indexesToPrefetch = indexesToBuild.Where(i => !moved.Contains(i)).ToList();
 
 			// One request decides the module for every step about to be built, before any of them
 			// build. Each step then reads its answer. A failure here leaves the cache empty and every
 			// step asks for itself, which is what happened before this existed.
-			await stepBuilder.PrefetchModules(goal, indexesToBuild);
+			await stepBuilder.PrefetchModules(goal, indexesToPrefetch);
 
 			// With the modules and methods known, one more request fills the parameters of every
 			// step, so a ten step goal is built in one request instead of ten. A step this cannot
 			// answer for builds on its own exactly as before.
-			await stepBuilder.PrefetchInstructions(goal, indexesToBuild);
+			await stepBuilder.PrefetchInstructions(goal, indexesToPrefetch);
 
 			// Reads the answer the prefetch above already has, and only asks for itself when it has
 			// none: a goal whose steps were all already built, or a prefetch that did not run.
@@ -211,6 +230,7 @@ namespace PLang.Building
 				return buildEventError;
 			}
 
+			AlignBuiltStepsWithPrFiles(goal, indexesToBuild);
 			WriteToGoalPrFile(goal);
 			logger.LogInformation($"Done building all goals {goal.GoalName} - It took {stopwatch.ElapsedMilliseconds}ms");
 			deciderReport.RecordGoalBuilt(goal, stopwatch.Elapsed);
@@ -399,7 +419,7 @@ namespace PLang.Building
 			return buildStepError;
 		}
 
-		private async Task<GroupedBuildErrors?> ValidateSteps(Goal goal)
+		private async Task<GroupedBuildErrors?> ValidateSteps(Goal goal, List<GoalStep> realigned)
 		{
 			// Since step has not been build we disable build validation for all
 			// steps that come after as they can be affected by previous steps. 
@@ -434,6 +454,10 @@ namespace PLang.Building
 
 
 				logger.LogDebug($"   - Found function, validating... - {stopwatch.ElapsedMilliseconds}");
+
+				// A goal written by an earlier build can list another module than the step's .pr file;
+				// the function is validated on the module it was built for.
+				if (StepPrFiles.AlignModuleWithInstruction(step, step.Instruction, logger)) realigned.Add(step);
 
 				(var parameterProperties, var returnObjectsProperties, var invalidFunctionError) = methodHelper.ValidateFunctions(step, null);
 				if (invalidFunctionError != null)
@@ -537,25 +561,51 @@ namespace PLang.Building
 			container.RegisterForPLangUserInjections(type, path, isGlobal, environmentVariable, environmentVariableValue);
 		}
 
+		// A step that was built in an earlier attempt and then failed in a later one, with another module,
+		// is left listing the module of the failed attempt while its .pr file still holds the earlier,
+		// complete build. Before the goal is written each built step is checked against its .pr file and
+		// the instruction wins, so 00. Goal.pr never lists a module the step's function is not on.
+		private void AlignBuiltStepsWithPrFiles(Goal goal, IEnumerable<int> stepIndexes)
+		{
+			foreach (var i in stepIndexes)
+			{
+				var step = goal.GoalSteps[i];
+				if (string.IsNullOrEmpty(step.AbsolutePrFilePath) || !fileSystem.File.Exists(step.AbsolutePrFilePath)) continue;
+
+				var (instruction, error) = InstructionCreator.Create(step.AbsolutePrFilePath, fileSystem);
+				if (error != null) continue;
+				if (!StepPrFiles.AlignModuleWithInstruction(step, instruction, logger)) continue;
+
+				step.Hash = null;
+				step.Hash = JsonConvert.SerializeObject(step, GoalSerializer.Settings).ComputeHash().Hash;
+			}
+		}
+
+		// With --buildparallel every step that finishes writes the goal, from its own task. Unlocked, a write
+		// serialized before another step was done could land after that step's own write and put the
+		// earlier state back, and two writes could run over each other in the same file.
 		private IBuilderError? WriteToGoalPrFile(Goal goal)
 		{
-			if (!fileSystem.Directory.Exists(goal.AbsolutePrFolderPath))
+			lock (goal)
 			{
-				fileSystem.Directory.CreateDirectory(goal.AbsolutePrFolderPath);
+				if (!fileSystem.Directory.Exists(goal.AbsolutePrFolderPath))
+				{
+					fileSystem.Directory.CreateDirectory(goal.AbsolutePrFolderPath);
+				}
+
+				var error = LoadInjections(goal);
+				if (error != null) return error;
+
+				goal.BuilderVersion = PlangHelper.GetVersion();
+				goal.Hash = "";
+
+				var json = JsonConvert.SerializeObject(goal, GoalSerializer.Settings);
+				goal.Hash = json.ComputeHash().Hash;
+
+				json = JsonConvert.SerializeObject(goal, GoalSerializer.Settings);
+				fileSystem.File.WriteAllText(goal.AbsolutePrFilePath, json);
+				return null;
 			}
-
-			var error = LoadInjections(goal);
-			if (error != null) return error;
-
-			goal.BuilderVersion = PlangHelper.GetVersion();
-			goal.Hash = "";
-
-			var json = JsonConvert.SerializeObject(goal, GoalSerializer.Settings);
-			goal.Hash = json.ComputeHash().Hash;
-
-			json = JsonConvert.SerializeObject(goal, GoalSerializer.Settings);
-			fileSystem.File.WriteAllText(goal.AbsolutePrFilePath, json);
-			return null;
 		}
 
 		private async Task<(Goal, IBuilderError?)> LoadMethodAndDescription(Goal goal)

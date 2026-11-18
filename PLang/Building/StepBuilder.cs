@@ -287,6 +287,8 @@ public class StepBuilder : IStepBuilder
 		step.Reload = doReload;
 		if (step.Reload) return (!step.Reload, null);
 
+		StepPrFiles.AlignModuleWithInstruction(step, instruction, logger.Value);
+
 		var gf = instruction.Function;
 		// lets load the return value into memoryStack
 		if (gf.ReturnValues?.Count > 0)
@@ -528,6 +530,9 @@ public class StepBuilder : IStepBuilder
 			ModuleChoice? choice;
 			IError? deciderError = null;
 			choice = deciderCache.ForGoal(goal).Module(step);
+			// The prefetched answer was given before any module was excluded. A step that comes back
+			// here because its module did not build must not be handed that same module again.
+			if (choice != null && excludeModules != null && excludeModules.Contains(choice.Module)) choice = null;
 			if (choice == null)
 			{
 				(choice, deciderError) = await decider.ChooseModule(step.Text, typeHelper.GetModulesDictionary(excludeModules));

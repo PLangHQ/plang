@@ -255,7 +255,7 @@ Escape a %variable% written inside the Description text as \%variable\%. That es
 				returnValues = null;
 			}
 			var function = new GenericFunction("", plan.Method.MethodName, parameters, returnValues);
-			cached.SetFunction(plan.Step, function, found.Request);
+			cached.SetFunction(plan.Step, plan.Module, function, found.Request);
 			filled++;
 		}
 
