@@ -22,7 +22,8 @@ public record ProcessInfo(string User, int Pid, string Name, long CpuSeconds);
 // waiting for accept() on any listening socket; above 0 for long means the program does not take connections as fast as they come.
 [JsonObject(NamingStrategyType = typeof(SnakeCaseNamingStrategy))]
 public record TcpStats(int Established, int SynRecv, int TimeWait, int CloseWait, int Total, long ListenQueueMax,
-	long RetransSegs, long AttemptFails, long EstabResets, long ListenOverflows, long ListenDrops, long Timeouts);
+	long RetransSegs, long AttemptFails, long EstabResets, long ListenOverflows, long ListenDrops, long Timeouts,
+	long InSegs, long OutSegs, long InErrs);
 
 // Pressure stall information: Avg10/60/300 is the percent of time in the last 10, 60 and 300 seconds that tasks waited for the resource (some: at least one task,
 // full: all non-idle tasks at once). Total is microseconds waited since boot and only goes up.

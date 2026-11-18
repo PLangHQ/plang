@@ -190,7 +190,7 @@ namespace PLangTests.Modules.HostModule
 		public void ReadTcpStats_CountsByStateAndCounters()
 		{
 			WriteTcp();
-			Write("net/snmp", "Ip: Forwarding DefaultTTL\nIp: 1 64\nTcp: RtoAlgorithm AttemptFails EstabResets RetransSegs\nTcp: 1 4 5 6\n");
+			Write("net/snmp", "Ip: Forwarding DefaultTTL\nIp: 1 64\nTcp: RtoAlgorithm AttemptFails EstabResets InSegs OutSegs RetransSegs InErrs\nTcp: 1 4 5 1000 2000 6 3\n");
 			Write("net/netstat", "TcpExt: ListenOverflows ListenDrops TCPTimeouts\nTcpExt: 7 8 9\n");
 
 			var s = ProcReader.ReadTcpStats(procRoot);
@@ -207,6 +207,9 @@ namespace PLangTests.Modules.HostModule
 			Assert.AreEqual(7L, s.ListenOverflows);
 			Assert.AreEqual(8L, s.ListenDrops);
 			Assert.AreEqual(9L, s.Timeouts);
+			Assert.AreEqual(1000L, s.InSegs);
+			Assert.AreEqual(2000L, s.OutSegs);
+			Assert.AreEqual(3L, s.InErrs);
 		}
 
 		[TestMethod]

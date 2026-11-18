@@ -26,7 +26,7 @@ public class Program : BaseProgram
 		return (ProcReader.ReadListeningPorts(), null);
 	}
 
-	[Description("The TCP connections now counted by state, and the kernel's TCP counters since boot. One object: Established, SynRecv, TimeWait, CloseWait, Total, ListenQueueMax (the most connections waiting for accept on a listening socket), RetransSegs, AttemptFails, EstabResets, ListenOverflows, ListenDrops, Timeouts. The counters only go up: take the difference between two reads. e.g. `get tcp stats, write to %tcp%`")]
+	[Description("The TCP connections now counted by state, and the kernel's TCP counters since boot. One object: Established, SynRecv, TimeWait, CloseWait, Total, ListenQueueMax (the most connections waiting for accept on a listening socket), RetransSegs, AttemptFails, EstabResets, ListenOverflows, ListenDrops, Timeouts, InSegs, OutSegs (segments received and sent), InErrs. The counters only go up: take the difference between two reads; retransmits as a share of traffic = ΔRetransSegs / ΔOutSegs. e.g. `get tcp stats, write to %tcp%`")]
 	[Example("get tcp stats, write to %tcp%", "")]
 	[Example("how many tcp connections are open, write to %tcp%", "")]
 	public async Task<(TcpStats?, IError?)> GetTcpStats()

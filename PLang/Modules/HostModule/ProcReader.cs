@@ -228,7 +228,8 @@ public static class ProcReader
 		var ext = ReadCounterTable(Path.Join(procRoot, "net", "netstat"), "TcpExt:");
 		return new TcpStats(established, synRecv, timeWait, closeWait, total, listenQueueMax,
 			tcp.GetValueOrDefault("RetransSegs"), tcp.GetValueOrDefault("AttemptFails"), tcp.GetValueOrDefault("EstabResets"),
-			ext.GetValueOrDefault("ListenOverflows"), ext.GetValueOrDefault("ListenDrops"), ext.GetValueOrDefault("TCPTimeouts"));
+			ext.GetValueOrDefault("ListenOverflows"), ext.GetValueOrDefault("ListenDrops"), ext.GetValueOrDefault("TCPTimeouts"),
+			tcp.GetValueOrDefault("InSegs"), tcp.GetValueOrDefault("OutSegs"), tcp.GetValueOrDefault("InErrs"));
 	}
 
 	/// <summary>snmp and netstat: a line "Tcp: Name1 Name2 ..." followed by "Tcp: 1 2 ...". Returns Name to value.</summary>
