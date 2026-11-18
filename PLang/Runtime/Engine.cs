@@ -405,6 +405,8 @@ namespace PLang.Runtime
 		private static CancellationTokenSource debounceTokenSource;
 		private static readonly object debounceLock = new object();
 		private IFileSystemWatcher? fileWatcher = null;
+		private IFileSystemWatcher? buildFolderWatcher = null;
+		private readonly object watcherLock = new object();
 
 		public virtual void Dispose()
 		{
@@ -413,6 +415,7 @@ namespace PLang.Runtime
 			{
 				return;
 			}
+			buildFolderWatcher?.Dispose();
 			fileWatcher?.Dispose();
 			/*
 			foreach (var listOfDisp in listOfDisposables)
@@ -1138,51 +1141,120 @@ namespace PLang.Runtime
 
 
 
+		// Reloads the goals when the .build folder changes. A deploy can write .pr files in place (git pull, cp), move them into place by
+		// rename (rsync, scp, tar), add or remove goal folders, or replace the whole .build folder. The first watcher covers everything inside
+		// .build; the second watches the folder holding .build, so a new .build folder gets a new watcher.
 		private void WatchForRebuild()
 		{
 			if (ParentEngine != null) return;
 
-			string path = fileSystem.Path.Join(fileSystem.BuildPath);
-			if (fileWatcher != null) fileWatcher.Dispose();
-
-			fileWatcher = fileSystem.FileSystemWatcher.New(path, "*.pr");
-
-			fileWatcher.Changed += (object sender, FileSystemEventArgs e) =>
+			if (buildFolderWatcher == null)
 			{
-				lock (debounceLock)
+				string buildPath = fileSystem.BuildPath.TrimEnd(fileSystem.Path.DirectorySeparatorChar);
+				string? parentPath = fileSystem.Path.GetDirectoryName(buildPath);
+				if (parentPath != null && fileSystem.Directory.Exists(parentPath))
 				{
-					debounceTokenSource?.Cancel();
-					debounceTokenSource?.Dispose();
-					debounceTokenSource = new CancellationTokenSource();
-
-					// Call the debounced method with a delay
-					Task.Delay(1 * 1000, debounceTokenSource.Token)
-						.ContinueWith(t =>
-						{
-							if (!t.IsCanceled)
-							{
-								Console.Write(".");
-								prParser.ForceLoadAllGoals();
-								var error = eventRuntime.Reload();
-								if (error != null)
-								{
-									Console.WriteLine(error);
-								}
-
-								foreach (var item in EnginePool.Pool)
-								{
-									// Rented engines share this parser, reloaded once above.
-									if (item.PrParser != prParser) item.ReloadGoals();
-									item.GetEventRuntime().Reload();
-								}
-
-
-							}
-						}, TaskScheduler.Default);
+					buildFolderWatcher = fileSystem.FileSystemWatcher.New(parentPath, fileSystem.Path.GetFileName(buildPath));
+					buildFolderWatcher.NotifyFilter = NotifyFilters.DirectoryName;
+					buildFolderWatcher.Created += OnBuildFolderReplaced;
+					buildFolderWatcher.Renamed += OnBuildFolderReplaced;
+					buildFolderWatcher.EnableRaisingEvents = true;
 				}
-			};
-			fileWatcher.IncludeSubdirectories = true;
-			fileWatcher.EnableRaisingEvents = true;
+			}
+
+			WatchBuildFolder();
+		}
+
+		private void WatchBuildFolder()
+		{
+			lock (watcherLock)
+			{
+				fileWatcher?.Dispose();
+				fileWatcher = null;
+
+				if (!fileSystem.Directory.Exists(fileSystem.BuildPath)) return;
+
+				var watcher = fileSystem.FileSystemWatcher.New(fileSystem.BuildPath);
+				watcher.NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.LastWrite;
+				watcher.IncludeSubdirectories = true;
+				watcher.Changed += OnBuildChanged;
+				watcher.Created += OnBuildChanged;
+				watcher.Deleted += OnBuildChanged;
+				watcher.Renamed += OnBuildChanged;
+				watcher.Error += (sender, e) =>
+				{
+					// The watcher stops after an error (the folder was removed, the event buffer overflowed). Start a new one and reload,
+					// since changes may have been missed.
+					if (!ReferenceEquals(sender, fileWatcher)) return;
+					logger.LogWarning(e.GetException(), "Watcher on {BuildPath} failed, starting a new one", fileSystem.BuildPath);
+					WatchBuildFolder();
+					ScheduleReload();
+				};
+				watcher.EnableRaisingEvents = true;
+				fileWatcher = watcher;
+			}
+		}
+
+		private void OnBuildFolderReplaced(object sender, FileSystemEventArgs e)
+		{
+			WatchBuildFolder();
+			ScheduleReload();
+		}
+
+		private void OnBuildChanged(object sender, FileSystemEventArgs e)
+		{
+			if (IsGoalChange(e)) ScheduleReload();
+		}
+
+		// A .pr file, or a goal folder created, moved or deleted. A folder's own Changed event (its timestamp) is not a change to the goals.
+		private bool IsGoalChange(FileSystemEventArgs e)
+		{
+			if (IsPrFile(e.FullPath)) return true;
+			if (e is RenamedEventArgs renamed && IsPrFile(renamed.OldFullPath)) return true;
+			return e.ChangeType != WatcherChangeTypes.Changed && string.IsNullOrEmpty(fileSystem.Path.GetExtension(e.FullPath));
+		}
+
+		private bool IsPrFile(string? path)
+		{
+			return path != null && fileSystem.Path.GetExtension(path).Equals(".pr", StringComparison.OrdinalIgnoreCase);
+		}
+
+		// Waits until the build folder has been quiet for 1 second, so a deploy of many files reloads once.
+		private void ScheduleReload()
+		{
+			lock (debounceLock)
+			{
+				debounceTokenSource?.Cancel();
+				debounceTokenSource?.Dispose();
+				debounceTokenSource = new CancellationTokenSource();
+
+				Task.Delay(1 * 1000, debounceTokenSource.Token)
+					.ContinueWith(t =>
+					{
+						if (t.IsCanceled) return;
+						try
+						{
+							Console.Write(".");
+							prParser.ForceLoadAllGoals();
+							var error = eventRuntime.Reload();
+							if (error != null)
+							{
+								Console.WriteLine(error);
+							}
+
+							foreach (var item in EnginePool.Pool)
+							{
+								// Rented engines share this parser, reloaded once above.
+								if (item.PrParser != prParser) item.ReloadGoals();
+								item.GetEventRuntime().Reload();
+							}
+						}
+						catch (Exception ex)
+						{
+							logger.LogError(ex, "Reloading goals from {BuildPath}", fileSystem.BuildPath);
+						}
+					}, TaskScheduler.Default);
+			}
 		}
 
 
