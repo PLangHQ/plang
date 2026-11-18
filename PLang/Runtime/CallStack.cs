@@ -130,9 +130,9 @@ public class CallStack
 
 	private void DisposeOfDisposables(CallStackFrame frame)
 	{
-		if (frame.Disposables.IsEmpty) return;
+		if (!frame.HasDisposables) return;
 
-		var hasErrors = !frame.Errors.IsEmpty;
+		var hasErrors = frame.HasErrors;
 		foreach (var disposable in frame.Disposables)
 		{
 			if (hasErrors && disposable is BaseProgram program)
@@ -277,31 +277,39 @@ public class CallStackFrame : VariableContainer
 	public RuntimeEvent? Event { get; }
 	public CallStackFrame? ParentFrame { get; }
 
-	public ConcurrentBag<IDisposable> Disposables { get; } = new();
-	public ConcurrentBag<IError> Errors { get; } = new();
+	// Most frames never get a disposable or an error, and a ConcurrentBag is a heavy object, so they are
+	// created on first use. HasDisposables/HasErrors answer without creating them.
+	private ConcurrentBag<IDisposable>? _disposables;
+	private ConcurrentBag<IError>? _errors;
+	public ConcurrentBag<IDisposable> Disposables => LazyInitializer.EnsureInitialized(ref _disposables)!;
+	public ConcurrentBag<IError> Errors => LazyInitializer.EnsureInitialized(ref _errors)!;
+	public bool HasDisposables => _disposables != null && !_disposables.IsEmpty;
+	public bool HasErrors => _errors != null && !_errors.IsEmpty;
 
 	// Indented steps (the body of an if) run only when the condition in THIS invocation enabled
 	// them. The flag used to live on the shared GoalStep, so a goal that recursed into itself
 	// from inside an if body saw the outer invocation's flags and ran steps its own condition
 	// had rejected.
-	private readonly HashSet<int> _enabledSteps = new();
+	private HashSet<int>? _enabledSteps;
 
 	public void SetStepEnabled(int stepIndex, bool enabled)
 	{
-		if (enabled) _enabledSteps.Add(stepIndex);
-		else _enabledSteps.Remove(stepIndex);
+		if (enabled) (_enabledSteps ??= new()).Add(stepIndex);
+		else _enabledSteps?.Remove(stepIndex);
 	}
 
 	public bool IsStepEnabled(int stepIndex)
 	{
-		return _enabledSteps.Contains(stepIndex);
+		return _enabledSteps != null && _enabledSteps.Contains(stepIndex);
 	}
 
 	private readonly ConcurrentQueue<ExecutedStep> _executedSteps = new();
 	private ExecutedStep? _currentExecutingStep;
-	private readonly Stopwatch _frameStopwatch;
+	// Timestamps instead of a Stopwatch object per frame (every goal call creates a frame).
+	private readonly long _frameStart;
+	private long _frameEnd;
 
-	public TimeSpan Duration => _frameStopwatch.Elapsed;
+	public TimeSpan Duration => Stopwatch.GetElapsedTime(_frameStart, _frameEnd != 0 ? _frameEnd : Stopwatch.GetTimestamp());
 	public bool IsComplete { get; private set; }
 	public bool IsEvent => Event != null;
 
@@ -317,7 +325,7 @@ public class CallStackFrame : VariableContainer
 		ParentFrame = parentFrame;
 		Event = eventBinding;
 		Phase = ExecutionPhase.None;
-		_frameStopwatch = Stopwatch.StartNew();
+		_frameStart = Stopwatch.GetTimestamp();
 	}
 
 	public void SetCurrentStep(GoalStep step, int stepIndex)
@@ -354,7 +362,7 @@ public class CallStackFrame : VariableContainer
 	{
 		if (IsComplete) return;
 
-		_frameStopwatch.Stop();
+		_frameEnd = Stopwatch.GetTimestamp();
 		_currentExecutingStep?.CompleteIfRunning(null, null);
 		IsComplete = true;
 	}
@@ -438,7 +446,8 @@ public class ExecutedStep
 	public IError? Error { get; private set; }
 	public bool IsComplete { get; private set; }
 
-	private readonly Stopwatch _stopwatch;
+	// A timestamp instead of a Stopwatch object per executed step.
+	private readonly long _startTimestamp;
 
 	public ExecutedStep(GoalStep step, int index)
 	{
@@ -446,15 +455,14 @@ public class ExecutedStep
 		Index = index;
 		LineNumber = step.LineNumber;
 		StartedAt = DateTime.UtcNow;
-		_stopwatch = Stopwatch.StartNew();
+		_startTimestamp = Stopwatch.GetTimestamp();
 	}
 
 	public void Complete(object? returnValue, IError? error)
 	{
 		if (IsComplete) return;
 
-		_stopwatch.Stop();
-		Duration = _stopwatch.Elapsed;
+		Duration = Stopwatch.GetElapsedTime(_startTimestamp);
 		CompletedAt = DateTime.UtcNow;
 		ReturnValue = returnValue;
 		Error = error;
