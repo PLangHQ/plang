@@ -79,19 +79,6 @@ namespace PLang.Runtime
 			}
 			
 			(var goalToRun, var error) = GoalHelper.GetGoal(relativeGoalPath, fileSystem.RootDirectory, goalToCall, goals, systemGoals);
-			if (goalToCall.Name == "CreateUserInVitalSource")
-			{
-				Console.WriteLine($"CreateUserInVitalSource: {goalToCall.Name} | params:{string.Join(",", goalToCall.Parameters.Select(p => p.Key))} | path: {goalToCall.Path}");
-				if (goalToRun != null)
-				{
-					Console.WriteLine($"Goal: {goalToRun.GoalName} | pr:{goalToRun.RelativePrPath}");
-				} else
-				{
-					Console.WriteLine($"Goal IS NULL: relativeGoalPath:{relativeGoalPath} | fileSystem.RootDirectory: {fileSystem.RootDirectory} | goalToCall:{goalToCall}");
-					throw new Exception("CreateUserInVitalSource Goal is null");
-				}
-
-			}
 			if (error != null) return (engine, null, error);
 			if (goalToRun == null) return (engine, null, new Error($"{goalToCall.Name} could not be found"));
 
