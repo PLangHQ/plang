@@ -244,13 +244,25 @@ public class Program : BaseProgram, IDisposable
 		// (payment, mail, LLM) holds its slot, so it is well above the core count.
 		// A request that waits longer than PLANG_REQUEST_QUEUE_TIMEOUT_SECONDS gets 503.
 		// Override with PLANG_MAX_CONCURRENT_REQUESTS (default 64) and
-		// PLANG_REQUEST_QUEUE_TIMEOUT_SECONDS (default 10).
+		// PLANG_REQUEST_QUEUE_TIMEOUT_SECONDS (default 2).
+		// The queue timeout was 10 s, and with it the server did not come back from a short
+		// overload while traffic continued. Measured on rafbokin, mixed pages at 100 requests a
+		// second: a 1-3 s hiccup (a long GC, an engine build burst, another process taking the
+		// CPU; reproduced with a 3 s SIGSTOP) filled the 64 slots, the queue grew to 600, and
+		// from then on the server answered only 40-70 requests a second for as long as the load
+		// lasted (30-90 s and more): every request now lived 10 s instead of 30 ms, its objects
+		// survived into the older GC generations, GC pause went from 15% to 30-46% of the time
+		// and the CPU sat at about one core, so the backlog never drained and most answers were
+		// a 503 after 10 s. No lock or slot was stuck: everything recovered once the load stopped.
+		// With 2 s the same hiccup costs a few seconds of 503s and the server recovers within
+		// 10-15 s under the same load. A request that would have waited longer than 2 s for a
+		// slot would mostly have been answered too late to be useful anyway.
 		var maxConcurrentRequests = int.TryParse(Environment.GetEnvironmentVariable("PLANG_MAX_CONCURRENT_REQUESTS"), out var configuredMax) && configuredMax > 0
 			? configuredMax
 			: 64;
 		var requestQueueTimeout = TimeSpan.FromSeconds(int.TryParse(Environment.GetEnvironmentVariable("PLANG_REQUEST_QUEUE_TIMEOUT_SECONDS"), out var configuredTimeout) && configuredTimeout > 0
 			? configuredTimeout
-			: 10);
+			: 2);
 		var requestGate = new SemaphoreSlim(maxConcurrentRequests, maxConcurrentRequests);
 
 		var builder = Host.CreateDefaultBuilder()
