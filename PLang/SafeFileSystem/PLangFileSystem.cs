@@ -216,18 +216,21 @@ namespace PLang.SafeFileSystem
 				return path.AdjustPathToOs();
 			}
 
-			if (IsPlangRooted(path))
+			// An OS path ("//etc/hostname", PathHelper keeps the leading // for "///etc/hostname") must be tested before the plang-rooted case:
+			// a path that starts with "/" is also plang-rooted, so the order made the OS branch dead and the path was joined onto the app folder.
+			// One slash goes, the rest is the real path; outside the app it ends in the access check below (FileAccessException).
+			if (IsOsRooted(path))
+			{
+				if (path.StartsWith("//"))
+				{
+					path = path.Substring(1);
+				}
+			}
+			else if (IsPlangRooted(path))
 			{
 				if (!path.StartsWith(RootDirectory))
 				{
 					path = Path.GetFullPath(Path.Join(RootDirectory, path));
-				}
-			}
-			else if (IsOsRooted(path))
-			{
-				if (path.StartsWith("//"))
-				{
-					path = path.Substring(0, 1);
 				}
 			}
 			else
