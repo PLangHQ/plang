@@ -464,11 +464,28 @@ public class MethodHelper
 
 	}
 
+	// Reflection hands out a new ParameterInfo[] on every GetParameters() call and builds CustomAttributeData
+	// objects on every CustomAttributes access. Both are fixed for a method, so they are looked up once per
+	// process. The attribute is cached by the (cached, hence stable) ParameterInfo instance.
+	private static readonly ConcurrentDictionary<MethodInfo, ParameterInfo[]> parametersByMethod = new();
+	private static readonly ConcurrentDictionary<ParameterInfo, CustomAttributeData?> handlesVariableByParameter = new();
+
+	private static ParameterInfo[] GetCachedParameters(MethodInfo method)
+	{
+		return parametersByMethod.GetOrAdd(method, static m => m.GetParameters());
+	}
+
+	private static CustomAttributeData? GetHandlesVariableAttribute(ParameterInfo parameter)
+	{
+		return handlesVariableByParameter.GetOrAdd(parameter, static p =>
+			p.CustomAttributes.FirstOrDefault(a => a.AttributeType == typeof(HandlesVariableAttribute)));
+	}
+
 	public (Dictionary<string, object?> Parameters, IError? Error) GetParameterValues(MethodInfo method, IGenericFunction function)
 	{
 		Stopwatch stopwatch = Stopwatch.StartNew();
 		var parameterValues = new Dictionary<string, object?>();
-		var parameters = method.GetParameters();
+		var parameters = GetCachedParameters(method);
 		if (parameters.Length == 0) return (parameterValues, null);
 
 		var step = function.Instruction.Step;
@@ -499,7 +516,7 @@ public class MethodHelper
 					continue;
 				}
 
-				var handlesAttribute = parameter.CustomAttributes.FirstOrDefault(p => p.AttributeType == typeof(HandlesVariableAttribute));
+				var handlesAttribute = GetHandlesVariableAttribute(parameter);
 				if (handlesAttribute == null && VariableHelper.IsVariable(variableValue))
 				{
 					if (VariableHelper.IsSetting(variableValue.ToString()))

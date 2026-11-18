@@ -987,11 +987,10 @@ namespace PLang.Runtime
 				await asyncConstructor.AsyncConstructor();
 			}
 
-			using (var cts = new CancellationTokenSource())
+			// A CancellationTokenSource with CancelAfter(30 s) used to be created here for every step (a timer
+			// per step). Its token was never passed to anything, so it could not cancel the step; it only
+			// cost a timer allocation and registration. Removed without changing behaviour.
 			{
-				long executionTimeout = (step.CancellationHandler == null) ? 30 * 1000 : step.CancellationHandler.CancelExecutionAfterXMilliseconds ?? 30 * 1000;
-				cts.CancelAfter(TimeSpan.FromMilliseconds(executionTimeout));
-
 				try
 				{
 					if (classInstance is IDisposable disposable)
