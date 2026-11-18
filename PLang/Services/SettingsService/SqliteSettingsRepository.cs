@@ -295,7 +295,23 @@ CREATE TABLE IF NOT EXISTS Settings (
 
 		public Setting? Get(string? fullName, string? type, string? key)
 		{
-			var setting = GetSettings().FirstOrDefault(p => p.ClassOwnerFullName == fullName && p.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
+			// Read only the wanted row. GetSettings() loads every setting, among them values of 100+ KB, and
+			// this runs on every database step (via the data source lookup). Keys are ASCII, so SQLite NOCASE
+			// matches what OrdinalIgnoreCase matched. The old scan is kept for null arguments.
+			Setting? setting;
+			if (fullName == null || key == null)
+			{
+				setting = GetSettings().FirstOrDefault(p => p.ClassOwnerFullName == fullName && p.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
+			}
+			else
+			{
+				using (IDbConnection connection = new SqliteConnection(DataSource))
+				{
+					setting = connection.Query<Setting>(
+						"SELECT * FROM Settings WHERE [ClassOwnerFullName]=@fullName AND [Key]=@key COLLATE NOCASE ORDER BY rowid LIMIT 1",
+						new { fullName, key }).FirstOrDefault();
+				}
+			}
 			/*
 			var verifiedData = signingService.VerifySignature(salt, setting.Value, "Setting", fullName, setting.Signature).Result;
 			if (verifiedData == null)
