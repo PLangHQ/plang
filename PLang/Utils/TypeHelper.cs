@@ -455,9 +455,31 @@ public class TypeHelper : ITypeHelper
 	public Type? GetRuntimeType(string? module)
 	{
 		if (module == null) return null;
-		if (!module.EndsWith(".Program")) module += ".Program";
-		return runtimeModules.FirstOrDefault(p => p.FullName == module);
+
+		// Called for every step. The answer depends only on the module name and the loaded module list, so it is
+		// remembered per list instance (the list is replaced when a TypeHelper is constructed), which also avoids
+		// the string concatenation and the scan over all modules per step.
+		var list = runtimeModules;
+		var cache = runtimeTypeCache;
+		if (cache == null || !ReferenceEquals(cache.List, list))
+		{
+			cache = new RuntimeTypeCache(list);
+			runtimeTypeCache = cache;
+		}
+		return cache.ByModule.GetOrAdd(module, static (name, modules) =>
+		{
+			if (!name.EndsWith(".Program")) name += ".Program";
+			return modules.FirstOrDefault(p => p.FullName == name);
+		}, list);
 	}
+
+	private sealed class RuntimeTypeCache
+	{
+		public RuntimeTypeCache(List<Type> list) { List = list; }
+		public List<Type> List { get; }
+		public System.Collections.Concurrent.ConcurrentDictionary<string, Type?> ByModule { get; } = new(StringComparer.Ordinal);
+	}
+	private static volatile RuntimeTypeCache? runtimeTypeCache;
 
 	public List<Type> GetBuilderModules()
 	{
