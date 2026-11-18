@@ -38,25 +38,39 @@ public class MethodHelper
 	private readonly ILogger logger;
 	private readonly IPLangContextAccessor contextAccessor;
 	private readonly ISettings settings;
-	private ConcurrentDictionary<string, MethodInfo> cachedMethodInfo;
+	private sealed record ResolvedMethod(Type ModuleClass, MethodInfo Method);
+	private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<IGenericFunction, ResolvedMethod> resolvedByFunction = new();
+	private static readonly ConcurrentDictionary<string, MethodInfo> cachedMethodInfo = new();
 	public MethodHelper(ITypeHelper typeHelper, ILogger logger, IPLangContextAccessor contextAccessor, ISettings settings)
 	{
 		this.typeHelper = typeHelper;
 		this.logger = logger;
 		this.contextAccessor = contextAccessor;
 		this.settings = settings;
-		cachedMethodInfo = new();
 	}
 
 	public async Task<MethodInfo?> GetMethod(object callingInstance, IGenericFunction function)
 	{
-		string cacheKey = function.Instruction.ModuleType + "_" + function.Name;
+		// Fast path: the resolved method is remembered on the (shared) function object of the step, so a
+		// freshly rented engine does not redo GetMethods + IsParameterMatch and no key string is built per step.
+		// A reloaded goal gets new function objects, so a stale entry cannot be found. The module type is
+		// compared because a function object is only valid for the module class it was resolved against.
+		var callingType = callingInstance.GetType();
+		if (resolvedByFunction.TryGetValue(function, out var resolved) && resolved.ModuleClass == callingType)
+		{
+			return resolved.Method;
+		}
+
+		// Static (shared by all engines): the module class is part of the key, so the cache stays valid
+		// across containers.
+		string cacheKey = callingType.FullName + "|" + function.Instruction.ModuleType + "_" + function.Name;
 		if (function.Parameters != null)
 		{
 			cacheKey += "_" + string.Join(",", function.Parameters.Select(p => p.Type));
 		}
 		if (cachedMethodInfo.TryGetValue(cacheKey, out var methodInfo))
 		{
+			resolvedByFunction.AddOrUpdate(function, new ResolvedMethod(callingType, methodInfo));
 			return methodInfo;
 		}
 
@@ -77,6 +91,7 @@ public class MethodHelper
 		if (method != null)
 		{
 			cachedMethodInfo.TryAdd(cacheKey, method);
+			resolvedByFunction.AddOrUpdate(function, new ResolvedMethod(callingType, method));
 			return method;
 		}
 
