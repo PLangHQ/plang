@@ -745,6 +745,11 @@ namespace PLang.Modules.FileModule
 			return signError;
 		}
 
+		/// <summary>True for an object that has a structure (a record, a class, a list, a dictionary): text, numbers, dates, guids and the like are written as their text.</summary>
+		private static bool IsStructured(object content) =>
+			content is not string && content is not IConvertible && content is not Guid && content is not TimeSpan && content is not DateTimeOffset && content is not Uri
+			&& content is not Newtonsoft.Json.Linq.JToken;
+
 		private async Task WriteToFileInternal(string path, object content, bool overwrite, bool loadVariables, bool emptyVariableIfNotFound, string encoding)
 		{
 			var absolutePath = GetPath(path);
@@ -777,8 +782,10 @@ namespace PLang.Modules.FileModule
 			{
 				content = memoryStack.LoadVariables(content, emptyVariableIfNotFound).ToString();
 			}
-			else if (content != null && content.ToString() == content.GetType().ToString())
+			else if (content != null && (content.ToString() == content.GetType().ToString() || IsStructured(content)))
 			{
+				// An object is written as JSON. The old test only caught a type whose ToString() is its own name: a record writes "TcpStats { Established = 14, ... }",
+				// a text nobody can read back (and not the snake case names its JSON attribute gives).
 				content = JsonConvert.SerializeObject(content, Newtonsoft.Json.Formatting.Indented);
 			}
 
