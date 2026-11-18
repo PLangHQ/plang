@@ -318,7 +318,7 @@ namespace PLang.Modules.DbModule
 				transaction.Connection?.Close();
 				datasource.Transaction = null;
 				datasource.AttachedDbs.Clear();
-				if (context.DataSource != null && context.DataSource.Name == datasource.Name)
+				if (context.DataSource != null && ModuleSettings.IsSameDataSourceName(context.DataSource.Name, datasource.Name))
 				{
 					context.DataSource = datasource;
 				}

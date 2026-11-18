@@ -114,7 +114,7 @@ namespace PLang.Modules.DbModule
 			{
 				lock (AttachedDbs)
 				{
-					if (AttachedDbs.Any(p => p.Alias == alias)) return;
+					if (AttachedDbs.Any(p => string.Equals(p.Alias, alias, StringComparison.OrdinalIgnoreCase))) return;
 
 					AttachedDbs.Add(new AttachedDb(alias, path));
 				}
@@ -183,7 +183,7 @@ namespace PLang.Modules.DbModule
 				string ext = fileSystem.Path.GetExtension(dataSourceName);
 				if (!string.IsNullOrEmpty(ext)) fileName = null;
 
-				var goal = prParser.GetAllGoals().FirstOrDefault(p => p.DataSourceName != null && p.DataSourceName.Equals(dataSourceName));
+				var goal = FindSetupGoal(prParser.GetAllGoals(), dataSourceName, mustBeSetup: false);
 				if (goal != null)
 				{
 					var instructionResult = prParser.GetInstructions(goal.GoalSteps, "CreateDataSource");
@@ -199,8 +199,10 @@ namespace PLang.Modules.DbModule
 					}
 				}
 
-				var localPath = $"/.db/{dataSourceName}{fileName}".AdjustPathToOs();
-				return await CreateSqliteDataSource(dataSourceName, localPath, setAsDefaultForApp, keepHistoryEventSourcing);
+				// The folder is the name of the datasource as it was first created, not the spelling of this step.
+				var folderName = (dataSourceName.Contains("%") || fileName == null) ? dataSourceName : GetExistingDataSourceFolderName(dataSourceName);
+				var localPath = $"/.db/{folderName}{fileName}".AdjustPathToOs();
+				return await CreateSqliteDataSource(folderName, localPath, setAsDefaultForApp, keepHistoryEventSourcing);
 			}
 
 			var listOfDbSupported = GetSupportedDbTypes();
@@ -272,6 +274,48 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 			await AddDataSourceToSettings(dataSource);
 
 			return await ProcessDataSource(dataSource);
+		}
+
+		/// <summary>
+		/// Datasource names are case-insensitive: "Vitalsource" and "VitalSource" are the same datasource.
+		/// </summary>
+		public static bool IsSameDataSourceName(string? a, string? b)
+		{
+			return string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
+		}
+
+		/// <summary>
+		/// The setup goal of the datasource with the given name, whatever the case the name is written in.
+		/// </summary>
+		public static Goal? FindSetupGoal(IEnumerable<Goal> goals, string? name, bool mustBeSetup = true)
+		{
+			if (name == null) return null;
+
+			return goals.FirstOrDefault(p => (!mustBeSetup || p.IsSetup) && IsSameDataSourceName(p.DataSourceName, name));
+		}
+
+		/// <summary>
+		/// The name of the datasource folder under /.db that is already on disk for this name, whatever the case
+		/// it is written in, so that one datasource is never given two folders on a case-sensitive file system.
+		/// Returns the name as given when there is no such folder.
+		/// </summary>
+		private string GetExistingDataSourceFolderName(string dataSourceName)
+		{
+			try
+			{
+				var dbFolder = "/.db".AdjustPathToOs();
+				if (!fileSystem.Directory.Exists(dbFolder)) return dataSourceName;
+
+				var existing = fileSystem.Directory.GetDirectories(dbFolder)
+					.Select(p => fileSystem.Path.GetFileName(p.TrimEnd('/', '\\')))
+					.FirstOrDefault(p => IsSameDataSourceName(p, dataSourceName));
+
+				return existing ?? dataSourceName;
+			}
+			catch (Exception)
+			{
+				return dataSourceName;
+			}
 		}
 
 		public static string? ConvertDataSourceNameInStep(string? dataSourceNameInStep)
@@ -431,7 +475,7 @@ Be concise"));
 				dataSources.ForEach(p => p.IsDefault = false);
 			}
 
-			var dataSourceIdx = dataSources.FindIndex(p => p.Name == dataSource.Name);
+			var dataSourceIdx = dataSources.FindIndex(p => IsSameDataSourceName(p.Name, dataSource.Name));
 			if (dataSourceIdx != -1)
 			{
 				dataSources[dataSourceIdx] = dataSource;
@@ -450,7 +494,7 @@ Be concise"));
 		public async Task RemoveDataSource(string dataSourceName)
 		{
 			var dataSources = await GetAllDataSources();
-			var dataSource = dataSources.FirstOrDefault(p => p.Name == dataSourceName);
+			var dataSource = dataSources.FirstOrDefault(p => IsSameDataSourceName(p.Name, dataSourceName));
 			if (dataSource != null)
 			{
 				dataSources.Remove(dataSource);
@@ -752,7 +796,7 @@ Be concise"));
 
 		private async Task<IError?> ExecuteSetup(DbTransaction transaction, string name)
 		{
-			var setupGoal = prParser.GetAllGoals().FirstOrDefault(p => p.DataSourceName != null && p.DataSourceName.Equals(name));
+			var setupGoal = FindSetupGoal(prParser.GetAllGoals(), name, mustBeSetup: false);
 			if (setupGoal == null)
 			{
 				logger.LogError("No setup goal matches datasource {DataSource}, so its schema is never migrated", name);
@@ -909,7 +953,7 @@ Be concise"));
 			}
 
 
-			var setupGoal = prParser.GetAllGoals().FirstOrDefault(p => p.IsSetup && p.DataSourceName == name);
+			var setupGoal = FindSetupGoal(prParser.GetAllGoals(), name);
 			if (setupGoal != null)
 			{
 				var createDataSourceStep = setupGoal.GoalSteps[0];

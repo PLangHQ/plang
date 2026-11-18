@@ -1075,7 +1075,7 @@ When the user points to a sql file (a path ending in .sql), the sql lives in tha
 		(var validSql, dataSourceName, error) = await IsValidSql(sql, dataSource, step);
 		if (error == null)
 		{
-			var dataSourceNameToSet = (dataSource.Name == dataSourceName) ? dataSource.NameInStep : dataSourceName;
+			var dataSourceNameToSet = ModuleSettings.IsSameDataSourceName(dataSource.Name, dataSourceName) ? dataSource.NameInStep : dataSourceName;
 			if (dataSourceNameToSet?.Contains("%variable0%") == true) return (instruction, new StepBuilderError("datasource cannot be users/%variable0%", step));
 
 			var updatedParams = gf.Parameters
@@ -1087,7 +1087,7 @@ When the user points to a sql file (a path ending in .sql), the sql lives in tha
 
 			logger.LogInformation($"  - ✅ Sql statement validated - {sql.MaxLength(30, "...")} - {step.Goal.RelativeGoalPath}:{step.LineNumber}");
 
-			var setupFile = goalParser.GetGoals().FirstOrDefault(p => p.IsSetup && p.DataSourceName == dataSource.Name);
+			var setupFile = ModuleSettings.FindSetupGoal(goalParser.GetGoals(), dataSource.Name);
 			if (setupFile == null)
 			{
 				return (instruction, new StepBuilderError($"Could not find setup file matching data source: '{dataSource.Name}'", step));
