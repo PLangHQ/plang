@@ -17,3 +17,12 @@ public record ListeningPort(string Protocol, string Address, int Port, string? P
 
 [JsonObject(NamingStrategyType = typeof(SnakeCaseNamingStrategy))]
 public record ProcessInfo(string User, int Pid, string Name, long CpuSeconds);
+
+// Connections now (by state) and the kernel's TCP counters since boot (the caller takes the difference between two reads). ListenQueueMax: the most connections
+// waiting for accept() on any listening socket; above 0 for long means the program does not take connections as fast as they come.
+[JsonObject(NamingStrategyType = typeof(SnakeCaseNamingStrategy))]
+public record TcpStats(int Established, int SynRecv, int TimeWait, int CloseWait, int Total, long ListenQueueMax,
+	long RetransSegs, long AttemptFails, long EstabResets, long ListenOverflows, long ListenDrops, long Timeouts);
+
+[JsonObject(NamingStrategyType = typeof(SnakeCaseNamingStrategy))]
+public record TcpConnection(string Protocol, string State, string LocalAddress, int LocalPort, string RemoteAddress, int RemotePort, long RxQueue, long TxQueue, int Uid);

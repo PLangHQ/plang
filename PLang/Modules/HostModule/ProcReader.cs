@@ -162,6 +162,92 @@ public static class ProcReader
 		return owners;
 	}
 
+	// ---- tcp: /proc/net/tcp and tcp6 for the connections, /proc/net/snmp and netstat for the kernel's counters
+
+	private static readonly Dictionary<string, string> TcpStates = new()
+	{
+		["01"] = "established", ["02"] = "syn_sent", ["03"] = "syn_recv", ["04"] = "fin_wait1", ["05"] = "fin_wait2", ["06"] = "time_wait",
+		["07"] = "close", ["08"] = "close_wait", ["09"] = "last_ack", ["0A"] = "listen", ["0B"] = "closing", ["0C"] = "new_syn_recv"
+	};
+
+	private static long Hex(string s) => long.TryParse(s, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var v) ? v : 0;
+
+	/// <summary>Every TCP connection (and listening socket) of the machine, one row each. A busy server has thousands: for the numbers alone use <see cref="ReadTcpStats"/>.</summary>
+	public static List<TcpConnection> ReadTcpConnections(string procRoot = "/proc")
+	{
+		var rows = new List<TcpConnection>();
+		foreach (var file in new[] { "tcp", "tcp6" })
+		{
+			string path = Path.Join(procRoot, "net", file);
+			if (!File.Exists(path)) continue;
+			bool v6 = file.EndsWith('6');
+			foreach (var line in File.ReadLines(path).Skip(1))
+			{
+				// sl local_address rem_address st tx_queue:rx_queue tr:tm->when retrnsmt uid timeout inode ...
+				var p = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+				if (p.Length < 8) continue;
+				var local = ParseAddress(p[1], v6);
+				var remote = ParseAddress(p[2], v6);
+				if (local == null || remote == null) continue;
+				var queues = p[4].Split(':');
+				rows.Add(new TcpConnection("tcp", TcpStates.GetValueOrDefault(p[3].ToUpperInvariant(), p[3]), local.Value.Address, local.Value.Port,
+					remote.Value.Address, remote.Value.Port, queues.Length > 1 ? Hex(queues[1]) : 0, Hex(queues[0]), (int)Num(p[7])));
+			}
+		}
+		return rows;
+	}
+
+	public static TcpStats ReadTcpStats(string procRoot = "/proc")
+	{
+		int established = 0, synRecv = 0, timeWait = 0, closeWait = 0, total = 0;
+		long listenQueueMax = 0;
+		// The files are read line by line and never kept: only the counts are, so a server with many connections costs time but no memory.
+		foreach (var file in new[] { "tcp", "tcp6" })
+		{
+			string path = Path.Join(procRoot, "net", file);
+			if (!File.Exists(path)) continue;
+			foreach (var line in File.ReadLines(path).Skip(1))
+			{
+				var p = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+				if (p.Length < 8) continue;
+				total++;
+				switch (p[3].ToUpperInvariant())
+				{
+					case "01": established++; break;
+					case "03": synRecv++; break;
+					case "06": timeWait++; break;
+					case "08": closeWait++; break;
+					case "0A":
+						var queues = p[4].Split(':');
+						if (queues.Length > 1) listenQueueMax = Math.Max(listenQueueMax, Hex(queues[1]));
+						break;
+				}
+			}
+		}
+		var tcp = ReadCounterTable(Path.Join(procRoot, "net", "snmp"), "Tcp:");
+		var ext = ReadCounterTable(Path.Join(procRoot, "net", "netstat"), "TcpExt:");
+		return new TcpStats(established, synRecv, timeWait, closeWait, total, listenQueueMax,
+			tcp.GetValueOrDefault("RetransSegs"), tcp.GetValueOrDefault("AttemptFails"), tcp.GetValueOrDefault("EstabResets"),
+			ext.GetValueOrDefault("ListenOverflows"), ext.GetValueOrDefault("ListenDrops"), ext.GetValueOrDefault("TCPTimeouts"));
+	}
+
+	/// <summary>snmp and netstat: a line "Tcp: Name1 Name2 ..." followed by "Tcp: 1 2 ...". Returns Name to value.</summary>
+	private static Dictionary<string, long> ReadCounterTable(string path, string prefix)
+	{
+		var values = new Dictionary<string, long>();
+		if (!File.Exists(path)) return values;
+		string[]? names = null;
+		foreach (var line in File.ReadLines(path))
+		{
+			if (!line.StartsWith(prefix)) continue;
+			var p = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+			if (names == null) { names = p; continue; }
+			for (int i = 1; i < p.Length && i < names.Length; i++) values[names[i]] = Num(p[i]);
+			break;
+		}
+		return values;
+	}
+
 	// ---- disks: /proc/mounts for what is mounted, statfs (DriveInfo) for how full
 
 	private static readonly HashSet<string> NotDisks = new() { "tmpfs", "devtmpfs", "proc", "sysfs", "cgroup", "cgroup2", "devpts", "mqueue", "securityfs",

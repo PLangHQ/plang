@@ -26,6 +26,26 @@ public class Program : BaseProgram
 		return (ProcReader.ReadListeningPorts(), null);
 	}
 
+	[Description("The TCP connections now counted by state, and the kernel's TCP counters since boot. One object: Established, SynRecv, TimeWait, CloseWait, Total, ListenQueueMax (the most connections waiting for accept on a listening socket), RetransSegs, AttemptFails, EstabResets, ListenOverflows, ListenDrops, Timeouts. The counters only go up: take the difference between two reads. e.g. `get tcp stats, write to %tcp%`")]
+	[Example("get tcp stats, write to %tcp%", "")]
+	[Example("how many tcp connections are open, write to %tcp%", "")]
+	public async Task<(TcpStats?, IError?)> GetTcpStats()
+	{
+		var error = OnlyLinux();
+		if (error != null) return (null, error);
+		return (ProcReader.ReadTcpStats(), null);
+	}
+
+	[Description("Every TCP connection and listening socket as a list, the long form of `get tcp stats`. Each row: Protocol, State (established, time_wait, close_wait, listen ...), LocalAddress, LocalPort, RemoteAddress, RemotePort, RxQueue, TxQueue, Uid. A busy server has thousands of rows: use `get tcp stats` when the numbers are enough. e.g. `get tcp stats full, write to %connections%`")]
+	[Example("get tcp stats full, write to %connections%", "")]
+	[Example("list every tcp connection, write to %connections%", "")]
+	public async Task<(List<TcpConnection>?, IError?)> GetTcpConnections()
+	{
+		var error = OnlyLinux();
+		if (error != null) return (null, error);
+		return (ProcReader.ReadTcpConnections(), null);
+	}
+
 	[Description("The running processes: User, Pid, Name, CpuSeconds (CPU time used so far). e.g. `get processes, write to %processes%`")]
 	[Example("get processes, write to %processes%", "")]
 	[Example("list the running processes, write to %procs%", "")]
