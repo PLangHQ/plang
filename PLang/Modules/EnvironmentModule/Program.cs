@@ -17,7 +17,7 @@ namespace PLang.Modules.EnvironmentModule;
 [Newtonsoft.Json.JsonObject(NamingStrategyType = typeof(Newtonsoft.Json.Serialization.SnakeCaseNamingStrategy))]
 public record RunningTask(string Kind, string Name, string? Goal, string? CalledFrom, DateTime StartedUtc, long RunningSeconds);
 
-[Description("Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install, disks (size and free space), memory (total, used, free), running tasks (dont wait goals, scheduled runs, webservers), runtime stats (gc heap, process memory, call stack depth, caches)")]
+[Description("Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install, disks (size and free space), memory (total, used, free), running tasks (dont wait goals, scheduled runs, webservers), running engines (one per request or dont wait run, call stack, variable sizes), runtime stats (gc heap, process memory, call stack depth, caches)")]
 [Effect(Effects.None)]
 public class Program : BaseProgram
 {
@@ -107,7 +107,7 @@ public class Program : BaseProgram
 	public async Task<List<RunningTask>> GetRunningTasks()
 	{
 		var now = DateTime.UtcNow;
-		return engine.KeepAliveRegistry.GetSnapshot().Select(entry =>
+		return engine.KeepAliveRegistry.GetKeepAppAliveSnapshot().Select(entry =>
 		{
 			var plangTask = entry.Instance as PlangTask;
 			return new RunningTask(entry.Kind, entry.Name, plangTask?.Goal.RelativeGoalPath, plangTask?.CallingGoal?.RelativeGoalPath,
@@ -115,7 +115,16 @@ public class Program : BaseProgram
 		}).ToList();
 	}
 
-	[Description("Diagnostics of the running app's memory, to tell whether growth is objects PLang holds or native/.NET memory. One object with three groups. gc: heap_mb, heap_after_collect_mb (only when forceGc, else null), gen0_collections, gen1_collections, gen2_collections, total_allocated_mb, heap_size_mb, fragmented_mb, committed_mb, large_object_heap_mb, pinned_object_heap_mb, finalization_pending_count, pinned_objects_count. process: rss_mb, rss_anon_mb, rss_file_mb, swap_mb, private_mb, virtual_mb, not_gc_mb (rss minus gc committed), threads, open_files, handle_count, thread_pool_threads, thread_pool_pending_work_items, timers, loaded_assemblies. plang: call_stack_depth, call_stack_max_depth, executed_steps_on_call_stack, memory_stack_variables, keep_alive_entries, running_tasks (count by kind), engine_pool (total, rented, free), context_items, context_shared_items, context_event_bindings, regex_cache_limit, caches (entry count of each runtime cache by name). forceGc=true runs a full blocking garbage collection first, which stops the whole app briefly; default false, set it only when the user asks to force/collect garbage. e.g. `get runtime stats, write to %stats%`")]
+	[Description("The engines running in the app: one is rented for each web request and each `dont wait` or scheduled goal run, and returned when it ends. Each row: id, name, is_root, state (running/idle), goal and step where it is now (goal file:line), step_text, called_from (the step that rented it), started_utc, running_seconds, thread_id, memory_stack_variables, call_stack (depth, executed_steps, running_ms, frames: goal, step, running_ms, executed_steps). Longest running first, top 20 (top=0 for all). withSizes=true also serializes each engine's variables to count their size: serialize_bytes, capped, truncated, largest_variables (name, bytes), size_errors, sorted largest first; it takes up to 200 ms, set it only when the user asks for sizes. includeRootEngine=true adds the root engine. e.g. `get running engines, write to %engines%`")]
+	[Example("get running engines, write to %engines%", "withSizes=false, top=20")]
+	[Example("get running engines, with sizes, write to %engines%", "withSizes=true")]
+	[Example("get top 5 running engines, include root engine, write to %engines%", "top=5, includeRootEngine=true")]
+	public async Task<List<RunningEngine>> GetRunningEngines(bool withSizes = false, int top = 20, bool includeRootEngine = false)
+	{
+		return RunningEnginesReader.Read(engine, withSizes, top, includeRootEngine);
+	}
+
+	[Description("Diagnostics of the running app's memory, to tell whether growth is objects PLang holds or native/.NET memory. One object with three groups. gc: heap_mb, heap_after_collect_mb (only when forceGc, else null), gen0_collections, gen1_collections, gen2_collections, total_allocated_mb, heap_size_mb, fragmented_mb, committed_mb, large_object_heap_mb, pinned_object_heap_mb, finalization_pending_count, pinned_objects_count. process: rss_mb, rss_anon_mb, rss_file_mb, swap_mb, private_mb, virtual_mb, not_gc_mb (rss minus gc committed), threads, open_files, handle_count, thread_pool_threads, thread_pool_pending_work_items, timers, loaded_assemblies. plang: call_stack_depth, call_stack_max_depth, executed_steps_on_call_stack, memory_stack_variables, keep_alive_entries, running_tasks (count by kind), engine_pool (total, rented, free), engines_running, oldest_running_engine_seconds, largest_engine (id, name, serialize_bytes, measured_utc; only from the last `get running engines, with sizes`, null when not measured), context_items, context_shared_items, context_event_bindings, regex_cache_limit, caches (entry count of each runtime cache by name). forceGc=true runs a full blocking garbage collection first, which stops the whole app briefly; default false, set it only when the user asks to force/collect garbage. e.g. `get runtime stats, write to %stats%`")]
 	[Example("get runtime stats, write to %stats%", "forceGc=false")]
 	[Example("get runtime stats, force garbage collection, write to %stats%", "forceGc=true")]
 	public async Task<RuntimeStats> GetRuntimeStats(bool forceGc = false)

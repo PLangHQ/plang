@@ -40,12 +40,16 @@ public record EnginePoolStats(int Total, int Rented, int Free);
 
 /// <summary>
 /// What PLang holds. CallStackDepth is the frame count of the current context's call stack, CallStackMaxDepth the deepest it has been.
-/// RunningTasks counts the keep-alive entries by kind (WaitForExecution for "dont wait" goals, Schedule, Webserver, ...).
+/// KeepAliveEntries and RunningTasks count what keeps the app running, RunningTasks by kind (WaitForExecution for
+/// "dont wait" goals, Schedule, Webserver, ...). EnginesRunning counts the rented engines, OldestRunningEngineSeconds is
+/// how long the oldest has been rented. LargestEngine comes from the last `get running engines, with sizes`; it is
+/// null when none of the running engines was measured, sizes are never measured here.
 /// Caches is the entry count of every runtime cache and list that grows while the app runs, by name.
 /// </summary>
 [JsonObject(NamingStrategyType = typeof(SnakeCaseNamingStrategy))]
 public record PlangRuntimeStats(int CallStackDepth, int CallStackMaxDepth, int ExecutedStepsOnCallStack, int MemoryStackVariables,
 	int KeepAliveEntries, Dictionary<string, int> RunningTasks, EnginePoolStats? EnginePool,
+	int EnginesRunning, double OldestRunningEngineSeconds, LargestEngine? LargestEngine,
 	int ContextItems, int ContextSharedItems, int ContextEventBindings, int RegexCacheLimit, Dictionary<string, int> Caches);
 
 public static class RuntimeStatsReader
@@ -115,14 +119,19 @@ public static class RuntimeStatsReader
 		int executedSteps = callStack?.GetFrames().Sum(f => f.ExecutedStepCount) ?? 0;
 
 		var registry = engine.KeepAliveRegistry;
-		var snapshot = registry?.GetSnapshot() ?? new List<KeepAliveEntry>();
+		var snapshot = registry?.GetKeepAppAliveSnapshot() ?? new List<KeepAliveEntry>();
 		var runningTasks = snapshot.GroupBy(p => p.Kind).ToDictionary(g => g.Key, g => g.Count());
+
+		var engines = registry?.GetEngineSnapshot() ?? new List<KeepAliveEntry>();
+		var now = DateTime.UtcNow;
+		double oldestEngineSeconds = engines.Count == 0 ? 0 : Math.Round(engines.Max(p => (now - p.StartedUtc).TotalSeconds), 1);
 
 		var pool = GetRootEngine(engine).EnginePool;
 		var enginePool = pool == null ? null : new EnginePoolStats(pool.Total, pool.Rented, pool.Free);
 
 		return new PlangRuntimeStats(callStack?.Depth ?? 0, callStack?.MaxDepthSeen ?? 0, executedSteps, context?.MemoryStack?.VariableCount ?? 0,
 			snapshot.Count, runningTasks, enginePool,
+			engines.Count, oldestEngineSeconds, RunningEnginesReader.GetLargestMeasured(engines),
 			context?.Items?.Count ?? 0, context?.SharedItems?.Count ?? 0, context?.EventBindings?.Count ?? 0, Regex.CacheSize,
 			GetCacheCounts(engine));
 	}
