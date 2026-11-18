@@ -605,24 +605,35 @@ public class MethodHelper
 				bool hasSettings = plan != null ? plan.HasSettings : variableValue.ToString().Contains("%Settings.");
 				if (!hasSettings)
 				{
-					var newJobj = jobj.DeepClone();
-					newJobj.ResolvePlaceholders(parameter.ParameterType, (name, targetType) =>
+					JToken newJobj;
+					// No %placeholder% anywhere: nothing is written into the tree, so the copy that protects the shared
+					// JObject is not needed, and ToObject builds a new object from it anyway. Not done when the target
+					// type is a JToken or object, where the "object" could be the tree itself.
+					if (plan != null && plan.Entries.Length == 0 && parameter.ParameterType != typeof(object) && !typeof(JToken).IsAssignableFrom(parameter.ParameterType))
 					{
-						var value = memoryStack.Get(name);
-						if (value is IObjectValue ov) return ov.Value;
-						if (value is List<object> list && list.FirstOrDefault() is ObjectValue)
+						newJobj = jobj;
+					}
+					else
+					{
+						newJobj = jobj.DeepClone();
+						newJobj.ResolvePlaceholders(parameter.ParameterType, (name, targetType) =>
 						{
-							return list.Select(p => ((ObjectValue)p).Value);
-						}
+							var value = memoryStack.Get(name);
+							if (value is IObjectValue ov) return ov.Value;
+							if (value is List<object> list && list.FirstOrDefault() is ObjectValue)
+							{
+								return list.Select(p => ((ObjectValue)p).Value);
+							}
 
-						if (targetType != null)
-						{
-							return TypeHelper.ConvertToType(value, targetType, variableName: name);
-						}
+							if (targetType != null)
+							{
+								return TypeHelper.ConvertToType(value, targetType, variableName: name);
+							}
 
 
-						return value;
-					});
+							return value;
+						});
+					}
 
 					int b = 0;
 					try
