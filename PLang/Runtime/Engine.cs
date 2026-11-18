@@ -240,8 +240,13 @@ namespace PLang.Runtime
 
 		public async Task<IEngine> RentAsync(GoalStep callingStep)
 		{
-			return await EnginePool.RentAsync(callingStep);
-			
+			var engine = await EnginePool.RentAsync(callingStep);
+			// Settings keys are prefixed with the engine's Environment (Settings.GetKey), and every
+			// rented engine has its own container and Settings. Without this, an app that runs
+			// `set environment "dev"` reads "production.X" in every request engine and every
+			// "dont wait" goal, and finds no setting.
+			engine.Environment = this.Environment;
+			return engine;
 		}
 		public void Return(IEngine engine, bool reset = false)
 		{
