@@ -642,10 +642,12 @@ namespace PLang.Runtime
 
 		private async Task<(object? ReturnValue, int StepIndex, IError? Error)> RunSteps(Goal goal, PLangContext context, int stepIndex = 0)
 		{
-			Stopwatch stopwatch = Stopwatch.StartNew();
+			// Timestamps instead of Stopwatch objects: the elapsed time is only read by log lines that are
+			// not built when the level is off, so a goal (and each of its steps) no longer allocates stopwatches.
+			long goalStart = Stopwatch.GetTimestamp();
 			object? returnValues = null;
 			IError? error = null;
-			logger.LogDebug($"  - Goal {goal.GoalName} starts - {stopwatch.ElapsedMilliseconds}");
+			logger.LogDebug($"  - Goal {goal.GoalName} starts - {ElapsedMs(goalStart)}");
 
 			if (context.Callback?.CallbackInfo.GoalHash == goal.Hash)
 			{
@@ -662,18 +664,18 @@ namespace PLang.Runtime
 			for (; stepIndex < goal.GoalSteps.Count; stepIndex++)
 			{
 
-				Stopwatch stepWatch = Stopwatch.StartNew();
-				logger.LogTrace($"   - Step idx {stepIndex} starts - {stepWatch.ElapsedMilliseconds}");
-							
+				long stepStart = Stopwatch.GetTimestamp();
+				logger.LogTrace($"   - Step idx {stepIndex} starts - {ElapsedMs(stepStart)}");
 
-				logger.LogDebug("   - [S] RunStep:{0} - {1}", goal.GoalSteps[stepIndex].PrFileName, stepWatch.ElapsedMilliseconds);
+
+				logger.LogDebug($"   - [S] RunStep:{goal.GoalSteps[stepIndex].PrFileName} - {ElapsedMs(stepStart)}");
 				(returnValues, error) = await RunStep(goal, stepIndex, context);
-				logger.LogTrace("   - [E] RunStep:{0} - {1}", goal.GoalSteps[stepIndex].PrFileName, stepWatch.ElapsedMilliseconds);
+				logger.LogTrace($"   - [E] RunStep:{goal.GoalSteps[stepIndex].PrFileName} - {ElapsedMs(stepStart)}");
 				
 				
 				if (error != null)
 				{
-					logger.LogTrace($"   - Step idx {stepIndex} has ERROR - {stepWatch.ElapsedMilliseconds}");
+					logger.LogTrace($"   - Step idx {stepIndex} has ERROR - {ElapsedMs(stepStart)}");
 					if (error is MultipleError me && me.IsErrorHandled)
 					{
 						var hasEndGoal = FindErrorHandled(me);
@@ -681,12 +683,12 @@ namespace PLang.Runtime
 					}
 					if (error is EndGoal endGoal)
 					{
-						logger.LogTrace($"   - Exiting goal because of end goal: {endGoal.Goal?.RelativeGoalPath} - {stepWatch.ElapsedMilliseconds}");
+						logger.LogTrace($"   - Exiting goal because of end goal: {endGoal.Goal?.RelativeGoalPath} - {ElapsedMs(stepStart)}");
 						try
 						{
 							if (!endGoal.EndingGoal?.RelativePrPath.Equals(goal.RelativePrPath) == true)
 							{
-								logger.LogTrace($"   - End goal doing return: {endGoal.Goal?.RelativeGoalPath} - {stepWatch.ElapsedMilliseconds}");
+								logger.LogTrace($"   - End goal doing return: {endGoal.Goal?.RelativeGoalPath} - {ElapsedMs(stepStart)}");
 								return (returnValues, stepIndex, endGoal);
 							}
 							else if (endGoal.EndingGoal == null)
@@ -702,18 +704,20 @@ namespace PLang.Runtime
 
 						}
 
-						logger.LogTrace($"   - End goal doing continue: {endGoal.Goal?.RelativeGoalPath} - {stepWatch.ElapsedMilliseconds}");
+						logger.LogTrace($"   - End goal doing continue: {endGoal.Goal?.RelativeGoalPath} - {ElapsedMs(stepStart)}");
 						return (returnValues, stepIndex, null);
 					}
 					var errorInGoalErrorHandler = await HandleGoalError(error, goal, stepIndex, context);
 					if (errorInGoalErrorHandler.Error != null) return (returnValues, stepIndex, errorInGoalErrorHandler.Error);
 					if (errorInGoalErrorHandler.Error is IErrorHandled) error = null;
 				}
-				logger.LogDebug($"   - Step idx {stepIndex} done - {stepWatch.ElapsedMilliseconds} - Current for all steps: {stopwatch.ElapsedMilliseconds}");
+				logger.LogDebug($"   - Step idx {stepIndex} done - {ElapsedMs(stepStart)} - Current for all steps: {ElapsedMs(goalStart)}");
 			}
-			logger.LogTrace($"  - All steps done in {goal.GoalName} - {stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace($"  - All steps done in {goal.GoalName} - {ElapsedMs(goalStart)}");
 			return (returnValues, stepIndex, error);
 		}
+
+		private static long ElapsedMs(long startTimestamp) => (long)Stopwatch.GetElapsedTime(startTimestamp).TotalMilliseconds;
 
 
 
@@ -748,11 +752,12 @@ namespace PLang.Runtime
 			context.CallingStep = step;
 
 			GoalRuntimeState.SetCurrentStepIndex(goal, goalStepIndex);
-			// step is shared by every request, so this run times itself with its own stopwatch;
-			// step.Stopwatch is still set for the debug output that reads it.
-			var stepStopwatch = Stopwatch.StartNew();
-			step.Stopwatch = stepStopwatch;
-			
+			// step is shared by every request, so this run times itself with its own timestamp (no stopwatch
+			// object per step). step.Stopwatch is only read by the debug output, so it is only set in debug mode
+			// (ProcessPrFile creates one if a log line needs it and it is missing).
+			long stepStartTimestamp = Stopwatch.GetTimestamp();
+			if (context.DebugMode) step.Stopwatch = Stopwatch.StartNew();
+
 			context.CallStack.SetCurrentStep(step, goalStepIndex);
 
 			SetStepLogLevel(step);
@@ -762,24 +767,29 @@ namespace PLang.Runtime
 				
 				if (HasExecuted(step, context)) return (null, null);
 
-				step.UniqueId = Guid.NewGuid().ToString();
-				logger.LogTrace($"     - Load instruction for step: {step.Text.MaxLength(20)} - {stepStopwatch.ElapsedMilliseconds}");
+				// step.UniqueId = Guid.NewGuid() was written here for every step execution, on the shared step.
+				// Nothing reads it (not the runtime, not the goals of rafbokin, os or the tests), so the GUID is gone.
+				logger.LogTrace($"     - Load instruction for step: {step.Text.MaxLength(20)} - {ElapsedMs(stepStartTimestamp)}");
 
-				var error = LoadInstruction(goal, step);
-				if (error != null)
+				// The instruction is cached on the step; it is only (re)loaded when the step has none.
+				if (step.Instruction == null)
 				{
-					return (null, error);
+					var error = LoadInstruction(goal, step);
+					if (error != null)
+					{
+						return (null, error);
+					}
 				}
-				logger.LogTrace($"     - Have instruction - {stepStopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"     - Have instruction - {ElapsedMs(stepStartTimestamp)}");
 				if (retryCount == 0)
 				{
-					logger.LogTrace($"     - Before event starts - {stepStopwatch.ElapsedMilliseconds}");
+					logger.LogTrace($"     - Before event starts - {ElapsedMs(stepStartTimestamp)}");
 					// Only run event one time, even if step is tried multiple times
 					var stepEventResult = await eventRuntime.RunStepEvents(EventType.Before, goal, step);
 					if (stepEventResult.Error != null) return (null, stepEventResult.Error);
 				}
 
-				logger.LogTrace($"     - ProcessPrFile {step.PrFileName} - {stepStopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"     - ProcessPrFile {step.PrFileName} - {ElapsedMs(stepStartTimestamp)}");
 
 				result = await ProcessPrFile(goal, step, goalStepIndex, context);
 
@@ -788,7 +798,7 @@ namespace PLang.Runtime
 					result = await HandleStepError(goal, step, goalStepIndex, result.Value.Error, retryCount, context);
 					if (result.Value.Error != null && result.Value.Error is MultipleError me && !me.IsErrorHandled) return result.Value;
 				}
-				logger.LogTrace($"     - Done with ProcessPrFile, doing after events - {stepStopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"     - Done with ProcessPrFile, doing after events - {ElapsedMs(stepStartTimestamp)}");
 
 				if (retryCount == 0)
 				{
@@ -797,7 +807,7 @@ namespace PLang.Runtime
 					if (stepEventResult.Error != null) return stepEventResult;
 				}
 
-				logger.LogTrace($"     - Done with after events - {stepStopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"     - Done with after events - {ElapsedMs(stepStartTimestamp)}");
 				return result.Value;
 			}
 			catch (Exception stepException)
@@ -810,10 +820,9 @@ namespace PLang.Runtime
 			}
 			finally
 			{
-				logger.LogTrace($"     - Reset log level - {stepStopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"     - Reset log level - {ElapsedMs(stepStartTimestamp)}");
 				ResetStepLogLevel(goal);
-				stepStopwatch.Stop();
-				logger.LogDebug($"     - Step all done - {stepStopwatch.ElapsedMilliseconds}");
+				logger.LogDebug($"     - Step all done - {ElapsedMs(stepStartTimestamp)}");
 
 				object? returnValues = null;
 				IError? error = null;

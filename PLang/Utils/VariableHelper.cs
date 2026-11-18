@@ -758,6 +758,9 @@ namespace PLang.Utils
 		{
 			if (variable is not string str) return false;
 			if (variable == null || string.IsNullOrEmpty(str)) return false;
+			// A match needs two '%'. Text without them (most step parameters) is rejected without the regex.
+			int first = str.IndexOf('%');
+			if (first < 0 || str.IndexOf('%', first + 1) < 0) return false;
 			return ContainsVariableRegex.IsMatch(str);
 		}
 		public static bool IsVariable(object? variable)
@@ -765,6 +768,9 @@ namespace PLang.Utils
 			if (variable is not string str) return false;
 
 			if (str == null || string.IsNullOrEmpty(str)) return false;
+			// The pattern is anchored with ^ and starts with '%'; a string that does not start with '%' (or is a
+			// single character) cannot match, so only candidates reach the regex.
+			if (str[0] != '%' || str.Length < 2) return false;
 			return IsVariableRegex.IsMatch(str);
 		}
 
@@ -840,7 +846,7 @@ namespace PLang.Utils
 			if (str.StartsWith("@")) str = str.Substring(1);
 			if (str.StartsWith("$.")) str = str.Remove(0, 2);
 			str = str.TrimEnd('+').TrimEnd('-');
-			str = ArrayIndexPlaceholderRegex.Replace(str, static match => $"[{match.Groups[1].Value}]");
+			if (str.Contains('α')) str = ArrayIndexPlaceholderRegex.Replace(str, static match => $"[{match.Groups[1].Value}]");
 
 			return str.Replace("α", ".");
 		}

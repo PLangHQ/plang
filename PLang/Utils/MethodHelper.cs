@@ -483,9 +483,10 @@ public class MethodHelper
 
 	public (Dictionary<string, object?> Parameters, IError? Error) GetParameterValues(MethodInfo method, IGenericFunction function)
 	{
-		Stopwatch stopwatch = Stopwatch.StartNew();
-		var parameterValues = new Dictionary<string, object?>();
+		long start = StepClock.Now();
 		var parameters = GetCachedParameters(method);
+		// Sized for the parameters: the default dictionary grows 0 -> 4 -> 8 and re-hashes on the way.
+		var parameterValues = new Dictionary<string, object?>(parameters.Length);
 		if (parameters.Length == 0) return (parameterValues, null);
 
 		var step = function.Instruction.Step;
@@ -494,7 +495,7 @@ public class MethodHelper
 
 		foreach (var parameter in parameters)
 		{
-			logger.LogTrace($"         - Loading parameter in GetParameterValues {parameter.Name} - {stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace($"         - Loading parameter in GetParameterValues {parameter.Name} - {StepClock.Ms(start)}");
 			if (parameter.Name == null) continue;
 
 			var inputParameter = function.Parameters.FirstOrDefault(p => p.Name == parameter.Name);
@@ -569,7 +570,7 @@ public class MethodHelper
 				{
 					SetObjectParameter(parameter, variableValue, handlesAttribute, parameterValues, memoryStack);
 				}
-				logger.LogTrace($"         - Have parameter {parameter.Name} - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"         - Have parameter {parameter.Name} - {StepClock.Ms(start)}");
 
 			}
 			catch (PropertyNotFoundException) { throw; }
@@ -586,7 +587,7 @@ public class MethodHelper
 			}
 
 		}
-		logger.LogTrace($"         - returning parameterVAlues - {stopwatch.ElapsedMilliseconds}");
+		logger.LogTrace($"         - returning parameterVAlues - {StepClock.Ms(start)}");
 		return (parameterValues, null);
 	}
 

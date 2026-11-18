@@ -83,11 +83,11 @@ namespace PLang.Modules
 
 		public void Init(IServiceContainer container, Goal goal, GoalStep step, Instruction instruction, IPLangContextAccessor contextAccessor)
 		{
-			Stopwatch stopwatch = Stopwatch.StartNew();
+			long start = StepClock.Now();
 			this.container = container;
 
 			this.logger = container.GetInstance<ILogger>();
-			logger.LogTrace($"        - Init on BaseProgram - {stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace($"        - Init on BaseProgram - {StepClock.Ms(start)}");
 
 			
 			this.appContext = container.GetInstance<PLangAppContext>();			
@@ -104,14 +104,14 @@ namespace PLang.Modules
 			this.instruction = instruction;
 			this.memoryStack.Goal = goal;
 
-			logger.LogTrace($"        - Set vars - {stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace($"        - Set vars - {StepClock.Ms(start)}");
 			
 			this.typeHelper = container.GetInstance<ITypeHelper>();
 			this.llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
 			this.methodHelper = container.GetInstance<MethodHelper>();
 
 			this.fileAccessHandler = container.GetInstance<IFileAccessHandler>();
-			logger.LogTrace($"        - Done init - {stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace($"        - Done init - {StepClock.Ms(start)}");
 		}
 
 		public IServiceContainer Container { get { return container; } }
@@ -150,19 +150,19 @@ namespace PLang.Modules
 		}
 
 		public async Task<(object? ReturnValue, IError? Error)> RunFunctionInternal(IGenericFunction function) { 
-			Stopwatch stopwatch = Stopwatch.StartNew();
+			long start = StepClock.Now();
 			Dictionary<string, object?>? parameterValues = null;
 			this.function = function; // this is to give sub classes access to current function running.
 			try
 			{
-				logger.LogTrace($"       - Get method {function.Name} - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"       - Get method {function.Name} - {StepClock.Ms(start)}");
 				MethodInfo? method = await methodHelper.GetMethod(this, function);
 				if (method == null)
 				{
 					return (null, new StepError($"Could not load method {function.Name} to run", goalStep, "MethodNotFound", 500));
 				}
 
-				logger.LogTrace($"       - Method:{goalStep.ModuleType}.{method.Name}({method.GetParameters()}) - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"       - Method:{goalStep.ModuleType}.{method.Name}({method.GetParameters()}) - {StepClock.Ms(start)}");
 
 				//TODO: Should move this caching check up the call stack. code is doing to much work before returning cache
 				if (await LoadCached(method, function)) return (null, null);
@@ -171,12 +171,12 @@ namespace PLang.Modules
 				{
 					return (new Error($"The method {method.Name} does not return Task. Method that are called must return Task"), null);
 				}
-				logger.LogTrace($"       - Loading parameter values - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"       - Loading parameter values - {StepClock.Ms(start)}");
 
 				(parameterValues, var error) = methodHelper.GetParameterValues(method, function);
 				if (error != null) return (null, error);
 
-				logger.LogTrace($"       - Have parameter values, calling Invoke - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"       - Have parameter values, calling Invoke - {StepClock.Ms(start)}");
 				
 				// This is for memoryStack event handler. Should find a better way
 				context.AddOrReplace(ReservedKeywords.Goal, goal);
@@ -230,7 +230,7 @@ namespace PLang.Modules
 					}
 				}
 
-				logger.LogTrace($"       - Invoke done - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"       - Invoke done - {StepClock.Ms(start)}");
 
 				if (task.Status == TaskStatus.Canceled)
 				{
@@ -426,11 +426,31 @@ namespace PLang.Modules
 			return (false, null);
 		}
 
+		// Reflection on the task type is the same for every call of a method, so it is read once per task type:
+		// the generic argument, the Result property and the fields of the result type. The result type check
+		// that used a dynamic call site and ToString() is cached per runtime type.
+		private sealed class TaskReader
+		{
+			public TaskReader(Type taskType)
+			{
+				ReturnArgument = taskType.GetGenericArguments().FirstOrDefault();
+				ResultProperty = taskType.GetProperty("Result");
+				Fields = ReturnArgument?.GetFields() ?? Array.Empty<FieldInfo>();
+			}
+			public Type? ReturnArgument { get; }
+			public PropertyInfo? ResultProperty { get; }
+			public FieldInfo[] Fields { get; }
+		}
+		private static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, TaskReader> taskReaders = new();
+		private static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, bool> valueTupleTypes = new();
+		private static bool IsValueTupleType(Type type) => valueTupleTypes.GetOrAdd(type, static t => t.ToString().Contains("ValueTuple"));
+
 		private (object? returnValue, IError? error, Properties? Properties) GetValuesFromTask(Task task)
 		{
 
 			Type taskType = task.GetType();
-			var returnArguments = taskType.GetGenericArguments().FirstOrDefault();
+			var reader = taskReaders.GetOrAdd(taskType, static t => new TaskReader(t));
+			var returnArguments = reader.ReturnArgument;
 			if (returnArguments == null) return (null, null, null);
 
 			if (returnArguments == typeof(IError))
@@ -448,7 +468,7 @@ namespace PLang.Modules
 			IError? error = null;
 			Properties? properties = null;
 
-			var resultProperty = taskType.GetProperty("Result");
+			var resultProperty = reader.ResultProperty;
 			if (resultProperty == null)
 			{
 				throw new Exception("This should not happen trying to get Result");
@@ -463,8 +483,9 @@ namespace PLang.Modules
 			if (rawResult is IError resultError) return (null, resultError, null);
 			if (rawResult is Properties resultProperties) return (null, null, resultProperties);
 
-			var result = (dynamic?)rawResult;
-			if (!result?.GetType().ToString().Contains("ValueTuple"))
+			// Used to be `(dynamic?)rawResult` with a dynamic call site per step; the same checks on object.
+			object result = rawResult;
+			if (!IsValueTupleType(result.GetType()))
 			{
 				if (returnArguments is IError)
 				{
@@ -490,7 +511,7 @@ namespace PLang.Modules
 			else
 			{
 
-				var fields = returnArguments.GetFields();
+				var fields = reader.Fields;
 				if (fields.Length == 0) throw new Exception("This should not happen, fields is 0 length from Task<,,>");
 
 				foreach (var field in fields)
