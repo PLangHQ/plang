@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 
 namespace PLang.Modules.HostModule;
 
-[Description("Look at what runs on the machine, as a sysadmin does: which ports listen and which program owns them, which processes run and as whom. Read only. Linux")]
+[Description("Look at what runs on the machine, as a sysadmin does: which ports listen and which program owns them, which processes run and as whom, tcp connections and counters (get tcp stats), cpu, memory and io pressure (get pressure, psi), cpu time counters (get cpu ticks), and one process's memory, threads, open files and age by pid (get process stats). Read only. Linux")]
 [Effect(Effects.None)]
 public class Program : BaseProgram
 {
@@ -58,6 +58,8 @@ public class Program : BaseProgram
 
 	[Description("How much CPU, memory and io held tasks back (pressure stall information, /proc/pressure). Each row: Resource (cpu, memory, io), Kind (some: at least one task waited, full: all non-idle tasks waited at once), Avg10, Avg60, Avg300 (percent of the last 10, 60, 300 seconds), Total (microseconds waited since boot, only goes up). cpu has no full row on older kernels; a kernel without pressure information gives an empty list. e.g. `get pressure, write to %pressure%`")]
 	[Example("get pressure, write to %pressure%", "")]
+	[Example("get psi, write to %psi%", "")]
+	[Example("get cpu pressure, write to %cpuPressure%", "")]
 	[Example("how much is the machine waiting for cpu, memory and io, write to %psi%", "")]
 	public async Task<(List<PressureRow>?, IError?)> GetPressure()
 	{
@@ -68,6 +70,7 @@ public class Program : BaseProgram
 
 	[Description("CPU time since boot in ticks (100 per second), all CPUs together, from /proc/stat. One object: Total, User (includes nice), System (includes irq and softirq), Idle, Iowait, Steal; User + System + Idle + Iowait + Steal = Total. The ticks only go up: take the difference between two reads, busy percent = 100 * (Δtotal - Δidle - Δiowait) / Δtotal. e.g. `get cpu ticks, write to %cpu%`")]
 	[Example("get cpu ticks, write to %cpu%", "")]
+	[Example("get cpu time, write to %cpu%", "")]
 	[Example("read the cpu time counters, write to %ticks%", "")]
 	public async Task<(CpuTicks?, IError?)> GetCpuTicks()
 	{
@@ -79,6 +82,7 @@ public class Program : BaseProgram
 	[Description("One process by its pid. One object: Pid, Name, RssMb (memory it holds), Threads, Fds (open files; null when they cannot be counted, which needs root for another user's process), CpuSeconds (CPU time used so far), AgeSeconds (seconds since it started). A pid that does not exist gives null, not an error. Takes a pid only; for a systemd service get its pid first, e.g. `run systemctl show -p MainPID --value plang`. e.g. `get process stats for pid %pid%, write to %p%`")]
 	[Example("get process stats for pid %pid%, write to %p%", "pid=%pid%")]
 	[Example("get stats of process 1234, write to %process%", "pid=1234")]
+	[Example("get process stats %pid%, write to %p%", "pid=%pid%")]
 	public async Task<(ProcessStats?, IError?)> GetProcessStats(int pid)
 	{
 		var error = OnlyLinux();
