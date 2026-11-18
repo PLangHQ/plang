@@ -141,43 +141,66 @@ public static class JObjectVarResolver
 				break;
 
 			case JTokenType.String:
-				var s = token.Value<string>()!;
-				var matches = Placeholder.Matches(s);
-				if (matches.Count == 0) return;
-
-				if (matches.Count == 1 && matches[0].Value == s)
-				{
-					string? name = null;
-					object? value = null;
-					try
-					{
-						name = matches[0].Groups["name"].Value;
-						value = resolve(name, targetType);
-						JToken newTok = value switch
-						{
-							null => JValue.CreateNull(),
-							JToken jt => jt,
-							_ => JToken.FromObject(value, JsonSerializer.Create(settings))
-						};
-						token.Replace(newTok);
-					} catch (Exception ex)
-					{
-						int i = 0;
-						Console.WriteLine($"JsonResolve on '{name}' - value:{value} - error:{ex.Message}");
-						
-					}
-				}
-				else
-				{
-					var replaced = Placeholder.Replace(s, m =>
-					{
-						var name = m.Groups["name"].Value;
-						var v = resolve(name, targetType);
-						return v?.ToString() ?? "";
-					});
-					token.Replace(new JValue(replaced));
-				}
+				ResolveString(token, token.Value<string>()!, targetType, resolve);
 				break;
+		}
+	}
+
+	/// <summary>
+	/// Resolves only the tokens the plan found (the tokens that have a %placeholder%), on a clone of the
+	/// JObject the plan was made from, instead of walking and regex matching every token. The clone has the same
+	/// shape as the original, so the recorded paths lead to the same tokens, and each token gets the same
+	/// target type and the same treatment as in <see cref="ResolvePlaceholders"/>, in the same order.
+	/// </summary>
+	public static void ResolvePlaceholders(this JToken clone, JObjectPlan plan, Func<string, Type?, object?> resolve)
+	{
+		foreach (var entry in plan.Entries)
+		{
+			JToken token = clone;
+			foreach (var segment in entry.Path)
+			{
+				token = segment is string name ? ((JObject)token)[name]! : ((JArray)token)[(int)segment];
+			}
+			ResolveString(token, entry.Text, entry.TargetType, resolve);
+		}
+	}
+
+	private static void ResolveString(JToken token, string s, Type? targetType, Func<string, Type?, object?> resolve)
+	{
+		var matches = Placeholder.Matches(s);
+		if (matches.Count == 0) return;
+
+		if (matches.Count == 1 && matches[0].Value == s)
+		{
+			string? name = null;
+			object? value = null;
+			try
+			{
+				name = matches[0].Groups["name"].Value;
+				value = resolve(name, targetType);
+				JToken newTok = value switch
+				{
+					null => JValue.CreateNull(),
+					JToken jt => jt,
+					_ => JToken.FromObject(value, JsonSerializer.Create(settings))
+				};
+				token.Replace(newTok);
+			} catch (Exception ex)
+			{
+				int i = 0;
+				Console.WriteLine($"JsonResolve on '{name}' - value:{value} - error:{ex.Message}");
+
+			}
+		}
+		else
+		{
+			var replaced = Placeholder.Replace(s, m =>
+			{
+				var name = m.Groups["name"].Value;
+				var v = resolve(name, targetType);
+				return v?.ToString() ?? "";
+			});
+			token.Replace(new JValue(replaced));
 		}
 	}
 }

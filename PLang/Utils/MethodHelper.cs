@@ -615,8 +615,10 @@ public class MethodHelper
 					}
 					else
 					{
+						// The copy stays: the placeholders are written into it, and the original is shared by every run
+						// (and every user). Only the tokens with a placeholder are visited, they were found once (J1).
 						newJobj = jobj.DeepClone();
-						newJobj.ResolvePlaceholders(parameter.ParameterType, (name, targetType) =>
+						Func<string, Type?, object?> resolve = (name, targetType) =>
 						{
 							var value = memoryStack.Get(name);
 							if (value is IObjectValue ov) return ov.Value;
@@ -632,7 +634,9 @@ public class MethodHelper
 
 
 							return value;
-						});
+						};
+						if (plan != null) newJobj.ResolvePlaceholders(plan, resolve);
+						else newJobj.ResolvePlaceholders(parameter.ParameterType, resolve);
 					}
 
 					int b = 0;
