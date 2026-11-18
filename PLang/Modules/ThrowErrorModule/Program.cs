@@ -20,7 +20,7 @@ namespace PLang.Modules.ThrowErrorModule
 	[Description("statusCode default is 400")]
 	public record ErrorInfo(string? Message = null, string Type = "error", int StatusCode = 400, string Key = "Error");
 
-	[Description("Allows user to throw error or retry a step. Allows user to stop(end) running goal, leaving it early without sending anything back. Create payment request(status code 402). Not for a step that returns a value, e.g. `return %result%`: giving named values back to the caller is the Return method of VariableModule, whatever the values happen to hold")]
+	[Description("Allows user to throw error or retry a step. Allows user to stop(end) running goal, leaving it early without sending anything back. Create payment request(status code 402). Not for a step that returns a value, e.g. `return %result%`: giving named values back to the caller is the Return method of VariableModule, whatever the values happen to hold. Not for a step that starts with `call` or `call goal`: that runs a goal, CallGoalModule, even when the goal is named ShowError, ThrowError or HandleError, e.g. `call goal ShowError message=\"Not found\"`")]
 	[Effect(Effects.None)]
 	public class Program : BaseProgram
 	{
@@ -32,7 +32,7 @@ namespace PLang.Modules.ThrowErrorModule
 		}
 
 
-		[Description("When user intends to throw an error or critical, etc. This can be stated as 'show error', 'throw crtical', 'print error', etc.")]
+		[Description("When user intends to throw an error or critical, etc. This can be stated as 'show error', 'throw crtical', 'print error', etc. Never for `call goal ShowError ...`: a goal named after an error is called, not thrown")]
 		[MethodSettings(CanBeAsync = false, CanHaveErrorHandling = false, CanBeCached = false)]
 		public async Task<IError?> ThrowError(ErrorMessage errorMessage)
 		{
@@ -52,7 +52,7 @@ namespace PLang.Modules.ThrowErrorModule
 			return new UserInputError(errorMessage.Content, goalStep, errorMessage.Key, errorMessage.StatusCode, null, errorMessage.FixSuggestion, errorMessage.HelpfullLinks, null, errorMessage);
 		}
 
-		[Description("When user intends to throw an error or critical, etc. This can be stated as 'show error', 'throw crtical', 'print error', etc. type can be error|critical. statusCode(like http status code) should be defined by user. error is %!error% if user defines it")]
+		[Description("When user intends to throw an error or critical, etc. This can be stated as 'show error', 'throw crtical', 'print error', etc. Never for `call goal ShowError ...`: a goal named after an error is called, not thrown. type can be error|critical. statusCode(like http status code) should be defined by user. error is %!error% if user defines it")]
 		[MethodSettings(CanBeAsync = false, CanHaveErrorHandling = false, CanBeCached = false)]
 		public async Task<IError?> Throw(object? message, string key = "UserDefinedError", int statusCode = 400, string? fixSuggestion = null, string? helpfullLinks = null)
 		{

@@ -26,6 +26,7 @@ namespace PLang.Modules.ConditionalModule
 {
 	[Description(@"if statement for the user intent. Example 1:'if %isValid% is true then call SomeGoal, else call OtherGoal', this condition would return true if %isValid% is true and call a goals on either conditions. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists. Prefer predefined methods in this module over SimpleCondition and CompoundCondition. 
 if statement can throw an error, e.g. `if %isValid% is false, then throw error 'Not valid'`
+A one line if that calls goals, `if %codeCount% >= 2 then call goal HandleOverLimit, else call goal IssueCodeNow`, sets goalToCallIfTrue to HandleOverLimit and goalToCallIfFalse to IssueCodeNow.
 
 ")]
 	[Effect(Effects.None)]
@@ -81,8 +82,11 @@ if statement can throw an error, e.g. `if %isValid% is false, then throw error '
 Operator: ==|!=|<|>|<=|>=|in|isEmpty|contains|startswith|endswith|indexOf. Equality is `==` (never a single `=`). IsNot property indicates if the condition is a negation of the specified operator. 
 IsNot=True for ‘is not’, ‘does not’, 
 Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
+A goal the step calls goes in goalToCallIfTrue (after `then`) and goalToCallIfFalse (after `else`), also when the whole if is written on one line. Never leave them out when the step says `call`.
 "
 )]
+		[Example("if %codeCount% >= 2 then call goal HandleOverLimit, else call goal IssueCodeNow", @"condition={""Kind"":""Simple"",""LeftValue"":""%codeCount%"",""Operator"":"">="",""RightValue"":2}, goalToCallIfTrue={Name=""HandleOverLimit""}, goalToCallIfFalse={Name=""IssueCodeNow""}")]
+		[Example("if %total% > 100 then call ApplyDiscount amount=%total%", @"condition={""Kind"":""Simple"",""LeftValue"":""%total%"",""Operator"":"">"",""RightValue"":100}, goalToCallIfTrue={Name=""ApplyDiscount"", Parameters={""amount"":""%total%""}}")]
 		public async Task<(object? ReturnValue, IError? Error)> SimpleCondition(SimpleCondition condition, 
 			GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
@@ -91,7 +95,8 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 		}
 
-		[Description("Logic: AND|OR Operator: ==|!=|<|>|<=|>=|in|contains|startswith|endswith|indexOf. Equality is `==` (never a single `=`).  IsNot property indicates if the condition is a negation of the specified operator. True for ‘is not’, ‘does not’, etc.")]
+		[Description("Logic: AND|OR Operator: ==|!=|<|>|<=|>=|in|contains|startswith|endswith|indexOf. Equality is `==` (never a single `=`).  IsNot property indicates if the condition is a negation of the specified operator. True for ‘is not’, ‘does not’, etc. A goal the step calls goes in goalToCallIfTrue (after `then`) and goalToCallIfFalse (after `else`), also when the whole if is written on one line.")]
+		[Example("if %count% > 0 and %isValid% then call goal Process, else call goal Reject", @"condition={""Kind"":""Compound"",""Logic"":""AND"",""Conditions"":[...]}, goalToCallIfTrue={Name=""Process""}, goalToCallIfFalse={Name=""Reject""}")]
 		public async Task<(object? ReturnValue, IError? Error)> CompoundCondition(CompoundCondition condition, 
 			GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)

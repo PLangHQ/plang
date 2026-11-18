@@ -17,7 +17,7 @@ namespace PLang.Modules.EnvironmentModule;
 [Newtonsoft.Json.JsonObject(NamingStrategyType = typeof(Newtonsoft.Json.Serialization.SnakeCaseNamingStrategy))]
 public record RunningTask(string Kind, string Name, string? Goal, string? CalledFrom, DateTime StartedUtc, long RunningSeconds);
 
-[Description("Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install, disks (size and free space), memory (total, used, free), running tasks (dont wait goals, scheduled runs, webservers), running engines (one per request or dont wait run, call stack, variable sizes), runtime stats (gc heap, process memory, call stack depth, caches)")]
+[Description("Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes (`set debug mode = true`, `set debug mode = false`, `remove debug mode`, `is in debug mode`; debug mode is a setting of the app, not a %variable%), set culture, open file in default app, npm install, disks (size and free space), memory (total, used, free), running tasks (dont wait goals, scheduled runs, webservers), running engines (one per request or dont wait run, call stack, variable sizes), runtime stats (gc heap, process memory, call stack depth, caches)")]
 [Effect(Effects.None)]
 public class Program : BaseProgram
 {
@@ -211,12 +211,19 @@ public class Program : BaseProgram
 	}
 
 
+	[Description("Turns debug mode on for the app: errors show their details. For a step that sets debug mode to true or on. Debug mode is not a %variable%, so this is never VariableModule.SetBoolVariable")]
+	[Example("set debug mode = true", "")]
+	[Example("set debug mode on", "")]
 	public async Task SetDebugMode()
 	{
 		context.ShowErrorDetails = true;
 		context.DebugMode = true;
 	}
 
+	[Description("Turns debug mode off for the app. For a step that sets debug mode to false or off, or removes it. Debug mode is not a %variable%, so this is never VariableModule.SetBoolVariable")]
+	[Example("set debug mode = false", "")]
+	[Example("set debug mode off", "")]
+	[Example("remove debug mode", "")]
 	public async Task RemoveDebugMode()
 	{
 		context.ShowErrorDetails = false;
