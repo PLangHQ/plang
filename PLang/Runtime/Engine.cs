@@ -56,6 +56,15 @@ namespace PLang.Runtime
 		/// The app's keep-alive registry. Every engine returns the root engine's instance.
 		/// </summary>
 		KeepAliveRegistry KeepAliveRegistry { get; }
+		/// <summary>The step that rented this engine from the EnginePool; null while it is in the pool and on the root engine.</summary>
+		GoalStep? RentedFrom { get; set; }
+		/// <summary>
+		/// The context of the goal this engine runs, or ran last, so another thread can read its call stack and memory stack.
+		/// The Context property cannot: it reads the calling thread's context. Null after the engine is returned.
+		/// </summary>
+		PLangContext? RunningContext { get; }
+		/// <summary>The managed thread id the engine's current step started on; async steps can continue on another thread.</summary>
+		int? RunningThreadId { get; }
 		string Path { get; }
 		bool IsInPool { get; set; }
 		public DateTime LastAccess { get; set; }
@@ -161,6 +170,10 @@ namespace PLang.Runtime
 			}
 		}
 
+		public GoalStep? RentedFrom { get; set; }
+		public PLangContext? RunningContext { get; private set; }
+		public int? RunningThreadId { get; private set; }
+
 		public IPLangFileSystem FileSystem { get { return fileSystem; } }
 		public ResolveEventHandler AsmHandler { get; set; }
 
@@ -230,17 +243,26 @@ namespace PLang.Runtime
 		public async Task<IEngine> RentAsync(GoalStep callingStep)
 		{
 			var engine = await EnginePool.RentAsync(callingStep);
-			// Settings keys are prefixed with the engine's Environment (Settings.GetKey), and every
-			// rented engine has its own container and Settings. Without this, an app that runs
-			// `set environment "dev"` reads "production.X" in every request engine and every
-			// "dont wait" goal, and finds no setting.
-			engine.Environment = this.Environment;
-			// Each rented engine has its own file system, so the grants this engine holds for its process
-			// (e.g. `give access to "/proc"`) are given to the rented one for as long as it is rented;
-			// Reset clears them when it goes back to the pool.
-			foreach (var fileAccess in fileSystem.GetProcessFileAccess())
+			try
 			{
-				engine.FileSystem.AddFileAccess(fileAccess with { ProcessId = engine.FileSystem.Id });
+				// Settings keys are prefixed with the engine's Environment (Settings.GetKey), and every
+				// rented engine has its own container and Settings. Without this, an app that runs
+				// `set environment "dev"` reads "production.X" in every request engine and every
+				// "dont wait" goal, and finds no setting.
+				engine.Environment = this.Environment;
+				// Each rented engine has its own file system, so the grants this engine holds for its process
+				// (e.g. `give access to "/proc"`) are given to the rented one for as long as it is rented;
+				// Reset clears them when it goes back to the pool.
+				foreach (var fileAccess in fileSystem.GetProcessFileAccess())
+				{
+					engine.FileSystem.AddFileAccess(fileAccess with { ProcessId = engine.FileSystem.Id });
+				}
+			}
+			catch
+			{
+				// The caller never gets the engine, so it cannot return it.
+				EnginePool.Return(engine);
+				throw;
 			}
 			return engine;
 		}
@@ -280,6 +302,9 @@ namespace PLang.Runtime
 			contextAccessor.Current = null;
 			var msa = container.GetInstance<IMemoryStackAccessor>();
 			msa.Current = null;
+			RentedFrom = null;
+			RunningContext = null;
+			RunningThreadId = null;
 			
 
 		
@@ -534,6 +559,7 @@ namespace PLang.Runtime
 		}
 		public async Task<(object? Variables, IError? Error)> RunGoal(Goal goal, Dictionary<string, object?> Parameters, PLangContext context, uint waitForXMillisecondsBeforeRunningGoal = 0)
 		{
+			RunningContext = context;
 			try
 			{
 				context.CallStack.EnterGoal(goal, context.Event);
@@ -763,6 +789,8 @@ namespace PLang.Runtime
 			if (context.DebugMode) step.Stopwatch = Stopwatch.StartNew();
 
 			context.CallStack.SetCurrentStep(step, goalStepIndex);
+			RunningContext = context;
+			RunningThreadId = System.Environment.CurrentManagedThreadId;
 
 			SetStepLogLevel(step);
 			try
@@ -1074,18 +1102,20 @@ namespace PLang.Runtime
 
 		private async Task KeepAlive()
 		{
+			// Rented engines are in the registry too but do not keep the app running: they serve a request or a task
+			// that a listener or a "dont wait" entry keeps alive, and are returned when it ends.
 			var registry = KeepAliveRegistry;
-			if (registry.Count == 0) return;
+			if (registry.KeepsAppAliveCount == 0) return;
 
 			// The app has started and stays up to serve (webserver, scheduler): fill the engine pool in the background.
 			if (ParentEngine == null) EnginePool.StartWarmUp();
 			logger.LogWarning("Keeping app alive, reasons:");
-			foreach (var kind in registry.GetSnapshot().Select(p => p.Kind).Distinct())
+			foreach (var kind in registry.GetKeepAppAliveSnapshot().Select(p => p.Kind).Distinct())
 			{
 				logger.LogWarning(" - " + kind);
 			}
 
-			while (registry.Count > 0)
+			while (registry.KeepsAppAliveCount > 0)
 			{
 				await Task.Delay(1000);
 

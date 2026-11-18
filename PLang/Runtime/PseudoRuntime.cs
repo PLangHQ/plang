@@ -67,6 +67,8 @@ namespace PLang.Runtime
 			var goalName = goalToCall.Name;
 			var parameters = goalToCall.Parameters;
 			var isRented = false;
+			// Set once the "dont wait" task has started: from then on the task returns the rented engine.
+			var taskReturnsEngine = false;
 
 			var goals = prParser.GetGoals();
 			var systemGoals = (disableOsGoals) ? new List<Goal>() : prParser.GetSystemGoals();
@@ -97,9 +99,8 @@ namespace PLang.Runtime
 				// decision: leave it in to give memory stack to isolated goals
 				if (isolated || !waitForExecution || CreateNewContainer(goalToRun.AbsoluteGoalFolderPath))
 				{
-					isRented = true;
-
 					runtimeEngine = await engine.RentAsync(context.CallingStep);
+					isRented = true;
 					logger.LogDebug($"             - Rented engine - {stopwatch.ElapsedMilliseconds}");
 				}
 
@@ -223,8 +224,9 @@ namespace PLang.Runtime
 								engine.Return(runtimeEngine);
 							}
 						}
-						
+
 					});
+					taskReturnsEngine = true;
 
 					engine.KeepAliveRegistry.Add(keepAliveKind, goalToRun.GoalName, new PlangTask(task, goalToRun, callingGoal));
 
@@ -245,7 +247,8 @@ namespace PLang.Runtime
 					//disposeError = await context.CallStack.CurrentFrame.DisposeVariables(context.MemoryStack);
 								
 				}
-				if (isRented && waitForExecution)
+				// A "dont wait" call that failed before its task started still holds the engine it rented.
+				if (isRented && (waitForExecution || !taskReturnsEngine))
 				{
 					engine.Return(runtimeEngine);
 				}

@@ -65,12 +65,29 @@ namespace PLang.Runtime
 				}
 
 
-				InitPerRequest(rootEngine.Container, engine);
-				return engine;
+				try
+				{
+					InitPerRequest(rootEngine.Container, engine);
+				}
+				catch
+				{
+					// Not rented after all: back to the pool, so it is neither lost nor left registered.
+					try { Return(engine); } catch { }
+					throw;
+				}
+				return RegisterRented(rootEngine, engine, callingStep);
 			}
 
 			engine = CreateEngine(rootEngine.FileSystem.RootDirectory, rootEngine.Container);
 
+			return RegisterRented(rootEngine, engine, callingStep);
+		}
+
+		// A rented engine is in the root engine's KeepAliveRegistry until Return, so `get running engines` lists it.
+		private static IEngine RegisterRented(IEngine rootEngine, IEngine engine, GoalStep callingStep)
+		{
+			engine.RentedFrom = callingStep;
+			rootEngine.KeepAliveRegistry.AddEngine(engine);
 			return engine;
 		}
 
@@ -79,6 +96,8 @@ namespace PLang.Runtime
 			var rootEngine = GetRootEngine();
 			var enginePool = rootEngine.EnginePool;
 			var pool = enginePool.Pool;
+			// First, so the entry goes even when the engine is already in the pool or Reset fails.
+			rootEngine.KeepAliveRegistry.RemoveEngine(engine);
 			if (engine.IsInPool)
 			{
 				return;
