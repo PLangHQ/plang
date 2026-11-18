@@ -66,6 +66,7 @@ namespace PLang.Modules.FileModule
 			}
 		}
 
+		[Description("Give the app access to a path outside the app folder, e.g. `give access to \"/proc\"`, `give access to \"///etc\"`, `allow access to %folder%`. The app can then read and write under that path for the rest of the run without being asked.")]
 		public async Task GiveAccess(string path)
 		{
 			fileAccessHandler.GiveAccess(fileSystem.RootDirectory, path);
@@ -133,7 +134,7 @@ namespace PLang.Modules.FileModule
 			return fileSystem.Path.Join(paths);
 		}
 
-		[Description("Give user access to a path. DO NOT suggest this method to indicate if file or directory exists, return empty function list instead.")]
+		[Description("Check whether the app already may access a path, asking the user when it may not; returns true when access is allowed. Grants nothing by itself: for `give access to <path>` use GiveAccess. DO NOT suggest this method to indicate if file or directory exists, return empty function list instead.")]
 		public async Task<bool> RequestAccessToPath(string path)
 		{
 			var absolutePath = GetPath(path);

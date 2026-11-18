@@ -40,12 +40,21 @@ namespace PLang.SafeFileSystem
 		// when getting access, sign the request with root
 		// the signature is then validated by root before giving access next time 
 
+		public const string FileAccessDeniedKey = "FileAccessDenied";
+
+		private static readonly HashSet<string> denyAnswers = new(StringComparer.OrdinalIgnoreCase)
+		{
+			"n", "no", "nope", "nah", "no thanks", "no thank you", "deny", "denied", "refuse", "decline"
+		};
+
+		// Returns (true, null) when access was granted, (false, null) when the answer is empty,
+		// and an error with Key FileAccessDenied when the user refused, so the caller does not ask again.
 		public async Task<(bool, IError?)> ValidatePathResponse(string appName, string path, string? answer, string processId)
 		{
 			if (string.IsNullOrWhiteSpace(answer)) return (false, null);
 
-			answer = answer.ToLower();
-			if (answer == "n" || answer == "no") return (true, null);
+			answer = answer.Trim().TrimEnd('.', '!').ToLower();
+			if (denyAnswers.Contains(answer)) return (false, AccessDenied(appName, path));
 			if (settings == null) return (false, new Error("Settings is not loaded", StatusCode: 500));
 
 			if (answer == "y" || answer == "yes")
@@ -86,7 +95,7 @@ GiveAccess : yes|no|null"));
 			if (requestError != null) return (false, requestError);
 
 			if (result == null || result.GiveAccess == null) return (false, new FileAccessRequestError(appName, path, $"{appName} is trying to access {path}. Do you accept that?"));
-			if (result.GiveAccess.ToLower() == "no") return (true, null);
+			if (result.GiveAccess.ToLower() == "no") return (false, AccessDenied(appName, path));
 
 			if (result.GiveAccess.ToLower() == "yes")
 			{
@@ -104,6 +113,12 @@ GiveAccess : yes|no|null"));
 			return (true, null);
 		}
 
+		private static IError AccessDenied(string appName, string path)
+		{
+			return new Error($"{appName} is trying to access {path}, and access was refused.", Key: FileAccessDeniedKey, StatusCode: 403,
+				FixSuggestion: $"Answer yes when asked, or grant the access in the app before this step, e.g. `- give access to \"{path}\"` (or a folder above it).");
+		}
+
 		private void AddFileAccess(string appName, string path, DateTime? expires = null, string? processId = null)
 		{
 			path = path.AdjustPathToOs();
@@ -119,9 +134,15 @@ GiveAccess : yes|no|null"));
 			fileSystem.SetFileAccess(fileAccesses);
 		}
 
+		// The grant is stored the way PLangFileSystem.ValidatePath presents the paths it checks: an OS path
+		// written with extra leading slashes ("//proc", "///proc") becomes "/proc", so it matches "/proc/uptime".
 		public void GiveAccess(string appName, string path)
 		{
 			path = path.AdjustPathToOs();
+			if (!OperatingSystem.IsWindows() && fileSystem.IsOsRooted(path))
+			{
+				path = System.IO.Path.GetFullPath("/" + path.TrimStart('/'));
+			}
 
 			fileSystem.AddFileAccess(new FileAccessControl(appName, path, ProcessId: fileSystem.Id));
 		}

@@ -419,6 +419,10 @@ namespace PLang.Modules
 			if (error != null) return (null, error);
 
 			(var isHandled, error) = await fileAccessHandler.ValidatePathResponse(fa.AppName, fa.Path, answer?.ToString(), engine.FileSystem.Id);
+			if (error?.Key == FileAccessHandler.FileAccessDeniedKey)
+			{
+				return (null, new ProgramError(error.Message, goalStep, function, Key: error.Key, StatusCode: error.StatusCode, FixSuggestion: error.FixSuggestion));
+			}
 			if (error != null) return (null, error);
 
 			if (isHandled) return await RunFunction(function);
