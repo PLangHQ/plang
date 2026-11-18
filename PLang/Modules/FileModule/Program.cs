@@ -745,10 +745,17 @@ namespace PLang.Modules.FileModule
 			return signError;
 		}
 
-		/// <summary>True for an object that has a structure (a record, a class, a list, a dictionary): text, numbers, dates, guids and the like are written as their text.</summary>
-		private static bool IsStructured(object content) =>
-			content is not string && content is not IConvertible && content is not Guid && content is not TimeSpan && content is not DateTimeOffset && content is not Uri
-			&& content is not Newtonsoft.Json.Linq.JToken;
+		/// <summary>
+		/// True when the object's text form is not meant to be read back: a type whose ToString() is its own name (a plain class, a list, a dictionary),
+		/// or a record or anonymous type, whose compiler-made ToString() is "Name { A = 1 }". A type with its own ToString() (StringBuilder, a value object) keeps its text.
+		/// </summary>
+		private static bool IsStructured(object content)
+		{
+			var type = content.GetType();
+			if (content.ToString() == type.ToString()) return true;
+			if (type.GetMethod("PrintMembers", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic, new[] { typeof(StringBuilder) }) != null) return true;
+			return type.IsDefined(typeof(System.Runtime.CompilerServices.CompilerGeneratedAttribute), false) && type.Name.Contains("AnonymousType");
+		}
 
 		private async Task WriteToFileInternal(string path, object content, bool overwrite, bool loadVariables, bool emptyVariableIfNotFound, string encoding)
 		{
@@ -782,10 +789,8 @@ namespace PLang.Modules.FileModule
 			{
 				content = memoryStack.LoadVariables(content, emptyVariableIfNotFound).ToString();
 			}
-			else if (content != null && (content.ToString() == content.GetType().ToString() || IsStructured(content)))
+			else if (content != null && IsStructured(content))
 			{
-				// An object is written as JSON. The old test only caught a type whose ToString() is its own name: a record writes "TcpStats { Established = 14, ... }",
-				// a text nobody can read back (and not the snake case names its JSON attribute gives).
 				content = JsonConvert.SerializeObject(content, Newtonsoft.Json.Formatting.Indented);
 			}
 

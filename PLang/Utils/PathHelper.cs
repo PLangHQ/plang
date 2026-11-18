@@ -68,8 +68,8 @@ namespace PLang.Utils
 			{
 				var absolutePath = pathWithDirSep.Substring(1);
 				var fullPath = fileSystem.Path.GetFullPath(absolutePath);
-				// Keep the leading "//" on Linux: a single "/" is the app's root to the file system, so "/etc/hostname" was joined onto the app
-				// folder a second time (File.Exists said "cannot be found" and no FileAccessException was ever asked). PLangFileSystem.ValidatePath drops one slash.
+				// Keep the leading "//" on Linux: to PLangFileSystem a single "/" is the app's root, so "/etc/hostname" would be joined onto the app folder.
+				// PLangFileSystem.ValidatePath drops one slash and runs the access check.
 				if (!OperatingSystem.IsWindows() && fullPath.StartsWith(fileSystem.Path.DirectorySeparatorChar))
 				{
 					return fileSystem.Path.DirectorySeparatorChar + fullPath;
