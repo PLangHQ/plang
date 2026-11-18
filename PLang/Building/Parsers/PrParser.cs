@@ -230,22 +230,37 @@ namespace PLang.Building.Parsers
 			goal.AbsolutePrFolderPath = goal.AbsolutePrFolderPath.AdjustPathToOs();
 		}
 
+		// The cache is keyed by path, and a deploy can put another build of a step at the same path. A step only gets an
+		// instruction built for its own module: a cached one for another module is read again from disk, and when the file
+		// on disk is for another module too, the step (its goal) is from another build than the file and null is returned.
+		// The caller then reloads the goals; running it would look for the method on the wrong module.
 		public Instruction? ParseInstructionFile(GoalStep step)
 		{
-			if (instructions.TryGetValue(step.AbsolutePrFilePath, out var instruction))
+			if (instructions.TryGetValue(step.AbsolutePrFilePath, out var instruction) && IsForStep(instruction, step))
 			{
 				return instruction;
 			}
 
 			instruction = JsonHelper.ParseFilePath<Instruction>(fileSystem, step.AbsolutePrFilePath);
-			if (instruction != null)
-			{
-				instruction.LlmRequest = null;
-				instructions.TryAdd(step.AbsolutePrFilePath, instruction);
-			}
-			
-			return instruction;
+			if (instruction == null) return null;
 
+			instruction.LlmRequest = null;
+			if (!IsForStep(instruction, step))
+			{
+				logger.LogWarning("{PrFile} is built for {InstructionModule} but its goal lists the step '{StepText}' as {StepModule}; the goal and the step file are from different builds",
+					step.AbsolutePrFilePath, instruction.ModuleType, step.Text, step.ModuleType);
+				return null;
+			}
+			instructions[step.AbsolutePrFilePath] = instruction;
+
+			return instruction;
+		}
+
+		// Older .pr files have no ModuleType on the instruction; those cannot be checked and are taken as they are.
+		private static bool IsForStep(Instruction instruction, GoalStep step)
+		{
+			if (string.IsNullOrEmpty(instruction.ModuleType) || string.IsNullOrEmpty(step.ModuleType)) return true;
+			return string.Equals(instruction.ModuleType, step.ModuleType, StringComparison.Ordinal);
 		}
 		public IReadOnlyList<Goal> ForceLoadAllGoals()
 		{
@@ -285,6 +300,9 @@ namespace PLang.Building.Parsers
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			logger.LogDebug($"   -- Loading all goals(force:{force})");
 
+			// Cleared before the new goals are handed out as well as after, so a step of the new goals cannot be
+			// given an instruction that was cached from the previous build.
+			if (force) instructions.Clear();
 			GetGoals(force);
 			GetSystemGoals(force);
 
