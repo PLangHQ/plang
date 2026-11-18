@@ -52,6 +52,8 @@ public class Program : BaseProgram, IDisposable
 	private readonly ProgramFactory programFactory;
 	private readonly static List<WebserverProperties> listeners = new();
 	internal static int ListenerCount => listeners.Count;
+	// The KeepAliveRegistry kind of a running webserver, from start until it is shut down.
+	private const string KeepAliveKind = "Webserver";
 	private bool disposed;
 
 
@@ -115,6 +117,9 @@ public class Program : BaseProgram, IDisposable
 		await webserverInfo.Listener.StopAsync();
 
 		listeners.Remove(webserverInfo);
+		// The listener is already stopped, so the entry goes without disposing (Dispose would stop it again).
+		// When nothing else keeps the app alive, the app ends.
+		engine.KeepAliveRegistry.Remove(webserverInfo, KeepAliveKind, dispose: false);
 		return (webserverInfo, null);
 	}
 
@@ -567,7 +572,7 @@ public class Program : BaseProgram, IDisposable
 		logger.LogDebug($"Listening on {webserverProperties.Host}:{webserverProperties.Port}...");
 		Console.WriteLine($" - Listening on {webserverProperties.Host}:{webserverProperties.Port}...");
 
-		KeepAlive(webserverProperties, "Webserver", $"{webserverProperties.Name} {webserverProperties.Host}:{webserverProperties.Port}");
+		KeepAlive(webserverProperties, KeepAliveKind, $"{webserverProperties.Name} {webserverProperties.Host}:{webserverProperties.Port}");
 
 		return (webserverProperties, null);
 	}
