@@ -77,7 +77,9 @@ namespace PLang.Modules.IrohModule
 			var engineRef = engine;
 			var accessorRef = contextAccessor;
 			var rootPath = fileSystem.RootDirectory;
-			_ = Task.Factory.StartNew(() => AcceptLoop(endpoint, onIncoming, engineRef, accessorRef, rootPath), TaskCreationOptions.LongRunning);
+			_ = Task.Factory.StartNew(() => endpoint.Serve(
+				stream => HandleStream(stream, endpoint, onIncoming, engineRef, accessorRef, rootPath),
+				ex => logger?.LogWarning("iroh: {Message}", ex.Message)), TaskCreationOptions.LongRunning);
 
 			KeepAlive(endpoint, "iroh-listen-" + keyName);
 			return (listener, null);
@@ -113,6 +115,7 @@ namespace PLang.Modules.IrohModule
 				_ = Task.Factory.StartNew(async () =>
 				{
 					connection.WaitUntilClosed();
+					connection.Dispose();
 					onClosed.Parameters.AddOrReplace("peer", peerInfo);
 					await pseudoRuntime.RunGoal(engineRef, accessorRef, rootPath, onClosed);
 				}, TaskCreationOptions.LongRunning);
@@ -229,37 +232,6 @@ namespace PLang.Modules.IrohModule
 			catch (Exception ex)
 			{
 				return (null, new ProgramError("Could not start iroh: " + ex.Message, goalStep, function));
-			}
-		}
-
-		private void AcceptLoop(IrohEndpoint endpoint, GoalToCallInfo onIncoming, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath)
-		{
-			while (true)
-			{
-				IrohConnection? connection = null;
-				try { connection = endpoint.Accept(); } catch { }
-				if (connection == null)
-				{
-					if (!Endpoints.Values.Contains(endpoint)) return;
-					Thread.Sleep(200);
-					continue;
-				}
-
-				var accepted = connection;
-				_ = Task.Factory.StartNew(() => ConnectionLoop(accepted, endpoint, onIncoming, engineRef, accessorRef, rootPath), TaskCreationOptions.LongRunning);
-			}
-		}
-
-		private void ConnectionLoop(IrohConnection connection, IrohEndpoint endpoint, GoalToCallInfo onIncoming, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath)
-		{
-			while (true)
-			{
-				IrohStream? stream = null;
-				try { stream = connection.AcceptStream(); } catch { }
-				if (stream == null) return;
-
-				var accepted = stream;
-				_ = Task.Run(() => HandleStream(accepted, endpoint, onIncoming, engineRef, accessorRef, rootPath));
 			}
 		}
 

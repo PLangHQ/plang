@@ -6,9 +6,14 @@ using System.Text;
 namespace PLang.Modules.IrohModule
 {
 	/// <summary>
-	/// Thin managed wrapper over the N0.IrohNet native calls. Every native call here is blocking, so the
-	/// callers run them on their own threads. Out pointers must be initialised with the *_default()
-	/// functions first, the native side drops the old value when it fills them (null crashes the process).
+	/// Thin managed wrapper over the N0.IrohNet native calls (iroh-c-ffi). Every native call here is blocking, so the
+	/// callers run them on their own threads.
+	///
+	/// Ownership, as iroh-c-ffi defines it: a function that takes a T** (a Rust <c>&amp;Box&lt;T&gt;</c>) borrows the box and
+	/// only replaces the value inside it, so the address of a local copy of the pointer is fine. A function that takes
+	/// a T* by value consumes and frees it: endpoint_close, connection_close, connection_closed, send_stream_finish
+	/// and every *_free. Out boxes must come from the *_default() functions, a null one crashes the process.
+	/// Each box is freed exactly once, and never while another thread is inside a call on it (see NativeHandle).
 	/// </summary>
 	public static unsafe class IrohKeys
 	{
@@ -33,7 +38,11 @@ namespace PLang.Modules.IrohModule
 			try
 			{
 				var result = iroh.secret_key_from_base32((byte*)text, &sk);
-				if (result != KeyResult.KEY_RESULT_OK) throw new IrohException("The stored iroh secret key is not valid: " + result);
+				if (result != KeyResult.KEY_RESULT_OK)
+				{
+					iroh.secret_key_free(sk);
+					throw new IrohException("The stored iroh secret key is not valid: " + result);
+				}
 				return sk;
 			}
 			finally { Marshal.FreeCoTaskMem(text); }
@@ -55,17 +64,82 @@ namespace PLang.Modules.IrohModule
 
 	public class IrohException(string message) : Exception(message);
 
+	/// <summary>
+	/// A native box that several threads call into. A call runs between TryEnter and Exit. Release hands the box to the
+	/// native function that consumes it (close or free) exactly once: right away when no call is running, otherwise
+	/// when the last running call exits. After Release, TryEnter fails, so no call starts on a freed box.
+	/// </summary>
+	internal sealed class NativeHandle(nint pointer)
+	{
+		private readonly object sync = new();
+		private int users;
+		private bool released;
+		private Action<nint>? pendingRelease;
+
+		public bool IsReleased
+		{
+			get { lock (sync) return released; }
+		}
+
+		public bool TryEnter(out nint value)
+		{
+			lock (sync)
+			{
+				if (released)
+				{
+					value = 0;
+					return false;
+				}
+				users++;
+				value = pointer;
+				return true;
+			}
+		}
+
+		public void Exit()
+		{
+			Action<nint> release;
+			lock (sync)
+			{
+				users--;
+				if (users > 0 || pendingRelease == null) return;
+				release = pendingRelease;
+				pendingRelease = null;
+			}
+			release(pointer);
+		}
+
+		public void Release(Action<nint> release)
+		{
+			lock (sync)
+			{
+				if (released) return;
+				released = true;
+				if (users > 0)
+				{
+					pendingRelease = release;
+					return;
+				}
+			}
+			release(pointer);
+		}
+	}
+
 	public sealed unsafe class IrohEndpoint : IDisposable
 	{
-		private readonly nint endpoint;
+		public const int FirstAcceptRetryMilliseconds = 200;
+		public const int MaxAcceptRetryMilliseconds = 1000;
+
+		private readonly NativeHandle handle;
 		private readonly byte[] alpn;
-		private bool disposed;
 
 		public string Id { get; }
 
+		public bool IsClosed => handle.IsReleased;
+
 		private IrohEndpoint(nint endpoint, byte[] alpn, string id)
 		{
-			this.endpoint = endpoint;
+			handle = new NativeHandle(endpoint);
 			this.alpn = alpn;
 			Id = id;
 		}
@@ -73,19 +147,19 @@ namespace PLang.Modules.IrohModule
 		public static IrohEndpoint Bind(string secretKeyBase32, string alpnName, bool useRelay = true)
 		{
 			byte[] alpn = Encoding.ASCII.GetBytes(alpnName);
-			SecretKey* sk = IrohKeys.LoadSecret(secretKeyBase32);
 			string id = IrohKeys.IdFromSecret(secretKeyBase32);
+			SecretKey* sk = IrohKeys.LoadSecret(secretKeyBase32);
 
 			SocketAddrV4* v4 = iroh.socket_addr_v4_default();
 			SocketAddrV6* v6 = iroh.socket_addr_v6_default();
 			IntPtr any4 = Marshal.StringToCoTaskMemUTF8("0.0.0.0:0");
 			IntPtr any6 = Marshal.StringToCoTaskMemUTF8("[::]:0");
+			EndpointConfig config = iroh.endpoint_config_default();
 			try
 			{
 				iroh.socket_addr_v4_from_string((byte*)any4, &v4);
 				iroh.socket_addr_v6_from_string((byte*)any6, &v6);
 
-				EndpointConfig config = iroh.endpoint_config_default();
 				config.relay_mode = useRelay ? RelayMode.RELAY_MODE_DEFAULT : RelayMode.RELAY_MODE_DISABLED;
 				config.discovery_cfg = useRelay ? DiscoveryConfig.DISCOVERY_CONFIG_D_N_S : DiscoveryConfig.DISCOVERY_CONFIG_NONE;
 				fixed (byte* alpnPtr = alpn)
@@ -94,14 +168,20 @@ namespace PLang.Modules.IrohModule
 				}
 				iroh.endpoint_config_add_secret_key(&config, sk);
 
+				// endpoint_bind consumes v4 and v6; the endpoint copies what it needs from the config.
 				Endpoint* ep = iroh.endpoint_default();
 				var result = iroh.endpoint_bind(&config, v4, v6, &ep);
-				if (result != EndpointResult.ENDPOINT_RESULT_OK) throw new IrohException("Could not bind the iroh endpoint: " + result);
+				if (result != EndpointResult.ENDPOINT_RESULT_OK)
+				{
+					iroh.endpoint_free(ep);
+					throw new IrohException("Could not bind the iroh endpoint: " + result);
+				}
 
 				return new IrohEndpoint((nint)ep, alpn, id);
 			}
 			finally
 			{
+				iroh.endpoint_config_free(config);
 				Marshal.FreeCoTaskMem(any4);
 				Marshal.FreeCoTaskMem(any6);
 			}
@@ -109,50 +189,140 @@ namespace PLang.Modules.IrohModule
 
 		public bool WaitUntilOnline(int timeoutMilliseconds)
 		{
-			Endpoint* ep = (Endpoint*)endpoint;
-			return iroh.endpoint_online(&ep, (ulong)timeoutMilliseconds) == EndpointResult.ENDPOINT_RESULT_OK;
+			nint pointer = Enter();
+			try
+			{
+				Endpoint* ep = (Endpoint*)pointer;
+				return iroh.endpoint_online(&ep, (ulong)timeoutMilliseconds) == EndpointResult.ENDPOINT_RESULT_OK;
+			}
+			finally { handle.Exit(); }
 		}
 
 		public string Ticket()
 		{
-			Endpoint* ep = (Endpoint*)endpoint;
-			EndpointAddr addr = iroh.endpoint_addr_default();
-			var result = iroh.endpoint_addr(&ep, &addr);
-			if (result != EndpointResult.ENDPOINT_RESULT_OK) throw new IrohException("Could not read the endpoint address: " + result);
-			return IrohKeys.Take(iroh.endpoint_addr_as_str(&addr));
+			nint pointer = Enter();
+			try
+			{
+				Endpoint* ep = (Endpoint*)pointer;
+				EndpointAddr addr = iroh.endpoint_addr_default();
+				try
+				{
+					var result = iroh.endpoint_addr(&ep, &addr);
+					if (result != EndpointResult.ENDPOINT_RESULT_OK) throw new IrohException("Could not read the endpoint address: " + result);
+					return IrohKeys.Take(iroh.endpoint_addr_as_str(&addr));
+				}
+				finally { iroh.endpoint_addr_free(addr); }
+			}
+			finally { handle.Exit(); }
 		}
 
-		/// <summary>Blocks until a peer connects. Returns null when the endpoint is closed.</summary>
+		/// <summary>
+		/// Blocks until a peer connects. Null when the endpoint is closed. An IrohException when one incoming connection
+		/// failed (handshake, wrong protocol); the endpoint keeps listening, so the caller may accept again.
+		/// </summary>
 		public IrohConnection? Accept()
 		{
-			if (disposed) return null;
-			Endpoint* ep = (Endpoint*)endpoint;
+			if (!handle.TryEnter(out nint pointer)) return null;
 			Connection* conn = iroh.connection_default();
 			EndpointResult result;
-			fixed (byte* alpnPtr = alpn)
+			try
 			{
-				result = iroh.endpoint_accept(&ep, new slice_ref_uint8 { ptr = alpnPtr, len = (UIntPtr)alpn.Length }, &conn);
+				Endpoint* ep = (Endpoint*)pointer;
+				fixed (byte* alpnPtr = alpn)
+				{
+					result = iroh.endpoint_accept(&ep, new slice_ref_uint8 { ptr = alpnPtr, len = (UIntPtr)alpn.Length }, &conn);
+				}
 			}
-			if (result != EndpointResult.ENDPOINT_RESULT_OK) return null;
+			finally { handle.Exit(); }
+
+			if (result != EndpointResult.ENDPOINT_RESULT_OK)
+			{
+				iroh.connection_free(conn);
+				if (handle.IsReleased) return null;
+				throw new IrohException("An incoming iroh connection failed: " + result);
+			}
+			if (handle.IsReleased)
+			{
+				iroh.connection_close(conn);
+				return null;
+			}
 			return new IrohConnection((nint)conn);
+		}
+
+		/// <summary>
+		/// Accepts peers until the endpoint is closed and hands every stream they open to onStream on the thread pool.
+		/// Blocks the calling thread. A failed accept is one peer whose handshake failed, the endpoint itself keeps
+		/// working, so it is reported to onFailure and the next accept waits a little (200 ms doubling up to 1 s, back to
+		/// none after a success). That bounds the work a flood of bad handshakes causes without holding up good peers long.
+		/// </summary>
+		public void Serve(Func<IrohStream, Task> onStream, Action<Exception>? onFailure = null)
+		{
+			int retryMilliseconds = 0;
+			while (true)
+			{
+				IrohConnection? connection;
+				try
+				{
+					connection = Accept();
+					retryMilliseconds = 0;
+				}
+				catch (IrohException ex)
+				{
+					onFailure?.Invoke(ex);
+					retryMilliseconds = retryMilliseconds == 0 ? FirstAcceptRetryMilliseconds : Math.Min(retryMilliseconds * 2, MaxAcceptRetryMilliseconds);
+					Thread.Sleep(retryMilliseconds);
+					continue;
+				}
+				if (connection == null) return;
+
+				var accepted = connection;
+				try
+				{
+					Task.Factory.StartNew(() => accepted.ServeStreams(onStream, onFailure), TaskCreationOptions.LongRunning);
+				}
+				catch (Exception ex)
+				{
+					accepted.Dispose();
+					onFailure?.Invoke(ex);
+				}
+			}
 		}
 
 		/// <summary>Connect to a peer by endpoint id (found through address lookup) or by a full ticket.</summary>
 		public IrohConnection Connect(string idOrTicket)
 		{
-			Endpoint* ep = (Endpoint*)endpoint;
 			EndpointAddr addr = ParseAddress(idOrTicket);
+			nint pointer;
+			try { pointer = Enter(); }
+			catch
+			{
+				iroh.endpoint_addr_free(addr);
+				throw;
+			}
+
 			Connection* conn = iroh.connection_default();
 			EndpointResult result;
-			fixed (byte* alpnPtr = alpn)
+			try
 			{
-				result = iroh.endpoint_connect(&ep, new slice_ref_uint8 { ptr = alpnPtr, len = (UIntPtr)alpn.Length }, addr, &conn);
+				Endpoint* ep = (Endpoint*)pointer;
+				fixed (byte* alpnPtr = alpn)
+				{
+					// endpoint_connect consumes addr.
+					result = iroh.endpoint_connect(&ep, new slice_ref_uint8 { ptr = alpnPtr, len = (UIntPtr)alpn.Length }, addr, &conn);
+				}
 			}
-			if (result != EndpointResult.ENDPOINT_RESULT_OK) throw new IrohException($"Could not connect to {Short(idOrTicket)}: {result}");
+			finally { handle.Exit(); }
+
+			if (result != EndpointResult.ENDPOINT_RESULT_OK)
+			{
+				iroh.connection_free(conn);
+				throw new IrohException($"Could not connect to {Short(idOrTicket)}: {result}");
+			}
 			return new IrohConnection((nint)conn);
 		}
 
-		public static bool IsTicket(string idOrTicket) => idOrTicket.StartsWith("endpoint", StringComparison.OrdinalIgnoreCase) && idOrTicket.Length > 80;
+		/// <summary>An endpoint id is 64 hex characters, so only a ticket starts with "endpoint".</summary>
+		public static bool IsTicket(string idOrTicket) => idOrTicket.StartsWith("endpoint", StringComparison.OrdinalIgnoreCase);
 
 		private static EndpointAddr ParseAddress(string idOrTicket)
 		{
@@ -164,7 +334,11 @@ namespace PLang.Modules.IrohModule
 				{
 					EndpointAddr parsed = iroh.endpoint_addr_default();
 					var addrResult = iroh.endpoint_addr_from_string((byte*)text, &parsed);
-					if (addrResult != AddrResult.ADDR_RESULT_OK) throw new IrohException("The iroh ticket is not valid: " + addrResult);
+					if (addrResult != AddrResult.ADDR_RESULT_OK)
+					{
+						iroh.endpoint_addr_free(parsed);
+						throw new IrohException("The iroh ticket is not valid: " + addrResult);
+					}
 					return parsed;
 				}
 
@@ -178,22 +352,31 @@ namespace PLang.Modules.IrohModule
 
 		private static string Short(string value) => value.Length > 16 ? value[..16] + "..." : value;
 
+		private nint Enter()
+		{
+			if (!handle.TryEnter(out nint pointer)) throw new IrohException("The iroh endpoint is closed");
+			return pointer;
+		}
+
+		/// <summary>
+		/// Closes the endpoint. A thread blocked in Accept holds it open until that accept returns (the next peer that
+		/// connects), then the endpoint closes and Accept returns null.
+		/// </summary>
 		public void Dispose()
 		{
-			if (disposed) return;
-			disposed = true;
-			iroh.endpoint_close((Endpoint*)endpoint);
+			handle.Release(pointer => iroh.endpoint_close((Endpoint*)pointer));
 		}
 	}
 
 	public sealed unsafe class IrohConnection : IDisposable
 	{
-		private readonly nint connection;
-		private bool disposed;
+		private const ulong ClosedPollMilliseconds = 1000;
 
-		internal IrohConnection(nint connection) { this.connection = connection; }
+		private readonly NativeHandle handle;
 
-		public bool IsDisposed => disposed;
+		internal IrohConnection(nint connection) { handle = new NativeHandle(connection); }
+
+		public bool IsDisposed => handle.IsReleased;
 
 		public const int ChunkBytes = 64 * 1024;
 
@@ -204,18 +387,14 @@ namespace PLang.Modules.IrohModule
 		/// </summary>
 		public byte[] Request(byte[] header, Stream? file, int chunkTimeoutMilliseconds, int answerTimeoutMilliseconds, int maxAnswerBytes)
 		{
-			Connection* conn = (Connection*)connection;
-			SendStream* send = iroh.send_stream_default();
-			RecvStream* recv = iroh.recv_stream_default();
-			var open = iroh.connection_open_bi(&conn, &send, &recv);
-			if (open != EndpointResult.ENDPOINT_RESULT_OK) throw new IrohException("Could not open a stream to the peer: " + open);
+			using var stream = OpenStream();
 
 			IrohException? writeError = null;
 			try
 			{
 				byte[] length = [(byte)((header.Length >> 24) & 0xFF), (byte)((header.Length >> 16) & 0xFF), (byte)((header.Length >> 8) & 0xFF), (byte)(header.Length & 0xFF)];
-				Write(send, length, length.Length, chunkTimeoutMilliseconds);
-				Write(send, header, header.Length, chunkTimeoutMilliseconds);
+				stream.Write(length, length.Length, chunkTimeoutMilliseconds);
+				stream.Write(header, header.Length, chunkTimeoutMilliseconds);
 
 				if (file != null)
 				{
@@ -223,17 +402,17 @@ namespace PLang.Modules.IrohModule
 					int read;
 					while ((read = file.Read(buffer, 0, buffer.Length)) > 0)
 					{
-						Write(send, buffer, read, chunkTimeoutMilliseconds);
+						stream.Write(buffer, read, chunkTimeoutMilliseconds);
 					}
 				}
 			}
 			catch (IrohException ex) { writeError = ex; }
 
-			iroh.send_stream_finish(send);
+			stream.Finish();
 
 			try
 			{
-				return ReadAll(recv, answerTimeoutMilliseconds, maxAnswerBytes);
+				return stream.ReadAll(answerTimeoutMilliseconds, maxAnswerBytes);
 			}
 			catch when (writeError != null)
 			{
@@ -241,66 +420,139 @@ namespace PLang.Modules.IrohModule
 			}
 		}
 
-		private static void Write(SendStream* send, byte[] bytes, int count, int timeoutMilliseconds)
+		private IrohStream OpenStream()
 		{
-			fixed (byte* ptr = bytes)
+			if (!handle.TryEnter(out nint pointer)) throw new IrohException("The connection to the peer is closed");
+			SendStream* send = iroh.send_stream_default();
+			RecvStream* recv = iroh.recv_stream_default();
+			EndpointResult open;
+			try
 			{
-				var written = iroh.send_stream_write_timeout(&send, new slice_ref_uint8 { ptr = ptr, len = (UIntPtr)count }, (ulong)timeoutMilliseconds);
-				if (written == EndpointResult.ENDPOINT_RESULT_TIMEOUT) throw new IrohException("The peer stopped taking data");
-				if (written != EndpointResult.ENDPOINT_RESULT_OK) throw new IrohException("Could not send to the peer: " + written);
+				Connection* conn = (Connection*)pointer;
+				open = iroh.connection_open_bi(&conn, &send, &recv);
 			}
+			finally { handle.Exit(); }
+
+			if (open != EndpointResult.ENDPOINT_RESULT_OK)
+			{
+				iroh.send_stream_free(send);
+				iroh.recv_stream_free(recv);
+				throw new IrohException("Could not open a stream to the peer: " + open);
+			}
+			return new IrohStream((nint)send, (nint)recv);
 		}
 
 		/// <summary>Blocks until the peer opens a stream. Null when the connection is closed.</summary>
 		public IrohStream? AcceptStream()
 		{
-			Connection* conn = (Connection*)connection;
+			if (!handle.TryEnter(out nint pointer)) return null;
 			SendStream* send = iroh.send_stream_default();
 			RecvStream* recv = iroh.recv_stream_default();
-			var result = iroh.connection_accept_bi(&conn, &send, &recv);
-			if (result != EndpointResult.ENDPOINT_RESULT_OK) return null;
+			EndpointResult result;
+			try
+			{
+				Connection* conn = (Connection*)pointer;
+				result = iroh.connection_accept_bi(&conn, &send, &recv);
+			}
+			finally { handle.Exit(); }
+
+			if (result != EndpointResult.ENDPOINT_RESULT_OK)
+			{
+				iroh.send_stream_free(send);
+				iroh.recv_stream_free(recv);
+				return null;
+			}
 			return new IrohStream((nint)send, (nint)recv);
 		}
 
-		/// <summary>Blocks until the connection is closed by either side.</summary>
+		/// <summary>
+		/// Hands every stream the peer opens to onStream on the thread pool until the connection closes, then frees the
+		/// connection. Each stream is disposed when its onStream ends. Blocks the calling thread.
+		/// </summary>
+		public void ServeStreams(Func<IrohStream, Task> onStream, Action<Exception>? onFailure = null)
+		{
+			try
+			{
+				while (true)
+				{
+					IrohStream? stream = AcceptStream();
+					if (stream == null) return;
+
+					var accepted = stream;
+					_ = Task.Run(() => onStream(accepted)).ContinueWith(handled =>
+					{
+						if (handled.Exception != null) onFailure?.Invoke(handled.Exception.GetBaseException());
+						accepted.Dispose();
+					}, TaskScheduler.Default);
+				}
+			}
+			finally { Dispose(); }
+		}
+
+		/// <summary>
+		/// Blocks until the connection is closed by either side. Waits in short native calls, so a Dispose from another
+		/// thread closes the connection within about a second.
+		/// </summary>
 		public void WaitUntilClosed()
 		{
-			iroh.connection_closed((Connection*)connection);
+			while (handle.TryEnter(out nint pointer))
+			{
+				EndpointResult result;
+				Vec_uint8 datagram = iroh.rust_buffer_alloc(0);
+				try
+				{
+					Connection* conn = (Connection*)pointer;
+					result = iroh.connection_read_datagram_timeout(&conn, &datagram, ClosedPollMilliseconds);
+				}
+				finally
+				{
+					iroh.rust_buffer_free(datagram);
+					handle.Exit();
+				}
+				if (result != EndpointResult.ENDPOINT_RESULT_OK && result != EndpointResult.ENDPOINT_RESULT_TIMEOUT) return;
+			}
 		}
 
-		internal static byte[] ReadAll(RecvStream* recv, int timeoutMilliseconds, int maxBytes)
-		{
-			Vec_uint8 buffer = iroh.rust_buffer_alloc(0);
-			var result = iroh.recv_stream_read_to_end_timeout(&recv, &buffer, (UIntPtr)maxBytes, (ulong)timeoutMilliseconds);
-			if (result == EndpointResult.ENDPOINT_RESULT_TIMEOUT) throw new IrohException("The peer did not answer in time");
-			if (result != EndpointResult.ENDPOINT_RESULT_OK) throw new IrohException("Could not read from the peer: " + result);
-			byte[] bytes = new byte[(int)buffer.len];
-			Marshal.Copy((IntPtr)buffer.ptr, bytes, 0, bytes.Length);
-			iroh.rust_buffer_free(buffer);
-			return bytes;
-		}
-
+		/// <summary>
+		/// Closes the connection and frees it. A call running on another thread keeps it until that call returns.
+		/// </summary>
 		public void Dispose()
 		{
-			if (disposed) return;
-			disposed = true;
-			iroh.connection_close((Connection*)connection);
+			handle.Release(pointer => iroh.connection_close((Connection*)pointer));
 		}
 	}
 
-	public sealed unsafe class IrohStream
+	/// <summary>
+	/// One bi directional stream. Used by one thread at a time; Dispose frees what is still held.
+	/// </summary>
+	public sealed unsafe class IrohStream : IDisposable
 	{
-		private readonly nint send;
-		private readonly nint recv;
+		private nint send;
+		private nint recv;
 
 		internal IrohStream(nint send, nint recv) { this.send = send; this.recv = recv; }
 
-		public byte[] ReadAll(int timeoutMilliseconds, int maxBytes) => IrohConnection.ReadAll((RecvStream*)recv, timeoutMilliseconds, maxBytes);
+		/// <summary>Reads the stream to its end, at most maxBytes. A timeout or a broken stream throws.</summary>
+		public byte[] ReadAll(int timeoutMilliseconds, int maxBytes)
+		{
+			RecvStream* stream = Recv();
+			Vec_uint8 buffer = iroh.rust_buffer_alloc(0);
+			try
+			{
+				var result = iroh.recv_stream_read_to_end_timeout(&stream, &buffer, (UIntPtr)maxBytes, (ulong)timeoutMilliseconds);
+				if (result == EndpointResult.ENDPOINT_RESULT_TIMEOUT) throw new IrohException("The peer did not answer in time");
+				if (result != EndpointResult.ENDPOINT_RESULT_OK) throw new IrohException("Could not read from the peer: " + result);
+				byte[] bytes = new byte[(int)buffer.len];
+				Marshal.Copy((IntPtr)buffer.ptr, bytes, 0, bytes.Length);
+				return bytes;
+			}
+			finally { iroh.rust_buffer_free(buffer); }
+		}
 
 		/// <summary>Reads up to count bytes. 0 means the peer finished the stream. A timeout or a broken stream throws.</summary>
 		public int Read(byte[] buffer, int count, int timeoutMilliseconds)
 		{
-			RecvStream* stream = (RecvStream*)recv;
+			RecvStream* stream = Recv();
 			fixed (byte* ptr = buffer)
 			{
 				long read = iroh.recv_stream_read_timeout(&stream, new slice_mut_uint8 { ptr = ptr, len = (UIntPtr)count }, (ulong)timeoutMilliseconds);
@@ -328,14 +580,55 @@ namespace PLang.Modules.IrohModule
 			return true;
 		}
 
+		public void Write(byte[] bytes, int count, int timeoutMilliseconds)
+		{
+			SendStream* stream = Send();
+			fixed (byte* ptr = bytes)
+			{
+				var written = iroh.send_stream_write_timeout(&stream, new slice_ref_uint8 { ptr = ptr, len = (UIntPtr)count }, (ulong)timeoutMilliseconds);
+				if (written == EndpointResult.ENDPOINT_RESULT_TIMEOUT) throw new IrohException("The peer stopped taking data");
+				if (written != EndpointResult.ENDPOINT_RESULT_OK) throw new IrohException("Could not send to the peer: " + written);
+			}
+		}
+
+		/// <summary>Ends the sending side. send_stream_finish consumes the send stream, so it is no longer held.</summary>
+		public void Finish()
+		{
+			nint stream = Interlocked.Exchange(ref send, 0);
+			if (stream == 0) return;
+			iroh.send_stream_finish((SendStream*)stream);
+		}
+
 		public void WriteAndFinish(byte[] bytes)
 		{
-			SendStream* stream = (SendStream*)send;
+			SendStream* stream = Send();
 			fixed (byte* ptr = bytes)
 			{
 				iroh.send_stream_write(&stream, new slice_ref_uint8 { ptr = ptr, len = (UIntPtr)bytes.Length });
 			}
-			iroh.send_stream_finish(stream);
+			Finish();
+		}
+
+		private SendStream* Send()
+		{
+			nint stream = send;
+			if (stream == 0) throw new IrohException("The stream is finished");
+			return (SendStream*)stream;
+		}
+
+		private RecvStream* Recv()
+		{
+			nint stream = recv;
+			if (stream == 0) throw new IrohException("The stream is closed");
+			return (RecvStream*)stream;
+		}
+
+		public void Dispose()
+		{
+			nint sendStream = Interlocked.Exchange(ref send, 0);
+			if (sendStream != 0) iroh.send_stream_free((SendStream*)sendStream);
+			nint recvStream = Interlocked.Exchange(ref recv, 0);
+			if (recvStream != 0) iroh.recv_stream_free((RecvStream*)recvStream);
 		}
 	}
 }
