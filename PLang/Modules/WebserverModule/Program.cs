@@ -115,6 +115,8 @@ public class Program : BaseProgram, IDisposable
 		}
 
 		await webserverInfo.Listener.StopAsync();
+		// A stopped host cannot start again (restart builds a new one), so its services and Kestrel are freed now.
+		webserverInfo.Listener.Dispose();
 
 		listeners.Remove(webserverInfo);
 		// The listener is already stopped, so the entry goes without disposing (Dispose would stop it again).
