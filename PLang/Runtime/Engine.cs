@@ -1064,6 +1064,8 @@ namespace PLang.Runtime
 			var alives = appContext.GetOrDefault<List<Alive>>("KeepAlive");
 			if (alives != null && alives.Count > 0)
 			{
+				// The app has started and stays up to serve (webserver, scheduler): fill the engine pool in the background.
+				if (ParentEngine == null) EnginePool.StartWarmUp();
 				logger.LogWarning("Keeping app alive, reasons:");
 				lock (Alive.Sync)
 				{

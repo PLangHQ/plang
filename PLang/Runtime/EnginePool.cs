@@ -89,12 +89,57 @@ namespace PLang.Runtime
 		}
 
 
+		/// <summary>
+		/// Engines that CleanupEngines never disposes, and the number StartWarmUp creates after startup.
+		/// A new engine costs 0.1 to 0.5 s of JIT and container setup, so a pool that shrinks to 5 after a
+		/// minute of quiet makes every burst after the quiet pay again. Env PLANG_ENGINE_POOL_MIN, default 8,
+		/// 0 turns both the floor (back to the old 5) and the warm-up off.
+		/// </summary>
+		public static readonly int MinPoolSize = ReadMinPoolSize();
+		private static int ReadMinPoolSize()
+		{
+			var value = Environment.GetEnvironmentVariable("PLANG_ENGINE_POOL_MIN");
+			if (int.TryParse(value, out int min) && min >= 0) return min == 0 ? 5 : min;
+			return 8;
+		}
+		private static bool WarmUpDisabled => Environment.GetEnvironmentVariable("PLANG_ENGINE_POOL_MIN") == "0";
+
+		private int warmUpStarted;
+
+		/// <summary>
+		/// Creates engines in the background until the pool holds MinPoolSize. One thread, one engine at a time,
+		/// so serving is not delayed; call it once the app has started. Safe to call repeatedly.
+		/// </summary>
+		public void StartWarmUp()
+		{
+			if (WarmUpDisabled) return;
+			if (Interlocked.Exchange(ref warmUpStarted, 1) == 1) return;
+
+			Task.Run(() =>
+			{
+				try
+				{
+					var root = GetRootEngine();
+					var pool = root.EnginePool.Pool;
+					while (pool.Count < MinPoolSize)
+					{
+						var engine = CreateEngine(root.FileSystem.RootDirectory, root.Container);
+						Return(engine);
+					}
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine("EnginePool warm-up stopped: " + ex.Message);
+				}
+			});
+		}
+
 		public void CleanupEngines()
 		{
 			var rootEngine = GetRootEngine();
 			var pool = rootEngine.EnginePool.Pool;
 
-			if (pool.Count <= 5) return;
+			if (pool.Count <= MinPoolSize) return;
 
 			int atStart = pool.Count;
 			var itemsToKeep = new List<IEngine>();
@@ -106,8 +151,8 @@ namespace PLang.Runtime
 			{
 				try
 				{
-					// Keep at least 5, and expire only if old enough
-					if (itemsToKeep.Count >= 5 && item.LastAccess < cutoffTime)
+					// Keep at least MinPoolSize, and expire only if old enough
+					if (itemsToKeep.Count >= MinPoolSize && item.LastAccess < cutoffTime)
 					{
 						disposed = true;
 						item.Dispose();
