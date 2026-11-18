@@ -165,7 +165,7 @@ namespace PLang.Modules.TemplateEngineModule
 				//var members = GetMembers(parsed);
 
 				logger.LogDebug($"             - Parsed content - {stopwatch.ElapsedMilliseconds}");
-				var result = await parsed.RenderAsync(templateContext);
+				var result = await PooledTemplateOutput.RenderAsync(parsed, templateContext);
 				logger.LogDebug($"             - Rendered content for: {goalStep.Text.MaxLength(40)} - {stopwatch.ElapsedMilliseconds}");
 				if (this.context != null && this.context.DebugMode && result != null)
 				{
