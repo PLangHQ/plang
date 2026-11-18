@@ -82,7 +82,14 @@ namespace PLang.Modules.TemplateEngineModule
 					, goalStep, this.function, StatusCode: 404,
 					FixSuggestion: similarFilesMessage));
 			}
-			string content = fileSystem.File.ReadAllText(fullPath);
+			// The file text is cached by path and last write time; the mtime is read before the text so a
+			// write in between only causes one extra reload.
+			long lastWrite = fileSystem.File.GetLastWriteTimeUtc(fullPath).Ticks;
+			if (!TemplateCache.TryGetFileContent(fullPath, lastWrite, out string content))
+			{
+				content = fileSystem.File.ReadAllText(fullPath);
+				TemplateCache.SetFileContent(fullPath, lastWrite, content);
+			}
 			var (renderedContent, error)= await RenderContent(content, fullPath, variables);
 
 			if (error != null) return (renderedContent, error);
@@ -153,7 +160,8 @@ namespace PLang.Modules.TemplateEngineModule
 
 			try
 			{
-				var parsed = Template.Parse(content);
+				// Parsed trees are shared between renders, see TemplateCache. Variables stay in templateContext.
+				var parsed = TemplateCache.GetOrParse(content);
 				//var members = GetMembers(parsed);
 
 				logger.LogDebug($"             - Parsed content - {stopwatch.ElapsedMilliseconds}");

@@ -79,7 +79,8 @@ namespace PLang.Modules.UiModule
 		{
 			if (html == null) return null;
 			// Parse the template into a Scriban template object
-			var template = Template.Parse(html);
+			// Read only use of the syntax tree, so the shared parse cache is safe here
+			var template = PLang.Modules.TemplateEngineModule.TemplateCache.GetOrParse(html);
 			// Modify the template using the syntax tree
 			var modifiedTemplate = new StringBuilder();
 			ModifyTemplate(template.Page.Body, modifiedTemplate);
