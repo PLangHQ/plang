@@ -17,6 +17,8 @@ namespace PLang.Modules.DbModule
 			.Select(p => p.Replace('\\', '/'))
 			.ToArray();
 
+		private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, byte> walConfirmed = new(StringComparer.OrdinalIgnoreCase);
+
 		private static bool IsSynchronousNormal(string? file)
 		{
 			if (synchronousNormalPaths.Length == 0 || string.IsNullOrEmpty(file)) return false;
@@ -36,11 +38,19 @@ namespace PLang.Modules.DbModule
 			var cs = sqlite.ConnectionString ?? string.Empty;
 			if (cs.Contains("Memory", StringComparison.OrdinalIgnoreCase)) return;
 
+			// The journal mode is stored in the database file, so once a file has answered "wal" the PRAGMA
+			// is not repeated for it in this process (it ran on every connection of every database step).
+			// synchronous is per connection and is still set every time for the files that ask for it.
+			var file = sqlite.DataSource;
+			bool needsSynchronous = IsSynchronousNormal(file);
+			if (!needsSynchronous && !string.IsNullOrEmpty(file) && walConfirmed.ContainsKey(file)) return;
+
 			try
 			{
 				using var command = sqlite.CreateCommand();
 				command.CommandText = "PRAGMA journal_mode=WAL;";
 				var mode = command.ExecuteScalar() as string;
+				if (!string.IsNullOrEmpty(file) && string.Equals(mode, "wal", StringComparison.OrdinalIgnoreCase)) walConfirmed.TryAdd(file, 0);
 
 				// synchronous=FULL (the default) waits for an fsync on every commit: 8 ms here, so one
 				// SQLite file takes at most about 120 commits a second, and every page view on rafbokin
