@@ -495,7 +495,7 @@ goalName is the goal that should be called, a whole word with possible slash(/),
 					// The goal runs on a rented engine with a copy of this memory stack, the same way as "call goal X, dont wait".
 					// The copy starts empty so a job does not see variables of the step that started the scheduler or of other jobs.
 					context.MemoryStack.Clear();
-					var (_, task, error) = await pseudoRuntime.RunGoal(engine, contextAccessor, fileSystem.RelativeAppPath, item.GoalName, goal, waitForExecution: false);
+					var (_, task, error) = await pseudoRuntime.RunGoal(engine, contextAccessor, fileSystem.RelativeAppPath, item.GoalName, goal, waitForExecution: false, keepAliveKind: KeepAliveRegistry.Schedule);
 					if (task is Task runTask)
 					{
 						runningJobs[item.AbsolutePrFilePath] = new RunningJob(runTask, now);

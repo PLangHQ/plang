@@ -31,7 +31,8 @@ namespace PLang.Runtime
 		Task<(IEngine Engine, object? Variables, IError? Error)> RunGoal(IEngine engine, IPLangContextAccessor contextAccessor, string appPath, GoalToCallInfo goalToCall,
 			Goal? callingGoal = null, bool waitForExecution = true,
 			long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, int indent = 0,
-			bool keepMemoryStackOnAsync = false, bool isolated = false, bool disableOsGoals = false, RuntimeEvent? runtimeEvent = null);
+			bool keepMemoryStackOnAsync = false, bool isolated = false, bool disableOsGoals = false, RuntimeEvent? runtimeEvent = null,
+			string keepAliveKind = KeepAliveRegistry.DontWait);
 	}
 
 	public class PseudoRuntime : IPseudoRuntime
@@ -51,7 +52,8 @@ namespace PLang.Runtime
 			RunGoal(IEngine engine, IPLangContextAccessor contextAccessor, string relativeAppPath, GoalToCallInfo goalToCall, Goal? callingGoal = null,
 						bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50,
 						uint waitForXMillisecondsBeforeRunningGoal = 0, int indent = 0,
-						bool keepMemoryStackOnAsync = false, bool isolated = false, bool disableOsGoals = false, RuntimeEvent? runtimeEvent = null)
+						bool keepMemoryStackOnAsync = false, bool isolated = false, bool disableOsGoals = false, RuntimeEvent? runtimeEvent = null,
+						string keepAliveKind = KeepAliveRegistry.DontWait)
 		{
 
 			Stopwatch stopwatch = Stopwatch.StartNew();
@@ -237,7 +239,7 @@ namespace PLang.Runtime
 						
 					});
 
-					engine.KeepAliveRegistry.Add(KeepAliveRegistry.DontWait, goalToRun.GoalName, task);
+					engine.KeepAliveRegistry.Add(keepAliveKind, goalToRun.GoalName, new PlangTask(task, goalToRun, callingGoal));
 
 					return (runtimeEngine, task, null);
 				}

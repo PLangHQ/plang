@@ -1092,7 +1092,7 @@ namespace PLang.Runtime
 				// A finished "dont wait" task has already returned the engine it rented (PseudoRuntime.RunGoal).
 				foreach (var entry in registry.RemoveCompletedTasks())
 				{
-					var task = (Task)entry.Instance;
+					var task = ((PlangTask)entry.Instance).Task;
 					if (task.IsFaulted && task.Exception != null)
 					{
 						Console.WriteLine(task.Exception.Flatten().ToString());

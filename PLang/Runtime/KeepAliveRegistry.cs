@@ -3,7 +3,8 @@ namespace PLang.Runtime
 	/// <summary>
 	/// One thing that keeps the app running: a webserver, the scheduler, a "dont wait" goal, a file watcher, ...
 	/// Kind is the reason printed in "Keeping app alive, reasons:", Name tells entries of the same kind apart
-	/// (webserver name and port, goal name), Instance is the object or Task that is kept alive.
+	/// (webserver name and port, goal name), Instance is the object kept alive; for a goal running without
+	/// its caller waiting ("dont wait", a scheduled run) it is a PlangTask.
 	/// </summary>
 	public record KeepAliveEntry(string Kind, string Name, DateTime StartedUtc, object Instance);
 
@@ -17,6 +18,7 @@ namespace PLang.Runtime
 	public class KeepAliveRegistry
 	{
 		public const string DontWait = "WaitForExecution";
+		public const string Schedule = "Schedule";
 
 		private readonly object sync = new();
 		private readonly List<KeepAliveEntry> entries = new();
@@ -51,14 +53,14 @@ namespace PLang.Runtime
 		}
 
 		/// <summary>
-		/// Removes every "dont wait" entry whose task has completed (ran to the end, faulted or was cancelled)
-		/// and returns them, so the caller can report faulted ones.
+		/// Removes every PlangTask entry ("dont wait", scheduled run) whose task has completed (ran to the end,
+		/// faulted or was cancelled) and returns them, so the caller can report faulted ones.
 		/// </summary>
 		public List<KeepAliveEntry> RemoveCompletedTasks()
 		{
 			lock (sync)
 			{
-				var completed = entries.Where(p => p.Kind == DontWait && p.Instance is Task task && task.IsCompleted).ToList();
+				var completed = entries.Where(p => p.Instance is PlangTask task && task.IsCompleted).ToList();
 				foreach (var entry in completed)
 				{
 					entries.Remove(entry);

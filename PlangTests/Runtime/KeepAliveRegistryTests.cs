@@ -84,24 +84,30 @@ namespace PLang.Runtime.Tests
 			Assert.AreEqual(0, instance.DisposeCount);
 		}
 
+		private static PlangTask GoalTask(Task<(object? Variables, IError? Error)> task, string goalName) =>
+			new PlangTask(task, new PLang.Building.Model.Goal { GoalName = goalName }, null);
+
 		[TestMethod]
-		public void RemoveCompletedTasks_RemovesOnlyCompletedDontWaitTasks()
+		public void RemoveCompletedTasks_RemovesOnlyCompletedPlangTasks()
 		{
 			var registry = new KeepAliveRegistry();
 			var running = new TaskCompletionSource<(object? Variables, IError? Error)>();
 			var done = Task.FromResult<(object? Variables, IError? Error)>((null, null));
 			var faulted = Task.FromException<(object? Variables, IError? Error)>(new InvalidOperationException("boom"));
+			var scheduled = Task.FromResult<(object? Variables, IError? Error)>((null, null));
 			var otherKindTask = Task.CompletedTask;
 
-			registry.Add(KeepAliveRegistry.DontWait, "Running", running.Task);
-			registry.Add(KeepAliveRegistry.DontWait, "Done", done);
-			registry.Add(KeepAliveRegistry.DontWait, "Faulted", faulted);
+			registry.Add(KeepAliveRegistry.DontWait, "Running", GoalTask(running.Task, "Running"));
+			registry.Add(KeepAliveRegistry.DontWait, "Done", GoalTask(done, "Done"));
+			registry.Add(KeepAliveRegistry.DontWait, "Faulted", GoalTask(faulted, "Faulted"));
+			registry.Add(KeepAliveRegistry.Schedule, "Scheduled", GoalTask(scheduled, "Scheduled"));
 			registry.Add("Webserver", "default *:8080", otherKindTask);
 
 			var removed = registry.RemoveCompletedTasks();
 
-			CollectionAssert.AreEquivalent(new[] { "Done", "Faulted" }, removed.Select(p => p.Name).ToList());
+			CollectionAssert.AreEquivalent(new[] { "Done", "Faulted", "Scheduled" }, removed.Select(p => p.Name).ToList());
 			CollectionAssert.AreEqual(new[] { "Running", "default *:8080" }, registry.GetSnapshot().Select(p => p.Name).ToList());
+			Assert.AreEqual("Running", ((PlangTask)registry.GetSnapshot()[0].Instance).Goal.GoalName);
 
 			running.SetResult((null, null));
 			Assert.AreEqual("Running", registry.RemoveCompletedTasks().Single().Name);
@@ -118,7 +124,7 @@ namespace PLang.Runtime.Tests
 			Assert.AreSame(root.KeepAliveRegistry, rented.KeepAliveRegistry);
 			Assert.AreSame(root.KeepAliveRegistry, rentedFromRented.KeepAliveRegistry);
 
-			var task = new TaskCompletionSource<(object? Variables, IError? Error)>().Task;
+			var task = GoalTask(new TaskCompletionSource<(object? Variables, IError? Error)>().Task, "Loop");
 			rentedFromRented.KeepAliveRegistry.Add(KeepAliveRegistry.DontWait, "Loop", task);
 
 			var entry = root.KeepAliveRegistry.GetSnapshot().Single();
