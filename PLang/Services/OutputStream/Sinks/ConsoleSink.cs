@@ -94,15 +94,15 @@ public sealed class ConsoleSink : IOutputSink
 		Console.Write($"[{tgt}] [{act}] ");
 	}
 
-	static void SetColor(int status, string level, bool isError = false)
+	static void SetColor(int status, string? level, bool isError = false)
 	{
-		if (isError || level.Equals("error", StringComparison.OrdinalIgnoreCase) || status >= 500)
+		if (isError || string.Equals(level, "error", StringComparison.OrdinalIgnoreCase) || status >= 500)
 		{
 			Console.ForegroundColor = ConsoleColor.Red;
 			Console.BackgroundColor = ConsoleColor.Yellow;
 			return;
 		}
-		if (status >= 400 || level.Equals("warning", StringComparison.OrdinalIgnoreCase))
+		if (status >= 400 || string.Equals(level, "warning", StringComparison.OrdinalIgnoreCase))
 		{
 			Console.ForegroundColor = ConsoleColor.Yellow;
 			Console.BackgroundColor = ConsoleColor.DarkRed;
