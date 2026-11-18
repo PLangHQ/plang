@@ -601,9 +601,9 @@ namespace PLang.Runtime
 			}
 			finally
 			{
-				AppContext.SetData("GoalLogLevelByUser", null);
-
-				logger.LogDebug($"[End] Goal: {goal.GoalName} => " + context.CallStack.CurrentFrame.Duration);
+				// AppContext.SetData("GoalLogLevelByUser", null) used to run here after every goal. The key is
+				// never read anywhere (AppContext.SetData takes a process wide lock), so the write is gone.
+				logger.LogDebug($"[End] Goal: {goal.GoalName} => {context.CallStack.CurrentFrame.Duration}");
 				context.CallStack.ExitGoal();
 
 
