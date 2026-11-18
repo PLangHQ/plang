@@ -468,6 +468,35 @@ namespace PLang.Building.Parsers
 				}
 			}
 
+			// The result depends only on the normalized name, the calling goal's folder and the loaded goal list,
+			// so it is remembered per (name, folder) until the list is replaced by a reload. Scanning all goals
+			// with several string comparisons per goal was a measurable part of every `call goal`.
+			// A miss (null) is remembered too; an ambiguous name throws and is therefore not remembered.
+			var loaded = goals;
+			var cache = lookupCache;
+			if (cache == null || !ReferenceEquals(cache.LoadedFrom, loaded))
+			{
+				cache = new GoalLookupCache(loaded);
+				lookupCache = cache;
+			}
+			var cacheKey = (goalNameOrPath, callingGoal?.RelativeGoalFolderPath);
+			if (cache.Found.TryGetValue(cacheKey, out var cachedGoal)) return cachedGoal;
+
+			var found = FindGoalByName(appStartupPath, goalNameOrPath, callingGoal);
+			cache.Found[cacheKey] = found;
+			return found;
+		}
+
+		private sealed class GoalLookupCache
+		{
+			public GoalLookupCache(IReadOnlyList<Goal> loadedFrom) { LoadedFrom = loadedFrom; }
+			public IReadOnlyList<Goal> LoadedFrom { get; }
+			public ConcurrentDictionary<(string, string?), Goal?> Found { get; } = new();
+		}
+		private volatile GoalLookupCache? lookupCache;
+
+		private Goal? FindGoalByName(string appStartupPath, string goalNameOrPath, Goal? callingGoal)
+		{
 			Goal? goal = null;
 
 			// first check for goal inside same goal file as the calling goal
