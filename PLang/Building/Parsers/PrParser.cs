@@ -230,10 +230,11 @@ namespace PLang.Building.Parsers
 			goal.AbsolutePrFolderPath = goal.AbsolutePrFolderPath.AdjustPathToOs();
 		}
 
-		// The cache is keyed by path, and a deploy can put another build of a step at the same path. A step only gets an
-		// instruction built for its own module: a cached one for another module is read again from disk, and when the file
-		// on disk is for another module too, the step (its goal) is from another build than the file and null is returned.
-		// The caller then reloads the goals; running it would look for the method on the wrong module.
+		// The cache is keyed by path, and a deploy can put another build of a step at the same path, so a cached instruction
+		// for another module than the step is read again from disk. When the file on disk is for another module too, the
+		// instruction wins: its function was built for its module, so the step runs on that module. This happens when the
+		// builder wrote one module in 00. Goal.pr and another in the step file (e.g. 'set debug mode = false' listed as
+		// VariableModule with an EnvironmentModule.RemoveDebugMode instruction).
 		public Instruction? ParseInstructionFile(GoalStep step)
 		{
 			if (instructions.TryGetValue(step.AbsolutePrFilePath, out var instruction) && IsForStep(instruction, step))
@@ -247,9 +248,9 @@ namespace PLang.Building.Parsers
 			instruction.LlmRequest = null;
 			if (!IsForStep(instruction, step))
 			{
-				logger.LogWarning("{PrFile} is built for {InstructionModule} but its goal lists the step '{StepText}' as {StepModule}; the goal and the step file are from different builds",
-					step.AbsolutePrFilePath, instruction.ModuleType, step.Text, step.ModuleType);
-				return null;
+				logger.LogWarning("{PrFile} is built for {InstructionModule} but its goal lists the step '{StepText}' as {StepModule}; the step runs on {InstructionModule}. Rebuild the goal to make them agree",
+					step.AbsolutePrFilePath, instruction.ModuleType, step.Text, step.ModuleType, instruction.ModuleType);
+				step.ModuleType = instruction.ModuleType;
 			}
 			instructions[step.AbsolutePrFilePath] = instruction;
 

@@ -34,15 +34,20 @@ namespace PLang.Building.Parsers.Tests
 		private static GoalStep Step(string path, string module) => new GoalStep { Text = "set debug mode = false", ModuleType = module, AbsolutePrFilePath = path };
 
 		[TestMethod]
-		public void StepOfOneBuild_FileOfAnother_IsNotRunOnTheWrongModule()
+		public void GoalListsAnotherModuleThanTheStepFile_StepRunsOnTheInstructionsModule()
 		{
 			var (fileSystem, parser, path) = Setup();
 			fileSystem.AddFile(path, Pr("PLang.Modules.EnvironmentModule", "RemoveDebugMode"));
 
-			// A goal loaded before the deploy still lists the step for the module of the earlier build.
-			var staleStep = Step(path, "PLang.Modules.VariableModule");
+			// 00. Goal.pr lists the step as VariableModule, the step file is EnvironmentModule.RemoveDebugMode.
+			var step = Step(path, "PLang.Modules.VariableModule");
 
-			Assert.IsNull(parser.ParseInstructionFile(staleStep));
+			var instruction = parser.ParseInstructionFile(step);
+			Assert.AreEqual("RemoveDebugMode", instruction!.Function.Name);
+			Assert.AreEqual("PLang.Modules.EnvironmentModule", step.ModuleType);
+
+			// The next read comes from the cache, now that the step and the instruction agree.
+			Assert.AreSame(instruction, parser.ParseInstructionFile(step));
 		}
 
 		[TestMethod]
