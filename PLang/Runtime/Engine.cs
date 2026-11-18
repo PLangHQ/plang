@@ -246,6 +246,13 @@ namespace PLang.Runtime
 			// `set environment "dev"` reads "production.X" in every request engine and every
 			// "dont wait" goal, and finds no setting.
 			engine.Environment = this.Environment;
+			// Each rented engine has its own file system, so the grants this engine holds for its process
+			// (e.g. `give access to "/proc"`) are given to the rented one for as long as it is rented;
+			// Reset clears them when it goes back to the pool.
+			foreach (var fileAccess in fileSystem.GetProcessFileAccess())
+			{
+				engine.FileSystem.AddFileAccess(fileAccess with { ProcessId = engine.FileSystem.Id });
+			}
 			return engine;
 		}
 		public void Return(IEngine engine, bool reset = false)

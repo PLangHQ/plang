@@ -19,6 +19,8 @@ namespace PLang.Interfaces
 
 		void AddFileAccess(FileAccessControl fileAccess);
 		void ClearFileAccess();
+		/// <summary>The grants that last as long as this file system's process (ProcessId == Id), e.g. from `give access to`.</summary>
+		List<FileAccessControl> GetProcessFileAccess();
 		bool IsOsRooted(string path);
 		bool IsPlangRooted(string? path);
 		void SetFileAccess(List<FileAccessControl> fileAccesses);

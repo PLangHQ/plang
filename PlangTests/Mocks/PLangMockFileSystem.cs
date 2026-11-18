@@ -74,6 +74,11 @@ namespace PLangTests.Mocks
 			throw new NotImplementedException();
 		}
 
+		public List<FileAccessControl> GetProcessFileAccess()
+		{
+			return new();
+		}
+
 		public bool IsOsRooted(string path)
 		{
 			throw new NotImplementedException();

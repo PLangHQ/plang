@@ -126,20 +126,25 @@ namespace PLang.SafeFileSystem
 		// the access should be signed by the root private key, with the uri, jwt key with expiration
 		// it is stored in system.sql. Now everytime he wants to access uri he can prove he has permission
 
+		// fileAccesses are the stored grants (settings). The grants that live only for this process
+		// (system folder, parent app, `give access to`, answered "yes") are not stored, so all of them are kept.
 		public void SetFileAccess(List<FileAccessControl> fileAccesses)
 		{
-			var engineFileAccess = this.fileAccesses.FirstOrDefault(p => p.ProcessId is not null);
+			var processFileAccesses = GetProcessFileAccess().Where(p => !fileAccesses.Contains(p)).ToList();
 
 			this.fileAccesses = fileAccesses;
-			if (engineFileAccess != null)
-			{
-				this.fileAccesses.Add(engineFileAccess);
-			}
+			this.fileAccesses.AddRange(processFileAccesses);
 		}
 
 		public void AddFileAccess(FileAccessControl fileAccess)
 		{
+			if (this.fileAccesses.Contains(fileAccess)) return;
 			this.fileAccesses.Add(fileAccess);
+		}
+
+		public List<FileAccessControl> GetProcessFileAccess()
+		{
+			return this.fileAccesses.Where(p => p.ProcessId == Id).ToList();
 		}
 
 		public void ClearFileAccess()
