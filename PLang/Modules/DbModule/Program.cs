@@ -72,7 +72,7 @@ namespace PLang.Modules.DbModule
 		private readonly ILogger logger;
 		private readonly ITypeHelper typeHelper;
 
-		[Description("ParameterName must be prefixed with @. VariableNameOrValue can be any primative type, string or a %variable%")]
+		[Description("ParameterName must be prefixed with @. VariableNameOrValue can be any primative type, string or a %variable%. One entry per %variable% of the step, however many times the sql uses it: every place the %variable% stands in the sql text, in any clause (where, case, join, a CTE, a subquery, a window function, the select list), is written as this @ParameterName, and the sql text holds no %variable% afterwards")]
 		public record ParameterInfo(string TypeFullName, string ParameterName, object? VariableNameOrValue);
 		public record TableInfo(string Name, List<ColumnInfo> Columns);
 		public record ColumnInfo(string Name, string Type, bool IsPrimaryKey, bool IsNotNull, object DefaultValue);
@@ -626,7 +626,7 @@ namespace PLang.Modules.DbModule
 			return await ExecuteDynamicSql(dataSource, sql, tableAllowList, parameters);
 		}
 
-		[Description("Query the database with a sql file pointed to by path, e.g. query sql/file.sql. It can use multiple datasource and parameterer")]
+		[Description("Query the database with a sql file pointed to by path, e.g. query sql/file.sql. It can use multiple datasource and parameterer. This is where a long query belongs (many lines, several CTEs, window functions): the sql is written in the file with @name for each value, and the step passes the values, `query sql/trends.sql, name=%name%, tab=%tab%, write to %rows%`. The file is run as it is, so a % inside it, e.g. like 'x%', is never a variable. When the step also says to return 1 row, set rowsToReturn=1: the file is still the sql, never write sql of your own")]
 		// The example used to write parameter=[{"date":"%now%"}]: the wrong name, and a dictionary
 		// where the type is a list of ParameterInfo. A step passing one parameter was then built
 		// with the bare variable as the whole list, which is not that type at all.
@@ -655,7 +655,17 @@ namespace PLang.Modules.DbModule
 			var readResult = await file.ReadTextFile(fileName);
 			if (readResult.Error != null) return (0, readResult.Error, null);
 
-			var result = await Select(dataSource, readResult.Content.ToString(), parameters);
+			var sqlText = readResult.Content.ToString();
+			var unbound = SqlVariables.Find(sqlText).Where(o => o.IsValue).Select(o => o.Name).Distinct().ToList();
+			if (unbound.Count > 0)
+			{
+				// The text of a sql file is run as it is, the step's variables are not put into it. A
+				// %variable% there would reach the database as sql and fail with a syntax error near %.
+				var names = string.Join(", ", unbound.Select(n => $"%{n}%"));
+				return (null, new ProgramError($"{fileName} contains {names}. A sql file is run as written, it does not get the step's variables. Write @{unbound[0]} in the file and pass {unbound[0]}=%{unbound[0]}% in the step, the value is then bound as a parameter.", goalStep, function, StatusCode: 400), null);
+			}
+
+			var result = await Select(dataSource, sqlText, parameters);
 			if (rowsToReturn != null && rowsToReturn >= 0 && result.Table != null)
 			{
 				var table = result.Table.Take(rowsToReturn.Value);
@@ -819,7 +829,7 @@ namespace PLang.Modules.DbModule
 			return await SelectOneRow(dataSource, sql, sqlParameters);
 		}
 
-		[Description("When SELECT/WITH should return 1 row (limit 1)")]
+		[Description("When SELECT/WITH should return 1 row (limit 1). Every %variable% in the step, wherever it stands in the sql, is an @parameter in the sql text and listed once in sqlParameters, the sql text holds no %variable%")]
 		public async Task<(object?, IError? errors, Properties? Properties)> SelectOneRow([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
@@ -861,7 +871,7 @@ namespace PLang.Modules.DbModule
 		}
 
 		[Description("Doing SELECT/WITH on multiple datasources")]
-		[Example("select * from main.users u, join users.orders o on o.userId=u.id where u.id=%id%, ds: data, users/%user.id%, write to %results%", @"sql=""select * from main.users u join users.orders o on o.userId=u.id where u.id=%id%"", sqlParameters=[""id"", ""%id""], dataSourceName=[""data"", ""users/%user.id%""], ReturnValues=[""%results%""]")]
+		[Example("select * from main.users u, join users.orders o on o.userId=u.id where u.id=%id%, ds: data, users/%user.id%, write to %results%", @"sql=""select * from main.users u join users.orders o on o.userId=u.id where u.id=@id"", sqlParameters=[{""TypeFullName"":""System.Int64"",""ParameterName"":""@id"",""VariableNameOrValue"":""%id%""}], dataSourceName=[""data"", ""users/%user.id%""], ReturnValues=[""%results%""]")]
 		public async Task<(Table? Table, IError? Error, Properties? Properties)> SelectWithMultipleDataSources([HandlesVariable] List<string> dataSourceNames, string sql, List<ParameterInfo>? sqlParameters = null)
 		{
 			var (dataSource, error) = await GetDataSourcesByNames(dataSourceNames);
@@ -870,8 +880,9 @@ namespace PLang.Modules.DbModule
 			return await Select(dataSource, sql, sqlParameters);
 		}
 
-		[Description("Any step starting with SELECT/WITH using one datasource.")]
-		[Example("select * from orders where id=%id%, ds: users/%user.id%, write to %orders%", @"sql=""select * from orders where id=@id"", sqlParameters=[""id"", ""%id""], dataSourceName=""users/%user.id%"", ReturnValues=[""%orders%""]")]
+		[Description("Any step starting with SELECT/WITH using one datasource. Every %variable% in the step, wherever it stands in the sql (where, case, join, a CTE, a subquery, a window function), is replaced by an @parameter in the sql text and listed once in sqlParameters, the same @parameter at every place the %variable% is used. The sql you return contains no %variable%, the length of the sql makes no difference. A step that carries a long query (many lines, several CTEs) is better written as a sql file, `query sql/file.sql, name=%name%`")]
+		[Example("select * from orders where id=%id%, ds: users/%user.id%, write to %orders%", @"sql=""select * from orders where id=@id"", sqlParameters=[{""TypeFullName"":""System.Int64"",""ParameterName"":""@id"",""VariableNameOrValue"":""%id%""}], dataSourceName=""users/%user.id%"", ReturnValues=[""%orders%""]")]
+		[Example("with per as (select case %tab% when 'week' then 7 else 1 end as d), recent as (select * from events where server = %name% and day > date('now', '-' || (select d from per) || ' day')) select kind, count(*) from recent where server = %name% group by kind, write to %rows%", @"sql=""with per as (select case @tab when 'week' then 7 else 1 end as d), recent as (select * from events where server = @name and day > date('now', '-' || (select d from per) || ' day')) select kind, count(*) from recent where server = @name group by kind"", sqlParameters=[{""TypeFullName"":""System.String"",""ParameterName"":""@tab"",""VariableNameOrValue"":""%tab%""},{""TypeFullName"":""System.String"",""ParameterName"":""@name"",""VariableNameOrValue"":""%name%""}], ReturnValues=[""%rows%""]")]
 		public async Task<(Table? Table, IError? Error, Properties? Properties)> Select([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
@@ -972,7 +983,8 @@ namespace PLang.Modules.DbModule
 							var (value, error) = ConvertObjectToType(prop.VariableNameOrValue, prop.TypeFullName, prop.ParameterName, prop.VariableNameOrValue, isSqlite);
 							if (error != null) return (null, error, properties);
 
-							param.Value = value;
+							// A null value is bound as sql NULL; the provider rejects a parameter whose Value is unset.
+							param.Value = value ?? DBNull.Value;
 							cmd.Parameters.Add(param);
 						}
 

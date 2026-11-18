@@ -137,7 +137,10 @@ Rules:
 - You MUST generate valid sql statement for {sqlType}
 - Number(int => long) MUST be type System.Int64 unless defined by user.
 - Keep ParameterInfo TypeFullName as sql type, e.g. column that is date/time map it to appropriate c# type, e.g. System.DateTime
-- string in user sql statement should be replaced with @ parameter in sql statement and added as parameters in ParamterInfo but as strings. Strings are as is in the parameter list.";
+- string in user sql statement should be replaced with @ parameter in sql statement and added as parameters in ParamterInfo but as strings. Strings are as is in the parameter list.
+- EVERY %variable% the user writes in the sql becomes an @parameter in the sql you return and one entry in the parameter list. This holds at every place the %variable% stands, in any clause: where, join, case expression, CTE (with .. as), subquery, window function, select list. A %variable% used many times is the same @parameter every time and is listed once. The sql you return contains no %variable% (a table or column name that is a %variable% is the one exception), and every parameter you list is used in the sql. Copying a long sql: check each %variable% again at the end.
+  e.g. `with per as (select case %tab% when 'a' then 1 else 2 end as d) select * from t where server = %name% and %tab% = 'a'` => sql: `with per as (select case @tab when 'a' then 1 else 2 end as d) select * from t where server = @name and @tab = 'a'`, parameters: @tab = %tab%, @name = %name%
+- a LIKE pattern in a string is not a %variable%: `like 'a%'` and `like '%a%'` stay as they are";
 
 			system += AppendSystemDependingOnMethod(methodsAndTables, dataSource);
 		}
@@ -201,6 +204,19 @@ Use <dataSourceAndTableInfos> to construct the valid sql
 		if (gf.Name == "ExecutePlang")
 		{
 			return buildResult;
+		}
+
+		// A %variable% the llm left in the sql text is bound as a parameter, and a parameter the sql does
+		// not use is reported, so the sql and its parameter list always describe the same statement.
+		var (reconciled, sqlVariableError) = SqlVariables.Apply(gf, goalStep.Text);
+		if (sqlVariableError != null)
+		{
+			return (null, new StepBuilderError(sqlVariableError, goalStep, Retry: true));
+		}
+		if (!ReferenceEquals(reconciled, gf))
+		{
+			gf = reconciled;
+			buildResult.Instruction = buildResult.Instruction with { Function = gf };
 		}
 
 		var dataSourceNameParam = gf.GetParameter<string>("dataSourceName");

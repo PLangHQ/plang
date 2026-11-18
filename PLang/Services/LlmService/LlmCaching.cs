@@ -96,10 +96,20 @@ namespace PLang.Services.LlmService
 			using (IDbConnection connection = new SqliteConnection(shareDataSourcePath))
 			{
 				var cache = connection.QueryFirstOrDefault<dynamic>("SELECT * FROM LlmCache WHERE Hash=@hash", new { hash });
-				if (cache != null) return;
+				var serialized = JsonConvert.SerializeObject(llmQuestion);
+
+				// An answer is only written for a request that went to the model, which is either a miss or
+				// a request that asked to skip the cache (Reload). The latest answer replaces the old one,
+				// or the next build of the same request would read the answer that was just replaced.
+				if (cache != null)
+				{
+					connection.Execute("UPDATE LlmCache SET LlmQuestion=@llmQuestion, LastUsed=CURRENT_TIMESTAMP WHERE Id=@id",
+						new { llmQuestion = serialized, id = (long)cache.Id });
+					return;
+				}
 
 				connection.Execute("INSERT INTO LlmCache (Hash, LlmQuestion) VALUES (@hash, @llmQuestion)",
-						new { hash, llmQuestion = JsonConvert.SerializeObject(llmQuestion) });
+						new { hash, llmQuestion = serialized });
 			}
 		}
 	}

@@ -304,7 +304,7 @@ Escape a %variable% written inside the Description text as \%variable\%. That es
 		// PLangBatchNoCache asks again instead of reading the llm cache, so the same goal can be
 		// built repeatedly to see how stable an answer is. Measuring accuracy off a cached answer
 		// measures nothing: every run returns the same characters.
-		if (Environment.GetEnvironmentVariable("PLangBatchNoCache") == "1") request.Reload = true;
+		if (Environment.GetEnvironmentVariable("PLangBatchNoCache") == "1" || GoalBuilder.ShouldRebuild(goal)) request.Reload = true;
 		request.model = Model;
 		request.top_p = 0;
 		request.temperature = 0;
@@ -372,8 +372,8 @@ Escape a %variable% written inside the Description text as \%variable\%. That es
 		request.maxLength = Math.Clamp(planned.Count * TokensPerStep, MinimumTokens, MaximumTokens);
 		// PLangBatchNoCache asks again instead of reading the llm cache, so the same goal can be
 		// built repeatedly to see how stable an answer is. Measuring accuracy off a cached answer
-		// measures nothing: every run returns the same characters.
-		if (Environment.GetEnvironmentVariable("PLangBatchNoCache") == "1") request.Reload = true;
+		// measures nothing: every run returns the same characters. --rebuild does the same.
+		if (Environment.GetEnvironmentVariable("PLangBatchNoCache") == "1" || GoalBuilder.ShouldRebuild(goal)) request.Reload = true;
 		request.model = Model;
 		request.top_p = 0;
 		request.temperature = 0;

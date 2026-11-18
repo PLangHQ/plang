@@ -542,7 +542,9 @@ Make sure to use the information in <error> to return valid JSON response"
 			llmRequest.Step = step;
 			llmRequest.Goal = step.Goal;
 
-			llmRequest.Reload = step.Reload;
+			// --rebuild asks the model again instead of reading the answer cached for this very request,
+			// and so does a retry: the model answered this request once and the answer failed.
+			llmRequest.Reload = step.Reload || previousBuildError != null || PLang.Building.GoalBuilder.ShouldRebuild(step);
 			if (contentExtractor != null)
 			{
 				llmRequest.llmResponseType = contentExtractor.LlmResponseType;
