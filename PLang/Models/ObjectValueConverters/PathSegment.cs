@@ -23,13 +23,15 @@ namespace PLang.Models.ObjectValueConverters
 	public static class PathSegmentParser
 	{
 		static ConcurrentDictionary<string, List<PathSegment>> PathCache = new();
+		// Built once. It used to be compiled again (a few ms of JIT) for every path not yet in PathCache.
+		private static readonly Regex PathRegex = new Regex(@"([.!]?)((?:\((?:""[^""]*""|'[^']*'|[^)""'])*\)|[^.!\[\]])+)|\[(.+?)\]", RegexOptions.Compiled);
 
 		public static List<PathSegment> ParsePath(string path, MemoryStack? memoryStack = null)
 		{
 			if (PathCache.TryGetValue(path, out var pathSegments)) return pathSegments;
 
 			var segments = new List<PathSegment>();
-			var regex = new Regex(@"([.!]?)((?:\((?:""[^""]*""|'[^']*'|[^)""'])*\)|[^.!\[\]])+)|\[(.+?)\]", RegexOptions.Compiled);
+			var regex = PathRegex;
 			try
 			{
 				bool propertyStarted = false;

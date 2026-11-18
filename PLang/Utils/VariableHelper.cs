@@ -674,14 +674,30 @@ namespace PLang.Utils
 
 		public record Variable(string OriginalKey, string Key, object? Value);
 
+		// The regexes below used to be built (parsed) on every call, or looked up through the static Regex
+		// cache with a pattern string that was concatenated on every call. They are built once; a Regex is
+		// thread safe for matching. The patterns and options are unchanged.
+		// The static Regex.Match/IsMatch/Replace helpers elsewhere keep parsed patterns in a cache of 15 entries
+		// by default; with more patterns in use they are parsed again and again.
+		private static readonly bool regexCacheSized = SetRegexCacheSize();
+		private static bool SetRegexCacheSize() { Regex.CacheSize = 256; return true; }
+
+		private static readonly Regex VariablesInTextRegex = new Regex(
+			@"(?<!\\)%([^\n\r%]+|Settings\.Get\((""|')+.*?(""|')+, (""|')+.*?(""|')+, (""|')+.*?(""|')+\))%",
+			RegexOptions.IgnoreCase | RegexOptions.Multiline);
+		private static readonly Regex SettingsGetRegex = new Regex(
+			@"Settings\.Get\(\\?('|"")(?<key>[^\('|"")]*)\\?('|"")\s*,\s*\\?('|"")(?<default>[^\('|"")]*)\\?('|"")\s*,\s*\\?('|"")(?<explain>[^\('|"")]*)\\?('|"")\)",
+			RegexOptions.IgnoreCase | RegexOptions.Multiline);
+		private static readonly Regex SettingsVariableRegex = new Regex(
+			"%Settings.(?<key>[a-z0-9]*)%|%Setting.(?<key>[a-z0-9]*)%",
+			RegexOptions.IgnoreCase | RegexOptions.Multiline);
+		private static readonly Regex ArrayIndexPlaceholderRegex = new Regex("α([0-9]+)α");
+
 		public static List<string> GetVariablesInText(string content)
 		{
 			if (string.IsNullOrWhiteSpace(content) || !content.Contains("%")) return new();
 
-			var pattern = @"(?<!\\)%([^\n\r%]+|Settings\.Get\((""|')+.*?(""|')+, (""|')+.*?(""|')+, (""|')+.*?(""|')+\))%";
-
-			var regex = new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
-			var matches = regex.Matches(content);
+			var matches = VariablesInTextRegex.Matches(content);
 			List<string> vars = new();
 			foreach (Match match in matches)
 			{
@@ -734,19 +750,22 @@ namespace PLang.Utils
 		}
 
 		public static readonly string VariablePattern = @"%[\p{L}\p{N}#'+-\[\]_\.\+\(\)\*\<\>\!\s\""\\]*%";
+		// Declared after VariablePattern: static initializers run in textual order.
+		private static readonly Regex ContainsVariableRegex = new Regex(VariablePattern, RegexOptions.Compiled);
+		private static readonly Regex IsVariableRegex = new Regex($"^{VariablePattern}$", RegexOptions.Compiled);
 
 		public static bool ContainsVariable(object? variable)
 		{
 			if (variable is not string str) return false;
 			if (variable == null || string.IsNullOrEmpty(str)) return false;
-			return Regex.IsMatch(str, VariablePattern, RegexOptions.Compiled);
+			return ContainsVariableRegex.IsMatch(str);
 		}
 		public static bool IsVariable(object? variable)
 		{
 			if (variable is not string str) return false;
 
 			if (str == null || string.IsNullOrEmpty(str)) return false;
-			return Regex.IsMatch(str, $"^{VariablePattern}$", RegexOptions.Compiled);
+			return IsVariableRegex.IsMatch(str);
 		}
 
 		public static bool IsSetting(string variableName)
@@ -776,9 +795,7 @@ namespace PLang.Utils
 			foreach (var varName in variableNames)
 			{
 
-				var settingsPattern = @"Settings\.Get\(\\?('|"")(?<key>[^\('|"")]*)\\?('|"")\s*,\s*\\?('|"")(?<default>[^\('|"")]*)\\?('|"")\s*,\s*\\?('|"")(?<explain>[^\('|"")]*)\\?('|"")\)";
-				var settingsRegex = new Regex(settingsPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
-				var settingsMatch = settingsRegex.Match(varName);
+				var settingsMatch = SettingsGetRegex.Match(varName);
 				if (settingsMatch.Success)
 				{
 					var setting = settings.Get<string>(typeof(Settings), settingsMatch.Groups["key"].Value, settingsMatch.Groups["default"].Value, settingsMatch.Groups["explain"].Value);
@@ -786,9 +803,7 @@ namespace PLang.Utils
 
 				}
 
-				settingsPattern = "%Settings.(?<key>[a-z0-9]*)%|%Setting.(?<key>[a-z0-9]*)%";
-				settingsRegex = new Regex(settingsPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
-				var settingsMatches = settingsRegex.Matches(varName);
+				var settingsMatches = SettingsVariableRegex.Matches(varName);
 				foreach (Match match in settingsMatches)
 				{
 					var setting = settings.Get<string>(typeof(Settings), match.Groups["key"].Value, "", match.Groups["key"].Value);
@@ -825,7 +840,7 @@ namespace PLang.Utils
 			if (str.StartsWith("@")) str = str.Substring(1);
 			if (str.StartsWith("$.")) str = str.Remove(0, 2);
 			str = str.TrimEnd('+').TrimEnd('-');
-			str = Regex.Replace(str, "α([0-9]+)α", match => $"[{match.Groups[1].Value}]");
+			str = ArrayIndexPlaceholderRegex.Replace(str, static match => $"[{match.Groups[1].Value}]");
 
 			return str.Replace("α", ".");
 		}

@@ -63,10 +63,12 @@ namespace PLang.Models.ObjectValueExtractors
 		}
 
 
+		// Built once; it used to be compiled on every call.
+		private static readonly Regex DateOffsetRegex = new Regex(@"([0-9]+)\s*([a-zA-Z]+)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
 		private DateTimeOffset DoDateTimeOp(DateTimeOffset dt, PathSegment segment)
 		{
-			var regex = new Regex(@"([0-9]+)\s*([a-zA-Z]+)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-			var matches = regex.Matches(segment.Value);
+			var matches = DateOffsetRegex.Matches(segment.Value);
 			if (matches.Count == 0 || matches[0].Groups.Count != 3) return dt;
 
 			int multiplier = (segment.Value.Contains("+")) ? 1 : -1;

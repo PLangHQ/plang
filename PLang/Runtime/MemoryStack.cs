@@ -1866,10 +1866,12 @@ namespace PLang.Runtime
 
 		}
 
+		// Built once; it used to be compiled on every call.
+		private static readonly Regex DateOffsetRegex = new Regex(@"^([0-9]+)\s*([a-zA-Z]+)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
 		private DateTime CalculateDate(Func<DateTime> nowFunc, string sign, string command)
 		{
-			var regex = new Regex(@"^([0-9]+)\s*([a-zA-Z]+)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-			var matches = regex.Matches(command);
+			var matches = DateOffsetRegex.Matches(command);
 			if (matches.Count == 0 || matches[0].Groups.Count != 3) return nowFunc();
 
 			int multiplier = (sign == "+") ? 1 : -1;
