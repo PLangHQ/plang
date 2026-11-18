@@ -25,7 +25,7 @@ using static PLang.Modules.DbModule.Program;
 
 namespace PLang.Modules.VariableModule
 {
-	[Description("Set, Get & Return variable(s). Set(NOT if statement) on variable includes condition such as empty or null, and a fallback written as `, default is X`, `, or X if empty` or `?? X`. A step that starts with `set %variable% =` belongs here, never to the database module, even when the word default appears. Bind onCreate, onChange, onRemove events to variable. Trim variable for llm. Use this module on `- return %variable`. Modify datetime (%now%, etc.)")]
+	[Description("Set, Get & Return variable(s). Load and store %variable%s so their value is kept between runs: a step that starts with `load %x%` or `store %x%` (save, persist) names a %variable%, never a table, and belongs here even when it names a datasource, e.g. `store %round%, ds: \"data\"`. Set(NOT if statement) on variable includes condition such as empty or null, and a fallback written as `, default is X`, `, or X if empty` or `?? X`. A step that starts with `set %variable% =` belongs here, never to the database module, even when the word default appears. Bind onCreate, onChange, onRemove events to variable. Trim variable for llm. Use this module on `- return %variable`. Modify datetime (%now%, etc.)")]
 	[Effect(Effects.None)]
 	public class Program : BaseProgram
 	{
@@ -40,14 +40,17 @@ namespace PLang.Modules.VariableModule
 			this.variableHelper = variableHelper;
 		}
 
+		private const string DataSourceNameDescription = "The datasource the step names, e.g. data in `ds: \"data\"`. Leave it out when the step names none: the app's default datasource is used";
+
 		private async Task<(DataSource?, IError?)> GetDataSource(string? dataSourceName)
 		{
 			var db = programFactory.GetProgram<DbModule.Program>(goalStep);
-			return await db.GetDataSource(dataSourceName);
-
+			return await db.GetDataSourceOrDefault(dataSourceName);
 		}
+		[Description("Loads %variable%s that an earlier run saved with store. A variable that has not been stored is empty")]
 		[Example("load %step%", @"variables=[""%step%""]")]
-		public async Task<(object?, IError?)> Load([HandlesVariable] List<string> variables, string? dataSourceName = null)
+		[Example("load %step%, ds: \"data\"", @"variables=[""%step%""], dataSourceName=""data""")]
+		public async Task<(object?, IError?)> Load([HandlesVariable] List<string> variables, [Description(DataSourceNameDescription)] string? dataSourceName = null)
 		{
 			Dictionary<string, object?> varsWithValue = new();
 			foreach (var variable in variables)
@@ -61,9 +64,11 @@ namespace PLang.Modules.VariableModule
 			return await LoadWithDefaultValueInternal(varsWithValue, dataSource);
 		}
 
-		[Description(@"Loads(not setting a variable) a variable with a default value, key: variable name, value: default value. example: load %age%, default 10 => key:%age% value:10")]
-		[Example("load %step%, set as 1 if empty", @"variablesWithDefaultValue=[""%step%"", 1]")]
-		public async Task<(object?, IError?)> LoadWithDefaultValue([HandlesVariable] Dictionary<string, object?> variablesWithDefaultValue, string? dataSourceName = null)
+		[Description(@"Loads(not setting a variable) %variable%s that an earlier run saved with store, each with a default value used when it has not been stored. key: variable name, value: default value. example: load %age%, default 10 => key:%age% value:10")]
+		[Example("load %step%, set as 1 if empty", @"variablesWithDefaultValue={""%step%"": 1}")]
+		[Example("load %samples%, default []", @"variablesWithDefaultValue={""%samples%"": []}")]
+		[Example("load %round%, default 0, ds: \"data\"", @"variablesWithDefaultValue={""%round%"": 0}, dataSourceName=""data""")]
+		public async Task<(object?, IError?)> LoadWithDefaultValue([HandlesVariable] Dictionary<string, object?> variablesWithDefaultValue, [Description(DataSourceNameDescription)] string? dataSourceName = null)
 		{
 			var (dataSource, error) = await GetDataSource(dataSourceName);
 			if (error != null) return (null, error);
@@ -75,8 +80,11 @@ namespace PLang.Modules.VariableModule
 		{
 			var db = programFactory.GetProgram<DbModule.Program>(goalStep);
 
-
-			List<object?> objects = new();
+			// With no ReturnValues on the step, each loaded variable is put into the memory stack under
+			// its own name (a path such as %user.settings% is resolved by the string overload of Put).
+			// With ReturnValues, the values are returned and go into the variables the step writes to.
+			bool putIntoMemoryStack = function?.ReturnValues == null || function.ReturnValues.Count == 0;
+			List<ObjectValue> objects = new();
 			foreach (var variable in variablesWithDefaultValue)
 			{
 				List<ParameterInfo> parameters = new();
@@ -88,48 +96,26 @@ namespace PLang.Modules.VariableModule
 					{
 						var createTableResult = await CreateVariablesTable(db, dataSource);
 						if (createTableResult.Error != null) return (null, createTableResult.Error);
-						return await LoadWithDefaultValue(variablesWithDefaultValue);
+						return await LoadWithDefaultValueInternal(variablesWithDefaultValue, dataSource);
 					}
+					if (result.Error != null) return (null, result.Error);
 
-
-					object defaultValue = variable.Value;
+					object? defaultValue = variable.Value;
 					if (VariableHelper.IsVariable(variable.Value))
 					{
-						defaultValue = memoryStack.Get(variable.Value.ToString());
+						defaultValue = memoryStack.Get(variable.Value!.ToString());
 					}
 
-					if (result.Table == null || result.Table.Count == 0)
+					var json = (result.Table != null && result.Table.Count > 0) ? (result.Table[0] as Row)?["value"]?.ToString() : null;
+					var value = (json == null) ? defaultValue : JsonConvert.DeserializeObject(json);
+
+					if (putIntoMemoryStack)
 					{
-
-
-						objects.Add(new ObjectValue(variable.Key, defaultValue));
-						continue;
-					}
-
-					var row = (Row)result.Table[0];
-					if (row == null)
-					{
-						objects.Add(new ObjectValue(variable.Key, defaultValue));
-						continue;
-					}
-
-					var json = row["value"]?.ToString();
-					if (json == null)
-					{
-						objects.Add(new ObjectValue(variable.Key, defaultValue));
-						continue;
-					}
-
-					var value = JsonConvert.DeserializeObject(json);
-
-					if (function?.ReturnValues == null || function?.ReturnValues?.Count == 0)
-					{
-						objects.Add(value);
 						memoryStack.Put(variable.Key, value, goalStep: goalStep);
 					}
 					else
 					{
-						objects.Add(value);
+						objects.Add(new ObjectValue(variable.Key, value));
 					}
 				}
 				catch (Exception ex)
@@ -165,7 +151,7 @@ namespace PLang.Modules.VariableModule
 		}
 
 		[Description("Set value to a variable then Store/Save variable(s) in a persistant storage. The storing of the variables must be defined by user.")]
-		public async Task<IError?> SetValueAndStore([HandlesVariable] Dictionary<string, object> variables, string? dataSourceName = null)
+		public async Task<IError?> SetValueAndStore([HandlesVariable] Dictionary<string, object> variables, [Description(DataSourceNameDescription)] string? dataSourceName = null)
 		{
 			var (dataSource, error) = await GetDataSource(dataSourceName);
 			if (error != null) return error;
@@ -188,8 +174,10 @@ namespace PLang.Modules.VariableModule
 			}
 			return await Store(vars, dataSource!);
 		}
-		[Description("Store/Save variable(s) in a persistant storage")]
-		public async Task<IError?> Store([HandlesVariable] List<string> variables, string? dataSourceName = null)
+		[Description("Store/Save %variable%s in a persistant storage, so a later run can load them. `store %x%` names a variable, never a table")]
+		[Example("store %round%", @"variables=[""%round%""]")]
+		[Example("store %samples%, %round%, ds: \"data\"", @"variables=[""%samples%"", ""%round%""], dataSourceName=""data""")]
+		public async Task<IError?> Store([HandlesVariable] List<string> variables, [Description(DataSourceNameDescription)] string? dataSourceName = null)
 		{
 			var (dataSource, error) = await GetDataSource(dataSourceName);
 			if (error != null) return error;

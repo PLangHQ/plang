@@ -51,7 +51,7 @@ using static PLang.Utils.VariableHelper;
 
 namespace PLang.Modules.DbModule
 {
-	[Description("Database access, select, insert, update, delete and execute raw sql, on a table of any name. A step naming a datasource, e.g. `ds: \"dev\"`, is database access. Handles transactions. Sets and create datasources. Isolated data pattern (idp)")]
+	[Description("Database access, select, insert, update, delete and execute raw sql, on a table of any name. A step naming a datasource, e.g. `ds: \"dev\"`, is database access, except `load %x%` and `store %x%` of a %variable%, which belong to the variable module. Handles transactions. Sets and create datasources. Isolated data pattern (idp)")]
 	[Effect(Effects.None)]
 	public class Program : BaseProgram, IDisposable
 	{
@@ -155,6 +155,17 @@ namespace PLang.Modules.DbModule
 
 			if (dataSource == null) return (null, new ProgramError($"Could not find datasource {name}", goalStep));
 			return (dataSource, null);
+		}
+
+		/// <summary>
+		/// The datasource with the given name, or the app's default datasource when no name is given.
+		/// Used by modules that keep their data in the app's database without the step naming one.
+		/// </summary>
+		internal async Task<(DataSource? DataSource, IError? Error)> GetDataSourceOrDefault(string? name)
+		{
+			if (string.IsNullOrWhiteSpace(name)) return await dbSettings.GetDataSourceOrDefault();
+
+			return await GetDataSource(name);
 		}
 
 		[Description("set the current datasource by name(s). This could be one datasource or many")]
