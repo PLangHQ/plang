@@ -149,6 +149,39 @@ namespace PLang.Runtime.Tests
 		}
 
 		[TestMethod]
+		public async Task ConcurrentRentAndReturn_NoEngineIsLostOrDuplicated()
+		{
+			const int poolSize = 8;
+			const int workers = 4;
+			const int iterations = 5000;
+
+			var (root, pool, _) = CreatePool();
+			var engines = new List<IEngine>();
+			for (int i = 0; i < poolSize; i++) engines.Add(PooledEngine(pool, "pooled" + i));
+			// The engines were pushed by hand; count them as created so Total, Free and Rented can be checked.
+			typeof(EnginePool).GetField("createdCount", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(pool, poolSize);
+
+			// Fewer workers than engines: the pool never runs empty unless an engine is lost, and then
+			// RentAsync tries to create one, which these substitutes cannot, so a lost engine fails the test.
+			var tasks = Enumerable.Range(0, workers).Select(_ => Task.Run(async () =>
+			{
+				for (int i = 0; i < iterations; i++)
+				{
+					var engine = await pool.RentAsync(new GoalStep());
+					pool.Return(engine);
+				}
+			})).ToArray();
+			await Task.WhenAll(tasks);
+
+			Assert.AreEqual(poolSize, pool.Total);
+			Assert.AreEqual(poolSize, pool.Free, "every engine is back in the pool");
+			Assert.AreEqual(0, pool.Rented);
+			Assert.AreEqual(poolSize, pool.Pool.Distinct().Count(), "no engine is in the pool twice");
+			CollectionAssert.AreEquivalent(engines.Select(p => p.Id).ToList(), pool.engineIds.Keys.ToList());
+			Assert.AreEqual(0, root.KeepAliveRegistry.GetEngineSnapshot().Count, "no rented engine entry is left");
+		}
+
+		[TestMethod]
 		public async Task OverlappingRents_EachEngineHasOneEntryUntilReturned()
 		{
 			var (root, pool, _) = CreatePool();

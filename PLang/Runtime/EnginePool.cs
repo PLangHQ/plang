@@ -46,7 +46,7 @@ namespace PLang.Runtime
 			return engine;
 		}
 
-		public async Task<IEngine> RentAsync(GoalStep callingStep, int retryCount = 0)
+		public async Task<IEngine> RentAsync(GoalStep callingStep)
 		{
 			var rootEngine = GetRootEngine();
 			var enginePool = rootEngine.EnginePool;
@@ -54,16 +54,10 @@ namespace PLang.Runtime
 
 			if (pool.TryPop(out var engine))
 			{
+				// The pop makes this engine ours: Return adds the id before it pushes, and only the Return that
+				// adds the id pushes, so the pool never holds an engine twice and a popped engine has its id.
+				enginePool.engineIds.TryRemove(engine.Id, out _);
 				engine.IsInPool = false;
-				if (!enginePool.engineIds.TryRemove(engine.Id, out _))
-				{
-					if (retryCount < 5)
-					{
-						return await RentAsync(callingStep, ++retryCount);
-					}
-					throw new Exception($"Could not remove engineId ({engine.Id}) when renting engine. Retry count {retryCount}");
-				}
-
 
 				try
 				{
@@ -102,20 +96,35 @@ namespace PLang.Runtime
 			{
 				return;
 			}
-			engine.IsInPool = true;
 
-			if (enginePool.engineIds.ContainsKey(engine.Id))
+			// Only one of two Returns of the same engine adds the id, and only that one pushes. The id goes in
+			// before the push, so an engine that RentAsync pops always has its id.
+			if (!enginePool.engineIds.TryAdd(engine.Id, 1))
 			{
 				Console.WriteLine($"RETURNING existing id: {engine.Id}");
 				return;
 			}
+			engine.IsInPool = true;
 
-			engine.Reset(true);
-			
+			try
+			{
+				engine.Reset(true);
+			}
+			catch
+			{
+				// The engine cannot go back to the pool and nobody holds it: dispose it, so it is not left counted in Total.
+				enginePool.engineIds.TryRemove(engine.Id, out _);
+				Interlocked.Increment(ref enginePool.disposedCount);
+				try
+				{
+					engine.Dispose();
+					engine.Container?.Dispose();
+				}
+				catch { }
+				throw;
+			}
+
 			pool.Push(engine);
-			enginePool.engineIds.TryAdd(engine.Id, 1);
-
-			
 		}
 
 
@@ -185,6 +194,7 @@ namespace PLang.Runtime
 					if (itemsToKeep.Count >= MinPoolSize && item.LastAccess < cutoffTime)
 					{
 						disposed = true;
+						rootEngine.EnginePool.engineIds.TryRemove(item.Id, out _);
 						Interlocked.Increment(ref rootEngine.EnginePool.disposedCount);
 						item.Dispose();
 						item.Container?.Dispose();
