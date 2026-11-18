@@ -102,12 +102,11 @@ namespace PLangTests.Modules.DbModule
 		}
 
 		[TestMethod]
-		public void Fix_ParameterTheSqlDoesNotUse_IsAnError()
+		public void Fix_ParameterTheSqlDoesNotUse_IsKeptAndNotAnError()
 		{
 			var result = SqlVariables.Fix("select * from t where a = @name", [P("@name", "%name%"), P("@tab", "%tab%")], "%name% %tab%");
-			Assert.IsNotNull(result.Error);
-			StringAssert.Contains(result.Error, "@tab");
-			Assert.IsFalse(result.Error.Contains("@name is listed"));
+			Assert.IsNull(result.Error);
+			Assert.AreEqual(2, result.Parameters.Count);
 		}
 
 		[TestMethod]

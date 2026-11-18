@@ -164,15 +164,8 @@ public static class SqlVariables
 			fixedSql = fixedSql.Substring(0, occurrence.Index) + parameter + fixedSql.Substring(occurrence.Index + occurrence.Length);
 		}
 
-		foreach (var p in result)
-		{
-			var name = ParameterNameOf(p.ParameterName);
-			if (name == "id" && p.VariableNameOrValue?.ToString() == "auto") continue;
-			if (!Regex.IsMatch(fixedSql, $@"[@:$]{Regex.Escape(name)}(?![A-Za-z0-9_])", RegexOptions.IgnoreCase))
-			{
-				problems.Add($"@{name} is listed in the parameters but the sql never uses @{name}. Wherever the step's {p.VariableNameOrValue} belongs in the sql, write @{name}, or drop the parameter.");
-			}
-		}
+		// A parameter the sql does not use is not an error: binding an unused parameter is harmless, and a step that
+		// used to build must not start failing because the model listed one more parameter than the sql needs.
 
 		string? error = null;
 		if (problems.Count > 0)
