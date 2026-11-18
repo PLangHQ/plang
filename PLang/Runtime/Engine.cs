@@ -1118,8 +1118,10 @@ namespace PLang.Runtime
 
 								if (engineWait.task.IsCompleted)
 								{
+									// The task returns the engine it rented itself (PseudoRuntime.RunGoal).
+									// engineWait.engine is the engine that called the goal, which can be
+									// back in the pool or rented by another request by now.
 									aliveTaskType.Instances.Remove(engineWait);
-									engineWait.engine.ParentEngine?.Return(engineWait.engine);
 									i--;
 									counter++;
 									if (counter > 100)
