@@ -65,6 +65,12 @@ namespace PLang.Runtime
 		PLangContext? RunningContext { get; }
 		/// <summary>The managed thread id the engine's current step started on; async steps can continue on another thread.</summary>
 		int? RunningThreadId { get; }
+		/// <summary>
+		/// The error that ended Run: an error from the start goal, setup or the start/end of app events that was not handled
+		/// in the goal and went to the app error events. Set even when an app error event (e.g. the system one that writes it out)
+		/// handled it, so the console can exit non-zero. Null when Run completed without such an error.
+		/// </summary>
+		IError? AppError { get; }
 		string Path { get; }
 		bool IsInPool { get; set; }
 		public DateTime LastAccess { get; set; }
@@ -173,6 +179,7 @@ namespace PLang.Runtime
 		public GoalStep? RentedFrom { get; set; }
 		public PLangContext? RunningContext { get; private set; }
 		public int? RunningThreadId { get; private set; }
+		public IError? AppError { get; private set; }
 
 		public IPLangFileSystem FileSystem { get { return fileSystem; } }
 		public ResolveEventHandler AsmHandler { get; set; }
@@ -367,7 +374,7 @@ namespace PLang.Runtime
 				goal = GetStartGoal(goalToRun);
 				if (goal == null)
 				{
-					(returnVars, error) = await eventRuntime.AppErrorEvents(new Error($"Goal '{goalToRun}' not found"));
+					(returnVars, error) = await RunAppErrorEvents(new Error($"Goal '{goalToRun}' not found"));
 					if (returnVars != null) vars.Add(returnVars);
 					if (error != null) return (ov, error);
 				}
@@ -376,7 +383,7 @@ namespace PLang.Runtime
 				if (returnVars != null) vars.Add(returnVars);
 				if (error != null)
 				{
-					(returnVars, error) = await eventRuntime.AppErrorEvents(error);
+					(returnVars, error) = await RunAppErrorEvents(error);
 					if (returnVars != null) vars.Add(returnVars);
 					if (error != null) return (ov, error);
 				}
@@ -385,7 +392,7 @@ namespace PLang.Runtime
 				if (returnVars != null) vars.Add(returnVars);
 				if (error != null)
 				{
-					(returnVars, error) = await eventRuntime.AppErrorEvents(error);
+					(returnVars, error) = await RunAppErrorEvents(error);
 					if (returnVars != null) vars.Add(returnVars);
 					if (error != null) return (ov, error);
 				}
@@ -396,7 +403,7 @@ namespace PLang.Runtime
 				if (returnVars != null) vars.Add(returnVars);
 				if (error != null)
 				{
-					(returnVars, error) = await eventRuntime.AppErrorEvents(error);
+					(returnVars, error) = await RunAppErrorEvents(error);
 					if (returnVars != null) vars.Add(returnVars);
 					if (error != null) return (ov, error);
 				}
@@ -406,7 +413,7 @@ namespace PLang.Runtime
 				if (returnVars != null) vars.Add(returnVars);
 				if (error != null)
 				{
-					(returnVars, error) = await eventRuntime.AppErrorEvents(error);
+					(returnVars, error) = await RunAppErrorEvents(error);
 					if (returnVars != null) vars.Add(returnVars);
 					if (error != null) return (ov, error);
 				}
@@ -419,6 +426,7 @@ namespace PLang.Runtime
 			{
 				logger.LogError(ex, "OnStart");
 				error = new Error(ex.Message, Exception: ex);
+				AppError ??= error;
 				return (ov, error);
 			}
 			finally
@@ -431,6 +439,14 @@ namespace PLang.Runtime
 
 
 			return (ov, error);
+		}
+
+		// The app error events decide what is done with an error that ends the app (the system event writes it out and
+		// returns no error). AppError keeps the first one, so the process can still report that the app ended on an error.
+		private Task<(object? Variables, IError? Error)> RunAppErrorEvents(IError appError)
+		{
+			if (appError is not IErrorHandled) AppError ??= appError;
+			return eventRuntime.AppErrorEvents(appError);
 		}
 
 

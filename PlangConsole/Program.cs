@@ -105,6 +105,13 @@ if (runtime)
 		var logger = container.GetInstance<ILogger>();
 		logger.LogError(result.Error.ToFormat("text").ToString());
 	}
+
+	// Exit code 1 when the app ended on an error that no goal handled, also when the app error event only wrote it
+	// out. A stop by SIGTERM/SIGINT exits 0, as does an app that completes or is stopped while it keeps running.
+	if ((result.Error != null || engine.AppError != null) && Volatile.Read(ref shuttingDown) == 0)
+	{
+		Environment.ExitCode = 1;
+	}
 	container.Dispose();
 }
 
