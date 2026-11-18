@@ -599,8 +599,11 @@ public class MethodHelper
 		{
 			if (variableValue is JObject jobj)
 			{
-				string str = variableValue.ToString();
-				if (!str.Contains("%Settings."))
+				// "Does it mention %Settings." was answered by serializing the whole JObject to a string on every
+				// run. The JObject belongs to the shared Instruction and does not change, so it is answered once.
+				var plan = JObjectPlan.Get(jobj, parameter.ParameterType);
+				bool hasSettings = plan != null ? plan.HasSettings : variableValue.ToString().Contains("%Settings.");
+				if (!hasSettings)
 				{
 					var newJobj = jobj.DeepClone();
 					newJobj.ResolvePlaceholders(parameter.ParameterType, (name, targetType) =>

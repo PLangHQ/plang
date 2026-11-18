@@ -6,9 +6,96 @@ using System;
 using System.Text;
 using System.Text.RegularExpressions;
 
+/// <summary>
+/// What a JObject parameter of a step contains, found once instead of on every run: whether it mentions
+/// "%Settings." and where its string tokens with %placeholders% are. The JObject comes from the Instruction
+/// in the shared goal graph and is never changed after it is loaded (every run works on a DeepClone), so the
+/// answer is the same for every run. A plan is made for one parameter type, because the type decides the
+/// target type that is handed to the resolver for each token.
+/// </summary>
+public sealed class JObjectPlan
+{
+	/// <summary>One string token that has at least one %placeholder%: where it is (property names and array
+	/// indexes from the root), its text, the target type the resolver gets, and whether the whole text is one placeholder.</summary>
+	public sealed record Entry(object[] Path, string Text, Type? TargetType, bool Single);
+
+	public Type AnalyzedFor { get; }
+	public bool HasSettings { get; }
+	public Entry[] Entries { get; }
+
+	private JObjectPlan(Type analyzedFor, bool hasSettings, Entry[] entries)
+	{
+		AnalyzedFor = analyzedFor;
+		HasSettings = hasSettings;
+		Entries = entries;
+	}
+
+	private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<JObject, JObjectPlan> plans = new();
+
+	/// <summary>The plan of this JObject for the parameter type, or null when it cannot be analysed (the caller
+	/// then does what it did before the plan existed, which includes throwing the same exceptions).</summary>
+	public static JObjectPlan? Get(JObject jobj, Type parameterType)
+	{
+		if (plans.TryGetValue(jobj, out var existing) && existing.AnalyzedFor == parameterType) return existing;
+
+		try
+		{
+			var entries = new List<Entry>();
+			Walk(jobj, parameterType, new List<object>(), entries);
+			var plan = new JObjectPlan(parameterType, jobj.ToString().Contains("%Settings."), entries.ToArray());
+			plans.AddOrUpdate(jobj, plan);
+			return plan;
+		}
+		catch (Exception)
+		{
+			return null;
+		}
+	}
+
+	// The same walk as JObjectVarResolver.ResolvePlaceholders, which decides the target type of every token.
+	private static void Walk(JToken token, Type targetType, List<object> path, List<Entry> entries)
+	{
+		switch (token.Type)
+		{
+			case JTokenType.Object:
+				foreach (var prop in ((JObject)token).Properties())
+				{
+					var propInfo = targetType?.GetProperty(prop.Name);
+					var propType = propInfo?.PropertyType ?? typeof(object);
+					path.Add(prop.Name);
+					Walk(prop.Value, propType ?? targetType, path, entries);
+					path.RemoveAt(path.Count - 1);
+				}
+				break;
+
+			case JTokenType.Array:
+				var jArray = (JArray)token;
+				for (int i = 0; i < jArray.Count; i++)
+				{
+					var type = targetType ?? typeof(object);
+					if (type.GenericTypeArguments.Length > 0)
+					{
+						type = type.GenericTypeArguments[0];
+					}
+					path.Add(i);
+					Walk(jArray[i], type, path, entries);
+					path.RemoveAt(path.Count - 1);
+				}
+				break;
+
+			case JTokenType.String:
+				var s = token.Value<string>()!;
+				var matches = JObjectVarResolver.Placeholder.Matches(s);
+				if (matches.Count == 0) return;
+				entries.Add(new Entry(path.ToArray(), s, targetType, matches.Count == 1 && matches[0].Value == s));
+				break;
+		}
+	}
+}
+
 public static class JObjectVarResolver
 {
-	static readonly Regex Placeholder = new("%(?<name>[^%]+)%", RegexOptions.Compiled);
+	internal static readonly Regex Placeholder = new("%(?<name>[^%]+)%", RegexOptions.Compiled);
 	static JsonSerializerSettings settings = new JsonSerializerSettings
 	{
 		Error = (sender, args) =>
