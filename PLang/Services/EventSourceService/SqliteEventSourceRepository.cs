@@ -57,9 +57,7 @@ namespace PLang.Services.EventSourceService
 
 			var pkey = encryption.GetKeyHash();
 
-			var generator = new IdGenerator(4);
-			var eventId = generator.CreateId();
-			var dataId = generator.ElementAt(1);
+			var eventId = IdHelper.NewId();
 
 			CreateEventsDb(dbConnection);
 
@@ -71,7 +69,8 @@ namespace PLang.Services.EventSourceService
 					(success, var error) = await InsertIntoEvent(dbConnection, eventId, encryptedData, pkey, transaction);
 					if (error != null) throw new ExceptionWrapper(error);
 
-					++eventId;
+					// The id was taken (another process with the same generator id): try a new one.
+					if (!success) eventId = IdHelper.NewId();
 				}
 
                 return await InsertData(dbConnection, sql, parameters, transaction, returnId);

@@ -1495,8 +1495,6 @@ For example:
 			IError? error;
 
 			long affectedRows = 0;
-			var generator = new IdGenerator(1);
-			var id = generator.ElementAt(0);
 			IDbTransaction? transaction = dataSource.Transaction;
 			if (transaction == null)
 			{
@@ -1515,7 +1513,7 @@ For example:
 					bool isListItem = column.Value.ToString().Contains("item.");
 					if (column.Key == "id")
 					{
-						param.Add(new ParameterInfo(typeof(Int64).FullName, "id", id + i));
+						param.Add(new ParameterInfo(typeof(Int64).FullName, "id", IdHelper.NewId()));
 						rowHasAnyValue = true; 
 						continue;
 					}
@@ -1716,9 +1714,7 @@ For example:
 					var id = p.VariableNameOrValue.ToString();
 					if (id == "auto" || string.IsNullOrEmpty(id))
 					{
-						var generator = new IdGenerator(new Random().Next(0, 1023));
-						var newId = generator.ElementAt(0);
-						param.Add("@" + parameterName, newId, DbType.Int64);
+						param.Add("@" + parameterName, IdHelper.NewId(), DbType.Int64);
 					}
 					else
 					{

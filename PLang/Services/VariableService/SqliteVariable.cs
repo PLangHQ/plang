@@ -97,8 +97,7 @@ namespace PLang.Services.VariableService
 			List<ObjectValue> sqlParameters;
 			if (data.Id == null)
 			{
-				var generator = new IdGenerator(4);
-				data.Id = generator.CreateId();
+				data.Id = IdHelper.NewId();
 
 				goalToCall = new GoalToCallInfo("/services/VariableService/InsertVariable")
 				{
