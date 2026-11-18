@@ -31,6 +31,7 @@ A Compound NEVER has LeftValue, Operator or RightValue of its own: those belong 
 		[Description(@"One test. Shape:
 {""Kind"":""Simple"",""LeftValue"":""%age%"",""Operator"":"">="",""RightValue"":18,""IsNot"":false}
 Operator: ==|!=|<|>|<=|>=|in|notIn|isEmpty|isNotEmpty|contains|notContains|startswith|notStartswith|endswith|notEndswith|indexOf.
+Equality is `==` (never a single `=`), not-equal is `!=`: `%count% is 0` => Operator ==.
 A test written in the negative takes the negative operator, and IsNot stays false:
   `%city% is empty`               => Operator isEmpty
   `%city% is not empty`           => Operator isNotEmpty
@@ -73,10 +74,10 @@ A Simple NEVER has Logic or Conditions: a step joining two tests is a Compound."
 
 			public static bool EvaluateSimple(Condition n) => n.Operator.ToLowerInvariant() switch
 			{
-				
-
-				"==" => Equals(n.LeftValue, n.RightValue),
-				"!=" => !Equals(n.LeftValue, n.RightValue),
+				// Equality is ==, not-equal is !=. The other spellings below mean exactly the same
+				// test and are accepted so a step built with one of them runs instead of throwing.
+				"==" or "=" or "===" or "equals" => Equals(n.LeftValue, n.RightValue),
+				"!=" or "<>" or "!==" => !Equals(n.LeftValue, n.RightValue),
 				">" => Cmp(n) > 0,
 				"<" => Cmp(n) < 0,
 				">=" => Cmp(n) >= 0,

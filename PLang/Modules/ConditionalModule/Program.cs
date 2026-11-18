@@ -78,7 +78,7 @@ if statement can throw an error, e.g. `if %isValid% is false, then throw error '
 		}
 
 		[Description(@"One condition made of a value and an operator, for cases no dedicated method covers. When a dedicated method exists for the test, use that instead: IsEmpty for `is empty`, IsEqual for `==`, StartsWith for `starts with`, ContainsString for `contains`.
-Operator: ==|!=|<|>|<=|>=|in|isEmpty|contains|startswith|endswith|indexOf. IsNot property indicates if the condition is a negation of the specified operator. 
+Operator: ==|!=|<|>|<=|>=|in|isEmpty|contains|startswith|endswith|indexOf. Equality is `==` (never a single `=`). IsNot property indicates if the condition is a negation of the specified operator. 
 IsNot=True for ‘is not’, ‘does not’, 
 Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 "
@@ -91,7 +91,7 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 		}
 
-		[Description("Logic: AND|OR Operator: ==|!=|<|>|<=|>=|in|contains|startswith|endswith|indexOf.  IsNot property indicates if the condition is a negation of the specified operator. True for ‘is not’, ‘does not’, etc.")]
+		[Description("Logic: AND|OR Operator: ==|!=|<|>|<=|>=|in|contains|startswith|endswith|indexOf. Equality is `==` (never a single `=`).  IsNot property indicates if the condition is a negation of the specified operator. True for ‘is not’, ‘does not’, etc.")]
 		public async Task<(object? ReturnValue, IError? Error)> CompoundCondition(CompoundCondition condition, 
 			GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
