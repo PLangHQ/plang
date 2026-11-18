@@ -82,7 +82,9 @@ namespace PLang.Events
 			return builderEvents!;
 		}
 
-		public async Task<List<EventBinding>> GetRuntimeEvents()
+		// Not async: nothing is awaited, and the compiler generated state machine and task cost an allocation on
+		// every step that asks for the events. A throw happens when the method is called, where the caller awaits it.
+		public Task<List<EventBinding>> GetRuntimeEvents()
 		{
 			if (runtimeEvents == null)
 			{
@@ -94,9 +96,9 @@ namespace PLang.Events
 				var events = new List<EventBinding>();
 				events.AddRange(contextAccessor.Current.EventBindings);
 				events.AddRange(runtimeEvents);
-				return events;
+				return Task.FromResult(events);
 			}
-			return runtimeEvents!;
+			return Task.FromResult(runtimeEvents!);
 		}
 
 		public IError? Reload()
@@ -366,10 +368,15 @@ namespace PLang.Events
 			var (context, error) = GetContext();
 			if (error != null) return (null, error);
 
-			var eventsToRun = events.Where(p => p.EventType == eventType && p.EventScope == EventScope.Step).ToList();
-			for (var i = 0; i < eventsToRun.Count; i++)
+			// Runs for every step. The step bindings used to be copied into a new list with LINQ first, which
+			// allocated even when no binding is a step binding (the normal case). The list is walked in place:
+			// the list is not changed while it is used (a reload assigns a new list, and bindings of the request
+			// are copied into a new list by GetRuntimeEvents), and the count is read once.
+			var count = events.Count;
+			for (var i = 0; i < count && i < events.Count; i++)
 			{
-				var eve = eventsToRun[i];
+				var eve = events[i];
+				if (eve.EventType != eventType || eve.EventScope != EventScope.Step) continue;
 				if (context!.CallStack.IsEventGoalInStack(eve.Id)) continue;
 
 				if (GoalHasBinding(goal, eve) && IsStepMatch(step, eve))
