@@ -182,14 +182,20 @@ namespace PLang.Runtime
 		public bool IsInPool { get; set; }
 		public ConcurrentQueue<IEngine> Pool { get { return pool; } }
 		public EnginePool EnginePool { get; set; }
-		public Engine()
-		{
-			Id = Guid.NewGuid().ToString();
 
+		// Process wide, so it is added once for all engines: the pool creates and disposes engines all the time,
+		// and a handler per engine would print every unhandled exception once per engine ever created.
+		static Engine()
+		{
 			AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
 			{
 				Console.WriteLine($"Unhandled exception: {args.ExceptionObject}");
 			};
+		}
+
+		public Engine()
+		{
+			Id = Guid.NewGuid().ToString();
 			LastAccess = DateTime.Now;
 			Serializers = new();
 
