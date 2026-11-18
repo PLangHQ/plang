@@ -78,12 +78,19 @@ namespace PLang.Modules.LoopModule
 		public IEnumerable<IReadOnlyList<object>> Split(IEnumerable source, int size) =>
 			Split(source.Cast<object>(), size);
 
+		// An item of a literal list can be a variable, e.g. [%first%, %second%]
+		private object? LoadLiteralItem(object? item)
+		{
+			if (item is string str && str.Contains('%')) return memoryStack.LoadVariables(str);
+			return item;
+		}
+
 		public record MultiThreaded(int ThreadCount = 1, double CpuUsage = 0, bool FailFast = true, [HandlesVariable] GoalToCallInfo? GoalToCallBeforeItemIsProcessed = null, [HandlesVariable] GoalToCallInfo? GoalToCallAfterItemIsProcessed = null);
 		public record LinqOptions(int Split = 0);
 
-		[Description(@"Predefined variables are %list%, %item%, %position%, %listCount%, user can overwrite those using parameters, e.g. `- go through %products%, call goal ProcessProduct item=%product%`, parameter key is ""item"" and value is ""%product%"". cpuUsage is percentage of cpu cores available, 80% => 0.8")]
-		
-		public async Task<IError?> RunLoop([HandlesVariableAttribute] string variableToLoopThrough, [HandlesVariableAttribute] GoalToCallInfo goalToCall,
+		[Description(@"Predefined variables are %list%, %item%, %position%, %listCount%, user can overwrite those using parameters, e.g. `- go through %products%, call goal ProcessProduct item=%product%`, parameter key is ""item"" and value is ""%product%"". The list can also be written in the step, e.g. `- go through [""cpu"",""memory"",""io""], call goal Check item=%name%`, then variableToLoopThrough is [""cpu"",""memory"",""io""]. cpuUsage is percentage of cpu cores available, 80% => 0.8")]
+
+		public async Task<IError?> RunLoop([Description(@"The list to go through: a variable, e.g. %products% or %order.items%, or a list written in the step as a json array, e.g. [""cpu"",""memory"",""io""] or [1,2,3]. A written list is given as the json array itself, never as a variable name")] [HandlesVariableAttribute] string variableToLoopThrough, [HandlesVariableAttribute] GoalToCallInfo goalToCall,
 		 MultiThreaded? multiThreaded = null, LinqOptions? linqOptions = null)
 		{
 			var parameters = goalToCall.Parameters;
@@ -111,7 +118,15 @@ namespace PLang.Modules.LoopModule
 
 
 
-			var obj = memoryStack.Get(variableToLoopThrough);
+			object? obj;
+			if (LiteralList.TryParse(variableToLoopThrough, out var literalItems))
+			{
+				obj = literalItems.Select(LoadLiteralItem).ToList();
+			}
+			else
+			{
+				obj = memoryStack.Get(variableToLoopThrough);
+			}
 			if (obj == null)
 			{
 				logger.LogDebug($"{variableToLoopThrough} does not exist. Have you created it? Check for spelling error", goalStep, function);
