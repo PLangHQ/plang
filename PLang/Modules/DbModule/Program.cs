@@ -1345,6 +1345,31 @@ For example:
 
 		}
 
+		/// <summary>
+		/// Runs a write statement on the datasource, inside its open transaction when it has one, without
+		/// recording it in __Events__, whatever the datasource's KeepHistory setting. For runtime-local
+		/// state, such as stored variables, that is not data to replay or sync.
+		/// </summary>
+		internal async Task<(long RowsAffected, IError? Error)> WriteWithoutEventSourcing(DataSource dataSource, string sql, List<ParameterInfo>? sqlParameters = null)
+		{
+			var prepare = Prepare(dataSource, sql, sqlParameters);
+			if (prepare.error != null) return (0, prepare.error);
+
+			try
+			{
+				var rowsAffected = await Write(new DisableEventSourceRepository(), prepare.connection!, prepare.sql, prepare.param, prepare.transaction);
+				return (rowsAffected, null);
+			}
+			catch (Exception ex)
+			{
+				return (0, new SqlError(ex.Message, sql, sqlParameters, goalStep, function, Exception: ex));
+			}
+			finally
+			{
+				Done(prepare.connection!, prepare.transaction);
+			}
+		}
+
 		[Description("Insert or update table(Upsert). Will return the id/primary key of the affected row. Used when user intends to write into a %id%")]
 		[Effect(Effects.WritesData)]
 		public async Task<(object? rowsAffected, IError? error)> InsertOrUpdateAndSelectIdOfRow([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null)

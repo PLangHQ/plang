@@ -137,16 +137,18 @@ namespace PLang.Modules.VariableModule
 			return (objects, null);
 		}
 
+		// __Variables__ holds this runtime's local state, not data to replay or sync, so its writes
+		// are never recorded in __Events__, even on a datasource that keeps history.
 		private async Task<(long, IError? Error)> CreateVariablesTable(DbModule.Program db, DataSource dataSource)
 		{
-			return await db.Execute(dataSource, @"CREATE TABLE __Variables__ (
+			return await db.WriteWithoutEventSourcing(dataSource, @"CREATE TABLE __Variables__ (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     variable TEXT NOT NULL UNIQUE,
     value TEXT,
     created DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated DATETIME DEFAULT CURRENT_TIMESTAMP,
     expires DATETIME
-);", ["__Variables__"]);
+);");
 
 		}
 
@@ -203,7 +205,7 @@ namespace PLang.Modules.VariableModule
 				parameters.Add(new ParameterInfo("System.String", "variable", variable));
 				parameters.Add(new ParameterInfo("System.String", "value", JsonConvert.SerializeObject(value)));
 
-				var (rowsAffected, error) = await db.Insert(dataSource, "INSERT INTO __Variables__ (variable, value) VALUES (@variable, @value) ON CONFLICT(variable) DO UPDATE SET value = excluded.value;", parameters);
+				var (rowsAffected, error) = await db.WriteWithoutEventSourcing(dataSource, "INSERT INTO __Variables__ (variable, value) VALUES (@variable, @value) ON CONFLICT(variable) DO UPDATE SET value = excluded.value;", parameters);
 
 				if (error != null)
 				{
