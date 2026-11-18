@@ -14,7 +14,7 @@ using static PLang.Executor;
 
 (var builder, var runtime) = RegisterStartupParameters.Register(args);
 
-// Set by the runtime block below. Clearing KeepAlive lets Engine.KeepAlive() unwind so
+// Set by the runtime block below. Clearing the KeepAliveRegistry lets Engine.KeepAlive() unwind so
 // Execute returns and container.Dispose() closes the db connections. Killing the process
 // outright (Environment.Exit / SIGKILL) can leave the sqlite files corrupted.
 Action? gracefulShutdown = null;
@@ -63,8 +63,6 @@ if (runtime)
 	var container = new ServiceContainer();
 	container.RegisterForPLangConsole(currentDirectory, Path.DirectorySeparatorChar.ToString());
 
-	var context = container.GetInstance<PLangAppContext>();
-
 	var fileAccessHandler = container.GetInstance<PLang.SafeFileSystem.IFileAccessHandler>();
 	fileAccessHandler.GiveAccess(Environment.CurrentDirectory, Path.Join(AppContext.BaseDirectory, "os"));
 	var engine = container.GetInstance<IEngine>();
@@ -79,7 +77,7 @@ if (runtime)
 		if (Interlocked.Exchange(ref shuttingDown, 1) == 1) return;
 
 		Console.WriteLine("Shutdown signal received, stopping...");
-		context.Remove("KeepAlive");
+		engine.KeepAliveRegistry.Clear();
 
 		Task.Run(async () =>
 		{

@@ -52,6 +52,10 @@ namespace PLang.Runtime
 		public string Name { get; set; }
 		void SetParentEngine(IEngine engine);
 		IEngine? ParentEngine { get; }
+		/// <summary>
+		/// The app's keep-alive registry. Every engine returns the root engine's instance.
+		/// </summary>
+		KeepAliveRegistry KeepAliveRegistry { get; }
 		string Path { get; }
 		bool IsInPool { get; set; }
 		public DateTime LastAccess { get; set; }
@@ -90,32 +94,6 @@ namespace PLang.Runtime
 		void ReloadGoals();
 		T GetProgram<T>() where T : BaseProgram;
 	}
-	public record Alive(Type Type, string Key, List<object> Instances) : IDisposable
-	{
-		/// <summary>
-		/// Guards the "KeepAlive" list and every Alive.Instances list. Every "dont wait" goal adds
-		/// itself from its own thread while Engine.KeepAlive removes finished ones once a second;
-		/// without a lock the List broke under load (100 requests a second) and KeepAlive read a
-		/// null entry, a NullReferenceException that ended the process.
-		/// </summary>
-		public static readonly object Sync = new();
-
-		public void Dispose()
-		{
-			foreach (var item in Instances)
-			{
-				if (item is IDisposable disposable) disposable.Dispose();
-				if (item is IList list)
-				{
-					foreach (var item2 in list)
-					{
-						if (item2 is IDisposable disposable1) disposable1.Dispose();
-					}
-				}
-			}
-		}
-	}
-
 
 	public class Engine : IEngine, IDisposable
 	{
@@ -171,6 +149,17 @@ namespace PLang.Runtime
 
 		IEngine? _parentEngine = null;
 		public IEngine? ParentEngine { get { return _parentEngine; } }
+
+		private readonly KeepAliveRegistry keepAliveRegistry = new();
+		public KeepAliveRegistry KeepAliveRegistry
+		{
+			get
+			{
+				IEngine engine = this;
+				while (engine.ParentEngine != null) engine = engine.ParentEngine;
+				return (engine == this) ? keepAliveRegistry : engine.KeepAliveRegistry;
+			}
+		}
 
 		public IPLangFileSystem FileSystem { get { return fileSystem; } }
 		public ResolveEventHandler AsmHandler { get; set; }
@@ -1085,71 +1074,32 @@ namespace PLang.Runtime
 
 		private async Task KeepAlive()
 		{
-			var alives = appContext.GetOrDefault<List<Alive>>("KeepAlive");
-			if (alives != null && alives.Count > 0)
+			var registry = KeepAliveRegistry;
+			if (registry.Count == 0) return;
+
+			// The app has started and stays up to serve (webserver, scheduler): fill the engine pool in the background.
+			if (ParentEngine == null) EnginePool.StartWarmUp();
+			logger.LogWarning("Keeping app alive, reasons:");
+			foreach (var kind in registry.GetSnapshot().Select(p => p.Kind).Distinct())
 			{
-				// The app has started and stays up to serve (webserver, scheduler): fill the engine pool in the background.
-				if (ParentEngine == null) EnginePool.StartWarmUp();
-				logger.LogWarning("Keeping app alive, reasons:");
-				lock (Alive.Sync)
+				logger.LogWarning(" - " + kind);
+			}
+
+			while (registry.Count > 0)
+			{
+				await Task.Delay(1000);
+
+				// A finished "dont wait" task has already returned the engine it rented (PseudoRuntime.RunGoal).
+				foreach (var entry in registry.RemoveCompletedTasks())
 				{
-					foreach (var alive in alives)
+					var task = (Task)entry.Instance;
+					if (task.IsFaulted && task.Exception != null)
 					{
-						logger.LogWarning(" - " + alive.Key);
+						Console.WriteLine(task.Exception.Flatten().ToString());
 					}
 				}
 
-				while (alives != null && alives.Count > 0)
-				{
-					await Task.Delay(1000);
-
-					alives = appContext.GetOrDefault<List<Alive>>("KeepAlive");
-					if (alives != null && alives.Count > 0)
-					lock (Alive.Sync)
-					{
-						var aliveTaskType = alives.FirstOrDefault(p => p.Key == "WaitForExecution");
-						if (aliveTaskType?.Instances != null)
-						{
-							bool isCompleted = true;
-							int counter = 0;
-							List<Task> tasks = new();
-							for (int i = 0; i < aliveTaskType.Instances.Count; i++)
-							{
-								var engineWait = (EngineWait)aliveTaskType.Instances[i];
-								tasks.Add(engineWait.task);
-
-								if (engineWait.task.IsFaulted)
-								{
-									Console.WriteLine(engineWait.task.Exception.Flatten().ToString());
-								}
-
-								if (engineWait.task.IsCompleted)
-								{
-									// The task returns the engine it rented itself (PseudoRuntime.RunGoal).
-									// engineWait.engine is the engine that called the goal, which can be
-									// back in the pool or rented by another request by now.
-									aliveTaskType.Instances.Remove(engineWait);
-									i--;
-									counter++;
-									if (counter > 100)
-									{
-										Console.WriteLine("!!! LOOP waiting on engine");
-									}
-								}
-							}
-							if (aliveTaskType.Instances.Count == 0)
-							{
-								alives.Remove(aliveTaskType);
-							}
-						}
-
-					}
-
-					EnginePool.CleanupEngines();
-
-				}
-
-
+				EnginePool.CleanupEngines();
 			}
 		}
 

@@ -804,52 +804,15 @@ namespace PLang.Modules
 
 
 		//TODO: should create a cleanup here to kill processes correctly
-		protected void KeepAlive(object instance, string key)
+		// Registers on the root engine's registry, so a listener started on a rented engine keeps the app alive too.
+		protected void KeepAlive(object instance, string key, string? name = null)
 		{
-			lock (Alive.Sync) AddKeepAlive(instance, key);
-		}
-
-		private void AddKeepAlive(object instance, string key)
-		{
-			var appContext = engine.GetAppContext();
-			var alives = appContext.GetOrDefault<List<Alive>>("KeepAlive");
-			if (alives == null) alives = new List<Alive>();
-
-			var aliveType = alives.FirstOrDefault(p => p.Type == instance.GetType() && p.Key == key);
-			if (aliveType == null)
-			{
-				aliveType = new Alive(instance.GetType(), key, [instance]);
-				alives.Add(aliveType);
-			}
-			else
-			{
-				aliveType.Instances.Add(instance);
-			}
-
-			appContext.AddOrReplace("KeepAlive", alives);
+			engine.KeepAliveRegistry.Add(key, name ?? key, instance);
 		}
 
 		public void RemoveKeepAlive(object instance, string key)
 		{
-			lock (Alive.Sync) RemoveKeepAliveLocked(instance, key);
-		}
-
-		private void RemoveKeepAliveLocked(object instance, string key)
-		{
-			var alives = appContext.GetOrDefault<List<Alive>>("KeepAlive");
-			if (alives == null) return;
-
-			var aliveType = alives.FirstOrDefault(p => p.Type == instance.GetType() && p.Key == key);
-			if (aliveType != null)
-			{
-				if (instance is IDisposable disposable) disposable.Dispose();
-				aliveType.Instances.Remove(instance);
-				if (aliveType.Instances.Count == 0)
-				{
-					alives.Remove(aliveType);
-				}
-				appContext.AddOrReplace("KeepAlive", alives);
-			}
+			engine.KeepAliveRegistry.Remove(instance, key);
 		}
 
 		protected void RegisterForPLangUserInjections(string type, string pathToDll, bool globalForWholeApp = false, string? environmentVariable = null, string? environmentVariableValue = null)

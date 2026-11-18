@@ -566,7 +566,7 @@ public class Program : BaseProgram, IDisposable
 		logger.LogDebug($"Listening on {webserverProperties.Host}:{webserverProperties.Port}...");
 		Console.WriteLine($" - Listening on {webserverProperties.Host}:{webserverProperties.Port}...");
 
-		KeepAlive(listeners, "Webserver");
+		KeepAlive(webserverProperties, "Webserver", $"{webserverProperties.Name} {webserverProperties.Host}:{webserverProperties.Port}");
 
 		return (webserverProperties, null);
 	}

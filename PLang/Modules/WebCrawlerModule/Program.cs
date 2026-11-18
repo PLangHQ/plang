@@ -77,8 +77,8 @@ namespace PLang.Modules.WebCrawlerModule
 		// own, and fail with "Cannot start a headed browser" because the defaults say headless
 		// false. The appContext injected into a module is no better: an engine rented from the pool
 		// brings its own container with its own one. engine.GetAppContext() is the app wide one, a
-		// rented engine adopts its parent's in Engine.Reset, and it is where KeepAlive and the file
-		// watchers already live.
+		// rented engine adopts its parent's in Engine.Reset, and it is where the file watchers
+		// already live.
 		private static string ProfileKey(string? profileName)
 		{
 			if (string.IsNullOrWhiteSpace(profileName)) return DefaultProfile;

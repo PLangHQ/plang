@@ -236,8 +236,8 @@ namespace PLang.Runtime
 						}
 						
 					});
-				
-					KeepAlive(engine, task);
+
+					engine.KeepAliveRegistry.Add(KeepAliveRegistry.DontWait, goalToRun.GoalName, task);
 
 					return (runtimeEngine, task, null);
 				}
@@ -282,39 +282,6 @@ namespace PLang.Runtime
 			}
 		}
 
-		public static void KeepAlive(IEngine engine, Task<(object? Variables, IError? Error)> task)
-		{
-			lock (Alive.Sync) AddKeepAlive(engine, task);
-		}
-
-		// Only the root engine waits on the "KeepAlive" list before the app exits. A "dont wait" goal
-		// runs on a rented engine, and a rented engine fresh from EnginePool.CreateEngine has its own
-		// app context, so a task registered there is never waited on. Every task is registered on the
-		// root engine, which keeps the app alive as long as any link of a "dont wait" chain runs.
-		private static void AddKeepAlive(IEngine engine, Task<(object? Variables, IError? Error)> task)
-		{
-			var rootEngine = engine;
-			while (rootEngine.ParentEngine != null) rootEngine = rootEngine.ParentEngine;
-
-			var alives = rootEngine.GetAppContext().GetOrDefault<List<Alive>>("KeepAlive");
-			if (alives == null) alives = new List<Alive>();
-
-			var aliveType = alives.FirstOrDefault(p => p.Type == task.GetType() && p.Key == "WaitForExecution");
-			if (aliveType == null)
-			{
-				aliveType = new Alive(task.GetType(), "WaitForExecution", [new EngineWait(task, engine)]);
-				alives.Add(aliveType);
-
-				rootEngine.GetAppContext().AddOrReplace("KeepAlive", alives);
-			}
-			else
-			{
-				aliveType.Instances!.Add(new EngineWait(task, engine));
-			}
-		}
-
-
-		public record EngineWait(Task task, IEngine engine);
 		public (string absolutePath, GoalToCallInfo goalName) GetAppAbsolutePath(string absolutePathToGoal, GoalToCallInfo? goalName = null)
 		{
 			absolutePathToGoal = absolutePathToGoal.AdjustPathToOs();
