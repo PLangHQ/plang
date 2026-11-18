@@ -24,5 +24,18 @@ public record ProcessInfo(string User, int Pid, string Name, long CpuSeconds);
 public record TcpStats(int Established, int SynRecv, int TimeWait, int CloseWait, int Total, long ListenQueueMax,
 	long RetransSegs, long AttemptFails, long EstabResets, long ListenOverflows, long ListenDrops, long Timeouts);
 
+// Pressure stall information: Avg10/60/300 is the percent of time in the last 10, 60 and 300 seconds that tasks waited for the resource (some: at least one task,
+// full: all non-idle tasks at once). Total is microseconds waited since boot and only goes up.
+[JsonObject(NamingStrategyType = typeof(SnakeCaseNamingStrategy))]
+public record PressureRow(string Resource, string Kind, double Avg10, double Avg60, double Avg300, long Total);
+
+// CPU time since boot in ticks (100 per second) for all CPUs together. User holds nice and System holds irq and softirq, so User + System + Idle + Iowait + Steal = Total.
+[JsonObject(NamingStrategyType = typeof(SnakeCaseNamingStrategy))]
+public record CpuTicks(long Total, long User, long System, long Idle, long Iowait, long Steal);
+
+// One process. Fds is null when its open files cannot be counted (another user's process, not as root); AgeSeconds is null when /proc/uptime does not read.
+[JsonObject(NamingStrategyType = typeof(SnakeCaseNamingStrategy))]
+public record ProcessStats(int Pid, string Name, long RssMb, int Threads, int? Fds, long CpuSeconds, long? AgeSeconds);
+
 [JsonObject(NamingStrategyType = typeof(SnakeCaseNamingStrategy))]
 public record TcpConnection(string Protocol, string State, string LocalAddress, int LocalPort, string RemoteAddress, int RemotePort, long RxQueue, long TxQueue, int Uid);

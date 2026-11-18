@@ -248,6 +248,138 @@ public static class ProcReader
 		return values;
 	}
 
+	// ---- pressure: /proc/pressure/{cpu,memory,io}, the share of time tasks waited for the resource (PSI)
+
+	public static List<PressureRow> ReadPressure(string procRoot = "/proc")
+	{
+		var rows = new List<PressureRow>();
+		foreach (var resource in new[] { "cpu", "memory", "io" })
+		{
+			string path = Path.Join(procRoot, "pressure", resource);
+			if (!File.Exists(path)) continue;
+			try
+			{
+				foreach (var line in File.ReadLines(path))
+				{
+					// "some avg10=0.00 avg60=0.00 avg300=0.00 total=12345"; cpu has no "full" line on older kernels, and then no row.
+					var p = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+					if (p.Length < 5 || (p[0] != "some" && p[0] != "full")) continue;
+					var values = new Dictionary<string, string>();
+					foreach (var pair in p.Skip(1))
+					{
+						int eq = pair.IndexOf('=');
+						if (eq > 0) values[pair[..eq]] = pair[(eq + 1)..];
+					}
+					if (!values.ContainsKey("avg10") || !values.ContainsKey("avg60") || !values.ContainsKey("avg300") || !values.ContainsKey("total")) continue;
+					rows.Add(new PressureRow(resource, p[0], Dec(values["avg10"]), Dec(values["avg60"]), Dec(values["avg300"]), Num(values["total"])));
+				}
+			}
+			catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+			{
+				// Not readable: no rows for this resource.
+			}
+		}
+		return rows;
+	}
+
+	private static double Dec(string s) => double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : 0;
+
+	// ---- cpu: the first line of /proc/stat, ticks since boot for all CPUs together
+
+	public static CpuTicks? ReadCpuTicks(string procRoot = "/proc")
+	{
+		string file = Path.Join(procRoot, "stat");
+		if (!File.Exists(file)) return null;
+		try
+		{
+			foreach (var line in File.ReadLines(file))
+			{
+				if (!line.StartsWith("cpu ")) continue;
+				// cpu user nice system idle iowait irq softirq steal guest guest_nice; a field an older kernel does not write counts as 0.
+				var p = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+				long Field(int i) => i < p.Length ? Num(p[i]) : 0;
+				long user = Field(1) + Field(2);
+				long system = Field(3) + Field(6) + Field(7);
+				long idle = Field(4), iowait = Field(5), steal = Field(8);
+				// guest and guest_nice are already counted in user and nice: they are not added again.
+				return new CpuTicks(user + system + idle + iowait + steal, user, system, idle, iowait, steal);
+			}
+		}
+		catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+		{
+			// Not readable.
+		}
+		return null;
+	}
+
+	// ---- one process: /proc/<pid>/stat (name, cpu time, start), /proc/<pid>/status (memory, threads), /proc/<pid>/fd (open files)
+
+	public static ProcessStats? ReadProcessStats(int pid, string procRoot = "/proc")
+	{
+		if (pid <= 0) return null;
+		string dir = Path.Join(procRoot, pid.ToString(CultureInfo.InvariantCulture));
+		if (!Directory.Exists(dir)) return null;
+		try
+		{
+			string stat = File.ReadAllText(Path.Join(dir, "stat"));
+			// "pid (name) state ...": the name may hold spaces and brackets, so cut at the LAST ")".
+			int open = stat.IndexOf('('), close = stat.LastIndexOf(')');
+			if (open < 0 || close < open) return null;
+			string name = stat[(open + 1)..close];
+			var rest = stat[(close + 1)..].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+			// after the name: state(0) ppid(1) ... utime(11) stime(12) ... starttime(19)
+			if (rest.Length < 20) return null;
+			long cpuSeconds = (Num(rest[11]) + Num(rest[12])) / ClockTicksPerSecond;
+			long startTicks = Num(rest[19]);
+
+			long rssKb = 0;
+			int threads = 0;
+			foreach (var line in File.ReadLines(Path.Join(dir, "status")))
+			{
+				// "VmRSS:	  123456 kB"; a kernel thread has no VmRSS line and uses no memory of its own.
+				if (line.StartsWith("VmRSS:")) rssKb = Num(line[6..].Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "");
+				else if (line.StartsWith("Threads:")) threads = (int)Num(line[8..].Trim());
+			}
+
+			return new ProcessStats(pid, name, rssKb / 1024, threads, CountFds(dir), cpuSeconds, ReadAgeSeconds(procRoot, startTicks));
+		}
+		catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+		{
+			// The process ended while it was read.
+			return null;
+		}
+	}
+
+	/// <summary>Entries of /proc/&lt;pid&gt;/fd; another user's process can only be counted by root, and then the count is null.</summary>
+	private static int? CountFds(string processDir)
+	{
+		try
+		{
+			return Directory.EnumerateFileSystemEntries(Path.Join(processDir, "fd")).Count();
+		}
+		catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+		{
+			return null;
+		}
+	}
+
+	/// <summary>Seconds since the process started: the machine's uptime (first number of /proc/uptime) minus the process's start, in ticks after boot.</summary>
+	private static long? ReadAgeSeconds(string procRoot, long startTicks)
+	{
+		try
+		{
+			string file = Path.Join(procRoot, "uptime");
+			if (!File.Exists(file)) return null;
+			var first = File.ReadAllText(file).Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+			if (first == null || !double.TryParse(first, NumberStyles.Float, CultureInfo.InvariantCulture, out double uptime)) return null;
+			return Math.Max(0, (long)(uptime - (double)startTicks / ClockTicksPerSecond));
+		}
+		catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+		{
+			return null;
+		}
+	}
+
 	// ---- disks: /proc/mounts for what is mounted, statfs (DriveInfo) for how full
 
 	private static readonly HashSet<string> NotDisks = new() { "tmpfs", "devtmpfs", "proc", "sysfs", "cgroup", "cgroup2", "devpts", "mqueue", "securityfs",
