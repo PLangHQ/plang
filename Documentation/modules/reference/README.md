@@ -50,7 +50,7 @@ the column spells out the ambiguous ones.
 | [OutputModule](./OutputModule.md) | `[output]` | 5 | Writes to the output stream. Ask a question with either text or template file. output stream can be to the user(default), system, to different channels such aud... |
 | [PlangModule](./PlangModule.md) | `[plang]` | 25 | get apps available, compiles plang code, gets goals and steps from .goal files, method descriptions and class scheme. Runtime Engine for plang, can run goal and... |
 | [PythonModule](./PythonModule.md) | `[python]` | 1 | Runs python scripts. Parameters can be passed to the python process |
-| [ScheduleModule](./ScheduleModule.md) | `[schedule]` | 5 | Wait, Sleep and time delay. Cron scheduler |
+| [ScheduleModule](./ScheduleModule.md) | `[schedule]` | 5 | Wait, Sleep and time delay. Interval and cron scheduler |
 | [SerializerModule](./SerializerModule.md) | `[serializer]` | 5 |  |
 | [TemplateEngineModule](./TemplateEngineModule.md) | `[templateengine]` | 2 | Render template html, files, elements using template engine. plang examples:  ``` - render file.html - render %content% to #main / will render the variable into... |
 | [TerminalModule](./TerminalModule.md) | `[terminal]` | 2 | Terminal/Console access to run external applications |
@@ -399,7 +399,7 @@ the column spells out the ambiguous ones.
 | SaveGoal | [PlangModule](./PlangModule.md) | `SaveGoal(PLang.Building.Model.Goal goal) : Object` |
 | SaveMethod | [PlangModule](./PlangModule.md) | `SaveMethod(Object methodPr) : Object` |
 | SaveMultipleFiles | [FileModule](./FileModule.md) | `SaveMultipleFiles(List<PLang.Modules.FileModule.FileInfo> files, Boolean loadVariables = False, Boolean emptyVariableIfNotFound = False, String encoding = utf-8) : object` |
-| Schedule | [ScheduleModule](./ScheduleModule.md) | `Schedule(String cronCommand, PLang.Models.GoalToCallInfo goalName, Nullable<DateTime> nextRun = null) : object` |
+| Schedule | [ScheduleModule](./ScheduleModule.md) | `Schedule(PLang.Models.GoalToCallInfo goalName, String cronCommand = null, Nullable<Int64> intervalInSeconds = null, Nullable<DateTime> nextRun = null) : object` |
 | ScrollToBottom | [WebCrawlerModule](./WebCrawlerModule.md) | `ScrollToBottom() : object` |
 | ScrollToElement | [WebCrawlerModule](./WebCrawlerModule.md) | `ScrollToElement(PLang.Modules.WebCrawlerModule.PlangWebElement element) : object` |
 | ScrollToElementByCssSelector | [WebCrawlerModule](./WebCrawlerModule.md) | `ScrollToElementByCssSelector(String cssSelector) : object` |

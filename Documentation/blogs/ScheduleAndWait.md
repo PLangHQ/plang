@@ -52,7 +52,7 @@ Here, the `SendReport` task is called with different `days` parameters:
 
 ### How Scheduling Works in the Background
 
-When you build your Plang code, the scheduling statements are converted into cron patterns. For example, "Monday at 9" becomes `0 9 * * 1`. These patterns are stored in the `.db/system.sqlite` database, and the Plang runtime executes the tasks when the time matches the pattern.
+When you build your Plang code, statements that name a clock time, weekday or day of the month are converted into cron patterns. For example, "Monday at 9" becomes `0 9 * * 1`, evaluated in UTC. Statements like "every 45 seconds" or "every 5 minutes" become an interval instead: the goal runs that often, counted from when the app scheduled it. The schedules are stored in the `.db/system.sqlite` database, and once the app has run `- start scheduler`, the Plang runtime runs each task when it is due. Tasks run in parallel, and a task whose previous run is still going skips that occurrence.
 
 ## Implementing Wait (or Sleep)
 

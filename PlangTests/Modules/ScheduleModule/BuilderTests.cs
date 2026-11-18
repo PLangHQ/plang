@@ -78,10 +78,8 @@ namespace PLang.Modules.ScheduleModule.Tests
 			Store(text, instruction.LlmRequest[0].RawResponse);
 
 			Assert.AreEqual("Schedule", gf.Name);
-			Assert.AreEqual("cronCommand", gf.Parameters[0].Name);
-			Assert.AreEqual("0 11 * * 1", gf.Parameters[0].Value);
-			Assert.AreEqual("goalName", gf.Parameters[1].Name);
-			Assert.AreEqual("!Process.File", gf.Parameters[1].Value);
+			Assert.AreEqual("0 11 * * 1", gf.Parameters.First(p => p.Name == "cronCommand").Value);
+			Assert.AreEqual("!Process.File", gf.Parameters.First(p => p.Name == "goalName").Value);
 
 		}
 

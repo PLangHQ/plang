@@ -27,17 +27,21 @@ Task Sleep(int sleepTimeInMilliseconds)
 
 ### Schedule a Recurring Task
 
-Scheduling a recurring task based on a cron expression is a typical use case for automation and background processing.
+A recurring task is either an interval ("every N seconds/minutes/hours/days", stored as `intervalInSeconds`) or a cron expression for clock times (5 fields, or 6 fields with seconds first, evaluated in UTC). A step sets exactly one of them.
 
 ```plang
 ScheduleRecurringTask
-- every "*/5 * * * *" call !FiveMinuteTask
+- every 45 seconds, call CheckQueue
+- every day at 8am, call SendDailyReport
+- start scheduler
 ```
 
 **C# Method Signature:**
 ```csharp
-Task Schedule(string cronCommand, string goalName, DateTime? nextRun = null)
+Task<IError?> Schedule(GoalToCallInfo goalName, string? cronCommand = null, long? intervalInSeconds = null, DateTime? nextRun = null)
 ```
+
+`every 45 seconds` builds as `intervalInSeconds: 45`, `every day at 8am` as `cronCommand: "0 8 * * *"`. Each due job is started like a `dont wait` goal call, so jobs run in parallel; a job whose previous run is still going skips that occurrence.
 
 For more detailed documentation and all examples, please visit the [Schedule Module Documentation](./PLang.Modules.ScheduleModule.md) and the [example repository on GitHub](https://github.com/PLangHQ/plang/tree/main/Tests/Schedule). Additionally, inspect the Program.cs source code for a deeper understanding of the module's implementation [here](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/ScheduleModule/Program.cs).
 

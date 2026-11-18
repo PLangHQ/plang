@@ -637,16 +637,16 @@ The Schedule in PLang facilitates the organization and execution of tasks based 
 - **Sleeping for Durations**: Pause execution for a specified duration.
 - **Scheduling Recurring Tasks**: Execute tasks at regular intervals or specific times.
 - **Delaying Tasks**: Schedule tasks to run after a delay.
-- **Utilizing Cron Expressions**: Leverage cron expressions for complex scheduling needs.
+- **Utilizing Cron Expressions**: Clock times, weekdays and days of the month ("every day at 8am") are cron expressions, evaluated in UTC.
 
 ## Quick Start
 
 To get started with scheduling tasks in PLang, here are some popular actions:
 
 - **Pause Execution**: `SleepShortDuration - sleep for 1 second`
-- **Schedule a Recurring Task**: `ScheduleRecurringTask - every 1 minute, call !ItIsCalled`
-- **Display Current Time**: `OutputCurrentTime - write out %Now%`
-- **Schedule a Task for a Specific Time**: `ScheduleSpecificTime - at 2.1.2024 22:19:49, call !TaskAtSpecificTime`
+- **Call a Goal Every N Seconds/Minutes/Hours**: `- every 45 seconds, call CheckQueue` (runs 45 seconds apart)
+- **Call a Goal at a Clock Time**: `- every day at 8am, call SendDailyReport`
+- **Start the Scheduler**: `- start scheduler`
 
 [Link to docs](./PLang.Modules.ScheduleModule.md)
 # WebCrawler

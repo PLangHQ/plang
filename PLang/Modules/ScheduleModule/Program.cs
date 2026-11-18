@@ -24,7 +24,7 @@ using static PLang.Modules.ScheduleModule.Program;
 
 namespace PLang.Modules.ScheduleModule
 {
-	[Description("Wait, Sleep and time delay. Schedule a goal to be called repeatedly ('every 15 seconds', 'every 5 minutes', 'every day at 8am'), cron scheduler")]
+	[Description("Wait, Sleep and time delay. Schedule a goal to be called repeatedly ('every 45 seconds', 'every 5 minutes', 'every day at 8am'), interval and cron scheduler")]
 	[Effect(Effects.None)]
 	public class Program : BaseProgram
 	{
@@ -126,28 +126,64 @@ NEVER use for a recurring call such as 'every 15 seconds call X' or 'every 5 min
 			return result.Error;
 		}
 
-		public record CronJob(string AbsolutePrFilePath, string CronCommand, GoalToCallInfo GoalName, DateTime? NextRun = null, int MaxExecutionTimeInMilliseconds = 30000)
+		/// <summary>
+		/// A scheduled call of GoalName. It runs either every IntervalInSeconds, counted from when the job was scheduled,
+		/// or on the clock times of the cron expression CronCommand (evaluated in UTC). A job stored without IntervalInSeconds is a cron job.
+		/// </summary>
+		public record CronJob(string AbsolutePrFilePath, string? CronCommand, GoalToCallInfo GoalName, DateTime? NextRun = null, long? IntervalInSeconds = null)
 		{
 			public bool IsArchived = false;
+
+			[JsonIgnore]
+			public bool IsInterval => IntervalInSeconds is > 0;
+
+			[JsonIgnore]
+			public string Schedule => IsInterval ? $"every {IntervalInSeconds} seconds" : $"cron '{CronCommand}'";
 		};
 
-		[Description(@"Calls goalName repeatedly, on every 'every ...' / 'each ...' / cron statement, also for intervals in seconds. The step registers the job and returns at once; it does not block the steps after it.
-cronCommand is a cron expression, either 5 fields (minute hour day-of-month month day-of-week) or, only when the interval is in seconds, 6 fields with seconds first (second minute hour day-of-month month day-of-week). Map the natural-language interval to the cron fields exactly; do NOT collapse an interval to a single daily run. Examples:
-'every 5 seconds, call X' => '*/5 * * * * *'
-'every 15 seconds call goal X' => '*/15 * * * * *'
-'every 30 seconds' => '*/30 * * * * *'
-'every minute' => '* * * * *'
-'every 5 minutes, call X' => '*/5 * * * *'
-'every 10 minutes' => '*/10 * * * *'
-'every 1 hour' / 'every hour' / 'hourly' => '0 * * * *'
-'every 2 hours' => '0 */2 * * *'
+		[Description(@"Calls goalName repeatedly, on every 'every ...' / 'each ...' / cron statement. The step registers the job and returns at once; it does not block the steps after it.
+Set exactly one of intervalInSeconds or cronCommand.
+intervalInSeconds: when the statement is 'every N seconds/minutes/hours/days' and names no clock time, weekday or day of month. Convert N to seconds. The goal runs every N seconds counted from when it was scheduled, not aligned to the clock. Examples:
+'every 5 seconds, call X' => 5
+'every 45 seconds call goal X' => 45
+'every minute' => 60
+'every 5 minutes, call X' => 300
+'every 90 minutes' => 5400
+'every hour' / 'hourly' => 3600
+'every 2 hours' => 7200
+'every day' / 'daily' => 86400
+cronCommand: when the statement names a clock time, a weekday, a day of the month or a minute of the hour. A cron expression of 5 fields (minute hour day-of-month month day-of-week), or 6 fields with seconds first (second minute hour day-of-month month day-of-week) only when a second is named. Evaluated in UTC. Examples:
 'every day at 8am' => '0 8 * * *'
 'every day at 7:30am' => '30 7 * * *'
-'at 11:00 on Monday' => '0 11 * * 1'
+'at 11:00 on Monday' / 'on mondays at 11 am' => '0 11 * * 1'
+'every weekday at 6pm' => '0 18 * * 1-5'
+'at minute 0 of every hour' / 'on the hour' => '0 * * * *'
+'at 15 and 45 minutes past every hour' => '15,45 * * * *'
 'on 5th of every month at 7am' => '0 7 5 * *'.
 goalName is the goal that should be called, a whole word with possible slash(/), written without a prefix.")]
-		public async Task<IError?> Schedule(string cronCommand, GoalToCallInfo goalName, DateTime? nextRun = null)
+		public async Task<IError?> Schedule(GoalToCallInfo goalName, string? cronCommand = null, long? intervalInSeconds = null, DateTime? nextRun = null)
 		{
+			var fixSuggestion = "Use intervalInSeconds for 'every N seconds/minutes/hours/days', e.g. 45 for every 45 seconds, or a cronCommand for clock times, e.g. '0 8 * * *' for every day at 8am";
+			if (intervalInSeconds != null)
+			{
+				if (!string.IsNullOrWhiteSpace(cronCommand))
+				{
+					return new ProgramError($"Schedule has both an interval ({intervalInSeconds} seconds) and a cron expression ('{cronCommand}'), it can only have one", goalStep, function, FixSuggestion: fixSuggestion);
+				}
+				if (intervalInSeconds <= 0)
+				{
+					return new ProgramError($"Interval must be at least 1 second, it is {intervalInSeconds}", goalStep, function, FixSuggestion: fixSuggestion);
+				}
+				SaveCronJob(settings, new CronJob(goalStep.AbsolutePrFilePath, null, goalName, nextRun, intervalInSeconds));
+				Interlocked.Increment(ref cronJobsVersion);
+				return null;
+			}
+
+			if (string.IsNullOrWhiteSpace(cronCommand))
+			{
+				return new ProgramError("Schedule needs an interval or a cron expression", goalStep, function, FixSuggestion: fixSuggestion);
+			}
+
 			try
 			{
 				ParseCron(cronCommand);
@@ -155,10 +191,10 @@ goalName is the goal that should be called, a whole word with possible slash(/),
 			catch (CrontabException ex)
 			{
 				return new ProgramError($"'{cronCommand}' is not a valid cron expression: {ex.Message}", goalStep, function, Exception: ex,
-					FixSuggestion: "Use 5 fields (minute hour day-of-month month day-of-week), e.g. '*/5 * * * *' for every 5 minutes, or 6 fields with seconds first, e.g. '*/15 * * * * *' for every 15 seconds");
+					FixSuggestion: "Use 5 fields (minute hour day-of-month month day-of-week), e.g. '0 8 * * *' for every day at 8am, or 6 fields with seconds first, e.g. '30 0 8 * * *' for 08:00:30. " + fixSuggestion);
 			}
 
-			SaveCronJob(settings, goalStep.AbsolutePrFilePath, cronCommand, goalName, nextRun);
+			SaveCronJob(settings, new CronJob(goalStep.AbsolutePrFilePath, cronCommand, goalName, nextRun));
 			Interlocked.Increment(ref cronJobsVersion);
 			return null;
 		}
@@ -187,6 +223,33 @@ goalName is the goal that should be called, a whole word with possible slash(/),
 		}
 
 		/// <summary>
+		/// The first run of an interval after scheduledRun that lies after now. Runs stay on the grid scheduledRun + k * interval,
+		/// so the period does not drift, and periods that passed while the process was busy or down are dropped instead of run one after another.
+		/// </summary>
+		public static DateTime GetNextIntervalRun(DateTime scheduledRun, TimeSpan interval, DateTime now)
+		{
+			var nextRun = scheduledRun + interval;
+			if (nextRun > now) return nextRun;
+
+			long missedPeriods = (now - nextRun).Ticks / interval.Ticks + 1;
+			return nextRun + TimeSpan.FromTicks(missedPeriods * interval.Ticks);
+		}
+
+		/// <summary>
+		/// The run of cronJob that follows now. An interval job without NextRun runs one interval after now; one with NextRun keeps
+		/// to the grid NextRun + k * interval. A cron job runs at the first occurrence of its expression after now.
+		/// </summary>
+		public static DateTime GetNextRun(CronJob cronJob, DateTime now)
+		{
+			if (cronJob.IsInterval)
+			{
+				var interval = TimeSpan.FromSeconds(cronJob.IntervalInSeconds!.Value);
+				return (cronJob.NextRun == null) ? now + interval : GetNextIntervalRun(cronJob.NextRun.Value, interval, now);
+			}
+			return GetNextRun(cronJob.CronCommand!, now);
+		}
+
+		/// <summary>
 		/// Jobs whose NextRun has been reached at now, in list order. A job without NextRun has not been given its first run time yet and is not due.
 		/// </summary>
 		public static List<CronJob> GetDueJobs(IEnumerable<CronJob> cronJobs, DateTime now)
@@ -194,18 +257,28 @@ goalName is the goal that should be called, a whole word with possible slash(/),
 			return cronJobs.Where(p => p.NextRun != null && p.NextRun <= now).ToList();
 		}
 
-		private static void SaveCronJob(ISettings settings, string absolutePrFilePath, string cronCommand, GoalToCallInfo goalName, DateTime? nextRun)
+		/// <summary>
+		/// What the scheduler does with a due job at now: start it, or skip this occurrence when its previous run is still going.
+		/// NextRun is the run that follows now in both cases.
+		/// </summary>
+		public record DueJob(CronJob Job, bool Skip, DateTime NextRun);
+
+		public static List<DueJob> PlanDueJobs(IEnumerable<CronJob> cronJobs, DateTime now, Func<CronJob, bool> isRunning)
+		{
+			return GetDueJobs(cronJobs, now).Select(job => new DueJob(job, isRunning(job), GetNextRun(job, now))).ToList();
+		}
+
+		private static void SaveCronJob(ISettings settings, CronJob cronJob)
 		{
 			var cronJobs = new ModuleSettings(settings).GetCronJobs();
-			var idx = cronJobs.FindIndex(p => p.AbsolutePrFilePath == absolutePrFilePath);
+			var idx = cronJobs.FindIndex(p => p.AbsolutePrFilePath == cronJob.AbsolutePrFilePath);
 			if (idx == -1)
 			{
-				var cronJob = new CronJob(absolutePrFilePath, cronCommand, goalName, nextRun);
 				cronJobs.Add(cronJob);
 			}
 			else
 			{
-				cronJobs[idx] = new CronJob(absolutePrFilePath, cronCommand, goalName, nextRun);
+				cronJobs[idx] = cronJob;
 			}
 
 			settings.SetList(typeof(ModuleSettings), cronJobs);
@@ -290,11 +363,14 @@ goalName is the goal that should be called, a whole word with possible slash(/),
 		{
 			// The loop ticks every second. A tick only compares the in-memory NextRun times with the clock; the job list is read
 			// from settings when a job is due, when a step has written a job, or every CronJobsReloadInterval.
+			// Due jobs are started without waiting for them, so the loop keeps its tick while jobs run, and runningJobs
+			// (only touched by this loop) holds each job's run until it has finished.
 			Task.Run((Func<Task?>)(async () =>
 			{
 				await Task.Delay(1000);
 
 				List<CronJob> cronJobs = new();
+				Dictionary<string, RunningJob> runningJobs = new();
 				long loadedVersion = -1;
 				DateTime lastLoad = DateTime.MinValue;
 
@@ -311,7 +387,7 @@ goalName is the goal that should be called, a whole word with possible slash(/),
 							loadedVersion = version;
 							lastLoad = now;
 							cronJobs = LoadCronJobs(settings, fileSystem, logger, now);
-							cronJobs = await RunScheduledTasks(cronJobs, settings, engine, logger, pseudoRuntime, fileSystem);
+							cronJobs = await RunScheduledTasks(cronJobs, runningJobs, settings, engine, logger, pseudoRuntime, fileSystem);
 						}
 					}
 					catch (Exception ex)
@@ -344,15 +420,15 @@ goalName is the goal that should be called, a whole word with possible slash(/),
 					DateTime nextRun;
 					try
 					{
-						nextRun = GetNextRun(cronJob.CronCommand, now);
+						nextRun = GetNextRun(cronJob, now);
 					}
-					catch (CrontabException ex)
+					catch (Exception ex) when (ex is CrontabException || ex is ArgumentNullException)
 					{
 						logger.LogError($"Cron job '{cronJob.CronCommand}' calling {cronJob.GoalName} in {cronJob.AbsolutePrFilePath} is not a valid cron expression: {ex.Message}");
 						continue;
 					}
-					SaveCronJob(settings, cronJob.AbsolutePrFilePath, cronJob.CronCommand, cronJob.GoalName, nextRun);
 					cronJob = cronJob with { NextRun = nextRun };
+					SaveCronJob(settings, cronJob);
 				}
 				cronJobs.Add(cronJob);
 			}
@@ -386,50 +462,62 @@ goalName is the goal that should be called, a whole word with possible slash(/),
 
 
 		/// <summary>
-		/// Runs the due jobs in cronJobs one after another and stores each one's next run time.
-		/// Returns cronJobs with the new NextRun values.
+		/// A job's run that has been started: Task completes when the goal has finished.
 		/// </summary>
-		private async Task<List<CronJob>> RunScheduledTasks(List<CronJob> cronJobs, ISettings settings, IEngine engine, ILogger logger, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem)
+		private record RunningJob(Task Task, DateTime StartedUtc);
+
+		/// <summary>
+		/// Starts each due job in cronJobs as a "dont wait" goal call and stores its next run time. A job whose previous run is
+		/// still going skips this occurrence. Returns cronJobs with the new NextRun values.
+		/// </summary>
+		private async Task<List<CronJob>> RunScheduledTasks(List<CronJob> cronJobs, Dictionary<string, RunningJob> runningJobs, ISettings settings, IEngine engine, ILogger logger, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem)
 		{
-			var dueJobs = GetDueJobs(cronJobs, SystemTime.OffsetUtcNow().DateTime);
-			foreach (var item in dueJobs)
+			foreach (var finished in runningJobs.Where(p => p.Value.Task.IsCompleted).Select(p => p.Key).ToList())
+			{
+				runningJobs.Remove(finished);
+			}
+
+			var now = SystemTime.OffsetUtcNow().DateTime;
+			var dueJobs = PlanDueJobs(cronJobs, now, job => runningJobs.ContainsKey(job.AbsolutePrFilePath));
+			foreach (var (item, skip, nextRun) in dueJobs)
 			{
 				try
 				{
+					if (skip)
+					{
+						var running = runningJobs[item.AbsolutePrFilePath];
+						logger.LogWarning($"Skipping cron run of {item.GoalName} ({item.Schedule}), its run started at {running.StartedUtc:HH:mm:ss} UTC is still going ({(now - running.StartedUtc).TotalSeconds:0} s). Next run {nextRun:HH:mm:ss} UTC");
+						continue;
+					}
+
 					logger.LogInformation($"Running cron - GoalName:{item.GoalName}");
 
-					using (CancellationTokenSource cts = new CancellationTokenSource())
+					// The goal runs on a rented engine with a copy of this memory stack, the same way as "call goal X, dont wait".
+					// The copy starts empty so a job does not see variables of the step that started the scheduler or of other jobs.
+					context.MemoryStack.Clear();
+					var (_, task, error) = await pseudoRuntime.RunGoal(engine, contextAccessor, fileSystem.RelativeAppPath, item.GoalName, goal, waitForExecution: false);
+					if (task is Task runTask)
 					{
-						context.MemoryStack.Clear();
+						runningJobs[item.AbsolutePrFilePath] = new RunningJob(runTask, now);
+					}
 
-						int maxExecutionTime = (item.MaxExecutionTimeInMilliseconds == 0) ? 30000 : item.MaxExecutionTimeInMilliseconds;
-						cts.CancelAfter(maxExecutionTime);
-						var (_, _, error) = await pseudoRuntime.RunGoal(engine, contextAccessor, fileSystem.RelativeAppPath, item.GoalName, goal);
-						if (error != null)
+					if (error != null && error is not EndGoal)
+					{
+						try
 						{
-							if (error != null && error is not EndGoal)
+							(_, error) = await engine.GetEventRuntime().AppErrorEvents(error);
+
+							if (error != null)
 							{
-								try
-								{
-									(_, error) = await engine.GetEventRuntime().AppErrorEvents(error);
-
-									if (error != null)
-									{
-										Console.WriteLine("Error running async goal:" + error.ToString());
-
-									}
-								} catch (Exception ex)
-								{
-									Console.WriteLine($"GoalName: {item.GoalName}" + ex.ToString());
-								}
+								Console.WriteLine("Error running async goal:" + error.ToString());
 
 							}
+						} catch (Exception ex)
+						{
+							Console.WriteLine($"GoalName: {item.GoalName}" + ex.ToString());
 						}
+
 					}
-				}
-				catch (OperationCanceledException)
-				{
-					logger.LogError($"{fileSystem.RelativeAppPath} doing cronjob {item.CronCommand} calling {item.GoalName} took longer then {item.MaxExecutionTimeInMilliseconds}ms to run.");
 				}
 				catch (Exception ex)
 				{
@@ -437,9 +525,7 @@ goalName is the goal that should be called, a whole word with possible slash(/),
 				}
 				finally
 				{
-					// The next run counts from when this run ended, so a run that takes longer than the interval skips the occurrences it overlapped.
-					var nextRun = GetNextRun(item.CronCommand, SystemTime.OffsetUtcNow().DateTime);
-					SaveCronJob(settings, item.AbsolutePrFilePath, item.CronCommand, item.GoalName, nextRun);
+					SaveCronJob(settings, item with { NextRun = nextRun });
 
 					var idx = cronJobs.IndexOf(item);
 					if (idx != -1) cronJobs[idx] = item with { NextRun = nextRun };

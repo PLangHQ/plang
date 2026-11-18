@@ -46,7 +46,7 @@ namespace PLangTests.Modules.ScheduleModule
 
 
 			var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, appCache);
-			await p.Schedule(cronCommand, goalName);
+			await p.Schedule(goalName, cronCommand: cronCommand);
 
 			settings.Received(1).SetList(typeof(ModuleSettings), Arg.Is<List<CronJob>>(list => 
 				list.FirstOrDefault().CronCommand == cronCommand && list.FirstOrDefault().GoalName == goalName && list.FirstOrDefault().NextRun == null
