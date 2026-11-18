@@ -58,6 +58,8 @@ namespace PLang.Events
 		private readonly IPseudoRuntime pseudoRuntime;
 		private List<EventBinding>? runtimeEvents = null;
 		private List<EventBinding>? builderEvents = null;
+		internal int RuntimeEventCount => runtimeEvents?.Count ?? 0;
+		internal int BuilderEventCount => builderEvents?.Count ?? 0;
 		private IServiceContainer? container;
 		public EventRuntime(IPLangFileSystem fileSystem, PrParser prParser, PLangAppContext appContext, IPLangContextAccessor contextAccessor, ILogger logger, IEngine engine, IPseudoRuntime pseudoRuntime)
 		{

@@ -495,6 +495,20 @@ namespace PLang.Building.Parsers
 		}
 		private volatile GoalLookupCache? lookupCache;
 
+		/// <summary>Entry counts of the goal lists and caches this parser holds, by name, for runtime diagnostics.</summary>
+		public Dictionary<string, int> GetCacheCounts()
+		{
+			return new Dictionary<string, int>
+			{
+				["pr_parser_goals"] = goals?.Count ?? 0,
+				["pr_parser_system_goals"] = systemGoals?.Count ?? 0,
+				["pr_parser_instructions"] = instructions.Count,
+				["pr_parser_goal_lookup"] = lookupCache?.Found.Count ?? 0,
+				["pr_parser_events"] = Events.Count,
+				["pr_parser_system_events"] = SystemEvents.Count,
+			};
+		}
+
 		private Goal? FindGoalByName(string appStartupPath, string goalNameOrPath, Goal? callingGoal)
 		{
 			Goal? goal = null;

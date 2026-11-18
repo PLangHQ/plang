@@ -41,6 +41,15 @@ public class MethodHelper
 	private sealed record ResolvedMethod(Type ModuleClass, MethodInfo Method);
 	private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<IGenericFunction, ResolvedMethod> resolvedByFunction = new();
 	private static readonly ConcurrentDictionary<string, MethodInfo> cachedMethodInfo = new();
+
+	/// <summary>Entry counts of the static method caches, by name, for runtime diagnostics.</summary>
+	internal static Dictionary<string, int> GetCacheCounts() => new()
+	{
+		["method_helper_resolved_by_function"] = resolvedByFunction.Count(),
+		["method_helper_method_info"] = cachedMethodInfo.Count,
+		["method_helper_parameters_by_method"] = parametersByMethod.Count,
+		["method_helper_handles_variable_by_parameter"] = handlesVariableByParameter.Count,
+	};
 	public MethodHelper(ITypeHelper typeHelper, ILogger logger, IPLangContextAccessor contextAccessor, ISettings settings)
 	{
 		this.typeHelper = typeHelper;

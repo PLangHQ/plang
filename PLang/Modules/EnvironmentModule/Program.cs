@@ -17,7 +17,7 @@ namespace PLang.Modules.EnvironmentModule;
 [Newtonsoft.Json.JsonObject(NamingStrategyType = typeof(Newtonsoft.Json.Serialization.SnakeCaseNamingStrategy))]
 public record RunningTask(string Kind, string Name, string? Goal, string? CalledFrom, DateTime StartedUtc, long RunningSeconds);
 
-[Description("Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install, disks (size and free space), memory (total, used, free), running tasks (dont wait goals, scheduled runs, webservers)")]
+[Description("Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install, disks (size and free space), memory (total, used, free), running tasks (dont wait goals, scheduled runs, webservers), runtime stats (gc heap, process memory, call stack depth, caches)")]
 [Effect(Effects.None)]
 public class Program : BaseProgram
 {
@@ -113,6 +113,22 @@ public class Program : BaseProgram
 			return new RunningTask(entry.Kind, entry.Name, plangTask?.Goal.RelativeGoalPath, plangTask?.CallingGoal?.RelativeGoalPath,
 				entry.StartedUtc, (long)(now - entry.StartedUtc).TotalSeconds);
 		}).ToList();
+	}
+
+	[Description("Diagnostics of the running app's memory, to tell whether growth is objects PLang holds or native/.NET memory. One object with three groups. gc: heap_mb, heap_after_collect_mb (only when forceGc, else null), gen0_collections, gen1_collections, gen2_collections, total_allocated_mb, heap_size_mb, fragmented_mb, committed_mb, large_object_heap_mb, pinned_object_heap_mb, finalization_pending_count, pinned_objects_count. process: rss_mb, rss_anon_mb, rss_file_mb, swap_mb, private_mb, virtual_mb, not_gc_mb (rss minus gc committed), threads, open_files, handle_count, thread_pool_threads, thread_pool_pending_work_items, timers, loaded_assemblies. plang: call_stack_depth, call_stack_max_depth, executed_steps_on_call_stack, memory_stack_variables, keep_alive_entries, running_tasks (count by kind), engine_pool (total, rented, free), context_items, context_shared_items, context_event_bindings, regex_cache_limit, caches (entry count of each runtime cache by name). forceGc=true runs a full blocking garbage collection first, which stops the whole app briefly; default false, set it only when the user asks to force/collect garbage. e.g. `get runtime stats, write to %stats%`")]
+	[Example("get runtime stats, write to %stats%", "forceGc=false")]
+	[Example("get runtime stats, force garbage collection, write to %stats%", "forceGc=true")]
+	public async Task<RuntimeStats> GetRuntimeStats(bool forceGc = false)
+	{
+		return RuntimeStatsReader.Read(engine, context, forceGc);
+	}
+
+	[Description("The call stack depth (number of goal frames) of the current context, an int. Cheap, for a watcher to poll. e.g. `get call stack depth, write to %depth%`")]
+	[Example("get call stack depth, write to %depth%", "")]
+	[Example("how deep is the call stack, write to %depth%", "")]
+	public async Task<int> GetCallStackDepth()
+	{
+		return context?.CallStack?.Depth ?? 0;
 	}
 
 	public async Task<bool> IsInCSharpDebugMode()

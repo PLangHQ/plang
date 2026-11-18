@@ -1239,6 +1239,7 @@ namespace PLang.Modules.WebserverModule
 		// every request. Parsing runs 633 device rules, so it is worth caching, and this keeps
 		// that without depending on the library's own cache.
 		static readonly System.Collections.Concurrent.ConcurrentDictionary<string, UAParser.Objects.ClientInfo> uaCache = new();
+		internal static int UserAgentCacheCount => uaCache.Count;
 
 		static UAParser.Objects.ClientInfo ParseUserAgent(string userAgent)
 		{

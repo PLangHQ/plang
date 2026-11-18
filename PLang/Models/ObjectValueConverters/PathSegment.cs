@@ -23,6 +23,7 @@ namespace PLang.Models.ObjectValueConverters
 	public static class PathSegmentParser
 	{
 		static ConcurrentDictionary<string, List<PathSegment>> PathCache = new();
+		internal static int PathCacheCount => PathCache.Count;
 		// Built once. It used to be compiled again (a few ms of JIT) for every path not yet in PathCache.
 		private static readonly Regex PathRegex = new Regex(@"([.!]?)((?:\((?:""[^""]*""|'[^']*'|[^)""'])*\)|[^.!\[\]])+)|\[(.+?)\]", RegexOptions.Compiled);
 

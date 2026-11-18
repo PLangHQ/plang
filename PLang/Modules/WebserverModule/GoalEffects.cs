@@ -43,6 +43,8 @@ namespace PLang.Modules.WebserverModule
 
 		private static readonly ConcurrentDictionary<string, (DateTime Written, StepInfo Info)> StepCache = new();
 		private static readonly ConcurrentDictionary<string, Effects?> DeclaredCache = new();
+		internal static int StepCacheCount => StepCache.Count;
+		internal static int DeclaredCacheCount => DeclaredCache.Count;
 
 		private readonly Func<string, Goal?> getGoalByPrPath;
 		private readonly Func<string, string, string?> readSqlFile;

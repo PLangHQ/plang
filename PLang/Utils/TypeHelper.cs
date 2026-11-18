@@ -481,6 +481,14 @@ public class TypeHelper : ITypeHelper
 	}
 	private static volatile RuntimeTypeCache? runtimeTypeCache;
 
+	/// <summary>Entry counts of the static module type lists and caches, by name, for runtime diagnostics.</summary>
+	internal static Dictionary<string, int> GetCacheCounts() => new()
+	{
+		["type_helper_runtime_modules"] = runtimeModules.Count,
+		["type_helper_builder_modules"] = builderModules.Count,
+		["type_helper_runtime_type_by_module"] = runtimeTypeCache?.ByModule.Count ?? 0,
+	};
+
 	public List<Type> GetBuilderModules()
 	{
 		return builderModules;

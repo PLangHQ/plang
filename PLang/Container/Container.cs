@@ -50,6 +50,8 @@ namespace PLang.Container
 	{
 		public record InjectedType(string InjectorName, Type ServiceType, Type ImplementationType);
 		private static readonly Dictionary<Type, InjectedType> injectedTypes = [];
+		internal static int InjectedTypeCount => injectedTypes.Count;
+		internal static int NotifiedAboutNotRegisterCount => NotifiedAboutNotRegister.Count;
 
 
 		public static void RegisterForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeAppStartupPath,

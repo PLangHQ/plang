@@ -89,6 +89,9 @@ namespace PLang.Runtime
 		}
 
 		public Goal Goal { get; set; }
+
+		/// <summary>Number of variables held, system variables (Now, GUID, ...) included.</summary>
+		public int VariableCount => variables.Count;
 		/*public PLangContext Context
 		{
 			get { return contextAccessor.Current; }

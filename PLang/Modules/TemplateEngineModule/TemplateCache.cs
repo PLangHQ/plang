@@ -23,6 +23,8 @@ namespace PLang.Modules.TemplateEngineModule
 
 		private static readonly ConcurrentDictionary<string, Template> parsed = new(StringComparer.Ordinal);
 		private static readonly ConcurrentDictionary<string, (long Ticks, string Content)> files = new(StringComparer.Ordinal);
+		internal static int ParsedCount => parsed.Count;
+		internal static int FileCount => files.Count;
 
 		public static Template GetOrParse(string content)
 		{

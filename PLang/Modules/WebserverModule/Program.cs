@@ -51,6 +51,7 @@ public class Program : BaseProgram, IDisposable
 	private readonly IPseudoRuntime pseudoRuntime;
 	private readonly ProgramFactory programFactory;
 	private readonly static List<WebserverProperties> listeners = new();
+	internal static int ListenerCount => listeners.Count;
 	private bool disposed;
 
 

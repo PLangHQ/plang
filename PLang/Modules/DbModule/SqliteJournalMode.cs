@@ -18,6 +18,7 @@ namespace PLang.Modules.DbModule
 			.ToArray();
 
 		private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, byte> walConfirmed = new(StringComparer.OrdinalIgnoreCase);
+		internal static int WalConfirmedCount => walConfirmed.Count;
 
 		private static bool IsSynchronousNormal(string? file)
 		{

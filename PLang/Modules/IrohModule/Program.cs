@@ -30,6 +30,7 @@ namespace PLang.Modules.IrohModule
 		private const string IncomingFolder = "/.tmp/iroh";
 
 		private static readonly ConcurrentDictionary<string, IrohEndpoint> Endpoints = new();
+		internal static int EndpointCount => Endpoints.Count;
 
 		public record IrohKey(string Name, string EndpointId);
 		public record IrohListener(string Name, string EndpointId, string Ticket);

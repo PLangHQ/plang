@@ -16,6 +16,17 @@ namespace PLang.Runtime
 		private ConcurrentStack<IEngine> _pool = new();
 		private IEngine rootEngine;
 		public ConcurrentStack<IEngine> Pool { get { return _pool; } }
+
+		// Counted on the root engine's pool, which every rent and return goes through.
+		private int createdCount;
+		private int disposedCount;
+		/// <summary>Engines this pool has created and not disposed: the ones in the pool plus the ones rented out.</summary>
+		public int Total => Volatile.Read(ref createdCount) - Volatile.Read(ref disposedCount);
+		/// <summary>Engines waiting in the pool.</summary>
+		public int Free => _pool.Count;
+		/// <summary>Engines rented out and not returned yet.</summary>
+		public int Rented => Math.Max(0, Total - Free);
+
 		public EnginePool(IEngine rootEngine)
 		{
 			
@@ -155,6 +166,7 @@ namespace PLang.Runtime
 					if (itemsToKeep.Count >= MinPoolSize && item.LastAccess < cutoffTime)
 					{
 						disposed = true;
+						Interlocked.Increment(ref rootEngine.EnginePool.disposedCount);
 						item.Dispose();
 						item.Container?.Dispose();
 					}
@@ -221,6 +233,7 @@ namespace PLang.Runtime
 			engine.SystemSink = rootEngine.SystemSink;
 			engine.UserSink = rootEngine.UserSink;
 
+			Interlocked.Increment(ref GetRootEngine().EnginePool.createdCount);
 			return engine;
 		}
 	}

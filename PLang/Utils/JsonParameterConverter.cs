@@ -31,6 +31,7 @@ public sealed class JObjectPlan
 	}
 
 	private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<JObject, JObjectPlan> plans = new();
+	internal static int PlanCount => plans.Count();
 
 	/// <summary>The plan of this JObject for the parameter type, or null when it cannot be analysed (the caller
 	/// then does what it did before the plan existed, which includes throwing the same exceptions).</summary>

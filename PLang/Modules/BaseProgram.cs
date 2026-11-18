@@ -447,6 +447,8 @@ namespace PLang.Modules
 		}
 		private static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, TaskReader> taskReaders = new();
 		private static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, bool> valueTupleTypes = new();
+		internal static int TaskReaderCount => taskReaders.Count;
+		internal static int ValueTupleTypeCount => valueTupleTypes.Count;
 		private static bool IsValueTupleType(Type type) => valueTupleTypes.GetOrAdd(type, static t => t.ToString().Contains("ValueTuple"));
 
 		private (object? returnValue, IError? error, Properties? Properties) GetValuesFromTask(Task task)

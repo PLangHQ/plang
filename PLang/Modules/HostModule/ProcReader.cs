@@ -350,6 +350,39 @@ public static class ProcReader
 		}
 	}
 
+	/// <summary>Open file handles (sockets and pipes included) of a process: the entries of /proc/&lt;pid&gt;/fd, null when they cannot be read.</summary>
+	public static int? CountOpenFiles(int pid, string procRoot = "/proc")
+	{
+		return CountFds(Path.Join(procRoot, pid.ToString(CultureInfo.InvariantCulture)));
+	}
+
+	/// <summary>
+	/// The "kB" lines of /proc/&lt;pid&gt;/status (VmRSS, RssAnon, RssFile, RssShmem, VmSwap, ...) by name, in kB.
+	/// RssAnon is memory the process allocated itself (managed heap, native allocations, thread stacks), RssFile is mapped files
+	/// such as the loaded dlls. Empty when the file cannot be read.
+	/// </summary>
+	public static Dictionary<string, long> ReadStatusKb(int pid, string procRoot = "/proc")
+	{
+		var result = new Dictionary<string, long>(StringComparer.Ordinal);
+		try
+		{
+			string file = Path.Join(procRoot, pid.ToString(CultureInfo.InvariantCulture), "status");
+			if (!File.Exists(file)) return result;
+			foreach (var line in File.ReadLines(file))
+			{
+				int colon = line.IndexOf(':');
+				if (colon <= 0 || !line.EndsWith(" kB")) continue;
+				var number = line[(colon + 1)..^3].Trim();
+				if (long.TryParse(number, NumberStyles.Integer, CultureInfo.InvariantCulture, out long kb)) result[line[..colon]] = kb;
+			}
+		}
+		catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+		{
+			// Not readable.
+		}
+		return result;
+	}
+
 	/// <summary>Entries of /proc/&lt;pid&gt;/fd; another user's process can only be counted by root, and then the count is null.</summary>
 	private static int? CountFds(string processDir)
 	{

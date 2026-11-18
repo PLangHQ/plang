@@ -43,6 +43,8 @@ public class CallStack
 	public ExecutionPhase CurrentPhase => CurrentFrame.Phase;
 	public RuntimeEvent? Event => CurrentFrame.Event;
 	public int Depth => _frames.Count;
+	/// <summary>The deepest this call stack has been since it was created.</summary>
+	public int MaxDepthSeen { get; private set; }
 	public bool HasFrames => !_frames.IsEmpty;
 
 	public const int MaxDepth = 1000;
@@ -64,6 +66,8 @@ public class CallStack
 		var frame = new CallStackFrame(goal, parentFrame, eventBinding);
 
 		_frames.Push(frame);
+		int depth = _frames.Count;
+		if (depth > MaxDepthSeen) MaxDepthSeen = depth;
 		SetPhase(ExecutionPhase.ExecutingGoal);
 
 		return frame;
@@ -371,6 +375,8 @@ public class CallStackFrame : VariableContainer
 	{
 		Errors.Add(error);
 	}
+
+	public int ExecutedStepCount => _executedSteps.Count;
 
 	public IReadOnlyList<ExecutedStep> GetExecutedSteps()
 	{

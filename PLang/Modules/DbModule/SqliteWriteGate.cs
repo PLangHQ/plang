@@ -21,6 +21,7 @@ namespace PLang.Modules.DbModule
 	internal static class SqliteWriteGate
 	{
 		private static readonly ConcurrentDictionary<string, SemaphoreSlim> gates = new(StringComparer.Ordinal);
+		internal static int GateCount => gates.Count;
 
 		public static SemaphoreSlim? For(IDbConnection? connection, IDbTransaction? transaction)
 		{
