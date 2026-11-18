@@ -83,11 +83,11 @@ namespace PLang.Modules
 
 		public void Init(IServiceContainer container, Goal goal, GoalStep step, Instruction instruction, IPLangContextAccessor contextAccessor)
 		{
-			Stopwatch stopwatch = Stopwatch.StartNew();
+			long start = StepClock.Now();
 			this.container = container;
 
 			this.logger = container.GetInstance<ILogger>();
-			logger.LogTrace($"        - Init on BaseProgram - {stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace($"        - Init on BaseProgram - {StepClock.Ms(start)}");
 
 			
 			this.appContext = container.GetInstance<PLangAppContext>();			
@@ -104,14 +104,14 @@ namespace PLang.Modules
 			this.instruction = instruction;
 			this.memoryStack.Goal = goal;
 
-			logger.LogTrace($"        - Set vars - {stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace($"        - Set vars - {StepClock.Ms(start)}");
 			
 			this.typeHelper = container.GetInstance<ITypeHelper>();
 			this.llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
 			this.methodHelper = container.GetInstance<MethodHelper>();
 
 			this.fileAccessHandler = container.GetInstance<IFileAccessHandler>();
-			logger.LogTrace($"        - Done init - {stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace($"        - Done init - {StepClock.Ms(start)}");
 		}
 
 		public IServiceContainer Container { get { return container; } }
@@ -150,19 +150,19 @@ namespace PLang.Modules
 		}
 
 		public async Task<(object? ReturnValue, IError? Error)> RunFunctionInternal(IGenericFunction function) { 
-			Stopwatch stopwatch = Stopwatch.StartNew();
+			long start = StepClock.Now();
 			Dictionary<string, object?>? parameterValues = null;
 			this.function = function; // this is to give sub classes access to current function running.
 			try
 			{
-				logger.LogTrace($"       - Get method {function.Name} - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"       - Get method {function.Name} - {StepClock.Ms(start)}");
 				MethodInfo? method = await methodHelper.GetMethod(this, function);
 				if (method == null)
 				{
 					return (null, new StepError($"Could not load method {function.Name} to run", goalStep, "MethodNotFound", 500));
 				}
 
-				logger.LogTrace($"       - Method:{goalStep.ModuleType}.{method.Name}({method.GetParameters()}) - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"       - Method:{goalStep.ModuleType}.{method.Name}({method.GetParameters()}) - {StepClock.Ms(start)}");
 
 				//TODO: Should move this caching check up the call stack. code is doing to much work before returning cache
 				if (await LoadCached(method, function)) return (null, null);
@@ -171,12 +171,12 @@ namespace PLang.Modules
 				{
 					return (new Error($"The method {method.Name} does not return Task. Method that are called must return Task"), null);
 				}
-				logger.LogTrace($"       - Loading parameter values - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"       - Loading parameter values - {StepClock.Ms(start)}");
 
 				(parameterValues, var error) = methodHelper.GetParameterValues(method, function);
 				if (error != null) return (null, error);
 
-				logger.LogTrace($"       - Have parameter values, calling Invoke - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"       - Have parameter values, calling Invoke - {StepClock.Ms(start)}");
 				
 				// This is for memoryStack event handler. Should find a better way
 				context.AddOrReplace(ReservedKeywords.Goal, goal);
@@ -230,7 +230,7 @@ namespace PLang.Modules
 					}
 				}
 
-				logger.LogTrace($"       - Invoke done - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"       - Invoke done - {StepClock.Ms(start)}");
 
 				if (task.Status == TaskStatus.Canceled)
 				{
