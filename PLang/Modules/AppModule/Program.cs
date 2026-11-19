@@ -12,7 +12,7 @@ using System.ComponentModel;
 namespace PLang.Modules.AppModule
 {
 	
-	[Description("Call an App. When the user has the word 'app' in his statement, this should be called. ")]
+	[Description("Call an App. When the user has the word 'app' in his statement, this should be called. Not for `drain app`, which stops the running process itself (EnvironmentModule).")]
 	public class Program(IPseudoRuntime pseudoRuntime, IEngine engine, PrParser prParser, IPLangContextAccessor contextAccessor) : BaseProgram()
 	{
 		public PLangContext Context { get { return context; } }

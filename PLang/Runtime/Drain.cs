@@ -37,6 +37,7 @@ namespace PLang.Runtime
 		private const int IrohCloseWaitMilliseconds = 5000;
 		private const int LiveConnectionCloseWaitMilliseconds = 1000;
 		private const int HostStopGraceMilliseconds = 2000;
+		private const int CalledFromRequestGraceMilliseconds = 300;
 		private const string IrohListenKindPrefix = "iroh-listen-";
 
 		private readonly KeepAliveRegistry registry;
@@ -110,8 +111,15 @@ namespace PLang.Runtime
 			int irohClosed = await CloseIroh();
 
 			var stopsDone = Task.WhenAll(stops);
+
+			// When the drain is a step of a request of a host that is being drained, that host cannot finish its stop before this request ends,
+			// so waiting for it would hold the answer until the timeout, and disposing the host would cut the answer. The listening sockets
+			// are closed already; the host finishes and goes away when the request is done.
+			bool calledFromRequest = callingEngine?.RunningContext?.HttpContext != null;
+			var hostWait = calledFromRequest ? TimeSpan.FromMilliseconds(CalledFromRequestGraceMilliseconds) : timeout + TimeSpan.FromMilliseconds(HostStopGraceMilliseconds);
+
 			// Kestrel returns at the token at the latest, the grace only keeps a host that does not honour the token from holding the drain
-			var finished = await Task.WhenAny(stopsDone, Task.Delay(timeout + TimeSpan.FromMilliseconds(HostStopGraceMilliseconds)));
+			var finished = await Task.WhenAny(stopsDone, Task.Delay(hostWait));
 			int webserversStopped = 0;
 			if (finished == stopsDone)
 			{
@@ -121,6 +129,11 @@ namespace PLang.Runtime
 					if (stopTimedOut) timedOut = true;
 				}
 			}
+			else if (calledFromRequest)
+			{
+				// the sockets are closed, the hosts finish with the request
+				webserversStopped = webservers.Count;
+			}
 			else
 			{
 				timedOut = true;
@@ -128,7 +141,7 @@ namespace PLang.Runtime
 
 			foreach (var (entry, properties) in webservers)
 			{
-				try { properties.Listener?.Dispose(); } catch { }
+				if (!calledFromRequest) { try { properties.Listener?.Dispose(); } catch { } }
 				Modules.WebserverModule.Program.ForgetListener(properties);
 				registry.Remove(properties, entry.Kind, dispose: false);
 			}
