@@ -50,6 +50,16 @@ condition itself and keep the same throwErrorOnTrue shape.
     IsNotEmpty(item: ""%x%"", throwErrorOnTrue: { ""Message"": ""Not found"", ""Type"": ""Error"", ""StatusCode"": 404 })
 ");
 			}
+			if (Regex.IsMatch(Regex.Replace(step.Text, "\"[^\"]*\"|'[^']*'", "\"\""), @"\bcall\b", RegexOptions.IgnoreCase))
+			{
+				AppendToSystemCommand(@"This condition calls a goal. Whatever method you choose (IsEmpty, IsNotEmpty, ContainsString, IsEqual, SimpleCondition, ...),
+ALWAYS set goalToCallIfTrue to the goal named after `then call` / `then` / `call`, also when the whole condition is written on ONE line,
+and goalToCallIfFalse to the goal named after `else`. ALWAYS keep the condition itself (the variable or value that is checked); a function with only goals is never correct.
+
+`- if %name% is empty then call goal AskName` => IsEmpty(item: ""%name%"", goalToCallIfTrue: { ""Name"": ""AskName"" })
+`- if %x% == 5 then call goal Five, else call goal Other` => IsEqual(item1: ""%x%"", item2: ""5"", goalToCallIfTrue: { ""Name"": ""Five"" }, goalToCallIfFalse: { ""Name"": ""Other"" })
+");
+			}
 			if (step.Text.Contains("%!"))
 			{
 				AppendToSystemCommand(@"variables starting with ! are global or app scoped variable, such a %!error%, %!goal%, etc. 
@@ -78,11 +88,31 @@ statments like `if %!error.Handled% does NOT mean it is false
 		// is evaluated and then does nothing.
 		public async Task<(Instruction, IBuilderError?)> BuilderValidate(GoalStep step, Instruction instruction, IGenericFunction gf)
 		{
-			var message = MissingGoalToCall(step.Text, gf);
+			var message = MissingCondition(step.Text, gf) ?? MissingGoalToCall(step.Text, gf);
 			if (message == null) return (instruction, null);
 
 			return (instruction, new StepBuilderError(message, step,
 				FixSuggestion: "Set goalToCallIfTrue to the goal called after `then` and goalToCallIfFalse to the goal called after `else`, e.g. goalToCallIfTrue={Name=\"HandleOverLimit\"}, goalToCallIfFalse={Name=\"IssueCodeNow\"}"));
+		}
+
+		/// <summary>
+		/// A step that starts with `if` is a condition. A condition method that carries no value for what it checks, only the goals,
+		/// evaluates nothing: the step would call its goal every time, or never. Returns the reason, or null when the condition is there.
+		/// </summary>
+		public static string? MissingCondition(string? stepText, IGenericFunction gf)
+		{
+			if (string.IsNullOrEmpty(stepText) || string.IsNullOrEmpty(gf?.Name)) return null;
+			if (!Regex.IsMatch(stepText.TrimStart(), @"^if\b", RegexOptions.IgnoreCase)) return null;
+
+			var methods = typeof(Program).GetMethods().Where(m => m.Name == gf.Name && m.GetParameters().Any(p => p.Name == "goalToCallIfTrue")).ToList();
+			if (methods.Count == 0) return null;
+
+			bool hasOperand = gf.Parameters != null && gf.Parameters.Any(p =>
+				!p.Name.StartsWith("goalToCall", StringComparison.OrdinalIgnoreCase) && !p.Name.StartsWith("throwError", StringComparison.OrdinalIgnoreCase) && HasValue(gf, p.Name));
+			if (hasOperand) return null;
+
+			return $"The step is a condition but {gf.Name} was built without any value to check, only the goals to call, so nothing would be evaluated. " +
+				"Put the variable or value that the step compares, e.g. `if %x% is empty then call A` => IsEmpty(item: \"%x%\", goalToCallIfTrue: {Name: \"A\"}).";
 		}
 
 		public static string? MissingGoalToCall(string? stepText, IGenericFunction gf)
