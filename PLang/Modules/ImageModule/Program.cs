@@ -1,15 +1,11 @@
-﻿using NBitcoin.Protocol;
-using PLang.Attributes;
+﻿using PLang.Attributes;
 using PLang.Errors;
 using PLang.Errors.Runtime;
 using PLang.Models;
-using PLang.Modules;
 using PLang.Modules.ImageModule.QrCode;
 using PLang.Runtime;
 using QRCoder;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
+using SkiaSharp;
 using System.ComponentModel;
 
 namespace PLang.Modules.ImageModule
@@ -86,12 +82,12 @@ namespace PLang.Modules.ImageModule
 
 					case "png":
 					case "pngbyte":
-						await GeneratePngByte(qrCodeData, request, result, props);
+						GeneratePngByte(qrCodeData, request, result, props);
 						break;
 
 					case "base64":
 					default:
-						await GenerateBase64(qrCodeData, request, result, props);
+						GenerateBase64(qrCodeData, request, result, props);
 						break;
 				}
 
@@ -151,27 +147,23 @@ namespace PLang.Modules.ImageModule
 				return (null, new ProgramError($"Image file not found: {sourcePath}", goalStep, function, StatusCode: 404));
 			}
 
-			var (encoder, formatName, formatError) = GetEncoder(format, target, quality);
+			var (encodedFormat, formatName, formatError) = GetEncoder(format, target);
 			if (formatError != null) return (null, formatError);
 
 			try
 			{
 				byte[] bytes = await fileSystem.File.ReadAllBytesAsync(source);
-				using var image = SixLabors.ImageSharp.Image.Load(bytes);
-				image.Mutate(x => x.AutoOrient());
+				var (decoded, readError) = Decode(bytes, sourcePath);
+				if (readError != null) return (null, readError);
 
+				var image = decoded!;
 				var result = new ImageResult { SourceWidth = image.Width, SourceHeight = image.Height, Format = formatName };
 				var background = ParseBackground(backgroundColor, formatName);
 
 				var (newWidth, newHeight, resizeMode) = CalculateSize(image.Width, image.Height, width, height, mode);
 				if (newWidth != image.Width || newHeight != image.Height)
 				{
-					image.Mutate(x => x.Resize(new ResizeOptions
-					{
-						Size = new SixLabors.ImageSharp.Size(newWidth, newHeight),
-						Mode = ResizeMode.Stretch,
-						Sampler = KnownResamplers.Bicubic
-					}));
+					image = Replace(image, ResizeBitmap(image, newWidth, newHeight));
 				}
 
 				if (resizeMode == "fill" && width > 0 && height > 0 && (image.Width != width || image.Height != height))
@@ -180,29 +172,27 @@ namespace PLang.Modules.ImageModule
 					int cropY = Math.Max(0, (image.Height - height) / 2);
 					int cropW = Math.Min(width, image.Width);
 					int cropH = Math.Min(height, image.Height);
-					image.Mutate(x => x.Crop(new SixLabors.ImageSharp.Rectangle(cropX, cropY, cropW, cropH)));
+					image = Replace(image, Draw(cropW, cropH, SKColors.Transparent, canvas => canvas.DrawBitmap(image, -cropX, -cropY)));
 				}
 
 				bool padToBox = (resizeMode == "pad" || center) && width > 0 && height > 0;
 				if (padToBox && (image.Width != width || image.Height != height))
 				{
-					var canvas = new SixLabors.ImageSharp.Image<Rgba32>(width, height, background.ToPixel<Rgba32>());
-					var point = new SixLabors.ImageSharp.Point((width - image.Width) / 2, (height - image.Height) / 2);
-					using var top = image.CloneAs<Rgba32>();
-					canvas.Mutate(x => x.DrawImage(top, point, 1f));
-					image.Dispose();
-					return await Save(canvas, encoder, target, formatName!, sharpen, background, result);
+					var top = image;
+					image = Replace(image, Draw(width, height, background, canvas => canvas.DrawBitmap(top, (width - top.Width) / 2, (height - top.Height) / 2)));
 				}
 
-				return await Save(image, encoder, target, formatName!, sharpen, background, result);
-			}
-			catch (SixLabors.ImageSharp.UnknownImageFormatException)
-			{
-				return (null, new ProgramError($"The file is not an image that can be read: {sourcePath}", goalStep, function, StatusCode: 400));
-			}
-			catch (SixLabors.ImageSharp.InvalidImageContentException ex)
-			{
-				return (null, new ProgramError($"The image is damaged and cannot be read: {sourcePath}. {ex.Message}", goalStep, function, Exception: ex, StatusCode: 400));
+				if (sharpen) image = Replace(image, Sharpen(image));
+				if (formatName == "jpeg")
+				{
+					var flat = image;
+					image = Replace(image, Draw(flat.Width, flat.Height, background, canvas => canvas.DrawBitmap(flat, 0, 0)));
+				}
+
+				using (image)
+				{
+					return await Write(image, encodedFormat, quality, target, result);
+				}
 			}
 			catch (Exception ex)
 			{
@@ -227,8 +217,14 @@ namespace PLang.Modules.ImageModule
 			{
 				return (null, new ProgramError($"Image file not found: {sourcePath}", goalStep, function, StatusCode: 404));
 			}
-			var probe = SixLabors.ImageSharp.Image.Identify(await fileSystem.File.ReadAllBytesAsync(source));
-			return await Resize(sourcePath, probe.Width, probe.Height, targetPath, "exact", quality, format, backgroundColor);
+			using var codec = SKCodec.Create(new MemoryStream(await fileSystem.File.ReadAllBytesAsync(source)));
+			if (codec == null)
+			{
+				return (null, new ProgramError($"The file is not an image that can be read: {sourcePath}", goalStep, function, StatusCode: 400));
+			}
+			// The size the image is shown in: a photo stored on its side (EXIF orientation 5-8) is turned before it is written.
+			var (shownWidth, shownHeight) = IsSideways(codec.EncodedOrigin) ? (codec.Info.Height, codec.Info.Width) : (codec.Info.Width, codec.Info.Height);
+			return await Resize(sourcePath, shownWidth, shownHeight, targetPath, "exact", quality, format, backgroundColor);
 		}
 
 		[Description("Reads the width, height and format of an image file without changing it")]
@@ -244,14 +240,14 @@ namespace PLang.Modules.ImageModule
 			try
 			{
 				var bytes = await fileSystem.File.ReadAllBytesAsync(source);
-				var info = SixLabors.ImageSharp.Image.Identify(bytes);
-				var name = SixLabors.ImageSharp.Image.DetectFormat(bytes)?.Name?.ToLowerInvariant();
-				if (name == "jpg") name = "jpeg";
+				using var codec = SKCodec.Create(new MemoryStream(bytes));
+				if (codec == null)
+				{
+					return (null, new ProgramError($"The file is not an image that can be read: {sourcePath}", goalStep, function, StatusCode: 400));
+				}
+				var info = codec.Info;
+				var name = codec.EncodedFormat.ToString().ToLowerInvariant();
 				return (new ImageResult { FilePath = source, Width = info.Width, Height = info.Height, SourceWidth = info.Width, SourceHeight = info.Height, Bytes = bytes.Length, Format = name }, null);
-			}
-			catch (SixLabors.ImageSharp.UnknownImageFormatException)
-			{
-				return (null, new ProgramError($"The file is not an image that can be read: {sourcePath}", goalStep, function, StatusCode: 400));
 			}
 			catch (Exception ex)
 			{
@@ -259,42 +255,116 @@ namespace PLang.Modules.ImageModule
 			}
 		}
 
-		private async Task<(ImageResult?, IError?)> Save(SixLabors.ImageSharp.Image image, SixLabors.ImageSharp.Formats.IImageEncoder encoder, string target, string formatName, bool sharpen, SixLabors.ImageSharp.Color background, ImageResult result)
+		// Reads the image and turns it the way its EXIF orientation says, so it is upright.
+		private (SKBitmap?, IError?) Decode(byte[] bytes, string sourcePath)
 		{
-			if (sharpen) image.Mutate(x => x.GaussianSharpen());
-
-			if (formatName == "jpeg")
+			using var codec = SKCodec.Create(new MemoryStream(bytes));
+			if (codec == null)
 			{
-				using var flat = image.CloneAs<Rgba32>();
-				var white = new SixLabors.ImageSharp.Image<Rgba32>(flat.Width, flat.Height, background.ToPixel<Rgba32>());
-				white.Mutate(x => x.DrawImage(flat, 1f));
-				image.Dispose();
-				return await Write(white, encoder, target, result);
+				return (null, new ProgramError($"The file is not an image that can be read: {sourcePath}", goalStep, function, StatusCode: 400));
 			}
-			return await Write(image, encoder, target, result);
+			var info = new SKImageInfo(codec.Info.Width, codec.Info.Height, SKColorType.Rgba8888, SKAlphaType.Premul);
+			var bitmap = new SKBitmap(info);
+			var decodeResult = codec.GetPixels(info, bitmap.GetPixels());
+			if (decodeResult != SKCodecResult.Success && decodeResult != SKCodecResult.IncompleteInput)
+			{
+				bitmap.Dispose();
+				return (null, new ProgramError($"The image is damaged and cannot be read: {sourcePath}. {decodeResult}", goalStep, function, StatusCode: 400));
+			}
+			return (Orient(bitmap, codec.EncodedOrigin), null);
 		}
 
-		private async Task<(ImageResult?, IError?)> Write(SixLabors.ImageSharp.Image image, SixLabors.ImageSharp.Formats.IImageEncoder encoder, string target, ImageResult result)
+		private static bool IsSideways(SKEncodedOrigin origin) =>
+			origin is SKEncodedOrigin.LeftTop or SKEncodedOrigin.RightTop or SKEncodedOrigin.RightBottom or SKEncodedOrigin.LeftBottom;
+
+		private static SKBitmap Orient(SKBitmap bitmap, SKEncodedOrigin origin)
 		{
-			using (image)
+			if (origin == SKEncodedOrigin.TopLeft) return bitmap;
+
+			float w = bitmap.Width, h = bitmap.Height;
+			// x' = scaleX * x + skewX * y + transX, y' = skewY * x + scaleY * y + transY
+			var matrix = origin switch
 			{
-				var directory = fileSystem.Path.GetDirectoryName(target);
-				if (!string.IsNullOrEmpty(directory) && !fileSystem.Directory.Exists(directory))
-				{
-					fileSystem.Directory.CreateDirectory(directory);
-				}
-				using var ms = new MemoryStream();
-				await image.SaveAsync(ms, encoder);
-				await fileSystem.File.WriteAllBytesAsync(target, ms.ToArray());
-				result.FilePath = target;
-				result.Width = image.Width;
-				result.Height = image.Height;
-				result.Bytes = ms.Length;
+				SKEncodedOrigin.TopRight => new SKMatrix(-1, 0, w, 0, 1, 0, 0, 0, 1),
+				SKEncodedOrigin.BottomRight => new SKMatrix(-1, 0, w, 0, -1, h, 0, 0, 1),
+				SKEncodedOrigin.BottomLeft => new SKMatrix(1, 0, 0, 0, -1, h, 0, 0, 1),
+				SKEncodedOrigin.LeftTop => new SKMatrix(0, 1, 0, 1, 0, 0, 0, 0, 1),
+				SKEncodedOrigin.RightTop => new SKMatrix(0, -1, h, 1, 0, 0, 0, 0, 1),
+				SKEncodedOrigin.RightBottom => new SKMatrix(0, -1, h, -1, 0, w, 0, 0, 1),
+				SKEncodedOrigin.LeftBottom => new SKMatrix(0, 1, 0, -1, 0, w, 0, 0, 1),
+				_ => SKMatrix.Identity
+			};
+			int newWidth = IsSideways(origin) ? bitmap.Height : bitmap.Width;
+			int newHeight = IsSideways(origin) ? bitmap.Width : bitmap.Height;
+			return Replace(bitmap, Draw(newWidth, newHeight, SKColors.Transparent, canvas =>
+			{
+				canvas.SetMatrix(matrix);
+				canvas.DrawBitmap(bitmap, 0, 0);
+			}));
+		}
+
+		// A large reduction in one cubic pass skips source pixels and aliases; halving first (each halving averages 2x2)
+		// keeps every pixel in the result, and the last step to the exact size is bicubic (Catmull-Rom).
+		private static SKBitmap ResizeBitmap(SKBitmap source, int width, int height)
+		{
+			var current = source;
+			while (current.Width / 2 >= width && current.Height / 2 >= height)
+			{
+				var half = current.Resize(new SKImageInfo(current.Width / 2, current.Height / 2, SKColorType.Rgba8888, SKAlphaType.Premul), new SKSamplingOptions(SKFilterMode.Linear));
+				if (current != source) current.Dispose();
+				current = half;
 			}
+			var resized = current.Resize(new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Premul), new SKSamplingOptions(SKCubicResampler.CatmullRom));
+			if (current != source) current.Dispose();
+			return resized;
+		}
+
+		private static SKBitmap Sharpen(SKBitmap source)
+		{
+			float[] kernel = [0, -1, 0, -1, 5, -1, 0, -1, 0];
+			using var filter = SKImageFilter.CreateMatrixConvolution(new SKSizeI(3, 3), kernel, 1f, 0f, new SKPointI(1, 1), SKShaderTileMode.Clamp, false);
+			using var paint = new SKPaint { ImageFilter = filter };
+			return Draw(source.Width, source.Height, SKColors.Transparent, canvas => canvas.DrawBitmap(source, 0, 0, paint));
+		}
+
+		private static SKBitmap Draw(int width, int height, SKColor background, Action<SKCanvas> draw)
+		{
+			var bitmap = new SKBitmap(new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Premul));
+			using var canvas = new SKCanvas(bitmap);
+			canvas.Clear(background);
+			draw(canvas);
+			canvas.Flush();
+			return bitmap;
+		}
+
+		private static SKBitmap Replace(SKBitmap old, SKBitmap replacement)
+		{
+			if (!ReferenceEquals(old, replacement)) old.Dispose();
+			return replacement;
+		}
+
+		private async Task<(ImageResult?, IError?)> Write(SKBitmap image, SKEncodedImageFormat format, int quality, string target, ImageResult result)
+		{
+			var directory = fileSystem.Path.GetDirectoryName(target);
+			if (!string.IsNullOrEmpty(directory) && !fileSystem.Directory.Exists(directory))
+			{
+				fileSystem.Directory.CreateDirectory(directory);
+			}
+			using var data = image.Encode(format, quality);
+			if (data == null)
+			{
+				return (null, new ProgramError($"Could not write the image as {format.ToString().ToLowerInvariant()}: {target}", goalStep, function));
+			}
+			var bytes = data.ToArray();
+			await fileSystem.File.WriteAllBytesAsync(target, bytes);
+			result.FilePath = target;
+			result.Width = image.Width;
+			result.Height = image.Height;
+			result.Bytes = bytes.Length;
 			return (result, null);
 		}
 
-		private (SixLabors.ImageSharp.Formats.IImageEncoder, string?, IError?) GetEncoder(string? format, string target, int quality)
+		private (SKEncodedImageFormat, string?, IError?) GetEncoder(string? format, string target)
 		{
 			var name = (format ?? "").Trim().TrimStart('.').ToLowerInvariant();
 			if (name == "") name = Path.GetExtension(target).TrimStart('.').ToLowerInvariant();
@@ -302,20 +372,38 @@ namespace PLang.Modules.ImageModule
 			{
 				case "jpg":
 				case "jpeg":
-					return (new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder { Quality = quality }, "jpeg", null);
+					return (SKEncodedImageFormat.Jpeg, "jpeg", null);
 				case "png":
-					return (new SixLabors.ImageSharp.Formats.Png.PngEncoder(), "png", null);
+					return (SKEncodedImageFormat.Png, "png", null);
 				case "webp":
-					return (new SixLabors.ImageSharp.Formats.Webp.WebpEncoder { Quality = quality }, "webp", null);
+					return (SKEncodedImageFormat.Webp, "webp", null);
 				default:
-					return (null!, null, new ProgramError($"Unsupported image format '{name}'. Use jpeg, png or webp, or give the target file one of those extensions", goalStep, function, StatusCode: 400));
+					return (default, null, new ProgramError($"Unsupported image format '{name}'. Use jpeg, png or webp, or give the target file one of those extensions", goalStep, function, StatusCode: 400));
 			}
 		}
 
-		private SixLabors.ImageSharp.Color ParseBackground(string? backgroundColor, string? formatName)
+		private static SKColor ParseBackground(string? backgroundColor, string? formatName)
 		{
-			if (!string.IsNullOrWhiteSpace(backgroundColor) && SixLabors.ImageSharp.Color.TryParse(backgroundColor.Trim(), out var color)) return color;
-			return formatName == "jpeg" ? SixLabors.ImageSharp.Color.White : SixLabors.ImageSharp.Color.Transparent;
+			var color = ParseColor(backgroundColor);
+			if (color != null) return color.Value;
+			return formatName == "jpeg" ? SKColors.White : SKColors.Transparent;
+		}
+
+		// A color as a CSS name (white, red, transparent) or hex: #rgb, #rgba, #rrggbb or #rrggbbaa (alpha last).
+		private static SKColor? ParseColor(string? value)
+		{
+			if (string.IsNullOrWhiteSpace(value)) return null;
+			var text = value.Trim();
+			var hex = text.TrimStart('#');
+			if (hex.Length is 3 or 4 or 6 or 8 && hex.All(Uri.IsHexDigit))
+			{
+				if (hex.Length <= 4) hex = string.Concat(hex.Select(c => $"{c}{c}"));
+				byte Part(int i) => Convert.ToByte(hex.Substring(i * 2, 2), 16);
+				return new SKColor(Part(0), Part(1), Part(2), hex.Length == 8 ? Part(3) : (byte)255);
+			}
+			var named = System.Drawing.Color.FromName(text.Replace(" ", ""));
+			if (named.IsKnownColor) return new SKColor(named.R, named.G, named.B, named.A);
+			return null;
 		}
 
 		private static (int, int, string) CalculateSize(int sourceWidth, int sourceHeight, int width, int height, string? mode)
@@ -400,19 +488,9 @@ namespace PLang.Modules.ImageModule
 			props.Add(new ObjectValue("epsMode", request.EpsMode));
 		}
 
-		private async Task GeneratePngByte(QRCodeData qrCodeData, QrCodeRequest request, QrCodeResult result, Properties props)
+		private void GeneratePngByte(QRCodeData qrCodeData, QrCodeRequest request, QrCodeResult result, Properties props)
 		{
-			var qrCode = new PngByteQRCode(qrCodeData);
-
-			var darkColorBytes = ParseColorToBytes(request.DarkColor, new byte[] { 0, 0, 0 });
-			var lightColorBytes = ParseColorToBytes(request.LightColor, new byte[] { 255, 255, 255 });
-
-			result.Bytes = qrCode.GetGraphic(
-				request.PixelsPerModule,
-				darkColorBytes,
-				lightColorBytes,
-				request.DrawQuietZones
-			);
+			result.Bytes = RenderPng(qrCodeData, request);
 			result.Base64 = Convert.ToBase64String(result.Bytes);
 			result.DataUri = $"data:image/png;base64,{result.Base64}";
 
@@ -420,27 +498,42 @@ namespace PLang.Modules.ImageModule
 			props.Add(new ObjectValue("format", "png"));
 		}
 
-		private async Task GenerateBase64(QRCodeData qrCodeData, QrCodeRequest request, QrCodeResult result, Properties props)
+		// PNG from QRCoder itself; a jpeg is that PNG encoded again. Gif is not written by SkiaSharp, so a gif request gets a PNG.
+		private void GenerateBase64(QRCodeData qrCodeData, QrCodeRequest request, QrCodeResult result, Properties props)
 		{
-			var darkColor = ParseColor(request.DarkColor, SixLabors.ImageSharp.Color.Black);
-			var lightColor = ParseColor(request.LightColor, SixLabors.ImageSharp.Color.White);
+			var png = RenderPng(qrCodeData, request);
 			var imgType = GetImageType(request.FilePath, request.Format);
-
-			var qrCode = new Base64QRCode(qrCodeData);
-			result.Base64 = qrCode.GetGraphic(
-				request.PixelsPerModule,
-				darkColor,
-				lightColor,
-				request.DrawQuietZones,
-				imgType
-			);
-			result.DataUri = $"data:image/{imgType.ToString().ToLower()};base64,{result.Base64}";
-			result.Bytes = Convert.FromBase64String(result.Base64);
+			if (imgType == "jpeg")
+			{
+				using var bitmap = SKBitmap.Decode(png);
+				using var flat = Draw(bitmap.Width, bitmap.Height, SKColors.White, canvas => canvas.DrawBitmap(bitmap, 0, 0));
+				using var data = flat.Encode(SKEncodedImageFormat.Jpeg, 100);
+				result.Bytes = data.ToArray();
+			}
+			else
+			{
+				imgType = "png";
+				result.Bytes = png;
+			}
+			result.Base64 = Convert.ToBase64String(result.Bytes);
+			result.DataUri = $"data:image/{imgType};base64,{result.Base64}";
 
 			props.Add(new ObjectValue("pixelsPerModule", request.PixelsPerModule));
 			props.Add(new ObjectValue("darkColor", request.DarkColor ?? "#000000"));
 			props.Add(new ObjectValue("lightColor", request.LightColor ?? "#FFFFFF"));
-			props.Add(new ObjectValue("format", imgType.ToString()));
+			props.Add(new ObjectValue("format", imgType == "jpeg" ? "Jpeg" : "Png"));
+		}
+
+		private static byte[] RenderPng(QRCodeData qrCodeData, QrCodeRequest request)
+		{
+			var dark = ParseColor(request.DarkColor) ?? SKColors.Black;
+			var light = ParseColor(request.LightColor) ?? SKColors.White;
+			var qrCode = new PngByteQRCode(qrCodeData);
+			return qrCode.GetGraphic(
+				request.PixelsPerModule,
+				System.Drawing.Color.FromArgb(dark.Alpha, dark.Red, dark.Green, dark.Blue),
+				System.Drawing.Color.FromArgb(light.Alpha, light.Red, light.Green, light.Blue),
+				request.DrawQuietZones);
 		}
 
 		private async Task SaveToFile(string filePath, QrCodeResult result, Properties props)
@@ -452,8 +545,6 @@ namespace PLang.Modules.ImageModule
 			{
 				fileSystem.Directory.CreateDirectory(directory);
 			}
-
-			var ext = Path.GetExtension(filePath).ToLowerInvariant();
 
 			if (result.Bytes != null || result.Bytes?.Length > 0)
 			{
@@ -510,56 +601,13 @@ namespace PLang.Modules.ImageModule
 			};
 		}
 
-		private SixLabors.ImageSharp.Color ParseColor(string? colorString, SixLabors.ImageSharp.Color defaultColor)
-		{
-			if (string.IsNullOrEmpty(colorString))
-				return defaultColor;
-
-			if (SixLabors.ImageSharp.Color.TryParse(colorString, out var color))
-				return color;
-
-			return defaultColor;
-		}
-
-		private byte[] ParseColorToBytes(string? colorString, byte[] defaultColor)
-		{
-			if (string.IsNullOrEmpty(colorString))
-				return defaultColor;
-
-			// Parse hex color like #RRGGBB or #RGB
-			var hex = colorString.TrimStart('#');
-			if (hex.Length == 3)
-			{
-				hex = $"{hex[0]}{hex[0]}{hex[1]}{hex[1]}{hex[2]}{hex[2]}";
-			}
-
-			if (hex.Length == 6)
-			{
-				return new byte[]
-				{
-					Convert.ToByte(hex.Substring(0, 2), 16),
-					Convert.ToByte(hex.Substring(2, 2), 16),
-					Convert.ToByte(hex.Substring(4, 2), 16)
-				};
-			}
-
-			return defaultColor;
-		}
-
-		private Base64QRCode.ImageType GetImageType(string? filePath, string? requestedFormat)
+		private static string GetImageType(string? filePath, string? requestedFormat)
 		{
 			var format = requestedFormat?.ToLowerInvariant()
 				?? Path.GetExtension(filePath)?.TrimStart('.').ToLowerInvariant()
 				?? "png";
 
-			return format switch
-			{
-				"jpg" or "jpeg" => Base64QRCode.ImageType.Jpeg,
-				"gif" => Base64QRCode.ImageType.Gif,
-				_ => Base64QRCode.ImageType.Png
-			};
+			return format is "jpg" or "jpeg" ? "jpeg" : "png";
 		}
 	}
-
-	
 }

@@ -92,11 +92,12 @@
     <PackageReference Include="OpenAI" Version="2.15.0" />
     <PackageReference Include="PdfPig" Version="0.1.16" />
     <PackageReference Include="pythonnet" Version="3.2.1" />
-    <PackageReference Include="QRCoder-ImageSharp" Version="0.10.1" />
+    <PackageReference Include="QRCoder" Version="1.9.0" />
     <PackageReference Include="RazorEngineCore" Version="2026.1.1" />
     <PackageReference Include="ReverseMarkdown" Version="6.3.0" />
     <PackageReference Include="Scriban.Signed" Version="7.6.1" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="2.1.13" />
+    <PackageReference Include="SkiaSharp" Version="4.157.0" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="4.157.0" />
     <PackageReference Include="Sprache" Version="2.3.1" />
     <PackageReference Include="SuperSimpleTcp" Version="3.2.5" />
     <PackageReference Include="System.CodeDom" Version="10.0.15" />
