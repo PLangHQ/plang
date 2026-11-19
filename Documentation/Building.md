@@ -111,7 +111,7 @@ An `EventsBuild.goal` in `events/` can run a goal before or after any goal or st
 
 ```plang
 EventsBuild
-- after step is built, call !CreateTest
+- after step is built, call CreateTest
 ```
 
 ## See also

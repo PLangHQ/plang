@@ -6,7 +6,7 @@ If you want to handle errors in your code, it's very simple:
 
 ```plang
 - read file.txt into %content%
-    on error !HandleError
+    on error call HandleError
 - write out %content%
 
 HandleError
@@ -19,8 +19,8 @@ You have options, such as:
 
 ```plang
 - read file.txt into %content%
-    on error that contains 'not found', call !HandleNotFound
-    on other errors call !HandleError
+    on error that contains 'not found', call HandleNotFound
+    on other errors call HandleError
 - write out %content%
 ```
 
@@ -64,17 +64,17 @@ To create events, start by creating a folder named `Events` (case sensitive, one
 
 ```plang
 Events
-- on app start, call !AppStarted
-- on goal start, for path '/api/*', call !Authenticate
-- before step, call !BenchmarkTimer
+- on app start, call AppStarted
+- on goal start, for path '/api/*', call Authenticate
+- before step, call BenchmarkTimer
 ```
 
 You can even bind an event to a variable, even if it doesn't exist:
 
 ```plang
-- when var %content% is created, call !ContentCreated
-- on %content% update, call !ContentUpdate
-- on %content% remove, call !ContentRemoved
+- when var %content% is created, call ContentCreated
+- on %content% update, call ContentUpdate
+- on %content% remove, call ContentRemoved
 ```
 
 ## Go to [Next Steps >>](./Lesson%206.md)

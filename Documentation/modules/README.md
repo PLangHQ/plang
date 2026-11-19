@@ -133,19 +133,19 @@ The `CallGoal` in PLang allows for the invocation of other goals within a script
 ### Calling a Simple Goal
 Invoke a goal to perform a specific task without parameters.
 ```plang
-- call !LogCurrentTime
+- call LogCurrentTime
 ```
 
 ### Passing Parameters to a Goal
 Execute a goal with parameters to tailor its operation.
 ```plang
-- call !ResizeImage imagePath="path/to/image.jpg", width=800, height=600
+- call ResizeImage imagePath="path/to/image.jpg", width=800, height=600
 ```
 
 ### Handling a Goal's Return Value
 Use the result of a goal in subsequent steps.
 ```plang
-- call !CalculateDiscount price=100, discountRate=20, write to %discountedPrice%
+- call CalculateDiscount price=100, discountRate=20, write to %discountedPrice%
 - write out "Discounted price: %discountedPrice%"
 ```
 
@@ -357,7 +357,7 @@ The Db facilitates database interactions, enabling data manipulation and managem
 Retrieve all records from the `tasks` table.
 ```plang
 - select * from tasks, write to %tasks%
-- go through %tasks%, call !PrintOut
+- go through %tasks%, call PrintOut
 ```
 ### Inserting Data
 Add a new task with a description and due date.
@@ -501,7 +501,7 @@ To set and retrieve a local variable:
 ```
 To monitor variable changes and respond to events:
 ```plang
-- when var 'theme' changes, call !ThemeChanged
+- when var 'theme' changes, call ThemeChanged
 ```
 
 [Link to docs](./PLang.Modules.LocalOrGlobalVariableModule.md)
@@ -521,7 +521,7 @@ Loop through a list of products and display each product's name and price:
 ```plang
 - add {"Name":"Product1", "Price":111} to list, write to %products%
 - add {"Name":"Product2", "Price":222} to list, write to %products%
-- go through %products% call !ShowProduct, item=%product%, list=%products%, key=1
+- go through %products% call ShowProduct, item=%product%, list=%products%, key=1
 ```
 ShowProduct Goal:
 ```plang
@@ -555,7 +555,7 @@ The Message facilitates secure and private communication, leveraging encryption 
 - **Listen for New Messages:** Automatically process new messages as they arrive.
   ```plang
   Message
-  - listen for new message, call !NewMessage, write content to %messageContent%
+  - listen for new message, call NewMessage, write content to %messageContent%
   ```
 
 [Link to docs](./PLang.Modules.MessageModule.md)

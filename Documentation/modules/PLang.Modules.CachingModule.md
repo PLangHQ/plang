@@ -21,7 +21,7 @@ Let's look at an example:
 
 ```plang
 - get 'http://api.example.com/data', write to %latestData%
-- if %latestData% is not empty then call !CacheData, else !HandleError
+- if %latestData% is not empty then call CacheData, else call HandleError
 
   - CacheData:
     - cache %latestData% for 30 minutes, to 'dataKey'

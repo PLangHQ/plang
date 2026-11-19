@@ -73,6 +73,6 @@ To debug the generated C# code:
 3. Right-click the module and select "Extract code".
 
 ### How the Debugger Works
-When you add the `--debug` parameter, an `Events` folder will appear. This folder binds to run before each step in the goal files to call `!SendDebug.goal`. The `SendDebug` goal sends a POST request to `http://localhost:60877/`. This server is started as soon as you start VS Code, and the VS Code Plang extension receives the data and displays it in the editor.
+When you add the `--debug` parameter, an `Events` folder will appear. This folder binds to run before each step in the goal files to call `SendDebug.goal`. The `SendDebug` goal sends a POST request to `http://localhost:60877/`. This server is started as soon as you start VS Code, and the VS Code Plang extension receives the data and displays it in the editor.
 
 By following these instructions, you can effectively debug your Plang applications and ensure they run smoothly.

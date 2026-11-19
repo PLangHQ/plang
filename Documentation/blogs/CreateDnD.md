@@ -84,18 +84,18 @@ Start
     \t0. Create new DoD
     \---------------------------
     \t- Story Arc Id"
-- call goal !GenerateAskUser
+- call goal GenerateAskUser
 ```
 _The syntax of each step is not strict, you can write it anyway you like as long as the intent is the same_
 
 The initial setup here is straightforward: we're initating the variable `%askUser%` with what the user would like to do next, with the options to create a new game or enter a Story Arc to continue an existing game.
 
-To make the experience more dynamic and tailored, `Start.goal` includes a call to `!GenerateAskUser`. This sub-goal fetches a list of recent games from the database and appends them to the `%askUser%` prompt, providing a quick way for users to jump back into their ongoing adventures.
+To make the experience more dynamic and tailored, `Start.goal` includes a call to `GenerateAskUser`. This sub-goal fetches a list of recent games from the database and appends them to the `%askUser%` prompt, providing a quick way for users to jump back into their ongoing adventures.
 
 ```plang
 GenerateAskUser
 - select * from games order by updated desc, write to %games%
-- foreach item in %games%, call !GenerateItemAskUser
+- foreach item in %games%, call GenerateItemAskUser
 
 GenerateItemAskUser
 - append to %askUser%, "\t- %item.id%\t%item.GAME% - %item.BOOKS% - %item.Updated.ToString("f")%"
@@ -109,8 +109,8 @@ After presenting the options, `Start.goal` captures the user's input and directs
 ```plang
 - ask user "%askUser%\n\nType in Story Arc Id or 0 to Create new game"
     , must be number(long), write to %gameId%
-- if %gameId% = 0, then call !CreateNewGame
-- if %gameId% > 0, then call !ShowStoryLine gameId=%gameId%
+- if %gameId% = 0, then call CreateNewGame
+- if %gameId% > 0, then call ShowStoryLine gameId=%gameId%
 ```
 
 Here, the user's choice is processed, leading to either the creation of a new game or the continuation of an existing storyline. This decision-making process is a critical component of the goal, guiding the user through the application's core functionalities.
@@ -124,15 +124,15 @@ Start
     \t0. Create new DoD
     \---------------------------
     \t- Story Arc Id"
-- call goal !GenerateAskUser
+- call goal GenerateAskUser
 - ask user "%askUser%\n\nType in Story Arc Id or 0 to Create new game"
     , must be number(long), write to %gameId%
-- if %gameId% = 0, then call !CreateNewGame
-- if %gameId% > 0, then call !ShowStoryLine gameId=%gameId%
+- if %gameId% = 0, then call CreateNewGame
+- if %gameId% > 0, then call ShowStoryLine gameId=%gameId%
 
 GenerateAskUser
 - select * from games order by updated desc, write to %games%
-- foreach item in %games%, call !GenerateItemAskUser
+- foreach item in %games%, call GenerateItemAskUser
 
 GenerateItemAskUser
 - append to %askUser%, "\t- %item.id%\t%item.GAME% - %item.BOOKS% - %item.Updated.ToString("f")%"
@@ -177,13 +177,13 @@ After laying out the defaults, `CreateNewGame.goal` invites the user to customiz
     Leave it empty if you happy with the defaults.
     '
     write to %answer%
-- if %answer% is not empty call !LoadPreferences
+- if %answer% is not empty call LoadPreferences
 ```
 
 The assistant prompts the user to review and potentially modify the default settings. This step empowers the user to shape the game to their liking, enhancing engagement and investment in the game setup process.
 
 #### Integrating User Preferences
-Should the user decide to customize their game setup, `CreateNewGame.goal` employs a smart mechanism to apply these preferences through `!LoadPreferences`. This feature demonstrates the flexibility of Plang, catering to user inputs and dynamically adjusting the game setup.
+Should the user decide to customize their game setup, `CreateNewGame.goal` employs a smart mechanism to apply these preferences through `LoadPreferences`. This feature demonstrates the flexibility of Plang, catering to user inputs and dynamically adjusting the game setup.
 
 ```plang
 LoadPreferences
@@ -201,7 +201,7 @@ With the preferences set, the game details are stored in the database, and the s
 ```plang
 - insert into games, %GAME%, %BOOKS%, %ROLE%, %THEME%, %TONALITY%, %CHARACTER%
     write to %gameId%
-- call goal !StartGame
+- call goal StartGame
 ```
 
 This step is pivotal as it saves the game configuration, making it retrievable for future sessions, and marks the transition from setup to actual gameplay.
@@ -219,7 +219,7 @@ StartGame
 - read llm/gameSetupSystem.txt, write to %gameSetupSystem%, load vars
 - [llm] system: %gameSetupSystem%
         scheme: {story:string, summary:string}
-- call goal !SaveStoryLine %user%="Let's play"
+- call goal SaveStoryLine %user%="Let's play"
 ```
 
 This section signals the game's start and prepares the system to [generate the initial storyline](https://github.com/PLangHQ/apps/blob/main/DnD/llm/gameSetupSystem.txt). It utilizes a game setup system, a set of logic and data that helps in crafting the game's narrative, and concludes by saving the introductory storyline.
@@ -245,7 +245,7 @@ CreateStoryLine
     tempature: 1
     topp: 1
     scheme: {story:string, summary:string}
-- call goal !SaveStoryLine user=%nextStep%
+- call goal SaveStoryLine user=%nextStep%
 ```
 
 This goal dynamically generates story arcs based on the game's context and the latest developments. It involves querying the game's current state and the most recent storylines to inform the next narrative segment.
@@ -257,7 +257,7 @@ Each new storyline generated is saved through `SaveStoryLine`, ensuring the game
 ```plang
 SaveStoryLine
 - insert into story_lines %gameId%, %story%, %summary%, %user%, write to %storyLineId%
-- call goal !ShowStoryLine
+- call goal ShowStoryLine
 ```
 
 This goal inserts the new story segment into the `story_lines` table and then proceeds to display this latest part of the story to the player.
@@ -275,7 +275,7 @@ ShowStoryLine
 - ask user "\n(to exit the game, type in 'exit game')
 
     ?:", write to %nextStep%
-- if %nextStep% == 'exit game' or empty (case insensitive), then call !Start, else !CreateStoryLine
+- if %nextStep% == 'exit game' or empty (case insensitive), then call Start, else call CreateStoryLine
 ```
 
 This goal retrieves and displays the latest story segment, offering the player a chance to continue the adventure or exit the game. It's a pivotal point where the narrative's progression and player interaction converge.

@@ -67,7 +67,7 @@ You can also use loops with HTTP requests. For example, fetching cat facts:
 ```plang
 CatFacts
 - GET https://cat-fact.herokuapp.com/facts, write to %facts%
-- go through %facts% !ShowFact fact=%item%
+- go through %facts% call ShowFact fact=%item%
 
 ShowFact
 - write out '%fact.text% was created at %fact.createdAt%'
