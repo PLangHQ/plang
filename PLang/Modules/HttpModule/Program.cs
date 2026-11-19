@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Nostr.Client.Client;
 using Org.BouncyCastle.Asn1.Cmp;
 using PLang.Errors;
 using PLang.Errors.Runtime;

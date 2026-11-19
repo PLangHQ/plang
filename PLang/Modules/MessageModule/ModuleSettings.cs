@@ -1,6 +1,8 @@
-﻿using NBitcoin.DataEncoders;
-using Nostr.Client.Keys;
+﻿using NBitcoin.Secp256k1;
+using NNostr.Client;
+using NNostr.Client.Protocols;
 using PLang.Building.Model;
+using System.Security.Cryptography;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
@@ -36,56 +38,55 @@ namespace PLang.Modules.MessageModule
 
 		public List<string> GetRelays()
 		{
-			var relays = settings.GetValues<string>(typeof(ModuleSettings), "NostrRelays");
+			var relays = settings.GetValues<string>(typeof(ModuleSettings), NostrRelays);
 			if (relays == null || relays.Count == 0)
 			{
 				relays = new List<string>() {
 					"wss://relay.damus.io",
+					"wss://relay.primal.net",
+					"wss://nos.lol",
 					"wss://nostr-pub.wellorder.net",
 					"wss://offchain.pub",
-					"wss://nos.lol",
-					"wss://relay.nostr.band", "wss://nostr.wine","wss://purplepag.es"
+					"wss://relay.nostr.band"
 				};
-				settings.SetList(typeof(ModuleSettings), relays, "NostrRelays");
+				settings.SetList(typeof(ModuleSettings), relays, NostrRelays);
 			}
 			return relays;
 		}
 
-		public void AddRelay(string relayUrl)
+		public List<string> AddRelay(string relayUrl)
 		{
-			if (!relayUrl.StartsWith("wss://"))
+			relayUrl = NostrRelayPool.Normalize(relayUrl);
+			if (!Uri.TryCreate(relayUrl, UriKind.Absolute, out _))
 			{
-				relayUrl = "wss://" + relayUrl;
-			}
-
-			UriCreationOptions options = new UriCreationOptions();
-
-			if (!Uri.TryCreate(relayUrl, options, out Uri result))
-			{
-				throw new ArgumentException($"{relayUrl} is not valid url. It should start with wss://");
+				throw new ArgumentException($"{relayUrl} is not a valid relay url. It should look like wss://relay.example.com");
 			}
 
 			var relays = GetRelays();
-			if (relays.Contains(relayUrl)) return;
+			if (relays.Any(r => NostrRelayPool.Normalize(r).Equals(relayUrl, StringComparison.OrdinalIgnoreCase))) return relays;
 
 			relays.Add(relayUrl);
-			settings.SetList(typeof(ModuleSettings), relays);
+			settings.SetList(typeof(ModuleSettings), relays, NostrRelays);
+			return relays;
 		}
 
-		public void RemoveRelay(string relayUrl)
+		public List<string> RemoveRelay(string relayUrl)
 		{
+			relayUrl = NostrRelayPool.Normalize(relayUrl);
 			var relays = GetRelays();
-			relays.Remove(relayUrl);
-			settings.SetList(typeof(ModuleSettings), relays);
+			relays.RemoveAll(r => NostrRelayPool.Normalize(r).Equals(relayUrl, StringComparison.OrdinalIgnoreCase));
+			settings.SetList(typeof(ModuleSettings), relays, NostrRelays);
+			return relays;
 		}
 
 		public virtual void CreateNewAccount(string name = "Default")
 		{
-			NostrPrivateKey key = NostrPrivateKey.GenerateNew();
+			var key = ECPrivKey.Create(RandomNumberGenerator.GetBytes(32));
+			var publicKey = key.CreateXOnlyPubKey();
 
 			var keys = settings.GetValues<NostrKey>(typeof(ModuleSettings)) ?? new List<NostrKey>();
 
-			var nostrKey = new NostrKey(name, key.Bech32, key.DerivePublicKey().Hex, key.DerivePublicKey().Bech32);
+			var nostrKey = new NostrKey(name, key.ToNIP19(), publicKey.ToHex(), publicKey.ToNIP19());
 			nostrKey.IsDefault = (keys.Where(p => !p.IsArchived).Count() == 0);
 
 			keys.Add(nostrKey);

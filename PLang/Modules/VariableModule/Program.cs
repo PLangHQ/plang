@@ -3,7 +3,6 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using NBitcoin.Protocol;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Nostr.Client.Json;
 using PLang.Attributes;
 using PLang.Errors;
 using PLang.Errors.Runtime;

@@ -14,7 +14,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Xml.Linq;
-using Websocket.Client.Logging;
 using static NBitcoin.RPC.SignRawTransactionRequest;
 
 namespace PLang.Runtime;

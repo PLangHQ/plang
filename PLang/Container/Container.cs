@@ -9,7 +9,6 @@ using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Nostr.Client.Client;
 using PLang.Building;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
@@ -40,7 +39,6 @@ using System.Data;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using Websocket.Client.Logging;
 using static PLang.Modules.DbModule.ModuleSettings;
 
 
@@ -201,11 +199,11 @@ namespace PLang.Container
 			});
 
 
-			container.RegisterSingleton<ILogger, Services.LoggerService.Logger<Executor>>(typeof(Logger).FullName);
+			container.RegisterSingleton<ILogger, Services.LoggerService.Logger<Executor>>(typeof(Services.LoggerService.Logger<Executor>).FullName);
 			container.RegisterSingleton(factory =>
 			{
 				var context = factory.GetInstance<PLangAppContext>();
-				var type = GetImplementation(context, ReservedKeywords.Inject_Logger, typeof(Logger));
+				var type = GetImplementation(context, ReservedKeywords.Inject_Logger, typeof(Services.LoggerService.Logger<Executor>));
 				return factory.GetInstance<ILogger>(type);
 			});
 
@@ -342,15 +340,6 @@ namespace PLang.Container
 			container.RegisterSingleton<MethodHelper>();
 			container.Register<IPLangAppsRepository, PLangAppsRepository>();
 			container.Register<IHttpClientFactory, SimpleHttpClientFactory>();
-
-			container.RegisterSingleton<INostrClient>(factory =>
-			{
-				var moduleSettings = new ModuleSettings(container.GetInstance<ISettings>(), container.GetInstance<ILlmServiceFactory>());
-				var nostrClientManager = new NostrClientManager();
-
-				var multi = nostrClientManager.GetClient(moduleSettings.GetRelays());
-				return multi;
-			});
 
 			container.RegisterSingleton<IWeb3>(factory =>
 			{

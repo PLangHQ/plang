@@ -9,7 +9,6 @@ using PLang.Utils;
 using System.IO.Abstractions;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
-using Websocket.Client.Logging;
 
 namespace PLang.SafeFileSystem
 {

@@ -28,7 +28,6 @@ using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using System.Xml;
 using System.Xml.Linq;
-using Websocket.Client.Logging;
 using static PLang.Modules.DbModule.Program;
 
 namespace PLang.Utils;

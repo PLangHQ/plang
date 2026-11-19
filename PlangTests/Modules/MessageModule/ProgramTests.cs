@@ -1,5 +1,4 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Nostr.Client.Client;
 using NSubstitute;
 using PLang.Modules.MessageModule;
 
@@ -9,7 +8,6 @@ namespace PLangTests.Modules.MessageModule
 	public class ProgramTests : BasePLangTest
 	{
 		Program p;
-		INostrClient nostrClient;
 		[TestInitialize]
 		public void Init() {
 			base.Initialize();
@@ -26,11 +24,7 @@ namespace PLangTests.Modules.MessageModule
 					nostrKeys = callInfo.Arg<List<NostrKey>>();
 				});
 
-			nostrClient = Substitute.For<INostrClient>();
-			nostrClient.Streams.Returns(new NostrClientStreams());
-			nostrClient.Streams.EventStream.Subscribe();
-
-			p = new Program(settings, logger, pseudoRuntime, engine, llmServiceFactory, nostrClient, signingService, errorHandlerFactory, errorSystemHandlerFactory, fileSystem);
+			p = new Program(settings, logger, pseudoRuntime, engine, llmServiceFactory, signingService, errorHandlerFactory, errorSystemHandlerFactory, fileSystem);
 			p.Init(container, null, null, null, null);
 		}
 
@@ -63,7 +57,7 @@ namespace PLangTests.Modules.MessageModule
 					nostrKeys = callInfo.Arg<List<NostrKey>>();
 				});
 
-			p = new Program(settings, logger, pseudoRuntime, engine, llmServiceFactory, null, signingService, errorHandlerFactory, errorSystemHandlerFactory, fileSystem);
+			p = new Program(settings, logger, pseudoRuntime, engine, llmServiceFactory, signingService, errorHandlerFactory, errorSystemHandlerFactory, fileSystem);
 			p.Init(container, null, null, null, null);
 
 

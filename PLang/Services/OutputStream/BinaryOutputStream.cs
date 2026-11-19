@@ -1,6 +1,5 @@
 ﻿using IdGen;
 using Newtonsoft.Json;
-using Nostr.Client.Client;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Runtime;
