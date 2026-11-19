@@ -40,9 +40,9 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.15" />
     <PackageReference Include="NSubstitute" Version="5.3.0" />
-    <PackageReference Include="TestableIO.System.IO.Abstractions.TestingHelpers" Version="22.0.10" />
+    <PackageReference Include="TestableIO.System.IO.Abstractions.TestingHelpers" Version="23.0.1" />
   </ItemGroup>
 
   <ItemGroup>

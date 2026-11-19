@@ -9,7 +9,6 @@ using PLang.Runtime;
 using PLang.Services.OutputStream.Messages;
 using PLang.Services.SettingsService;
 using PLang.Utils;
-using ReverseMarkdown.Converters;
 using System.Collections;
 using System.ComponentModel;
 using System.Diagnostics;

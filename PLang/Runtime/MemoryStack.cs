@@ -32,7 +32,6 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using static NBitcoin.Scripting.PubKeyProvider;
 using static PLang.Utils.VariableHelper;
 
 namespace PLang.Runtime
