@@ -1203,11 +1203,6 @@ namespace PLang.Modules.WebserverModule
 			properties.Add(new ObjectValue("Headers", request.Headers.ToDictionary(h => h.Key, h => h.Value.ToString())));
 			properties.Add(new ObjectValue("KeepAlive", request.Headers.KeepAlive.ToString()));
 
-			foreach (var item in request.Headers)
-			{
-				properties.Add(new ObjectValue(item.Key, item.Value.ToString()));
-			}
-
 			request.Headers.TryGetValue("X-Requested-With", out var ajax);
 			properties.Add(new ObjectValue("IsAjax", ajax.ToString().Equals("XMLHttpRequest", StringComparison.OrdinalIgnoreCase)));
 			properties.Add(new ObjectValue("Ip", httpContext.Connection.RemoteIpAddress?.ToString()));
@@ -1218,6 +1213,15 @@ namespace PLang.Modules.WebserverModule
 				var clientInfo = ParseUserAgent(request.Headers.UserAgent.ToString());
 
 				properties.Add(new ObjectValue("ClientInfo", clientInfo));
+			}
+
+			// Each header is a property too (%request!Accept-Language%), but never in place of a property plang sets itself:
+			// a client that sends a header named Ip, IsAjax or Method must not change %request!Ip%, %request!IsAjax% or %request!Method%.
+			var ownNames = new HashSet<string>(properties.Select(p => p.Name), StringComparer.OrdinalIgnoreCase) { "UserAgent", "ClientInfo" };
+			foreach (var item in request.Headers)
+			{
+				if (ownNames.Contains(item.Key)) continue;
+				properties.Add(new ObjectValue(item.Key, item.Value.ToString()));
 			}
 
 			return properties;

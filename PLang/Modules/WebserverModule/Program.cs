@@ -929,7 +929,7 @@ OnStartingWebserver
 		}
 	}
 
-	[Description("headerKey should be null unless specified by user")]
+	[Description("Returns the ip address of the connection. headerKey should be null unless specified by user (e.g. X-Forwarded-For when the app runs behind a proxy); then the value of that header is returned")]
 	public async Task<string?> GetUserIp(string? headerKey = null)
 	{
 		if (HttpContext == null) return null;
@@ -942,7 +942,8 @@ OnStartingWebserver
 				return value;
 			}
 		}
-		return HttpContext.Request.Host.Host;
+		// The address of the connection. The Host header is what the client typed in the url, not where it is, and any client can set it.
+		return HttpContext.Connection.RemoteIpAddress?.ToString();
 	}
 
 	public async Task<string> GetRequestHeader(string key)
