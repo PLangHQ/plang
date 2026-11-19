@@ -179,9 +179,9 @@ namespace PLang.Modules.LoopModule
 				var nonDefaultParameters = goalToCall.Parameters.Where(p => !p.Key.Equals("item", StringComparison.OrdinalIgnoreCase) &&
 						!p.Key.Equals("list", StringComparison.OrdinalIgnoreCase) &&
 						!p.Key.Equals("position", StringComparison.OrdinalIgnoreCase));
-				foreach (var param in nonDefaultParameters)
+				var templates = nonDefaultParameters.ToList();
 				{
-					goalToCall.Parameters.AddOrReplace(param.Key, memoryStack.LoadVariables(param.Value));
+					// The parameters are templates, e.g. v=%item.n%: kept as written and resolved for each item below, when %item% is set.
 				}
 				var items = enumerables.ToDynamicList();
 				for (int i = 0;i<items.Count;i++) 
@@ -198,6 +198,17 @@ namespace PLang.Modules.LoopModule
 						goalToCall.Parameters.AddOrReplace(itemName.ToString()!, item);
 					}
 					goalToCall.Parameters.AddOrReplace(positionName.ToString()!, idx++);
+
+					if (templates.Count > 0)
+					{
+						memoryStack.Put(listName.ToString()!, items);
+						memoryStack.Put(itemName.ToString()!, goalToCall.Parameters[itemName.ToString()!]);
+						memoryStack.Put(positionName.ToString()!, idx - 1);
+						foreach (var template in templates)
+						{
+							goalToCall.Parameters.AddOrReplace(template.Key, memoryStack.LoadVariables(template.Value));
+						}
+					}
 
 					var result = await pseudoRuntime.RunGoal(engine, contextAccessor, goal.RelativeAppStartupFolderPath, goalToCall, Goal);
 					if (result.Error != null && result.Error is not IErrorHandled) return result.Error;
