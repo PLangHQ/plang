@@ -17,6 +17,10 @@ export class AskHandler extends BaseKindHandler {
         }
         if (message.callback) {
             if (message.content.toLowerCase().indexOf('<form') != -1) {
+                // The hash belongs to the form the ask template made, the one with its callback field.
+                // A page can hold other forms (a "change" button on a finished step) and they must not
+                // answer this question when they are posted. Content with no such field keeps the old
+                // behaviour, every form gets the hash.
                 const hashInput = `<input type="hidden" name="__plang_callback_hash" value="${message.callback.hash}">`;
                 const ownsCallback = (inner) => /name\s*=\s*["']callback["']/i.test(inner);
                 const forms = message.content.match(/<form[^>]*>[\s\S]*?<\/form>/gi) ?? [];

@@ -1,5 +1,6 @@
 import { t as defaultT } from "../i18n/index.js";
 import { KeyStore } from "./KeyStore.js";
+const ECDSA = { name: "ECDSA", namedCurve: "P-256" };
 export class ECDSASigner {
     constructor(t = defaultT) {
         this.t = t;
@@ -24,18 +25,47 @@ export class ECDSASigner {
             this.keyPromise = this.loadOrCreate();
         return this.keyPromise;
     }
+    // The private key is non-extractable wherever it can be kept as a CryptoKey (IndexedDB, memory):
+    // a script on the page can sign with it, but cannot read it and take the identity away. Only the
+    // web storage rungs, which hold text, keep it as a JWK. See KeyStore.
     async loadOrCreate() {
+        const tier = await this.store.tier();
         const stored = await this.store.get();
         if (stored) {
-            const privateKey = await crypto.subtle.importKey("jwk", stored.privateKey, { name: "ECDSA", namedCurve: "P-256" }, true, ["sign"]);
-            const publicKey = await crypto.subtle.importKey("jwk", stored.publicKey, { name: "ECDSA", namedCurve: "P-256" }, true, ["verify"]);
+            const publicKey = await crypto.subtle.importKey("jwk", stored.publicKey, ECDSA, true, ["verify"]);
+            if (stored.privateKey instanceof CryptoKey) {
+                return { privateKey: stored.privateKey, publicKey };
+            }
+            const privateKey = await crypto.subtle.importKey("jwk", stored.privateKey, ECDSA, false, ["sign"]);
+            if (tier === "indexeddb") {
+                // A key stored as a JWK by an earlier version: the same identity, kept from now on as
+                // a CryptoKey, and the readable JWK is gone. When the browser cannot store a CryptoKey
+                // the JWK stays, so the visitor keeps their identity either way.
+                try {
+                    await this.store.put({ privateKey, publicKey: stored.publicKey });
+                }
+                catch { /* the JWK stays */ }
+            }
             return { privateKey, publicKey };
         }
-        const keyPair = (await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]));
-        const privateKey = await crypto.subtle.exportKey("jwk", keyPair.privateKey);
-        const publicKey = await crypto.subtle.exportKey("jwk", keyPair.publicKey);
-        await this.store.put({ privateKey, publicKey });
-        return { privateKey: keyPair.privateKey, publicKey: keyPair.publicKey };
+        if (tier === "indexeddb" || tier === "memory") {
+            const keyPair = (await crypto.subtle.generateKey(ECDSA, false, ["sign", "verify"]));
+            const publicJwk = await crypto.subtle.exportKey("jwk", keyPair.publicKey);
+            try {
+                await this.store.put({ privateKey: keyPair.privateKey, publicKey: publicJwk });
+                return { privateKey: keyPair.privateKey, publicKey: keyPair.publicKey };
+            }
+            catch {
+                // A browser that cannot store a CryptoKey in IndexedDB: store a JWK, as on the web
+                // storage rungs, rather than a new identity on every page load.
+            }
+        }
+        const keyPair = (await crypto.subtle.generateKey(ECDSA, true, ["sign", "verify"]));
+        const privateJwk = await crypto.subtle.exportKey("jwk", keyPair.privateKey);
+        const publicJwk = await crypto.subtle.exportKey("jwk", keyPair.publicKey);
+        await this.store.put({ privateKey: privateJwk, publicKey: publicJwk });
+        const privateKey = await crypto.subtle.importKey("jwk", privateJwk, ECDSA, false, ["sign"]);
+        return { privateKey, publicKey: keyPair.publicKey };
     }
     async exportPublicKey() {
         const { publicKey } = await this.getKey();

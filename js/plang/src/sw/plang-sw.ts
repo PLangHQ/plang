@@ -20,7 +20,9 @@ const STORE_NAME = "keys";
 const KEY_ID = "signing";
 const SIGNATURE_LIFETIME_MS = 5 * 60_000;
 
-type StoredKeys = { privateKey: JsonWebKey; publicKey: JsonWebKey };
+// The private key is a non-extractable CryptoKey; a JWK when it was stored by an earlier version and
+// the page has not moved it to a CryptoKey yet.
+type StoredKeys = { privateKey: CryptoKey | JsonWebKey; publicKey: JsonWebKey };
 
 let signingKey: Promise<{ privateKey: CryptoKey; publicKey: JsonWebKey } | null> | null = null;
 
@@ -43,9 +45,9 @@ function loadKey() {
         signingKey = (async () => {
             const stored = await readStoredKeys();
             if (!stored) return null;
-            const privateKey = await crypto.subtle.importKey(
-                "jwk", stored.privateKey, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]
-            );
+            const privateKey = stored.privateKey instanceof CryptoKey
+                ? stored.privateKey
+                : await crypto.subtle.importKey("jwk", stored.privateKey, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
             return { privateKey, publicKey: stored.publicKey };
         })();
         // A missing key is looked at again on the next navigation: the page creates it on its

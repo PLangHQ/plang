@@ -52,7 +52,12 @@ export class ExecuteHandler extends BaseKindHandler implements KindHandler<"exec
             // the render that came before this message is applied without being awaited, so the
             // dom is still settling and scrolling now is undone as the new content lays out, and
             // applyAction reads message.dom, which only a render message carries.
-            const actions = (message.actions ?? []).filter((a) => a !== message.function);
+            // An execute message has no content, so an action that writes content (the form's
+            // p-actions="replace", carried over to every message of the request) would write
+            // nothing over the target: the page went blank. Only the actions that move the page
+            // (scroll, focus, navigate ...) apply here.
+            const writesContent = ["replace", "replaceSelf", "append", "appendOrReplace", "prepend", "prependOrReplace"];
+            const actions = (message.actions ?? []).filter((a) => a !== message.function && !writesContent.includes(a));
             if (actions.length) {
                 const domMessage = {
                     ...message,

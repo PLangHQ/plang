@@ -38,7 +38,9 @@ function loadKey() {
             const stored = await readStoredKeys();
             if (!stored)
                 return null;
-            const privateKey = await crypto.subtle.importKey("jwk", stored.privateKey, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
+            const privateKey = stored.privateKey instanceof CryptoKey
+                ? stored.privateKey
+                : await crypto.subtle.importKey("jwk", stored.privateKey, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
             return { privateKey, publicKey: stored.publicKey };
         })();
         // A missing key is looked at again on the next navigation: the page creates it on its

@@ -15,12 +15,24 @@ npm run build
 
 ## Use in an app
 
-1. Copy `dist/` to the app's `js/plang/dist/` and load `/js/plang/dist/main.js` as a module.
+1. Copy `dist/` to the app's `js/plang/dist/v<N>/`, where `<N>` is the number in `VERSION`, and load
+   `/js/plang/dist/v<N>/main.js` as a module. A new number is a new address, so a browser cannot run
+   a cached module of the previous version against the new ones.
 2. Copy `dist/plang-sw.js` to the root of the site, so it is served as `/plang-sw.js`. It has to be at
    the root, that is what gives it the whole site as its scope. If it is missing the client works
    as before, only without the signed navigation below.
 
 Never edit the copied files in an app: the next copy overwrites them. Change `src/` here, build, and copy again.
+Every change to `src/` raises `VERSION` by one.
+
+## The signing key
+
+The visitor's identity is an ECDSA P-256 key pair made in the browser. In IndexedDB the private key is
+a non-extractable `CryptoKey`: a script on the page can sign with it while it runs, but cannot read it
+and send it away. A key stored as a JWK by a version before 5 is moved to a `CryptoKey` on the first
+page load, with the same identity. A browser that refuses IndexedDB but keeps localStorage or
+sessionStorage keeps the key there as a JWK, readable by scripts on the page, rather than getting a new
+identity on every page load (see `crypto/KeyStore.ts`).
 
 ## Signed navigation (`plang-sw.js`)
 

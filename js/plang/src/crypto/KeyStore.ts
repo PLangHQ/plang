@@ -1,6 +1,10 @@
 import { errorReporter } from "../net/ErrorReporter.js";
 
-export type StoredKeys = { privateKey: JsonWebKey; publicKey: JsonWebKey };
+/**
+ * The private key is a non-extractable CryptoKey where it is kept as one (IndexedDB, memory), and a
+ * JWK where only text can be kept (localStorage, sessionStorage). The public key is always a JWK.
+ */
+export type StoredKeys = { privateKey: CryptoKey | JsonWebKey; publicKey: JsonWebKey };
 export type Tier = "indexeddb" | "localstorage" | "sessionstorage" | "memory";
 
 const DB_NAME = "ecdsa_keys";
@@ -15,12 +19,13 @@ const WEB_KEY = "plang.ecdsa_keys";
  * signing throws, so the poll never connects, so the page renders a spinner and nothing else.
  * Teachers on managed machines hit exactly that and reported the invite link as broken.
  *
- * Why falling back is acceptable: the private key is already generated as **extractable** and
- * written as a plain JWK. It is ordinary same-origin JSON today, readable by any script on
- * the page. localStorage and sessionStorage have precisely the same exposure, so moving
- * between them costs no real security. This would NOT be true of a non-extractable CryptoKey,
- * which can only live in IndexedDB; if the key is ever made non-extractable, this whole file
- * has to go.
+ * What each rung costs: in IndexedDB (and in memory) the private key is a non-extractable
+ * CryptoKey. A script on the page can sign with it while it runs, but cannot read the key and
+ * take it away. localStorage and sessionStorage hold only text, so on those rungs the private
+ * key is a JWK that any script on the page can read. That is the price of a browser that
+ * refuses IndexedDB but keeps web storage, and it is still better than a new identity on every
+ * page load. A key is never moved down the ladder: a JWK is only written on the web storage
+ * rungs, for a key generated there.
  *
  * Cookies are deliberately not a rung. A cookie is sent to the server on every request, which
  * would put the private key on the wire. That is strictly worse than any option here.
