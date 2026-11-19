@@ -851,7 +851,9 @@ namespace PLang.Modules.WebserverModule
 
 		private (Goal?, Routing?, List<ObjectValue>? SlugVariables, IError?) GetGoalByRouting(List<Routing>? routings, HttpRequest request)
 		{
-			if (request == null || request.Path == null || routings == null)
+			// Not request.Path == null: for a PathString that is true for an empty path too (a request such as
+			// `OPTIONS *` or `GET http://host`), which is not an error of the server: no route matches it, 404.
+			if (request == null || routings == null)
 			{
 				return (null, null, null, new ProgramError("request object empty", step, StatusCode: 500));
 			}
