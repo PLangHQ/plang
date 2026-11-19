@@ -351,7 +351,9 @@ namespace PLang.Modules.VariableModule
 				return;
 			}
 
-			if (content is JToken)
+			// A json array with a %variable% in it is loaded into a list of the real values (VariableHelper.LoadVariablesToJArray);
+			// it is the array, not its ToString().
+			if (content is JToken || content is System.Collections.IList)
 			{
 				memoryStack.Put(key, content, goalStep: goalStep);
 				return;
