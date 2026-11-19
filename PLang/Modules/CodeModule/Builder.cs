@@ -368,7 +368,8 @@ ReturnValues: [""type"":""System.String"", VariableName:""%fileName%""]
 				//AppendToAssistantCommand(error.LlmInstruction);
 			}
 
-			step.LlmRequest.llmResponseType = "csharp";
+			// The step has no request yet when it is built together with other steps; the request is made by Build below
+			if (step.LlmRequest != null) step.LlmRequest.llmResponseType = "csharp";
 
 			(var instruction, var buildError) = await Build<CodeImplementationResponse>(step, error);
 			if (buildError != null) return (null, buildError);
