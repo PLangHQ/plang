@@ -95,6 +95,8 @@ namespace PLang.Runtime
 		PLangAppContext GetAppContext();
 		void Init(IServiceContainer container);
 		Task<(object? Variables, IError? Error)> Run(string goalToRun, PLangContext context);
+		/// <summary>Runs the setup goals; what Run does at start unless the process is in standby.</summary>
+		Task<(object? Variables, IError?)> RunSetupGoals(PLangContext context);
 		Task<(object? Variables, IError? Error)> RunGoal(Goal goal, PLangContext context, uint waitForXMillisecondsBeforeRunningGoal = 0);
 		Goal? GetGoal(string goalName, Goal? callingGoal = null);
 		Task<(object? ReturnValue, IError? Error)> RunFromStep(string prFile, PLangContext context);
@@ -388,7 +390,8 @@ namespace PLang.Runtime
 					if (error != null) return (ov, error);
 				}
 
-				(returnVars, error) = await RunSetup(goal, context);
+				// A standby process does not run the setup goals at start, `run setup` runs them on demand
+				(returnVars, error) = RuntimeMode.Standby ? (null, null) : await RunSetup(goal, context);
 				if (returnVars != null) vars.Add(returnVars);
 				if (error != null)
 				{
@@ -520,7 +523,12 @@ namespace PLang.Runtime
 		}
 
 
-		private async Task<(object? Variables, IError?)> RunSetup(Goal startGoal, PLangContext context)
+		public async Task<(object? Variables, IError?)> RunSetupGoals(PLangContext context)
+		{
+			return await RunSetup(null, context);
+		}
+
+		private async Task<(object? Variables, IError?)> RunSetup(Goal? startGoal, PLangContext context)
 		{
 			var setupGoals = prParser.GetAllGoals().Where(p => p.IsSetup).OrderBy(p => !p.GoalName.Equals("Setup", StringComparison.OrdinalIgnoreCase)); //Setup should come first
 			if (!setupGoals.Any())

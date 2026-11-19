@@ -161,13 +161,16 @@ public class Program : BaseProgram, IDisposable
 	}
 	public record ResponseProperties(string ContentType = "text/html", string ResponseEncoding = "utf-8");
 
+	[Example("start webserver on port 8091, reuse port", "Port=8091, ReusePort=true")]
 	public record WebserverProperties(string Name = "default", string Host = "*", int Port = 8080,
 		RequestProperties? DefaultRequestProperties = null, ResponseProperties? DefaultResponseProperties = null,
 		GoalToCallInfo? OnStart = null, GoalToCallInfo? OnShutdown = null,
 		GoalToCallInfo? OnRequestBegin = null, GoalToCallInfo? OnRequestEnd = null,
 		GoalToCallInfo? OnGoalRequestBegin = null, GoalToCallInfo? OnGoalRequestEnd = null,
 		GoalToCallInfo? OnPollStart = null, GoalToCallInfo? OnPollRefresh = null, GoalToCallInfo? OnPollEnd = null,
-		bool RedirectWwwToApex = false
+		bool RedirectWwwToApex = false,
+		[property: Description("Set true when the step says `reuse port`, e.g. `- start webserver on port 8091, reuse port` gives Port=8091, ReusePort=true. The listening socket is bound with SO_REUSEPORT so that another process can listen on the same port at the same time (Linux only, ignored on Windows). Leave false otherwise")]
+		bool ReusePort = false
 		)
 		: IDisposable
 	{
@@ -320,6 +323,7 @@ public class Program : BaseProgram, IDisposable
 				web.ConfigureServices(s =>
 				{
 					s.AddSingleton(webserverProperties);
+					if (webserverProperties.ReusePort) ReusePortSocket.Enable(s);
 					s.AddResponseCompression(o =>
 					{
 						o.EnableForHttps = true;

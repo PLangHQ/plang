@@ -285,9 +285,20 @@ goalName is the goal that should be called, a whole word with possible slash(/),
 
 		}
 
-		public async Task StartScheduler()
+		[Description("Starts the scheduler. Does nothing when the app was started with --no-scheduler or --standby, unless force is true. e.g. `start scheduler`, `start scheduler, force`")]
+		[Example("start scheduler", "force=false")]
+		[Example("start scheduler, force", "force=true")]
+		public async Task StartScheduler(bool force = false)
 		{
-
+			if (!RuntimeMode.SchedulerEnabled)
+			{
+				if (!force)
+				{
+					this.logger.LogInformation("Scheduler not started, the app was started with --no-scheduler or --standby. Use `enable scheduler` to start it");
+					return;
+				}
+				RuntimeMode.SetSchedulerEnabled(true);
+			}
 
 			IEngine engine = this.engine;
 			ISettings settings = this.settings;
@@ -331,6 +342,13 @@ goalName is the goal that should be called, a whole word with possible slash(/),
 
 		}
 
+
+		[Description("Clears --no-scheduler/--standby and starts the scheduler. e.g. `enable scheduler`")]
+		[Example("enable scheduler", "")]
+		public async Task EnableScheduler()
+		{
+			await StartScheduler(force: true);
+		}
 
 		private void Start(ISettings settings, IEngine engine, PrParser prParser, ILogger logger, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem)
 		{

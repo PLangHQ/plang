@@ -26,6 +26,8 @@ namespace PLang.Utils
 				AppContext.SetSwitch(ReservedKeywords.Environment, true);
 			}
 
+			RuntimeMode.Register(args);
+
 			var csdebug = args.FirstOrDefault(p => p == "--csdebug") != null;
 			if (csdebug && !Debugger.IsAttached)
 			{
