@@ -291,7 +291,9 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 		{
 			if (name == null) return null;
 
-			return goals.FirstOrDefault(p => (!mustBeSetup || p.IsSetup) && IsSameDataSourceName(p.DataSourceName, name));
+			// A goal named Setup that names no datasource is the setup of "data", the app's own database. Its DataSourceName is only
+			// set once its steps are built, so a goal built at the same time, or after the .build folder was deleted, would not find it.
+			return goals.FirstOrDefault(p => (!mustBeSetup || p.IsSetup) && IsSameDataSourceName(p.DataSourceName ?? (p.GoalName?.Equals("setup", StringComparison.OrdinalIgnoreCase) == true ? "data" : null), name));
 		}
 
 		/// <summary>

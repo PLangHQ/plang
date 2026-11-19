@@ -138,6 +138,7 @@ namespace PLang.Modules.TerminalModule
 				{
 					if (parameter == null) continue;
 
+					// An argument is text: a number or a boolean (`plang exec Y port=8091 restart=true`) is written as text, a boolean in lower case
 					startInfo.ArgumentList.Add(parameter);
 				}
 			}
@@ -290,23 +291,15 @@ namespace PLang.Modules.TerminalModule
 				properties.Add(new ObjectValue("ExitCode", exitCode.Value));
 			}
 
-			bool badExitCode = parser != null && exitCode != null && !parser.OkExitCodes.Contains(exitCode.Value);
-			if (parser != null && stderrMode != TerminalParser.StderrMode.Error)
+			// The step is an error when, and only when, the exit code is not ok: 0, or the codes of the parser. Output on stderr with
+			// an ok exit code is not an error (many programs write progress and warnings there), and a non-zero exit code always is,
+			// whether or not the program wrote to stderr. The exit code stays available as %out!ExitCode%.
+			var okExitCodes = parser?.OkExitCodes ?? new[] { 0 };
+			bool badExitCode = exitCode != null && !okExitCodes.Contains(exitCode.Value);
+			if (badExitCode)
 			{
-				if (badExitCode)
-				{
-					var tail = string.Join("\n", errorOutput.ToString().Split('\n', StringSplitOptions.RemoveEmptyEntries).TakeLast(5).Select(l => l.TrimEnd('\r')));
-					error = new ProgramError($"Command: {string.Join(" ", startInfo.ArgumentList)}\nExit code {exitCode}, expected one of [{string.Join(", ", parser.OkExitCodes)}]\n{tail}", goalStep, function);
-				}
-			}
-			else if (errorOutput.Length > 0)
-			{
-				command = appExecutableName = string.Join(" ", startInfo.ArgumentList);
-				error = new ProgramError($"Command: {command}\n{errorOutput}", goalStep, function);
-			}
-			else if (badExitCode)
-			{
-				error = new ProgramError($"Command: {string.Join(" ", startInfo.ArgumentList)}\nExit code {exitCode}, expected one of [{string.Join(", ", parser!.OkExitCodes)}]", goalStep, function);
+				var tail = string.Join("\n", errorOutput.ToString().Split('\n', StringSplitOptions.RemoveEmptyEntries).TakeLast(5).Select(l => l.TrimEnd('\r')));
+				error = new ProgramError($"Command: {string.Join(" ", startInfo.ArgumentList)}\nExit code {exitCode}, expected one of [{string.Join(", ", okExitCodes)}]\n{tail}", goalStep, function);
 			}
 			logger.LogTrace("Done with TerminalModule");
 

@@ -884,7 +884,15 @@ public class MethodHelper
 		{
 			for (int i = 0; i < list.Count; i++)
 			{
-				list[i] = memoryStack.LoadVariables(list[i]);
+				{
+					var loaded = memoryStack.LoadVariables(list[i]);
+					// A list of text takes a number or a boolean as its text (`terminal echo %port%` with port=8091 from `plang exec`)
+					if (loaded != null && loaded is not string && parameter.ParameterType.GenericTypeArguments.Length == 1 && parameter.ParameterType.GenericTypeArguments[0] == typeof(string))
+					{
+						loaded = loaded is bool flag ? (flag ? "true" : "false") : Convert.ToString(loaded, System.Globalization.CultureInfo.InvariantCulture);
+					}
+					list[i] = loaded;
+				}
 			}
 			parameterValues.Add(parameter.Name, list);
 			return;

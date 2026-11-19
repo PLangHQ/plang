@@ -823,7 +823,10 @@ When the user points to a sql file (a path ending in .sql), the sql lives in tha
 
 		if (string.IsNullOrEmpty(dataSourceName) && step.Goal.IsSetup)
 		{
-			dataSourceName = step.Goal.DataSourceName ?? "data"; // a Setup goal without a datasource in its steps: the app's own database, which always exists
+			// A Setup goal without a datasource in its steps: the app's own database, "data", which always exists. The goal records it, the
+				// run of the goal sets it as the datasource of the context (a step like CreateTable carries no datasource of its own).
+				step.Goal.DataSourceName ??= "data";
+				dataSourceName = step.Goal.DataSourceName;
 		}
 
 		if (string.IsNullOrEmpty(dataSourceName))
