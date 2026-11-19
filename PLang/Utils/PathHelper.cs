@@ -81,6 +81,14 @@ namespace PLang.Utils
 			startOfPath = (pathWithDirSep.Length > 2) ? pathWithDirSep.Substring(0, 2) : pathWithDirSep;
 			if (startOfPath == (fileSystem.Path.DirectorySeparatorChar.ToString() + fileSystem.Path.DirectorySeparatorChar.ToString()))
 			{
+				// "//file.txt" is the root of the drive: c:\file.txt on Windows, /file.txt on Linux. On Linux the root is
+				// returned as "//file.txt", the form PLangFileSystem.ValidatePath takes as an OS path (a single "/" is the
+				// app's root there), the same as the "///" branch above does.
+				if (!OperatingSystem.IsWindows() && fileSystem.Path.DirectorySeparatorChar == '/')
+				{
+					var rootPath = fileSystem.Path.GetFullPath(pathWithDirSep.Substring(1));
+					return fileSystem.Path.DirectorySeparatorChar + rootPath;
+				}
 				var absolutePath = JoinRootWithPath(fileSystem, fileSystem.Path.GetPathRoot(fileSystem.RootDirectory), pathWithDirSep);
 				return fileSystem.Path.GetFullPath(absolutePath);
 			}
