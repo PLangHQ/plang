@@ -228,7 +228,7 @@ namespace PLang.Runtime
 					});
 					taskReturnsEngine = true;
 
-					engine.KeepAliveRegistry.Add(keepAliveKind, goalToRun.GoalName, new PlangTask(task, goalToRun, callingGoal));
+					engine.KeepAliveRegistry.Add(keepAliveKind, goalToRun.GoalName, new PlangTask(task, goalToRun, callingGoal, engine.Id));
 
 					return (runtimeEngine, task, null);
 				}

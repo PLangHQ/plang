@@ -21,7 +21,12 @@ namespace PLang.Modules.EnvironmentModule;
 [JsonObject(NamingStrategyType = typeof(SnakeCaseNamingStrategy))]
 public record RunningEngine(string Id, string Name, bool IsRoot, string State, string? Goal, string? Step, string? StepText, string? CalledFrom,
 	DateTime StartedUtc, double RunningSeconds, int? ThreadId, int MemoryStackVariables, EngineCallStack CallStack,
-	long? SerializeBytes = null, bool? Capped = null, bool? Truncated = null, List<VariableSize>? LargestVariables = null, List<VariableSizeError>? SizeErrors = null);
+	long? SerializeBytes = null, bool? Capped = null, bool? Truncated = null, List<VariableSize>? LargestVariables = null, List<VariableSizeError>? SizeErrors = null,
+		EngineRequest? Request = null, int Tasks = 0);
+
+/// <summary>The web request an engine is serving: method and path (no query string, it may hold secrets).</summary>
+[JsonObject(NamingStrategyType = typeof(SnakeCaseNamingStrategy))]
+public record EngineRequest(string Method, string Path);
 
 /// <summary>
 /// The engine's call stack, current frame first. ExecutedSteps and RunningMs add up every frame, the cost of the stack:
@@ -157,7 +162,36 @@ public static class RunningEnginesReader
 			StepLocation(engine.RentedFrom, null),
 			startedUtc, Math.Round((now - startedUtc).TotalSeconds, 1), engine.RunningThreadId,
 			context?.MemoryStack?.VariableCount ?? 0,
-			new EngineCallStack(frames.Count, executedSteps, Math.Round(runningMs, 1), stackFrames));
+			new EngineCallStack(frames.Count, executedSteps, Math.Round(runningMs, 1), stackFrames),
+			Request: ReadRequest(context),
+			Tasks: CountTasks(engine));
+	}
+
+	private static EngineRequest? ReadRequest(PLangContext? context)
+	{
+		try
+		{
+			var request = context?.HttpContext?.Request;
+			return request == null ? null : new EngineRequest(request.Method, request.Path.Value ?? "");
+		}
+		catch
+		{
+			// the request was disposed while the engine finished
+			return null;
+		}
+	}
+
+	/// <summary>The goals this engine started without waiting ("dont wait", scheduled runs) that are still running.</summary>
+	private static int CountTasks(IEngine engine)
+	{
+		try
+		{
+			return engine.KeepAliveRegistry.GetSnapshot().Count(p => p.Instance is PlangTask task && !task.IsCompleted && task.CallingEngineId == engine.Id);
+		}
+		catch
+		{
+			return 0;
+		}
 	}
 
 	private static string? GoalPath(Goal? goal)
