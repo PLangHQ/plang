@@ -125,7 +125,9 @@ namespace PLang.Modules.MessageModule
 			appContext.AddOrReplace(CurrentAccountIdx, idx);
 		}
 
-		private Action<string, NostrEvent>? eventHandler;
+		// A listener lives as long as the app, not as long as the step: the module instance is disposed when the goal that started
+		// listening ends. A new listen on the same key replaces its listener.
+		private static readonly ConcurrentDictionary<string, Action<string, NostrEvent>> listeners = new();
 
 		[Description("goalName should be prefixed by ! and be whole word with possible slash(/). The sender of a message is its public key in hex")]
 		public async Task Listen(GoalToCallInfo goalName, [HandlesVariable] string contentVariableName = "content",
@@ -152,8 +154,7 @@ namespace PLang.Modules.MessageModule
 
 			var pool = await GetPool();
 
-			if (eventHandler != null) pool.EventReceived -= eventHandler;
-			eventHandler = (id, nostrEvent) =>
+			Action<string, NostrEvent> eventHandler = (id, nostrEvent) =>
 			{
 				if (id != subscriptionId) return;
 				_ = Task.Run(async () =>
@@ -169,6 +170,8 @@ namespace PLang.Modules.MessageModule
 					}
 				});
 			};
+			if (listeners.TryRemove(subscriptionId, out var previous)) pool.EventReceived -= previous;
+			listeners[subscriptionId] = eventHandler;
 			pool.EventReceived += eventHandler;
 
 			await pool.Subscribe(subscriptionId, [
@@ -437,7 +440,6 @@ namespace PLang.Modules.MessageModule
 		public void Dispose()
 		{
 			appContext.Remove(CurrentAccountIdx);
-			if (eventHandler != null) NostrRelayPool.Shared.EventReceived -= eventHandler;
 		}
 
 		private static string? ToHexPublicKey(string? publicKey)
