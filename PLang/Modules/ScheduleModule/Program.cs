@@ -174,7 +174,7 @@ goalName is the goal that should be called, a whole word with possible slash(/),
 				{
 					return new ProgramError($"Interval must be at least 1 second, it is {intervalInSeconds}", goalStep, function, FixSuggestion: fixSuggestion);
 				}
-				SaveCronJob(settings, new CronJob(goalStep.AbsolutePrFilePath, null, goalName, nextRun, intervalInSeconds));
+				SaveCronJob(settings, KeepNextRun(new ModuleSettings(settings).GetCronJobs(), new CronJob(goalStep.AbsolutePrFilePath, null, goalName, nextRun, intervalInSeconds)));
 				Interlocked.Increment(ref cronJobsVersion);
 				return null;
 			}
@@ -194,9 +194,27 @@ goalName is the goal that should be called, a whole word with possible slash(/),
 					FixSuggestion: "Use 5 fields (minute hour day-of-month month day-of-week), e.g. '0 8 * * *' for every day at 8am, or 6 fields with seconds first, e.g. '30 0 8 * * *' for 08:00:30. " + fixSuggestion);
 			}
 
-			SaveCronJob(settings, new CronJob(goalStep.AbsolutePrFilePath, cronCommand, goalName, nextRun));
+			SaveCronJob(settings, KeepNextRun(new ModuleSettings(settings).GetCronJobs(), new CronJob(goalStep.AbsolutePrFilePath, cronCommand, goalName, nextRun)));
 			Interlocked.Increment(ref cronJobsVersion);
 			return null;
+		}
+
+		/// <summary>
+		/// The schedule step runs again at every start of the app. A job that is already stored with the same schedule and goal keeps its
+		/// stored NextRun, so a restart does not move the next run to one interval after the start, and a run that came due while the app
+		/// was down runs once, when the scheduler starts. A new or changed schedule, or a NextRun given by the step, starts over.
+		/// </summary>
+		public static CronJob KeepNextRun(IEnumerable<CronJob> storedJobs, CronJob created)
+		{
+			if (created.NextRun != null) return created;
+
+			var stored = storedJobs.FirstOrDefault(p => p.AbsolutePrFilePath == created.AbsolutePrFilePath);
+			if (stored == null || stored.NextRun == null) return created;
+
+			bool sameSchedule = stored.IntervalInSeconds == created.IntervalInSeconds
+				&& string.Equals(stored.CronCommand, created.CronCommand, StringComparison.Ordinal)
+				&& string.Equals(stored.GoalName?.Name, created.GoalName?.Name, StringComparison.OrdinalIgnoreCase);
+			return sameSchedule ? created with { NextRun = stored.NextRun } : created;
 		}
 
 		// Incremented when a step writes a cron job, so a running scheduler loop reads the job list again on its next tick.
