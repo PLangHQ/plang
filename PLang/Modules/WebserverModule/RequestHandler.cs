@@ -722,6 +722,9 @@ namespace PLang.Modules.WebserverModule
 			return null;
 		}
 
+		/// <summary>The Key of the error for a request whose path is no route and no file type that is served.</summary>
+		public const string NoRouteNoFileKey = "NoRouteNoFile";
+
 		private async Task<IError?> ProcessGeneralRequest(HttpContext httpContext)
 		{
 			var requestedFile = httpContext.Request.Path.Value;
@@ -744,8 +747,11 @@ namespace PLang.Modules.WebserverModule
 			var mimeType = GetMimeType(fileExtension);
 			if (mimeType == null)
 			{
-				httpContext.Response.StatusCode = 415;
-				return new Error($"Unsupported Media Type - {httpContext.Request.Path.ToString()} | {httpContext.Request.Method} - {httpContext.Request.Headers.UserAgent}", StatusCode: 415);
+				// A path that is no route and no file type that is served (/api/todos, /nonexistent) is not found: 404. It is an error
+				// that goes to the error events of the app with its own Key, so an app tells "no route, no file" (scanner hits) from a
+				// 404 that a goal throws on purpose.
+				httpContext.Response.StatusCode = 404;
+				return new Error($"No route and no file - {httpContext.Request.Path.ToString()} | {httpContext.Request.Method} - {httpContext.Request.Headers.UserAgent}", NoRouteNoFileKey, StatusCode: 404);
 			}
 
 			// /js/app/v7/main.js -> /js/app/main.js. A version segment in the PATH (not the query)
