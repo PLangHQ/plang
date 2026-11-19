@@ -28,7 +28,7 @@ namespace PLang.Building.Model
 				if (string.IsNullOrEmpty(absolutePath)) return (null, null);
 
 				string json = fileSystem.File.ReadAllText(absolutePath);
-				var instruction = JsonConvert.DeserializeObject<Instruction>(json);
+				var instruction = JsonConvert.DeserializeObject<Instruction>(json, PLang.Utils.JsonHelper.PrFileSettings);
 
 				return (instruction, null);
 			}

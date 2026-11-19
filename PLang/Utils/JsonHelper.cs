@@ -86,15 +86,13 @@ namespace PLang.Utils
 
 			string content = fileSystem.File.ReadAllText(filePath);
 
-			try
-			{
-				return JsonConvert.DeserializeObject<T>(content);
-			}
-			catch (Exception ex)
-			{
-				throw;
-			}
+			return JsonConvert.DeserializeObject<T>(content, PrFileSettings);
 		}
+
+		// A text in a .pr file stays the text that was written. By default Newtonsoft reads an ISO date text ("2026-11-20T11:45:00")
+		// as a DateTime, which then reaches a string parameter or a text column in the format of the culture ("11/20/2026 11:45:00").
+		// A parameter of type DateTime still gets a DateTime: the value is converted to the type of the parameter.
+		public static readonly JsonSerializerSettings PrFileSettings = new() { DateParseHandling = DateParseHandling.None };
 
 		public static string ToStringIgnoreError(object? obj)
 		{
