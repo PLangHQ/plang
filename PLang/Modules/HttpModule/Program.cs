@@ -574,14 +574,15 @@ namespace PLang.Modules.HttpModule
 					return (bytes, null, properties);
 				}
 
-				var charsets = UtfUnknown.CharsetDetector.DetectFromBytes(bytes);
-				var enc = charsets.Detected?.Encoding ?? Encoding.UTF8;
-				if (charsets != null && charsets.Details != null)
+				// The charset of the Content-Type header, else UTF-8 when the bytes are valid UTF-8, and only otherwise a guess
+				var decoded = ResponseDecoder.Decode(bytes, response.Content.Headers.ContentType?.CharSet);
+				var enc = decoded.Encoding;
+				if (decoded.Details != null)
 				{
 					List<string> charsetProp = new();
-					foreach (var charset in charsets.Details)
+					foreach (var detail in decoded.Details)
 					{
-						charsetProp.Add($"EncodingName:{charset.EncodingName} - Confidence:{charset.Confidence} - Log:{charset.StatusLog}");
+						charsetProp.Add(detail);
 					}
 
 					properties.Add(new ObjectValue("charsets", charsetProp));
@@ -590,7 +591,7 @@ namespace PLang.Modules.HttpModule
 				// Ensure non-UTF encodings are available
 				Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-				string responseBody = enc.GetString(bytes);
+				string responseBody = decoded.Text;
 
 
 				//string responseBody = await response.Content.ReadAsStringAsync();
