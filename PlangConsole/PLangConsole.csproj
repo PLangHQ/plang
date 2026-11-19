@@ -17,6 +17,13 @@
   <ItemGroup>
     <ProjectReference Include="..\PLang\PLang.csproj" />
   </ItemGroup>
+
+  <!-- The system and os goals ship with plang and sit next to plang.dll (PrParser looks in AppContext.BaseDirectory/system). A publish
+       copies them, a build does not, so a build still runs from the folders of the repository. .db folders are never copied. -->
+  <ItemGroup>
+    <Content Include="..\system\**\*" Exclude="..\system\**\.db\**" Link="system\%(RecursiveDir)%(Filename)%(Extension)" CopyToPublishDirectory="PreserveNewest" CopyToOutputDirectory="Never" />
+    <Content Include="..\os\**\*" Exclude="..\os\**\.db\**" Link="os\%(RecursiveDir)%(Filename)%(Extension)" CopyToPublishDirectory="PreserveNewest" CopyToOutputDirectory="Never" />
+  </ItemGroup>
 	
 	<PropertyGroup Condition="'$(RuntimeIdentifier)' == 'osx-x64' Or '$(RuntimeIdentifier)' == 'osx-arm64'">
 		<UseAppHost>true</UseAppHost>
