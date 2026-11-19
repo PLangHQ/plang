@@ -29,7 +29,7 @@ When specifying paths in the application, adhere to the following conventions to
 - `- read file.txt into %content%`: The `file.txt` should be located in the same folder as the `.goal` file.
 - `- read /file.txt into %content%`: The `file.txt` should be located in the application folder (where `.build`, `.db`, and `Start.goal` are located).
 - `- read //file.txt into %content%`: The `file.txt` should be located at the root of the drive, e.g., `C:\file.txt` on Windows or `/file.txt` on Linux/Macos.
-- `- read ///shared/file.txt into %content%`: The `file.txt` should be located on the 'shared' network drive (note: this is applicable only on Windows systems).
+- `- read ///shared/file.txt into %content%`: The `file.txt` should be located on the 'shared' network drive (note: this is applicable only on Windows systems; on Linux `///` is an error, write `//mnt/shared/file.txt` for a mounted share).
 
 
 ### Example

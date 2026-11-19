@@ -55,6 +55,13 @@ namespace PLang.Utils
 			return fileSystem.Path.Join(fileSystem.SystemDirectory, goal.RelativeGoalFolderPath, path);
 		}
 
+		/// <summary>The error for a path that starts with /// where there are no network drives (Linux).</summary>
+		public static Exception NetworkPathNotSupported(string path)
+		{
+			return new NotSupportedException($"The path '{path}' starts with ///, which is a network drive (\\\\server\\share) and exists on Windows only. " +
+				"To reach a folder outside the app on Linux, write it with // (the root of the drive), e.g. //proc or //home/user/folder. A network share is mounted first, e.g. //mnt/share.");
+		}
+
 		public static string GetPath(string? path, IPLangFileSystem fileSystem, Goal? goal)
 		{
 			if (string.IsNullOrEmpty(path))
@@ -66,15 +73,11 @@ namespace PLang.Utils
 			string startOfPath = (pathWithDirSep.Length > 3) ? pathWithDirSep.Substring(0, 3) : pathWithDirSep;
 			if (startOfPath == (fileSystem.Path.DirectorySeparatorChar.ToString() + fileSystem.Path.DirectorySeparatorChar.ToString() + fileSystem.Path.DirectorySeparatorChar.ToString()))
 			{
+				// "///server/share" is a network drive (\\server\share), it exists on Windows only.
+				if (!OperatingSystem.IsWindows()) throw NetworkPathNotSupported(path);
+
 				var absolutePath = pathWithDirSep.Substring(1);
-				var fullPath = fileSystem.Path.GetFullPath(absolutePath);
-				// Keep the leading "//" on Linux: to PLangFileSystem a single "/" is the app's root, so "/etc/hostname" would be joined onto the app folder.
-				// PLangFileSystem.ValidatePath drops one slash and runs the access check.
-				if (!OperatingSystem.IsWindows() && fullPath.StartsWith(fileSystem.Path.DirectorySeparatorChar))
-				{
-					return fileSystem.Path.DirectorySeparatorChar + fullPath;
-				}
-				return fullPath;
+				return fileSystem.Path.GetFullPath(absolutePath);
 			}
 
 
@@ -83,7 +86,7 @@ namespace PLang.Utils
 			{
 				// "//file.txt" is the root of the drive: c:\file.txt on Windows, /file.txt on Linux. On Linux the root is
 				// returned as "//file.txt", the form PLangFileSystem.ValidatePath takes as an OS path (a single "/" is the
-				// app's root there), the same as the "///" branch above does.
+				// app's root there).
 				if (!OperatingSystem.IsWindows() && fileSystem.Path.DirectorySeparatorChar == '/')
 				{
 					var rootPath = fileSystem.Path.GetFullPath(pathWithDirSep.Substring(1));

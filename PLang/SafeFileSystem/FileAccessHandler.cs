@@ -135,10 +135,11 @@ GiveAccess : yes|no|null"));
 		}
 
 		// The grant is stored the way PLangFileSystem.ValidatePath presents the paths it checks: an OS path
-		// written with extra leading slashes ("//proc", "///proc") becomes "/proc", so it matches "/proc/uptime".
+		// written with // ("//proc") becomes "/proc", so it matches "/proc/uptime". /// is a network drive and an error on Linux.
 		public void GiveAccess(string appName, string path)
 		{
 			path = path.AdjustPathToOs();
+			if (!OperatingSystem.IsWindows() && path.StartsWith("///")) throw PathHelper.NetworkPathNotSupported(path);
 			if (!OperatingSystem.IsWindows() && fileSystem.IsOsRooted(path))
 			{
 				path = System.IO.Path.GetFullPath("/" + path.TrimStart('/'));

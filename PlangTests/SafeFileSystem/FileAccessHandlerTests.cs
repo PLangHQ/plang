@@ -117,15 +117,24 @@ namespace PLangTests.SafeFileSystem
 		[DataTestMethod]
 		[DataRow("/proc")]
 		[DataRow("//proc")]
-		[DataRow("///proc")]
-		[DataRow("////proc")]
-		[DataRow("///proc/")]
-		public void GiveAccess_OsPathWithAnyNumberOfLeadingSlashes_MatchesValidatedPath(string grant)
+		[DataRow("//proc/")]
+		public void GiveAccess_OsPath_MatchesValidatedPath(string grant)
 		{
 			handler.GiveAccess(fileSystem.RootDirectory, grant);
 
 			Assert.AreEqual("/proc/uptime", fileSystem.ValidatePath("//proc/uptime"));
 			Assert.IsTrue(fileSystem.GetProcessFileAccess().Any(p => p.path == "/proc" || p.path == "/proc/"));
+		}
+
+		[DataTestMethod]
+		[DataRow("///proc")]
+		[DataRow("////proc")]
+		public void GiveAccess_NetworkPathOnLinux_IsAnError(string grant)
+		{
+			if (OperatingSystem.IsWindows()) return;
+
+			var ex = Assert.ThrowsException<NotSupportedException>(() => handler.GiveAccess(fileSystem.RootDirectory, grant));
+			StringAssert.Contains(ex.Message, "network drive");
 		}
 
 		[TestMethod]

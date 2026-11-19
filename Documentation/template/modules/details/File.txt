@@ -26,7 +26,7 @@ Current working directory is always where .goal file is located
 '- read file.txt into %content%' the file.txt should be located in same folder as the .goal file
 '- read /file.txt into %content%' the file.txt should be located in app folder(where .build, .db and Start.goal is located)
 '- read //file.txt into %content%' the file.txt should be located in root of the drive, e.g. c:\file.txt
-'- read ///shared/file.txt into %content%' the file.txt should be located on the 'shared' drive (windows only)
+'- read ///shared/file.txt into %content%' the file.txt should be located on the 'shared' drive (windows only, on Linux /// is an error: write //mnt/shared/file.txt for a mounted share)
 
 
 

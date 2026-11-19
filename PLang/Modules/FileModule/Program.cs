@@ -66,7 +66,7 @@ namespace PLang.Modules.FileModule
 			}
 		}
 
-		[Description("Give the app access to a path outside the app folder, e.g. `give access to \"/proc\"`, `give access to \"///etc\"`, `allow access to %folder%`. The app can then read and write under that path for the rest of the run without being asked.")]
+		[Description("Give the app access to a path outside the app folder, e.g. `give access to \"/proc\"`, `give access to \"//etc\"` (// is the root of the drive), `allow access to %folder%`. The app can then read and write under that path for the rest of the run without being asked.")]
 		public async Task GiveAccess(string path)
 		{
 			fileAccessHandler.GiveAccess(fileSystem.RootDirectory, path);
