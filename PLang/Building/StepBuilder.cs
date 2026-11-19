@@ -288,6 +288,7 @@ public class StepBuilder : IStepBuilder
 		if (step.Reload) return (!step.Reload, null);
 
 		StepPrFiles.AlignModuleWithInstruction(step, instruction, logger.Value);
+		if (IsConditionWithOtherModule(step, step.ModuleType)) return (false, null);
 
 		var gf = instruction.Function;
 		// lets load the return value into memoryStack
@@ -541,6 +542,10 @@ public class StepBuilder : IStepBuilder
 			{
 				logger.Value.LogWarning($"{step.LineNumber}: Decider failed, falling back to llm: {deciderError.Message}");
 			}
+			else if (choice != null && IsConditionWithOtherModule(step, choice.Module))
+			{
+				logger.Value.LogInformation($"{step.LineNumber}: Decider chose {choice.Module} ({choice.Confidence:0.00}) for a step that starts with if, falling back to llm");
+			}
 			else if (choice != null && choice.Confidence >= DeciderConfidenceThreshold && typeHelper.GetRuntimeType(choice.Module) != null)
 			{
 				logger.Value.LogInformation($"{step.LineNumber}: Decider chose {choice.Module} ({choice.Confidence:0.00}) for {step.Text.Trim(['\n', '\r', '\t']).MaxLength(80)}");
@@ -578,7 +583,10 @@ public class StepBuilder : IStepBuilder
 		{
 			return (step, new InvalidModuleStepError(module, $"ModuleType {module} does not exist.", step, FixSuggestion: "Choose a module from list provided in <modules>"));
 		}
-
+		if (IsConditionWithOtherModule(step, module))
+		{
+			return (step, new StepBuilderError($"The step starts with `if`, it is a condition and is built with {ConditionalModule}, not {module}. The goal it calls runs only when the condition is true.", step, "ConditionNotConditionalModule", Retry: true));
+		}
 
 
 		step.ModuleType = module;
@@ -597,6 +605,17 @@ public class StepBuilder : IStepBuilder
 
 	}
 
+
+	private const string ConditionalModule = "PLang.Modules.ConditionalModule";
+
+	// A step that starts with `if` is a condition. Built with another module (e.g. CallGoalModule for
+	// `if %x% == 1 then call goal Y`) it would run its action unconditionally. A module the user named
+	// in the step ([code] if ...) is respected and never reaches this check.
+	private static bool IsConditionWithOtherModule(GoalStep step, string? module)
+	{
+		if (!System.Text.RegularExpressions.Regex.IsMatch(step.Text ?? "", @"^\s*(-\s*)?if\s", System.Text.RegularExpressions.RegexOptions.IgnoreCase)) return false;
+		return !string.Equals(module, ConditionalModule, StringComparison.OrdinalIgnoreCase);
+	}
 
 	private int GetErrorCount(GoalStep step, IBuilderError error)
 	{
