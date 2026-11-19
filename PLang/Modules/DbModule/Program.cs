@@ -950,7 +950,10 @@ namespace PLang.Modules.DbModule
 						bool isListValue = prop.VariableNameOrValue is IList && prop.VariableNameOrValue is not byte[]
 							&& !isJsonObjectOrScalar;
 
-						if (prop.TypeFullName == typeof(System.Array).FullName || isListValue)
+						// A list is expanded only where the sql takes a list of values (`where id in @list`). Anywhere else, e.g. json_each(@list),
+							// json_extract(@list, ...), it is ONE value: the JSON text of the array.
+							bool expandList = prop.TypeFullName == typeof(System.Array).FullName || (isListValue && SqlListParameter.UsedAsList(prep.sql, prop.ParameterName));
+							if (expandList)
 						{
 							if (prop.VariableNameOrValue == null || string.IsNullOrEmpty(prop.VariableNameOrValue.ToString()))
 							{
@@ -980,7 +983,14 @@ namespace PLang.Modules.DbModule
 						{
 							var param = cmd.CreateParameter();
 							param.ParameterName = prop.ParameterName;
-							var (value, error) = ConvertObjectToType(prop.VariableNameOrValue, prop.TypeFullName, prop.ParameterName, prop.VariableNameOrValue, isSqlite);
+							var rawValue = prop.VariableNameOrValue;
+							var typeName = prop.TypeFullName;
+							if (isListValue)
+							{
+								rawValue = SqlListParameter.ToJsonText(rawValue);
+								typeName = typeof(string).FullName!;
+							}
+							var (value, error) = ConvertObjectToType(rawValue, typeName, prop.ParameterName, rawValue, isSqlite);
 							if (error != null) return (null, error, properties);
 
 							// A null value is bound as sql NULL; the provider rejects a parameter whose Value is unset.
