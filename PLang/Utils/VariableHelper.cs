@@ -348,6 +348,9 @@ namespace PLang.Utils
 				if (value is DateTime date) return date.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
 				if (value is DateTimeOffset offset) return offset.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
 			}
+			// System.Array (a sql parameter that is a list, `where name in %names%`) cannot be instantiated: the list stays what it is
+			// and the sql layer expands it.
+			if (convertValueTo.IsAbstract || convertValueTo.IsInterface) return value;
 			return TypeHelper.ConvertToType(value, convertValueTo);
 		}
 

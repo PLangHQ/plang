@@ -1861,6 +1861,9 @@ For example:
 
 			if (obj is System.DBNull || obj == null) return (null, null);
 
+			// A list parameter (`where name in %names%`) stays the list, it is expanded into one parameter per item when the query runs
+			if (typeFullName == typeof(System.Array).FullName) return (obj, null);
+
 			Type? targetType = Type.GetType(typeFullName);
 			if (targetType == null)
 			{
