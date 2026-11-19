@@ -416,6 +416,12 @@ goalName is the goal that should be called, a whole word with possible slash(/),
 					{
 						var now = SystemTime.OffsetUtcNow().DateTime;
 						var version = Interlocked.Read(ref cronJobsVersion);
+						// A drain (`drain app`) turns the scheduler off: no new run starts, runs that are going finish.
+						if (!RuntimeMode.SchedulerEnabled)
+						{
+							await Task.Delay(1000);
+							continue;
+						}
 						bool hasDueJob = GetDueJobs(cronJobs, now).Count > 0;
 
 						if (hasDueJob || version != loadedVersion || now - lastLoad >= CronJobsReloadInterval)

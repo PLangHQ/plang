@@ -124,12 +124,40 @@ public class Program : BaseProgram
 		return RunningEnginesReader.Read(engine, withSizes, top, includeRootEngine);
 	}
 
-	[Description("Diagnostics of the running app's memory, to tell whether growth is objects PLang holds or native/.NET memory. One object with three groups. gc: heap_mb, heap_after_collect_mb (only when forceGc, else null), gen0_collections, gen1_collections, gen2_collections, total_allocated_mb, heap_size_mb, fragmented_mb, committed_mb, large_object_heap_mb, pinned_object_heap_mb, finalization_pending_count, pinned_objects_count. process: rss_mb, rss_anon_mb, rss_file_mb, swap_mb, private_mb, virtual_mb, not_gc_mb (rss minus gc committed), threads, open_files, handle_count, thread_pool_threads, thread_pool_pending_work_items, timers, loaded_assemblies. plang: call_stack_depth, call_stack_max_depth, executed_steps_on_call_stack, memory_stack_variables, keep_alive_entries, running_tasks (count by kind), engine_pool (total, rented, free), engines_running, oldest_running_engine_seconds, largest_engine (id, name, serialize_bytes, measured_utc; only from the last `get running engines, with sizes`, null when not measured), context_items, context_shared_items, context_event_bindings, regex_cache_limit, caches (entry count of each runtime cache by name), standby (started with --standby), scheduler_enabled (false when started with --no-scheduler or --standby, until `enable scheduler`). forceGc=true runs a full blocking garbage collection first, which stops the whole app briefly; default false, set it only when the user asks to force/collect garbage. e.g. `get runtime stats, write to %stats%`")]
+	[Description("Diagnostics of the running app's memory, to tell whether growth is objects PLang holds or native/.NET memory. One object with three groups. gc: heap_mb, heap_after_collect_mb (only when forceGc, else null), gen0_collections, gen1_collections, gen2_collections, total_allocated_mb, heap_size_mb, fragmented_mb, committed_mb, large_object_heap_mb, pinned_object_heap_mb, finalization_pending_count, pinned_objects_count. process: rss_mb, rss_anon_mb, rss_file_mb, swap_mb, private_mb, virtual_mb, not_gc_mb (rss minus gc committed), threads, open_files, handle_count, thread_pool_threads, thread_pool_pending_work_items, timers, loaded_assemblies. plang: call_stack_depth, call_stack_max_depth, executed_steps_on_call_stack, memory_stack_variables, keep_alive_entries, running_tasks (count by kind), engine_pool (total, rented, free), engines_running, oldest_running_engine_seconds, largest_engine (id, name, serialize_bytes, measured_utc; only from the last `get running engines, with sizes`, null when not measured), context_items, context_shared_items, context_event_bindings, regex_cache_limit, caches (entry count of each runtime cache by name), standby (started with --standby), scheduler_enabled (false when started with --no-scheduler or --standby, until `enable scheduler`), draining (true once `drain app` has started). forceGc=true runs a full blocking garbage collection first, which stops the whole app briefly; default false, set it only when the user asks to force/collect garbage. e.g. `get runtime stats, write to %stats%`")]
 	[Example("get runtime stats, write to %stats%", "forceGc=false")]
 	[Example("get runtime stats, force garbage collection, write to %stats%", "forceGc=true")]
 	public async Task<RuntimeStats> GetRuntimeStats(bool forceGc = false)
 	{
 		return RuntimeStatsReader.Read(engine, context, forceGc);
+	}
+
+	private static AppDrainer? drainer;
+	private static readonly object drainLock = new();
+
+	[Description("Gracefully drains the running app so a new process (started with --standby, listening on the same port with `reuse port`) can take over without dropped requests. Stops the webservers from accepting new connections (requests in flight finish), starts no new scheduled runs, waits until the running requests and goals have finished or the timeout comes, then closes what is still open (long lived http responses, iroh endpoints and connections) so the clients connect again. timeoutInSeconds: 0 means the setting DrainTimeoutSeconds, default 30. exitWhenDone (default true): the process ends with exit code 0 when the drain is done, false leaves it running without listeners. Returns phase timings in ms (stop_accepting_ms, wait_ms, going_away_ms, total_ms), engines_waited_for, timed_out, live_connections_closed, iroh_closed, webservers_stopped, exited. A second call while draining is an error. e.g. `drain app, write to %result%`")]
+	[Example("drain app", "timeoutInSeconds=0, exitWhenDone=true")]
+	[Example("drain app, timeout 45 seconds", "timeoutInSeconds=45, exitWhenDone=true")]
+	[Example("drain app, then exit", "exitWhenDone=true")]
+	[Example("drain app, do not exit, write to %result%", "exitWhenDone=false")]
+	public async Task<(DrainResult?, IError?)> DrainApp(int timeoutInSeconds = 0, bool exitWhenDone = true)
+	{
+		if (timeoutInSeconds <= 0) timeoutInSeconds = settings.GetOrDefault<int>(typeof(Program), AppDrainer.TimeoutSetting, AppDrainer.DefaultTimeoutSeconds);
+		if (timeoutInSeconds <= 0) timeoutInSeconds = AppDrainer.DefaultTimeoutSeconds;
+
+		AppDrainer current;
+		lock (drainLock)
+		{
+			drainer ??= new AppDrainer(engine.KeepAliveRegistry, engine);
+			current = drainer;
+		}
+
+		var result = await current.Drain(TimeSpan.FromSeconds(timeoutInSeconds), exitWhenDone);
+		if (result == null)
+		{
+			return (null, new Errors.Runtime.ProgramError("The app is already draining", goalStep, function, Key: "AlreadyDraining", StatusCode: 409));
+		}
+		return (result, null);
 	}
 
 	[Description("Runs the setup goals now. They run at every start of the app, except when it was started with --standby. e.g. `run setup`")]

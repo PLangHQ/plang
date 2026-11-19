@@ -11,6 +11,12 @@ namespace PLang.Utils
 		public const string NoSchedulerSwitch = "!NoScheduler";
 		public const string StandbySwitch = "!Standby";
 
+		public const string DrainingSwitch = "!Draining";
+
+		/// <summary>True from the start of `drain app`: the app is handing over to another process.</summary>
+		public static bool Draining => IsSet(DrainingSwitch);
+		public static void SetDraining(bool value) => AppContext.SetSwitch(DrainingSwitch, value);
+
 		public static bool Standby => IsSet(StandbySwitch);
 		public static bool SchedulerEnabled => !IsSet(NoSchedulerSwitch);
 

@@ -52,6 +52,9 @@ public class Program : BaseProgram, IDisposable
 	private readonly ProgramFactory programFactory;
 	private readonly static List<WebserverProperties> listeners = new();
 	internal static int ListenerCount => listeners.Count;
+	// Used by `drain app`, which stops and disposes the host itself.
+	internal static void ForgetListener(WebserverProperties webserver) => listeners.Remove(webserver);
+	internal const string WebserverKeepAliveKind = KeepAliveKind;
 	// The KeepAliveRegistry kind of a running webserver, from start until it is shut down.
 	private const string KeepAliveKind = "Webserver";
 	private bool disposed;

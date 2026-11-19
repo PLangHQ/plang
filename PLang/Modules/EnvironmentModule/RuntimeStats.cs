@@ -51,7 +51,7 @@ public record PlangRuntimeStats(int CallStackDepth, int CallStackMaxDepth, int E
 	int KeepAliveEntries, Dictionary<string, int> RunningTasks, EnginePoolStats? EnginePool,
 	int EnginesRunning, double OldestRunningEngineSeconds, LargestEngine? LargestEngine,
 	int ContextItems, int ContextSharedItems, int ContextEventBindings, int RegexCacheLimit, Dictionary<string, int> Caches,
-	bool Standby = false, bool SchedulerEnabled = true);
+	bool Standby = false, bool SchedulerEnabled = true, bool Draining = false);
 
 public static class RuntimeStatsReader
 {
@@ -134,7 +134,7 @@ public static class RuntimeStatsReader
 			snapshot.Count, runningTasks, enginePool,
 			engines.Count, oldestEngineSeconds, RunningEnginesReader.GetLargestMeasured(engines),
 			context?.Items?.Count ?? 0, context?.SharedItems?.Count ?? 0, context?.EventBindings?.Count ?? 0, Regex.CacheSize,
-			GetCacheCounts(engine), Utils.RuntimeMode.Standby, Utils.RuntimeMode.SchedulerEnabled);
+			GetCacheCounts(engine), Utils.RuntimeMode.Standby, Utils.RuntimeMode.SchedulerEnabled, Utils.RuntimeMode.Draining);
 	}
 
 	private static IEngine GetRootEngine(IEngine engine)

@@ -246,7 +246,7 @@ namespace PLang.Modules.IrohModule
 				iroh.connection_close(conn);
 				return null;
 			}
-			return new IrohConnection((nint)conn);
+			return Track(new IrohConnection((nint)conn));
 		}
 
 		/// <summary>
@@ -318,7 +318,7 @@ namespace PLang.Modules.IrohModule
 				iroh.connection_free(conn);
 				throw new IrohException($"Could not connect to {Short(idOrTicket)}: {result}");
 			}
-			return new IrohConnection((nint)conn);
+			return Track(new IrohConnection((nint)conn));
 		}
 
 		/// <summary>An endpoint id is 64 hex characters, so only a ticket starts with "endpoint".</summary>
@@ -348,6 +348,33 @@ namespace PLang.Modules.IrohModule
 				return iroh.endpoint_addr_new(key);
 			}
 			finally { Marshal.FreeCoTaskMem(text); }
+		}
+
+		private readonly System.Collections.Concurrent.ConcurrentDictionary<IrohConnection, byte> connections = new();
+
+		/// <summary>Remembers a connection of this endpoint, so CloseConnections can close it. Disposed ones are dropped on the way.</summary>
+		private IrohConnection Track(IrohConnection connection)
+		{
+			foreach (var disposed in connections.Keys.Where(p => p.IsDisposed).ToList()) connections.TryRemove(disposed, out _);
+			connections[connection] = 0;
+			return connection;
+		}
+
+		/// <summary>
+		/// Closes every connection this endpoint accepted or made that is still open. Each one is freed once (NativeHandle),
+		/// and one with a call running on another thread is freed when that call returns. The native API closes a
+		/// connection without an application close code or reason. Returns how many were closed.
+		/// </summary>
+		public int CloseConnections()
+		{
+			int closed = 0;
+			foreach (var connection in connections.Keys.ToList())
+			{
+				if (!connections.TryRemove(connection, out _) || connection.IsDisposed) continue;
+				connection.Dispose();
+				closed++;
+			}
+			return closed;
 		}
 
 		private static string Short(string value) => value.Length > 16 ? value[..16] + "..." : value;

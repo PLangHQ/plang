@@ -213,6 +213,23 @@ namespace PLang.Modules.IrohModule
 			}
 		}
 
+		/// <summary>
+		/// Used by `drain app`: closes every connection of every endpoint, then the endpoints, so the peers see the
+		/// connection drop and dial again (the next process listens on the same key). Returns how many of each were closed.
+		/// </summary>
+		internal static (int Endpoints, int Connections) CloseAll()
+		{
+			int endpoints = 0, connections = 0;
+			foreach (var keyName in Endpoints.Keys.ToList())
+			{
+				if (!Endpoints.TryRemove(keyName, out var endpoint)) continue;
+				connections += endpoint.CloseConnections();
+				endpoint.Dispose();
+				endpoints++;
+			}
+			return (endpoints, connections);
+		}
+
 		private (IrohEndpoint?, IError?) GetEndpoint(string keyName, bool useRelay)
 		{
 			try
