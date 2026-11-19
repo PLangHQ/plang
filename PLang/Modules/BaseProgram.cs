@@ -202,7 +202,7 @@ namespace PLang.Modules
 						var parameter = method.GetParameters().FirstOrDefault(p => p.ParameterType.FullName == type);
 						if (parameter != null)
 						{
-							var functionParameter = function.Parameters.FirstOrDefault(p => p.Name == parameter.Name);
+							var functionParameter = function.Parameters?.FirstOrDefault(p => p.Name == parameter.Name);
 							if (functionParameter != null)
 							{
 								return (null, new InvalidParameterError(function.Name, $"{functionParameter.Value} is not corrent value to call {function.Name}. It should be type of {type}. Is the step loading {functionParameter.Value} correct?", goalStep, FixSuggestion: $"Check if the step that loads {functionParameter.Value} is correctly mapped."));

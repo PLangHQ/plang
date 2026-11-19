@@ -507,7 +507,8 @@ public class MethodHelper
 			logger.LogTrace($"         - Loading parameter in GetParameterValues {parameter.Name} - {StepClock.Ms(start)}");
 			if (parameter.Name == null) continue;
 
-			var inputParameter = function.Parameters.FirstOrDefault(p => p.Name == parameter.Name);
+			// A step built without parameters has null for them (`start scheduler` on .46): every parameter is then missing, the optional ones take their default
+			var inputParameter = function.Parameters?.FirstOrDefault(p => p.Name == parameter.Name);
 
 			if (inputParameter == null && !parameter.IsOptional && !parameter.ParameterType.Name.StartsWith("Nullable"))
 			{
