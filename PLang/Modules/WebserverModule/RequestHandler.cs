@@ -52,6 +52,8 @@ namespace PLang.Modules.WebserverModule
 				var request = httpContext.Request;
 				if (!request.Body.CanRead) return (false, null, null);
 
+					if (HandleEmptyPath(httpContext)) return (false, null, null);
+
 				if (webserverProperties.DefaultRequestProperties!.SignedRequestRequired && !request.Headers.TryGetValue("X-Signature", out var value))
 				{
 					return (false, null, new Error("All requests must be signed"));
@@ -138,6 +140,38 @@ namespace PLang.Modules.WebserverModule
 		}
 
 
+
+		/// <summary>
+		/// A request target without a path: `OPTIONS *` (asterisk-form) or `GET http://host HTTP/1.1` (absolute-form without a path).
+		/// The first is answered here, 200 with Allow, the second is a request for "/" (RFC 9112 3.2.2). Anything else with an empty
+		/// path is a bad request. One line is logged for each, as such a request never reaches the request log otherwise.
+		/// Returns true when the response is complete.
+		/// </summary>
+		public static bool HandleEmptyPath(HttpContext httpContext)
+		{
+			var request = httpContext.Request;
+			if (request.Path.HasValue) return false;
+
+			var rawTarget = httpContext.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpRequestFeature>()?.RawTarget;
+			Console.WriteLine($"{DateTime.Now} - empty request path: {httpContext.Connection.RemoteIpAddress} | {request.Method} | {rawTarget} | {request.Headers.UserAgent}");
+
+			if (rawTarget == "*")
+			{
+				if (!HttpMethods.IsOptions(request.Method))
+				{
+					httpContext.Response.StatusCode = 400;
+					return true;
+				}
+
+				httpContext.Response.StatusCode = 200;
+				httpContext.Response.Headers.Allow = "GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS";
+				httpContext.Response.ContentLength = 0;
+				return true;
+			}
+
+			request.Path = new PathString("/");
+			return false;
+		}
 
 		private async Task<IError?> HandleRequest(PLangContext context, IEngine requestEngine, WebserverProperties webserverInfo)
 		{
