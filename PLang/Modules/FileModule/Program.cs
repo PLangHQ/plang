@@ -625,7 +625,10 @@ namespace PLang.Modules.FileModule
 
 			var files = fileSystem.Directory.GetFiles(absoluteDirectoryPath, searchPattern, searchOption);
 
-			var paths = files.Select(path => path.Replace(fileSystem.RootDirectory, ""));
+			// A folder outside the app is written //path. The file system drops one slash on the way, and a path
+			// that starts with a single slash is the app's root, so the files would be taken for files in the app.
+			bool outsideApp = absoluteDirectoryPath.StartsWith("//");
+			var paths = files.Select(path => outsideApp && !path.StartsWith("//") ? "/" + path : path.Replace(fileSystem.RootDirectory, ""));
 			if (excludePatterns != null)
 			{
 				paths = paths.Where(file => !excludePatterns.Any(pattern =>
@@ -863,12 +866,22 @@ namespace PLang.Modules.FileModule
 			var absoluteDirectoryPath = GetPath(directoryPath);
 			var absoluteDestinationPath = GetPath(destinationPath);
 
-			var files = await GetFilePathsInDirectory(absoluteDirectoryPath, searchPattern, excludePatterns, includeSubfoldersAndFiles);
+			// The path as written: GetFilePathsInDirectory resolves it itself, and an absolute path outside the app (//home/x)
+			// would be taken as relative to the app when it is resolved a second time.
+			var files = await GetFilePathsInDirectory(directoryPath, searchPattern, excludePatterns, includeSubfoldersAndFiles);
 			foreach (var file in files)
 			{
-				string relativePath = file.AbsolutePath.Replace(absoluteDirectoryPath, "");
+								string relativePath = file.AbsolutePath.Substring(absoluteDirectoryPath.Length).TrimStart('/', '\\');
 				var copyDestinationFilePath = fileSystem.Path.Join(absoluteDestinationPath, relativePath);
-				await CopyFile(file.AbsolutePath, copyDestinationFilePath, true, overwriteFiles);
+				// both paths are absolute now, CopyFile would resolve them again
+				// not Path.GetDirectoryName: it turns //folder (outside the app) into /folder, the app's root
+				var lastSeparator = copyDestinationFilePath.LastIndexOfAny(new[] { '/', '\\' });
+				var destinationFolder = lastSeparator > 0 ? copyDestinationFilePath.Substring(0, lastSeparator) : null;
+				if (!string.IsNullOrEmpty(destinationFolder) && !fileSystem.Directory.Exists(destinationFolder))
+				{
+					fileSystem.Directory.CreateDirectory(destinationFolder);
+				}
+				fileSystem.File.Copy(file.AbsolutePath, copyDestinationFilePath, overwriteFiles);
 			}
 
 		}
