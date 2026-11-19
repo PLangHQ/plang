@@ -78,7 +78,7 @@ namespace PLang.Modules.CompressionModule
 		}
 
 		public async Task<IError?> CompressDirectory(string sourceDirectoryName, string destinationArchiveFileName, int compressionLevel = 0,
-			bool includeBaseDirectory = true, bool createDestinationDirectory = true, bool overwriteDestinationFile = false, string[]? excludePatterns = null
+			[Description("true (default): the archive holds the folder itself, folder/file.txt. false when the step says without the folder, the content only, not the base folder: the archive holds file.txt, and extracting it puts the files straight into the destination")] bool includeBaseDirectory = true, bool createDestinationDirectory = true, bool overwriteDestinationFile = false, string[]? excludePatterns = null
 			)
 		{
 			var absoluteSourceDirectoryName = GetPath(sourceDirectoryName);

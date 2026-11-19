@@ -72,6 +72,28 @@ namespace PLang.Modules.FileModule
 			fileAccessHandler.GiveAccess(fileSystem.RootDirectory, path);
 		}
 
+		[Description("Hash of the content of a file, as lower case hex. algorithm: sha256 (default), sha1 or md5. e.g. `get hash of file %path%, write to %hash%`, `get sha256 of file //shared/x.dll, write to %hash%`")]
+		[Example("get hash of file %path%, write to %hash%", "path=%path%, algorithm=\"sha256\"")]
+		public async Task<(string?, IError?)> GetFileHash(string path, string algorithm = "sha256")
+		{
+			var absolutePath = GetPath(path);
+			if (!fileSystem.File.Exists(absolutePath))
+			{
+				return (null, new Error($"File not found: {path}", "FileNotFound", 404, FixSuggestion: "Check the path of the file."));
+			}
+
+			using var stream = fileSystem.File.OpenRead(absolutePath);
+			byte[] hash;
+			switch (algorithm.ToLowerInvariant())
+			{
+				case "sha256": hash = System.Security.Cryptography.SHA256.HashData(stream); break;
+				case "sha1": hash = System.Security.Cryptography.SHA1.HashData(stream); break;
+				case "md5": hash = System.Security.Cryptography.MD5.HashData(stream); break;
+				default: return (null, new Error($"Algorithm '{algorithm}' is not supported. Use sha256, sha1 or md5.", "AlgorithmNotSupported", 400));
+			}
+			return (Convert.ToHexString(hash).ToLowerInvariant(), null);
+		}
+
 		public async Task<(object?, IError?)> FileExists(string filePathOrVariableName, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
@@ -654,7 +676,10 @@ namespace PLang.Modules.FileModule
 				if (fileSystem.IsOsRooted(path))
 				{
 					absolutePath = path;
-					relativePath = path.Replace(directoryPath, "");
+					// relative to the folder that was listed (the path as written may differ from the resolved one, e.g. //x)
+					relativePath = path.StartsWith(absoluteDirectoryPath, StringComparison.Ordinal)
+						? path.Substring(absoluteDirectoryPath.Length).TrimStart('/', '\\')
+						: path.Replace(directoryPath, "");
 				}
 				else
 				{
