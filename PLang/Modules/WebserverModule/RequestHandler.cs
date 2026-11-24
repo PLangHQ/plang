@@ -1,4 +1,5 @@
 ﻿using NBitcoin.Secp256k1;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
@@ -406,6 +407,40 @@ namespace PLang.Modules.WebserverModule
 		}
 
 
+		/// <summary>
+		/// A signature names the request it was made for: plang's http client signs "url" (the path and query) and "method".
+		/// A signature replayed on another url or with another method is refused, so a route that checks %Identity% needs no
+		/// guard of its own. A signature without them (the browser client signs neither yet) is not bound here.
+		/// </summary>
+		private static IError? CheckSignedRequest(SignedMessage? signature, HttpRequest request)
+		{
+			if (signature?.Headers == null) return null;
+
+			var signedMethod = SignedHeader(signature, "method");
+			if (signedMethod != null && !signedMethod.Equals(request.Method, StringComparison.OrdinalIgnoreCase))
+			{
+				return new UnauthorizedError($"The signature was made for method {signedMethod}, this request is {request.Method}. Sign the request again.");
+			}
+
+			var signedUrl = SignedHeader(signature, "url");
+			if (signedUrl != null)
+			{
+				string signedPath = Uri.UnescapeDataString(signedUrl);
+				string fullPath = Uri.UnescapeDataString((request.PathBase + request.Path).ToString() + request.QueryString);
+				if (!signedPath.Equals(fullPath, StringComparison.Ordinal))
+				{
+					return new UnauthorizedError($"The signature was made for {signedUrl}, this request is {fullPath}. Sign the request again.");
+				}
+			}
+			return null;
+		}
+
+		private static string? SignedHeader(SignedMessage signature, string name)
+		{
+			var header = signature.Headers!.FirstOrDefault(p => p.Key.Equals(name, StringComparison.OrdinalIgnoreCase));
+			return header.Key == null ? null : header.Value?.ToString();
+		}
+
 		private async Task<(SignedMessage? SignedMessage, IError? Error)> VerifySignature(IEngine engine, PLangContext context)
 		{
 			if (context.SignedMessage != null) return (context.SignedMessage, null);
@@ -433,8 +468,18 @@ namespace PLang.Modules.WebserverModule
 			byte[]? rawBody = await GetRawBody(request);
 			if (rawBody == null) return (null, new Error("Cannot read body"));
 
+			// The url and method are checked before the signature is verified, so a signature replayed on another request
+			// is refused without its nonce being spent, and the request it was made for still goes through.
+			SignedMessage? claimed = null;
+			try { claimed = JsonConvert.DeserializeObject<SignedMessage>(signatureData); } catch (Newtonsoft.Json.JsonException) { }
+			var boundError = CheckSignedRequest(claimed, request);
+			if (boundError != null) return (null, boundError);
+
 			var verifiedSignatureResult = await identity.VerifySignature(signatureData, headers, rawBody);
 			if (verifiedSignatureResult.Error != null) return (null, verifiedSignatureResult.Error);
+
+			boundError = CheckSignedRequest(verifiedSignatureResult.Signature, request);
+			if (boundError != null) return (null, boundError);
 
 			if (verifiedSignatureResult.Signature != null)
 			{
