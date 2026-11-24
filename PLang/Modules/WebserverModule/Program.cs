@@ -350,7 +350,17 @@ public class Program : BaseProgram, IDisposable
 				{
 					app.Use(async (ctx, next) =>
 					{
-						//Console.WriteLine("Request accepted:" + ctx.Request.Path.Value);
+						// While the app drains, an HTTP/1.x answer tells the client to close the connection, so its next request
+						// opens a new connection (to the process taking over) instead of being sent on one that is about to close.
+						// HTTP/2 and 3 get GOAWAY from Kestrel when it stops.
+						if (RuntimeMode.Draining && !HttpProtocol.IsHttp2(ctx.Request.Protocol) && !HttpProtocol.IsHttp3(ctx.Request.Protocol))
+						{
+							ctx.Response.OnStarting(() =>
+							{
+								ctx.Response.Headers.Connection = "close";
+								return Task.CompletedTask;
+							});
+						}
 						await next();
 					});
 					app.UseForwardedHeaders();

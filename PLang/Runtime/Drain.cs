@@ -21,7 +21,8 @@ namespace PLang.Runtime
 	/// <summary>
 	/// A graceful drain of the running app, so another process (started with --standby, listening on the same port with `reuse port`)
 	/// can take over without dropped requests.
-	/// 1. Stop accepting: every "Webserver" entry of the registry gets IHost.StopAsync (Kestrel stops accepting and lets requests in flight
+	/// 1. Stop accepting: for one second every HTTP/1.x answer carries Connection: close, so busy keep-alive clients move to the new
+	///    process; then every "Webserver" entry of the registry gets IHost.StopAsync (Kestrel stops accepting and lets requests in flight
 	///    finish until the timeout), and the scheduler starts no new runs.
 	/// 2. Wait: until no entry with WaitOnShutdown (a rented engine serving a request, a "dont wait" or scheduled run) is left, or the timeout.
 	/// 3. Going away: what is still open is closed so the client connects again: long lived HTTP responses (Engine.LiveConnections),
@@ -38,6 +39,10 @@ namespace PLang.Runtime
 		private const int LiveConnectionCloseWaitMilliseconds = 1000;
 		private const int HostStopGraceMilliseconds = 2000;
 		private const int CalledFromRequestGraceMilliseconds = 300;
+		// How long the webservers keep answering, each answer with Connection: close, before they stop. A client busy on a
+		// keep-alive connection gets its close with an answer and opens its next connection to the new process; without
+		// it, Kestrel closes the connection while the client's next request is already on its way, and that request is lost.
+		private const int ConnectionCloseWindowMilliseconds = 1000;
 		private const string IrohListenKindPrefix = "iroh-listen-";
 
 		private readonly KeepAliveRegistry registry;
@@ -83,6 +88,11 @@ namespace PLang.Runtime
 				.Where(p => p.Kind == Modules.WebserverModule.Program.WebserverKeepAliveKind && p.Instance is WebserverProperties)
 				.Select(p => (Entry: p, Properties: (WebserverProperties)p.Instance))
 				.ToList();
+			if (webservers.Count > 0)
+			{
+				try { await Task.Delay(ConnectionCloseWindowMilliseconds, deadline.Token); }
+				catch (OperationCanceledException) { }
+			}
 			var stops = webservers.Select(p => StopHost(p.Properties, deadline.Token)).ToList();
 			await Task.Yield();
 			long stopAcceptingMs = phase.ElapsedMilliseconds;
