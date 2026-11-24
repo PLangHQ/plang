@@ -13,10 +13,15 @@ namespace PLang.Runtime
 	/// drains is not counted), TimedOut is true when the timeout came before everything had finished.
 	/// LiveConnectionsClosed are the long lived HTTP responses that were ended, IrohClosed the iroh endpoints and connections
 	/// that were closed, WebserversStopped the webservers that no longer accept connections. Exited: the registry was cleared, so the app ends.
+	/// StillRunning: what was still running when the timeout came (cut when the process ends); empty when nothing timed out.
 	/// </summary>
 	[JsonObject(NamingStrategyType = typeof(SnakeCaseNamingStrategy))]
 	public record DrainResult(long StopAcceptingMs, long WaitMs, long GoingAwayMs, long TotalMs, int EnginesWaitedFor, bool TimedOut,
-		int LiveConnectionsClosed, int IrohClosed, int WebserversStopped, bool Exited);
+		int LiveConnectionsClosed, int IrohClosed, int WebserversStopped, bool Exited, List<DrainStillRunning>? StillRunning = null);
+
+	/// <summary>A run that had not finished when the drain timed out: its kind (Engine, Schedule, ...), name and start.</summary>
+	[JsonObject(NamingStrategyType = typeof(SnakeCaseNamingStrategy))]
+	public record DrainStillRunning(string Kind, string Name, DateTime StartedUtc);
 
 	/// <summary>
 	/// A graceful drain of the running app, so another process (started with --standby, listening on the same port with `reuse port`)
@@ -93,13 +98,18 @@ namespace PLang.Runtime
 				try { await Task.Delay(ConnectionCloseWindowMilliseconds, deadline.Token); }
 				catch (OperationCanceledException) { }
 			}
-			var stops = webservers.Select(p => StopHost(p.Properties, deadline.Token)).ToList();
+			// When the drain is a step of a request, Kestrel must not abort connections at the timeout: that would also cut the
+			// connection the drain answer goes out on. Requests still running then end with the process instead.
+			bool calledFromRequest = callingEngine?.RunningContext?.HttpContext != null;
+			var stopToken = calledFromRequest ? CancellationToken.None : deadline.Token;
+			var stops = webservers.Select(p => StopHost(p.Properties, stopToken)).ToList();
 			await Task.Yield();
 			long stopAcceptingMs = phase.ElapsedMilliseconds;
 
 			// Phase 2: wait for the work in progress
 			phase.Restart();
 			var waitedFor = new HashSet<KeepAliveEntry>(ReferenceEqualityComparer.Instance);
+			var stillRunning = new List<DrainStillRunning>();
 			while (true)
 			{
 				var pending = registry.GetSnapshot().Where(IsWaitedFor).ToList();
@@ -109,6 +119,7 @@ namespace PLang.Runtime
 				if (deadline.IsCancellationRequested)
 				{
 					timedOut = true;
+					stillRunning.AddRange(pending.Select(p => new DrainStillRunning(p.Kind, (p.Instance as IEngine)?.Name ?? p.Name, p.StartedUtc)));
 					break;
 				}
 				await Task.Delay(PollMilliseconds);
@@ -125,7 +136,6 @@ namespace PLang.Runtime
 			// When the drain is a step of a request of a host that is being drained, that host cannot finish its stop before this request ends,
 			// so waiting for it would hold the answer until the timeout, and disposing the host would cut the answer. The listening sockets
 			// are closed already; the host finishes and goes away when the request is done.
-			bool calledFromRequest = callingEngine?.RunningContext?.HttpContext != null;
 			var hostWait = calledFromRequest ? TimeSpan.FromMilliseconds(CalledFromRequestGraceMilliseconds) : timeout + TimeSpan.FromMilliseconds(HostStopGraceMilliseconds);
 
 			// Kestrel returns at the token at the latest, the grace only keeps a host that does not honour the token from holding the drain
@@ -165,7 +175,7 @@ namespace PLang.Runtime
 			if (exitWhenDone) registry.Clear();
 
 			return new DrainResult(stopAcceptingMs, waitMs, goingAwayMs, total.ElapsedMilliseconds, waitedFor.Count, timedOut,
-				liveClosed, irohClosed, webserversStopped, exitWhenDone);
+				liveClosed, irohClosed, webserversStopped, exitWhenDone, stillRunning);
 		}
 
 		private bool IsWaitedFor(KeepAliveEntry entry)

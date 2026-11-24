@@ -353,11 +353,12 @@ public class Program : BaseProgram, IDisposable
 						// While the app drains, an HTTP/1.x answer tells the client to close the connection, so its next request
 						// opens a new connection (to the process taking over) instead of being sent on one that is about to close.
 						// HTTP/2 and 3 get GOAWAY from Kestrel when it stops.
-						if (RuntimeMode.Draining && !HttpProtocol.IsHttp2(ctx.Request.Protocol) && !HttpProtocol.IsHttp3(ctx.Request.Protocol))
+						// Checked when the answer starts, so a request that came in just before the drain also gets it.
+						if (!HttpProtocol.IsHttp2(ctx.Request.Protocol) && !HttpProtocol.IsHttp3(ctx.Request.Protocol))
 						{
 							ctx.Response.OnStarting(() =>
 							{
-								ctx.Response.Headers.Connection = "close";
+								if (RuntimeMode.Draining) ctx.Response.Headers.Connection = "close";
 								return Task.CompletedTask;
 							});
 						}
