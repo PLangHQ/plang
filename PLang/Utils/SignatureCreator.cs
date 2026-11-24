@@ -103,17 +103,31 @@ namespace PLang.Utils
 			return item.Value;
 		}
 
+		/// <summary>
+		/// A signature as json text. One made in a browser carries its public key as a P-256 jwk (jwkIdentity) and its
+		/// identity is the hash of that key. Returns null when the text is not a signature or the jwk is not a key.
+		/// </summary>
 		internal static SignedMessage? Parse(string str)
 		{
-			var jobj = JObject.Parse(str);
-			var crv = jobj["jwkIdentity"];
-			if (crv != null)
+			JObject jobj;
+			try { jobj = JObject.Parse(str); }
+			catch (JsonException) { return null; }
+
+			var jwk = jobj["jwkIdentity"];
+			if (jwk != null && jwk.Type != JTokenType.Null)
 			{
+				if (jwk is not JObject jwkObject
+					|| jwkObject["x"] is not JValue { Type: JTokenType.String } xToken
+					|| jwkObject["y"] is not JValue { Type: JTokenType.String } yToken)
+				{
+					return null;
+				}
+
 				var signature = JsonConvert.DeserializeObject<SignedMessageJwkIdentity>(str);
 				if (signature == null) return null;
 
-				string x = signature.JwkIdentity["x"].ToString();
-				string y = signature.JwkIdentity["y"].ToString();
+				string x = xToken.ToString();
+				string y = yToken.ToString();
 				string keyString = $"{{\"crv\":\"P-256\",\"kty\":\"EC\",\"x\":\"{x}\",\"y\":\"{y}\"}}";
 				using var sha = SHA256.Create();
 				byte[] hash = sha.ComputeHash(Encoding.UTF8.GetBytes(keyString));

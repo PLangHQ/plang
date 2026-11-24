@@ -133,7 +133,10 @@ namespace PLang.Modules.IdentityModule
 			}
 			if (signature == null && signatureFromUser is string str)
 			{
-				signature = SignatureCreator.Parse(str);
+				// The text comes from whoever sent the request, so anything it holds is a refused signature, not a fault.
+				try { signature = SignatureCreator.Parse(str); }
+				catch (Exception ex) { return (null, new ProgramError("Signature could not be read: " + ex.Message, goalStep, Key: "SignatureInvalid", StatusCode: 401)); }
+				if (signature == null) return (null, new ProgramError("Signature could not be read: it is not a plang signature.", goalStep, Key: "SignatureInvalid", StatusCode: 401));
 			} else if (signature == null && signatureFromUser is IDictionary)
 			{
 				var result = SignatureCreator.Cast(signatureFromUser as Dictionary<string, object?>);
