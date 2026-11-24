@@ -25,6 +25,8 @@ export declare class ECDSASigner {
     private t;
     private store;
     private keyPromise;
+    private clockOffsetMs;
+    adjustClock(serverDate: Date): boolean;
     constructor(t?: T);
     /** Which rung of the storage ladder is in use. Resolved on first touch. */
     storeTier(): Promise<import("./KeyStore.js").Tier>;

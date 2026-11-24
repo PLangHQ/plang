@@ -2,12 +2,24 @@ import { t as defaultT } from "../i18n/index.js";
 import { KeyStore } from "./KeyStore.js";
 const ECDSA = { name: "ECDSA", namedCurve: "P-256" };
 export class ECDSASigner {
+    // serverDate: the server's Date header on an answer that refused a signature as expired.
+    // Returns true when the clock was corrected, so a new signature would carry another time.
+    adjustClock(serverDate) {
+        const offset = serverDate.getTime() - Date.now();
+        if (isNaN(offset) || Math.abs(offset - this.clockOffsetMs) < 30_000)
+            return false;
+        this.clockOffsetMs = offset;
+        return true;
+    }
     constructor(t = defaultT) {
         this.t = t;
         // Storage is behind a ladder now. A browser that refuses IndexedDB used to make signing
         // throw, which killed the poll and left the page on a spinner forever. See KeyStore.
         this.store = new KeyStore();
         this.keyPromise = null;
+        // Server time minus this device's time. A signature carries its created and expires time, which the server
+        // checks against its own clock, so a device with a wrong clock signs with the server's time instead.
+        this.clockOffsetMs = 0;
     }
     /** Which rung of the storage ladder is in use. Resolved on first touch. */
     async storeTier() {
@@ -100,7 +112,7 @@ export class ECDSASigner {
         const target = new URL(request.url, location.href);
         headersObj["url"] = target.pathname + target.search;
         headersObj["method"] = request.method.toUpperCase();
-        const now = new Date();
+        const now = new Date(Date.now() + this.clockOffsetMs);
         const msg = {
             type: "ecdsa-sha-256",
             nonce: crypto.randomUUID(),

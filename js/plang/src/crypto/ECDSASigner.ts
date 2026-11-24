@@ -28,6 +28,18 @@ export class ECDSASigner {
     // throw, which killed the poll and left the page on a spinner forever. See KeyStore.
     private store = new KeyStore();
     private keyPromise: Promise<KeyPair> | null = null;
+    // Server time minus this device's time. A signature carries its created and expires time, which the server
+    // checks against its own clock, so a device with a wrong clock signs with the server's time instead.
+    private clockOffsetMs = 0;
+
+    // serverDate: the server's Date header on an answer that refused a signature as expired.
+    // Returns true when the clock was corrected, so a new signature would carry another time.
+    adjustClock(serverDate: Date): boolean {
+        const offset = serverDate.getTime() - Date.now();
+        if (isNaN(offset) || Math.abs(offset - this.clockOffsetMs) < 30_000) return false;
+        this.clockOffsetMs = offset;
+        return true;
+    }
 
     constructor(private t: T = defaultT) {}
 
@@ -137,7 +149,7 @@ export class ECDSASigner {
         headersObj["url"] = target.pathname + target.search;
         headersObj["method"] = request.method.toUpperCase();
 
-        const now = new Date();
+        const now = new Date(Date.now() + this.clockOffsetMs);
         const msg: SignedMessage = {
             type: "ecdsa-sha-256",
             nonce: crypto.randomUUID(),

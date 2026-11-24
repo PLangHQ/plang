@@ -57,6 +57,7 @@ export declare class Plang {
     private announceFailed;
     fetch(url: string, options?: NavigatorOptions | undefined): Promise<any>;
     private signAndSend;
+    private signAgain;
     private isStaleSignature;
     getPlangHash(body: any): string | null;
     handleResponse(line: string, ctx: HandleCtx): Promise<void>;

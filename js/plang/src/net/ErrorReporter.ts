@@ -97,6 +97,8 @@ export class ErrorReporter {
     // an identity reports SecurityError, not a network error, so it still comes through.
     private static readonly networkNoise = [
         "network error",
+        "networkerror",        // Firefox: "NetworkError when attempting to fetch resource."
+        "error in input stream", // Firefox: the open poll's stream broke off
         "load failed",
         "failed to fetch",
         "the network connection was lost",

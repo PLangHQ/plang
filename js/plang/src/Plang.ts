@@ -2,7 +2,7 @@ import { HistoryNavigator } from "./navigation/HistoryNavigator.js";
 import { OverrideNavigator, type HeaderKV, type NavigatorOptions } from "./navigation/OverrideNavigator.js";
 import { PollRequest } from "./net/PollRequest.js";
 import { registerNavigationSigner } from "./net/NavigationSigner.js";
-import { ECDSASigner } from "./crypto/ECDSASigner.js";
+import { ECDSASigner, type SignedMessage } from "./crypto/ECDSASigner.js";
 import { t as defaultT } from "./i18n/index.js";
 import type { T } from "./i18n/index.js";
 import { ResponseDispatcher, type HandleCtx } from "./net/ResponseDispatcher.js";
@@ -241,14 +241,17 @@ export class Plang {
                 headers: headers,
                 method: options.method ?? 'GET'
             } as RequestInit;
-            let res = await this.signAndSend(url, requestInit);
+            let sent = await this.signAndSend(url, requestInit);
+            let res = sent.res;
             // A signature lives five minutes. A phone that holds a request longer than that
             // (locked screen, a stalled connection the browser replays) delivers it expired, or
-            // replays it with a nonce the server has already seen. The server checks the
-            // signature before running anything, so nothing has happened yet and one resend with
-            // a fresh signature is safe, also for a POST.
+            // replays it with a nonce the server has already seen; a device whose clock is wrong
+            // signs it expired from the start. The server checks the signature before running
+            // anything, so nothing has happened yet and one resend with a fresh signature is safe,
+            // also for a POST. It is sent only when it can be answered differently.
             if ((res.status === 401 || res.status === 403) && await this.isStaleSignature(res)) {
-                res = await this.signAndSend(url, requestInit);
+                const retry = await this.signAgain(url, requestInit, sent.signature, res);
+                if (retry) res = retry;
             }
             this.announceReady();
 
@@ -305,10 +308,26 @@ export class Plang {
         }
     }
 
-    private async signAndSend(url: string, requestInit: RequestInit): Promise<Response> {
+    private async signAndSend(url: string, requestInit: RequestInit): Promise<{ res: Response, signature: SignedMessage }> {
         const req = new Request(url, requestInit);
-        const sigObj = await this.signer.signRequest(req);
-        req.headers.set("X-Signature", JSON.stringify(sigObj));
+        const signature = await this.signer.signRequest(req);
+        req.headers.set("X-Signature", JSON.stringify(signature));
+        return { res: await window.fetch(req), signature };
+    }
+
+    // Signs the request again after the server refused the first signature as stale, and sends it only when the
+    // new signature differs where the first failed: another nonce, and a time the server's clock accepts.
+    // Returns null when it would be refused the same way.
+    private async signAgain(url: string, requestInit: RequestInit, first: SignedMessage, refused: Response): Promise<Response | null> {
+        const serverDate = refused.headers.get("Date");
+        if (serverDate) this.signer.adjustClock(new Date(serverDate));
+
+        const req = new Request(url, requestInit);
+        const signature = await this.signer.signRequest(req);
+        if (signature.nonce === first.nonce) return null;
+        if (serverDate && signature.expires && new Date(signature.expires).getTime() <= new Date(serverDate).getTime()) return null;
+
+        req.headers.set("X-Signature", JSON.stringify(signature));
         return await window.fetch(req);
     }
 
