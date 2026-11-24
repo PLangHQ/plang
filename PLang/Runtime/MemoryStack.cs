@@ -462,8 +462,9 @@ namespace PLang.Runtime
 			object? value;
 			if (keyPath.VariableName.Equals("identity", StringComparison.OrdinalIgnoreCase)) value = context.Identity;
 			else if (keyPath.VariableName.Equals("signature", StringComparison.OrdinalIgnoreCase)) value = context.SignedMessage;
-			// The app's own identity: the one it signs with, as `get my identity` gives it.
-			else if (keyPath.VariableName.Equals(ReservedKeywords.MyIdentity, StringComparison.OrdinalIgnoreCase)) value = engine.Container.GetInstance<IPLangIdentityService>().GetCurrentIdentity();
+			// The app's own identity as the public key text it signs with, the same form %Identity% has for a caller,
+			// so `%Identity% == %MyIdentity%` compares directly. `get my identity` gives the whole identity.
+			else if (keyPath.VariableName.Equals(ReservedKeywords.MyIdentity, StringComparison.OrdinalIgnoreCase)) value = engine.Container.GetInstance<IPLangIdentityService>().GetCurrentIdentity().Identifier;
 			else return null;
 
 			var ov = new ObjectValue(keyPath.VariableName, value);

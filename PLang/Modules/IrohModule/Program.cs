@@ -15,7 +15,7 @@ using System.Text;
 
 namespace PLang.Modules.IrohModule
 {
-	[Description("Talk to other plang apps over iroh, peer to peer by key and not by ip. Create and print the endpoint key (`create iroh key`), listen for signed commands (`start listening`), connect to a peer by its key (`connect to`) and tell it to run a goal (`tell %peer% to Update`)")]
+	[Description("Talk to other plang apps over iroh, peer to peer by key and not by ip. Create and print the endpoint key (`create iroh key`), listen for signed commands (`start listening`), connect to a peer by its key (`connect to`) and tell it to run a goal (`tell %peer% to Update`). Listen and connect can bind a fixed UDP port (`on udp port 7000`)")]
 	public class Program(IPseudoRuntime pseudoRuntime, IPLangSigningService signingService) : BaseProgram
 	{
 		public const string Alpn = "plang/tell/1";
@@ -91,6 +91,7 @@ namespace PLang.Modules.IrohModule
 		[Description("Connect to a peer by its endpoint id (or a full ticket). Returns the peer to use in tell. onClosed is called when the connection drops, use it to connect again")]
 		[Example("connect to %kioskKey%, on closed call Redial, write to %agent%", "target=%kioskKey%, onClosed=Redial")]
 		[Example("connect to iroh peer %id%, key 'admin', write to %agent%", "target=%id%, keyName=\"admin\"")]
+		[Example("connect to %agentEndpoint%, on udp port 47001, write to %agent%", "target=%agentEndpoint%, port=47001")]
 		public async Task<(IrohPeer?, IError?)> Connect(string target, GoalToCallInfo? onClosed = null, string keyName = "default", bool useRelay = true,
 			[Description(PortDescription)] int port = 0)
 		{
