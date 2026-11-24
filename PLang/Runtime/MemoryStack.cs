@@ -459,9 +459,16 @@ namespace PLang.Runtime
 		{
 			var context = contextAccessor.Current;
 
-			if (keyPath.VariableName.Equals("identity", StringComparison.OrdinalIgnoreCase)) return new ObjectValue(keyPath.VariableName, context.Identity);
-			if (keyPath.VariableName.Equals("signature", StringComparison.OrdinalIgnoreCase)) return new ObjectValue(keyPath.VariableName, context.SignedMessage);
-			return null;
+			object? value;
+			if (keyPath.VariableName.Equals("identity", StringComparison.OrdinalIgnoreCase)) value = context.Identity;
+			else if (keyPath.VariableName.Equals("signature", StringComparison.OrdinalIgnoreCase)) value = context.SignedMessage;
+			// The app's own identity: the one it signs with, as `get my identity` gives it.
+			else if (keyPath.VariableName.Equals(ReservedKeywords.MyIdentity, StringComparison.OrdinalIgnoreCase)) value = engine.Container.GetInstance<IPLangIdentityService>().GetCurrentIdentity();
+			else return null;
+
+			var ov = new ObjectValue(keyPath.VariableName, value);
+			if (value == null || string.IsNullOrEmpty(keyPath.Path)) return ov;
+			return ov.GetObjectValue(keyPath.Path.TrimStart('.'), memoryStack: this);
 		}
 
 		private ObjectValue? GetFromGoal(KeyPath keyPath)

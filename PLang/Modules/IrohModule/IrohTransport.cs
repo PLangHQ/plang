@@ -144,7 +144,8 @@ namespace PLang.Modules.IrohModule
 			Id = id;
 		}
 
-		public static IrohEndpoint Bind(string secretKeyBase32, string alpnName, bool useRelay = true)
+		/// <summary>Binds the endpoint's UDP sockets on every address, on the given port (0: a free one).</summary>
+		public static IrohEndpoint Bind(string secretKeyBase32, string alpnName, bool useRelay = true, int port = 0)
 		{
 			byte[] alpn = Encoding.ASCII.GetBytes(alpnName);
 			string id = IrohKeys.IdFromSecret(secretKeyBase32);
@@ -152,8 +153,8 @@ namespace PLang.Modules.IrohModule
 
 			SocketAddrV4* v4 = iroh.socket_addr_v4_default();
 			SocketAddrV6* v6 = iroh.socket_addr_v6_default();
-			IntPtr any4 = Marshal.StringToCoTaskMemUTF8("0.0.0.0:0");
-			IntPtr any6 = Marshal.StringToCoTaskMemUTF8("[::]:0");
+			IntPtr any4 = Marshal.StringToCoTaskMemUTF8($"0.0.0.0:{port}");
+			IntPtr any6 = Marshal.StringToCoTaskMemUTF8($"[::]:{port}");
 			EndpointConfig config = iroh.endpoint_config_default();
 			try
 			{

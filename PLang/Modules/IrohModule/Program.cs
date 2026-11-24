@@ -61,7 +61,9 @@ namespace PLang.Modules.IrohModule
 		[Description("Start listening for iroh peers. Every incoming command must be signed, an unsigned or badly signed one is declined. The goal in onIncoming is called first with %Identity% (the signer), %goalName%, %parameters% and %EndpointId% (and %fileName% and %fileSize% when a file comes with the command, the file is not received until this goal has not failed), and it decides if the identity is allowed by throwing an error to decline. When it does not fail the requested goal runs and what it returns goes back to the caller. onIncoming is required")]
 		[Example("start listening, on incoming call Allow, write to %listener%", "onIncoming=Allow")]
 		[Example("listen on iroh 'kiosk', on incoming call Allow", "keyName=\"kiosk\", onIncoming=Allow")]
-		public async Task<(IrohListener?, IError?)> Listen(GoalToCallInfo? onIncoming = null, string keyName = "default", bool useRelay = true)
+		[Example("start listening on udp port 7000, on incoming call Allow", "onIncoming=Allow, port=7000")]
+		public async Task<(IrohListener?, IError?)> Listen(GoalToCallInfo? onIncoming = null, string keyName = "default", bool useRelay = true,
+			[Description(PortDescription)] int port = 0)
 		{
 			if (onIncoming == null || string.IsNullOrEmpty(onIncoming.Name))
 			{
@@ -69,7 +71,7 @@ namespace PLang.Modules.IrohModule
 					FixSuggestion: "Add 'on incoming call Allow' to the step, e.g. `- start listening, on incoming call Allow`. The goal gets %Identity% and throws an error to decline"));
 			}
 
-			var (endpoint, error) = GetEndpoint(keyName, useRelay);
+			var (endpoint, error) = GetEndpoint(keyName, useRelay, port);
 			if (error != null) return (null, error);
 
 			var listener = new IrohListener(keyName, endpoint!.Id, endpoint.Ticket());
@@ -89,9 +91,10 @@ namespace PLang.Modules.IrohModule
 		[Description("Connect to a peer by its endpoint id (or a full ticket). Returns the peer to use in tell. onClosed is called when the connection drops, use it to connect again")]
 		[Example("connect to %kioskKey%, on closed call Redial, write to %agent%", "target=%kioskKey%, onClosed=Redial")]
 		[Example("connect to iroh peer %id%, key 'admin', write to %agent%", "target=%id%, keyName=\"admin\"")]
-		public async Task<(IrohPeer?, IError?)> Connect(string target, GoalToCallInfo? onClosed = null, string keyName = "default", bool useRelay = true)
+		public async Task<(IrohPeer?, IError?)> Connect(string target, GoalToCallInfo? onClosed = null, string keyName = "default", bool useRelay = true,
+			[Description(PortDescription)] int port = 0)
 		{
-			var (endpoint, error) = GetEndpoint(keyName, useRelay);
+			var (endpoint, error) = GetEndpoint(keyName, useRelay, port);
 			if (error != null) return (null, error);
 
 			IrohConnection connection;
@@ -230,8 +233,14 @@ namespace PLang.Modules.IrohModule
 			return (endpoints, connections);
 		}
 
-		private (IrohEndpoint?, IError?) GetEndpoint(string keyName, bool useRelay)
+		private const string PortDescription = "UDP port the endpoint binds, on IPv4 and IPv6, for a firewall rule or a NAT port forward. 0 (the default) takes a free port. The first listen or connect of a key binds it; a later one uses that endpoint as it is";
+
+		private (IrohEndpoint?, IError?) GetEndpoint(string keyName, bool useRelay, int port)
 		{
+			if (port < 0 || port > 65535)
+			{
+				return (null, new ProgramError($"The port must be from 0 to 65535, got {port}", goalStep, function));
+			}
 			try
 			{
 				var endpoint = Endpoints.GetOrAdd(keyName, _ =>
@@ -243,7 +252,7 @@ namespace PLang.Modules.IrohModule
 						secret = IrohKeys.Generate().Secret;
 						settings.Set(typeof(Program), settingKey, secret);
 					}
-					return IrohEndpoint.Bind(secret, Alpn, useRelay);
+					return IrohEndpoint.Bind(secret, Alpn, useRelay, port);
 				});
 				return (endpoint, null);
 			}
