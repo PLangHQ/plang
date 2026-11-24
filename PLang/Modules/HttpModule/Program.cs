@@ -635,7 +635,14 @@ namespace PLang.Modules.HttpModule
 			catch (System.Net.Http.HttpRequestException ex)
 			{
 				int statusCode = (int?)ex.StatusCode ?? 503;
-				return (null, new ProgramError(ex.Message, goalStep, function, StatusCode: statusCode), properties);
+				// "Resource temporarily unavailable" is the text of both a failed name lookup and a refused connect;
+				// the kind of failure and the socket error tell them apart.
+				string kind = ex.HttpRequestError.ToString();
+				if (ex.InnerException is System.Net.Sockets.SocketException socketEx)
+				{
+					kind += $", socket {socketEx.SocketErrorCode} ({socketEx.NativeErrorCode})";
+				}
+				return (null, new ProgramError($"{ex.Message} [{kind}]", goalStep, function, StatusCode: statusCode), properties);
 			}
 			catch (Exception ex)
 			{
