@@ -11,6 +11,7 @@ using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.OutputStream.Messages;
 using PLang.Services.OutputStream.Sinks;
+using PLang.Services.SigningService;
 using PLang.Utils;
 using Microsoft.Net.Http.Headers;
 using System.Diagnostics;
@@ -441,6 +442,23 @@ namespace PLang.Modules.WebserverModule
 			return header.Key == null ? null : header.Value?.ToString();
 		}
 
+		/// <summary>
+		/// X-Signature-Error tells the client why its signature was refused when signing again gets past it:
+		/// "expired" (made too long ago, or on a clock that is wrong; the Date header has the server's time) or
+		/// "nonce" (already used). The body is the app's own error page, so the client cannot rely on reading it.
+		/// </summary>
+		private static void SetSignatureErrorHeader(HttpContext httpContext, IError error)
+		{
+			if (httpContext.Response.HasStarted) return;
+
+			var message = error.Message ?? "";
+			string? reason = null;
+			if (message.StartsWith(PLangSigningService.ExpiredMessage) || message.StartsWith(PLangSigningService.TooOldMessage)) reason = "expired";
+			else if (message.StartsWith(PLangSigningService.NonceUsedMessage)) reason = "nonce";
+
+			if (reason != null) httpContext.Response.Headers["X-Signature-Error"] = reason;
+		}
+
 		private async Task<(SignedMessage? SignedMessage, IError? Error)> VerifySignature(IEngine engine, PLangContext context)
 		{
 			if (context.SignedMessage != null) return (context.SignedMessage, null);
@@ -476,7 +494,11 @@ namespace PLang.Modules.WebserverModule
 			if (boundError != null) return (null, boundError);
 
 			var verifiedSignatureResult = await identity.VerifySignature(signatureData, headers, rawBody);
-			if (verifiedSignatureResult.Error != null) return (null, verifiedSignatureResult.Error);
+			if (verifiedSignatureResult.Error != null)
+			{
+				SetSignatureErrorHeader(httpContext, verifiedSignatureResult.Error);
+				return (null, verifiedSignatureResult.Error);
+			}
 
 			boundError = CheckSignedRequest(verifiedSignatureResult.Signature, request);
 			if (boundError != null) return (null, boundError);

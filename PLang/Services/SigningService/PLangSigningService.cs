@@ -47,6 +47,11 @@ namespace PLang.Services.SigningService
 		private readonly Modules.SerializerModule.Program serialier;
 		private readonly Modules.CryptographicModule.Program hasher;
 		private readonly string SignatureInvalid = "SignatureInvalid";
+		// The start of the messages of a signature that was valid but is stale: made too long ago, or its nonce already
+		// used. A client that signs again gets past both, so the webserver tells it so (X-Signature-Error).
+		public const string ExpiredMessage = "Signature expired";
+		public const string TooOldMessage = "The signature is to old";
+		public const string NonceUsedMessage = "Nonce has been used";
 		private readonly string VerifySignatureCacheKey = "VerifySignature_{0}";
 		public PLangSigningService(IAppCache appCache, IPLangIdentityService identityService, PLangAppContext context,
 			Modules.SerializerModule.Program serialier, Modules.CryptographicModule.Program hasher)
@@ -205,14 +210,14 @@ namespace PLang.Services.SigningService
 			var expires = clientSignedMessage.Expires;
 			if (expires < SystemTime.OffsetUtcNow())
 			{
-				return (null, new ServiceError($"Signature expired at {expires}", GetType(), SignatureInvalid, StatusCode: 401));
+				return (null, new ServiceError($"{ExpiredMessage} at {expires}", GetType(), SignatureInvalid, StatusCode: 401));
 			}
 
 			// A signature that states its own expiry is trusted until then, the five minute window
 			// only applies to signatures without one.
 			if (expires == null && clientSignedMessage.Created < SystemTime.OffsetUtcNow().AddMinutes(-5))
 			{
-				return (null, new ServiceError("The signature is to old.", GetType(), SignatureInvalid, StatusCode: 401));
+				return (null, new ServiceError($"{TooOldMessage}.", GetType(), SignatureInvalid, StatusCode: 401));
 			}
 
 			if (contracts != null)
@@ -237,7 +242,7 @@ namespace PLang.Services.SigningService
 				var usedNonce = await appCache.Get(nonceCacheKey);
 				if (usedNonce != null)
 				{
-					return (null, new ServiceError("Nonce has been used. New request needs to be created", GetType(), SignatureInvalid, StatusCode: 403));
+					return (null, new ServiceError($"{NonceUsedMessage}. New request needs to be created", GetType(), SignatureInvalid, StatusCode: 403));
 				}
 				if (expires != null && expires.Value.AddSeconds(5) > nonceKeptUntil) nonceKeptUntil = expires.Value.AddSeconds(5);
 			}
