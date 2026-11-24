@@ -997,17 +997,21 @@ namespace PLang.Modules.FileModule
 
 		public async Task StopListeningToFileChange(string[] fileSearchPatterns, GoalToCallInfo? goalToCall = null)
 		{
-			string key = $"FileWatcher_{fileSearchPatterns}_";
-			if (goalToCall != null) key += goalToCall;
-
-			var items = appContext.Where(p => p.Key.StartsWith(key));
-			foreach (var item in items)
+			foreach (var fileSearchPattern in fileSearchPatterns)
 			{
-				var watcher = appContext[item.Key] as IFileSystemWatcher;
-				if (watcher == null) continue;
+				string key = $"FileWatcher_{fileSearchPattern}_";
+				if (goalToCall != null) key += goalToCall + "_";
 
-				watcher.EnableRaisingEvents = false;
-				appContext.Remove(item.Key);
+				var keys = appContext.Keys.Where(p => p.StartsWith(key)).ToList();
+				foreach (var itemKey in keys)
+				{
+					var watcher = appContext[itemKey] as IFileSystemWatcher;
+					appContext.Remove(itemKey);
+					if (watcher == null) continue;
+
+					watcher.EnableRaisingEvents = false;
+					RemoveKeepAlive(watcher, $"FileWatcher [{fileSearchPattern}]");
+				}
 			}
 
 
@@ -1031,6 +1035,9 @@ namespace PLang.Modules.FileModule
 			[HandlesVariable] string oldFileNameVariableName = "OldName"
 			)
 		{
+			// A run started by the watcher acts as whoever ran this step: the app itself when it set up the watcher
+			// (console, scheduler), the signer when a signed request set it up.
+			var watcherIdentity = memoryStack.Get("Identity")?.ToString();
 			PLangFileSystemWatcherFactory watcherFactory = new PLangFileSystemWatcherFactory(fileSystem);
 			foreach (var fileSearchPattern in fileSearchPatterns)
 			{
@@ -1060,7 +1067,7 @@ namespace PLang.Modules.FileModule
 					watcher.Changed += (object sender, FileSystemEventArgs e) =>
 					{
 						AddEventToTimer(sender, e, debounceTime, goalToCall, excludeFiles,
-							absoluteFilePathVariableName, fileNameVariableName, changeTypeVariableName, senderVariableName);
+							absoluteFilePathVariableName, fileNameVariableName, changeTypeVariableName, senderVariableName, watcherIdentity);
 
 					};
 				}
@@ -1069,8 +1076,7 @@ namespace PLang.Modules.FileModule
 					watcher.Created += (object sender, FileSystemEventArgs e) =>
 					{
 						AddEventToTimer(sender, e, debounceTime, goalToCall, excludeFiles,
-							absoluteFilePathVariableName, fileNameVariableName, changeTypeVariableName, senderVariableName
-							);
+							absoluteFilePathVariableName, fileNameVariableName, changeTypeVariableName, senderVariableName, watcherIdentity);
 
 					};
 				}
@@ -1079,7 +1085,7 @@ namespace PLang.Modules.FileModule
 					watcher.Deleted += async (object sender, FileSystemEventArgs e) =>
 					{
 						AddEventToTimer(sender, e, debounceTime, goalToCall, excludeFiles,
-							absoluteFilePathVariableName, fileNameVariableName, changeTypeVariableName, senderVariableName);
+							absoluteFilePathVariableName, fileNameVariableName, changeTypeVariableName, senderVariableName, watcherIdentity);
 
 					};
 				}
@@ -1108,8 +1114,7 @@ namespace PLang.Modules.FileModule
 								parameters.Add(senderVariableName, sender);
 
 								goalToCall.Parameters.AddOrReplaceDict(parameters);
-								// Whoever can write in the watched folder starts this run: it is from outside, with nobody's identity.
-								using var origin = RunOrigin.External(null);
+								using var origin = RunOrigin.External(watcherIdentity);
 								var task = pseudoRuntime.RunGoal(engine, contextAccessor, fileSystem.Path.DirectorySeparatorChar.ToString(), goalToCall);
 								task.Wait();
 
@@ -1127,17 +1132,16 @@ namespace PLang.Modules.FileModule
 				;
 
 				appContext.AddOrReplace($"FileWatcher_{fileSearchPattern}_{goalToCall}_{counter}", watcher);
-				KeepAlive(this, $"FileWatcher [{fileSearchPattern}]");
+				// The watcher lives as long as the app, not as long as the goal that started it: the keep-alive entry
+				// holds the watcher itself and disposes it when the entry is removed.
+				KeepAlive(watcher, $"FileWatcher [{fileSearchPattern}]");
 			}
 		}
 
 		private void AddEventToTimer(object sender, FileSystemEventArgs e, long debounceTime,
 			string goalToCall, List<string>? excludeFiles,
 			string absoluteFilePathVariableName, string fileNameVariableName,
-			string changeTypeVariableName, string senderVariableName
-
-
-			)
+			string changeTypeVariableName, string senderVariableName, string? watcherIdentity)
 		{
 			Timer? timer;
 			if (timers.TryGetValue(e.FullPath, out timer))
@@ -1149,7 +1153,7 @@ namespace PLang.Modules.FileModule
 				timer = new Timer(async (state) =>
 				{
 					await WatcherCallGoal(sender, e, goalToCall, excludeFiles,
-						absoluteFilePathVariableName, fileNameVariableName, changeTypeVariableName, senderVariableName);
+						absoluteFilePathVariableName, fileNameVariableName, changeTypeVariableName, senderVariableName, watcherIdentity);
 				}, e.FullPath, debounceTime, Timeout.Infinite);
 				timers.TryAdd(e.FullPath, timer);
 			}
@@ -1158,7 +1162,7 @@ namespace PLang.Modules.FileModule
 		private static readonly object _lock = new object();
 		private async Task WatcherCallGoal(object sender, FileSystemEventArgs e, GoalToCallInfo goalToCall, List<string>? excludeFiles,
 			string absoluteFilePathVariableName, string fileNameVariableName,
-			string changeTypeVariableName, string senderVariableName)
+			string changeTypeVariableName, string senderVariableName, string? watcherIdentity)
 		{
 			if (excludeFiles != null && excludeFiles.Contains(e.Name)) return;
 
@@ -1173,8 +1177,7 @@ namespace PLang.Modules.FileModule
 				goalToCall.Parameters.AddOrReplaceDict(parameters);
 				try
 				{
-					// Whoever can write in the watched folder starts this run: it is from outside, with nobody's identity.
-					using var origin = RunOrigin.External(null);
+					using var origin = RunOrigin.External(watcherIdentity);
 					var task = pseudoRuntime.RunGoal(engine, contextAccessor, fileSystem.Path.DirectorySeparatorChar.ToString(), goalToCall);
 					task.Wait();
 
@@ -1260,18 +1263,8 @@ namespace PLang.Modules.FileModule
 				((FileStream)appContext[key]).Dispose();
 			}
 
-			var fileWatchers = appContext.Keys.Where(p => p.StartsWith("FileWatcher_"));
-			foreach (var key in fileWatchers)
-			{
-				var watcher = (IFileSystemWatcher)appContext[key];
-
-				watcher?.Dispose();
-			}
-
-			foreach (var key in timers)
-			{
-				key.Value.Dispose();
-			}
+			// File watchers and their debounce timers are not disposed here: this instance is disposed when the goal
+			// that ran the step ends, and a watcher keeps running for the app (see ListenToFileChange).
 		}
 
 
