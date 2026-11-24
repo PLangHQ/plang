@@ -96,7 +96,9 @@ async function signHeaders(headers: Record<string, string>) {
 async function answerNavigation(request: Request): Promise<Response> {
     try {
         const accept = request.headers.get("accept") ?? "text/html";
-        const signed = await signHeaders({ accept });
+        // The url and method are signed, as Plang.fetch does, so the server takes the signature only for this request.
+        const target = new URL(request.url);
+        const signed = await signHeaders({ accept, url: target.pathname + target.search, method: "GET" });
         if (!signed) return fetch(request);
 
         // manual: a redirect is the server's answer and the browser is the one to follow it, so

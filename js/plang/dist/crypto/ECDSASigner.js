@@ -95,6 +95,11 @@ export class ECDSASigner {
         request.headers.forEach((v, k) => {
             headersObj[k] = v;
         });
+        // The request the signature is for, as plang's own http client signs it: the server refuses the signature on
+        // any other url or method, so a captured signature cannot be replayed against another route.
+        const target = new URL(request.url, location.href);
+        headersObj["url"] = target.pathname + target.search;
+        headersObj["method"] = request.method.toUpperCase();
         const now = new Date();
         const msg = {
             type: "ecdsa-sha-256",
