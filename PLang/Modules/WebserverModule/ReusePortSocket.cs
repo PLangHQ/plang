@@ -18,6 +18,30 @@ public static class ReusePortSocket
 
 	public static bool IsSupported => RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
 
+	private const string MigrateRequestsSetting = "/proc/sys/net/ipv4/tcp_migrate_req";
+
+	/// <summary>
+	/// Each listener of a port shared with SO_REUSEPORT has its own accept queue. When the old process closes its listener
+	/// (`drain app` during a promote), the connections still in its queue are reset, unless the kernel moves them to
+	/// another listener of the port, which it does when net.ipv4.tcp_migrate_req is 1 (Linux 5.14+).
+	/// Returns a warning when the setting is 0 or the kernel does not have it, else null.
+	/// </summary>
+	public static string? QueuedConnectionsLostOnCloseWarning()
+	{
+		if (!IsSupported) return null;
+
+		string? value = null;
+		try { value = File.ReadAllText(MigrateRequestsSetting).Trim(); }
+		catch (Exception) { }
+		if (value == "1") return null;
+
+		var state = value == null ? "is not available in this kernel (needs Linux 5.14+)" : $"is {value}";
+		return $"reuse port: net.ipv4.tcp_migrate_req {state}, so connections waiting in this process's accept queue are " +
+			"dropped when it closes its listener (`drain app` during a promote). Set it to 1 to hand them to the new process: " +
+			"`echo 'net.ipv4.tcp_migrate_req = 1' | sudo tee /etc/sysctl.d/60-plang-reuseport.conf && sudo sysctl --system`. " +
+			"See tcp_migrate_req in https://docs.kernel.org/networking/ip-sysctl.html";
+	}
+
 	/// <summary>Makes the host bind its sockets with SO_REUSEPORT. Does nothing outside Linux.</summary>
 	public static void Enable(IServiceCollection services)
 	{

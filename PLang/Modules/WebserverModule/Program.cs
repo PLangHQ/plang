@@ -326,7 +326,12 @@ public class Program : BaseProgram, IDisposable
 				web.ConfigureServices(s =>
 				{
 					s.AddSingleton(webserverProperties);
-					if (webserverProperties.ReusePort) ReusePortSocket.Enable(s);
+					if (webserverProperties.ReusePort)
+					{
+						ReusePortSocket.Enable(s);
+						var warning = ReusePortSocket.QueuedConnectionsLostOnCloseWarning();
+						if (warning != null) logger.LogWarning(warning);
+					}
 					s.AddResponseCompression(o =>
 					{
 						o.EnableForHttps = true;
