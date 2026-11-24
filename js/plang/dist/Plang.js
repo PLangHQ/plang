@@ -281,10 +281,15 @@ export class Plang {
         req.headers.set("X-Signature", JSON.stringify(signature));
         return await window.fetch(req);
     }
+    // The webserver says why it refused the signature in X-Signature-Error ("expired" or "nonce"), since the body is
+    // the app's own error page. A runtime before 0.1.19.72 sends no header; then its error text is looked for.
     async isStaleSignature(res) {
+        const reason = res.headers.get("X-Signature-Error");
+        if (reason)
+            return reason === "expired" || reason === "nonce";
         try {
             const text = await res.clone().text();
-            return text.includes("Signature expired") || text.includes("Nonce has been used");
+            return text.includes("Signature expired") || text.includes("The signature is to old") || text.includes("Nonce has been used");
         }
         catch {
             return false;
