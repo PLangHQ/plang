@@ -122,6 +122,8 @@ namespace PLang.Modules.IrohModule
 					connection.WaitUntilClosed();
 					connection.Dispose();
 					onClosed.Parameters.AddOrReplace("peer", peerInfo);
+					// The peer or the network closed it: a run from outside, with nobody's identity.
+					using var origin = RunOrigin.External(null);
 					await pseudoRuntime.RunGoal(engineRef, accessorRef, rootPath, onClosed);
 				}, TaskCreationOptions.LongRunning);
 			}
@@ -368,6 +370,8 @@ namespace PLang.Modules.IrohModule
 				gateParameters["fileName"] = fileName;
 				gateParameters["fileSize"] = fileSize;
 			}
+			// A command comes from outside: %Identity% is the identity that signed it, in the gate and in the goal it runs.
+			using var origin = RunOrigin.External(verified.Identity?.ToString());
 			var allowed = await pseudoRuntime.RunGoal(engineRef, accessorRef, rootPath, new GoalToCallInfo(onIncoming.Name, gateParameters));
 			if (allowed.Error != null && allowed.Error is not Return)
 			{

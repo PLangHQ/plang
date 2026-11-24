@@ -255,6 +255,7 @@ namespace PLang.Modules.MessageModule
 				parameters.Add(eventVariableName, message);
 				parameters.Add(senderVariableName, message.PublicKey);
 
+				string? signedBy = null;
 				var signatureData = message.Tags?.FirstOrDefault(p => p.TagIdentifier == "X-Signature")?.Data.FirstOrDefault(p => p != null);
 				if (signatureData != null)
 				{
@@ -263,6 +264,7 @@ namespace PLang.Modules.MessageModule
 					{
 						var identites = await signingService.VerifySignature(signature);
 						parameters.AddOrReplace(ReservedKeywords.Signature, identites.Signature);
+						if (identites.Error == null) signedBy = identites.Signature?.Identity;
 					}
 				}
 
@@ -272,6 +274,8 @@ namespace PLang.Modules.MessageModule
 				goalName.Parameters.AddOrReplaceDict(parameters);
 
 				var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
+				// A message comes from outside: %Identity% is the plang identity that signed it, or nobody.
+				using var origin = RunOrigin.External(signedBy);
 				var task = pseudoRuntime.RunGoal(goalEngine, contextAccessor, Goal.RelativeAppStartupFolderPath, goalName, goal);
 				if (task == null) return null;
 

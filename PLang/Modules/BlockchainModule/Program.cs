@@ -179,6 +179,8 @@ namespace PLang.Modules.BlockchainModule
 						parameters.Add("__TxLog__", eventLog.Log);
 						goalToCall.Parameters.AddOrReplaceDict(parameters);
 
+						// A chain event is from outside: nobody's identity.
+						using var origin = RunOrigin.External(null);
 						var task = pseudoRuntime.RunGoal(engine, contextAccessor, Goal.RelativeAppStartupFolderPath, goalToCall, goal);
 						task.Wait();
 					}
@@ -281,6 +283,8 @@ namespace PLang.Modules.BlockchainModule
 				
 				callGoal.Parameters.AddOrReplaceDict(parameters);
 
+				// A new block is from outside: nobody's identity.
+				using var origin = RunOrigin.External(null);
 				pseudoRuntime.RunGoal(engine, contextAccessor, Goal.RelativeAppStartupFolderPath, callGoal, Goal);
 			});
 
@@ -288,6 +292,7 @@ namespace PLang.Modules.BlockchainModule
 			{
 				if (callGoalOnUnsubscribe != null)
 				{
+					using var origin = RunOrigin.External(null);
 					pseudoRuntime.RunGoal(engine, contextAccessor, Goal.RelativeAppStartupFolderPath, callGoalOnUnsubscribe, Goal);
 				}
 			});

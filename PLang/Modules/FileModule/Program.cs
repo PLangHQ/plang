@@ -1108,6 +1108,8 @@ namespace PLang.Modules.FileModule
 								parameters.Add(senderVariableName, sender);
 
 								goalToCall.Parameters.AddOrReplaceDict(parameters);
+								// Whoever can write in the watched folder starts this run: it is from outside, with nobody's identity.
+								using var origin = RunOrigin.External(null);
 								var task = pseudoRuntime.RunGoal(engine, contextAccessor, fileSystem.Path.DirectorySeparatorChar.ToString(), goalToCall);
 								task.Wait();
 
@@ -1171,6 +1173,8 @@ namespace PLang.Modules.FileModule
 				goalToCall.Parameters.AddOrReplaceDict(parameters);
 				try
 				{
+					// Whoever can write in the watched folder starts this run: it is from outside, with nobody's identity.
+					using var origin = RunOrigin.External(null);
 					var task = pseudoRuntime.RunGoal(engine, contextAccessor, fileSystem.Path.DirectorySeparatorChar.ToString(), goalToCall);
 					task.Wait();
 

@@ -1401,6 +1401,8 @@ Frontpage
 
 					websocketData.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.Identity, verifiedSignature.Signature.Identity);
 
+					// A websocket message is from outside: the identity that signed it.
+					using var origin = RunOrigin.External(verifiedSignature.Signature.Identity);
 					await pseudoRuntime.RunGoal(engine, contextAccessor, fileSystem.RootDirectory, websocketData.GoalToCall);
 				}
 				messageStream.SetLength(0);
