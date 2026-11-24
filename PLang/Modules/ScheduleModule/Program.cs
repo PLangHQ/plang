@@ -504,6 +504,20 @@ goalName is the goal that should be called, a whole word with possible slash(/),
 
 
 		/// <summary>
+		/// A scheduler started from a request or a goal whose output is not the app's runs on its own engine, and that engine
+		/// keeps its own registry, so `drain app` (which reads the app's registry) did not see the job and the process ended in
+		/// the middle of it. The run is then also entered in the app's registry until it finishes, so a drain waits for it.
+		/// </summary>
+		private void WaitForOnShutdown(IEngine schedulerEngine, string goalName, Task runTask)
+		{
+			var appRegistry = this.engine.KeepAliveRegistry;
+			if (ReferenceEquals(appRegistry, schedulerEngine.KeepAliveRegistry)) return;
+
+			appRegistry.Add(KeepAliveRegistry.Schedule, goalName, runTask, keepsAppAlive: false, waitOnShutdown: true);
+			runTask.ContinueWith(_ => appRegistry.Remove(runTask, KeepAliveRegistry.Schedule, dispose: false), TaskScheduler.Default);
+		}
+
+		/// <summary>
 		/// A job's run that has been started: Task completes when the goal has finished.
 		/// </summary>
 		private record RunningJob(Task Task, DateTime StartedUtc);
@@ -543,6 +557,7 @@ goalName is the goal that should be called, a whole word with possible slash(/),
 					if (task is Task runTask)
 					{
 						runningJobs[item.AbsolutePrFilePath] = new RunningJob(runTask, now);
+						WaitForOnShutdown(engine, item.GoalName, runTask);
 					}
 
 					if (error != null && error is not EndGoal)
