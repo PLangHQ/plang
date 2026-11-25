@@ -34,7 +34,11 @@ namespace PLang.Modules.IrohModule
 
 		public record IrohKey(string Name, string EndpointId);
 		public record IrohListener(string Name, string EndpointId, string Ticket);
-		public record IrohPeer(string Target, string? EndpointId, IrohConnection Connection);
+		public record IrohPeer(string Target, string? EndpointId, IrohConnection Connection) : IHoldsDisposable
+		{
+			[Newtonsoft.Json.JsonIgnore]
+			public IDisposable Disposable => Connection;
+		}
 
 		[Description("Create the iroh endpoint key with a name, saved in settings, and return its endpoint id to print or share. When the key exists it is returned unchanged, unless replace is true. The secret is never returned")]
 		[Example("create iroh key, write to %key%", "name=\"default\"")]
@@ -88,7 +92,7 @@ namespace PLang.Modules.IrohModule
 			return (listener, null);
 		}
 
-		[Description("Connect to a peer by its endpoint id (or a full ticket). Returns the peer to use in tell. Without onClosed the connection closes when this goal ends. With onClosed it stays open, and onClosed is called when the connection drops, use it to connect again")]
+		[Description("Connect to a peer by its endpoint id (or a full ticket). Returns the peer to use in tell. Without onClosed the connection closes when this goal ends, or when the calling goal ends if this goal returns it. With onClosed it stays open, and onClosed is called when the connection drops, use it to connect again")]
 		[Example("connect to %kioskKey%, on closed call Redial, write to %agent%", "target=%kioskKey%, onClosed=Redial")]
 		[Example("connect to iroh peer %id%, key 'admin', write to %agent%", "target=%id%, keyName=\"admin\"")]
 		[Example("connect to %agentEndpoint%, on udp port 47001, write to %agent%", "target=%agentEndpoint%, port=47001")]
@@ -113,8 +117,9 @@ namespace PLang.Modules.IrohModule
 
 			if (onClosed == null)
 			{
-				// The peer lives in a variable of this goal, so the connection closes when the goal ends; the listening side
-				// then frees what it holds for it. A connection with onClosed stays open until the peer or the network closes it.
+				// The connection closes when this goal ends, or, when the goal returns the peer, when the calling goal ends;
+				// the listening side then frees what it holds for it. A connection with onClosed stays open until the peer
+				// or the network closes it.
 				contextAccessor.Current.CallStack.AddDisposable(connection);
 			}
 			else
@@ -137,7 +142,7 @@ namespace PLang.Modules.IrohModule
 			return (new IrohPeer(target, endpointId, connection), null);
 		}
 
-		[Description("Close the connection to a peer. A connection without onClosed also closes by itself when the goal that connected ends")]
+		[Description("Close the connection to a peer. A connection without onClosed also closes by itself when the goal that holds it ends")]
 		[Example("disconnect from %agent%", "peer=%agent%")]
 		[Example("close connection %agent%", "peer=%agent%")]
 		public async Task Disconnect(IrohPeer peer)

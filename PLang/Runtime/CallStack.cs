@@ -127,6 +127,25 @@ public class CallStack
 		CurrentFrame.Disposables.Add(disposable);
 	}
 
+	/// <summary>
+	/// A goal returns these values to the goal that called it: a disposable of the current goal that is one of them, or
+	/// that one of them holds (IHoldsDisposable), is disposed when the calling goal ends instead of this one.
+	/// </summary>
+	public void HandOverToCaller(IEnumerable<object?> values)
+	{
+		var frame = CurrentFrameOrNull;
+		if (frame?.ParentFrame == null || !frame.HasDisposables) return;
+
+		foreach (var value in values)
+		{
+			var disposable = value is IHoldsDisposable holder ? holder.Disposable : value as IDisposable;
+			if (disposable != null && frame.RemoveDisposable(disposable))
+			{
+				frame.ParentFrame.Disposables.Add(disposable);
+			}
+		}
+	}
+
 	public void AddError(IError error)
 	{
 		CurrentFrame.AddError(error);
@@ -272,6 +291,12 @@ public class CallStack
 	}
 }
 
+/// <summary>A value that holds a disposable of a goal frame, e.g. a connection, so returning the value hands the disposable to the calling goal.</summary>
+public interface IHoldsDisposable
+{
+	IDisposable Disposable { get; }
+}
+
 public class CallStackFrame : VariableContainer
 {
 	public Goal Goal { get; }
@@ -286,6 +311,25 @@ public class CallStackFrame : VariableContainer
 	private ConcurrentBag<IDisposable>? _disposables;
 	private ConcurrentBag<IError>? _errors;
 	public ConcurrentBag<IDisposable> Disposables => LazyInitializer.EnsureInitialized(ref _disposables)!;
+
+	/// <summary>Takes the disposable out of this frame, so it is not disposed when the frame ends. False when it is not here.</summary>
+	public bool RemoveDisposable(IDisposable disposable)
+	{
+		var bag = _disposables;
+		if (bag == null) return false;
+		lock (bag)
+		{
+			var kept = new List<IDisposable>();
+			bool found = false;
+			while (bag.TryTake(out var item))
+			{
+				if (!found && ReferenceEquals(item, disposable)) found = true;
+				else kept.Add(item);
+			}
+			foreach (var item in kept) bag.Add(item);
+			return found;
+		}
+	}
 	public ConcurrentBag<IError> Errors => LazyInitializer.EnsureInitialized(ref _errors)!;
 	public bool HasDisposables => _disposables != null && !_disposables.IsEmpty;
 	public bool HasErrors => _errors != null && !_errors.IsEmpty;
