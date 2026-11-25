@@ -93,10 +93,12 @@ namespace PLang.Events
 				throw new RuntimeException("Events are null. GetRuntimeEvents() cannot be called before Load");
 			}
 
-			if (contextAccessor.Current.EventBindings.Count > 0)
+			// No context when a request fails before its context is set; the app's events still apply.
+			var contextBindings = contextAccessor.Current?.EventBindings;
+			if (contextBindings != null && contextBindings.Count > 0)
 			{
 				var events = new List<EventBinding>();
-				events.AddRange(contextAccessor.Current.EventBindings);
+				events.AddRange(contextBindings);
 				events.AddRange(runtimeEvents);
 				return Task.FromResult(events);
 			}

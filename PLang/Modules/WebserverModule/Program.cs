@@ -234,7 +234,17 @@ public class Program : BaseProgram, IDisposable
 
 		//engine.ChildEngines.Add(webserverEngine);
 
-		RequestHandler requestHandler = new RequestHandler(goalStep, logger, fileSystem, container.GetInstance<Modules.IdentityModule.Program>(), prParser);
+		// The webserver runs as long as the app, so its requests are served on the app's root engine. A webserver
+		// started from a goal that runs on a rented engine (a web request, a "dont wait" or scheduled goal) must not
+		// keep that engine: it goes back to the pool when the goal ends, is rented by others, and CleanupEngines
+		// disposes it, after which every request to this webserver failed.
+		var appEngine = engine;
+		while (appEngine.ParentEngine != null) appEngine = appEngine.ParentEngine;
+		var appContainer = appEngine.Container;
+		var appEventRuntime = appEngine.GetEventRuntime();
+		var appLogger = appContainer.GetInstance<ILogger>();
+
+		RequestHandler requestHandler = new RequestHandler(goalStep, appLogger, appEngine.FileSystem, appContainer.GetInstance<Modules.IdentityModule.Program>(), appContainer.GetInstance<PrParser>());
 
 		if (webserverProperties.OnStart != null)
 		{
@@ -406,7 +416,7 @@ public class Program : BaseProgram, IDisposable
 						Stopwatch stopwatch = Stopwatch.StartNew();
 						try
 						{
-							logger.LogInformation(" ---------- Request Starts ({0}) ---------- {1}", httpContext.Request.Path.Value, stopwatch.ElapsedMilliseconds);
+							appLogger.LogInformation(" ---------- Request Starts ({0}) ---------- {1}", httpContext.Request.Path.Value, stopwatch.ElapsedMilliseconds);
 
 							try
 							{
@@ -424,28 +434,28 @@ public class Program : BaseProgram, IDisposable
 								return;
 							}
 
-							requestEngine = await engine.RentAsync(goalStep);
+							requestEngine = await appEngine.RentAsync(goalStep);
 							requestEngine.Name = "RequestEngine_" + httpContext.Request.Path.Value;
 
 
-							var memoryStack = MemoryStack.New(container, requestEngine);
-							var msa = container.GetInstance<IMemoryStackAccessor>();
+							var memoryStack = MemoryStack.New(appContainer, requestEngine);
+							var msa = appContainer.GetInstance<IMemoryStackAccessor>();
 							msa.Current = memoryStack;
 
 							PLangContext context = new(memoryStack, requestEngine, ExecutionMode.HttpRequest);
-							
 
-							var contextAccessor = container.GetInstance<IPLangContextAccessor>();
+
+							var contextAccessor = appContainer.GetInstance<IPLangContextAccessor>();
 							contextAccessor.Current = context;
 							context.HttpContext = httpContext;
 							context.Items.AddOrReplace("!IsHttp", true);
 
 							AddToCallStack(requestEngine, httpContext.Request.Path.Value ?? "RequestStart");
 
-							var httpOutputSink = new HttpSink(context, webserverProperties, engine.LiveConnections);
+							var httpOutputSink = new HttpSink(context, webserverProperties, appEngine.LiveConnections);
 							pageSink = httpOutputSink;
 							context.UserSink = httpOutputSink;
-							context.SystemSink = engine.SystemSink;
+							context.SystemSink = appEngine.SystemSink;
 							(poll, identity, error) = await requestHandler.HandleRequestAsync(requestEngine, context, webserverProperties);
 
 							// StatelessCallbackError is IErrorHandled, so the branch below never saw it and an
@@ -514,10 +524,19 @@ public class Program : BaseProgram, IDisposable
 						}
 						catch (Exception ex)
 						{
+							// Nothing has answered the request: without a status it would go out as an empty 200.
+							try
+							{
+								if (!httpContext.Response.HasStarted) httpContext.Response.StatusCode = 500;
+							}
+							catch { }
+							Console.WriteLine(" ---- Request failed  ----");
+							Console.WriteLine(ex);
+							Console.WriteLine(" ---- Request failed  ----");
 							try
 							{
 								// something bad happend, write error using the original app engine
-								(_, error) = await this.eventRuntime.AppErrorEvents(new ExceptionError(ex, ex.Message, goal, goalStep));
+								(_, error) = await appEventRuntime.AppErrorEvents(new ExceptionError(ex, ex.Message, goal, goalStep));
 								if (error != null)
 								{
 									//AppError had error, this is a critical thing and should not happen
@@ -531,7 +550,7 @@ public class Program : BaseProgram, IDisposable
 							{
 								try
 								{
-									Console.WriteLine(" ---- Critical Exception(2)  ----\n\nWill not show first exception, only last one ");
+									Console.WriteLine(" ---- Critical Exception(2)  ---- AppError events failed on the exception above");
 									Console.WriteLine(ex2);
 									Console.WriteLine(" ---- Critical Exception(2)  ---- ");
 								} catch
@@ -567,17 +586,17 @@ public class Program : BaseProgram, IDisposable
 
 							if (requestEngine != null)
 							{
-								engine.Return(requestEngine, true);
+								appEngine.Return(requestEngine, true);
 							}
 							if (hasRequestSlot) requestGate.Release();
 
-							logger.LogInformation(" ---------- Request Done ({0}) ---------- {1}", httpContext.Request.Path.Value, stopwatch.ElapsedMilliseconds);
+							appLogger.LogInformation(" ---------- Request Done ({0}) ---------- {1}", httpContext.Request.Path.Value, stopwatch.ElapsedMilliseconds);
 
 						}
 
 						if (poll)
 						{
-							await DoPoll(httpContext, identity, engine, webserverProperties);
+							await DoPoll(httpContext, identity, appEngine, webserverProperties);
 						}
 					});
 
@@ -588,7 +607,7 @@ public class Program : BaseProgram, IDisposable
 
 
 		webserverProperties.Listener = app;
-		webserverProperties.Engine = engine;
+		webserverProperties.Engine = appEngine;
 
 		await app.StartAsync();
 
