@@ -64,6 +64,9 @@ namespace PLang.Modules.IrohModule
 
 	public class IrohException(string message) : Exception(message);
 
+	/// <summary>The connection has ended (closed by the peer, the network or this side), so nothing more goes over it.</summary>
+	public class IrohConnectionEndedException(string message) : IrohException(message);
+
 	/// <summary>
 	/// A native box that several threads call into. A call runs between TryEnter and Exit. Release hands the box to the
 	/// native function that consumes it (close or free) exactly once: right away when no call is running, otherwise
@@ -384,12 +387,6 @@ namespace PLang.Modules.IrohModule
 			return closed;
 		}
 
-		/// <summary>The open connection of this endpoint with that id (IrohConnection.Id), accepted or made; null when it is closed or unknown.</summary>
-		public IrohConnection? FindConnection(string id)
-		{
-			return connections.Keys.FirstOrDefault(p => p.Id == id && !p.IsDisposed);
-		}
-
 		private static string Short(string value) => value.Length > 16 ? value[..16] + "..." : value;
 
 		private nint Enter()
@@ -418,9 +415,22 @@ namespace PLang.Modules.IrohModule
 
 		public bool IsDisposed => handle.IsReleased;
 
-		/// <summary>Names this connection inside the process, so an app can keep it (e.g. in a table) and tell the peer later.</summary>
+		/// <summary>Names this connection inside the process.</summary>
 		public string Id { get; } = Guid.NewGuid().ToString("N");
 
+		private volatile bool closedByPeer;
+
+		/// <summary>
+		/// True when the peer or the network ended the connection, false while it is open or when this side closed it
+		/// (disconnect, the end of the goal that held it).
+		/// </summary>
+		public bool ClosedByPeer => closedByPeer;
+
+		/// <summary>Marks the connection as ended by the peer or the network, unless this side has closed it already.</summary>
+		private void NoteEnded()
+		{
+			if (!handle.IsReleased) closedByPeer = true;
+		}
 		public const int ChunkBytes = 64 * 1024;
 
 		/// <summary>
@@ -465,7 +475,7 @@ namespace PLang.Modules.IrohModule
 
 		private IrohStream OpenStream()
 		{
-			if (!handle.TryEnter(out nint pointer)) throw new IrohException("The connection to the peer is closed");
+			if (!handle.TryEnter(out nint pointer)) throw new IrohConnectionEndedException("The connection to the peer is closed");
 			SendStream* send = iroh.send_stream_default();
 			RecvStream* recv = iroh.recv_stream_default();
 			EndpointResult open;
@@ -480,7 +490,8 @@ namespace PLang.Modules.IrohModule
 			{
 				iroh.send_stream_free(send);
 				iroh.recv_stream_free(recv);
-				throw new IrohException("Could not open a stream to the peer: " + open);
+				NoteEnded();
+				throw new IrohConnectionEndedException("Could not open a stream to the peer: " + open);
 			}
 			return new IrohStream((nint)send, (nint)recv);
 		}
@@ -503,6 +514,7 @@ namespace PLang.Modules.IrohModule
 			{
 				iroh.send_stream_free(send);
 				iroh.recv_stream_free(recv);
+				NoteEnded();
 				return null;
 			}
 			return new IrohStream((nint)send, (nint)recv);
@@ -552,7 +564,11 @@ namespace PLang.Modules.IrohModule
 					iroh.rust_buffer_free(datagram);
 					handle.Exit();
 				}
-				if (result != EndpointResult.ENDPOINT_RESULT_OK && result != EndpointResult.ENDPOINT_RESULT_TIMEOUT) return;
+				if (result != EndpointResult.ENDPOINT_RESULT_OK && result != EndpointResult.ENDPOINT_RESULT_TIMEOUT)
+				{
+					NoteEnded();
+					return;
+				}
 			}
 		}
 

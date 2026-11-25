@@ -275,7 +275,6 @@ namespace PLang.Modules.VariableModule
 			}
 
 
-			context.CallStack.HandOverToCaller(returnValues.Select(p => p.Value));
 			return new Return(returnValues);
 		}
 
