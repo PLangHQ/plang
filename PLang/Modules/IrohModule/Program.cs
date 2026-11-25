@@ -208,25 +208,47 @@ namespace PLang.Modules.IrohModule
 			}
 		}
 
-		[Description("Close the connection to a peer (%peer% or the id of the connection). A connection without onClosed and onIncoming also closes by itself when the goal that holds it ends")]
+		[Description("Close the connection to a peer (%peer% from connect or of an incoming command). A connection without onClosed and onIncoming also closes by itself when the goal that holds it ends")]
 		[Example("disconnect from %agent%", "peer=%agent%")]
 		[Example("close connection %agent%", "peer=%agent%")]
-		public async Task Disconnect([Description("A peer from connect or %peer% of an incoming command, or the id of its connection (%peer.Id%)")] object peer)
+		public async Task Disconnect(IrohPeer peer)
 		{
-			ResolvePeer(peer)?.Connection?.Dispose();
+			peer?.Connection?.Dispose();
 		}
 
-		[Description("Tell a connected peer to run a goal in its app. The peer is one from connect, %peer% of an incoming command (tells it back on the same connection), or the id of an open connection (%peer.Id%, kept from an earlier run). The command is signed with your identity, the peer decides if it will run it. Returns what the remote goal returns")]
+		[Description("Close the connection with this id (%peer.Id%, kept from an earlier run)")]
+		[Example("disconnect peer id %peerId%", "peerId=%peerId%")]
+		public async Task DisconnectById(string peerId)
+		{
+			ResolvePeer(peerId)?.Connection?.Dispose();
+		}
+
+		[Description("Tell a connected peer to run a goal in its app. The peer is one from connect, or %peer% of an incoming command (tells it back on the same connection). The command is signed with your identity, the peer decides if it will run it. Returns what the remote goal returns")]
 		[Example("tell %agent% to Update, version: \"1\", write to %result%", "goalName=\"Update\", parameters={\"version\":\"1\"}")]
 		[Example("tell %agent% to RestartKiosk, timeout 30 seconds, write to %result%", "goalName=\"RestartKiosk\", timeoutInSeconds=30")]
 		[Example("tell %agent% to Update, file: %package%, write to %result%", "goalName=\"Update\", file=%package%")]
-		[Example("tell %watcher.peerId% to Ingest, seq: %seq%, write to %result%", "peer=%watcher.peerId%, goalName=\"Ingest\", parameters={\"seq\":\"%seq%\"}")]
-		public async Task<(object?, IError?)> Tell([Description("A peer from connect or %peer% of an incoming command, or the id of its connection (%peer.Id%)")] object peer, string goalName, Dictionary<string, object?>? parameters = null,
+		[Example("tell %peer% to Ingest, seq: %seq%, write to %result%", "goalName=\"Ingest\", parameters={\"seq\":\"%seq%\"}")]
+		public async Task<(object?, IError?)> Tell(IrohPeer peer, string goalName, Dictionary<string, object?>? parameters = null,
 			[Description("Path of a file to send with the command. Its size and sha256 are in the signed command, the peer checks them and gives the goal the saved path as %file%")] string? file = null,
 			int timeoutInSeconds = 60, int expiresInSeconds = 120)
 		{
-			var connected = ResolvePeer(peer);
-			if (connected?.Connection == null)
+			return await TellConnected(peer, goalName, parameters, file, timeoutInSeconds, expiresInSeconds);
+		}
+
+		[Description("Tell the peer of an open connection by its id (%peer.Id% of an incoming command or of connect, kept from an earlier run, e.g. in a table) to run a goal in its app. Same as tell otherwise. When the connection has closed the error key is PeerNotConnected")]
+		[Example("tell peer id %peerId% to Ingest, seq: %seq%, write to %result%", "peerId=%peerId%, goalName=\"Ingest\", parameters={\"seq\":\"%seq%\"}")]
+		[Example("tell connection %watcher.peerId% to Ingest, write to %result%", "peerId=%watcher.peerId%, goalName=\"Ingest\"")]
+		public async Task<(object?, IError?)> TellById(string peerId, string goalName, Dictionary<string, object?>? parameters = null,
+			[Description("Path of a file to send with the command. Its size and sha256 are in the signed command, the peer checks them and gives the goal the saved path as %file%")] string? file = null,
+			int timeoutInSeconds = 60, int expiresInSeconds = 120)
+		{
+			return await TellConnected(ResolvePeer(peerId), goalName, parameters, file, timeoutInSeconds, expiresInSeconds);
+		}
+
+		private async Task<(object?, IError?)> TellConnected(IrohPeer? connected, string goalName, Dictionary<string, object?>? parameters, string? file,
+			int timeoutInSeconds, int expiresInSeconds)
+		{
+			if (connected?.Connection == null || connected.Connection.IsDisposed)
 			{
 				return (null, new ProgramError("The peer is not connected", goalStep, function, Key: "PeerNotConnected",
 					FixSuggestion: "Connect first, e.g. `- connect to %key%, write to %agent%`. A peer that connected to this app is told on its connection while it is open; when it has closed, the peer must connect again"));
