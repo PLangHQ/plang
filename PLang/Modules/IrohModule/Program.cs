@@ -34,9 +34,15 @@ namespace PLang.Modules.IrohModule
 
 		public record IrohKey(string Name, string EndpointId);
 		public record IrohListener(string Name, string EndpointId, string Ticket);
-		public record IrohPeer(string Target, string? EndpointId, IrohConnection Connection) : IHoldsDisposable
+		/// <summary>
+		/// One open connection to a peer, made with connect or accepted by listen. Id names the connection while it is open,
+		/// so an app can keep it (e.g. in a table) and tell the peer in a later run: `tell %peerId% to Ingest`.
+		/// </summary>
+		public record IrohPeer(string Target, string? EndpointId, [property: JsonIgnore] IrohConnection Connection) : IHoldsDisposable
 		{
-			[Newtonsoft.Json.JsonIgnore]
+			public string Id => Connection.Id;
+
+			[JsonIgnore]
 			public IDisposable Disposable => Connection;
 		}
 
@@ -62,12 +68,13 @@ namespace PLang.Modules.IrohModule
 			return await CreateKey(name, false);
 		}
 
-		[Description("Start listening for iroh peers. Every incoming command must be signed, an unsigned or badly signed one is declined. The goal in onIncoming is called first with %Identity% (the signer), %goalName%, %parameters% and %EndpointId% (and %fileName% and %fileSize% when a file comes with the command, the file is not received until this goal has not failed), and it decides if the identity is allowed by throwing an error to decline. When it does not fail the requested goal runs and what it returns goes back to the caller. onIncoming is required")]
+		[Description("Start listening for iroh peers. Every incoming command must be signed, an unsigned or badly signed one is declined. The goal in onIncoming is called first with %Identity% (the signer), %goalName%, %parameters%, %EndpointId% and %peer% (the connection the command came on) (and %fileName% and %fileSize% when a file comes with the command, the file is not received until this goal has not failed), and it decides if the identity is allowed by throwing an error to decline. When it does not fail the requested goal runs, also with %peer% and %Identity%, and what it returns goes back to the caller. %peer% can be told back on the same connection while it is open (`tell %peer% to Ingest`); keep %peer.Id% to tell it in a later run. onClosed is called with %peer% when a connection of a peer closes. onIncoming is required")]
 		[Example("start listening, on incoming call Allow, write to %listener%", "onIncoming=Allow")]
 		[Example("listen on iroh 'kiosk', on incoming call Allow", "keyName=\"kiosk\", onIncoming=Allow")]
 		[Example("start listening on udp port 7000, on incoming call Allow", "onIncoming=Allow, port=7000")]
+		[Example("start listening on udp port 47000, on incoming call Allow, on closed call PeerGone, write to %listener%", "onIncoming=Allow, onClosed=PeerGone, port=47000")]
 		public async Task<(IrohListener?, IError?)> Listen(GoalToCallInfo? onIncoming = null, string keyName = "default", bool useRelay = true,
-			[Description(PortDescription)] int port = 0)
+			[Description(PortDescription)] int port = 0, GoalToCallInfo? onClosed = null)
 		{
 			if (onIncoming == null || string.IsNullOrEmpty(onIncoming.Name))
 			{
@@ -84,20 +91,23 @@ namespace PLang.Modules.IrohModule
 			var engineRef = engine;
 			var accessorRef = contextAccessor;
 			var rootPath = fileSystem.RootDirectory;
+			Action<IrohConnection>? connectionClosed = onClosed == null ? null : connection =>
+				RunClosed(onClosed, new IrohPeer(connection.Id, null, connection), engineRef, accessorRef, rootPath).GetAwaiter().GetResult();
 			_ = Task.Factory.StartNew(() => endpoint.Serve(
-				stream => HandleStream(stream, endpoint, onIncoming, engineRef, accessorRef, rootPath),
-				ex => logger?.LogWarning("iroh: {Message}", ex.Message)), TaskCreationOptions.LongRunning);
+				(stream, connection) => HandleStream(stream, connection, endpoint, onIncoming, engineRef, accessorRef, rootPath),
+				ex => logger?.LogWarning("iroh: {Message}", ex.Message), connectionClosed), TaskCreationOptions.LongRunning);
 
 			KeepAlive(endpoint, "iroh-listen-" + keyName);
 			return (listener, null);
 		}
 
-		[Description("Connect to a peer by its endpoint id (or a full ticket). Returns the peer to use in tell. Without onClosed the connection closes when this goal ends, or when the calling goal ends if this goal returns it. With onClosed it stays open, and onClosed is called when the connection drops, use it to connect again")]
+		[Description("Connect to a peer by its endpoint id (or a full ticket). Returns the peer to use in tell. Without onClosed and onIncoming the connection closes when this goal ends, or when the calling goal ends if this goal returns it. With onClosed or onIncoming it stays open until the peer or the network closes it, and onClosed is called then, use it to connect again. With onIncoming the peer can also tell this app on the same connection: every command must be signed, onIncoming is called first and declines by throwing an error, exactly as in `start listening`, then the requested goal runs")]
 		[Example("connect to %kioskKey%, on closed call Redial, write to %agent%", "target=%kioskKey%, onClosed=Redial")]
 		[Example("connect to iroh peer %id%, key 'admin', write to %agent%", "target=%id%, keyName=\"admin\"")]
 		[Example("connect to %agentEndpoint%, on udp port 47001, write to %agent%", "target=%agentEndpoint%, port=47001")]
+		[Example("connect to %agentEndpoint%, on incoming call Allow, on closed call Reconnect, write to %agent%", "target=%agentEndpoint%, onIncoming=Allow, onClosed=Reconnect")]
 		public async Task<(IrohPeer?, IError?)> Connect(string target, GoalToCallInfo? onClosed = null, string keyName = "default", bool useRelay = true,
-			[Description(PortDescription)] int port = 0)
+			[Description(PortDescription)] int port = 0, GoalToCallInfo? onIncoming = null)
 		{
 			var (endpoint, error) = GetEndpoint(keyName, useRelay, port);
 			if (error != null) return (null, error);
@@ -115,53 +125,111 @@ namespace PLang.Modules.IrohModule
 			target = target.Trim().Trim('﻿').Trim();
 			string? endpointId = IrohEndpoint.IsTicket(target) ? null : target;
 
-			if (onClosed == null)
+			var peer = new IrohPeer(target, endpointId, connection);
+			if (onClosed == null && onIncoming == null)
 			{
 				// The connection closes when this goal ends, or, when the goal returns the peer, when the calling goal ends;
-				// the listening side then frees what it holds for it. A connection with onClosed stays open until the peer
-				// or the network closes it.
+				// the listening side then frees what it holds for it.
 				contextAccessor.Current.CallStack.AddDisposable(connection);
+				return (peer, null);
 			}
-			else
+
+			var engineRef = engine;
+			var accessorRef = contextAccessor;
+			var rootPath = fileSystem.RootDirectory;
+			if (onIncoming != null)
 			{
-				var engineRef = engine;
-				var accessorRef = contextAccessor;
-				var rootPath = fileSystem.RootDirectory;
-				var peerInfo = new IrohPeer(target, endpointId, connection);
+				// The peer opens streams on this connection as on a listening endpoint. A thread waits for them until the
+				// connection closes; while it waits, a local disconnect takes effect when the peer or the network closes it.
+				// The app stays alive while it can be told something, as with `start listening`.
+				string keepAliveKind = "iroh-listen-connection-" + connection.Id;
+				KeepAlive(connection, keepAliveKind, "iroh connection to " + target);
+				_ = Task.Factory.StartNew(async () =>
+				{
+					connection.ServeStreams(
+						stream => HandleStream(stream, connection, endpoint!, onIncoming, engineRef, accessorRef, rootPath),
+						ex => logger?.LogWarning("iroh: {Message}", ex.Message));
+					// onClosed runs before the app may end, so a goal that connects again keeps it alive
+					try
+					{
+						if (onClosed != null) await RunClosed(onClosed, peer, engineRef, accessorRef, rootPath);
+					}
+					finally
+					{
+						RemoveKeepAlive(connection, keepAliveKind);
+					}
+				}, TaskCreationOptions.LongRunning);
+			}
+			else if (onClosed != null)
+			{
 				_ = Task.Factory.StartNew(async () =>
 				{
 					connection.WaitUntilClosed();
 					connection.Dispose();
-					onClosed.Parameters.AddOrReplace("peer", peerInfo);
-					// The peer or the network closed it: a run from outside, with nobody's identity.
-					using var origin = RunOrigin.External(null);
-					await pseudoRuntime.RunGoal(engineRef, accessorRef, rootPath, onClosed);
+					await RunClosed(onClosed, peer, engineRef, accessorRef, rootPath);
 				}, TaskCreationOptions.LongRunning);
 			}
 
-			return (new IrohPeer(target, endpointId, connection), null);
+			return (peer, null);
 		}
 
-		[Description("Close the connection to a peer. A connection without onClosed also closes by itself when the goal that holds it ends")]
+		private async Task RunClosed(GoalToCallInfo onClosed, IrohPeer peer, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath)
+		{
+			var parameters = new Dictionary<string, object?>(onClosed.Parameters) { ["peer"] = peer };
+			// The peer or the network closed it: a run from outside, with nobody's identity.
+			using var origin = RunOrigin.External(null);
+			await pseudoRuntime.RunGoal(engineRef, accessorRef, rootPath, new GoalToCallInfo(onClosed.Name, parameters));
+		}
+
+		/// <summary>
+		/// The peer a step names: a peer from connect or from an incoming command (%peer%), or the id of an open connection
+		/// (%peer.Id%, kept from an earlier run). Null when the connection is not open (any more).
+		/// </summary>
+		private static IrohPeer? ResolvePeer(object? value)
+		{
+			switch (value)
+			{
+				case IrohPeer peer:
+					return peer;
+				case ObjectValue ov:
+					return ResolvePeer(ov.Value);
+				case JObject json:
+					return ResolvePeer(json["Id"]?.ToString() ?? json["id"]?.ToString());
+				case string id when !string.IsNullOrWhiteSpace(id):
+					id = id.Trim();
+					foreach (var endpoint in Endpoints.Values)
+					{
+						var connection = endpoint.FindConnection(id);
+						if (connection != null) return new IrohPeer(id, null, connection);
+					}
+					return null;
+				default:
+					return null;
+			}
+		}
+
+		[Description("Close the connection to a peer (%peer% or the id of the connection). A connection without onClosed and onIncoming also closes by itself when the goal that holds it ends")]
 		[Example("disconnect from %agent%", "peer=%agent%")]
 		[Example("close connection %agent%", "peer=%agent%")]
-		public async Task Disconnect(IrohPeer peer)
+		public async Task Disconnect([Description("A peer from connect or %peer% of an incoming command, or the id of its connection (%peer.Id%)")] object peer)
 		{
-			peer?.Connection?.Dispose();
+			ResolvePeer(peer)?.Connection?.Dispose();
 		}
 
-		[Description("Tell a connected peer to run a goal in its app. The command is signed with your identity, the peer decides if it will run it. Returns what the remote goal returns")]
+		[Description("Tell a connected peer to run a goal in its app. The peer is one from connect, %peer% of an incoming command (tells it back on the same connection), or the id of an open connection (%peer.Id%, kept from an earlier run). The command is signed with your identity, the peer decides if it will run it. Returns what the remote goal returns")]
 		[Example("tell %agent% to Update, version: \"1\", write to %result%", "goalName=\"Update\", parameters={\"version\":\"1\"}")]
 		[Example("tell %agent% to RestartKiosk, timeout 30 seconds, write to %result%", "goalName=\"RestartKiosk\", timeoutInSeconds=30")]
 		[Example("tell %agent% to Update, file: %package%, write to %result%", "goalName=\"Update\", file=%package%")]
-		public async Task<(object?, IError?)> Tell(IrohPeer peer, string goalName, Dictionary<string, object?>? parameters = null,
+		[Example("tell %watcher.peerId% to Ingest, seq: %seq%, write to %result%", "peer=%watcher.peerId%, goalName=\"Ingest\", parameters={\"seq\":\"%seq%\"}")]
+		public async Task<(object?, IError?)> Tell([Description("A peer from connect or %peer% of an incoming command, or the id of its connection (%peer.Id%)")] object peer, string goalName, Dictionary<string, object?>? parameters = null,
 			[Description("Path of a file to send with the command. Its size and sha256 are in the signed command, the peer checks them and gives the goal the saved path as %file%")] string? file = null,
 			int timeoutInSeconds = 60, int expiresInSeconds = 120)
 		{
-			if (peer?.Connection == null)
+			var connected = ResolvePeer(peer);
+			if (connected?.Connection == null)
 			{
-				return (null, new ProgramError("You need to connect to a peer first", goalStep, function,
-					FixSuggestion: "Add a step before this one, e.g. `- connect to %key%, write to %agent%`"));
+				return (null, new ProgramError("The peer is not connected", goalStep, function, Key: "PeerNotConnected",
+					FixSuggestion: "Connect first, e.g. `- connect to %key%, write to %agent%`. A peer that connected to this app is told on its connection while it is open; when it has closed, the peer must connect again"));
 			}
 			if (string.IsNullOrWhiteSpace(goalName))
 			{
@@ -174,7 +242,7 @@ namespace PLang.Modules.IrohModule
 				["parameters"] = parameters == null ? new JObject() : JObject.FromObject(parameters),
 				["created"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
 			};
-			if (peer.EndpointId != null) payload["to"] = peer.EndpointId;
+			if (connected.EndpointId != null) payload["to"] = connected.EndpointId;
 
 			string? filePath = null;
 			if (!string.IsNullOrWhiteSpace(file))
@@ -211,7 +279,7 @@ namespace PLang.Modules.IrohModule
 				answerBytes = await Task.Run(() =>
 				{
 					using Stream? fileStream = filePath == null ? null : new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-					return peer.Connection.Request(Encoding.UTF8.GetBytes(request), fileStream, ChunkTimeoutMilliseconds, timeoutInSeconds * 1000, MaxAnswerBytes);
+					return connected.Connection.Request(Encoding.UTF8.GetBytes(request), fileStream, ChunkTimeoutMilliseconds, timeoutInSeconds * 1000, MaxAnswerBytes);
 				});
 			}
 			catch (Exception ex)
@@ -284,13 +352,14 @@ namespace PLang.Modules.IrohModule
 			}
 		}
 
-		private async Task HandleStream(IrohStream stream, IrohEndpoint endpoint, GoalToCallInfo onIncoming, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath)
+		private async Task HandleStream(IrohStream stream, IrohConnection connection, IrohEndpoint endpoint, GoalToCallInfo onIncoming, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath)
 		{
 			TellAnswer answer;
 			string? receivedFolder = null;
 			try
 			{
-				(answer, receivedFolder) = await Process(stream, endpoint, onIncoming, engineRef, accessorRef, rootPath);
+				var peer = new IrohPeer(connection.Id, null, connection);
+				(answer, receivedFolder) = await Process(stream, peer, endpoint, onIncoming, engineRef, accessorRef, rootPath);
 			}
 			catch (Exception ex)
 			{
@@ -306,7 +375,7 @@ namespace PLang.Modules.IrohModule
 			try { stream.WriteAndFinish(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(answer))); } catch { }
 		}
 
-		private async Task<(TellAnswer Answer, string? ReceivedFolder)> Process(IrohStream stream, IrohEndpoint endpoint, GoalToCallInfo onIncoming, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath)
+		private async Task<(TellAnswer Answer, string? ReceivedFolder)> Process(IrohStream stream, IrohPeer peer, IrohEndpoint endpoint, GoalToCallInfo onIncoming, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath)
 		{
 			byte[] lengthBytes = new byte[4];
 			if (!stream.ReadExactly(lengthBytes, 4, ChunkTimeoutMilliseconds))
@@ -324,10 +393,10 @@ namespace PLang.Modules.IrohModule
 				return (new TellAnswer(false, null, "Declined: the command header is not valid", 400), null);
 			}
 
-			return await Process(stream, headerBytes, endpoint, onIncoming, engineRef, accessorRef, rootPath);
+			return await Process(stream, headerBytes, peer, endpoint, onIncoming, engineRef, accessorRef, rootPath);
 		}
 
-		private async Task<(TellAnswer Answer, string? ReceivedFolder)> Process(IrohStream stream, byte[] bytes, IrohEndpoint endpoint, GoalToCallInfo onIncoming, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath)
+		private async Task<(TellAnswer Answer, string? ReceivedFolder)> Process(IrohStream stream, byte[] bytes, IrohPeer peer, IrohEndpoint endpoint, GoalToCallInfo onIncoming, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath)
 		{
 			var request = JsonConvert.DeserializeObject<TellRequest>(Encoding.UTF8.GetString(bytes));
 			if (request == null || string.IsNullOrEmpty(request.Signature) || string.IsNullOrEmpty(request.Payload))
@@ -382,7 +451,8 @@ namespace PLang.Modules.IrohModule
 				[ReservedKeywords.Identity] = verified.Identity,
 				["goalName"] = goalName,
 				["parameters"] = parameters,
-				["EndpointId"] = endpoint.Id
+				["EndpointId"] = endpoint.Id,
+				["peer"] = peer
 			};
 			if (fileName != null)
 			{
@@ -418,6 +488,7 @@ namespace PLang.Modules.IrohModule
 			}
 
 			parameters[ReservedKeywords.Identity] = verified.Identity;
+			parameters["peer"] = peer;
 			var run = await pseudoRuntime.RunGoal(engineRef, accessorRef, rootPath, new GoalToCallInfo(goalName, parameters));
 
 			if (run.Error is Return ret)

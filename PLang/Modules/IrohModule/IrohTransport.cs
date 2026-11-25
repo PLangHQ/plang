@@ -251,12 +251,13 @@ namespace PLang.Modules.IrohModule
 		}
 
 		/// <summary>
-		/// Accepts peers until the endpoint is closed and hands every stream they open to onStream on the thread pool.
-		/// Blocks the calling thread. A failed accept is one peer whose handshake failed, the endpoint itself keeps
-		/// working, so it is reported to onFailure and the next accept waits a little (200 ms doubling up to 1 s, back to
-		/// none after a success). That bounds the work a flood of bad handshakes causes without holding up good peers long.
+		/// Accepts peers until the endpoint is closed and hands every stream they open, with its connection, to onStream on
+		/// the thread pool; onConnectionClosed gets each connection once it has closed. Blocks the calling thread. A failed
+		/// accept is one peer whose handshake failed, the endpoint itself keeps working, so it is reported to onFailure and
+		/// the next accept waits a little (200 ms doubling up to 1 s, back to none after a success). That bounds the work a
+		/// flood of bad handshakes causes without holding up good peers long.
 		/// </summary>
-		public void Serve(Func<IrohStream, Task> onStream, Action<Exception>? onFailure = null)
+		public void Serve(Func<IrohStream, IrohConnection, Task> onStream, Action<Exception>? onFailure = null, Action<IrohConnection>? onConnectionClosed = null)
 		{
 			int retryMilliseconds = 0;
 			while (true)
@@ -279,7 +280,12 @@ namespace PLang.Modules.IrohModule
 				var accepted = connection;
 				try
 				{
-					Task.Factory.StartNew(() => accepted.ServeStreams(onStream, onFailure), TaskCreationOptions.LongRunning);
+					Task.Factory.StartNew(() =>
+					{
+						accepted.ServeStreams(stream => onStream(stream, accepted), onFailure);
+						try { onConnectionClosed?.Invoke(accepted); }
+						catch (Exception ex) { onFailure?.Invoke(ex); }
+					}, TaskCreationOptions.LongRunning);
 				}
 				catch (Exception ex)
 				{
@@ -378,6 +384,12 @@ namespace PLang.Modules.IrohModule
 			return closed;
 		}
 
+		/// <summary>The open connection of this endpoint with that id (IrohConnection.Id), accepted or made; null when it is closed or unknown.</summary>
+		public IrohConnection? FindConnection(string id)
+		{
+			return connections.Keys.FirstOrDefault(p => p.Id == id && !p.IsDisposed);
+		}
+
 		private static string Short(string value) => value.Length > 16 ? value[..16] + "..." : value;
 
 		private nint Enter()
@@ -405,6 +417,9 @@ namespace PLang.Modules.IrohModule
 		internal IrohConnection(nint connection) { handle = new NativeHandle(connection); }
 
 		public bool IsDisposed => handle.IsReleased;
+
+		/// <summary>Names this connection inside the process, so an app can keep it (e.g. in a table) and tell the peer later.</summary>
+		public string Id { get; } = Guid.NewGuid().ToString("N");
 
 		public const int ChunkBytes = 64 * 1024;
 
