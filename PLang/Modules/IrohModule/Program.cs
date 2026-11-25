@@ -88,7 +88,7 @@ namespace PLang.Modules.IrohModule
 			return (listener, null);
 		}
 
-		[Description("Connect to a peer by its endpoint id (or a full ticket). Returns the peer to use in tell. onClosed is called when the connection drops, use it to connect again")]
+		[Description("Connect to a peer by its endpoint id (or a full ticket). Returns the peer to use in tell. Without onClosed the connection closes when this goal ends. With onClosed it stays open, and onClosed is called when the connection drops, use it to connect again")]
 		[Example("connect to %kioskKey%, on closed call Redial, write to %agent%", "target=%kioskKey%, onClosed=Redial")]
 		[Example("connect to iroh peer %id%, key 'admin', write to %agent%", "target=%id%, keyName=\"admin\"")]
 		[Example("connect to %agentEndpoint%, on udp port 47001, write to %agent%", "target=%agentEndpoint%, port=47001")]
@@ -111,7 +111,13 @@ namespace PLang.Modules.IrohModule
 			target = target.Trim().Trim('﻿').Trim();
 			string? endpointId = IrohEndpoint.IsTicket(target) ? null : target;
 
-			if (onClosed != null)
+			if (onClosed == null)
+			{
+				// The peer lives in a variable of this goal, so the connection closes when the goal ends; the listening side
+				// then frees what it holds for it. A connection with onClosed stays open until the peer or the network closes it.
+				contextAccessor.Current.CallStack.AddDisposable(connection);
+			}
+			else
 			{
 				var engineRef = engine;
 				var accessorRef = contextAccessor;
@@ -129,6 +135,14 @@ namespace PLang.Modules.IrohModule
 			}
 
 			return (new IrohPeer(target, endpointId, connection), null);
+		}
+
+		[Description("Close the connection to a peer. A connection without onClosed also closes by itself when the goal that connected ends")]
+		[Example("disconnect from %agent%", "peer=%agent%")]
+		[Example("close connection %agent%", "peer=%agent%")]
+		public async Task Disconnect(IrohPeer peer)
+		{
+			peer?.Connection?.Dispose();
 		}
 
 		[Description("Tell a connected peer to run a goal in its app. The command is signed with your identity, the peer decides if it will run it. Returns what the remote goal returns")]
