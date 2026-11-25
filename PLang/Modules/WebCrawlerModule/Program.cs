@@ -1132,6 +1132,18 @@ return result;");
 			options.Args = args.ToArray();
 			return options;
 		}
+
+		/// <summary>
+		/// Downloads the browser build this Playwright version needs, with the Playwright driver that ships with the runtime
+		/// (.playwright next to plang.dll), into the browser folder Playwright uses (PLAYWRIGHT_BROWSERS_PATH or ~/.cache/ms-playwright).
+		/// </summary>
+		private async Task InstallBrowser(params string[] browsers)
+		{
+			logger.LogWarning("The browser for Playwright is not installed, installing {Browsers}", string.Join(", ", browsers));
+			int exitCode = await Task.Run(() => Microsoft.Playwright.Program.Main(["install", .. browsers]));
+			if (exitCode != 0) logger.LogWarning("Installing {Browsers} for Playwright ended with exit code {ExitCode}", string.Join(", ", browsers), exitCode);
+		}
+
 		private async Task<IBrowserContext> GetChromeDriver(IPlaywright playwright, bool headless, string profileName,
 			bool kioskMode, Dictionary<string, object>? argumentOptions, bool hideTestingMode, int errorCount = 0)
 		{
@@ -1195,8 +1207,7 @@ return result;");
 				{
 					if (errorCount < 2 && pe.Message.Contains("Executable doesn't exist"))
 					{
-						var program = programFactory.GetProgram<PLang.Modules.TerminalModule.Program>(goalStep);
-						await program.RunTerminal("playwright.ps1", ["install"], pathToWorkingDirInTerminal: AppContext.BaseDirectory);
+						await InstallBrowser("chromium", "chromium-headless-shell");
 
 						return await GetChromeDriver(playwright, headless, profileName, kioskMode, argumentOptions, hideTestingMode, ++errorCount);
 					}
@@ -1242,12 +1253,11 @@ return result;");
 				}
 				catch (PlaywrightException pe)
 				{
-					if (pe.Message.Contains("Executable doesn't exist"))
+					if (errorCount < 2 && pe.Message.Contains("Executable doesn't exist"))
 					{
-						var program = programFactory.GetProgram<PLang.Modules.TerminalModule.Program>(goalStep);
-						await program.RunTerminal("playwright.ps1", ["instal"]);
+						await InstallBrowser("chrome");
 
-						return await GetChromeDriver(playwright, headless, profileName, kioskMode, argumentOptions, hideTestingMode);
+						return await GetChromeDriver(playwright, headless, profileName, kioskMode, argumentOptions, hideTestingMode, ++errorCount);
 					}
 					throw;
 				}
