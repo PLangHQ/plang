@@ -90,7 +90,7 @@ statments like `if %!error.Handled% does NOT mean it is false
 		// is evaluated and then does nothing.
 		public async Task<(Instruction, IBuilderError?)> BuilderValidate(GoalStep step, Instruction instruction, IGenericFunction gf)
 		{
-			var message = UnnamedGoalToCall(step.Text, gf) ?? StrayNegation(step.Text, gf) ?? UnsupportedOperator(gf);
+			var message = UnnamedGoalToCall(step.Text, gf) ?? StrayNegation(step.Text, gf) ?? InvertedEquality(step.Text, gf) ?? UnsupportedOperator(gf);
 			if (message != null) return (instruction, new StepBuilderError(message, step));
 
 			message = MissingCondition(step.Text, gf) ?? MissingGoalToCall(step.Text, gf);
@@ -227,6 +227,42 @@ statments like `if %!error.Handled% does NOT mean it is false
 					"(`then call goal X`); a condition with an indented block under it and no `call` has no goal to call: leave both goals null.";
 			}
 			return null;
+		}
+
+		// A negated test and the positive method it must not be built as with its then-goal on true, and the method to use.
+		private static readonly (Regex Negation, string Positive, string Use)[] NegatedTests =
+		[
+			(new(@"\bis\s+not\s+true\b|\bisn't\s+true\b", RegexOptions.IgnoreCase), "IsTrue", "IsFalse"),
+			(new(@"\bis\s+not\s+false\b|\bisn't\s+false\b", RegexOptions.IgnoreCase), "IsFalse", "IsTrue"),
+			(new(@"!=|<>|\bnot\s+equal|\bdoes\s+not\s+equal|\bdoesn't\s+equal", RegexOptions.IgnoreCase), "IsEqual", "IsNotEqual"),
+			(new(@"\bis\s+not\s+empty\b|\bisn't\s+empty\b", RegexOptions.IgnoreCase), "IsEmpty", "IsNotEmpty"),
+			(new(@"\bdoes\s+not\s+contain|\bdoesn't\s+contain|\bnot\s+contains?\b", RegexOptions.IgnoreCase), "ContainsString", "NotContainsString"),
+		];
+		private static readonly Regex ThenGoalRegex = new(@"\bthen\s+(call\s+)?(goal\s+)?(?<goal>[\w/!.]+)", RegexOptions.IgnoreCase);
+
+		/// <summary>
+		/// `if %x% != true then call Stop` built as IsEqual(x, true), or `if %x% is not true then call Stop` built as
+		/// IsTrue(x), each with goalToCallIfTrue Stop, runs Stop in the opposite case of the step. The positive method is
+		/// right for a negated step only with the goals swapped (the then-goal on false). Returns the reason, or null.
+		/// </summary>
+		public static string? InvertedEquality(string? stepText, IGenericFunction gf)
+		{
+			if (string.IsNullOrEmpty(stepText) || gf is not GenericFunction function) return null;
+
+			var unquoted = Regex.Replace(stepText, "\"[^\"]*\"|'[^']*'", "\"\"");
+			// only the condition, not what the then-goal is called
+			var conditionPart = Regex.Split(unquoted, @"\bthen\b", RegexOptions.IgnoreCase)[0];
+			var negated = NegatedTests.FirstOrDefault(t => t.Positive.Equals(function.Name, StringComparison.OrdinalIgnoreCase) && t.Negation.IsMatch(conditionPart));
+			if (negated.Negation == null) return null;
+
+			var then = ThenGoalRegex.Match(unquoted);
+			if (!then.Success) return null;
+
+			var thenGoal = then.Groups["goal"].Value.TrimStart('!');
+			var ifTrue = GoalName(function.Parameters?.FirstOrDefault(p => p.Name == "goalToCallIfTrue")?.Value)?.TrimStart('!');
+			if (ifTrue == null || !ifTrue.Equals(thenGoal, StringComparison.OrdinalIgnoreCase)) return null;
+
+			return $"The step is a negated test, but {function.Name} was built with goalToCallIfTrue {thenGoal}, so {thenGoal} would run in the opposite case. Use {negated.Use} with goalToCallIfTrue {thenGoal}.";
 		}
 
 		private static string? GoalName(object? value)
