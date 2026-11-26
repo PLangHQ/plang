@@ -727,6 +727,14 @@ namespace PLang.Utils
 				}
 				if (variable.StartsWith("%Settings."))
 				{
+					// A build only needs the setting's name. Reading its value asked for it when it was missing, and a build
+					// with no one at the console failed on the step.
+					AppContext.TryGetSwitch("Builder", out bool building);
+					if (building)
+					{
+						variables.Add(ObjectValue.Nullable(variable));
+						continue;
+					}
 					LoadSetting(variables, variable, content);
 
 					continue;

@@ -89,6 +89,8 @@ statments like `if %!error.Handled% does NOT mean it is false
 		public async Task<(Instruction, IBuilderError?)> BuilderValidate(GoalStep step, Instruction instruction, IGenericFunction gf)
 		{
 			var message = MissingCondition(step.Text, gf) ?? MissingGoalToCall(step.Text, gf);
+			bool hasBlock = step.NextStep != null && step.NextStep.Indent > step.Indent;
+			message ??= DroppedAction(step.Text, hasBlock, gf);
 			if (message == null) return (instruction, null);
 
 			return (instruction, new StepBuilderError(message, step,
@@ -113,6 +115,46 @@ statments like `if %!error.Handled% does NOT mean it is false
 
 			return $"The step is a condition but {gf.Name} was built without any value to check, only the goals to call, so nothing would be evaluated. " +
 				"Put the variable or value that the step compares, e.g. `if %x% is empty then call A` => IsEmpty(item: \"%x%\", goalToCallIfTrue: {Name: \"A\"}).";
+		}
+
+		/// <summary>
+		/// A one-line condition can call a goal, end the goal or throw. `- if %x% is empty, set %x% = 1` was built as the
+		/// test alone and the set was dropped without a word, so the step did nothing. Returns the reason, or null.
+		/// </summary>
+		public static string? DroppedAction(string? stepText, bool hasBlock, IGenericFunction gf)
+		{
+			if (hasBlock || string.IsNullOrEmpty(stepText) || string.IsNullOrEmpty(gf?.Name)) return null;
+			if (!Regex.IsMatch(stepText.TrimStart(), @"^if\b", RegexOptions.IgnoreCase)) return null;
+
+			// The test written as a constant: `if %x% is empty, set %x% = 1` built as SetVariableWithCondition(boolValue: true)
+			// set %x% every time.
+			if (gf.Name == nameof(Program.SetVariableWithCondition))
+			{
+				var boolValue = gf.Parameters?.FirstOrDefault(p => p.Name == "boolValue")?.Value;
+				var asText = boolValue?.ToString()?.Trim();
+				if (boolValue is bool || asText == "true" || asText == "false" || asText == "True" || asText == "False")
+				{
+					return "The step tests a condition, but SetVariableWithCondition was built with boolValue as a constant, so the test was dropped and the variable would be set every time. " +
+						"Write the action as an indented step under the condition:\n- if %x% is empty then\n    - set %x% = 1";
+				}
+				return null;
+			}
+
+			var takesGoals = typeof(Program).GetMethods().Where(m => m.Name == gf.Name)
+				.Any(m => m.GetParameters().Any(p => p.Name == "goalToCallIfTrue"));
+			if (!takesGoals) return null;
+
+			if (HasValue(gf, "goalToCallIfTrue") || HasValue(gf, "goalToCallIfFalse")
+				|| HasValue(gf, "throwErrorOnTrue") || HasValue(gf, "throwErrorOnFalse")) return null;
+
+			// What comes after the condition: `then`, a comma or nothing at all.
+			var text = Regex.Replace(stepText, "\"[^\"]*\"|'[^']*'", "\"\"");
+			var rest = Regex.Match(text, @"(?:\bthen\b|,)\s*(\S.*)$", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+			if (!rest.Success) return null;
+
+			return $"The step does something when the condition holds (`{rest.Groups[1].Value.Trim()}`), but {gf.Name} was built with no goal to call and nothing to throw, so that part would be dropped. " +
+				"A one-line condition can only call a goal (`- if %x% is empty then call goal SetX`), end the goal or throw. Write any other action as an indented step under the condition:\n" +
+				"- if %x% is empty then\n    - set %x% = 1";
 		}
 
 		public static string? MissingGoalToCall(string? stepText, IGenericFunction gf)

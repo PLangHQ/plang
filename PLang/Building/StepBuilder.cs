@@ -1032,6 +1032,19 @@ Builder will continue on other steps but not this one: ({step.Text}).
 
 	private List<string> GetUserRequestedModule(GoalStep step)
 	{
+		// `call X ...` where X is a goal of the app is a goal call. `call /tools/Fetch url="http://..."` was built as an
+		// http get of the url and `call Chat message=%m%` as the llm module, so the goal never ran.
+		var callMatch = Regex.Match(step.Text.Trim(), @"^call\s+(?:goal\s+)?[""']?([\w/\\.]+?)[""']?(?=[\s,]|$)", RegexOptions.IgnoreCase);
+		if (callMatch.Success && step.Goal != null)
+		{
+			try
+			{
+				var (calledGoal, _) = GoalHelper.GetGoalPath(step, new GoalToCallInfo(callMatch.Groups[1].Value), goalParser.GetGoals(), prParser.GetSystemGoals());
+				if (calledGoal != null) return ["PLang.Modules.CallGoalModule"];
+			}
+			catch { }
+		}
+
 		var modules = typeHelper.GetRuntimeModules();
 		List<string> forceModuleType = new List<string>();
 		var match = Regex.Match(step.Text.Trim(), @"^\[[\w]+\]", RegexOptions.IgnoreCase | RegexOptions.Multiline);

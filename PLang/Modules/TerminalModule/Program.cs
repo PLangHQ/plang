@@ -310,7 +310,9 @@ namespace PLang.Modules.TerminalModule
 				return (parsed.Value, error, properties);
 			}
 
-			return (dataOutput.ToString(), error, properties);
+			// The line break after the last line is not part of the value, as in a shell's $(...): `date +%Y` gives "2026",
+			// and a name or path read this way can be used as it is.
+			return (dataOutput.ToString().TrimEnd('\r', '\n'), error, properties);
 		}
 
 		[Description("Run an executable that streams its output while it runs, for a step that names a variable to receive each line as it arrives. A plain `write to %variable%` is the finished output and belongs to RunTerminal, not here: this method is only for a step that names a separate variable for the running output, e.g. `terminal ffmpeg ..., %delta%`.")]

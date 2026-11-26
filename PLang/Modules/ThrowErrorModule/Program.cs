@@ -98,7 +98,11 @@ namespace PLang.Modules.ThrowErrorModule
 			return null;
 		}
 
-		[Description("When user intends the execution of the goal to stop without giving a error response. This is equal to doing return in a function. Depth is how far up the stack it should end, previous goal is 1")]
+		[Description("When user intends the execution of the goal to stop without giving a error response. This is equal to doing return in a function. levels is how many goals above this one also end: the number the step gives for goals above, whatever the wording (levels up, previous goals, last goals, goals above); `and previous` is 1")]
+		[Example("end goal", "levels=0")]
+		[Example("end goal and previous", "levels=1")]
+		[Example("end goal and 3 levels up", "levels=3")]
+		[Example("end goal and 2 last goals", "levels=2")]
 		[MethodSettings(CanBeAsync = false, CanHaveErrorHandling = false, CanBeCached = false)]
 		public async Task<IError?> EndGoalExecution(string? message = null, int levels = 0)
 		{

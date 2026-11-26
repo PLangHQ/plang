@@ -13,25 +13,20 @@ be a different module than you meant: an http get instead of a goal call, a math
 
 | You write | What happens | Write instead |
 |---|---|---|
-| `- if %x% is empty, set %x% = 1` | only the test is built; the `set` is dropped without a warning | two steps, or `- set default value %x% = 1` |
-| `- end goal and 3 last goals` | ends only this goal (`levels` 0) | `- end goal and 3 levels up` |
-| `- call Chat message=%m%` (a goal named like a module action: Chat, Tell, Send, Read, Write) | does not build | `- call goal Chat message=%m%` |
-| `- call /tools/Fetch url="http://..."` | built as an http get of the url; the goal never runs | `- call goal /tools/Fetch url=%url%` |
+| `- if %x% is empty, set %x% = 1` | does not build: a one-line condition can only call a goal, end the goal or throw | the action as an indented step under `- if %x% is empty then`, or `- set default value %x% = 1` |
 | `- read file "/x.jsonl", write to %t%` | read as JSON lines, not as text | `- read text file "/x.jsonl", write to %t%` |
 | `- select ... where task like 'r%'` | a `%` in a step starts a variable; the step does not build | `- select task from Todos where task like 'r' \|\| char(37), write to %rows%` |
-| a step that reads `%Settings.X%`, built with no one at the console | the build reads the setting, asks for it, and the step fails when there is no answer | set the setting before a headless build |
 
 ## Values and methods
 
 - **A method argument is a literal.** Write it in double quotes: `%s.Split(";")%`, `%lines.Split("\n")%` (a new line).
   In single quotes `'\n'` is not a new line. Calls can be chained: `%line.Trim().Split(" ")%`. A variable or another call
   cannot be an argument: `%p.Substring(p.LastIndexOf("/"))%` does not work; work it out in its own step first.
-- **Terminal output ends with a new line.** Trim it before it goes into a path, a name or a comparison, and before splitting it
-  into lines:
+- **Terminal output has one line per line.** The line break after the last line is not part of the value, so it can go into
+  a path, a name or a comparison as it is; `Split("\n")` gives the lines:
   ```plang
   - terminal ls /srv/app/releases, write to %out%
-  - set %list% = %out.Trim()%
-  - go through %list.Split("\n")%, call Release name=%item%
+  - go through %out.Split("\n")%, call Release name=%item%
   ```
 - **A select with one column and `return 1 row` gives the value itself.** `select task as name ..., return 1 row, write to %v%`:
   `%v%` is the task, `%v.name%` is empty. The same goes for `select count(*) as n`.
