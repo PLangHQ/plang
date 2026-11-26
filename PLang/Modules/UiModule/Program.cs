@@ -382,7 +382,10 @@ IsTemplateFile is true when RenderMessage.Content is a file name, which includes
 				{
 					var parameters = new Dictionary<string, object?>();
 					parameters.Add(layoutOptions.DefaultRenderVariable, content);
-					(content, error) = await templateEngine.RenderFile(layoutOptions.TemplateFile, parameters, options.RenderToOutputstream);
+					// Rendered into content only: the one answer is the render message below. Written to the output here
+					// as well, the request got the whole layout document first (into #main) and then the body, and every
+					// inline script of the page ran twice.
+					(content, error) = await templateEngine.RenderFile(layoutOptions.TemplateFile, parameters, false);
 					if (error != null) return (content, error);
 					if (layoutTarget.Equals("body", StringComparison.OrdinalIgnoreCase))
 					{
