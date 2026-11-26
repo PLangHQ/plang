@@ -1164,31 +1164,8 @@ Reason:{error.Message}", step,
 		if (dataSourceNames == null || dataSourceNames.Count == 0) return null;
 
 		var program = GetProgram(step);
-		var error = await program.BeginTransaction(dataSourceNames);
-		if (error != null)
-		{
-			if (error.StatusCode == 409)
-			{
-				string atGoal = "";
-				var goal = goalParser.GetGoals().FirstOrDefault(p => p.RelativePrPath == context.DataSource.TransactionStartGoal);
-				if (goal != null)
-				{
-					atGoal = " " + goal.RelativeGoalPath;
-				}
-
-				logger.LogWarning($"  - ⚠️ Transaction not commited in code{atGoal}. It will be automatically commited. Good practice to add `- end transaction` step to you code.");
-
-				error = await program.EndTransaction(true);
-				if (error != null) return new StepBuilderError(error, step);
-
-				return await BuilderBeginTransaction(step, instruction, gf);
-			}
-			else
-			{
-				return new StepBuilderError(error, step);
-			}
-		}
-
+		var error = await program.UseDataSourceForBuild(dataSourceNames);
+		if (error != null) return new StepBuilderError(error, step);
 		return null;
 	}
 	public async Task<IBuilderError?> BuilderRollback(GoalStep step, Instruction instruction, DbGenericFunction gf)
@@ -1205,7 +1182,29 @@ Reason:{error.Message}", step,
 		var sql = gf.GetParameter<string>("sql");
 		if (string.IsNullOrEmpty(sql)) return new StepBuilderError("sql is empty, cannot create table", step);
 
-		var (dataSource, error) = await GetDataSource(step, gf);
+		// The steps of a goal are built at the same time, so `create table` can be checked before the `create datasource`
+		// step of its setup file has made its datasource the context's: the table went into the default datasource's
+		// in memory database, and every step on users/%userId% then failed with "has not been built in this process".
+		// A setup file that creates a datasource creates its tables in it.
+		var created = step.Goal.GoalSteps
+			.Select(s => Regex.Match(s.Text ?? "", @"^\s*create\s+data\s*source\s+[""']?([^""',\s]+)", RegexOptions.IgnoreCase))
+			.FirstOrDefault(m => m.Success)?.Groups[1].Value;
+		DataSource? dataSource;
+		IBuilderError? error;
+		if (!string.IsNullOrEmpty(created) && gf.GetParameter<List<string>>("dataSourceNames") == null)
+		{
+			(dataSource, error) = await dbSettings.GetDataSourceForBuilder(created, step, false);
+			if (error?.StatusCode == 404)
+			{
+				// its create datasource step is still being built; checked again in a moment
+				await Task.Delay(500);
+				return new StepBuilderError($"The datasource \"{created}\" of this setup file is not created yet", step, Retry: true);
+			}
+		}
+		else
+		{
+			(dataSource, error) = await GetDataSource(step, gf);
+		}
 		if (error != null)
 		{
 			if (error.StatusCode != 404) return error;

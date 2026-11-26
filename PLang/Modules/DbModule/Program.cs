@@ -195,6 +195,20 @@ namespace PLang.Modules.DbModule
 			return await BeginTransaction(dataSource, onRollback);
 		}
 
+		/// <summary>
+		/// What `begin transaction` does while building: the datasource becomes the context's, so the steps after it are
+		/// checked against it, and no transaction is opened. A real one held a write lock on the build's in memory
+		/// database, and a goal built at the same time that began one too waited for it for ever: the build never ended.
+		/// </summary>
+		internal async Task<IError?> UseDataSourceForBuild(List<string>? dataSourceNames)
+		{
+			var (dataSource, error) = await GetDataSourcesByNames(dataSourceNames);
+			if (error != null) return error;
+			if (dataSource == null) return null;
+			dataSource.TransactionStartGoal = goal.RelativePrPath;
+			return AddDataSourceToContext(dataSource);
+		}
+
 		internal async Task<IError?> BeginTransaction(DataSource? dataSource = null, GoalToCallInfo? onRollback = null)
 		{
 			IError? error;
