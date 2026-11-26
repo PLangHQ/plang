@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
+using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Runtime;
 using PLang.Interfaces;
@@ -153,20 +154,22 @@ namespace PLang.Modules.IrohModule
 			var listener = new IrohListener(keyName, endpoint!.Id, endpoint.Ticket());
 			RemoveOldReceivedFiles(fileSystem.RootDirectory);
 
-			var engineRef = engine;
+			var engineRef = RootEngine(engine);
 			var accessorRef = contextAccessor;
 			var rootPath = fileSystem.RootDirectory;
+			var callingGoal = goal;
+			var callingStep = goalStep;
 			Action<IrohConnection> connectionClosed = connection =>
 			{
 				var key = Peers.FirstOrDefault(p => ReferenceEquals(p.Value.Connection, connection)).Key;
 				RemovePeer(connection, dispose: false);
 				if (onClosed != null && connection.ClosedByPeer)
 				{
-					RunClosed(onClosed, new IrohPeer(key ?? "", null, connection), engineRef, accessorRef, rootPath).GetAwaiter().GetResult();
+					RunClosed(onClosed, new IrohPeer(key ?? "", null, connection), engineRef, accessorRef, rootPath, callingGoal, callingStep).GetAwaiter().GetResult();
 				}
 			};
 			_ = Task.Factory.StartNew(() => endpoint.Serve(
-				(stream, connection) => HandleStream(stream, connection, null, endpoint, onIncoming, engineRef, accessorRef, rootPath),
+				(stream, connection) => HandleStream(stream, connection, null, endpoint, onIncoming, engineRef, accessorRef, rootPath, callingGoal, callingStep),
 				ex => logger?.LogWarning("iroh: {Message}", ex.Message), connectionClosed), TaskCreationOptions.LongRunning);
 
 			KeepAlive(endpoint, "iroh-listen-" + keyName);
@@ -213,9 +216,11 @@ namespace PLang.Modules.IrohModule
 				AddPeer(peer);
 				KeepAlive(connection, PeerKeepAliveKind + connection.Id, "iroh connection to " + target);
 
-				var engineRef = engine;
+				var engineRef = RootEngine(engine);
 				var accessorRef = contextAccessor;
 				var rootPath = fileSystem.RootDirectory;
+				var callingGoal = goal;
+				var callingStep = goalStep;
 				// A thread waits until the connection ends: for the streams the peer opens when it may tell this app
 				// (a disconnect then takes effect when the peer next sends or closes), otherwise in short polls.
 				_ = Task.Factory.StartNew(async () =>
@@ -223,7 +228,7 @@ namespace PLang.Modules.IrohModule
 					if (onIncoming != null)
 					{
 						connection.ServeStreams(
-							stream => HandleStream(stream, connection, peer, endpoint!, onIncoming, engineRef, accessorRef, rootPath),
+							stream => HandleStream(stream, connection, peer, endpoint!, onIncoming, engineRef, accessorRef, rootPath, callingGoal, callingStep),
 							ex => logger?.LogWarning("iroh: {Message}", ex.Message));
 					}
 					else
@@ -231,7 +236,7 @@ namespace PLang.Modules.IrohModule
 						connection.WaitUntilClosed();
 						connection.Dispose();
 					}
-					await ConnectionEnded(peer, onClosed, engineRef, accessorRef, rootPath);
+					await ConnectionEnded(peer, onClosed, engineRef, accessorRef, rootPath, callingGoal, callingStep);
 				}, TaskCreationOptions.LongRunning);
 
 				return (peer, null);
@@ -248,7 +253,7 @@ namespace PLang.Modules.IrohModule
 		/// that goal's connect makes a new one, and it stops keeping the app alive only after onClosed, so the app does not
 		/// end while that goal connects again.
 		/// </summary>
-		private async Task ConnectionEnded(IrohPeer peer, GoalToCallInfo? onClosed, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath)
+		private async Task ConnectionEnded(IrohPeer peer, GoalToCallInfo? onClosed, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath, Goal? callingGoal, GoalStep? callingStep)
 		{
 			foreach (var entry in Peers.Where(p => ReferenceEquals(p.Value.Connection, peer.Connection)).ToList())
 			{
@@ -256,7 +261,7 @@ namespace PLang.Modules.IrohModule
 			}
 			try
 			{
-				if (onClosed != null && peer.Connection.ClosedByPeer) await RunClosed(onClosed, peer, engineRef, accessorRef, rootPath);
+				if (onClosed != null && peer.Connection.ClosedByPeer) await RunClosed(onClosed, peer, engineRef, accessorRef, rootPath, callingGoal, callingStep);
 			}
 			finally
 			{
@@ -264,8 +269,28 @@ namespace PLang.Modules.IrohModule
 			}
 		}
 
-		private async Task RunClosed(GoalToCallInfo onClosed, IrohPeer peer, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath)
+		private static IEngine RootEngine(IEngine engine)
 		{
+			while (engine.ParentEngine != null) engine = engine.ParentEngine;
+			return engine;
+		}
+
+		/// <summary>
+		/// A command from a peer (or the end of its connection) runs on a context of its own, on the app's root engine. Not on
+		/// the context of the step that connected or listened: that may be a "dont wait" or scheduled run whose context is gone
+		/// when the next command comes, and every command was then declined with "No frame on CallStack".
+		/// </summary>
+		private static void UseCommandContext(IEngine engineRef, IPLangContextAccessor accessorRef, Goal? callingGoal, GoalStep? callingStep)
+		{
+			var context = new PLangContext(MemoryStack.New(engineRef.Container, engineRef), engineRef, ExecutionMode.Console);
+			context.CallingStep = callingStep;
+			if (callingGoal != null) context.CallStack.EnterGoal(callingGoal);
+			accessorRef.Current = context;
+		}
+
+		private async Task RunClosed(GoalToCallInfo onClosed, IrohPeer peer, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath, Goal? callingGoal, GoalStep? callingStep)
+		{
+			UseCommandContext(engineRef, accessorRef, callingGoal, callingStep);
 			var parameters = new Dictionary<string, object?>(onClosed.Parameters) { ["peer"] = peer };
 			// The peer or the network closed it: a run from outside, with nobody's identity.
 			using var origin = RunOrigin.External(null);
@@ -453,8 +478,9 @@ namespace PLang.Modules.IrohModule
 		/// onIncoming); null for a connection accepted by listen, which is kept under the %Identity% that signed the command
 		/// once onIncoming allows it, and closed when the command is not signed.
 		/// </summary>
-		private async Task HandleStream(IrohStream stream, IrohConnection connection, IrohPeer? connectedPeer, IrohEndpoint endpoint, GoalToCallInfo onIncoming, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath)
+		private async Task HandleStream(IrohStream stream, IrohConnection connection, IrohPeer? connectedPeer, IrohEndpoint endpoint, GoalToCallInfo onIncoming, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath, Goal? callingGoal, GoalStep? callingStep)
 		{
+			UseCommandContext(engineRef, accessorRef, callingGoal, callingStep);
 			TellAnswer answer;
 			string? receivedFolder = null;
 			try
