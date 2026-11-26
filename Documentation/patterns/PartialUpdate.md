@@ -73,8 +73,9 @@ AddRoutes
 - `target: "#productList"` replaces what is inside that element and nothing else. The same `list.html` is used for the first
   render and for every update.
 - The promise `callGoal` returns resolves when the answer has been applied, so a script can go on after `await`.
-- `(number)` names the type of `%id%`. It does not refuse other values: `/product/detail/abc` reaches the goal with
-  `%id%` = `abc` (status 200), and the select finds no row. A goal that must have a real id checks `%product%`.
+- `(number)` is checked: `/product/detail/abc` and `/product/detail/1.5` do not match the route, so the next route is tried
+  and otherwise the answer is 404. The goal gets `%id%` as a number. A goal still checks that `%product%` was found, since a
+  number that is not in the table is a valid id.
 - Build the url in the template (`'/product/detail/{{ p.id }}'`), never pass the id to javascript as a number: row ids are
   large, and javascript rounds them.
 
