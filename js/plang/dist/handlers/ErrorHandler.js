@@ -37,7 +37,11 @@ export class ErrorHandler extends BaseKindHandler {
             return;
         }
         var msg = message.content ?? message.message ?? 'Unknown error';
-        if (!message.debug && this.showWhereItHappened(msg, ctx, message.key === "CallbackExpired")) {
+        // A 4xx with a message from the app ("This form has already been sent", `throw error "Not allowed", 403`) says
+        // what is wrong, so it is the text shown. "The error is logged" is for a fault of the site, a 5xx.
+        const status = Number(message.status ?? 0);
+        const fromApp = status >= 400 && status < 500 && !!(message.content ?? message.message) && message.key !== "CallbackExpired";
+        if (!message.debug && this.showWhereItHappened(msg, ctx, message.key === "CallbackExpired", fromApp)) {
             console.error("[plang error]", message);
             return;
         }
@@ -65,28 +69,30 @@ export class ErrorHandler extends BaseKindHandler {
     // background refresh, does it go to the top of the page.
     // A form past the timeout set on its ask step is refused on purpose. It is not a fault to
     // report, the user has to open the page again.
-    showWhereItHappened(msg, ctx, formExpired = false) {
+    showWhereItHappened(msg, ctx, formExpired = false, fromApp = false) {
         const source = (ctx?.options?.submitter ?? ctx?.options?.sourceElement);
         const box = document.createElement("div");
         box.className = "plangVilla";
         box.setAttribute("role", "alert");
         const text = document.createElement("p");
         text.className = "plangVillaText";
-        text.textContent = t(formExpired ? "errorFormExpired" : "errorFailed");
-        const detail = document.createElement("details");
-        const sum = document.createElement("summary");
-        sum.textContent = t("errorWhatHappened");
-        const pre = document.createElement("pre");
-        pre.textContent = String(msg);
-        detail.appendChild(sum);
-        detail.appendChild(pre);
+        text.textContent = fromApp ? String(msg) : t(formExpired ? "errorFormExpired" : "errorFailed");
         const ok = document.createElement("button");
         ok.type = "button";
         ok.className = "plangVillaOk";
         ok.textContent = t("errorOk");
         ok.addEventListener("click", () => box.remove());
         box.appendChild(text);
-        box.appendChild(detail);
+        if (!fromApp) {
+            const detail = document.createElement("details");
+            const sum = document.createElement("summary");
+            sum.textContent = t("errorWhatHappened");
+            const pre = document.createElement("pre");
+            pre.textContent = String(msg);
+            detail.appendChild(sum);
+            detail.appendChild(pre);
+            box.appendChild(detail);
+        }
         box.appendChild(ok);
         if (source && source.isConnected) {
             const previous = source.parentElement?.querySelector(":scope > .plangVilla");

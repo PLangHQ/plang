@@ -9,5 +9,5 @@ export declare class ErrorHandler extends BaseKindHandler implements KindHandler
     plang: Plang;
     constructor(plang: Plang);
     handle(message: ErrorMessage, ctx: HandleCtx): Promise<void>;
-    showWhereItHappened(msg: string, ctx: HandleCtx, formExpired?: boolean): boolean;
+    showWhereItHappened(msg: string, ctx: HandleCtx, formExpired?: boolean, fromApp?: boolean): boolean;
 }
