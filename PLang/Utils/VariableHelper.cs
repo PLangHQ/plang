@@ -709,7 +709,8 @@ namespace PLang.Utils
 			@"Settings\.Get\(\\?('|"")(?<key>[^\('|"")]*)\\?('|"")\s*,\s*\\?('|"")(?<default>[^\('|"")]*)\\?('|"")\s*,\s*\\?('|"")(?<explain>[^\('|"")]*)\\?('|"")\)",
 			RegexOptions.IgnoreCase | RegexOptions.Multiline);
 		private static readonly Regex SettingsVariableRegex = new Regex(
-			"%Settings.(?<key>[a-z0-9]*)%|%Setting.(?<key>[a-z0-9]*)%",
+			// a name may hold _ (Hetzner_finland); without it %Settings.Hetzner_finland% was never read and went out as text
+			@"%Settings\.(?<key>[a-z0-9_]*)%|%Setting\.(?<key>[a-z0-9_]*)%",
 			RegexOptions.IgnoreCase | RegexOptions.Multiline);
 		private static readonly Regex ArrayIndexPlaceholderRegex = new Regex("α([0-9]+)α");
 
