@@ -37,6 +37,22 @@ namespace PLang.Modules.VariableModule
 			return (instruction, new StepBuilderError($"The step returns {string.Join(", ", missing.Select(m => "%" + m + "%"))} but the parameter variables does not contain it. variables must hold every variable the step names, e.g. variables={expected}", step, "ReturnIsMissingVariable", Retry: true));
 		}
 
+		/// <summary>
+		/// `set %rep% = %s.Trim().Replace(" ", "-")%` is one variable with calls on it, not a calculation. Built as
+		/// SetVariableWithCalculation the expression became `%s%.Trim().Replace(...)`, which NCalc cannot parse, so it failed
+		/// at run time ("Error parsing the expression").
+		/// </summary>
+		public async Task<(Instruction?, IBuilderError?)> BuilderSetVariableWithCalculation(GoalStep step, Instruction instruction, GenericFunction gf)
+		{
+			var assignment = Regex.Match(step.Text.Trim(), @"^-?\s*set\s+(?:var(?:iable)?\s+)?%[^%]+%\s*=\s*(.+?)\s*(?:,\s*round\b.*)?$", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+			if (!assignment.Success) return (instruction, null);
+
+			var value = assignment.Groups[1].Value.Trim();
+			if (!PLang.Utils.VariableHelper.IsVariable(value)) return (instruction, null);
+
+			return (instruction, new StepBuilderError($"`{value}` is one variable (with its methods called), not a calculation. Use SetVariable with value=\"{value}\".", step, "NotACalculation", Retry: true));
+		}
+
 		private static List<KeyValuePair<string, string?>> GetEntries(object? value)
 		{
 			if (value is string str && str.TrimStart().StartsWith("{"))
