@@ -1288,8 +1288,34 @@ Reason:{error.Message}", step,
 	{
 		return await BuilderInsert(step, instruction, gf);
 	}
+	private static readonly Regex SqlExpressionRegex = new(@"%\s*\|\||\|\|\s*%|\b(substr|substring|lower|upper|trim|ltrim|rtrim|coalesce|ifnull|nullif|replace|length|round|abs|instr|printf|format|concat|cast|date|datetime|time|strftime|julianday|unixepoch|json_\w+)\s*\(",
+		RegexOptions.IgnoreCase);
+
+	/// <summary>
+	/// `insert into notes, text=%prefix% || substr(%body%, 1, 10)` built as text=@text with the value
+	/// "%prefix% || substr(%body%, 1, 10)" stored the sql expression as text. A parameter value that mixes a %variable%
+	/// with sql (|| or a function call) belongs in the sql, with a @parameter for each variable.
+	/// </summary>
+	private static IBuilderError? SqlExpressionAsValue(GoalStep step, List<ParameterInfo>? parameterInfos)
+	{
+		foreach (var p in parameterInfos ?? [])
+		{
+			if (p.VariableNameOrValue is not string value || !VariableHelper.ContainsVariable(value) || VariableHelper.IsVariable(value.Trim())) continue;
+			var unquoted = Regex.Replace(value, "\"[^\"]*\"|'[^']*'", "''");
+			if (!SqlExpressionRegex.IsMatch(unquoted)) continue;
+
+			var names = VariableHelper.GetVariablesInText(value).Select(v => "@" + v.Trim('%').Replace(".", "")).Distinct();
+			return new StepBuilderError($"{p.ParameterName} holds the sql expression `{value}` as its value, so it would be stored as that text. Write the expression into the sql with a parameter for each variable ({string.Join(", ", names)}), e.g. values (@id, @prefix || substr(@body, 1, 10)) with @prefix=%prefix% and @body=%body%",
+				step, "SqlExpressionAsValue", Retry: true);
+		}
+		return null;
+	}
+
 	public async Task<(Instruction, IBuilderError?)> BuilderInsert(GoalStep step, Instruction instruction, DbGenericFunction gf)
 	{
+		var expressionError = SqlExpressionAsValue(step, gf.GetParameter<List<ParameterInfo>>("sqlParameters"));
+		if (expressionError != null) return (instruction, expressionError);
+
 		var (dataSource, error) = await GetDataSource(step, gf);
 		if (error != null) return (instruction, error);
 

@@ -51,9 +51,12 @@ namespace PLang.Modules.VariableModule
 			// "the default is 5" inside a quoted value is the value, not a default
 			var unquoted = System.Text.RegularExpressions.Regex.Replace(step.Text ?? "", "\"[^\"]*\"|'[^']*'", "\"\"");
 			if (!DefaultInStepRegex.IsMatch(unquoted)) return (instruction, null);
-			return (instruction, new StepBuilderError($"`{step.Text.Trim()}` gives a default value, which SetVariable drops. Use SetValueOnVariablesOrDefaultIfValueIsEmpty: FirstValue is the value, ValueIfFirstIsEmpty the default.",
+			return (instruction, new StepBuilderError($"`{step.Text.Trim()}` gives a default value, which {gf.Name} drops. Use SetValueOnVariablesOrDefaultIfValueIsEmpty: FirstValue is the value, ValueIfFirstIsEmpty the default.",
 				step, "DefaultDropped", Retry: true));
 		}
+
+		public Task<(Instruction?, IBuilderError?)> BuilderSetStringVariable(GoalStep step, Instruction instruction, GenericFunction gf) => BuilderSetVariable(step, instruction, gf);
+		public Task<(Instruction?, IBuilderError?)> BuilderSetJsonObjectVariable(GoalStep step, Instruction instruction, GenericFunction gf) => BuilderSetVariable(step, instruction, gf);
 
 		public async Task<(Instruction?, IBuilderError?)> BuilderSetVariableWithCalculation(GoalStep step, Instruction instruction, GenericFunction gf)
 		{
