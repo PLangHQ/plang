@@ -91,6 +91,12 @@ namespace PLang.Utils
 				return loaded is string text ? text.Replace(PercentPlaceholder, "%") : loaded;
 			}
 
+			if (obj is string composed && composed.Contains("%Settings.", StringComparison.OrdinalIgnoreCase) && ComposedSettingRegex.IsMatch(composed)
+				&& !(AppContext.TryGetSwitch("Builder", out bool isBuilding) && isBuilding))
+			{
+				obj = ComposeSettingNames(memoryStack, composed);
+			}
+
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			if (obj is string variableName)
 			{
@@ -706,6 +712,28 @@ namespace PLang.Utils
 			"%Settings.(?<key>[a-z0-9]*)%|%Setting.(?<key>[a-z0-9]*)%",
 			RegexOptions.IgnoreCase | RegexOptions.Multiline);
 		private static readonly Regex ArrayIndexPlaceholderRegex = new Regex("α([0-9]+)α");
+
+		// %Settings.Token%project%% : the name of a setting with a variable in it.
+		private static readonly Regex ComposedSettingRegex = new Regex(
+			@"%Settings\.(?<before>[A-Za-z0-9_]*)%(?<variable>[A-Za-z_][\w.!]*)%(?<after>[A-Za-z0-9_]*)%", RegexOptions.IgnoreCase);
+
+		/// <summary>
+		/// `%Settings.Token%project%%` with %project% "Finland" is %Settings.TokenFinland%: the setting is picked by name
+		/// without its value ever being in a variable (where an error would show it). The variable's value may only hold
+		/// letters, digits and _, so a value cannot reach outside a setting's name. It went out as the text "project%%".
+		/// </summary>
+		private string ComposeSettingNames(MemoryStack memoryStack, string text)
+		{
+			return ComposedSettingRegex.Replace(text, match =>
+			{
+				var value = memoryStack.Get("%" + match.Groups["variable"].Value + "%")?.ToString();
+				if (string.IsNullOrEmpty(value) || !Regex.IsMatch(value, @"^[A-Za-z0-9_]+$"))
+				{
+					throw new ArgumentException($"%{match.Groups["variable"].Value}% must hold a setting name part (letters, digits, _) to read {match.Value}; it holds \"{value}\"");
+				}
+				return "%Settings." + match.Groups["before"].Value + value + match.Groups["after"].Value + "%";
+			});
+		}
 
 		public static List<string> GetVariablesInText(string content)
 		{

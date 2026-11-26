@@ -66,21 +66,15 @@ and a request to the llm. Modules get the real value. Mark any other value the s
 `write out` hides it too: `write out "password is %password%"` writes `password is ****`. Modules that send it on
 (http, a process, an iroh peer) get the real value. Values shorter than 6 characters are not hidden.
 
-The name of a setting cannot be built from a variable: `%Settings.Token%project%%` is not read as `Settings.TokenFinland`, and the
-request goes out with the wrong text and no error. To pick one of several keys, call one goal per key:
+The name of a setting can have a variable in it, to pick one of several keys without the key going into a variable:
 
 ```plang
-Servers
-- if %project% == "germany" then call GetGermany, else GetFinland
-
-GetGermany
-- get https://api.example.com/servers, headers {"Authorization": "Bearer %Settings.TokenGermany%"}, write to %servers%
-
-GetFinland
-- get https://api.example.com/servers, headers {"Authorization": "Bearer %Settings.TokenFinland%"}, write to %servers%
+- set %project% = "Finland"
+- get https://api.example.com/servers, headers {"Authorization": "Bearer %Settings.Token%project%%"}, write to %servers%
 ```
 
-The called goal shares the caller's variables, so `%servers%` is there in `Servers` after the call.
+`%Settings.Token%project%%` reads `Settings.TokenFinland`. The variable's value may only hold letters, digits and `_`;
+anything else is an error.
 
 ## The environment is part of the key
 
