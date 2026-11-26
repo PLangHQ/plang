@@ -914,7 +914,11 @@ OnStartingWebserver
 			(var response, var isFlushed, var error) = hos.GetResponse();
 			if (response != null)
 			{
-				if (!string.IsNullOrEmpty(context.Identity))
+				// A signed request from the plang client gets the redirect as a message it acts on. A signed page load (the
+				// service worker signs navigations, the answer is html) is shown by the browser as it is: a message there was
+				// a bare page waiting for a client that is not loaded, a blank page. It gets a real redirect.
+				bool isPageLoad = hos.ContentType.Contains("html", StringComparison.OrdinalIgnoreCase);
+				if (!string.IsNullOrEmpty(context.Identity) && !(isPageLoad && !isFlushed && !response.HasStarted))
 				{
 					var executeMessage = new ExecuteMessage("redirect", url);
 					var sink = context.GetSink(executeMessage.Actor);
