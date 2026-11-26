@@ -101,4 +101,4 @@ the time can be followed down one goal at a time.
 A goal that is slow once after a start, like `Setup` on the first start of a new database, is normal. One that is slow on every
 load is the one to fix.
 
-See also: [Events](./Events.md), [Startup parameters](./StartupParameters.md), [Recommended app structure](./RecommendedAppStructure.md).
+See also: [Events](../Events.md), [Startup parameters](../StartupParameters.md), [Recommended app structure](../RecommendedAppStructure.md).

@@ -37,54 +37,18 @@ How to put the client in an app, the layout and the web server options it needs,
 
 ### 1. A new visitor's first document can never be personal
 
-The html a new visitor gets on the first hit is the same for everyone, because at that moment the
-server has no idea who is asking. You cannot render a name, a cart count, a role or a private page
-into it. Anything personal has to arrive **after** the client connects.
+The html a new visitor gets on the first hit cannot hold a name, a cart count or a role, because at
+that moment the server has no idea who is asking. It is still the whole page: the parts that depend
+on the visitor are in their anonymous state (a sign in link where the name would be), and the poll
+renders them into their elements once the client connects. A returning browser's page load is
+signed, so it gets the page for that person at once. The pattern is
+[First page load](./patterns/FirstPageLoad.md).
 
-The clean way is to let **the page ask for itself again** once it has an identity. A `before each
-goal` event decides, and the shell it renders carries one line:
+Writes keyed on the identity (where the visitor came from, a visit per person) happen on the poll,
+never on the first GET: the first GET of a new visitor has no identity to key them on.
 
-```plang
-Gate
-- if %Identity% is empty then
-    - [ui] set "/ui/layoutBare.html" as default layout, default render variable "main"
-    - [ui] render "/ui/pages/shell.html", navigate
-    - end goal, and previous
-```
-
-```html
-<!-- shell.html: whatever anonymous visitors should see, plus the re-request -->
-<script>
-addEventListener('plang:ready', function (e) {
-    e.detail.fetch(location.pathname + location.search, { method: 'GET', headers: [{ key: 'X-Plang-Layout', value: 'body' }] });
-}, { once: true });
-</script>
-```
-
-`plang:ready` fires when the client has its keys and has been answered once. The fetch is a signed
-request to the **same url**, so the goal runs again, now with `%Identity%` and `%user%` known. The
-header `X-Plang-Layout: body` asks the server to render the layout around the content as it would
-for a plain GET and to send it as a render message that replaces `body`. Header, footer, menus and
-the page arrive in one answer, drawn for the person who is actually there.
-
-A goal can ask for the same from its side, `- [ui] render "page.html", navigate, redraw the whole
-body inside the layout` (`LayoutTarget`). Use it when a goal switches layout, for instance a bare
-kiosk screen next to the normal site: in-app navigation only swaps `#main`, so the old header would
-stay unless the whole body is redrawn.
-
-What you get for free: the layout can hold the header, footer and role based menus **statically**,
-because only identified requests ever render it. No slots, no painting from the poll, no separate
-landing template.
-
-Three things to get right, each of which was a real bug:
-
-- **Do not bind the gate to the layout event's own folder.** If the goal that sets the layout is in
-  `/pages/` and the gate is bound to `/pages/.*`, the gate runs before the layout event as well and
-  the shell is rendered twice. Keep both in `events/`.
-- **`end goal, and previous`**, not `end goal`. The plain form ends only the event goal and the
-  route goal runs anyway.
-- **A route that shows an `ask user` form needs `get and post`.** The form posts back to the url it
-  was rendered from.
+A route that shows an `ask user` form needs `get and post`: the form posts back to the url it was
+rendered from.
 
 ### 2. There is no sign in page
 
@@ -155,7 +119,7 @@ empty profile, a new keypair, and is a stranger.
 
 ## The mental model
 
-Think of the first request as fetching an empty stage, and the first signed request as the actor walking on. Every
-personal thing the user sees is put there by a request the client made. If you find yourself asking
+Think of a new visitor's first request as the stage set for anyone, and the first signed request as the actor walking on.
+Every personal thing a new visitor sees is put there by a request the client made. If you find yourself asking
 "why does the server not know who this is", the answer is nearly always that the browser, not the
 client, made the request.
