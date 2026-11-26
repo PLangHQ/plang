@@ -253,7 +253,10 @@ namespace PLang.Services.OpenAi
 			request.Headers.UserAgent.ParseAdd("plang v0.1");
 			request.Headers.Add("Authorization", $"Bearer {bearer}");
 			request.Content = new StringContent(data, Encoding.GetEncoding("UTF-8"), "application/json");
-			httpClient.Timeout = new TimeSpan(0, 5, 0);
+			// A request the service holds without answering is given up after 3 minutes and asked again (below). It used
+			// to wait 5 minutes and then was taken for an answer that could not be read, three more times: a build sat
+			// up to 20 minutes on one step, at 0% cpu, and looked hung.
+			httpClient.Timeout = TimeSpan.FromMinutes(3);
 			try
 			{
 
@@ -292,6 +295,16 @@ namespace PLang.Services.OpenAi
 
 					return (obj, null);
 				}
+			}
+			catch (Exception ex) when (ex is TaskCanceledException || ex is HttpRequestException)
+			{
+				// No answer came (timed out, connection dropped): the same question again, twice at most.
+				if (errorCount < 2)
+				{
+					logger?.LogWarning($"LLM request got no answer ({ex.GetType().Name}: {ex.Message}), asking again");
+					return await Query(question, responseType, ++errorCount);
+				}
+				return (null, new ServiceError($"The LLM service gave no answer after {errorCount + 1} tries: {ex.Message}", this.GetType(), Exception: ex, StatusCode: 504));
 			}
 			catch (Exception ex)
 			{
