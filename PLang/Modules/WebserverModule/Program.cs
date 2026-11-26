@@ -482,14 +482,18 @@ public class Program : BaseProgram, IDisposable
 									// The error is written by the request's sink, so it goes out in the sink's format, e.g. plain json on a json route.
 									httpContext.Response.ContentType = httpOutputSink.ContentType;
 								}
-								if (error is UserInputError uie)
+								// An error the app threw (`throw error "Not allowed", 403`) goes to `on app error` like any other, so
+								// the app decides what the visitor sees. Handled, nothing more is written; still a user error (the
+								// same, or one the handler threw), its message goes out as it was written.
+								(_, error) = await requestEngine.GetEventRuntime().AppErrorEvents(error);
+								if (error == null || error is IErrorHandled) return;
+								if (error is UserInputError uie && uie.ErrorMessage != null)
 								{
-									var sink = context.GetSink(uie.ErrorMessage?.Actor ?? "user");
+									if (!httpContext.Response.HasStarted) httpContext.Response.StatusCode = uie.StatusCode;
+									var sink = context.GetSink(uie.ErrorMessage.Actor ?? "user");
 									await sink.SendAsync(uie.ErrorMessage);
 									return;
 								}
-
-								(_, error) = await requestEngine.GetEventRuntime().AppErrorEvents(error);
 
 								if (error != null)
 								{

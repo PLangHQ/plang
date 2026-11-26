@@ -430,7 +430,13 @@ namespace PLang.Events
 				}
 				if (result.Error == error) continue;
 
-				if (result.Error != null && result.Error is not IErrorHandled)
+				// A handler that throws its own message (`throw error "Not allowed here", 403`) answers with it, in place of
+				// the error it handled. It is not IErrorHandled, so it was only chained and the original message went out.
+				if (result.Error is UserInputError)
+				{
+					error = result.Error;
+				}
+				else if (result.Error != null && result.Error is not IErrorHandled)
 				{
 					error.ErrorChain.Add(result.Error);
 					Console.WriteLine($@"Chain added:{error.ErrorChain.Count}");
