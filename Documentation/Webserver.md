@@ -73,6 +73,9 @@ OnRequest
   when a page connects, `on poll refresh` when it connects again.
 - `on goal begin request` runs before every route. Here it and the poll load the visitor (see 6), so every page knows
   `%user%`.
+- `on request begin` runs before every request, files included: `/js/plang/dist/v8/main.js` and `/plang-sw.js` too. Put a
+  check on `%Identity%` in `on goal begin request` or in the route. A check in `on request begin` that refuses anonymous
+  requests also refuses the client's own files, and the client never loads.
 
 A page renders into the layout:
 
@@ -102,6 +105,27 @@ Measured with a headless browser and a fresh profile:
 | your own `fetch('/api/whoami')`, `<img src>`, `<script src>` | empty |
 
 `window.plang.MyIdentity()` gives the identity the browser holds.
+
+## Calling a route from a script
+
+`window.plang.fetch(url, options)` is signed, and what the route sends is applied to the page. To use the answer in a script
+instead, pass `onSuccess` (and `onFailure`); the promise itself resolves to nothing. The route's output is in
+`message.content`, as text:
+
+```html
+<script>
+window.plang.fetch('/api/whoami', {
+    method: 'GET',
+    onSuccess: async function (message) {
+        const answer = JSON.parse(message.content);   // {"identity": "..."}
+        document.querySelector('#who').textContent = answer.identity;
+    },
+    onFailure: async function (message) {
+        console.warn(message.status, message.content);
+    }
+});
+</script>
+```
 
 ## 5. A page that needs the identity, for a new visitor
 
@@ -191,3 +215,13 @@ Test
 
 The first step is the new visitor; the wait lets the client make its key and connect. Every request after that in the same
 profile is signed.
+
+If the first step fails with "Executable doesn't exist at .../chrome-headless-shell", the browser this runtime needs is not
+installed. Install it with the Playwright that ships with plang, from the runtime's folder:
+
+```bash
+.playwright/node/linux-x64/node .playwright/package/cli.js install chromium-headless-shell
+```
+
+Set `PLAYWRIGHT_BROWSERS_PATH` to a folder you can write to, for both the install and the run, when the default one is not
+yours.
