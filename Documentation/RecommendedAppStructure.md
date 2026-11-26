@@ -22,7 +22,7 @@ Run with `plang` or `plang name=Anna`. Arguments of the form `key=value` become 
 fills in the one that is missing. A goal other than Start runs with `plang exec path/to/Goal key=value`, and a goal that ends in
 `throw error` makes plang exit with 1, so a script can be used from the shell.
 
-If the app has a database, the schema goes in `Setup/` and is append only: [Setup and migrations](../SetupAndMigrations.md).
+If the app has a database, the schema goes in `Setup/` and is append only: [Setup and migrations](./SetupAndMigrations.md).
 There is no `live`, no port and no mock at this level.
 
 ## Level 2: small web app
@@ -37,8 +37,8 @@ The port is an argument with a default, so `plang port=8091` starts it elsewhere
 never a plain `set %port% = 8080`, which would overwrite the argument.
 Start the web server in `Start`. It can also be started from a goal that runs in a request or on the scheduler (a second web server
 started by a deploy, for example).
-Routes, pages and the request gate: [Running on a server](../RunningOnAServer.md), [Identity in the browser](../IdentityInTheBrowser.md),
-[Events](../Events.md).
+Routes, pages and the request gate: [Running on a server](./RunningOnAServer.md), [Identity in the browser](./IdentityInTheBrowser.md),
+[Events](./Events.md).
 
 ## Level 3: web app in production
 
@@ -99,18 +99,18 @@ Deploying a new version of an app that has real users and real data, whether it 
 procedure of its own: the app has to be set up for it, the test databases have to be ready, and there are several steps in a fixed
 order. It is only worth the work once a deploy can hurt real users, and a small app does not need it.
 
-The full best practice is on its own page: [Deploying a new version](./Deploy.md). It builds on [Mocking](./Mocking.md) and
+The full best practice is on its own page: [Deploying a new version](./Deploy.md). It builds on [Mocking a provider](./TalkingToAnApi.md#mocking-a-provider-for-a-test-instance) and
 [Settings](./Settings.md).
 
 ## Other topics
 
 | Topic | Page |
 |---|---|
-| Schema and migrations | [Setup and migrations](../SetupAndMigrations.md) |
-| Authorization: who may see which page | [Identity in the browser](../IdentityInTheBrowser.md) |
-| Identity | [Identity](../Identity.md) |
-| Events | [Events](../Events.md) |
-| Errors | [Error handling](../ErrorHandler.md) |
-| Running on a server | [Running on a server](../RunningOnAServer.md) |
-| Startup parameters | [Startup parameters](../StartupParameters.md) |
-| External APIs and their mocks | [Talking to an API](../TalkingToAnApi.md) |
+| Schema and migrations | [Setup and migrations](./SetupAndMigrations.md) |
+| Authorization: who may see which page | [Identity in the browser](./IdentityInTheBrowser.md) |
+| Identity | [Identity](./Identity.md) |
+| Events | [Events](./Events.md) |
+| Errors | [Error handling](./ErrorHandler.md) |
+| Running on a server | [Running on a server](./RunningOnAServer.md) |
+| Startup parameters | [Startup parameters](./StartupParameters.md) |
+| External APIs and their mocks | [Talking to an API](./TalkingToAnApi.md) |

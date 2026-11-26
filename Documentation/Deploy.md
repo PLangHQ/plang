@@ -10,19 +10,19 @@ start the real one. Everything is a goal; no shell script is needed. This is lev
 Do not begin until all of these are true:
 
 1. **The app is at level 3:** `live` and `port` as arguments, seeding in `BeforeStart`, the scheduler started only under `live == 1`.
-2. **Every outside provider is mocked** and the app starts with `mock=1`: [Mocking](./Mocking.md).
+2. **Every outside provider is mocked** and the app starts with `mock=1`: [Mocking a provider](./TalkingToAnApi.md#mocking-a-provider-for-a-test-instance).
 3. **`deploy/PrepareTestCopy` and `deploy/Check` exist** and pass against a copy (below).
 4. **The test databases are ready:** a copy of every database file and of `.db/system.sqlite`, complete, recent and on a disk with room.
    A copy taken of a database that is being written to is crash consistent, not clean, so take it at a quiet moment or from a snapshot.
 5. **There is a way back:** the previous version is still on the machine. A failed runtime update is
    `ln -sfn /opt/plang/<previous> /opt/plang/current` and a restart; a failed goal update is `git reset --hard <previous commit>` in the
-   app directory and a restart ([Running on a server](../RunningOnAServer.md)).
+   app directory and a restart ([Running on a server](./RunningOnAServer.md)).
 
 ## The test instance
 
 1. Copy the production databases and `.db/system.sqlite` to a test folder, once. After the copy it is an independent file.
 2. Make the copy safe, once: in the copy folder run `plang exec deploy/PrepareTestCopy`, which sets every provider url and key to a dummy
-   ([Mocking](./Mocking.md), [Settings](./Settings.md)). It writes to the settings of the folder it runs in, so never run it in the live folder.
+   ([Mocking a provider](./TalkingToAnApi.md#mocking-a-provider-for-a-test-instance), [Settings](./Settings.md#a-missing-setting-when-no-one-is-there)). It writes to the settings of the folder it runs in, so never run it in the live folder.
 3. Start the new version there on another port, with the new runtime if it is changing and the same runtime options production uses
    (for example `--llmservice=`): `plang mock=1 port=8091`. Build the new goals in the copy first.
 4. Run `plang exec deploy/Check base=http://localhost:8091`.
@@ -61,7 +61,7 @@ A goal that ends in `throw error` makes plang exit with 1, so the deploy goal ca
   Setup that rewrites rows is fine on the copy; compare counts and columns, not contents.
 - **Seeds:** `Expectations.goal` lists the minimum rows the startup creates, counted with `select count(*)` on the real database,
   not taken from a log line.
-- **Settings:** every `%Settings.X%` used in the goals must exist ([Settings](./Settings.md)).
+- **Settings:** every `%Settings.X%` used in the goals must exist ([Settings](./Settings.md#a-missing-setting-when-no-one-is-there)).
 
 ## Running root commands from a goal
 

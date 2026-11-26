@@ -115,6 +115,56 @@ Wildcards in the url match at the start or the end only. A `*` in the middle,
 `https://api.example.com/v3/*/messages`, never matches, and again fails open, straight to the real
 service.
 
+## Mocking a provider for a test instance
+
+A test instance must never reach a real payment provider, shipping service or customer mailbox. Mock what moves money, reaches a
+real person or books something physical. Cheap, read-only calls can stay real. An llm may stay real; remember that a copy of
+production holds real customer data.
+
+**The switch.** `plang mock=1` starts a mock instance. It is a separate argument from `live=1`, and the two are never combined:
+
+```plang
+Start
+- if %live% == 1 then call SetLiveVars, else SetDevVars
+- if %mock% == 1 then call goal StartMock
+- call goal BeforeStart
+
+StartMock
+- if %live% == 1 then
+    - throw error "live=1 and mock=1 together are not allowed", statusCode 500
+- set environment "production"
+- call goal /dev/mocks/MocksSetup
+```
+
+A mock instance runs with the production settings (environment `production`), otherwise it proves nothing about production.
+
+**One registry**, `dev/mocks/MockApis.goal`, with one goal per provider:
+
+```plang
+MockApis
+- call goal MockPayments
+- mock http post url:https://api.example.com/*, call MockMail
+```
+
+`mock http` is bound to the request. Registered at startup it never applies to a request, so register it from the
+`on goal begin request` event, behind a cache flag that `MocksSetup` sets.
+
+**Dead values, set once.** A mock fails open (see above), so when the test copy is made, a goal overwrites every provider url in the
+**copied** `system.sqlite` with a dead address and every key with a dummy. The mocks still match, because they read the same settings:
+
+```plang
+PrepareTestCopy
+- set environment "production"
+- set %Settings.PaymentUrl% = "http://127.0.0.1:9/dead"
+- set %Settings.PaymentApiKey% = "test"
+```
+
+Run it once, in the copy folder: `plang exec deploy/PrepareTestCopy`. A missed mock now fails with "connection refused" instead of
+charging a card. **It writes to the settings of the folder it runs in**, so never run it in the live folder.
+
+A url written in a goal, not read from a setting, cannot be redirected this way. Mock it in the registry, and use the provider's
+own test key where there is one. The whole procedure is in [Deploying a new version](./Deploy.md).
+
 ## Keep the vendor behind a boundary
 
 One folder knows the vendor's urls, field names and ids, and nothing else does. External ids live in
