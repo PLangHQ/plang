@@ -38,7 +38,6 @@ be a different module than you meant: an http get instead of a goal call, a math
   ```
 - **A select with one column and `return 1 row` gives the value itself.** `select task as name ..., return 1 row, write to %v%`:
   `%v%` is the task, `%v.name%` is empty. The same goes for `select count(*) as n`.
-- **A command line argument cannot contain `=`.** `plang startArgs=a=b` gives `startArgs` the value `a`.
 
 ## Variables between goals
 
