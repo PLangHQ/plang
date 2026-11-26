@@ -85,7 +85,10 @@ namespace PLang.Interfaces
 
 		public IOutputSink GetSink(string actor)
 		{
-			if (string.IsNullOrWhiteSpace(actor)) return SystemSink;
+			// Every message's actor is "user" unless it says otherwise, so an empty one (a .pr from an old builder, or
+			// `actor: %x%` with %x% empty) goes to the user too: it went to the system sink, which in a web request is
+			// the server's console, and the request got an empty 200.
+			if (string.IsNullOrWhiteSpace(actor)) return UserSink;
 
 			return actor.Equals("user", StringComparison.OrdinalIgnoreCase) ? UserSink : SystemSink;
 		}
