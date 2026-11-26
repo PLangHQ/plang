@@ -392,7 +392,9 @@ public class MethodHelper
 				}
 
 				// check if variable is in step, just incase LLM invents a new variable
-				if (VariableHelper.IsVariable(builderParameter.Value) && !goalStep.Text.Contains(builderParameter.Value.ToString(), StringComparison.OrdinalIgnoreCase))
+				// The llm may give an escape written in the step, e.g. %lines.Split("\n")%, as the character itself.
+				if (VariableHelper.IsVariable(builderParameter.Value) && !goalStep.Text.Contains(builderParameter.Value.ToString(), StringComparison.OrdinalIgnoreCase)
+					&& !goalStep.Text.Contains(builderParameter.Value.ToString()!.Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t"), StringComparison.OrdinalIgnoreCase))
 				{
 					buildErrors.Add(new InvalidParameterError(methodInfo.Name,
 						$"{builderParameter.Value} could not be found in step. User is not defining {builderParameter.Value} as variable. You should not make up new variables.", goalStep));

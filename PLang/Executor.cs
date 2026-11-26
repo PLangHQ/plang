@@ -510,7 +510,7 @@ namespace PLang
 				if (args[i].StartsWith("--")) continue;
 				if (args[i].Contains("="))
 				{
-					var value = args[i].Split('=')[1];
+					var value = args[i].Split('=', 2)[1];
 					if (value.StartsWith("\"")) value = value.Substring(1).Trim();
 					if (value.EndsWith("\"")) value = value.Substring(0, value.Length - 1).Trim();
 

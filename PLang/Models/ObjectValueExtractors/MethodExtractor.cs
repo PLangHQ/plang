@@ -259,7 +259,12 @@ namespace PLang.Models.ObjectValueExtractors
 		private (IEnumerable<MethodInfo>, object? obj) GetMethodsOnType(object obj, string methodName, List<object> paramValues)
 		{
 			var type = obj.GetType();
-			var methods = type.GetMethods().Where(p => !p.IsStatic && p.Name.ToLower() == methodName.ToLower() && p.GetParameters().Length == paramValues.Count);
+			// A method whose last parameters are optional is called with fewer values, e.g. Split(" ") is
+			// Split(string separator, StringSplitOptions options = None). Exact parameter counts are tried first.
+			IEnumerable<MethodInfo> methods = type.GetMethods()
+				.Where(p => !p.IsStatic && p.Name.ToLower() == methodName.ToLower() && AcceptsCount(p, paramValues.Count))
+				.OrderBy(p => p.GetParameters().Length != paramValues.Count)
+				.ToList();
 			if (methods.Any()) return (methods, obj);
 
 			methods = type.GetMethods().Where(p => p.IsStatic && p.Name.ToLower() == methodName.ToLower() && p.GetParameters().Length == paramValues.Count);
@@ -313,6 +318,46 @@ namespace PLang.Models.ObjectValueExtractors
 
 		}
 
+		// \\ is a backslash and \" a quote; with controlCharacters, \n, \r and \t are those characters.
+		// Any other backslash is kept as it is.
+		private static string Unescape(string value, bool controlCharacters)
+		{
+			if (!value.Contains('\\')) return value;
+			var sb = new StringBuilder(value.Length);
+			for (int i = 0; i < value.Length; i++)
+			{
+				char c = value[i];
+				if (c == '\\' && i + 1 < value.Length)
+				{
+					char next = value[i + 1];
+					string? replacement = next switch
+					{
+						'\\' => "\\",
+						'"' => "\"",
+						'n' when controlCharacters => "\n",
+						'r' when controlCharacters => "\r",
+						't' when controlCharacters => "\t",
+						_ => null
+					};
+					if (replacement != null)
+					{
+						sb.Append(replacement);
+						i++;
+						continue;
+					}
+				}
+				sb.Append(c);
+			}
+			return sb.ToString();
+		}
+
+		private static bool AcceptsCount(MethodInfo method, int count)
+		{
+			var parameters = method.GetParameters();
+			if (count > parameters.Length) return false;
+			return parameters.Skip(count).All(p => p.IsOptional);
+		}
+
 		private static object?[]? GetParameters(MemoryStack? memoryStack, List<object> paramValues, MethodInfo method)
 		{
 			var parameters = method.GetParameters();
@@ -322,15 +367,24 @@ namespace PLang.Models.ObjectValueExtractors
 				for (int i = 0; i < parameters.Length; i++)
 				{
 					var paramType = parameters[i].ParameterType;
+					if (i >= paramValues.Count)
+					{
+						if (!parameters[i].IsOptional) return null;
+						convertedParams[i] = parameters[i].DefaultValue;
+						continue;
+					}
 					if (paramType == typeof(string))
 					{
-						var paramValue = paramValues[i].ToString().Trim()
-								.Replace("\\\\", "\\").Replace("\\\"", "\"");
-						if (paramValue.StartsWith("\"") && paramValue.EndsWith("\""))
+						var paramValue = paramValues[i].ToString().Trim();
+						if (paramValue.StartsWith("\"") && paramValue.EndsWith("\"") && paramValue.Length >= 2)
 						{
-							paramValue = paramValue.Substring(1, paramValue.Length - 2);
+							// A quoted text: \n, \r and \t are the characters, as in the step `%lines.Split("\n")%`.
+							convertedParams[i] = Unescape(paramValue.Substring(1, paramValue.Length - 2), controlCharacters: true);
 						}
-						convertedParams[i] = paramValue;
+						else
+						{
+							convertedParams[i] = Unescape(paramValue, controlCharacters: false);
+						}
 					}
 					else if (paramValues[i].GetType() == paramType)
 					{
