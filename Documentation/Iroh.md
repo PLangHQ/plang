@@ -125,7 +125,7 @@ A peer that disappears without closing (a crash, a lost network) is noticed afte
 - A `tell` that is waiting when that happens fails with a general error, not `NotConnected`, so `on error NotConnected` does not catch it and the goal stops. In the pull pattern the next pull gets `NotConnected` and connects again.
 - `when the connection closes` runs then, so in the push pattern the app subscribes again.
 
-`tell %agent% to X`, with the connection object from `connect ..., write to %agent%`, still works.
+A step can also tell the connection object that `connect ..., write to %agent%` returns: `tell %agent% to X`.
 
 ## Send a file with the command
 

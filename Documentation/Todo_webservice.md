@@ -101,7 +101,7 @@ What the client receives depends on its `Accept` header:
 - `*/*` (curl, a browser) or `text/plain`: what the route writes, here the JSON list.
 - `application/json`: a message that holds it, `{"kind": "text", "status": 200, "content": "[{...}]", ...}`. `content` is the written text as a string.
 
-A route cannot yet answer plain JSON to a client that sends `Accept: application/json`.
+A route cannot answer plain JSON to a client that sends `Accept: application/json`.
 
 ### Step 8: Build and Run the Application
 Ensure you are in the root of the `Todo` folder, then build and run the application:
@@ -136,7 +136,7 @@ Create a folder named `test` in the root of the `Todo` folder.
 
   A plang client asks for JSON, so it receives the message described in Step 7; the list is in `%todos.content%`.
 
-  A `post` from plang with a JSON body is refused by a plang server today (400), so add tasks with a REST client for now.
+  A `post` from plang with a JSON body is refused by a plang server (400), so add tasks with a REST client.
 
   Execute the test:
 

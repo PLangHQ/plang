@@ -31,8 +31,8 @@ Do not begin until all of these are true:
 The port is an argument, so `Start.goal` is the same file in both places. `set default value %port% = 443` keeps the
 argument when one is given; a plain `set %port% = 443` overwrites it.
 
-What does not run in a test instance: the scheduler (it starts only under `live == 1`; `--no-scheduler` is also available
-on newer runtimes), the certificate, and anything else guarded by `live`. Seeding does run, on the copy; that is part of what is tested.
+What does not run in a test instance: the scheduler (it starts only under `live == 1`; `--no-scheduler` also turns it
+off), the certificate, and anything else guarded by `live`. Seeding does run, on the copy; that is part of what is tested.
 
 ## deploy/Check
 
