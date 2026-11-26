@@ -618,14 +618,24 @@ Bad (dont use for):
 		[Example(@"set %day% = %request.query.day%, default is """"", @"keyValues.key=""%day%"", value=[""%request.query.day%"", """"]")]
 		[Example(@"set %goals% = %q.goals%, default is []", @"keyValues.key=""%goals%"", value=[""%q.goals%"", []]")]
 		[Example(@"set %target% = %request.body.target%, default is ""#body""", @"keyValues.key=""%target%"", value=[""%request.body.target%"", ""#body""]")]
+		private static readonly System.Text.RegularExpressions.Regex SettingOnlyRegex = new(@"^%Settings?\.(?<key>[A-Za-z0-9_]+)%$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
 		public async Task SetValueOnVariablesOrDefaultIfValueIsEmpty([HandlesVariableAttribute] List<VariableIfEmpty> variables, [Description("true only when the step asks for a %variable% written in the value to be kept as literal text instead of being replaced with its value. false is the normal case")] bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, [Description("Almost always unset. Only when the step says the assignment is conditional on the current value, e.g. `set %x% = 1 only if it is not null`")] object? onlyIfValueIsNot = null)
 		{
 			foreach (var variable in variables)
 			{
-
-
-
-				var value = (variable.FirstValue is string str && str.Contains("%")) ? memoryStack.LoadVariables(str) : variable.FirstValue;
+				object? value;
+				var settingMatch = variable.FirstValue is string text ? SettingOnlyRegex.Match(text.Trim()) : System.Text.RegularExpressions.Match.Empty;
+				if (settingMatch.Success)
+				{
+					// `set %d% = %Settings.X%, default is ""`: a missing setting is the default, the user is not asked for it
+					value = settings.GetOrDefault<string?>(typeof(PLang.Services.SettingsService.Settings), settingMatch.Groups["key"].Value, null);
+					if (value != null) SensitiveValues.Add(value);
+				}
+				else
+				{
+					value = (variable.FirstValue is string str && str.Contains("%")) ? memoryStack.LoadVariables(str) : variable.FirstValue;
+				}
 				var value2 = (variable.ValueIfFirstIsEmpty is string str2 && str2.Contains("%")) ? memoryStack.LoadVariables(str2) : variable.ValueIfFirstIsEmpty;
 
 				var objectValue = memoryStack.GetObjectValue(variable.Name, false);

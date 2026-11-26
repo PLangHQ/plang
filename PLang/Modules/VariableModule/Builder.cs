@@ -42,6 +42,19 @@ namespace PLang.Modules.VariableModule
 		/// SetVariableWithCalculation the expression became `%s%.Trim().Replace(...)`, which NCalc cannot parse, so it failed
 		/// at run time ("Error parsing the expression").
 		/// </summary>
+		private static readonly System.Text.RegularExpressions.Regex DefaultInStepRegex = new(@",\s*(default|defaults)\b|\bdefault\s+(is|value|to|=)\b|\?\?",
+			System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+		// `set %d% = %Settings.X%, default is "fallback"` built as SetVariable dropped the default without a word.
+		public async Task<(Instruction?, IBuilderError?)> BuilderSetVariable(GoalStep step, Instruction instruction, GenericFunction gf)
+		{
+			// "the default is 5" inside a quoted value is the value, not a default
+			var unquoted = System.Text.RegularExpressions.Regex.Replace(step.Text ?? "", "\"[^\"]*\"|'[^']*'", "\"\"");
+			if (!DefaultInStepRegex.IsMatch(unquoted)) return (instruction, null);
+			return (instruction, new StepBuilderError($"`{step.Text.Trim()}` gives a default value, which SetVariable drops. Use SetValueOnVariablesOrDefaultIfValueIsEmpty: FirstValue is the value, ValueIfFirstIsEmpty the default.",
+				step, "DefaultDropped", Retry: true));
+		}
+
 		public async Task<(Instruction?, IBuilderError?)> BuilderSetVariableWithCalculation(GoalStep step, Instruction instruction, GenericFunction gf)
 		{
 			var assignment = Regex.Match(step.Text.Trim(), @"^-?\s*set\s+(?:var(?:iable)?\s+)?%[^%]+%\s*=\s*(.+?)\s*(?:,\s*round\b.*)?$", RegexOptions.IgnoreCase | RegexOptions.Singleline);
