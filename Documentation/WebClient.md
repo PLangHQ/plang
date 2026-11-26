@@ -47,27 +47,18 @@ replaced.
 
 ```plang
 Start
-- start webserver, port: 8080,
-    on start call AddRoutes,
-    on goal begin request call SetLayout,
-    on poll start call PollStart
+- [ui] set "/ui/default/layout.html" as default layout, default render variable "main"
+- start webserver, port: 8080, on start call AddRoutes
 
 AddRoutes
 - add route "/", call /pages/Home
 - add route "/me", call /pages/Me
 - add route "/api/whoami", content type application/json, call /api/WhoAmI
-
-SetLayout
-- [ui] set "/ui/default/layout.html" as default layout, default render variable "main"
-
-PollStart
-- write out to system "a page connected: %Identity%"
 ```
 
-- **`on poll start` is required.** The client opens its connection at `/?plang.poll=1`. With an `on poll start` goal the
-  server keeps it open. Without one it is handled as a plain request for `/`, the home page's goal runs, and its render
-  replaces the page the visitor is on.
-- **Set the layout on each request**, in `on goal begin request`. A layout set in `Start` is not used by the requests.
+The layout is set once, for the whole app. The client keeps one connection open (`/?plang.poll=1`), and the server can
+send to the page on it. To run a goal when a page connects, add `on poll start call X` to `start webserver`; `on poll
+refresh call Y` runs when it connects again. Both are optional.
 
 A page renders into the layout:
 
@@ -77,12 +68,11 @@ Home
 - [ui] render "/ui/home.html", navigate
 ```
 
-An api route answers plain JSON when the route says `content type application/json`. Put the object in a variable first:
+An api route answers plain JSON when the route says `content type application/json`:
 
 ```plang
 WhoAmI
-- set %answer% = {"identity": "%Identity%"}
-- write out %answer%
+- write out {"identity": "%Identity%"}
 ```
 
 ## 4. Which requests carry the identity
@@ -92,7 +82,7 @@ Measured with a headless browser and a fresh profile:
 | request | `%Identity%` in the goal |
 |---|---|
 | the first load of a page by a new visitor (no key yet) | empty |
-| the client's connection (`on poll start`) right after it | set: the client made the key |
+| the client's connection (`/?plang.poll=1`, `on poll start`) right after it | set: the client made the key |
 | a link in the app, a form, `window.plang.fetch(url, { method: 'GET' })` | set |
 | a later load of any url in the same browser, typed or from a link in a mail | set: `plang-sw.js` signs it, and the server renders the page for that person at once |
 | your own `fetch('/api/whoami')`, `<img src>`, `<script src>` | empty |
