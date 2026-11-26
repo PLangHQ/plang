@@ -136,9 +136,9 @@ showing a shell.
 
 ## 6. One browser, one identity
 
-Each browser makes its own key, so a phone and a laptop are two identities, and a cleared browser is a new one. A person is
-the app's own record. Nothing in plang links a browser to a person; the app keeps a row per identity and points it at the
-user when the person proves who they are in that browser, for example with a code sent by mail.
+Each browser makes its own key, so a phone and a laptop are two identities, and a cleared browser is a new one. Who the
+person is, is the app's to decide: the app keeps a row per identity and points it at the user when the person proves who
+they are in that browser, for example with a code sent by mail. Each app chooses its own proof.
 
 ```plang
 Setup
