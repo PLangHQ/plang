@@ -199,6 +199,19 @@ namespace PLang.Runtime.Tests
 		}
 
 		[TestMethod]
+		public void Put_StringThatLooksLikeAVariable_IsStoredAsText()
+		{
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);
+			stack.Put("secret", "local-secret-value");
+			stack.Put("in", JObject.Parse("{\"y\":\"%secret%\"}"));
+
+			// A user's value, read from a variable, is put as it is: "%secret%" is text, not a reference.
+			stack.Put("copy", stack.Get("%in.y%"));
+
+			Assert.AreEqual("%secret%", stack.Get("copy"));
+		}
+
+		[TestMethod]
 		public void GetTestListWithIndex()
 		{
 			var stack = new MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);

@@ -1109,24 +1109,8 @@ namespace PLang.Runtime
 
 
 
-			if (value is string str && VariableHelper.IsVariable(str))
-			{
-				var plan = GetVariableExecutionPlan(originalKey, str, staticVariable);
-				ObjectValue variableValue = plan.ObjectValue;
-				foreach (var call in plan.Calls)
-				{
-					if (call.Contains("("))
-					{
-						variableValue = ExecuteMethod(variableValue, call, plan.VariableName);
-					}
-					else
-					{
-						variableValue = ExecuteProperty(variableValue, call, plan.VariableName);
-					}
-				}
-				value = variableValue.Value;
-			}
-
+			// The value is stored as it is. A string that looks like a variable, e.g. "%secret%", is text: it can come
+			// from a user (a request body, a file), and resolving it here would hand that user any variable or setting.
 			var ov = GetObjectValue(originalKey);
 			ov.Value = value;
 			if (properties != null) { 

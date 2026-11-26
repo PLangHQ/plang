@@ -591,13 +591,14 @@ Bad (dont use for):
 			}
 			if (value is bool boolValue)
 			{
+				// valueIfTrue and valueIfFalse are loaded before the call; loading again would resolve a %...% inside the value.
 				if (boolValue)
 				{
-					await SetVariable(variableName, valueIfTrue);
+					await SetVariable(variableName, valueIfTrue, doNotLoadVariablesInValue: true);
 				}
 				else
 				{
-					await SetVariable(variableName, valueIfFalse);
+					await SetVariable(variableName, valueIfFalse, doNotLoadVariablesInValue: true);
 				}
 			}
 
@@ -620,8 +621,8 @@ Bad (dont use for):
 
 
 
-				var value = (variable.FirstValue is string str && str.Contains("%")) ? memoryStack.Get(str) : variable.FirstValue;
-				var value2 = (variable.ValueIfFirstIsEmpty is string str2 && str2.Contains("%")) ? memoryStack.Get(str2) : variable.ValueIfFirstIsEmpty;
+				var value = (variable.FirstValue is string str && str.Contains("%")) ? memoryStack.LoadVariables(str) : variable.FirstValue;
+				var value2 = (variable.ValueIfFirstIsEmpty is string str2 && str2.Contains("%")) ? memoryStack.LoadVariables(str2) : variable.ValueIfFirstIsEmpty;
 
 				var objectValue = memoryStack.GetObjectValue(variable.Name, false);
 				object? val = !VariableHelper.IsEmpty(value) ? value : value2;
@@ -631,7 +632,8 @@ Bad (dont use for):
 					val = TypeHelper.ConvertToType(val, Type.GetType(variable.Type));
 				}
 
-				await SetVariable(variable.Name, val, doNotLoadVariablesInValue, keyIsDynamic, onlyIfValueIsNot);
+				// val is already the value of the variables, not a step text: loading it again would resolve a %...% inside it.
+				await SetVariable(variable.Name, val, doNotLoadVariablesInValue: true, keyIsDynamic, onlyIfValueIsNot);
 			}
 		}
 

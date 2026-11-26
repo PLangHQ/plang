@@ -16,7 +16,7 @@ namespace PLang.Modules.IrohModule.Tests
 
 		private static IrohEndpoint Bind() => IrohEndpoint.Bind(IrohKeys.Generate().Secret, Alpn, useRelay: false);
 
-		private static async Task Echo(IrohStream stream)
+		private static async Task Echo(IrohStream stream, IrohConnection connection)
 		{
 			await Task.Yield();
 			var length = new byte[4];
@@ -77,7 +77,7 @@ namespace PLang.Modules.IrohModule.Tests
 			connection.Dispose();
 
 			Assert.IsTrue(connection.IsDisposed);
-			Assert.ThrowsException<IrohException>(() => connection.Request(Encoding.UTF8.GetBytes("{}"), null, 1000, 1000, 1024));
+			Assert.ThrowsException<IrohConnectionEndedException>(() => connection.Request(Encoding.UTF8.GetBytes("{}"), null, 1000, 1000, 1024));
 			connection.Dispose();
 		}
 
