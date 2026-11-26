@@ -37,7 +37,7 @@ Events
 ```plang
 / error/HandleError.goal
 HandleError
-- if %!error.StatusCode% != 415 and %!error.Key% != "NoRouteNoFile" then call goal SaveError
+- if %!error.StatusCode% != 415 and %!error.Key% != "NoRouteNoFile" and %!error.Key% != "UserDefinedError" then call goal SaveError
 - if %request!IsAjax% is false and %request!Headers.Accept% contains "application/json" then call JsonError, else PageError
 
 SaveError
@@ -129,10 +129,10 @@ A route whose step fails (status 503), and a url that does not exist:
 
 - **`on app error`** runs for an error nothing else handled: in a route, in `Start`, and in a goal the scheduler runs (no url in the
   row).
-- **`throw error "Not allowed", status code 403` does not reach the handler.** It is the goal's answer to the visitor, not a fault,
-  and it is not recorded. `window.plang.fetch` gets it as `{"kind": "error", "key": "UserDefinedError", "status": 403,
-  "content": "Not allowed"}`: `onFailure` gets that, and without `onFailure` the client shows the message in a box in
-  `<div id="plangVillur"></div>` when the layout has one. A page load of a goal that throws gets 403 and an empty page.
+- **`throw error "Not allowed", status code 403` in a goal** is the goal's answer to the visitor, not a fault. It reaches the
+  handler with the key `UserDefinedError`, which is not recorded, and `error.html` shows its message: a page load gets 403 and
+  "Not allowed" in the layout. `window.plang.fetch` gets it in `onFailure`; without `onFailure` the client shows the message in
+  a box in `<div id="plangVillur"></div>` when the layout has one.
 - **Who is asking.** `%user%` is loaded in `on goal begin request` and is there in the handler. `contains 'admin'` is also true for
   a role `admin,sysadmin`.
 - **Escape every value** with `| html.escape`, after `json` too: `json` does not escape. `{{ x | json true }}` wrote `<b>x</b>`
