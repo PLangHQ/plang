@@ -19,20 +19,25 @@ Requests that **carry** the identity:
 - navigation inside the app, that is a click on an `<a href>` the client intercepts
 - a form the client submits
 - an `ask user` callback
+- any page load in a browser that already has a key, typed, bookmarked or followed from a mail: the client's service
+  worker (`plang-sw.js`) signs it
 
 Requests that **do not**:
 
-- the very first load of a url, typed, bookmarked, or followed from another site
+- the first page load by a new visitor, a browser with no key yet
 - `<img src>`, `<script src>`, `<link href>`, a background `fetch` you wrote yourself
 - a link with `target="_blank"`, a download, anything the browser opens as a new document
 - curl, wget, a webhook from a payment provider or a mail service
 - a crawler
 
+How to put the client in an app, the layout and the web server options it needs, is in
+[Web server](./Webserver.md).
+
 ## What follows from it
 
-### 1. The first document can never be personal
+### 1. A new visitor's first document can never be personal
 
-The html the browser gets on the first hit is the same for everyone, because at that moment the
+The html a new visitor gets on the first hit is the same for everyone, because at that moment the
 server has no idea who is asking. You cannot render a name, a cart count, a role or a private page
 into it. Anything personal has to arrive **after** the client connects.
 
@@ -115,8 +120,8 @@ string or a signature you verify.
 
 curl has no keypair, so it is the anonymous case by definition. Everything behind
 `- if %user.id% is empty` will behave for curl exactly as it does for a stranger, which is usually
-not what you are trying to test. Use a real browser, and remember that a hard navigation to a url
-in that browser is also anonymous, only in-app navigation carries the identity.
+not what you are trying to test. Use a real browser. Its first page load is anonymous; once the
+client has made its key, every later load in that browser is signed.
 
 Two practical notes for automated browser tests:
 
@@ -124,7 +129,8 @@ Two practical notes for automated browser tests:
   which then fails at the first step that expects one. Set a normal desktop user agent.
 - To move around in-app from a test, go through the client: `window.plang.fetch('/the/path',
   { method: 'GET' })` is exactly what a click on an in-app link does, or click a real link on the
-  page. `page.goto` is a hard navigation and drops you back to anonymous.
+  page. A plain navigation to a url is signed too, by `plang-sw.js`, once the first load has made
+  the key.
 
 With plang's own browser, `PLang.Modules.WebCrawlerModule`, the whole recipe is three steps. The
 profile folder keeps the keypair, so the browser is the same visitor every time and can be linked
