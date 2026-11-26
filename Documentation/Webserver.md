@@ -1,9 +1,13 @@
-# The plang client in a web app
+# Web server
+
+How a plang app serves web pages: the plang js client in the page, the layout, the web server and its events, and who the
+visitor is.
 
 A web page talks to a plang app through the plang js client. It holds the visitor's identity, signs every request it makes,
 keeps a connection open so the server can send to the page, and applies what the server sends. Do not write your own fetch
 and signing code: a request the client does not make carries no identity. Why that matters is in
-[Identity in the browser](./IdentityInTheBrowser.md); this page is how to wire it up.
+[Identity in the browser](./IdentityInTheBrowser.md); this page is how to wire it up. A first app with routes and a
+database is the [Todo web service tutorial](./Todo_webservice.md).
 
 ## 1. Put the client in the app
 

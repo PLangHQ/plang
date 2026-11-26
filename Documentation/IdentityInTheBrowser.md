@@ -31,7 +31,7 @@ Requests that **do not**:
 - a crawler
 
 How to put the client in an app, the layout and the web server options it needs, is in
-[The plang client in a web app](./WebClient.md).
+[Web server](./Webserver.md).
 
 ## What follows from it
 

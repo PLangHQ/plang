@@ -92,6 +92,7 @@ Explore plang's features and capabilities:
     - **Builder**
         - **[Building plang code](https://github.com/PLangHQ/plang/blob/main/Documentation/Building.md)**: What the builder decides and what the llm writes, the commands, writing steps that build first time, building several files at once, and what to verify.
     - **Writing an app that works the first time**
+        - **[Web server](https://github.com/PLangHQ/plang/blob/main/Documentation/Webserver.md)**: Serving web pages: the plang js client, the layout, the web server and its events, and loading who the visitor is.
         - **[Identity in the browser](https://github.com/PLangHQ/plang/blob/main/Documentation/IdentityInTheBrowser.md)**: Where the identity comes from in a browser, which requests carry it, and what that decides about the first page load, sign in, images and webhooks.
         - **[ask user](https://github.com/PLangHQ/plang/blob/main/Documentation/AskUser.md)**: Why `ask user` is `Console.ReadLine`, what survives the answer on a stateless web request and what does not, how the callback resumes the goal, and why a form is one shot.
         - **[Setup and migrations](https://github.com/PLangHQ/plang/blob/main/Documentation/SetupAndMigrations.md)**: Setup.goal is a log of what already happened, the two run once mechanisms, and why editing a create statement is not a migration.
