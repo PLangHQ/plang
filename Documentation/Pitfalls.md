@@ -21,24 +21,21 @@ be a different module than you meant: an http get instead of a goal call, a math
 | `- read file "/x.jsonl", write to %t%` | read as JSON lines, not as text | `- read text file "/x.jsonl", write to %t%` |
 | `- connect to %key%, on incoming call Allow, on closed call Again` | may be built as a websocket connect, or with Allow as the step's error handler | `- connect to iroh peer %key%, when a command comes in run Allow, when the connection closes run Again` ([Iroh](./Iroh.md)) |
 | `- tell %subscriber% to Ingest` where `%subscriber%` holds a key | built for a connection object; fails at run time | `- tell peer id %subscriber% to Ingest` |
-| `- execute sql "... like 'a%'"` | a `%` in a step starts a variable; the step does not build | put the sql in a file and run it with `query file`, or compare with `substr` |
+| `- select ... where task like 'r%'` | a `%` in a step starts a variable; the step does not build | `- select task from Todos where task like 'r' \|\| char(37), write to %rows%` |
 | a step that reads `%Settings.X%`, built with no one at the console | the build reads the setting, asks for it, and the step fails when there is no answer | set the setting before a headless build |
 
 ## Values and methods
 
-- **A method argument is a literal in single quotes.** `%s.Split(';')%` works, `%s.Split(";")%` is "Could not find method".
-  A variable or another call cannot be an argument: `%p.Substring(p.LastIndexOf('/'))%` does not work. Do one call per step:
+- **A method argument is a literal.** Write it in double quotes: `%s.Split(";")%`, `%lines.Split("\n")%` (a new line).
+  In single quotes `'\n'` is not a new line. Calls can be chained: `%line.Trim().Split(" ")%`. A variable or another call
+  cannot be an argument: `%p.Substring(p.LastIndexOf("/"))%` does not work; work it out in its own step first.
+- **Terminal output ends with a new line.** Trim it before it goes into a path, a name or a comparison, and before splitting it
+  into lines:
   ```plang
-  - set %clean% = %line.Trim()%
-  - go through %clean.Split(' ')%, call Word word=%item%
+  - terminal ls /srv/app/releases, write to %out%
+  - set %list% = %out.Trim()%
+  - go through %list.Split("\n")%, call Release name=%item%
   ```
-- **Lines cannot be split with `Split`.** `'\n'` is not a new line there. Join the lines in the shell and split on the separator:
-  ```plang
-  - terminal sh -c "cat list.txt | paste -sd ';'", write to %lines%
-  - set %joined% = %lines.Trim()%
-  - go through %joined.Split(';')%, call Line line=%item%
-  ```
-- **Terminal output ends with a new line.** Trim it before it goes into a path, a name or a comparison: `- set %v% = %out.Trim()%`.
 - **A select with one column and `return 1 row` gives the value itself.** `select task as name ..., return 1 row, write to %v%`:
   `%v%` is the task, `%v.name%` is empty. The same goes for `select count(*) as n`.
 - **A command line argument cannot contain `=`.** `plang startArgs=a=b` gives `startArgs` the value `a`.
@@ -47,7 +44,8 @@ be a different module than you meant: an http get instead of a goal call, a math
 
 - **A goal you call and wait for shares the caller's variables.** What it sets, new or existing, is there when it returns.
   A goal started with `dont wait` gets a copy: what it sets is not seen by the caller.
-- **`load %x%, set as "y" if empty` replaces a value the caller passed in.** `load` reads `%x%` from the app's data store. For a
+- **`load %x%, set as "y" if empty` replaces a value the caller passed in.** `load` reads `%x%` from the app's data store and sets
+  what it finds, or the default, whatever the caller gave. For a
   default on a parameter, write `- set default value %model% = "haiku"`; it keeps a value that was given.
 - **`on error call goal X` goes on after the failed step.** X runs, then the next step. To stop, have X end the goal or throw
   ([Error handling](./ErrorHandler.md)).

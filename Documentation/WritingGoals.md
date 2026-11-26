@@ -48,34 +48,29 @@ DoTheThing
 
 `end goal` at the top level of a goal, not inside a condition, is fine.
 
-## A called goal does not hand its variables back
+## A called goal shares the caller's variables
 
 ```plang
 Caller
-- call goal LoadCustomer
-- write out %customer.name%          # empty
+- set %config% = "default"
+- call goal LoadCustomer id=%id%
+- write out %customer.name%          # set by LoadCustomer
+- write out %config%                 # "changed": LoadCustomer overwrote it
 
 LoadCustomer
 - select * from customers where id=%id%, return 1 row, write to %customer%
+- set %config% = "changed"
 ```
 
-Setting a variable inside a goal does not make it visible to the caller. What comes back is what
-the goal **returns**, and the caller has to catch it:
+A goal you call and wait for runs on the caller's variables. What it sets, new or existing, is there
+when it returns, and it can overwrite a variable the caller still needs. A goal that reads a file
+into `%config%` replaces any change made to `%config%` before. Give a called goal's own variables
+names the caller does not use.
 
-```plang
-Caller
-- call goal LoadCustomer id=%id%, write to %customer%
+Parameters go in as named arguments: `call goal SendMail to=%email%, subject=%subject%`.
 
-LoadCustomer
-- select * from customers where id=%id%, return 1 row, write to %customer%
-- return %customer%
-```
-
-Parameters go the other way as named arguments: `call goal SendMail to=%email%, subject=%subject%`.
-
-This is also why an accumulating loop does not work: `go through %files%, call SaveFile` cannot
-build up a list in the caller. Have the called goal write its result somewhere, a table or a file,
-rather than into a variable the caller hopes to read.
+A goal started with `dont wait` gets a copy of the variables: what it sets is not seen by the caller.
+Have it write its result somewhere, a table or a file, for the caller to read.
 
 ## Do not invent variables to hold what you already have
 
