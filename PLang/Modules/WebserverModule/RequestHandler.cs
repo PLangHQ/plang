@@ -493,6 +493,13 @@ namespace PLang.Modules.WebserverModule
 			var boundError = CheckSignedRequest(claimed, request);
 			if (boundError != null) return (null, boundError);
 
+			// A signature without the hash of the body would let anyone who captured it send any body with it.
+			if (rawBody.Length > 0 && claimed != null && claimed.Data == null)
+			{
+				return (null, new Error("The signature does not cover the body of the request. Sign the request with the hash of its body.",
+					"InvalidSignatureData", StatusCode: 400));
+			}
+
 			var verifiedSignatureResult = await identity.VerifySignature(signatureData, headers, rawBody);
 			if (verifiedSignatureResult.Error != null)
 			{

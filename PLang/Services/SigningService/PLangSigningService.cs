@@ -154,7 +154,13 @@ namespace PLang.Services.SigningService
 			{
 				signature.Headers = headers;
 			}
-			if (data != null)
+			if (data is byte[] rawBytes)
+			{
+				// Bytes are hashed as they are, e.g. the body of an http request, as the webserver hashes the body it receives.
+				(var hash, var error) = await hasher.Hash(rawBytes, true, type: "Keccak256");
+				signature.Data = new HashedData("Keccak256", "raw", hash.ToString());
+			}
+			else if (data != null)
 			{
 				var bytes = await serialier.Serialize(data, "json");
 				(var hash, var error) = await hasher.Hash(bytes, true, type: "Keccak256");

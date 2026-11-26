@@ -169,6 +169,7 @@ When a request carries a signature, the web server checks it before the route's 
 | it is younger than 5 minutes, or before its own `expires` | 401, `X-Signature-Error: expired` |
 | its nonce has not been used before (a replay) | 403, `X-Signature-Error: nonce` |
 | it was made for this url (path and query) and method | 401 |
+| a request with a body: the signature holds the hash of that body, and the hash matches | 400 |
 | the signature is well formed (`created`, `identity`, a supported type) | 400 or 401 |
 
 A refused request does not run the route's goal, but it does reach the app's error events (`on app error`).

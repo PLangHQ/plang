@@ -763,14 +763,13 @@ namespace PLang.Modules.HttpModule
 			string method = request.Method.Method;
 			string url = request.RequestUri.PathAndQuery;
 			string[] contracts = ["C0"];
-			string? body = null;
+			// The signature carries the hash of the body bytes exactly as they are sent, which is what the receiving
+			// webserver hashes. No body, no data in the signature.
+			byte[]? body = null;
 
 			if (request.Content != null)
 			{
-				using (var reader = new StreamReader(request.Content.ReadAsStream()))
-				{
-					body = await reader.ReadToEndAsync();
-				}
+				body = await request.Content.ReadAsByteArrayAsync();
 			}
 
 			var headers = new Dictionary<string, object>();
