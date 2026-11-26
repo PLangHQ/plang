@@ -61,7 +61,7 @@ built while a different datasource was current keeps that decision until the `.p
 ```
 
 For files, `post multipart form data` takes a value prefixed with `@`, which is either a path or a
-base64 string, and may carry `;type=` and `;name=`:
+base64 string, and may carry `;type=` and `;name=` (or `;filename=`), in any order:
 
 ```plang
 - set %data% = {"from": "%sender%", "to": "%to%", "attachment": %files%}

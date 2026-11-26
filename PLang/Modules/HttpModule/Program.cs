@@ -321,15 +321,15 @@ namespace PLang.Modules.HttpModule
 				return null;
 			}
 
-			string fileName = this.memoryStack.LoadVariables(value.Substring(1))?.ToString() ?? "";
+			// "@<file or base64>;type=<mime>;name=<file name>", the options in any order; filename= is the same as name=.
+			var parts = (this.memoryStack.LoadVariables(value.Substring(1))?.ToString() ?? "").Split(';');
+			string fileName = parts[0];
 			string? typeValue = null;
 			string? partName = null;
 
-			while (fileName.Contains(";"))
+			foreach (var part in parts.Skip(1))
 			{
-				string option = fileName.Substring(fileName.IndexOf(";") + 1);
-				fileName = fileName.Substring(0, fileName.IndexOf(";"));
-
+				var option = part.Trim();
 				if (option.StartsWith("type=", StringComparison.OrdinalIgnoreCase))
 				{
 					typeValue = option.Substring("type=".Length);
@@ -337,6 +337,10 @@ namespace PLang.Modules.HttpModule
 				else if (option.StartsWith("name=", StringComparison.OrdinalIgnoreCase))
 				{
 					partName = option.Substring("name=".Length);
+				}
+				else if (option.StartsWith("filename=", StringComparison.OrdinalIgnoreCase))
+				{
+					partName = option.Substring("filename=".Length);
 				}
 			}
 
