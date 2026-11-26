@@ -90,7 +90,7 @@ statments like `if %!error.Handled% does NOT mean it is false
 		// is evaluated and then does nothing.
 		public async Task<(Instruction, IBuilderError?)> BuilderValidate(GoalStep step, Instruction instruction, IGenericFunction gf)
 		{
-			var message = UnnamedGoalToCall(step.Text, gf) ?? StrayNegation(step.Text, gf);
+			var message = UnnamedGoalToCall(step.Text, gf) ?? StrayNegation(step.Text, gf) ?? UnsupportedOperator(gf);
 			if (message != null) return (instruction, new StepBuilderError(message, step));
 
 			message = MissingCondition(step.Text, gf) ?? MissingGoalToCall(step.Text, gf);
@@ -270,6 +270,37 @@ statments like `if %!error.Handled% does NOT mean it is false
 
 			return "A condition was built with IsNot true, but the step says no `not`. IsNot negates the test, so the condition is the opposite of the step " +
 				"(`%x% is false` built as Operator == RightValue false with IsNot true is never true). Set IsNot false; a negative test takes the negative operator.";
+		}
+
+		private static readonly HashSet<string> SupportedOperators = new(StringComparer.OrdinalIgnoreCase)
+		{
+			"==", "=", "===", "equals", "!=", "<>", "!==", ">", "<", ">=", "<=", "in", "notin", "isempty", "isnotempty",
+			"contains", "notcontains", "startswith", "notstartswith", "endswith", "notendswith", "indexof", "istrue", "isfalse"
+		};
+
+		/// <summary>
+		/// An operator the runtime does not know fails every time the step runs ("Op 'x'"). Refused while building.
+		/// </summary>
+		public static string? UnsupportedOperator(IGenericFunction gf)
+		{
+			var condition = gf?.Parameters?.FirstOrDefault(p => string.Equals(p.Name, "condition", StringComparison.OrdinalIgnoreCase))?.Value;
+			if (condition == null) return null;
+			Newtonsoft.Json.Linq.JToken token;
+			try
+			{
+				token = condition is Newtonsoft.Json.Linq.JToken t ? t
+					: condition is string s ? Newtonsoft.Json.Linq.JToken.Parse(s)
+					: Newtonsoft.Json.Linq.JToken.FromObject(condition);
+			}
+			catch { return null; }
+
+			foreach (var op in token.SelectTokens("$..Operator").Select(p => p.ToString()))
+			{
+				if (string.IsNullOrEmpty(op)) continue;
+				if (SupportedOperators.Contains(ConditionEvaluator.ConditionEngine.NormalizeOperator(op))) continue;
+				return $"Operator \"{op}\" is not one the runtime knows. Use one of: {string.Join(", ", SupportedOperators)}; a test written in the negative takes the negative operator, e.g. `does not start with` => notstartswith.";
+			}
+			return null;
 		}
 
 		private static bool HasValue(IGenericFunction gf, string name)

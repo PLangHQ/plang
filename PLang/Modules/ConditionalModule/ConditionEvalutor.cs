@@ -72,7 +72,28 @@ A Simple NEVER has Logic or Conditions: a step joining two tests is a Compound."
 				return result;
 			}
 
-			public static bool EvaluateSimple(Condition n) => n.Operator.ToLowerInvariant() switch
+			/// <summary>
+			/// An operator as the builder sometimes writes it in words: `does not start with` is notstartswith, `starts with`
+			/// startswith, `does not contain` notcontains. Spaces and underscores go, and "doesnot"/"not" are one form.
+			/// </summary>
+			public static string NormalizeOperator(string? op)
+			{
+				var o = (op ?? "").ToLowerInvariant().Replace(" ", "").Replace("_", "");
+				if (o.StartsWith("doesnot")) o = "not" + o.Substring("doesnot".Length);
+				else if (o.StartsWith("isnot") && o.Length > "isnot".Length && o != "isnotempty") o = "not" + o.Substring("isnot".Length);
+				return o switch
+				{
+					"startwith" or "startswith" => "startswith",
+					"endwith" or "endswith" => "endswith",
+					"notstartwith" or "notstartswith" => "notstartswith",
+					"notendwith" or "notendswith" => "notendswith",
+					"contain" or "contains" => "contains",
+					"notcontain" or "notcontains" => "notcontains",
+					_ => o
+				};
+			}
+
+			public static bool EvaluateSimple(Condition n) => NormalizeOperator(n.Operator) switch
 			{
 				// Equality is ==, not-equal is !=. The other spellings below mean exactly the same
 				// test and are accepted so a step built with one of them runs instead of throwing.
@@ -100,8 +121,23 @@ A Simple NEVER has Logic or Conditions: a step joining two tests is a Compound."
 				"notcontains" => !Has(n.LeftValue, n.RightValue),
 				"notstartswith" => !Str(n, (s, x) => s.StartsWith(x, StringComparison.OrdinalIgnoreCase)),
 				"notendswith" => !Str(n, (s, x) => s.EndsWith(x, StringComparison.OrdinalIgnoreCase)),
+				// Built by builders before .108 for `is true` / `is false`; the same as == true / == false.
+				"istrue" => IsTrue(n.LeftValue),
+				"isfalse" => !IsTrue(n.LeftValue),
 				_ => throw new NotSupportedException($"Op '{n.Operator}'")
 			};
+
+			private static bool IsTrue(object? value)
+			{
+				if (value is ObjectValue ov) value = ov.Value;
+				if (value is Newtonsoft.Json.Linq.JValue jv) value = jv.Value;
+				return value switch
+				{
+					bool b => b,
+					string s => bool.TryParse(s.Trim(), out var parsed) && parsed,
+					_ => false
+				};
+			}
 
 			private static bool IsEmpty(object? leftValue, object? rightValue)
 			{

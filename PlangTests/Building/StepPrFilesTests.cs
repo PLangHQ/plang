@@ -206,6 +206,21 @@ namespace PLang.Building.Tests
 			new List<Parameter> { new("PLang.Modules.ConditionalModule.ConditionEvaluator+SimpleCondition", "condition", Newtonsoft.Json.Linq.JObject.Parse(json)) });
 
 		[TestMethod]
+		public void OperatorsInWords_AreTheRuntimesOperators()
+		{
+			var engine = typeof(PLang.Modules.ConditionalModule.ConditionEvaluator.ConditionEngine);
+			Assert.AreEqual("notstartswith", PLang.Modules.ConditionalModule.ConditionEvaluator.ConditionEngine.NormalizeOperator("does not start with"));
+			Assert.AreEqual("startswith", PLang.Modules.ConditionalModule.ConditionEvaluator.ConditionEngine.NormalizeOperator("starts with"));
+			Assert.AreEqual("notcontains", PLang.Modules.ConditionalModule.ConditionEvaluator.ConditionEngine.NormalizeOperator("does not contain"));
+			Assert.AreEqual("isnotempty", PLang.Modules.ConditionalModule.ConditionEvaluator.ConditionEngine.NormalizeOperator("isNotEmpty"));
+			Assert.AreEqual("==", PLang.Modules.ConditionalModule.ConditionEvaluator.ConditionEngine.NormalizeOperator("=="));
+
+			Assert.IsNull(ConditionalBuilder.UnsupportedOperator(WithCondition("""{"Kind":"Simple","LeftValue":"%p%","Operator":"does not start with","RightValue":"/events/"}""")));
+			Assert.IsNull(ConditionalBuilder.UnsupportedOperator(WithCondition("""{"Kind":"Simple","LeftValue":"%a%","Operator":"isTrue"}""")));
+			Assert.IsNotNull(ConditionalBuilder.UnsupportedOperator(WithCondition("""{"Kind":"Simple","LeftValue":"%a%","Operator":"matches"}""")));
+		}
+
+		[TestMethod]
 		public void IsNot_OnlyWhenTheStepSaysNot()
 		{
 			var doubleNegation = WithCondition("""{"Kind":"Compound","Logic":"AND","Conditions":[{"Kind":"Simple","LeftValue":"%a%","Operator":"==","RightValue":false,"IsNot":true},{"Kind":"Simple","LeftValue":"%b%","Operator":">","RightValue":300,"IsNot":false}]}""");
