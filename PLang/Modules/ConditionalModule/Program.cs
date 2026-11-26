@@ -538,6 +538,22 @@ A goal the step calls goes in goalToCallIfTrue (after `then`) and goalToCallIfFa
 
 		}
 
+		/// <summary>
+		/// `if %x% is empty then end goal` is built with Type (or Key) EndGoal: it ends the goal the step is in (level 0), the
+		/// same as an `end goal` step, and the goal that called it goes on. It was thrown as an error with key EndGoal, which
+		/// is no end goal, so it stopped every goal up the call stack. Any other ErrorInfo is thrown.
+		/// </summary>
+		private async Task<IError?> ThrowOrEnd(ErrorInfo errorInfo, string defaultMessage)
+		{
+			var module = GetProgramModule<ThrowErrorModule.Program>();
+			if (string.Equals(errorInfo.Type, "EndGoal", StringComparison.OrdinalIgnoreCase)
+				|| string.Equals(errorInfo.Key, "EndGoal", StringComparison.OrdinalIgnoreCase))
+			{
+				return await module.EndGoalExecution();
+			}
+			return await module.Throw(errorInfo.Message ?? defaultMessage, errorInfo.Type, errorInfo.StatusCode);
+		}
+
 		private async Task<(object?, IError?)> ExecuteResult(bool result, GoalToCallInfo? goalToCallOnTrue,
 			GoalToCallInfo? goalToCallOnFalse, ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
@@ -597,13 +613,11 @@ A goal the step calls goes in goalToCallIfTrue (after `then`) and goalToCallIfFa
 			
 			if (result && throwErrorOnTrue != null)
 			{
-				var module = GetProgramModule<ThrowErrorModule.Program>();
-				return (returnVars, await module.Throw(throwErrorOnTrue.Message ?? "Is empty", throwErrorOnTrue.Type, throwErrorOnTrue.StatusCode));
+				return (returnVars, await ThrowOrEnd(throwErrorOnTrue, "Is empty"));
 			}
 			if (!result && throwErrorOnFalse != null)
 			{
-				var module = GetProgramModule<ThrowErrorModule.Program>();
-				return (returnVars, await module.Throw(throwErrorOnFalse.Message ?? "Is not empty", throwErrorOnFalse.Type, throwErrorOnFalse.StatusCode));
+				return (returnVars, await ThrowOrEnd(throwErrorOnFalse, "Is not empty"));
 			}
 			var frame = context.CallStack.CurrentFrame;
 			var nextStep = goalStep.NextStep;
