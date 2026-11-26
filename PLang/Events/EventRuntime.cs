@@ -936,7 +936,11 @@ namespace PLang.Events
 
 		private bool IsMatchingStarPattern(Goal goal, string goalToBindTo)
 		{
-			var goalRelativeFolderPath = goal.AbsolutePrFolderPath.Replace(fileSystem.BuildPath, "");
+			// A goal of the runtime (system/events/SetupApp) is not under the app's build folder; its path is taken from
+			// its own app root, so `^/(?!events/).*` leaves out its events/ as well, not only the app's.
+			var goalRelativeFolderPath = goal.AbsolutePrFolderPath.StartsWith(fileSystem.BuildPath, StringComparison.OrdinalIgnoreCase)
+				? goal.AbsolutePrFolderPath.Substring(fileSystem.BuildPath.Length)
+				: Regex.Replace(goal.RelativePrFolderPath ?? "", @"^[\\/]?\.build(?=[\\/]|$)", "");
 			goalToBindTo = ChangeDirectorySeperators(goalToBindTo);
 			goalRelativeFolderPath = ChangeDirectorySeperators(goalRelativeFolderPath);
 			if (goal.Visibility == Visibility.Public && !goalRelativeFolderPath.EndsWith("/")) goalRelativeFolderPath += "/";
