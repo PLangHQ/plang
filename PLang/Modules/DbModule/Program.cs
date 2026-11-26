@@ -535,6 +535,7 @@ namespace PLang.Modules.DbModule
 
 			bool isSqlite = (dataSource.TypeFullName.Contains("sqlite", StringComparison.OrdinalIgnoreCase));
 
+			(sql, Parameters) = IdPerSelectedRow(sql, Parameters, isSqlite);
 			var paramResult = GetDynamicParameters(sql, isInsert, Parameters, isSqlite, dataSource);
 			if (paramResult.Error != null) return (null, null, null, sql, paramResult.Error);
 
@@ -1770,6 +1771,27 @@ For example:
 ", null);
 		}
 
+
+		private static readonly System.Text.RegularExpressions.Regex InsertSelectRegex = new(@"^\s*insert\s+(or\s+\w+\s+)?into\s+[^(]+\([^)]*\)\s*select\s",
+			System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Singleline);
+		private static readonly System.Text.RegularExpressions.Regex IdParameterRegex = new(@"@id\b(?!\.)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+		/// <summary>
+		/// `insert into errors (id, message) select @id, value from json_each(@json)` gave every selected row the one id
+		/// of @id "auto", so a second row failed on the unique id. Each row gets its own id: @id is the first of a block
+		/// of ids no other insert of this process gets, and row n is @id + n.
+		/// </summary>
+		private static (string Sql, List<ParameterInfo>? Parameters) IdPerSelectedRow(string sql, List<ParameterInfo>? parameters, bool isSqlite)
+		{
+			if (!isSqlite || parameters == null || !InsertSelectRegex.IsMatch(sql)) return (sql, parameters);
+			var id = parameters.FirstOrDefault(p => p.ParameterName.Equals("@id", StringComparison.OrdinalIgnoreCase));
+			if (id == null || id.VariableNameOrValue?.ToString() != "auto") return (sql, parameters);
+
+			var selectStart = InsertSelectRegex.Match(sql).Length;
+			var selectPart = IdParameterRegex.Replace(sql.Substring(selectStart), "(@id + row_number() over () - 1)");
+			var list = parameters.Select(p => p == id ? p with { VariableNameOrValue = IdHelper.ReserveBlock() } : p).ToList();
+			return (sql.Substring(0, selectStart) + selectPart, list);
+		}
 
 		private (DynamicParameters DynamicParameters, IError? Error) GetDynamicParameters(string sql, bool isInsert, List<ParameterInfo>? Parameters, bool isSqlite, DataSource dataSource)
 		{

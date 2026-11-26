@@ -14,5 +14,29 @@ public static class IdHelper
 		Random.Shared.Next(0, IdGeneratorOptions.Default.IdStructure.MaxGenerators),
 		new IdGeneratorOptions(sequenceOverflowStrategy: SequenceOverflowStrategy.SpinWait));
 
-	public static long NewId() => generator.CreateId();
+	private static long reservedUpTo;
+
+	public static long NewId()
+	{
+		while (true)
+		{
+			var id = generator.CreateId();
+			if (id > Interlocked.Read(ref reservedUpTo)) return id;
+		}
+	}
+
+	/// <summary>
+	/// The first id of a block for many rows in one statement (insert ... select): rows get id, id + 1, ... NewId never
+	/// returns an id of the block, about 4 million ids (one millisecond of this generator); it waits that millisecond out.
+	/// </summary>
+	public static long ReserveBlock()
+	{
+		var id = NewId();
+		var structure = IdGeneratorOptions.Default.IdStructure;
+		var end = id + (1L << (structure.GeneratorIdBits + structure.SequenceBits));
+		long current;
+		do { current = Interlocked.Read(ref reservedUpTo); if (current >= end) break; }
+		while (Interlocked.CompareExchange(ref reservedUpTo, end, current) != current);
+		return id;
+	}
 }
