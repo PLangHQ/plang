@@ -434,6 +434,14 @@ namespace PLang.Building.Parsers
 				return (goal, null);
 			}
 
+			// `on start call /routes/Main` is built with the name and no path; a name with a folder is found the way
+			// `call goal /routes/Main` finds it, from the app's root. It was compared to goal names and never found.
+			if (goalToCall.Name.Contains('/') || goalToCall.Name.Contains('\\'))
+			{
+				var (byPath, _) = GoalHelper.GetGoal("/", fileSystem.RootDirectory, goalToCall, goals, GetSystemGoals());
+				if (byPath != null) return (byPath, null);
+			}
+
 			var goalsFound = goals.Where(p => p.GoalName.Equals(goalToCall.Name, StringComparison.OrdinalIgnoreCase));
 			if (goalsFound.Count() > 1)
 			{
