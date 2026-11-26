@@ -733,7 +733,9 @@ Builder will continue on other steps but not this one: ({step.Text}).
 		// the contract: a clause in the text is a handler in the properties.
 		if (canHaveErrorHandling)
 		{
-			int clauses = Regex.Matches(step.Text, @"\bon\s+error\b", RegexOptions.IgnoreCase).Count;
+			// `on error line call X` (start process) is a parameter of the step, not an error handler; quoted text is a value.
+			var text = Regex.Replace(step.Text, "\"[^\"]*\"|'[^']*'", "\"\"");
+			int clauses = Regex.Matches(text, @"\bon\s+error\b(?!\s+lines?\b)", RegexOptions.IgnoreCase).Count;
 			int handlers = stepProperties.ErrorHandlers?.Count ?? 0;
 			if (clauses > handlers)
 			{
