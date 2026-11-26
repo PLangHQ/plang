@@ -175,7 +175,10 @@ namespace PLang.Building
 				return await BuildGoal(container, goal, context, errorCount, goalIndex);
 			}
 
-			if (degreeOfParallelism > 1 && indexesToBuild.Count > 1)
+			// A setup goal's steps change the build's in memory database in their order (create datasource, create table,
+			// add column), so they are built one after the other: built at the same time, `add column` was checked
+			// before `create table` had run ("no such table") and a table went into the wrong datasource.
+			if (degreeOfParallelism > 1 && indexesToBuild.Count > 1 && !goal.IsSetup)
 			{
 				var errorsByIndex = new System.Collections.Concurrent.ConcurrentDictionary<int, IBuilderError>();
 				using (var gate = new SemaphoreSlim(degreeOfParallelism))
