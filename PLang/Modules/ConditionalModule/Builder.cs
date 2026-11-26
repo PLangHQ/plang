@@ -214,6 +214,11 @@ statments like `if %!error.Handled% does NOT mean it is false
 				if (string.IsNullOrWhiteSpace(name)) continue;
 
 				var lastSegment = name.Trim().TrimEnd('/').Split('/').Last();
+				if (Regex.IsMatch(lastSegment, @"^(end(\s+goal)?|throw|return)\b", RegexOptions.IgnoreCase))
+				{
+					return $"{parameterName} is \"{name}\", which is not a goal. `then end goal` is throwErrorOnTrue (throwErrorOnFalse after `else`) " +
+						"{ \"Message\": \"End goal\", \"Type\": \"EndGoal\", \"StatusCode\": 0, \"Key\": \"EndGoal\" }, `then throw ...` is throwErrorOnTrue with the message; leave the goals null.";
+				}
 				bool isKeyword = ConditionWords.Contains(lastSegment, StringComparer.OrdinalIgnoreCase);
 				bool isNamed = Regex.IsMatch(stepText, @"(?<!\w)" + Regex.Escape(lastSegment) + @"(?!\w)", RegexOptions.IgnoreCase);
 				if (!isKeyword && isNamed) continue;

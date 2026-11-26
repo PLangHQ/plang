@@ -196,6 +196,7 @@ namespace PLang.Building.Tests
 			const string blockIf = "if %!Event.SourceGoal.IsSystem% is false and %!callstack.Frames[idx].DurationMs% > 300 then";
 			Assert.IsNotNull(ConditionalBuilder.UnnamedGoalToCall(blockIf, Function("CompoundCondition", new { Name = "then" })));
 			Assert.IsNotNull(ConditionalBuilder.UnnamedGoalToCall("if %x% > 2 then", Function("SimpleCondition", new { Name = "Process" })));
+			Assert.IsNotNull(ConditionalBuilder.UnnamedGoalToCall("if %n% > 1 then end goal", Function("SimpleCondition", new { Name = "end goal" })));
 			Assert.IsNull(ConditionalBuilder.UnnamedGoalToCall(blockIf, Function("CompoundCondition")));
 			Assert.IsNull(ConditionalBuilder.UnnamedGoalToCall(OneLineIf, Function("SimpleCondition", new { Name = "HandleOverLimit" }, new { Name = "IssueCodeNow" })));
 			Assert.IsNull(ConditionalBuilder.UnnamedGoalToCall("if %x% then call goal /api/Process", Function("IsTrue", new { Name = "/api/Process" })));
