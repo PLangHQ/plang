@@ -269,7 +269,8 @@ namespace PLang.Runtime
 			{
 				if (item.IsSystemVariable) continue;
 
-				target.Put(new ObjectValue(item.Name, item.Value.DeepClone(),
+				var value = item.Value is PLang.Models.ILiveValue ? item.Value : item.Value.DeepClone();
+				target.Put(new ObjectValue(item.Name, value,
 					properties: CloneProperties(item.Properties, item.Name)));
 			}
 		}

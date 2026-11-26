@@ -39,7 +39,7 @@ namespace PLang.Modules.IrohModule
 		/// connected to, or the %Identity% that signed the commands of a peer that connected to this app.
 		/// </summary>
 		[JsonConverter(typeof(IrohPeerReader))]
-		public record IrohPeer(string Target, string? EndpointId, [property: JsonIgnore] IrohConnection Connection);
+		public record IrohPeer(string Target, string? EndpointId, [property: JsonIgnore] IrohConnection Connection) : PLang.Models.ILiveValue;
 
 		/// <summary>
 		/// A peer given as its key (text) or as a peer that was serialized is the connection kept under that key, so
