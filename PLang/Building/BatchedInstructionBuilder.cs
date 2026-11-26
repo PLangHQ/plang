@@ -583,15 +583,28 @@ Escape a %variable% written inside the Description text as \%variable\%. That es
 		text.AppendLine("ReturnValues is null when the step writes its result into no variable.");
 		text.AppendLine();
 
+		// The type of a variable an earlier step of this goal writes, from what its method returns. Only a known type
+		// (not object) of a variable this step uses gets a line: a line listing every variable was tried and not sent,
+		// as every line added to a step competes with the step's own words, and most steps get none.
+		var written = new Dictionary<string, (int Step, Type Type)>(StringComparer.OrdinalIgnoreCase);
 		foreach (var plan in planned)
 		{
-			// The module's full name, as the method blocks above are keyed, and nothing else. A line
-			// listing the step's variables and their types was tried here and is not sent: it was
-			// never in what was measured, and every line added to a step is a line competing with
-			// the step's own words.
 			text.AppendLine($"step {plan.Step.Index}: calls {plan.Module}.{plan.Method.MethodName}");
 			text.AppendLine(plan.Step.Text.Trim());
+			var known = System.Text.RegularExpressions.Regex.Matches(plan.Step.Text, @"%([\w!]+)[%.\[]")
+				.Select(m => m.Groups[1].Value).Distinct(StringComparer.OrdinalIgnoreCase)
+				.Where(name => written.ContainsKey(name)).ToList();
+			if (known.Count > 0)
+			{
+				text.AppendLine("variables from earlier steps: " + string.Join(", ", known.Select(name => $"%{name}% is {written[name].Type.Name} (step {written[name].Step})")));
+			}
 			text.AppendLine();
+
+			var target = System.Text.RegularExpressions.Regex.Match(plan.Step.Text, @"\b(?:write|writes|save|put|load)\s+(?:it\s+)?(?:to|into|in)\s+%([\w!]+)%", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+			if (!target.Success) continue;
+			var method = typeHelper.GetRuntimeType(plan.Module)?.GetMethods().Where(m => m.Name == plan.Method.MethodName).ToList();
+			var type = method?.Count == 1 ? PLang.Utils.MethodHelper.ValueTypeOf(method[0]) : null;
+			if (type != null) written[target.Groups[1].Value] = (plan.Step.Index, type);
 		}
 		return text.ToString();
 	}
