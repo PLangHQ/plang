@@ -294,7 +294,7 @@ public class StepBuilder : IStepBuilder
 		// lets load the return value into memoryStack
 		if (gf.ReturnValues?.Count > 0)
 		{
-			await LoadVariablesIntoMemoryStack(gf, memoryStack, settings);
+			await LoadVariablesIntoMemoryStack(gf, memoryStack, settings, step.ModuleType);
 		}
 
 		var builderRun = await this.instructionBuilder.RunStepValidation(step, instruction, gf);
@@ -989,33 +989,45 @@ Builder will continue on other steps but not this one: ({step.Text}).
 		return llmRequest;
 	}
 
-	public async Task<IBuilderError?> LoadVariablesIntoMemoryStack(IGenericFunction gf, MemoryStack memoryStack, ISettings settings)
+	public async Task<IBuilderError?> LoadVariablesIntoMemoryStack(IGenericFunction gf, MemoryStack memoryStack, ISettings settings, string? moduleType = null)
 	{
 		if (gf.ReturnValues != null && gf.ReturnValues.Count > 0)
 		{
-			foreach (var returnValue in gf.ReturnValues)
+			// The type the module method returns; the llm's guess (returnValue.Type) only when the method returns object.
+			Type? methodValueType = null;
+			if (!string.IsNullOrEmpty(moduleType))
 			{
-				memoryStack.PutForBuilder(returnValue.VariableName, returnValue.Type);
+				var program = typeHelper.GetRuntimeType(moduleType);
+				var methods = program?.GetMethods().Where(m => m.Name == gf.Name).ToList();
+				if (methods?.Count == 1) methodValueType = MethodHelper.ValueTypeOf(methods[0]);
+			}
+			for (int i = 0; i < gf.ReturnValues.Count; i++)
+			{
+				var returnValue = gf.ReturnValues[i];
+				memoryStack.PutForBuilder(returnValue.VariableName, (i == 0 && methodValueType != null) ? methodValueType : returnValue.Type);
 			}
 		}
 
-		return await LoadParameters(gf, memoryStack, settings);
+		LoadParameters(gf, memoryStack);
+		return null;
 	}
-	private async Task<IBuilderError?> LoadParameters(IGenericFunction gf, MemoryStack memoryStack, ISettings settings)
+
+	// A variable a parameter names (e.g. the list of `go through %products%`) is known to later steps while building.
+	// It is the variable in the parameter's value; the name of the C# parameter is no variable.
+	private void LoadParameters(IGenericFunction gf, MemoryStack memoryStack)
 	{
-		// todo: hack for now, should be able to load dynamically variables that are being set at build time
-		// might have to structure the build
-		if (gf == null || gf.Parameters == null || gf.Parameters.Count == 0) return null;
+		if (gf == null || gf.Parameters == null || gf.Parameters.Count == 0) return;
 
 		foreach (var parameter in gf.Parameters)
 		{
-			if (VariableHelper.IsVariable(parameter.Value))
-			{
-				memoryStack.PutForBuilder(parameter.Name, parameter.Type);
-			}
+			if (!VariableHelper.IsVariable(parameter.Value)) continue;
+			var name = parameter.Value!.ToString()!;
+			// only a plain variable, not a path into one (%list[0].name%)
+			if (!System.Text.RegularExpressions.Regex.IsMatch(name, @"^%[\w!]+%$")) continue;
+			var existing = memoryStack.GetObjectValue(name, false);
+			if (existing.Initiated || (existing.Type != null && existing.Type != typeof(Nullable))) continue;
+			memoryStack.PutForBuilder(name, null);
 		}
-
-		return null;
 	}
 
 	protected string GetVariablesInStep(GoalStep step)

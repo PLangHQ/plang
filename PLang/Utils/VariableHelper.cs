@@ -765,7 +765,13 @@ namespace PLang.Utils
 				if (!ov.Initiated)
 				{
 					AppContext.TryGetSwitch("Builder", out bool isBuilder);
-					if (isBuilder) ov = ObjectValue.Nullable(variable);
+					if (isBuilder)
+					{
+						// keep the type an earlier step gave the variable, so the llm is told what it holds
+						var type = ov.Type;
+						ov = ObjectValue.Nullable(variable);
+						if (type != null && type != typeof(Nullable) && type != typeof(object)) ov.Type = type;
+					}
 
 					//throw new VariableDoesNotExistsException($"Variable {variable} not found");
 				}

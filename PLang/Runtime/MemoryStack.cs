@@ -1064,9 +1064,19 @@ namespace PLang.Runtime
 
 			if (string.IsNullOrEmpty(key)) return;
 			key = Clean(key);
-			//Put(key, value, false, false);
-			var objectValue = new ObjectValue(key, value, null, null, false);
+			// While building, a variable an earlier step writes has no value yet, only a type. The type is kept as the
+			// type of the value, never as its value: the type name stored as the value was read as data (%idx% was
+			// "System.String" and Frames[idx] failed), and the llm was told every such variable is a string.
+			var type = value as Type ?? ResolveBuilderType(value as string);
+			var objectValue = new ObjectValue(key, null, type, null, false);
 			AddOrReplace(this.variables, key, objectValue);
+		}
+
+		private static Type? ResolveBuilderType(string? typeName)
+		{
+			if (string.IsNullOrWhiteSpace(typeName)) return null;
+			typeName = typeName.Trim().TrimEnd('?');
+			return Type.GetType(typeName) ?? typeof(MemoryStack).Assembly.GetType(typeName) ?? Type.GetType("System." + typeName);
 		}
 
 		public void PutStatic(string key, object? value)

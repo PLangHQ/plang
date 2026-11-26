@@ -675,7 +675,9 @@ ReturnValue rules
 				}
 				else
 				{
-					vars += variable.PathAsVariable + " (type:" + (variable.Value?.GetType().FullName ?? "object") + "), ";
+					var type = variable.Value?.GetType() ?? variable.Type;
+					if (type == null || type == typeof(Nullable)) type = typeof(object);
+					vars += variable.PathAsVariable + " (type:" + type.FullName + "), ";
 
 				}
 			}

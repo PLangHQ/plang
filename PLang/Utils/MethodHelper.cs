@@ -34,6 +34,27 @@ namespace PLang.Utils;
 
 public class MethodHelper
 {
+	/// <summary>
+	/// The type of the value a module method gives the step's `write to %x%`: T of Task&lt;T&gt;, the first item of a tuple
+	/// such as (object?, IError?). Null when that is object, an error or nothing, so the caller knows no more than the llm.
+	/// </summary>
+	public static Type? ValueTypeOf(System.Reflection.MethodInfo? method)
+	{
+		var type = method?.ReturnType;
+		if (type == null || type == typeof(void) || type == typeof(Task) || type == typeof(ValueTask)) return null;
+		if (type.IsGenericType && (type.GetGenericTypeDefinition() == typeof(Task<>) || type.GetGenericTypeDefinition() == typeof(ValueTask<>)))
+		{
+			type = type.GetGenericArguments()[0];
+		}
+		if (type.IsGenericType && type.FullName?.StartsWith("System.ValueTuple") == true)
+		{
+			type = type.GetGenericArguments()[0];
+		}
+		type = Nullable.GetUnderlyingType(type) ?? type;
+		if (type == typeof(object) || typeof(IError).IsAssignableFrom(type)) return null;
+		return type;
+	}
+
 	private readonly ITypeHelper typeHelper;
 	private readonly ILogger logger;
 	private readonly IPLangContextAccessor contextAccessor;
@@ -156,9 +177,12 @@ public class MethodHelper
 					step.Instruction.Function = function;
 					if (instanceFunction.ReturnType != typeof(Task) && function.ReturnValues != null && function.ReturnValues.Count > 0)
 					{
+						var methodValueType = ValueTypeOf(instanceFunction);
 						foreach (var returnValue in function.ReturnValues)
 						{
-							if (memoryStack != null) memoryStack.PutForBuilder(returnValue.VariableName, returnValue.Type);
+							// The type the method returns; the llm's guess only when the method returns object.
+							object? type = (methodValueType != null && returnValue == function.ReturnValues[0]) ? methodValueType : returnValue.Type;
+							if (memoryStack != null) memoryStack.PutForBuilder(returnValue.VariableName, type);
 
 							ReturnObjectProperties.Add(returnValue.VariableName,
 								new ParameterType() { Name = returnValue.VariableName, FullTypeName = returnValue.Type });

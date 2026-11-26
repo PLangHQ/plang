@@ -45,7 +45,7 @@ namespace PLang.Modules.TerminalModule
 
 		[Description("Start a program that keeps running beside the app, and return it, so the step writes it to a %variable%. Each line the program writes is handed to onOutputLine (standard output) or onErrorLine (standard error) as %line%, one at a time and in order, with the process as %process%; onExit gets %exitCode% when it ends. Write to its standard input with `write out %text% to %variable%`, end it with `stop process %variable%`. Not for a command whose output the step waits for: that is RunTerminal.")]
 		[Example("start process \"claude\", parameters [\"-p\", \"--verbose\"], on output line call OnLine, on exit call OnExit, write to %bot%", @"appExecutableName=""claude"", parameters=[""-p"",""--verbose""], onOutputLine={Name=""OnLine""}, onExit={Name=""OnExit""}, ReturnValues = %bot%")]
-		public async Task<(object?, IError?)> StartProcess(
+		public async Task<(PlangProcess?, IError?)> StartProcess(
 			[Description("The program to run, e.g. claude, or a full path such as /usr/bin/node")] string appExecutableName,
 			[Description("The arguments handed to the program, one entry each, in the order the step writes them")] List<string>? parameters = null,
 			[Description("The directory the program runs in, stated by the step as e.g. `working dir: \"/srv/app\"`")] string? pathToWorkingDirInTerminal = null,

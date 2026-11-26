@@ -187,7 +187,7 @@ namespace PLang.Building
 				return (build.Instruction, invalidFunctionError);
 			}
 			logger.LogDebug($"Done with function validation - putting into memory and writing to file - {stopwatch.ElapsedMilliseconds} ");
-			var error = await stepBuilder.LoadVariablesIntoMemoryStack(instruction.Function, memoryStack, settings);
+			var error = await stepBuilder.LoadVariablesIntoMemoryStack(instruction.Function, memoryStack, settings, step.ModuleType);
 			if (error != null) return (build.Instruction, error);
 
 			instruction.ModuleType = step.ModuleType;
@@ -458,7 +458,18 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 				}
 
 				(var goalFound, var error) = GoalHelper.GetGoalPath(goalStep, goalToCall, goalParser.GetGoals(), prParser.GetSystemGoals());
-				if (error != null) return (instruction, new BuilderError(error) { Retry = false });
+				if (error != null)
+				{
+					// A goal the step names that does not exist is a typo for the developer to fix. A name the step does not
+					// contain at all ("Name", "then") is a wrong answer from the llm, built again with the reason.
+					var lastSegment = goalToCall.Name.TrimEnd('/').Split('/').Last();
+					bool stepNamesIt = System.Text.RegularExpressions.Regex.IsMatch(goalStep.Text ?? "", @"(?<!\w)" + System.Text.RegularExpressions.Regex.Escape(lastSegment) + @"(?!\w)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+					if (stepNamesIt) return (instruction, new BuilderError(error) { Retry = false });
+
+					var goalsInFile = goalStep.Goal?.GoalSteps == null ? "" : string.Join(", ", goalParser.GetGoals()
+						.Where(g => g.RelativeGoalPath == goalStep.Goal.RelativeGoalPath).Select(g => g.GoalName));
+					return (instruction, new StepBuilderError($"The goal to call \"{goalToCall.Name}\" is not a goal the step names. Use the goal name written in the step after `call` (goals in this file: {goalsInFile}).", goalStep, Retry: true));
+				}
 				if (goalFound != null)
 				{
 					//if (goalToCall.Path?.Equals(goalFound.RelativeGoalPath) == true) return (instruction, null);
