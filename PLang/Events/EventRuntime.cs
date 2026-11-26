@@ -344,7 +344,9 @@ namespace PLang.Events
 
 				if (!GoalHasBinding(goal, eve)) continue;
 
-				var result = await Run(eve, eve.Goal, eve.GoalStep, isBuilder: isBuilder);
+				// %!Event.SourceStep% / %!Event.SourceGoal% is the goal the event fired for. The calling goal stays the binding's
+				// goal in Events.goal: `end goal` / `end goal, and previous` in the event goal count their levels from it.
+				var result = await Run(eve, eve.Goal, goalStep, isBuilder: isBuilder);
 				if (result.Error != null) return (Variables, result.Error);
 
 				// Every binding that matches the goal must run. Returning on the first event that
