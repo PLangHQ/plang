@@ -34,7 +34,9 @@ Welcome to the documentation for the Plang programming language. This guide will
 - **Module Focus**: Use square brackets (`[...]`) to specify a module for a step, e.g., `[llm]` uses the LlmModule.
 
 ### Escape Characters
-- **Escaping**: Use the backslash (`\`) as an escape character for `%`, e.g., `\%ThisWillNotBeVariable\%`.
+- **Escaping**: Use the backslash (`\`) as an escape character for `%`, e.g., `\%ThisWillNotBeVariable\%`. `\%` is a literal `%`:
+  `- set %text% = "50\% off for %name%"` gives `50% off for Anna`, and in sql `- select task from todos where task like 'r\%', write to %rows%`
+  finds every task that starts with r. `like \%%q%\%` finds the tasks that contain the value of `%q%`.
 
 ## Example of Plang Source Code
 
