@@ -585,17 +585,14 @@ Be concise"));
 				{
 					if (nameInStep.Contains("%"))
 					{
-						var nameInStepLoaded = memoryStack.LoadVariables(nameInStep);
-
-						var nr = nameInStepLoaded.ToString().Replace("users", "").Replace("/", "").Replace("\\", "");
-						Console.WriteLine($"nr:{nr} | nameInStep:{nameInStep} nameInStepLoaded:{nameInStepLoaded} | dataSourceName:{dataSourceName} | context.DataSource.Name:{context.DataSource.Name} | connstring:{context.DataSource.ConnectionString}");
-
-						if (context.DataSource.ConnectionString.Contains(nr))
+						// The context's datasource (e.g. of an open transaction) is the step's only when it is the same
+						// database file: `users/%userId%` with %userId% 5 is not the database of user 15.
+						var localPath = await ResolveLocalPath(nameInStep);
+						if (localPath != null && context.DataSource.LocalPath != null
+							&& string.Equals(fileSystem.Path.GetFullPath(localPath), fileSystem.Path.GetFullPath(context.DataSource.LocalPath), StringComparison.Ordinal))
 						{
 							return (context.DataSource, null);
 						}
-						Console.WriteLine($"did not return datasource");
-
 					}
 					else
 					{
@@ -638,6 +635,28 @@ Be concise"));
 			}
 			return await ProcessDataSource(dataSource);
 
+		}
+
+		/// <summary>
+		/// The database file of a datasource name with variables, with the variables' current values put in, the same way
+		/// InitiateDatabase makes it. Null when the datasource is unknown or a variable is empty.
+		/// </summary>
+		private async Task<string?> ResolveLocalPath(string nameInStep)
+		{
+			var dataSources = await GetAllDataSources();
+			var dataSourceName = GetNameAndPathByVariable(nameInStep, null).dataSourceName;
+			var dataSource = dataSources.FirstOrDefault(p => p.Name.Equals(dataSourceName, StringComparison.OrdinalIgnoreCase));
+			if (dataSource?.LocalPath == null) return null;
+
+			var localPath = dataSource.LocalPath;
+			var variables = variableHelper.GetVariables(nameInStep, memoryStack);
+			for (int i = 0; i < variables.Count; i++)
+			{
+				var value = variables[i].Value?.ToString();
+				if (string.IsNullOrEmpty(value)) return null;
+				localPath = localPath.Replace($"%variable{i}%", value);
+			}
+			return localPath;
 		}
 
 		private async Task<(DataSource?, IError?)> InitiateDatabase(DataSource dataSource, string name, string cacheKey)
