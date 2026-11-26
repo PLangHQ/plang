@@ -1253,10 +1253,45 @@ namespace PLang.Modules.WebserverModule
 			List<ObjectValue> variables = new();
 			foreach (var item in dict)
 			{
-				variables.Add(new ObjectValue(item.Key.Replace("__dot__", "."), item.Value));
+				var name = item.Key.Replace("__dot__", ".");
+				var paramInfo = route.ParamInfos?.FirstOrDefault(p => p.Name.Trim('%').Equals(name, StringComparison.OrdinalIgnoreCase));
+				// `/product/%id%(number)`: the type is checked, so /product/abc does not run the goal with %id% "abc".
+				// A value that is not of the type is no match for this route (another route may match, else 404).
+				var (ok, value) = TypedRouteValue(item.Value, paramInfo);
+				if (!ok) return (false, null, null);
+				variables.Add(new ObjectValue(name, value));
 			}
 
 			return (true, variables, null);
+		}
+
+		private static (bool Ok, object? Value) TypedRouteValue(string value, ParamInfo? paramInfo)
+		{
+			if (paramInfo == null) return (true, value);
+			if (!string.IsNullOrEmpty(paramInfo.RegexValidation))
+			{
+				try
+				{
+					if (!System.Text.RegularExpressions.Regex.IsMatch(value, paramInfo.RegexValidation)) return (false, null);
+				}
+				catch (ArgumentException) { }
+			}
+			var type = paramInfo.Type?.Trim().ToLowerInvariant();
+			switch (type)
+			{
+				case null or "" or "string" or "text":
+					return (true, value);
+				case "number" or "int" or "integer" or "long" or "int64" or "int32":
+					return long.TryParse(value, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var l) ? (true, l) : (false, null);
+				case "decimal" or "double" or "float":
+					return decimal.TryParse(value, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var d) ? (true, d) : (false, null);
+				case "bool" or "boolean":
+					return bool.TryParse(value, out var b) ? (true, b) : (false, null);
+				case "guid":
+					return Guid.TryParse(value, out var g) ? (true, g) : (false, null);
+				default:
+					return (true, value);
+			}
 		}
 
 
