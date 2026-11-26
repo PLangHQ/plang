@@ -48,17 +48,27 @@ replaced.
 ```plang
 Start
 - [ui] set "/ui/default/layout.html" as default layout, default render variable "main"
-- start webserver, port: 8080, on start call AddRoutes
+- start webserver, port: 8080,
+    on start call AddRoutes,
+    on poll start call LoadUser,
+    on poll refresh call LoadUser,
+    on goal begin request call OnRequest
 
 AddRoutes
 - add route "/", call /pages/Home
 - add route "/me", call /pages/Me
 - add route "/api/whoami", content type application/json, call /api/WhoAmI
+
+OnRequest
+- if %Identity% is not empty then
+    - call goal LoadUser
 ```
 
-The layout is set once, for the whole app. The client keeps one connection open (`/?plang.poll=1`), and the server can
-send to the page on it. To run a goal when a page connects, add `on poll start call X` to `start webserver`; `on poll
-refresh call Y` runs when it connects again. Both are optional.
+- The layout is set once, for the whole app.
+- The client keeps one connection open (`/?plang.poll=1`), and the server can send to the page on it. `on poll start` runs
+  when a page connects, `on poll refresh` when it connects again.
+- `on goal begin request` runs before every route. Here it and the poll load the visitor (see 6), so every page knows
+  `%user%`.
 
 A page renders into the layout:
 
@@ -123,8 +133,45 @@ showing a shell.
 ## 6. One browser, one identity
 
 Each browser makes its own key, so a phone and a laptop are two identities, and a cleared browser is a new one. A person is
-the app's own record: keep a table of identities per user, and add a row when the person proves who they are in the new
-browser, for example with a code sent by mail. See [Identity](./Identity.md).
+the app's own record. Nothing in plang links a browser to a person; the app keeps a row per identity and points it at the
+user when the person proves who they are in that browser, for example with a code sent by mail.
+
+```plang
+Setup
+- create table users
+    columns: name(string, not null)
+- create table identities
+    columns: identity(string, not null), userAgent(string), userId(int)
+```
+
+```plang
+/ %user% for this identity, from the cache when it is there.
+LoadUser
+- get cache "User_%Identity%", write to %user%
+- if %user% is empty then
+    - call goal LoadUserFromDb
+
+/ The first time an identity is seen it gets a row. Then it is cached.
+LoadUserFromDb
+- call goal FindUser
+- if %user% is empty then
+    - insert into identities, identity=%Identity%, userAgent=%request!User-Agent%, write to %identityId%
+    - call goal FindUser
+- set cache "User_%Identity%" = %user%, for 20 min from last access
+
+FindUser
+- select i.id as identityId, i.userId, u.name from identities i left join users u on u.id = i.userId where i.identity = %Identity%, return 1 row, write to %user%
+```
+
+A goal then has three cases: no `%Identity%` (a new visitor's first load), an identity with no user yet (`%user.userId%`
+empty: the browser is not linked to a person), and a known user. Once the person has proven who they are:
+
+```plang
+- update identities set userId = %userId% where identity = %Identity%
+- remove cache "User_%Identity%"
+```
+
+The next request loads the user. See [Identity](./Identity.md).
 
 ## 7. Test it with a real browser
 
