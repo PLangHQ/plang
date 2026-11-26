@@ -292,6 +292,9 @@ namespace PLang.Building
 						await handler.ShowError(error, null);
 					}
 				}
+				// An exception stopped the build part way, so goals after it were never built. Without an error back
+				// the build ended with exit code 0, as if it had succeeded.
+				return [new BuilderError(error) { Goal = error.Goal, Step = error.Step }];
 
 			}
 			finally

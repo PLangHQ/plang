@@ -634,7 +634,7 @@ public class StepBuilder : IStepBuilder
 		string errorCount = "";
 		if (errors != null && errors.Count > 0)
 		{
-			errorCount = $"I tried {errorCount} times.";
+			errorCount = $"I tried {errors.Count} times. The last reason: {errors[^1].Message}";
 		}
 
 		string noBuildErrorMessage = $@"Could not find module for {step.Text}. {errorCount}";

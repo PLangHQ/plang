@@ -10,29 +10,33 @@ namespace PLang.Services.LlmService
 {
 	public class LlmCaching(IPLangFileSystem fileSystem, ISettings settings)
 	{
+		private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, bool> tablesCreated = new();
+		private static readonly object createLock = new();
+
+		// Goals build in parallel and each asks the cache. The file used to be made with File.Create, and a goal that
+		// opened it while another still held that handle failed with "being used by another process", which stopped
+		// the build. SQLite makes the file itself; the table is made once per file, under a lock.
 		private void CreateLlmCacheTable(string datasource)
 		{
-			var dbPath = datasource.Between("=", ";");
-			if (!File.Exists(dbPath))
+			if (tablesCreated.ContainsKey(datasource)) return;
+			lock (createLock)
 			{
+				if (tablesCreated.ContainsKey(datasource)) return;
+
+				var dbPath = datasource.Between("=", ";");
 				string? dirName = Path.GetDirectoryName(dbPath);
 				if (!string.IsNullOrEmpty(dirName) && !Directory.Exists(dirName))
 				{
 					var dir = Directory.CreateDirectory(dirName!);
 					dir.Attributes = FileAttributes.Directory | FileAttributes.Hidden;
 				}
-				else if (string.IsNullOrEmpty(dirName))
-				{
-					if (File.Exists(dbPath))
-					{
-						File.Delete(dbPath);
-					}
-				}
-				using (var fs = File.Create(dbPath))
-				{
-					fs.Close();
-				}
+				CreateTable(datasource);
+				tablesCreated[datasource] = true;
 			}
+		}
+
+		private static void CreateTable(string datasource)
+		{
 			using (IDbConnection connection = new SqliteConnection(datasource))
 			{
 				string sql = $@"CREATE TABLE IF NOT EXISTS LlmCache (

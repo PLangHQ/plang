@@ -218,7 +218,8 @@ namespace PLang.Building
 			string errorCount = "";
 			if (errors != null && errors.Count > 0)
 			{
-				errorCount = $"I tried {errors.Count} times.";
+				// The reason of the last try is what the user acts on, e.g. "write the action as an indented step".
+				errorCount = $"I tried {errors.Count} times. The last reason: {errors[^1].Message}";
 			}
 			return new InstructionBuilderError($@"Could not create instruction for {step.Text}. {errorCount}", step, step.Instruction,
 				Retry: false,
