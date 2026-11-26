@@ -692,10 +692,11 @@ namespace PLang.Modules.DbModule
 		[Description("Query sql statement that is fully from a %variable%. Since this is pure and dynamic execution on database, user MUST to define list of tables that are allowed to be queried")]
 		[Example(@"execute query %sql%, ds: %dataSource%, tables: users, products, write to %result%", @"sql=%sql%, dataSouceName=%dataSource%, tableAllowList=[""users"", ""products""]")]
 		[Effect(Effects.FromSql)]
-		public async Task<(Table?, IError?, Properties?)> QueryDynamicSql([HandlesVariable] string sql, List<string> tableAllowList, [HandlesVariable] List<string>? dataSourceNames = null, List<ParameterInfo>? parameters = null)
+		public async Task<(Table?, IError?, Properties?)> QueryDynamicSql([HandlesVariable] string sql, List<string>? tableAllowList = null, [HandlesVariable] List<string>? dataSourceNames = null, List<ParameterInfo>? parameters = null)
 		{
 			(sql, var sqlError) = LoadDynamicSql(sql);
 			if (sqlError != null) return (null, sqlError, null);
+			if (tableAllowList == null || tableAllowList.Count == 0) return (null, NoTableAllowList(sql), null);
 
 			(var dataSources, var error) = await GetDataSourcesByNames(dataSourceNames);
 			if (error != null) return (null, error, null);
@@ -720,16 +721,24 @@ namespace PLang.Modules.DbModule
 				FixSuggestion: "Write the step so the value goes in as a parameter, e.g. `select value from json_each(%json%)` as a select on a datasource, which sends @json as a parameter, then build again"));
 		}
 
+		private IError NoTableAllowList(string sql)
+		{
+			return new ProgramError($"The sql is run as written, so the step must name the tables it may touch: {sql}", goalStep, function,
+				Key: "NoTableAllowList",
+				FixSuggestion: "Add the tables to the step, e.g. `execute query %sql%, tables: users, orders`. A select from a json value (json_each(%json%)) with no table: `select value from json_each(%json%), ds: data, write to %rows%`");
+		}
+
 		internal async Task<(long, IError?)> ExecuteDynamicSql(DataSource dataSource, string sql, List<string> tableAllowList, List<ParameterInfo>? parameters = null)
 		{
 			return await Execute(dataSource, sql, tableAllowList, parameters);
 		}
 		[Description("Executes a sql statement that defined by user, such as `create index ..`, `drop ..`. Preferable not for select,update,insert statements. This statement will be validated. Since this is pure and dynamic execution on database, user MUST to define list of tables that are allowed to be updated")]
 		[Effect(Effects.WritesData)]
-		public async Task<(long RowsAffected, IError? Error)> Execute([HandlesVariable] string dataSourceName, [HandlesVariable] string sql, List<string> tableAllowList, List<ParameterInfo>? parameters = null)
+		public async Task<(long RowsAffected, IError? Error)> Execute([HandlesVariable] string sql, List<string>? tableAllowList = null, [HandlesVariable] string? dataSourceName = null, List<ParameterInfo>? parameters = null)
 		{
 			(sql, var sqlError) = LoadDynamicSql(sql);
 			if (sqlError != null) return (0, sqlError);
+			if (tableAllowList == null || tableAllowList.Count == 0) return (0, NoTableAllowList(sql));
 
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
 			if (error != null) return (0, error);
