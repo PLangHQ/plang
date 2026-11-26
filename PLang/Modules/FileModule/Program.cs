@@ -881,8 +881,21 @@ namespace PLang.Modules.FileModule
 			{
 				content = memoryStack.LoadVariables(content, emptyVariableIfNotFound).ToString();
 			}
-			await fileSystem.File.AppendAllTextAsync(absolutePath, content + seperator, encoding: FileHelper.GetEncoding(encoding));
+			// .NET appends by seeking to the end and writing there, so two appends to the same file at the same time
+			// wrote at the same place and one line was lost without an error. Appends to a file go one at a time.
+			var gate = AppendGates.GetOrAdd(absolutePath, _ => new SemaphoreSlim(1, 1));
+			await gate.WaitAsync();
+			try
+			{
+				await fileSystem.File.AppendAllTextAsync(absolutePath, content + seperator, encoding: FileHelper.GetEncoding(encoding));
+			}
+			finally
+			{
+				gate.Release();
+			}
 		}
+
+		private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, SemaphoreSlim> AppendGates = new(StringComparer.Ordinal);
 
 		[Effect(Effects.WritesFiles)]
 		public async Task CopyFiles(string directoryPath, string destinationPath, string searchPattern = "*", string[]? excludePatterns = null,
