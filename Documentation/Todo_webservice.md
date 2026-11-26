@@ -53,11 +53,12 @@ Start
 - start webserver, port: 8080, on start call AddRoutes
 
 AddRoutes
-- add route "/api/newtask", POST, call /api/NewTask
-- add route "/api/list", call /api/List
+- add route "/api/newtask", POST, content type application/json, call /api/NewTask
+- add route "/api/list", content type application/json, call /api/List
 ```
 
 **Explanation**: `start webserver` on its own answers 404 to every path: a goal in `api/` is only reached through a route. A route takes GET unless it says otherwise; `/api/newtask` takes POST.
+- `content type application/json` makes the route a json api: what its goal writes is the body of the answer, as plain json.
 - The goal is written with its folder, `call /api/NewTask`. A name without a folder is looked for in the folder of the goal that adds the route.
 - Adding the routes in `on start` is the recommended place. `add route` also works as a step after `start webserver`, but not before it: "No webserver is running to add the route to".
 - A path with no route and no file, or a route called with a method it does not take, answers 404.
@@ -97,11 +98,15 @@ List
 
 **Explanation**: This code defines an API endpoint for listing all tasks. It selects all entries from the `Todos` table and returns them.
 
-What the client receives depends on its `Accept` header:
-- `*/*` (curl, a browser) or `text/plain`: what the route writes, here the JSON list.
-- `application/json`: a message that holds it, `{"kind": "text", "status": 200, "content": "[{...}]", ...}`. `content` is the written text as a string.
+The route is `content type application/json`, so every client gets the list itself, `[{"id": 1, "task": "...", ...}]`,
+with `Content-Type: application/json`:
+- An object or list that is written out is the body as it is; text is sent as a json string, `"hello"`.
+- An error answers its status code with `{"error": "task cannot be empty", "key": "UserDefinedError", "status": 400}`.
+- Write the answer once: two `write out` steps give two json values one after the other.
+- Plang.js in a browser (`Accept: application/plang+json`) still gets the plang stream.
 
-A route cannot answer plain JSON to a client that sends `Accept: application/json`.
+On a route without `content type application/json`, a client that sends `Accept: application/json` gets each
+written message wrapped, `{"kind": "text", "status": 200, "content": "...", ...}`.
 
 ### Step 8: Build and Run the Application
 Ensure you are in the root of the `Todo` folder, then build and run the application:

@@ -293,6 +293,7 @@ namespace PLang.Modules.WebserverModule
 				var encoding = Encoding.GetEncoding(strEncoding);
 
 				resp.Headers["Content-Type"] = $"{routing.ResponseProperties.ContentType}; charset={encoding.BodyName}";
+				if (context.UserSink is Services.OutputStream.Sinks.HttpSink httpSink) httpSink.UseRouteResponse(routing.ResponseProperties);
 
 				resp.Headers.Add("X-Goal-Hash", goal.Hash);
 				resp.Headers.Add("X-Goal-Signature", goal.Signature);

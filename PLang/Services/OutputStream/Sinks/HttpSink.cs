@@ -26,7 +26,7 @@ public sealed class HttpSink : IOutputSink
 	readonly PLangContext context;
 	readonly WebserverProperties _props;
 	readonly ConcurrentDictionary<string, LiveConnection> _live;
-	readonly ITransformer _transformer;
+	ITransformer _transformer;
 
 	string _path;
 
@@ -55,7 +55,25 @@ public sealed class HttpSink : IOutputSink
 		if (_transformer is HtmlTransformer) _page = new HtmlPageBuffer();
 	}
 
-	readonly HtmlPageBuffer? _page;
+	HtmlPageBuffer? _page;
+
+	/// <summary>The content type the answer is written in, with its charset.</summary>
+	public string ContentType => $"{_transformer.ContentType}; charset={_transformer.Encoding.WebName}";
+
+	/// <summary>
+	/// The route that handles the request is known. A route whose response content type is application/json answers
+	/// with what its goal writes as plain json, unless the client asked for the plang stream (Plang.js).
+	/// </summary>
+	public void UseRouteResponse(ResponseProperties responseProperties)
+	{
+		if (_transformer is PlangTransformer) return;
+		if (!(responseProperties.ContentType?.StartsWith("application/json", StringComparison.OrdinalIgnoreCase) ?? false)) return;
+		if (_page?.Started == true) return;
+
+		var encoding = Encoding.GetEncoding(responseProperties.ResponseEncoding ?? _props.DefaultResponseProperties!.ResponseEncoding);
+		_transformer = new RawJsonTransformer(encoding);
+		_page = null;
+	}
 
 	/// <summary>
 	/// A classic GET holds its page until the request ends. True once a render or ask has started it,

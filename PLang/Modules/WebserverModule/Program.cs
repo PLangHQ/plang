@@ -479,9 +479,8 @@ public class Program : BaseProgram, IDisposable
 								if (!httpContext.Response.HasStarted)
 								{
 									httpContext.Response.StatusCode = error.StatusCode;
-
-									var encoding = Encoding.GetEncoding(webserverProperties.DefaultResponseProperties.ResponseEncoding);
-									httpContext.Response.ContentType = $"{webserverProperties.DefaultResponseProperties.ContentType}; charset={encoding.BodyName}";
+									// The error is written by the request's sink, so it goes out in the sink's format, e.g. plain json on a json route.
+									httpContext.Response.ContentType = httpOutputSink.ContentType;
 								}
 								if (error is UserInputError uie)
 								{
@@ -748,6 +747,10 @@ OnStartingWebserver
 	// /admin/dev/chat/%id%(number)/archive, which is a real route in one app, and the model then
 	// answered that step by retrieving this example instead of reading it, carrying goalId=%id%
 	// onto three steps that never mention it.
+	// A json route answers with what its goal writes as plain json (an object written out is the body), not the message
+	// envelope a client gets when it asks for application/json on another route.
+	[Example("add route /zoo/feed, content type application/json, call /zoo/Feed",
+		@"path=""/zoo/feed"", pathParameters=[], goalToCall={""Name"":""/zoo/Feed""}, responseProperties={""ContentType"":""application/json""}")]
 	[Example("add route /shop/%sku%/review, call /shop/Review productSku=%sku%",
 		@"path=""/shop/%sku%/review"", pathParameters=[{""Name"":""sku"",""VariableOrValue"":""%sku%""}], goalToCall={""Name"":""/shop/Review"",""Parameters"":{""productSku"":""%sku%""}}")]
 	public async Task<IError?> AddRoute([HandlesVariable] string path, List<ParamInfo> pathParameters, GoalToCallInfo goalToCall,
