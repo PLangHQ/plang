@@ -89,9 +89,13 @@ the time can be followed down one goal at a time.
 
 ```plang
 - select route, name, count(*) as loads, avg(duration_ms) as avg_ms, max(duration_ms) as max_ms
-    from slow_runs where created > %Now-7days%
+    from slow_runs where created > %Now-7days% and path not like '/events/\%'
     group by route, name order by avg_ms * loads desc, write to %slowest%
 ```
+
+The goals in `events/` are recorded too: the recording goals themselves, and with `--slowsteps` their steps show up in
+`slow_steps`. They are left out when reading, not when recording, because an extra condition on the path in the event makes
+the `if` harder to build right. `\%` is a literal `%` in the step; a bare `%` there makes the `like` match nothing.
 
 ```json
 [{"route": null, "name": "Setup", "loads": 1, "avg_ms": 2058.0, "max_ms": 2058},
