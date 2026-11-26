@@ -75,10 +75,21 @@ namespace PLang.Utils
 
 
 
+		/// <summary>`\%` in a step is a literal %, e.g. "50\% off" or a LIKE pattern, not the start or end of a variable.</summary>
+		public const string EscapedPercent = "\\%";
+		// Stands in for an escaped % while the variables are loaded; a private use character no text contains.
+		private const string PercentPlaceholder = "";
+
 		public object? LoadVariables(MemoryStack memoryStack, object? obj, bool emptyIfNotFound = true, object? defaultValue = null)
 		{
 			if (obj == null) return null;
 			if (obj.GetType().IsPrimitive) return obj;
+
+			if (obj is string escapedText && escapedText.Contains(EscapedPercent))
+			{
+				var loaded = LoadVariables(memoryStack, escapedText.Replace(EscapedPercent, PercentPlaceholder), emptyIfNotFound, defaultValue);
+				return loaded is string text ? text.Replace(PercentPlaceholder, "%") : loaded;
+			}
 
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			if (obj is string variableName)
@@ -740,7 +751,16 @@ namespace PLang.Utils
 					continue;
 				}
 
-				var ov = memoryStack.GetObjectValue(variable);
+				ObjectValue ov;
+				try
+				{
+					ov = memoryStack.GetObjectValue(variable);
+				}
+				catch (Exception) when (!LooksLikeVariableName(variable))
+				{
+					// Text between two % that is no variable name, e.g. `like '%' || @q || '%'` in sql, stays text.
+					continue;
+				}
 
 				if (!ov.Initiated)
 				{
@@ -754,13 +774,21 @@ namespace PLang.Utils
 
 			return variables;
 		}
+		// A variable starts with a letter, _ or ! after its %, e.g. %name%, %!error%, %list[0].x%.
+		private static bool LooksLikeVariableName(string variable)
+		{
+			var name = variable.Trim('%');
+			return name.Length > 0 && (char.IsLetter(name[0]) || name[0] == '_' || name[0] == '!');
+		}
+
 		private void LoadSetting(List<ObjectValue> variables, string variable, string content)
 		{
 			var settingsObjects = GetSettingObjectsValue(content);
 			variables.AddRange(settingsObjects);
 		}
 
-		public static readonly string VariablePattern = @"%[\p{L}\p{N}#'+-\[\]_\.\+\(\)\*\<\>\!\s\""\\]*%";
+		// A % written as \% is text, not a variable marker.
+		public static readonly string VariablePattern = @"(?<!\\)%[\p{L}\p{N}#'+-\[\]_\.\+\(\)\*\<\>\!\s\""\\]*(?<!\\)%";
 		// Declared after VariablePattern: static initializers run in textual order.
 		private static readonly Regex ContainsVariableRegex = new Regex(VariablePattern, RegexOptions.Compiled);
 		private static readonly Regex IsVariableRegex = new Regex($"^{VariablePattern}$", RegexOptions.Compiled);

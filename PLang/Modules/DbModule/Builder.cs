@@ -883,7 +883,7 @@ When the user points to a sql file (a path ending in .sql), the sql lives in tha
 	public async Task<IBuilderError?> BuilderExecuteDynamicSql(GoalStep step, Instruction instruction, DbGenericFunction gf)
 	{
 		string sql = gf.GetParameter<string>("sql");
-		var variables = variableHelper.GetVariables(sql, memoryStack);
+		var variables = SqlVariables.Find(sql);
 		if (variables.Count > 0)
 		{
 			logger.LogWarning($"  - ⚠️ Dynamic sql will not be validated - {sql}");
@@ -1441,10 +1441,11 @@ Reason:{error.Message}", step,
 		}
 
 
-		var variables = variableHelper.GetVariables(sql, memoryStack);
-		foreach (var variable in variables)
+		// Only the %variables% of the sql itself: a % inside a string literal is text. `like '%' || @q || '%'` was read
+		// as the variable "' || @q || '", which threw and failed the step.
+		foreach (var occurrence in SqlVariables.Find(sql).OrderByDescending(o => o.Index))
 		{
-			sql = sql.Replace(variable.PathAsVariable, "?");
+			sql = sql.Substring(0, occurrence.Index) + "?" + sql.Substring(occurrence.Index + occurrence.Length);
 		}
 
 
