@@ -35,7 +35,7 @@ OnRequest
   when a page connects, `on poll refresh` when it connects again.
 - `on goal begin request` runs before every route. Here it and the poll load the visitor (see 6), so every page knows
   `%user%`.
-- `on request begin` runs before every request, files included: `/js/plang/dist/v11/main.js` and `/plang-sw.js` too. Put a
+- `on request begin` runs before every request, files included: `/js/plang/dist/v12/main.js` and `/plang-sw.js` too. Put a
   check on `%Identity%` in `on goal begin request` or in the route. A check in `on request begin` that refuses anonymous
   requests also refuses the client's own files, and the client never loads.
 

@@ -216,9 +216,6 @@ export class Plang {
                 await UtilHelper.doDownloadResponse(res);
                 return;
             }
-            const body = res.body;
-            if (!body)
-                return null;
             const handleCtx = {
                 isOk: res.ok,
                 options: options,
@@ -226,6 +223,20 @@ export class Plang {
                 headers: headers,
                 url: url
             };
+            // A failed request with no message in its body (a 404 for a path with no route, a 502 from a proxy) still
+            // fails: onFailure gets an error made from the status. It got nothing and the page did nothing.
+            let handled = 0;
+            const failWithoutMessage = async () => {
+                if (res.ok || handled > 0)
+                    return;
+                const message = { kind: "error", status: res.status, key: "HttpError", content: `${res.status} ${res.statusText}`.trim() };
+                await this.handleResponse(JSON.stringify(message), handleCtx);
+            };
+            const body = res.body;
+            if (!body) {
+                await failWithoutMessage();
+                return null;
+            }
             const reader = body.getReader();
             const decoder = new TextDecoder();
             let buffer = "";
@@ -239,12 +250,15 @@ export class Plang {
                 for (const line of lines) {
                     if (!line.trim() || line.startsWith('\"ping\"'))
                         continue;
+                    handled++;
                     await this.handleResponse(line, handleCtx);
                 }
             }
             if (buffer.trim()) {
+                handled++;
                 await this.handleResponse(buffer, handleCtx);
             }
+            await failWithoutMessage();
             return null;
         }
         catch (e) {
