@@ -653,14 +653,19 @@ When the user points to a sql file (a path ending in .sql), the sql lives in tha
 				// resolve create-table steps in goals using a non-default datasource, which
 				// previously only worked in a full build (where earlier steps had populated it).
 				// Gated to CreateTable so a genuine typo in a select/insert/update still errors.
-				if (stepDataSource != null && methodsAndTables.ContainsMethod("CreateTable"))
+				// A table an earlier step of this goal creates (`create table products` then `insert into products`
+				// in a Setup goal) does not exist yet in the first build of an app, so no datasource has it.
+				var createdHere = tablesWithMissingDataSource.All(t => IsCreatedEarlierInGoal(step, t.Name));
+				var dataSourceForNew = stepDataSource ?? (methodsAndTables.DataSourceNames?.Count > 0 ? dataSources.FirstOrDefault() : dataSources.FirstOrDefault(p => p.IsDefault) ?? dataSources.FirstOrDefault());
+				if (stepDataSource != null && methodsAndTables.ContainsMethod("CreateTable") || createdHere && dataSourceForNew != null)
 				{
+					var target = stepDataSource ?? dataSourceForNew!;
 					foreach (var t in tablesWithMissingDataSource)
 					{
-						t.DataSource = stepDataSource;
-						t.DataSourceName = stepDataSource.NameInStep;
+						t.DataSource = target;
+						t.DataSourceName = target.NameInStep;
 					}
-					if (methodsAndTables.DataSource == null) methodsAndTables.DataSource = stepDataSource;
+					if (methodsAndTables.DataSource == null) methodsAndTables.DataSource = target;
 				}
 				else
 				{
@@ -695,6 +700,14 @@ When the user points to a sql file (a path ending in .sql), the sql lives in tha
 			}
 		}
 		return (methodsAndTables, null);
+	}
+
+	private static bool IsCreatedEarlierInGoal(GoalStep step, string tableName)
+	{
+		if (step.Goal?.GoalSteps == null || string.IsNullOrEmpty(tableName)) return false;
+		var pattern = @"\bcreate\s+table\s+(if\s+not\s+exists\s+)?[`""\[]?" + System.Text.RegularExpressions.Regex.Escape(tableName) + @"\b";
+		return step.Goal.GoalSteps.TakeWhile(p => p != step)
+			.Any(p => System.Text.RegularExpressions.Regex.IsMatch(p.Text ?? "", pattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase));
 	}
 
 	// The mirror is opened on first use, so it can exist and still hold nothing: that is a
