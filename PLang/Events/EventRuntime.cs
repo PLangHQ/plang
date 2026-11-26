@@ -344,9 +344,9 @@ namespace PLang.Events
 
 				if (!GoalHasBinding(goal, eve)) continue;
 
-				// %!Event.SourceStep% / %!Event.SourceGoal% is the goal the event fired for. The calling goal stays the binding's
-				// goal in Events.goal: `end goal` / `end goal, and previous` in the event goal count their levels from it.
-				var result = await Run(eve, eve.Goal, goalStep, isBuilder: isBuilder);
+				// The goal the event fired for is the source (%!Event.SourceStep%, %!Event.SourceGoal%) and the calling goal of
+				// the event goal: `end goal, and previous` in the event goal ends the event goal and that goal.
+				var result = await Run(eve, goal, goalStep, isBuilder: isBuilder);
 				if (result.Error != null) return (Variables, result.Error);
 
 				// Every binding that matches the goal must run. Returning on the first event that
@@ -737,7 +737,9 @@ namespace PLang.Events
 				//if (result.Error is IUserInputError) return (Variables, result.Error);
 				if (result.Error is EndGoal endGoal && !endGoal.Terminate)
 				{
-					if (GoalHelper.IsPartOfCallStack(eve.Goal, endGoal))
+					// An end goal that ends only the event goal (`end goal`) stays in it. One that ends the goal the event
+					// fired for or a goal above it (`end goal, and previous`) is passed on.
+					if (EndsGoalOrAbove(sourceGoal, endGoal))
 					{
 						return (Variables, endGoal);
 					}
@@ -766,6 +768,21 @@ namespace PLang.Events
 		}
 
 
+
+		/// <summary>
+		/// True when endGoal ends goal or one of the goals that called it.
+		/// </summary>
+		private static bool EndsGoalOrAbove(Goal? goal, EndGoal endGoal)
+		{
+			if (endGoal.EndingGoal == null) return false;
+			int counter = 0;
+			while (goal != null && counter++ < 100)
+			{
+				if (goal.RelativePrPath.Equals(endGoal.EndingGoal.RelativePrPath)) return true;
+				goal = goal.ParentGoal;
+			}
+			return false;
+		}
 
 		private bool EventMatchesError(EventBinding eve, IError error)
 		{

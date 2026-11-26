@@ -631,6 +631,8 @@ namespace PLang.Runtime
 				logger.LogDebug($" - Running Before event on goal - {context.CallStack.CurrentFrame.Duration}");
 
 				var result = await eventRuntime.RunGoalEvents(EventType.Before, goal);
+				// `end goal, and previous` in a before event ends this goal; the goal that called it goes on.
+				if (EndsThisGoal(result.Error, goal)) return (result.Variables, null);
 				if (result.Error != null) return result;
 
 				logger.LogDebug($" - Event done, now running Steps - {context.CallStack.CurrentFrame.Duration}");
@@ -643,6 +645,7 @@ namespace PLang.Runtime
 				logger.LogDebug($" - Steps done, running After events - {context.CallStack.CurrentFrame.Duration}");
 
 				result = await eventRuntime.RunGoalEvents(EventType.After, goal);
+				if (EndsThisGoal(result.Error, goal)) return (returnValues, stepError);
 				if (result.Error != null) return result;
 
 				logger.LogTrace($" - After events done - {context.CallStack.CurrentFrame.Duration}");
@@ -1359,6 +1362,12 @@ namespace PLang.Runtime
 			return prParser.GetGoalByAppAndGoalName(fileSystem.SystemDirectory, goalName, callingGoal);
 		}
 
+
+		private static bool EndsThisGoal(IError? error, Goal goal)
+		{
+			return error is EndGoal endGoal && !endGoal.Terminate
+				&& endGoal.EndingGoal?.RelativePrPath.Equals(goal.RelativePrPath) == true;
+		}
 
 		private IError? FindErrorHandled(MultipleError me)
 		{
