@@ -111,6 +111,9 @@ namespace PLang.Modules.TemplateEngineModule
 			var templateContext = new TemplateContext();
 			templateContext.EnableNullIndexer = true;
 			templateContext.EnableRelaxedMemberAccess = true;
+			// {{ user.name }} with no %user% is empty, as %user.name% is in a step, instead of failing the whole render
+			// ("Cannot get the member user.name for a null object").
+			templateContext.EnableRelaxedTargetAccess = true;
 			templateContext.MemberRenamer = member => member.Name;
 
 			logger.LogDebug($"             - Add variables: variables - {stopwatch.ElapsedMilliseconds}");
