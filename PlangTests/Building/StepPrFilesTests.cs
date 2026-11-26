@@ -191,6 +191,30 @@ namespace PLang.Building.Tests
 		}
 
 		[TestMethod]
+		public void GoalToCall_MustBeAGoalTheStepNames()
+		{
+			const string blockIf = "if %!Event.SourceGoal.IsSystem% is false and %!callstack.Frames[idx].DurationMs% > 300 then";
+			Assert.IsNotNull(ConditionalBuilder.UnnamedGoalToCall(blockIf, Function("CompoundCondition", new { Name = "then" })));
+			Assert.IsNotNull(ConditionalBuilder.UnnamedGoalToCall("if %x% > 2 then", Function("SimpleCondition", new { Name = "Process" })));
+			Assert.IsNull(ConditionalBuilder.UnnamedGoalToCall(blockIf, Function("CompoundCondition")));
+			Assert.IsNull(ConditionalBuilder.UnnamedGoalToCall(OneLineIf, Function("SimpleCondition", new { Name = "HandleOverLimit" }, new { Name = "IssueCodeNow" })));
+			Assert.IsNull(ConditionalBuilder.UnnamedGoalToCall("if %x% then call goal /api/Process", Function("IsTrue", new { Name = "/api/Process" })));
+		}
+
+		private static GenericFunction WithCondition(string json) => new("", "SimpleCondition",
+			new List<Parameter> { new("PLang.Modules.ConditionalModule.ConditionEvaluator+SimpleCondition", "condition", Newtonsoft.Json.Linq.JObject.Parse(json)) });
+
+		[TestMethod]
+		public void IsNot_OnlyWhenTheStepSaysNot()
+		{
+			var doubleNegation = WithCondition("""{"Kind":"Compound","Logic":"AND","Conditions":[{"Kind":"Simple","LeftValue":"%a%","Operator":"==","RightValue":false,"IsNot":true},{"Kind":"Simple","LeftValue":"%b%","Operator":">","RightValue":300,"IsNot":false}]}""");
+			Assert.IsNotNull(ConditionalBuilder.StrayNegation("if %a% is false and %b% > 300 then", doubleNegation));
+			Assert.IsNull(ConditionalBuilder.StrayNegation("if %a% is not false and %b% > 300 then", doubleNegation));
+			var plain = WithCondition("""{"Kind":"Simple","LeftValue":"%a%","Operator":"==","RightValue":false,"IsNot":false}""");
+			Assert.IsNull(ConditionalBuilder.StrayNegation("if %a% is false then", plain));
+		}
+
+		[TestMethod]
 		public void NoCallInTheCondition_NeedsNoGoal()
 		{
 			Assert.IsNull(ConditionalBuilder.MissingGoalToCall("if %x% > 2 then", Function("SimpleCondition")));

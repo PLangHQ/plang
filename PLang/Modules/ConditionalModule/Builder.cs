@@ -67,13 +67,15 @@ statments like `if %!error.Handled% does NOT mean it is false
 ");
 			}
 
-			return await Build(step, null);
+			return await Build(step, previousBuildError, null);
 		}
 
-		private async Task<(Instruction?, IBuilderError?)> Build(GoalStep step, CompilerError? error = null, int errorCount = 0)
-		{	
+		// previousBuildError goes on to the llm request: without it a retry is answered from the goal's batched answers
+		// (or the llm cache) with the same answer that failed validation.
+		private async Task<(Instruction?, IBuilderError?)> Build(GoalStep step, IBuilderError? previousBuildError, CompilerError? error = null, int errorCount = 0)
+		{
 
-			var result = await PrepareStep(step);
+			var result = await PrepareStep(step, previousBuildError);
 			if (result.Error != null) return result;
 
 			var gf = result.Instruction.Function as GenericFunction;
@@ -88,7 +90,10 @@ statments like `if %!error.Handled% does NOT mean it is false
 		// is evaluated and then does nothing.
 		public async Task<(Instruction, IBuilderError?)> BuilderValidate(GoalStep step, Instruction instruction, IGenericFunction gf)
 		{
-			var message = MissingCondition(step.Text, gf) ?? MissingGoalToCall(step.Text, gf);
+			var message = UnnamedGoalToCall(step.Text, gf) ?? StrayNegation(step.Text, gf);
+			if (message != null) return (instruction, new StepBuilderError(message, step));
+
+			message = MissingCondition(step.Text, gf) ?? MissingGoalToCall(step.Text, gf);
 			bool hasBlock = step.NextStep != null && step.NextStep.Indent > step.Indent;
 			message ??= DroppedAction(step.Text, hasBlock, gf);
 			if (message == null) return (instruction, null);
@@ -193,6 +198,75 @@ statments like `if %!error.Handled% does NOT mean it is false
 			return null;
 		}
 
+		private static readonly string[] ConditionWords = ["then", "else", "call", "goal", "if", "and", "or"];
+
+		/// <summary>
+		/// A goal to call must be one the step names. `if %a% is false and %b% > 300 then` with a block under it was built
+		/// with goalToCallIfTrue "then", which fails at build time ("Could not find goal matching then"). Returns the reason, or null.
+		/// </summary>
+		public static string? UnnamedGoalToCall(string? stepText, IGenericFunction gf)
+		{
+			if (string.IsNullOrEmpty(stepText) || gf?.Parameters == null) return null;
+
+			foreach (var parameterName in new[] { "goalToCallIfTrue", "goalToCallIfFalse" })
+			{
+				var name = GoalName(gf.Parameters.FirstOrDefault(p => string.Equals(p.Name, parameterName, StringComparison.OrdinalIgnoreCase))?.Value);
+				if (string.IsNullOrWhiteSpace(name)) continue;
+
+				var lastSegment = name.Trim().TrimEnd('/').Split('/').Last();
+				bool isKeyword = ConditionWords.Contains(lastSegment, StringComparer.OrdinalIgnoreCase);
+				bool isNamed = Regex.IsMatch(stepText, @"(?<!\w)" + Regex.Escape(lastSegment) + @"(?!\w)", RegexOptions.IgnoreCase);
+				if (!isKeyword && isNamed) continue;
+
+				return $"{parameterName} is \"{name}\", but the step names no goal of that name. Set {parameterName} only to a goal the step calls " +
+					"(`then call goal X`); a condition with an indented block under it and no `call` has no goal to call: leave both goals null.";
+			}
+			return null;
+		}
+
+		private static string? GoalName(object? value)
+		{
+			return value switch
+			{
+				null => null,
+				PLang.Models.GoalToCallInfo info => info.Name,
+				Newtonsoft.Json.Linq.JObject obj => (obj.GetValue("Name", StringComparison.OrdinalIgnoreCase))?.ToString(),
+				Newtonsoft.Json.Linq.JValue v => v.Value?.ToString(),
+				string s => s.TrimStart().StartsWith("{") ? GoalName(Newtonsoft.Json.Linq.JObject.Parse(s)) : s,
+				_ => GoalName(Newtonsoft.Json.Linq.JObject.FromObject(value))
+			};
+		}
+
+		/// <summary>
+		/// IsNot negates a test. A negative test is written with the negative operator (isNotEmpty, !=), so IsNot is true only
+		/// for a step that says not. `%x% is false` was built as Operator == RightValue false with IsNot true, a double negation,
+		/// so the condition was never true. Returns the reason, or null.
+		/// </summary>
+		public static string? StrayNegation(string? stepText, IGenericFunction gf)
+		{
+			if (string.IsNullOrEmpty(stepText) || gf?.Parameters == null) return null;
+			var condition = gf.Parameters.FirstOrDefault(p => string.Equals(p.Name, "condition", StringComparison.OrdinalIgnoreCase))?.Value;
+			if (condition == null) return null;
+
+			Newtonsoft.Json.Linq.JToken token;
+			try
+			{
+				token = condition is Newtonsoft.Json.Linq.JToken t ? t
+					: condition is string s ? Newtonsoft.Json.Linq.JToken.Parse(s)
+					: Newtonsoft.Json.Linq.JToken.FromObject(condition);
+			}
+			catch { return null; }
+
+			bool hasNegatedNode = token.SelectTokens("$..IsNot").Any(p => p.Type == Newtonsoft.Json.Linq.JTokenType.Boolean && (bool)p);
+			if (!hasNegatedNode) return null;
+
+			var text = Regex.Replace(stepText, "\"[^\"]*\"|'[^']*'", "\"\"");
+			if (Regex.IsMatch(text, @"\bnot\b|n't\b|!|\bnever\b|\bunless\b|\bneither\b|\bnor\b", RegexOptions.IgnoreCase)) return null;
+
+			return "A condition was built with IsNot true, but the step says no `not`. IsNot negates the test, so the condition is the opposite of the step " +
+				"(`%x% is false` built as Operator == RightValue false with IsNot true is never true). Set IsNot false; a negative test takes the negative operator.";
+		}
+
 		private static bool HasValue(IGenericFunction gf, string name)
 		{
 			var parameter = gf.Parameters?.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
@@ -207,14 +281,14 @@ statments like `if %!error.Handled% does NOT mean it is false
 				|| functionName == "RunInlineCode");
 		}
 
-		public async Task<(Instruction? Instruction, IBuilderError? Error)> PrepareStep(GoalStep step)
+		public async Task<(Instruction? Instruction, IBuilderError? Error)> PrepareStep(GoalStep step, IBuilderError? previousBuildError = null)
 		{
 			if (step.NextStep != null && step.NextStep.Indent > step.Indent)
 			{
 				AppendToSystemCommand("Next line of code will be executed if this return true");
 			}
 
-			return await base.Build(step);
+			return await base.Build(step, previousBuildError);
 		}
 
 		public async Task<(Instruction?, IBuilderError?)> MakeCode(GoalStep step, CompilerError? error = null, int errorCount = 0) {
@@ -299,7 +373,7 @@ statments like `if %!error.Handled% does NOT mean it is false
 			if (compilerError != null)
 			{
 				logger.LogWarning($"- Error compiling code - will ask LLM again ({errorCount} of 3 attempts) - Error:{compilerError}");
-				return await Build(step, compilerError, errorCount);
+				return await Build(step, null, compilerError, errorCount);
 			}
 			List<Parameter> parameters = new List<Parameter>();
 			parameters.Add(new Parameter(implementation.GetType().FullName, "implementation", implementation));

@@ -27,14 +27,14 @@ namespace PLang.Modules.WebserverModule
 
 			if (buildResult.Instruction.Function.Name == "AddRoute")
 			{
-				return await BuildFunction(step, buildResult.Instruction);
+				return await BuildFunction(step, buildResult.Instruction, previousBuildError);
 			}
 
 			return buildResult;
-			
+
 		}
 
-		private async Task<(Instruction? Instruction, IBuilderError? BuilderError)> BuildFunction(GoalStep step, Instruction instruction)
+		private async Task<(Instruction? Instruction, IBuilderError? BuilderError)> BuildFunction(GoalStep step, Instruction instruction, IBuilderError? previousBuildError)
 		{
 			var programType = typeHelper.GetRuntimeType(step.ModuleType);
 			if (programType == null) return (null, new InstructionBuilderError($"Could not load type {step.ModuleType}", step, instruction, Retry: false));
@@ -58,7 +58,8 @@ namespace PLang.Modules.WebserverModule
 {methodJson}
 ## functions details ##");
 
-			var instructionResult = await base.Build(step);
+			// A retry carries its error, so it is not answered from the goal's batched answers again.
+			var instructionResult = await base.Build(step, previousBuildError);
 
 			return instructionResult;
 
