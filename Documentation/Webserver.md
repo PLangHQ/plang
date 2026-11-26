@@ -11,7 +11,8 @@ database is the [Todo web service tutorial](./Todo_webservice.md).
 
 ## 1. Put the client in the app
 
-The client ships with plang in `js/plang/dist/`. Copy two things into the app:
+The client comes with every plang release, in its `js/plang/` folder: `dist/` (the client), `VERSION` (its number) and
+`README.md`. In the plang source it is `js/plang/dist/`. Copy two things into the app:
 
 ```
 myapp/
