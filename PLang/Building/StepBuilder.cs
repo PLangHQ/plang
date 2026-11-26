@@ -773,9 +773,9 @@ Builder will continue on other steps but not this one: ({step.Text}).
 	private static readonly Regex CacheForRegex = new(@"\bcache\w*\s+(for\s+)?(?<n>\d+(\.\d+)?)\s*(?<unit>ms|milliseconds?|s|sec|seconds?|m|min|minutes?|h|hours?|d|days?)\b", RegexOptions.IgnoreCase);
 
 	/// <summary>
-	/// A caching handler without a time or a key caches nothing: the runtime skips a step cache with no key. An answer
-	/// can come back that way (a batch of steps answered with an empty handler), so the time is read from the step's
-	/// `cache for 10 minutes` and the key is the step's text, whose %variables% give each value its own entry.
+	/// A caching handler without a time caches nothing. An answer can come back that way (a batch of steps answered with
+	/// an empty handler), so the time is read from the step's `cache for 10 minutes`. The key stays as the step wrote it;
+	/// with none, the runtime keys the cache by the step and the values of the variables it reads.
 	/// </summary>
 	private static CachingHandler? CompleteCachingHandler(GoalStep step, CachingHandler? handler)
 	{
@@ -798,10 +798,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			handler.TimeInMilliseconds = (long)ms;
 		}
 		if (handler.TimeInMilliseconds <= 0) return null;
-		if (string.IsNullOrWhiteSpace(handler.CacheKey))
-		{
-			handler.CacheKey = (step.Goal?.RelativeGoalPath ?? "") + ":" + (step.Text ?? "").Trim();
-		}
+		if (string.IsNullOrWhiteSpace(handler.CacheKey)) handler.CacheKey = null;
 		return handler;
 	}
 

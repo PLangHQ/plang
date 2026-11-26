@@ -51,17 +51,14 @@ jq '.GoalSteps[0].CacheHandler' ".build/report/OrderSummary/00. Goal.pr"
 {"TimeInMilliseconds": 300000, "CacheKey": "orderSummary_%status%_%from%", "CachingType": 1, "Location": "memory"}
 ```
 
-`CacheKey` must be your key with its variables, and `TimeInMilliseconds` your expiry. When it reads `"TimeInMilliseconds": 0` and
-`"CacheKey": null`, the step runs uncached on every call. Build that goal again, one step at a time:
-
-```bash
-plang build --batchbuild=off --rebuild
-```
+`CacheKey` is your key with its variables, or `null` when the step names none, and `TimeInMilliseconds` your expiry. When it reads
+`"TimeInMilliseconds": 0`, the step runs uncached on every call: build that goal again.
 
 ## Why this way
 
-- **No key at all** (`cache for 5 minutes`) builds with `"CacheKey": null`, and a step without a key is never cached: two calls with
-  an insert between them returned 1350 and then 6350.
+- **No key at all** (`cache for 5 minutes`) is cached too: the key is the step and the values of every %variable% the step reads,
+  hashed, so `where status=%status%` is one entry for `paid` and one for `refunded`, and a setting never sits in a key. Write a key
+  when the answer depends on something the step does not read, such as the user behind a query that does not name them.
 - **A fixed key** (`cache "orderSummary" for 5 minutes`) is the wrong-answer case above for every input at once.
 - **Every input in the key**, including the ones that are almost always the same: the one time a filter is changed is the time the
   wrong answer shows.

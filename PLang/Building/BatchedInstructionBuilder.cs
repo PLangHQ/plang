@@ -131,8 +131,10 @@ Examples:
 
 WaitForExecution: false only when the step says not to wait, e.g. `dont wait`.
 CachingHandler: only when the step asks for caching, e.g. `cache for 10 minutes`, as
- {""TimeInMilliseconds"": <the time in milliseconds>, ""CacheKey"": ""<key, may hold the step's %variables% so each value is cached on its own>"", ""CachingType"": 0 (sliding) or 1 (absolute), ""Location"": ""memory"" or ""disk""}
- `get https://api.x.com/%id%, cache for 10 minutes` => {""TimeInMilliseconds"": 600000, ""CacheKey"": ""api.x.com/%id%"", ""CachingType"": 1, ""Location"": ""memory""}
+ {""TimeInMilliseconds"": <the time in milliseconds>, ""CacheKey"": <the key only when the step names one, else null>, ""CachingType"": 0 (sliding) or 1 (absolute), ""Location"": ""memory"" or ""disk""}
+ `get https://api.x.com/%id%, cache for 10 minutes` => {""TimeInMilliseconds"": 600000, ""CacheKey"": null, ""CachingType"": 1, ""Location"": ""memory""}
+ `cache ""countT"" for 10 minutes` => {""TimeInMilliseconds"": 600000, ""CacheKey"": ""countT"", ""CachingType"": 1, ""Location"": ""memory""}
+ A step with no key is cached by the step and the values of the variables it reads, so never invent a key.
 LoggerLevel: null, or one of trace|debug|info|warning|error when the step names one.
 A note in parentheses after a step says what that step's method does not permit; obey it.";
 

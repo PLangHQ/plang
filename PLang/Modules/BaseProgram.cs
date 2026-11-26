@@ -677,20 +677,48 @@ namespace PLang.Modules
 			}
 		}
 
+		/// <summary>
+		/// The key the step is cached under. A key the step wrote (`cache "countT" for 10 minutes`) is used with its
+		/// %variables% loaded. With none, the key is the step (goal and step number) and the values of every %variable%
+		/// the step reads, hashed: `where status = %status%` is cached once for "open" and once for "closed", and a
+		/// setting or sensitive value is never kept in a key.
+		/// </summary>
+		private string? GetCacheKey()
+		{
+			var written = goalStep?.CacheHandler?.CacheKey;
+			if (!string.IsNullOrEmpty(written))
+			{
+				var loaded = memoryStack.LoadVariables(written)?.ToString();
+				return string.IsNullOrEmpty(loaded) ? written : loaded;
+			}
+			if (goalStep == null || goal == null) return null;
+
+			var key = new System.Text.StringBuilder();
+			key.Append(goal.RelativePrFolderPath).Append('#').Append(goalStep.Number);
+			foreach (var variable in VariableHelper.GetVariablesInText(goalStep.Text ?? "").Distinct(StringComparer.OrdinalIgnoreCase))
+			{
+				object? value;
+				try { value = memoryStack.LoadVariables(variable); } catch (Exception) { value = null; }
+				key.Append('\n').Append(variable).Append('=').Append(JsonConvert.SerializeObject(value));
+			}
+			var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(key.ToString())));
+			return ".cache/" + hash.ToLowerInvariant();
+		}
+
 		private async Task SetCachedItem(object? result)
 		{
 			if (result == null || goalStep == null || goalStep.CacheHandler == null) return;
-			if (goalStep?.CacheHandler?.CacheKey == null || goalStep.CacheHandler?.TimeInMilliseconds == null) return;
 
 			long time = goalStep.CacheHandler?.TimeInMilliseconds ?? 0;
-			if (time == 0) return;
+			if (time <= 0) return;
 
-			var cacheKey = memoryStack.LoadVariables(goalStep.CacheHandler?.CacheKey)?.ToString();
-			if (string.IsNullOrEmpty(cacheKey))
-			{
-				cacheKey = goalStep.CacheHandler?.CacheKey;
-				if (string.IsNullOrEmpty(cacheKey)) return;
-			}
+			var cacheKey = GetCacheKey();
+			if (string.IsNullOrEmpty(cacheKey)) return;
+
+			// The value is cached, not the variable holding it: a cached ObjectValue put back into the same variable on a
+			// hit became its own value, and reading it overflowed the stack.
+			if (result is ObjectValue objectValue) result = objectValue.Value;
+			if (result == null) return;
 
 			if (goalStep.CacheHandler?.Location == "disk")
 			{
@@ -730,7 +758,7 @@ namespace PLang.Modules
 
 		private async Task<bool> LoadCached(MethodInfo method, IGenericFunction function)
 		{
-			if (goalStep?.CacheHandler == null || goalStep.CacheHandler?.CacheKey == null) return false;
+			if (goalStep?.CacheHandler == null || goalStep.CacheHandler.TimeInMilliseconds <= 0) return false;
 
 			if (method.ReturnType == typeof(Task) || !goalStep.WaitForExecution)
 			{
@@ -747,12 +775,8 @@ namespace PLang.Modules
 			{
 				if (function.ReturnValues == null) return false;
 
-				var cacheKey = memoryStack.LoadVariables(goalStep.CacheHandler?.CacheKey)?.ToString();
-				if (string.IsNullOrEmpty(cacheKey))
-				{
-					cacheKey = goalStep.CacheHandler?.CacheKey;
-					if (string.IsNullOrEmpty(cacheKey)) return false;
-				}
+				var cacheKey = GetCacheKey();
+				if (string.IsNullOrEmpty(cacheKey)) return false;
 
 				if (goalStep.CacheHandler?.Location == "disk")
 				{
@@ -788,6 +812,7 @@ namespace PLang.Modules
 				else
 				{
 					var obj = await appCache.Get(cacheKey);
+					if (obj is ObjectValue cachedObjectValue) obj = cachedObjectValue.Value;
 					if (obj != null && function.ReturnValues != null && function.ReturnValues.Count > 0)
 					{
 						foreach (var returnValue in function.ReturnValues)
