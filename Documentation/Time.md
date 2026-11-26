@@ -47,6 +47,36 @@ Modify
 
 In this example, various time modifications are performed, such as adding days, milliseconds, and years, or subtracting days, seconds, and years from the current time.
 
+## Difference Between Two Dates
+
+Set a variable to a pattern `between` two dates:
+
+```plang
+Elapsed
+- set %t0% = %NowUtc%
+- call goal DoWork
+- set %ms% = totalmilliseconds between %t0% and %NowUtc%
+- write out "DoWork took %ms% ms"
+
+DaysLeft
+- set %days% = totaldays between %Now% and %dueDate%
+- set %hours% = totalhours between %Now% and %dueDate%
+```
+
+The result is a number (`3.0000004` for three days).
+
+Patterns: `totaldays`, `totalhours`, `totalminutes`, `totalseconds`, `totalmilliseconds`, `totalnanoseconds`, `ticks`.
+- Write the pattern as one word: `totalmilliseconds`, not `total milliseconds`. A pattern that is not on the list returns the whole time span (`00:00:00.1552299`), not a number.
+- `days`, `hours`, `minutes`, `seconds`, `milliseconds` and `nanoseconds` are only that part of the time span (`milliseconds` is 0-999), not the total. Use the `total` patterns for a difference.
+- Use the `set ... = <pattern> between` form. Other wordings (`get days between ...`) may be built as a math expression, which fails on dates.
+
+These do not work:
+
+```plang
+- set %diff% = %end.Subtract(start)%       / start without % is read as text, not a variable
+- set %diff% = %end.Subtract(%start%)%     / a variable cannot be written inside another %...%
+```
+
 ## Working with DateTime Methods and Properties
 
 Developers can use all methods and properties from the C# `DateTime` class. For a comprehensive list, refer to the [Microsoft documentation](https://learn.microsoft.com/en-us/dotnet/api/system.datetime?view=net-8.0).

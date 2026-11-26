@@ -154,6 +154,57 @@ Start
 This identity is automatically included in every HTTP request, any file access outside your app’s scope, and every message you send.
 
 
+### Signed requests: what the runtime checks for you
+
+| variable | what it is | when it is empty |
+|---|---|---|
+| `%Identity%` | the identity that signed the request being handled (the caller). On a run of the app itself, it is `%MyIdentity%` | the request was not signed |
+| `%MyIdentity%` | this app's own identity, as text | never |
+
+When a request carries a signature, the web server checks it before the route's goal runs:
+
+| check | answer when it fails |
+|---|---|
+| the signature is valid for the identity it names | 401 |
+| it is younger than 5 minutes, or before its own `expires` | 401, `X-Signature-Error: expired` |
+| its nonce has not been used before (a replay) | 403, `X-Signature-Error: nonce` |
+| it was made for this url (path and query) and method | 401 |
+| the signature is well formed (`created`, `identity`, a supported type) | 400 or 401 |
+
+A refused request does not run the route's goal, but it does reach the app's error events (`on app error`).
+
+So a goal never reads the signature, checks the time or keeps nonces. It only decides whether `%Identity%` is allowed:
+
+```plang
+DeployRoute
+- if %Identity% != %Settings.DeployerIdentity% then
+    - throw error "Not allowed", status code 401
+- call goal Deploy
+```
+
+Compare `%Identity%` with an identity you trust, never a token in the url, a cookie you made up or an ip address.
+
+Used nonces are kept in the memory of the running process. They are forgotten when the app restarts and are not shared between instances of the app. A nonce is only kept after a valid signature, so a refused request does not use it up.
+
+#### Every request is signed
+
+```plang
+- get https://example.com/report, write to %report%
+```
+
+This request is signed, and a plang server sees your identity in `%Identity%`. To send a request without a signature:
+
+```plang
+- get https://feeds.example.org/feed.xml, do not sign the request, write to %feed%
+```
+
+Use `do not sign the request` only for a server that cannot take the extra headers. Do not use it towards your own plang servers: the server then gets an empty `%Identity%`. A multipart form post, `download file` and sending binary are not signed.
+
+#### Calling your own app
+
+- **The same running app:** use `call goal`, not http.
+- **Another running instance of the app** (a test instance, a second server): a signed request to its route is right. When both share the app's identity, the receiving route checks `%Identity% == %MyIdentity%`.
+
 ### C# - Advanced Programming
 
 For developers interested in the technical workings of plang's Identity, especially in C#, the following will provide insight into how user requests are signed and verified.

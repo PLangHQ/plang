@@ -178,5 +178,6 @@ Then restart the machine once, before you have users, and watch it come back on 
 
 ## See also
 
+- [Deploying a new version](./Deploy.md) for testing a new version on a copy of the production databases before it goes live.
 - [Startup parameters](./StartupParameters.md) for `live=1` and the rest.
 - [Identity in the browser](./IdentityInTheBrowser.md) if the app serves people rather than machines.

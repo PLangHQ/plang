@@ -28,6 +28,35 @@ When you reference a setting like `%Settings.MyKey%` in your Plang code, Plang w
 
 To change or remove a key, you will need to open the `.db/system.sqlite` database with a database tool.
 
+## A missing setting when no one is there
+
+On a server, in a test or with stdin closed, there is no one to answer the question. The answer is then empty: the step goes on with
+an empty value, the run does not fail, and an empty row is stored, so the setting looks "set" from then on. A real value has to
+overwrite it later.
+
+So never rely on a setting being absent:
+
+- A test instance sets a dummy for **every** `%Settings.X%` the app reads ([Mocking a provider](./TalkingToAnApi.md#mocking-a-provider-for-a-test-instance)).
+- A deploy check compares the `%Settings.X%` names used in the goals with `select Key from Settings` and fails by name for any
+  that is missing ([Deploying a new version](./Deploy.md)).
+
+## The environment is part of the key
+
+`set environment "production"` makes `%Settings.X%` read the row `production.X`; `dev` reads `dev.X`. `production` is the default.
+A copy of the production `system.sqlite` has `production.` rows only, so a test instance that runs as `dev` finds none of them. Run a
+test instance with the same environment as production.
+
+## Two different rows can share a name
+
+`%Settings.OpenAiKey%` is a row owned by the settings class. The runtime's own llm service reads its own row, owned by the service,
+under the same key name. Setting one does not change the other. To block or replace the key for `[llm]` steps, change the service's
+row, not only `%Settings.OpenAiKey%`.
+
+## The setup ledger lives here too
+
+The list of setup steps that have already run is a row in the same file (`production.SetupRunOnce`, per environment). A copy of
+`system.sqlite` carries it, so a test copy does not repeat setup that production already ran. See [Setup and migrations](./SetupAndMigrations.md).
+
 ## Advanced Customization
 
 For advanced users, Plang allows customization of the settings service. This is useful if you want to use a custom storage medium for settings, such as environment files, cloud secret managers, or other secure storage solutions.

@@ -85,6 +85,7 @@ Explore plang's features and capabilities:
         - **[Error Handling](https://github.com/PLangHQ/plang/blob/main/Documentation/ErrorHandler.md)**: How to handle errors in Plang
         - **[Cache Handling](https://github.com/PLangHQ/plang/blob/main/Documentation/CachingHandler.md)**: How to cache in Plang 
         - **[Events](https://github.com/PLangHQ/plang/blob/main/Documentation/Events.md)**: Learn about event-driven programming in plang. 
+        - **[Iroh](https://github.com/PLangHQ/plang/blob/main/Documentation/Iroh.md)**: Tell another plang app what to do, peer to peer by key: listen, connect, push and pull, and a peer that goes away.
     - **Runtime**
         - **[Runtime Lifecycle](https://github.com/PLangHQ/plang/blob/main/Documentation/RuntimeLifecycle.md)**: Sequence of operations when running plang           
         - **[Startup parameters](https://github.com/PLangHQ/plang/blob/main/Documentation/StartupParameters.md)**: Lists out what parameters can be injected at startup
@@ -94,9 +95,12 @@ Explore plang's features and capabilities:
         - **[Identity in the browser](https://github.com/PLangHQ/plang/blob/main/Documentation/IdentityInTheBrowser.md)**: Where the identity comes from in a browser, which requests carry it, and what that decides about the first page load, sign in, images and webhooks.
         - **[ask user](https://github.com/PLangHQ/plang/blob/main/Documentation/AskUser.md)**: Why `ask user` is `Console.ReadLine`, what survives the answer on a stateless web request and what does not, how the callback resumes the goal, and why a form is one shot.
         - **[Setup and migrations](https://github.com/PLangHQ/plang/blob/main/Documentation/SetupAndMigrations.md)**: Setup.goal is a log of what already happened, the two run once mechanisms, and why editing a create statement is not a migration.
-        - **[Writing goals that behave](https://github.com/PLangHQ/plang/blob/main/Documentation/WritingGoals.md)**: One decision per goal, why `end goal` inside an `if` is a trap, and what a called goal hands back.
+        - **[Pitfalls](https://github.com/PLangHQ/plang/blob/main/Documentation/Pitfalls.md)**: Steps that build to the wrong thing, values and methods that surprise, variables between goals; each with the wording that works.
+        - **[Writing goals that behave](https://github.com/PLangHQ/plang/blob/main/Documentation/WritingGoals.md)**: One decision per goal, why `end goal` inside an `if` is a trap, and what a called goal shares with its caller.
         - **[Talking to an api](https://github.com/PLangHQ/plang/blob/main/Documentation/TalkingToAnApi.md)**: Keys with a dash in them, form and multipart posts, webhooks, and the mock that quietly stops matching.
         - **[Running on your own server](https://github.com/PLangHQ/plang/blob/main/Documentation/RunningOnAServer.md)**: Runtime and app on a linux box, systemd, TLS straight from plang with no proxy, deploys, a watchdog, and rollback.
+        - **[Recommended app structure](https://github.com/PLangHQ/plang/blob/main/Documentation/RecommendedAppStructure.md)**: Four levels, from a console app to a web app with real users and data, and what each level adds.
+        - **[Deploying a new version](https://github.com/PLangHQ/plang/blob/main/Documentation/Deploy.md)**: A new runtime or new goals on a copy of the production databases first, with mocked providers and a check that fails the deploy.
         - **[Agents](https://github.com/PLangHQ/plang/blob/main/Documentation/Agents.md)**: One step runs the loop, tools are goals, three events draw it; what to put in the prompt and what to attach to results.
     - **Extending the language**
         - **[Modules](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/README.md)**: Learn how to extend the language. Discover the different modules available in plang and their capabilities. 
