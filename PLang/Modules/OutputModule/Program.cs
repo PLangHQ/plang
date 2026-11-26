@@ -416,6 +416,34 @@ namespace PLang.Modules.OutputModule
 			return await sink.SendAsync(textMessage);
 		}
 
+		[Description("Write content to a %variable% that holds where it goes: a process started with `start process` gets it as one line on its standard input. Choose this when the step writes out TO a %variable%, e.g. `write out %json% to %bot%`; `write out %x%` without `to %variable%` is Write. Text is written as it is, any other value as one line of json.")]
+		[Example("write out %json% to %bot%", @"content=""%json%"", to=""%bot%""")]
+		[Example("write out \"hello\" to %process%", @"content=""hello"", to=""%process%""")]
+		public async Task<IError?> WriteTo(object? content, object? to)
+		{
+			string line = content switch
+			{
+				null => "",
+				string text => text,
+				Newtonsoft.Json.Linq.JToken token => token.ToString(Newtonsoft.Json.Formatting.None),
+				_ => Newtonsoft.Json.JsonConvert.SerializeObject(content, Newtonsoft.Json.Formatting.None)
+			};
+
+			if (to is TerminalModule.PlangProcess process)
+			{
+				try
+				{
+					await process.WriteLine(line);
+					return null;
+				}
+				catch (Exception ex) when (ex is InvalidOperationException || ex is IOException)
+				{
+					return new ProgramError($"Could not write to {process}: {ex.Message}", goalStep, function, Exception: ex);
+				}
+			}
+
+			return new ProgramError($"Cannot write out to {(to == null ? "an empty variable" : to.GetType().Name)}. A %variable% to write to holds a process started with `start process`.", goalStep, function);
+		}
 
 		}
 }

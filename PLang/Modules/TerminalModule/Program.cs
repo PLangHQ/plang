@@ -29,15 +29,114 @@ namespace PLang.Modules.TerminalModule
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ProgramFactory programFactory;
 		private readonly IEngine engine;
+		private readonly IPseudoRuntime pseudoRuntime;
 		public static readonly string DefaultOutputVariable = "__Terminal_Output__";
 		public static readonly string DefaultErrorOutputVariable = "__Terminal_Error_Output__";
-		public Program(ILogger logger, ISettings settings, IPLangFileSystem fileSystem, ProgramFactory programFactory, IEngine engine) : base()
+		public const string ProcessKeepAliveKind = "Process";
+		public Program(ILogger logger, ISettings settings, IPLangFileSystem fileSystem, ProgramFactory programFactory, IEngine engine, IPseudoRuntime pseudoRuntime) : base()
 		{
 			this.logger = logger;
 			this.settings = settings;
 			this.fileSystem = fileSystem;
 			this.programFactory = programFactory;
 			this.engine = engine;
+			this.pseudoRuntime = pseudoRuntime;
+		}
+
+		[Description("Start a program that keeps running beside the app, and return it, so the step writes it to a %variable%. Each line the program writes is handed to onOutputLine (standard output) or onErrorLine (standard error) as %line%, one at a time and in order, with the process as %process%; onExit gets %exitCode% when it ends. Write to its standard input with `write out %text% to %variable%`, end it with `stop process %variable%`. Not for a command whose output the step waits for: that is RunTerminal.")]
+		[Example("start process \"claude\", parameters [\"-p\", \"--verbose\"], on output line call OnLine, on exit call OnExit, write to %bot%", @"appExecutableName=""claude"", parameters=[""-p"",""--verbose""], onOutputLine={Name=""OnLine""}, onExit={Name=""OnExit""}, ReturnValues = %bot%")]
+		public async Task<(object?, IError?)> StartProcess(
+			[Description("The program to run, e.g. claude, or a full path such as /usr/bin/node")] string appExecutableName,
+			[Description("The arguments handed to the program, one entry each, in the order the step writes them")] List<string>? parameters = null,
+			[Description("The directory the program runs in, stated by the step as e.g. `working dir: \"/srv/app\"`")] string? pathToWorkingDirInTerminal = null,
+			[Description("The goal called for each line on standard output, `on output line call X`")] GoalToCallInfo? onOutputLine = null,
+			[Description("The goal called for each line on standard error, `on error line call X`")] GoalToCallInfo? onErrorLine = null,
+			[Description("The goal called when the program has ended, `on exit call X`")] GoalToCallInfo? onExit = null,
+			[Description("A name for the process, shown in runtime stats; the program name when the step gives none")] string? name = null)
+		{
+			var startInfo = new ProcessStartInfo { FileName = ResolveExecutable(appExecutableName), WorkingDirectory = ResolveWorkingDir(pathToWorkingDirInTerminal) };
+			foreach (var parameter in parameters ?? []) if (parameter != null) startInfo.ArgumentList.Add(parameter);
+
+			var root = engine;
+			while (root.ParentEngine != null) root = root.ParentEngine;
+
+			// The goals run as the app's own, on a context of their own: not on the context of the step that started the
+			// process, which may be a request that has ended long before the program writes its next line.
+			var processContext = new PLangContext(MemoryStack.New(root.Container, root), root, ExecutionMode.Console);
+			processContext.CallingStep = goalStep;
+			processContext.CallStack.EnterGoal(goal);
+			var callingGoal = goal;
+			PlangProcess? plangProcess = null;
+
+			async Task Call(GoalToCallInfo goalToCall, string variableName, object value)
+			{
+				contextAccessor.Current = processContext;
+				processContext.MemoryStack.Clear();
+				var call = new GoalToCallInfo(goalToCall.Name, new Dictionary<string, object?>(goalToCall.Parameters ?? new())) { Path = goalToCall.Path };
+				call.Parameters[variableName] = value;
+				call.Parameters["process"] = plangProcess;
+				using var origin = RunOrigin.App();
+				var (_, task, error) = await pseudoRuntime.RunGoal(root, contextAccessor, fileSystem.RelativeAppPath, call, callingGoal, waitForExecution: false);
+				if (error != null)
+				{
+					logger.LogError($"{goalToCall.Name} for process {plangProcess?.Name}: {error.Message}");
+					return;
+				}
+				if (task is Task running) await running;
+			}
+
+			try
+			{
+				plangProcess = PlangProcess.Start(startInfo, name ?? appExecutableName,
+					onOutputLine == null ? null : line => Call(onOutputLine, "line", line),
+					onErrorLine == null ? null : line => Call(onErrorLine, "line", line),
+					onExit == null ? null : exitCode => Call(onExit, "exitCode", exitCode));
+			}
+			catch (Exception ex) when (ex is System.ComponentModel.Win32Exception || ex is InvalidOperationException)
+			{
+				return (null, new ProgramError($"Could not start {appExecutableName}: {ex.Message}", goalStep, function, Exception: ex));
+			}
+
+			var registry = root.KeepAliveRegistry;
+			registry.Add(ProcessKeepAliveKind, plangProcess.Name, plangProcess);
+			var started = plangProcess;
+			_ = started.Completion.ContinueWith(_ => registry.Remove(started, ProcessKeepAliveKind, dispose: false), TaskScheduler.Default);
+
+			return (plangProcess, null);
+		}
+
+		[Description("End a program started with `start process`, e.g. `stop process %bot%`. Its onExit goal is called.")]
+		[Example("stop process %bot%", @"process=""%bot%""")]
+		public async Task<IError?> StopProcess(object process)
+		{
+			if (process is not PlangProcess plangProcess)
+			{
+				return new ProgramError($"{process ?? "null"} is not a process started with `start process`", goalStep, function);
+			}
+			plangProcess.Stop();
+			await Task.WhenAny(plangProcess.Completion, Task.Delay(5000));
+			return null;
+		}
+
+		private string ResolveWorkingDir(string? pathToWorkingDirInTerminal)
+		{
+			if (!string.IsNullOrWhiteSpace(pathToWorkingDirInTerminal)) return GetPath(pathToWorkingDirInTerminal);
+			if (Goal != null && Goal.IsSystem && context.CallingStep != null) return context.CallingStep.Goal.AbsoluteGoalFolderPath;
+			return (Goal != null) ? Goal.AbsoluteGoalFolderPath : fileSystem.GoalsPath;
+		}
+
+		private string ResolveExecutable(string appExecutableName)
+		{
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && string.IsNullOrEmpty(Path.GetExtension(appExecutableName)))
+			{
+				appExecutableName = appExecutableName + ".exe";
+			}
+			var fileNameWithPath = GetPath(appExecutableName);
+			if (fileSystem.File.Exists(fileNameWithPath)) return fileNameWithPath;
+			fileNameWithPath = GetPath(Path.Join("/bin", appExecutableName));
+			if (fileSystem.File.Exists(fileNameWithPath)) return fileNameWithPath;
+			// not found as a file, so it must be on PATH
+			return appExecutableName;
 		}
 
 		public async Task Read(string? variableName)

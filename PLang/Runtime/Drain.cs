@@ -130,6 +130,8 @@ namespace PLang.Runtime
 			phase.Restart();
 			int liveClosed = await CloseLiveConnections(webservers.Select(p => p.Properties));
 			int irohClosed = await CloseIroh();
+			// Programs started with `start process` belong to this process; the one taking over starts its own.
+			Modules.TerminalModule.PlangProcess.StopAll();
 
 			var stopsDone = Task.WhenAll(stops);
 

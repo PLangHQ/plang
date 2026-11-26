@@ -19,7 +19,7 @@ namespace PLangTests.Modules.PythonModule
 		public void Init()
 		{
 			base.Initialize();
-			terminalProgram = new PLang.Modules.TerminalModule.Program(logger, settings, fileSystem, programFactory, engine);
+			terminalProgram = new PLang.Modules.TerminalModule.Program(logger, settings, fileSystem, programFactory, engine, pseudoRuntime);
 			terminalProgram.Init(container, null, null, null, null);
 
 		}
