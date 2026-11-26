@@ -30,15 +30,48 @@ To change or remove a key, you will need to open the `.db/system.sqlite` databas
 
 ## A missing setting when no one is there
 
-On a server, in a test or with stdin closed, there is no one to answer the question. The answer is then empty: the step goes on with
-an empty value, the run does not fail, and an empty row is stored, so the setting looks "set" from then on. A real value has to
-overwrite it later.
+The question is asked only when someone can answer it.
+
+- **In a web request, a scheduled job or a goal called with `dont wait`** a missing setting is an error, `MissingSetting` (500):
+  "The setting production.X has no value". The step stops, and the error goes to the app's error handler like any other. Nothing
+  is asked and nothing is stored.
+- **At the command line with stdin closed** (a script, `< /dev/null`) the question gets an empty answer: the step goes on with an
+  empty value, the run does not fail, and an empty row is stored, so the setting looks "set" from then on. A real value has to
+  overwrite it later.
 
 So never rely on a setting being absent:
 
 - A test instance sets a dummy for **every** `%Settings.X%` the app reads ([Mocking a provider](./TalkingToAnApi.md#mocking-a-provider-for-a-test-instance)).
 - A deploy check compares the `%Settings.X%` names used in the goals with `select Key from Settings` and fails by name for any
   that is missing ([Deploying a new version](./Deploy.md)).
+
+## A secret stays in `%Settings.X%`
+
+Write `%Settings.X%` in the step that uses it. Never copy it into a variable first:
+
+```plang
+- get https://api.example.com/servers, headers {"Authorization": "Bearer %Settings.ApiToken%"}, write to %servers%
+```
+
+When that step fails, the error shows the step as written, `Bearer %Settings.ApiToken%`, and never the value. A variable is shown
+with its value: after `set %token% = %Settings.ApiToken%`, a failing step that uses `%token%` prints `%token% => "the token"` in
+the error, and the error is logged and may be stored.
+
+The name of a setting cannot be built from a variable: `%Settings.Token%project%%` is not read as `Settings.TokenFinland`, and the
+request goes out with the wrong text and no error. To pick one of several keys, call one goal per key:
+
+```plang
+Servers
+- if %project% == "germany" then call GetGermany, else GetFinland
+
+GetGermany
+- get https://api.example.com/servers, headers {"Authorization": "Bearer %Settings.TokenGermany%"}, write to %servers%
+
+GetFinland
+- get https://api.example.com/servers, headers {"Authorization": "Bearer %Settings.TokenFinland%"}, write to %servers%
+```
+
+The called goal shares the caller's variables, so `%servers%` is there in `Servers` after the call.
 
 ## The environment is part of the key
 
