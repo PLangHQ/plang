@@ -69,7 +69,8 @@ OnRequest
     - call goal LoadUser
 ```
 
-- The layout is set once, for the whole app.
+- The layout is set once, for the whole app. A layout set while a request is handled (in a route or an event of the
+  request) is for that request only and wins over the app's; other requests keep the app's layout.
 - The client keeps one connection open (`/?plang.poll=1`), and the server can send to the page on it. `on poll start` runs
   when a page connects, `on poll refresh` when it connects again.
 - `on goal begin request` runs before every route. Here it and the poll load the visitor (see 6), so every page knows

@@ -89,11 +89,33 @@ namespace PLang.Modules.UiModule
 
 
 
+			if (IsRequest())
+			{
+				// A layout set while handling a request is for that request only.
+				context.Items.TryGetValue(RequestLayoutsKey, out object? requestObj);
+				var requestLayouts = WithLayout(requestObj as List<LayoutOptions>, options);
+				context.Items.AddOrReplace(RequestLayoutsKey, requestLayouts);
+				return (requestLayouts, null);
+			}
+
 			var layoutContext = LayoutContext();
 			layoutContext.TryGetValue("Layouts", out object? obj);
-			// A new list each time: requests read the list while another goal may set a layout.
-			var layouts = (obj as List<LayoutOptions>)?.ToList() ?? new List<LayoutOptions>();
+			var layouts = WithLayout(obj as List<LayoutOptions>, options);
+			layoutContext.AddOrReplace("Layouts", layouts);
+			return (layouts, null);
+		}
 
+		private const string RequestLayoutsKey = "!Layouts";
+
+		private bool IsRequest() => context != null && (context.ExecutionMode == ExecutionMode.HttpRequest || context.HttpContext != null);
+
+		/// <summary>
+		/// A new list each time, with options in place of the layout of the same name: requests read a list while another
+		/// goal may set a layout.
+		/// </summary>
+		private static List<LayoutOptions> WithLayout(List<LayoutOptions>? current, LayoutOptions options)
+		{
+			var layouts = current?.ToList() ?? new List<LayoutOptions>();
 			var idx = layouts.FindIndex(p => p.Name == options.Name);
 			if (idx == -1)
 			{
@@ -103,14 +125,12 @@ namespace PLang.Modules.UiModule
 			{
 				layouts[idx] = options;
 			}
-			layoutContext.AddOrReplace("Layouts", layouts);
-			return (layouts, null);
+			return layouts;
 		}
 
 		/// <summary>
-		/// Layouts are set for the whole app, e.g. in Start, and every request reads them. Each engine in the pool has its
-		/// own app context, so they are kept on the app's root engine: a layout set in Start reached no request, and one
-		/// set in a request only the requests that got the same engine.
+		/// Layouts set outside a request, e.g. in Start, are for the whole app and every request reads them. Each engine in
+		/// the pool has its own app context, so they are kept on the app's root engine.
 		/// </summary>
 		private PLangAppContext LayoutContext()
 		{
@@ -203,20 +223,26 @@ Attribute: Member is the key in the SetAttribute js method, make sure to convert
 		}
 
 
+		/// <summary>
+		/// The layout of name set in this request, else the one set for the whole app.
+		/// </summary>
 		private LayoutOptions? GetLayoutOptions(string? name = null)
 		{
-			LayoutContext().TryGetValue("Layouts", out object? obj);
-			var layouts = obj as List<LayoutOptions>;
-			if (layouts == null)
-			{
-				return null;
-			}
 			if (string.IsNullOrEmpty(name))
 			{
 				name = "default";
 			}
 
-			return layouts.FirstOrDefault(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+			if (context != null && context.Items.TryGetValue(RequestLayoutsKey, out object? requestObj)
+				&& requestObj is List<LayoutOptions> requestLayouts)
+			{
+				var requestLayout = requestLayouts.FirstOrDefault(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+				if (requestLayout != null) return requestLayout;
+			}
+
+			LayoutContext().TryGetValue("Layouts", out object? obj);
+			var layouts = obj as List<LayoutOptions>;
+			return layouts?.FirstOrDefault(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 		}
 
 		private bool CanRenderMainLayout(IOutputSink sink)
