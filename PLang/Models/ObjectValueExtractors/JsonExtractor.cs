@@ -61,7 +61,8 @@ namespace PLang.Models.ObjectValueExtractors
 					{
 						if (memoryStack == null) throw new Exception("MemoryStack cannot be null when searching for variable in " + segment.Value);
 
-						index = memoryStack.Get<int>(segment.Value);
+						// A number of any type (`set %i% = 1` is a long); anything else gives no element.
+						if (!ObjectValueExtractor.TryGetIndex(memoryStack.Get(segment.Value), out index)) return null;
 					}
 
 					if (jArray.Count > index)

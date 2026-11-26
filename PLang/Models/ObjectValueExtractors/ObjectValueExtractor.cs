@@ -20,9 +20,35 @@ namespace PLang.Models.ObjectValueExtractors
 			}
 			if (memoryStack == null) throw new Exception("MemoryStack is null trying to get index. This is not valid.");
 
-			var indexValue = memoryStack.GetObjectValue(segement.Value).ValueAs<int>();
-			return $"[{indexValue}]";
+			if (int.TryParse(segement.Value, out var literalIndex)) return $"[{literalIndex}]";
+			if (TryGetIndex(memoryStack.Get(segement.Value), out var indexValue)) return $"[{indexValue}]";
+			return $"[{segement.Value}]";
+		}
 
+		/// <summary>
+		/// The value of an index variable (%list[i]%) as an int: a number of any numeric type, or a string of digits.
+		/// False for anything else, e.g. a variable that does not exist yet while building.
+		/// </summary>
+		public static bool TryGetIndex(object? value, out int index)
+		{
+			index = 0;
+			if (value is ObjectValue ov) value = ov.Value;
+			if (value is JValue jValue) value = jValue.Value;
+			switch (value)
+			{
+				case int i: index = i; return true;
+				case long or short or byte or uint or ulong or ushort or sbyte:
+					try { index = Convert.ToInt32(value); return true; } catch (OverflowException) { return false; }
+				case double or float or decimal:
+					var number = Convert.ToDecimal(value);
+					if (number != decimal.Truncate(number) || number < int.MinValue || number > int.MaxValue) return false;
+					index = (int)number;
+					return true;
+				case string s:
+					return int.TryParse(s.Trim(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out index);
+				default:
+					return false;
+			}
 		}
 		public static ObjectValue Extract(ObjectValue objectValue, List<PathSegment> segments, MemoryStack? memoryStack = null)
 		{

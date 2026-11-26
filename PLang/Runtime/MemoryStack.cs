@@ -363,7 +363,23 @@ namespace PLang.Runtime
 		{
 			var obj = Get(key, staticVariable);
 			if (obj == null) return default(T);
+			if (obj is T value) return value;
+			// A number is stored as the type it was set with (`set %i% = 1` is a long), so it is converted to the
+			// numeric type asked for, e.g. an index %list[i]% read as int.
+			if (obj is IConvertible && IsNumeric(obj.GetType()) && IsNumeric(typeof(T)))
+			{
+				var target = Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T);
+				return (T?)Convert.ChangeType(obj, target, System.Globalization.CultureInfo.InvariantCulture);
+			}
 			return (T?)obj;
+		}
+
+		private static bool IsNumeric(Type type)
+		{
+			type = Nullable.GetUnderlyingType(type) ?? type;
+			return type == typeof(int) || type == typeof(long) || type == typeof(short) || type == typeof(byte)
+				|| type == typeof(uint) || type == typeof(ulong) || type == typeof(ushort) || type == typeof(sbyte)
+				|| type == typeof(double) || type == typeof(float) || type == typeof(decimal);
 		}
 
 		public object? Get(string key, Type type, bool staticVariable = false)

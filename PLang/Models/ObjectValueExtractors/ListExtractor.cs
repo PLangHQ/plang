@@ -67,7 +67,8 @@ namespace PLang.Models.ObjectValueExtractors
 			{
 				if (memoryStack == null) throw new Exception("MemoryStack cannot be null when searching for variable in " + segment.Value);
 
-				index = Convert.ToInt32(segment.ValueOfPath ?? memoryStack.Get(segment.Value));
+				// An index that is not a number (e.g. %idx% that does not exist yet while building) gives no element.
+				if (!ObjectValueExtractor.TryGetIndex(segment.ValueOfPath ?? memoryStack.Get(segment.Value), out index)) return null;
 			}
 
 
