@@ -357,7 +357,15 @@ namespace PLang.Modules.OutputModule
 				settings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
 			}
 
-			textMessage = textMessage with { Content = JsonConvert.SerializeObject(textMessage.Content, settings) };
+			// The content is json text, e.g. {"identity": "..."} from the step. Serialized as it is, it became a json string
+			// holding that text ("{\"identity\"...}"); it is read as json first. Text that is not json is written as a json string.
+			object content = textMessage.Content;
+			var trimmed = textMessage.Content?.Trim();
+			if (!string.IsNullOrEmpty(trimmed) && (trimmed.StartsWith('{') || trimmed.StartsWith('[')))
+			{
+				try { content = Newtonsoft.Json.Linq.JToken.Parse(trimmed); } catch (JsonReaderException) { }
+			}
+			textMessage = textMessage with { Content = JsonConvert.SerializeObject(content, settings) };
 
 			return await Write(textMessage);
 		}
