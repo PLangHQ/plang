@@ -448,7 +448,35 @@ public class ExecutedStep
 	public DateTime StartedAt { get; }
 	public DateTime? CompletedAt { get; private set; }
 	public TimeSpan Duration { get; private set; }
-	public object? ReturnValue { get; private set; }
+
+	// The return value is only read for the call stack's type and preview. A value type or a short string is kept; any
+	// other value is held weakly, so the call stack does not keep it alive: a goal that rendered a 42 MB page five times
+	// held all five strings until the goal ended.
+	private const int KeptStringLength = 1024;
+	private object? returnValue;
+	private WeakReference<object>? weakReturnValue;
+	public object? ReturnValue
+	{
+		get
+		{
+			if (returnValue != null) return returnValue;
+			return weakReturnValue != null && weakReturnValue.TryGetTarget(out var value) ? value : null;
+		}
+		private set
+		{
+			returnValue = null;
+			weakReturnValue = null;
+			if (value == null) return;
+			if (value.GetType().IsValueType || value is string { Length: <= KeptStringLength })
+			{
+				returnValue = value;
+			}
+			else
+			{
+				weakReturnValue = new WeakReference<object>(value);
+			}
+		}
+	}
 	public IError? Error { get; private set; }
 	public bool IsComplete { get; private set; }
 

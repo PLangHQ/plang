@@ -16,8 +16,21 @@ namespace PLang.Modules.TemplateEngineModule
 	/// </summary>
 	internal sealed class PooledTemplateOutput : IScriptOutput, IDisposable
 	{
-		private char[]? buffer = ArrayPool<char>.Shared.Rent(4096);
+		// Buffers up to this many chars come from the shared pool. A larger one is a plain array the GC takes back:
+		// the shared pool keeps what is returned to it per core and per thread, so the buffers of one 42 MB render
+		// (every size from 4K to 64M chars, about 250 MB) stayed in the process after each render on a new thread.
+		internal const int MaxPooledLength = 1024 * 1024;
+
+		private char[]? buffer = Rent(4096);
 		private int length;
+
+		private static char[] Rent(int minimumLength) =>
+			minimumLength <= MaxPooledLength ? ArrayPool<char>.Shared.Rent(minimumLength) : new char[minimumLength];
+
+		private static void Return(char[] array)
+		{
+			if (array.Length <= MaxPooledLength) ArrayPool<char>.Shared.Return(array);
+		}
 
 		public void Write(string text, int offset, int count)
 		{
@@ -25,9 +38,9 @@ namespace PLang.Modules.TemplateEngineModule
 			var current = buffer ?? throw new ObjectDisposedException(nameof(PooledTemplateOutput));
 			if (length + count > current.Length)
 			{
-				var bigger = ArrayPool<char>.Shared.Rent(Math.Max(current.Length * 2, length + count));
+				var bigger = Rent(Math.Max(current.Length * 2, length + count));
 				Array.Copy(current, bigger, length);
-				ArrayPool<char>.Shared.Return(current);
+				Return(current);
 				buffer = current = bigger;
 			}
 			text.CopyTo(offset, current, length, count);
@@ -46,7 +59,7 @@ namespace PLang.Modules.TemplateEngineModule
 		{
 			var current = buffer;
 			buffer = null;
-			if (current != null) ArrayPool<char>.Shared.Return(current);
+			if (current != null) Return(current);
 		}
 
 		/// <summary>
