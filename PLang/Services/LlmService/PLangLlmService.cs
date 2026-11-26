@@ -248,6 +248,14 @@ What is name of payer?", GetCountry));
 				}
 			}
 
+			// The request goes signed with the app's identity; without one (a headless build with no console to set it up)
+			// llm.plang.is answered "%Identity% is empty", which says nothing of what to do.
+			if (rawResponse?.Contains("Identity\\\\% is empty") == true || rawResponse?.Contains("Identity% is empty") == true || rawResponse?.Contains("Identity\\% is empty") == true)
+			{
+				return (null, new ServiceError("The plang llm service needs the app's identity, and this app has none set up (a build with no console cannot create it). Build with another llm service: `plang build --llmservice=openai` with %Settings.OpenAiKey% set, or run `plang build` once at a console to set up the plang llm service.",
+					GetType(), Key: "NoIdentityForLlm", ContinueBuild: false));
+			}
+
 			return (null, new ServiceError(rawResponse, GetType()));
 
 
