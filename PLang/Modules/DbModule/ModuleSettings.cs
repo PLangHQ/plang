@@ -643,7 +643,9 @@ Be concise"));
 		/// </summary>
 		private async Task<string?> ResolveLocalPath(string nameInStep)
 		{
-			var dataSources = await GetAllDataSources();
+			// The stored datasources as they are: only the template of the path is needed, and processing them
+			// (GetAllDataSources) opens and checks each one.
+			var dataSources = settings.GetValues<DataSource>(this.GetType());
 			var dataSourceName = GetNameAndPathByVariable(nameInStep, null).dataSourceName;
 			var dataSource = dataSources.FirstOrDefault(p => p.Name.Equals(dataSourceName, StringComparison.OrdinalIgnoreCase));
 			if (dataSource?.LocalPath == null) return null;
