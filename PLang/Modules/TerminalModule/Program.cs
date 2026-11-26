@@ -60,18 +60,19 @@ namespace PLang.Modules.TerminalModule
 			var root = engine;
 			while (root.ParentEngine != null) root = root.ParentEngine;
 
-			// The goals run as the app's own, on a context of their own: not on the context of the step that started the
-			// process, which may be a request that has ended long before the program writes its next line.
-			var processContext = new PLangContext(MemoryStack.New(root.Container, root), root, ExecutionMode.Console);
-			processContext.CallingStep = goalStep;
-			processContext.CallStack.EnterGoal(goal);
 			var callingGoal = goal;
+			var callingStep = goalStep;
 			PlangProcess? plangProcess = null;
 
 			async Task Call(GoalToCallInfo goalToCall, string variableName, object value)
 			{
+				// The goals run as the app's own, each call on a context of its own: not on the context of the step that
+				// started the process, which may be a request that ended long ago, and not shared between the output and
+				// the error stream, whose goals run at the same time.
+				var processContext = new PLangContext(MemoryStack.New(root.Container, root), root, ExecutionMode.Console);
+				processContext.CallingStep = callingStep;
+				processContext.CallStack.EnterGoal(callingGoal);
 				contextAccessor.Current = processContext;
-				processContext.MemoryStack.Clear();
 				var call = new GoalToCallInfo(goalToCall.Name, new Dictionary<string, object?>(goalToCall.Parameters ?? new())) { Path = goalToCall.Path };
 				call.Parameters[variableName] = value;
 				call.Parameters["process"] = plangProcess;
