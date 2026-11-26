@@ -876,7 +876,7 @@ namespace PLang.Events
 
 			if (IsGoalInEventCallstack(goal, eventBinding.GoalToCall.Path)) return false;
 
-			string goalToBindTo = eventBinding.GoalToBindTo.Name.ToLower().Replace("!", "");
+			string goalToBindTo = Regex.Replace(eventBinding.GoalToBindTo.Name.ToLower(), @"(?<!\(\?)!", "");
 			// GoalToBindTo = Hello
 			if (!goalToBindTo.Contains(".") && !goalToBindTo.Contains("*") && !goalToBindTo.Contains("/") && !goalToBindTo.Contains(@"\") && !goalToBindTo.Contains(":"))
 			{

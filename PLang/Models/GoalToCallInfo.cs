@@ -30,7 +30,9 @@ namespace PLang.Models
 			{
 				name = name.Replace("\\", "/");
 			}
-			this.name = name.Replace("!", "");
+			// "!" marks a private goal (!DoStuff) and is dropped, but not in a regex lookahead: `^/(?!events/).*` became
+			// `/(?events/).*`, an invalid regex, and the app did not start.
+			this.name = System.Text.RegularExpressions.Regex.Replace(name, @"(?<!\(\?)!", "");
 		}
 		public string Name { get { return name; } set { name = value; } }
 
