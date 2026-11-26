@@ -51,6 +51,12 @@ namespace PLang.Utils
 			}
 
 			var result = await identity.VerifySignature(signature);
+			// A callback is used once. A form that is sent again (a double click, a resend) got a fresh callback and ran its
+			// goal a second time without the user seeing anything; it is refused now, with a message the user sees.
+			if (result.Error != null && result.Error.Message?.StartsWith(Services.SigningService.PLangSigningService.NonceUsedMessage, StringComparison.OrdinalIgnoreCase) == true)
+			{
+				return (null, null, new Error("This form has already been sent", "CallbackUsed", 409));
+			}
 			if (result.Error != null)
 			{
 				// signature is to old or nonce has been used, create new callback and allow user to sign again

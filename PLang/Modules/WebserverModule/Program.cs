@@ -462,7 +462,7 @@ public class Program : BaseProgram, IDisposable
 							// expired form answer got an empty 200: the answer vanished without a word. It carries
 							// a freshly signed callback, so the user only has to submit again.
 							// A form past its own timeout is refused on purpose, it is not a fault to log.
-							if (error is StatelessCallbackError || error?.Key == "CallbackExpired")
+							if (error is StatelessCallbackError || error?.Key == "CallbackExpired" || error?.Key == "CallbackUsed")
 							{
 								if (!httpContext.Response.HasStarted)
 								{
