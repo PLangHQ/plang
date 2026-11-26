@@ -96,15 +96,18 @@ public class TextTransformer : ITransformer
 
 			}
 
-			string? content = StringHelper.ConvertToString(obj);
+			// An error is its text: on a page load (text/html) the visitor sees the message, html encoded, not an empty page.
+			string? content = obj is ErrorMessage em
+				? (ContentType.Contains("html", StringComparison.OrdinalIgnoreCase) ? System.Net.WebUtility.HtmlEncode(em.Content) : em.Content)
+				: StringHelper.ConvertToString(obj);
 			if (content == null) return (0, null);
 
 			needed = encoding.GetByteCount(content);
 			gate = await TransformerHelper.GetGate(context.SharedItems, ct);
 			span = writer.GetSpan(needed);
 
-			
 			length = encoding.GetBytes(content.AsSpan(), span);
+			writer.Advance(length);
 			return (length, null);
 
 		}
