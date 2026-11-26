@@ -292,6 +292,9 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 		private void SetFunctionsOnTemplate(TemplateContext templateContext)
 		{
 			templateContext.LoopLimit = 50000;
+			// No length limit on a value written into the template. Scriban's default (1 MB) cut the value and appended
+			// "..." without an error, which broke e.g. a large JSON value in a textarea.
+			templateContext.LimitToString = 0;
 			(_, var exists) = ContainsVariable("date_format", templateContext);
 			if (!exists)
 			{
