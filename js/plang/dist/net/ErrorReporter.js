@@ -18,6 +18,9 @@ const MAX_QUEUED = 20;
 //   - first sighting of a message goes immediately, repeats are coalesced, because the poll
 //     retries on a timer and would otherwise send forever
 export class ErrorReporter {
+    useSigner(signer) {
+        this.signer = signer;
+    }
     constructor() {
         this.seen = new Map();
         this.pending = new Map();
@@ -32,6 +35,10 @@ export class ErrorReporter {
         // surfaces that as a network error like any other. Without this guard every ordinary
         // navigation and every closed tab logs a failure, which buries the real ones.
         this.unloading = false;
+        // Errors are signed like every other request of the client, so the server knows whose browser it is
+        // (%Identity%). Set by Plang when it starts; errors from before that, or when signing itself is what fails,
+        // go unsigned and say why in the body.
+        this.signer = null;
         addEventListener("pagehide", () => {
             this.flush();
             this.unloading = true;
@@ -194,17 +201,7 @@ export class ErrorReporter {
         // thrown or logged while we are inside send() is dropped by report() above.
         this.sending = true;
         try {
-            const body = JSON.stringify({ errors: batch, path: location.pathname });
-            // Raw fetch on purpose. plang.fetch signs the request, and signing is one of the
-            // things that can be broken when we most need to report. keepalive lets the
-            // request outlive the page, which is what makes an error on the way out survive.
-            void fetch(ENDPOINT, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body,
-                keepalive: true,
-                credentials: "same-origin",
-            }).catch(() => {
+            void this.post(batch).catch(() => {
                 this.transportDown = true;
                 this.queue(batch);
             });
@@ -215,6 +212,48 @@ export class ErrorReporter {
         }
         finally {
             this.sending = false;
+        }
+    }
+    // Raw fetch on purpose, never plang.fetch: a failure inside it would re-enter the reporter. The request is
+    // signed here with the signer itself. Signing is one of the things that can be broken when we most need to
+    // report (no key store, a crypto error), so a batch whose signing fails, or whose signature the server refuses,
+    // goes unsigned with signed: false and the reason. keepalive lets the request outlive the page, which is what
+    // makes an error on the way out survive.
+    async post(batch) {
+        const send = (body, signature) => fetch(ENDPOINT, {
+            method: "POST",
+            headers: signature
+                ? { "Content-Type": "application/json", "X-Signature": signature }
+                : { "Content-Type": "application/json" },
+            body,
+            keepalive: true,
+            credentials: "same-origin",
+        });
+        const unsigned = (signError) => JSON.stringify({ errors: batch, path: location.pathname, signed: false, signError });
+        if (!this.signer) {
+            await send(unsigned("the client had not started"));
+            return;
+        }
+        let body;
+        let signature;
+        try {
+            body = JSON.stringify({ errors: batch, path: location.pathname, signed: true });
+            const request = new Request(ENDPOINT, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body,
+            });
+            signature = JSON.stringify(await this.signer.signRequest(request));
+        }
+        catch (e) {
+            const err = e;
+            await send(unsigned(`${err?.name ?? "Error"}: ${err?.message ?? String(e)}`));
+            return;
+        }
+        const response = await send(body, signature);
+        const refused = response.headers.get("X-Signature-Error");
+        if (refused || response.status === 401) {
+            await send(unsigned(`signature refused: ${refused ?? response.status}`));
         }
     }
     /** Offline or endpoint unreachable: keep it and try again on the next page load. */

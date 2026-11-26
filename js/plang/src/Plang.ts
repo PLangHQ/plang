@@ -58,6 +58,7 @@ export class Plang {
     public keyStoreTier: string | null = null;
     constructor(tr: T = defaultT) {
         this.tr = tr;
+        errorReporter.useSigner(this.signer);
         this.navigator = new HistoryNavigator(this, tr);
         this.overrideNav = new OverrideNavigator(this);
         this.responses = new ResponseDispatcher(this.tr);

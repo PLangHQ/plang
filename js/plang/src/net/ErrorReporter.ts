@@ -11,6 +11,9 @@ export type JsErr = {
     origin: JsErrOrigin;
 };
 
+/** What the reporter needs from the signer: the signature of one request, as plang.fetch sends it. */
+export type RequestSigner = { signRequest(request: Request): Promise<unknown> };
+
 const ENDPOINT = "/js-error";
 const MAX_DISTINCT_PER_PAGE = 20;
 const COALESCE_MS = 5000;
@@ -45,6 +48,14 @@ export class ErrorReporter {
     // surfaces that as a network error like any other. Without this guard every ordinary
     // navigation and every closed tab logs a failure, which buries the real ones.
     private unloading = false;
+    // Errors are signed like every other request of the client, so the server knows whose browser it is
+    // (%Identity%). Set by Plang when it starts; errors from before that, or when signing itself is what fails,
+    // go unsigned and say why in the body.
+    private signer: RequestSigner | null = null;
+
+    useSigner(signer: RequestSigner): void {
+        this.signer = signer;
+    }
 
     constructor() {
         addEventListener("pagehide", () => {
@@ -253,17 +264,7 @@ export class ErrorReporter {
         // thrown or logged while we are inside send() is dropped by report() above.
         this.sending = true;
         try {
-            const body = JSON.stringify({ errors: batch, path: location.pathname });
-            // Raw fetch on purpose. plang.fetch signs the request, and signing is one of the
-            // things that can be broken when we most need to report. keepalive lets the
-            // request outlive the page, which is what makes an error on the way out survive.
-            void fetch(ENDPOINT, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body,
-                keepalive: true,
-                credentials: "same-origin",
-            }).catch(() => {
+            void this.post(batch).catch(() => {
                 this.transportDown = true;
                 this.queue(batch);
             });
@@ -272,6 +273,52 @@ export class ErrorReporter {
             this.queue(batch);
         } finally {
             this.sending = false;
+        }
+    }
+
+    // Raw fetch on purpose, never plang.fetch: a failure inside it would re-enter the reporter. The request is
+    // signed here with the signer itself. Signing is one of the things that can be broken when we most need to
+    // report (no key store, a crypto error), so a batch whose signing fails, or whose signature the server refuses,
+    // goes unsigned with signed: false and the reason. keepalive lets the request outlive the page, which is what
+    // makes an error on the way out survive.
+    private async post(batch: JsErr[]): Promise<void> {
+        const send = (body: string, signature?: string) => fetch(ENDPOINT, {
+            method: "POST",
+            headers: signature
+                ? { "Content-Type": "application/json", "X-Signature": signature }
+                : { "Content-Type": "application/json" },
+            body,
+            keepalive: true,
+            credentials: "same-origin",
+        });
+        const unsigned = (signError: string) =>
+            JSON.stringify({ errors: batch, path: location.pathname, signed: false, signError });
+
+        if (!this.signer) {
+            await send(unsigned("the client had not started"));
+            return;
+        }
+
+        let body: string;
+        let signature: string;
+        try {
+            body = JSON.stringify({ errors: batch, path: location.pathname, signed: true });
+            const request = new Request(ENDPOINT, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body,
+            });
+            signature = JSON.stringify(await this.signer.signRequest(request));
+        } catch (e) {
+            const err = e as any;
+            await send(unsigned(`${err?.name ?? "Error"}: ${err?.message ?? String(e)}`));
+            return;
+        }
+
+        const response = await send(body, signature);
+        const refused = response.headers.get("X-Signature-Error");
+        if (refused || response.status === 401) {
+            await send(unsigned(`signature refused: ${refused ?? response.status}`));
         }
     }
 

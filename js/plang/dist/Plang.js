@@ -35,6 +35,7 @@ export class Plang {
         /** Where the signing key ended up. Sent on the first poll so the server can record it. */
         this.keyStoreTier = null;
         this.tr = tr;
+        errorReporter.useSigner(this.signer);
         this.navigator = new HistoryNavigator(this, tr);
         this.overrideNav = new OverrideNavigator(this);
         this.responses = new ResponseDispatcher(this.tr);

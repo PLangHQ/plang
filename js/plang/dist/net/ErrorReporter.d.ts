@@ -9,6 +9,10 @@ export type JsErr = {
     count: number;
     origin: JsErrOrigin;
 };
+/** What the reporter needs from the signer: the signature of one request, as plang.fetch sends it. */
+export type RequestSigner = {
+    signRequest(request: Request): Promise<unknown>;
+};
 export declare class ErrorReporter {
     private seen;
     private pending;
@@ -17,6 +21,8 @@ export declare class ErrorReporter {
     private capped;
     private transportDown;
     private unloading;
+    private signer;
+    useSigner(signer: RequestSigner): void;
     constructor();
     private static readonly ignored;
     private static readonly networkNoise;
@@ -55,6 +61,7 @@ export declare class ErrorReporter {
     private scheduleFlush;
     private flush;
     private send;
+    private post;
     /** Offline or endpoint unreachable: keep it and try again on the next page load. */
     private queue;
     private drainQueue;
