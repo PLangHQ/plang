@@ -92,7 +92,7 @@ Explore plang's features and capabilities:
     - **Builder**
         - **[Building plang code](https://github.com/PLangHQ/plang/blob/main/Documentation/Building.md)**: What the builder decides and what the llm writes, the commands, writing steps that build first time, building several files at once, and what to verify.
     - **Writing an app that works the first time**
-        - **[Web server](https://github.com/PLangHQ/plang/blob/main/Documentation/Webserver.md)**: Serving web pages: the plang js client, the layout, the web server and its events, and loading who the visitor is.
+        - **[Web server](https://github.com/PLangHQ/plang/blob/main/Documentation/Webserver.md)**: The web server and its events, routes, which requests carry the identity, calling a route from a script, and testing with a real browser. How pages are built is in Patterns.
         - **[Identity in the browser](https://github.com/PLangHQ/plang/blob/main/Documentation/IdentityInTheBrowser.md)**: Where the identity comes from in a browser, which requests carry it, and what that decides about the first page load, sign in, images and webhooks.
         - **[ask user](https://github.com/PLangHQ/plang/blob/main/Documentation/AskUser.md)**: Why `ask user` is `Console.ReadLine`, what survives the answer on a stateless web request and what does not, how the callback resumes the goal, and why a form is one shot.
         - **[Setup and migrations](https://github.com/PLangHQ/plang/blob/main/Documentation/SetupAndMigrations.md)**: Setup.goal is a log of what already happened, the two run once mechanisms, and why editing a create statement is not a migration.
@@ -101,7 +101,7 @@ Explore plang's features and capabilities:
         - **[Talking to an api](https://github.com/PLangHQ/plang/blob/main/Documentation/TalkingToAnApi.md)**: Keys with a dash in them, form and multipart posts, webhooks, and the mock that quietly stops matching.
         - **[Running a program beside the app](https://github.com/PLangHQ/plang/blob/main/Documentation/Process.md)**: `start process`, a goal for each output line, `write out ... to %process%`, stop, and reaching it from other goals.
         - **[Running on your own server](https://github.com/PLangHQ/plang/blob/main/Documentation/RunningOnAServer.md)**: Runtime and app on a linux box, systemd, TLS straight from plang with no proxy, deploys, a watchdog, and rollback.
-        - **[Finding slow goals](https://github.com/PLangHQ/plang/blob/main/Documentation/SlowGoals.md)**: Record every entry goal slower than a limit, and the steps that took the time when you fix one.
+        - **[Patterns](https://github.com/PLangHQ/plang/blob/main/Documentation/patterns/README.md)**: The recommended way to solve the problems every app has: the page layout, updating part of a page, who the visitor is, slow goals, and more. Read the list before you write an app.
         - **[Recommended app structure](https://github.com/PLangHQ/plang/blob/main/Documentation/RecommendedAppStructure.md)**: Four levels, from a console app to a web app with real users and data, and what each level adds.
         - **[Deploying a new version](https://github.com/PLangHQ/plang/blob/main/Documentation/Deploy.md)**: A new runtime or new goals on a copy of the production databases first, with mocked providers and a check that fails the deploy.
         - **[Agents](https://github.com/PLangHQ/plang/blob/main/Documentation/Agents.md)**: One step runs the loop, tools are goals, three events draw it; what to put in the prompt and what to attach to results.

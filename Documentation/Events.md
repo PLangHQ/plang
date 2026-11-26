@@ -31,7 +31,7 @@ Events
 This setup ensures that the `AuthenticateUser` event is called before each goal in the 'api/*' path, and the `Analyze.LogInfoAboutGoal` event is called after each goal.
 
 `after each goal` runs after the first goal of each file (the public goals). Add `include private goals` to also run it after the
-other goals in a file, which is every goal a page calls. Recording the goals that are slow: [Finding slow goals](./SlowGoals.md).
+other goals in a file, which is every goal a page calls. Recording the goals that are slow: [Finding slow goals](./patterns/SlowGoals.md).
 
 ### Error Handling Events
 

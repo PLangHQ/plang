@@ -176,14 +176,13 @@ Cross cutting things are bound once rather than called from every goal:
 
 ```plang
 Events
-- before each goal(including private) in /admin/.*, call CheckAdmin
-- before each goal(including private) in /pages/.*, call /pages/Layout
-- on app error, call goal HandleError
+- before each goal in "/admin/.*", call /admin/Authenticate
+- on app error, call goal /error/HandleError
 ```
 
-Two things worth knowing: a guard has to come before the layout binding for the same path, and
-rendering a page from inside an error event produces an empty response body, so an error page bound
-that way never appears.
+A gate lives in the folder it guards: [Folder authentication](./patterns/FolderAuthentication.md). The
+layout is set once in Start, not in an event: [Page layout](./patterns/PageLayout.md). What the error
+handler records and shows: [App error handling](./patterns/AppErrorHandling.md).
 
 ## See also
 

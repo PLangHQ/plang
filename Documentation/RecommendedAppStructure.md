@@ -42,60 +42,15 @@ Routes, pages and the request gate: [Running on a server](./RunningOnAServer.md)
 
 Record slow goals from the first day: an `after each goal` event that writes every entry goal taking more than 300 ms to a table.
 A page should answer in about 100 ms, and the table tells you which page does not and where the time goes, before a user does.
-The pattern, with the step level detail for when you fix one: [Finding slow goals](./SlowGoals.md).
+The pattern, with the step level detail for when you fix one: [Finding slow goals](./patterns/SlowGoals.md).
 
 ## Level 3: web app in production
 
-Add the three things production needs that development does not: a different environment, seeding that finishes before the first
-visitor, and the scheduler.
+Add what production needs and development does not: `live=1` on the command line to pick the production settings, seeding that
+finishes before the first visitor (`BeforeStart`), the scheduler, routes split by area with dev routes only in dev, and the
+certificate. One `Start.goal` serves both. The full Start.goal, built and run both ways: [Start and environments](./patterns/StartAndEnvironments.md).
 
-```plang
-Start
-- if %live% == 1 then call SetLiveVars, else SetDevVars
-- call goal BeforeStart
-- if %live% == 1 then call goal RunScheduledTasks
-- start webserver, port: %port%, host: %host%,
-    on start call OnStartWebserver
-    on goal begin request call OnGoalRequestBegin
-
-SetLiveVars
-- set default value %port% = 443, %host% = "*", %environment% = "production"
-- set environment "production"
-
-SetDevVars
-- set default value %port% = 8080, %host% = "*", %environment% = "dev"
-- set environment "dev"
-```
-
-- `live=1` on the production command line (systemd `ExecStart=plang live=1`).
-- Work that must finish before the first visitor (imports, seeding) goes in `BeforeStart`, with `on error call` on each import so one
-  broken import cannot take the site down. The `on start` event is for what the web server itself needs, such as routes and the certificate.
-- The scheduler starts only under `live == 1` and after seeding.
-- The certificate is production only.
-- Every setting is read for the current environment (`production.X` or `dev.X`): [Settings](./Settings.md).
-
-### What BeforeStart does
-
-It prepares the data the app needs before it takes traffic: importing reference data, seeding tables, anything a page would
-otherwise find missing. It runs on every start, so every step must be safe to run again (an upsert, not a plain insert).
-
-```plang
-BeforeStart
-- call goal /import/Countries, on error call SeedFailed
-- call goal /import/Translations, on error call SeedFailed
-- call goal /import/EmailTemplates, on error call SeedFailed
-
-SeedFailed
-- write out to system "Seed failed: %!error.Message%"
-```
-
-- **One `on error call` per import.** `on error call X` hands the error to X and the goal carries on with the next step, unless X itself
-  throws. A broken import is logged and the site still starts. Without it, one failing import stops the whole start.
-- **Imports are idempotent**, because they run on every start: `insert or replace` or an update keyed on a stable id, never a plain insert.
-- **Not here:** anything that needs the web server running (routes, the certificate), which belongs in the `on start` event, and
-  anything that must run repeatedly, which belongs to the scheduler.
-- Why it is a goal of its own and not the `on start` event: the scheduler and the first requests must not start before the data is
-  there. A failing import inside the `on start` event, with the scheduler already running, can leave the site unresponsive.
+A web app with real users also records its errors in a table from the first day: [App error handling](./patterns/AppErrorHandling.md).
 
 ## Level 4: updating a web app that has real data
 
@@ -110,11 +65,12 @@ The full best practice is on its own page: [Deploying a new version](./Deploy.md
 
 | Topic | Page |
 |---|---|
+| Folders, and which folder is restricted to whom | [App folders](./patterns/AppFolders.md) |
 | Schema and migrations | [Setup and migrations](./SetupAndMigrations.md) |
 | Authorization: who may see which page | [Identity in the browser](./IdentityInTheBrowser.md) |
 | Identity | [Identity](./Identity.md) |
 | Events | [Events](./Events.md) |
-| Slow pages and goals | [Finding slow goals](./SlowGoals.md) |
+| Slow pages and goals | [Finding slow goals](./patterns/SlowGoals.md) |
 | Errors | [Error handling](./ErrorHandler.md) |
 | Running on a server | [Running on a server](./RunningOnAServer.md) |
 | Startup parameters | [Startup parameters](./StartupParameters.md) |

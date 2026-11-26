@@ -29,6 +29,9 @@ be a different module than you meant: an http get instead of a goal call, a math
   ```
 - **A select with one column and `return 1 row` gives the value itself.** `select task as name ..., return 1 row, write to %v%`:
   `%v%` is the task, `%v.name%` is empty. The same goes for `select count(*) as n`.
+- **A template does not escape html, and the `json` filter does not either.** `{{ x | json true }}` writes `<b>` as real html,
+  so a value that came from outside (a url, a form, an error message, a step's text) runs as markup or script in the page.
+  Write `{{ x | html.escape }}`, and `{{ x | json true | html.escape }}` for json, on every value that is not your own html.
 
 ## Variables between goals
 
