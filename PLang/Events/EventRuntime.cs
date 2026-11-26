@@ -335,6 +335,15 @@ namespace PLang.Events
 
 			var goalStep = new GoalStep() { Name = $"GoalEvent_{eventType}", RelativeGoalPath = goal.RelativeGoalPath, Goal = goal };
 
+			// A goal an event calls (a gate such as /admin/sysadmin/Authenticate) gets no goal events of its own: it matched
+			// another gate's `before each goal in "/admin/.*"`, that nested event ran first and set %!Event.SourceGoal% to
+			// the gate, so the gate saw itself as the page it guards.
+			if (events.Any(e => e.EventScope == EventScope.Goal && e.GoalToCall?.Path != null &&
+				e.GoalToCall.Path.Equals(goal.RelativePrPath, StringComparison.OrdinalIgnoreCase)))
+			{
+				return (null, null);
+			}
+
 			var eventsToRun = events.Where(p => p.EventType == eventType && p.EventScope == EventScope.Goal).ToList();
 			List<ObjectValue> Variables = new();
 			for (var i = 0; i < eventsToRun.Count; i++)
