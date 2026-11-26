@@ -405,6 +405,14 @@ goalName is the goal that should be called, a whole word with possible slash(/),
 			{
 				await Task.Delay(1000);
 
+				// Jobs are the app's own runs. They run on a context of the scheduler's engine, not on the context of the step that
+				// started the scheduler: started by `enable scheduler` from a request, that context is the request's (%!IsHttp%,
+				// its signer, its http output), and every job would run as part of that request.
+				var schedulerContext = new PLangContext(MemoryStack.New(engine.Container, engine), engine, ExecutionMode.ScheduledTask);
+				schedulerContext.CallingStep = goalStep;
+				schedulerContext.CallStack.EnterGoal(goal);
+				contextAccessor.Current = schedulerContext;
+
 				List<CronJob> cronJobs = new();
 				Dictionary<string, RunningJob> runningJobs = new();
 				long loadedVersion = -1;
@@ -429,7 +437,7 @@ goalName is the goal that should be called, a whole word with possible slash(/),
 							loadedVersion = version;
 							lastLoad = now;
 							cronJobs = LoadCronJobs(settings, fileSystem, logger, now);
-							cronJobs = await RunScheduledTasks(cronJobs, runningJobs, settings, engine, logger, pseudoRuntime, fileSystem);
+							cronJobs = await RunScheduledTasks(cronJobs, runningJobs, schedulerContext, settings, engine, logger, pseudoRuntime, fileSystem);
 						}
 					}
 					catch (Exception ex)
@@ -526,7 +534,7 @@ goalName is the goal that should be called, a whole word with possible slash(/),
 		/// Starts each due job in cronJobs as a "dont wait" goal call and stores its next run time. A job whose previous run is
 		/// still going skips this occurrence. Returns cronJobs with the new NextRun values.
 		/// </summary>
-		private async Task<List<CronJob>> RunScheduledTasks(List<CronJob> cronJobs, Dictionary<string, RunningJob> runningJobs, ISettings settings, IEngine engine, ILogger logger, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem)
+		private async Task<List<CronJob>> RunScheduledTasks(List<CronJob> cronJobs, Dictionary<string, RunningJob> runningJobs, PLangContext schedulerContext, ISettings settings, IEngine engine, ILogger logger, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem)
 		{
 			foreach (var finished in runningJobs.Where(p => p.Value.Task.IsCompleted).Select(p => p.Key).ToList())
 			{
@@ -550,7 +558,8 @@ goalName is the goal that should be called, a whole word with possible slash(/),
 
 					// The goal runs on a rented engine with a copy of this memory stack, the same way as "call goal X, dont wait".
 					// The copy starts empty so a job does not see variables of the step that started the scheduler or of other jobs.
-					context.MemoryStack.Clear();
+					schedulerContext.MemoryStack.Clear();
+					contextAccessor.Current = schedulerContext;
 					// A scheduled job is the app's own run, whatever started the scheduler: %Identity% is %MyIdentity%.
 					using var origin = RunOrigin.App();
 					var (_, task, error) = await pseudoRuntime.RunGoal(engine, contextAccessor, fileSystem.RelativeAppPath, item.GoalName, goal, waitForExecution: false, keepAliveKind: KeepAliveRegistry.Schedule);
