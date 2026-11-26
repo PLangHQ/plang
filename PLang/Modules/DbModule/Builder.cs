@@ -536,12 +536,18 @@ When the user points to a sql file (a path ending in .sql), the sql lives in tha
 		}
 
 
-		if (!methodHasDataSourceName)
+		// A transaction step names a datasource and no table: `begin transaction "users/%userId%"` came back with a table
+		// "users" now and then, which no datasource has, and the step did not build ("Datasource 'data' has not been built").
+		bool transactionStep = methodsAndTables.ContainsMethod("BeginTransaction") || methodsAndTables.ContainsMethod("EndTransaction")
+			|| methodsAndTables.ContainsMethod("Rollback");
+		if (transactionStep) methodsAndTables.Tables?.Clear();
+
+		if (!methodHasDataSourceName || transactionStep)
 		{
 			if (stepDataSource != null)
 			{
 				methodsAndTables.DataSource = stepDataSource;
-				methodsAndTables.Tables.ForEach(p => p.DataSource = stepDataSource);
+				methodsAndTables.Tables?.ForEach(p => p.DataSource = stepDataSource);
 			}
 			return (methodsAndTables, null);
 		}
