@@ -409,10 +409,40 @@ A goal the step calls goes in goalToCallIfTrue (after `then`) and goalToCallIfFa
 		}
 		
 		
+		private static bool? AsBool(object? value)
+		{
+			if (value is JValue jvalue) value = jvalue.Value;
+			switch (value)
+			{
+				case bool b: return b;
+				case string s:
+					s = s.Trim();
+					if (s.Equals("true", StringComparison.OrdinalIgnoreCase) || s == "1") return true;
+					if (s.Equals("false", StringComparison.OrdinalIgnoreCase) || s == "0") return false;
+					return null;
+				case long or int or short or byte or sbyte or ulong or uint or ushort:
+					var n = Convert.ToInt64(value);
+					return n == 1 ? true : n == 0 ? false : null;
+				case decimal or double or float:
+					var d = Convert.ToDouble(value);
+					return d == 1 ? true : d == 0 ? false : null;
+				default: return null;
+			}
+		}
+
 		internal bool IsEqualInternal(object? item1, object? item2, bool ignoreCase = true) {
 			bool? result = null;
 			if (item1 == item2) result = true;
 			if (result == null && item1 != null && item1.Equals(item2)) result = true;
+
+			// `%user.admin% != true`: a bool against "true" (the step's text) or 1 (a sqlite bool column) is a bool
+			// comparison. It was compared as unlike types, so != true was true for an admin too.
+			if (result == null && (item1 is bool || item2 is bool))
+			{
+				var b1 = AsBool(item1);
+				var b2 = AsBool(item2);
+				if (b1 != null && b2 != null) return b1 == b2;
+			}
 
 			if (result == null)
 			{
