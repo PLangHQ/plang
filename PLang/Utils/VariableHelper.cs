@@ -791,7 +791,9 @@ namespace PLang.Utils
 		public static readonly string VariablePattern = @"(?<!\\)%[\p{L}\p{N}#'+-\[\]_\.\+\(\)\*\<\>\!\s\""\\]*(?<!\\)%";
 		// Declared after VariablePattern: static initializers run in textual order.
 		private static readonly Regex ContainsVariableRegex = new Regex(VariablePattern, RegexOptions.Compiled);
-		private static readonly Regex IsVariableRegex = new Regex($"^{VariablePattern}$", RegexOptions.Compiled);
+		// \z, not $: $ also matches before a final line break, so "%line%\n" was taken for the variable alone and the
+		// line break was lost (`append "%line%\n" to file` wrote every line on one).
+		private static readonly Regex IsVariableRegex = new Regex($"^{VariablePattern}\\z", RegexOptions.Compiled);
 
 		public static bool ContainsVariable(object? variable)
 		{
