@@ -130,7 +130,9 @@ Examples:
  `on error status code = 404, call NotFound` => [{""IgnoreError"": false, ""StatusCode"": 404, ""Key"": null, ""GoalToCall"": {""Name"": ""NotFound""}}]
 
 WaitForExecution: false only when the step says not to wait, e.g. `dont wait`.
-CachingHandler: only when the step asks for caching, e.g. `cache for 10 minutes`.
+CachingHandler: only when the step asks for caching, e.g. `cache for 10 minutes`, as
+ {""TimeInMilliseconds"": <the time in milliseconds>, ""CacheKey"": ""<key, may hold the step's %variables% so each value is cached on its own>"", ""CachingType"": 0 (sliding) or 1 (absolute), ""Location"": ""memory"" or ""disk""}
+ `get https://api.x.com/%id%, cache for 10 minutes` => {""TimeInMilliseconds"": 600000, ""CacheKey"": ""api.x.com/%id%"", ""CachingType"": 1, ""Location"": ""memory""}
 LoggerLevel: null, or one of trace|debug|info|warning|error when the step names one.
 A note in parentheses after a step says what that step's method does not permit; obey it.";
 

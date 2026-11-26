@@ -765,9 +765,44 @@ Builder will continue on other steps but not this one: ({step.Text}).
 		step.WaitForExecution = (canBeAsync) ? stepProperties.WaitForExecution : true;
 		step.LoggerLevel = GetLoggerLevel(stepProperties.LoggerLevel);
 		// cannot put caching on caching module
-		step.CacheHandler = (canBeCached) ? stepProperties.CachingHandler : null;
+		step.CacheHandler = (canBeCached) ? CompleteCachingHandler(step, stepProperties.CachingHandler) : null;
 
 		return (step, null);
+	}
+
+	private static readonly Regex CacheForRegex = new(@"\bcache\w*\s+(for\s+)?(?<n>\d+(\.\d+)?)\s*(?<unit>ms|milliseconds?|s|sec|seconds?|m|min|minutes?|h|hours?|d|days?)\b", RegexOptions.IgnoreCase);
+
+	/// <summary>
+	/// A caching handler without a time or a key caches nothing: the runtime skips a step cache with no key. An answer
+	/// can come back that way (a batch of steps answered with an empty handler), so the time is read from the step's
+	/// `cache for 10 minutes` and the key is the step's text, whose %variables% give each value its own entry.
+	/// </summary>
+	private static CachingHandler? CompleteCachingHandler(GoalStep step, CachingHandler? handler)
+	{
+		var match = CacheForRegex.Match(step.Text ?? "");
+		if (handler == null && !match.Success) return null;
+		handler ??= new CachingHandler();
+
+		if (handler.TimeInMilliseconds <= 0 && match.Success)
+		{
+			var n = double.Parse(match.Groups["n"].Value, System.Globalization.CultureInfo.InvariantCulture);
+			var unit = match.Groups["unit"].Value.ToLowerInvariant();
+			double ms = unit switch
+			{
+				"ms" or "millisecond" or "milliseconds" => n,
+				"s" or "sec" or "second" or "seconds" => n * 1000,
+				"m" or "min" or "minute" or "minutes" => n * 60_000,
+				"h" or "hour" or "hours" => n * 3_600_000,
+				_ => n * 86_400_000,
+			};
+			handler.TimeInMilliseconds = (long)ms;
+		}
+		if (handler.TimeInMilliseconds <= 0) return null;
+		if (string.IsNullOrWhiteSpace(handler.CacheKey))
+		{
+			handler.CacheKey = (step.Goal?.RelativeGoalPath ?? "") + ":" + (step.Text ?? "").Trim();
+		}
+		return handler;
 	}
 
 	/// <summary>
