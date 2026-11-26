@@ -89,12 +89,10 @@ namespace PLang.Modules.UiModule
 
 
 
-			appContext.TryGetValue("Layouts", out object? obj);
-			var layouts = obj as List<LayoutOptions>;
-			if (layouts == null)
-			{
-				layouts = new List<LayoutOptions>();
-			}
+			var layoutContext = LayoutContext();
+			layoutContext.TryGetValue("Layouts", out object? obj);
+			// A new list each time: requests read the list while another goal may set a layout.
+			var layouts = (obj as List<LayoutOptions>)?.ToList() ?? new List<LayoutOptions>();
 
 			var idx = layouts.FindIndex(p => p.Name == options.Name);
 			if (idx == -1)
@@ -105,8 +103,20 @@ namespace PLang.Modules.UiModule
 			{
 				layouts[idx] = options;
 			}
-			appContext.AddOrReplace("Layouts", layouts);
+			layoutContext.AddOrReplace("Layouts", layouts);
 			return (layouts, null);
+		}
+
+		/// <summary>
+		/// Layouts are set for the whole app, e.g. in Start, and every request reads them. Each engine in the pool has its
+		/// own app context, so they are kept on the app's root engine: a layout set in Start reached no request, and one
+		/// set in a request only the requests that got the same engine.
+		/// </summary>
+		private PLangAppContext LayoutContext()
+		{
+			var root = engine;
+			while (root.ParentEngine != null) root = root.ParentEngine;
+			return root.GetAppContext() ?? appContext;
 		}
 
 
@@ -195,7 +205,7 @@ Attribute: Member is the key in the SetAttribute js method, make sure to convert
 
 		private LayoutOptions? GetLayoutOptions(string? name = null)
 		{
-			appContext.TryGetValue("Layouts", out object? obj);
+			LayoutContext().TryGetValue("Layouts", out object? obj);
 			var layouts = obj as List<LayoutOptions>;
 			if (layouts == null)
 			{
