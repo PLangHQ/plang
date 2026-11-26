@@ -40,6 +40,10 @@ started by a deploy, for example).
 Routes, pages and the request gate: [Running on a server](./RunningOnAServer.md), [Identity in the browser](./IdentityInTheBrowser.md),
 [Events](./Events.md).
 
+Record slow goals from the first day: an `after each goal` event that writes every entry goal taking more than 300 ms to a table.
+A page should answer in about 100 ms, and the table tells you which page does not and where the time goes, before a user does.
+The pattern, with the step level detail for when you fix one: [Finding slow goals](./SlowGoals.md).
+
 ## Level 3: web app in production
 
 Add the three things production needs that development does not: a different environment, seeding that finishes before the first
@@ -110,6 +114,7 @@ The full best practice is on its own page: [Deploying a new version](./Deploy.md
 | Authorization: who may see which page | [Identity in the browser](./IdentityInTheBrowser.md) |
 | Identity | [Identity](./Identity.md) |
 | Events | [Events](./Events.md) |
+| Slow pages and goals | [Finding slow goals](./SlowGoals.md) |
 | Errors | [Error handling](./ErrorHandler.md) |
 | Running on a server | [Running on a server](./RunningOnAServer.md) |
 | Startup parameters | [Startup parameters](./StartupParameters.md) |
