@@ -692,14 +692,32 @@ namespace PLang.Modules.DbModule
 		[Description("Query sql statement that is fully from a %variable%. Since this is pure and dynamic execution on database, user MUST to define list of tables that are allowed to be queried")]
 		[Example(@"execute query %sql%, ds: %dataSource%, tables: users, products, write to %result%", @"sql=%sql%, dataSouceName=%dataSource%, tableAllowList=[""users"", ""products""]")]
 		[Effect(Effects.FromSql)]
-		public async Task<(Table?, IError?, Properties?)> QueryDynamicSql([HandlesVariable] List<string> dataSourceNames, string sql, List<string> tableAllowList, List<ParameterInfo>? parameters = null)
+		public async Task<(Table?, IError?, Properties?)> QueryDynamicSql([HandlesVariable] string sql, List<string> tableAllowList, [HandlesVariable] List<string>? dataSourceNames = null, List<ParameterInfo>? parameters = null)
 		{
-
+			(sql, var sqlError) = LoadDynamicSql(sql);
+			if (sqlError != null) return (null, sqlError, null);
 
 			(var dataSources, var error) = await GetDataSourcesByNames(dataSourceNames);
 			if (error != null) return (null, error, null);
 
 			return await Select(dataSources, sql, parameters);
+		}
+
+		/// <summary>
+		/// The sql of a dynamic query is either all one variable (`execute query %sql%`, the app built it) or sql text. A
+		/// %variable% inside sql text (`select value from json_each(%json%)`) would be pasted into the sql, where its value
+		/// can change the statement (sql injection), so it is refused; the value goes in as a @parameter.
+		/// </summary>
+		private (string Sql, IError? Error) LoadDynamicSql(string sql)
+		{
+			if (string.IsNullOrEmpty(sql) || !VariableHelper.ContainsVariable(sql)) return (sql, null);
+			if (VariableHelper.IsVariable(sql.Trim()))
+			{
+				return (memoryStack.Get(sql.Trim())?.ToString() ?? "", null);
+			}
+			return (sql, new ProgramError($"The sql has a %variable% in its text: {sql}. Its value would be pasted into the sql, where it can change the statement",
+				goalStep, function, Key: "VariableInSql",
+				FixSuggestion: "Write the step so the value goes in as a parameter, e.g. `select value from json_each(%json%)` as a select on a datasource, which sends @json as a parameter, then build again"));
 		}
 
 		internal async Task<(long, IError?)> ExecuteDynamicSql(DataSource dataSource, string sql, List<string> tableAllowList, List<ParameterInfo>? parameters = null)
@@ -708,8 +726,11 @@ namespace PLang.Modules.DbModule
 		}
 		[Description("Executes a sql statement that defined by user, such as `create index ..`, `drop ..`. Preferable not for select,update,insert statements. This statement will be validated. Since this is pure and dynamic execution on database, user MUST to define list of tables that are allowed to be updated")]
 		[Effect(Effects.WritesData)]
-		public async Task<(long RowsAffected, IError? Error)> Execute([HandlesVariable] string dataSourceName, string sql, List<string> tableAllowList, List<ParameterInfo>? parameters = null)
+		public async Task<(long RowsAffected, IError? Error)> Execute([HandlesVariable] string dataSourceName, [HandlesVariable] string sql, List<string> tableAllowList, List<ParameterInfo>? parameters = null)
 		{
+			(sql, var sqlError) = LoadDynamicSql(sql);
+			if (sqlError != null) return (0, sqlError);
+
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
 			if (error != null) return (0, error);
 
