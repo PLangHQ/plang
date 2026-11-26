@@ -1426,9 +1426,24 @@ For example:
 				if (!dataSource.KeepHistory)
 				{
 					var value = await prepare.connection.QuerySingleOrDefaultAsync(prepare.sql, prepare.param, prepare.transaction) as IDictionary<string, object>;
+					object? id = value?.FirstOrDefault().Value;
+					// A step built while the datasource kept history is a plain insert with @id: it returns no row. The id is the
+					// one the insert was given, else the row id sqlite gave it. The row is in; failing here made the step an
+					// error after the data was written.
+					if (id == null)
+					{
+						if (prepare.param.ParameterNames.Contains("id"))
+						{
+							id = prepare.param.Get<object>("id");
+						}
+						else if (prepare.connection is Microsoft.Data.Sqlite.SqliteConnection)
+						{
+							id = await prepare.connection.ExecuteScalarAsync("select last_insert_rowid()", transaction: prepare.transaction);
+						}
+					}
 					Done(prepare.connection, prepare.transaction);
 
-					return (value.FirstOrDefault().Value, null);
+					return (id, null);
 				}
 				else
 				{
