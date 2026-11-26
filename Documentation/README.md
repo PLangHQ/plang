@@ -97,6 +97,7 @@ Explore plang's features and capabilities:
         - **[Writing goals that behave](https://github.com/PLangHQ/plang/blob/main/Documentation/WritingGoals.md)**: One decision per goal, why `end goal` inside an `if` is a trap, and what a called goal hands back.
         - **[Talking to an api](https://github.com/PLangHQ/plang/blob/main/Documentation/TalkingToAnApi.md)**: Keys with a dash in them, form and multipart posts, webhooks, and the mock that quietly stops matching.
         - **[Running on your own server](https://github.com/PLangHQ/plang/blob/main/Documentation/RunningOnAServer.md)**: Runtime and app on a linux box, systemd, TLS straight from plang with no proxy, deploys, a watchdog, and rollback.
+        - **[Recommended app structure](https://github.com/PLangHQ/plang/blob/main/Documentation/app-structure/RecommendedAppStructure.md)**: Four levels, from a console app to a web app with real users and data; settings per environment, mocking providers, and deploying a new version on a copy first.
         - **[Agents](https://github.com/PLangHQ/plang/blob/main/Documentation/Agents.md)**: One step runs the loop, tools are goals, three events draw it; what to put in the prompt and what to attach to results.
     - **Extending the language**
         - **[Modules](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/README.md)**: Learn how to extend the language. Discover the different modules available in plang and their capabilities. 
