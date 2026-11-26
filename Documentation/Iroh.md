@@ -19,27 +19,113 @@ PrintKey
 ```plang
 Start
 - start listening, on incoming call Allow, write to %listener%
-- keep alive
 
 Allow
 - if %Identity% != %Settings.TrustedIdentity% then
     - throw error "Not allowed", 403
 ```
 
-`on incoming` is required. A command that is not signed, or whose signature is wrong, is declined before your goal is called. The goal gets `%Identity%` (the signer), `%goalName%`, `%parameters%` and `%EndpointId%`. When it throws an error the command is declined, otherwise the requested goal runs with `%Identity%` as a parameter and what it returns goes back to the sender.
+Listening keeps the app running. `on incoming` is required. A command that is not signed, or whose signature is wrong, is declined before your goal is called. The goal gets `%Identity%` (the signer), `%goalName%`, `%parameters%` and `%EndpointId%`. When it throws an error the command is declined, otherwise the requested goal runs with `%Identity%` as a parameter and what it returns goes back to the sender.
 
 ## Connect and tell
 
+A connection is kept by the runtime under the peer's key (its endpoint id), not by the goal that made it. Any goal can use it: a scheduled run, a request, an event. Tell the peer by its key, and connect when the tell says there is no connection:
+
 ```plang
 Update
-- connect to %kioskKey%, on closed call Redial, write to %agent%
-- tell %agent% to Update, version: "1", write to %result%
+- tell %kioskKey% to Update, version: "1", timeout 30 seconds,
+    on error NotConnected call Connect, retry 3 times, wait 10 seconds between retries,
+    write to %result%
 
-Redial
-- connect to %kioskKey%, on closed call Redial, write to %agent%
+Connect
+- connect to iroh peer %kioskKey%
 ```
 
-`tell` waits for the answer (60 seconds by default, `timeout 30 seconds` changes it). `%result%` is what the remote goal returns. A declined command is an error in the step, so `on error` works.
+- `tell` waits for the answer (60 seconds by default, `timeout 30 seconds` changes it). `%result%` is what the remote goal returns. A declined command is an error in the step, so `on error` works.
+- `tell` to a key with no open connection fails with the error key `NotConnected`. The first tell makes the connection this way, and so does the first tell after a connection was lost.
+- There is one connection per key. A `connect` to a key that is already connected returns the open connection, so connecting again does not dial again.
+- An open connection keeps the app running, as a webserver does. No `keep alive` is needed. An app that connects once and has nothing else to do ends only when the connection closes, or with `disconnect from %kioskKey%`.
+- Write the wait between retries as `wait 10 seconds between retries`. Other wordings (`retry 3 times over 30 seconds`) may build with no wait.
+
+### Push: the peer sends to you
+
+The usual pattern: the app subscribes once, and the peer tells it when it has something. The app must take commands on its own connection (`when a command comes in`), and connect and subscribe again when the connection closes, since no later step would notice.
+
+```plang
+Start
+- call goal Subscribe
+
+Subscribe
+- tell %agentEndpoint% to Subscribe, since: %lastSeq%, timeout 10 seconds,
+    on error NotConnected call Connect, retry 100 times, wait 10 seconds between retries
+
+Connect
+- connect to iroh peer %agentEndpoint%, when a command comes in run Allow, when the connection closes run Subscribe
+
+Allow
+- if %Identity% != %Settings.AgentIdentity% then
+    - throw error "Not allowed", 403
+
+Ingest
+- write out "got %at%"
+```
+
+The peer keeps the subscriber's identity and tells it by that:
+
+```plang
+Subscribe
+- cache %Identity% for 30 days, key "subscriber"
+
+Push
+- get cache "subscriber", write to %subscriber%
+- tell peer id %subscriber% to Ingest, at: %Now%, timeout 10 seconds, on error call goal Dropped
+```
+
+- A peer that connected to `start listening` is kept under the `%Identity%` that signed its command, once `on incoming` allowed it. Write `tell peer id %x%` when `%x%` holds a key or an identity.
+- `when the connection closes` runs when the peer or the network ends the connection, not after `disconnect`.
+- Write the connect step with `when a command comes in run X` and `when the connection closes run Y`. With `on incoming call X, on closed call Y` the step may be built as a websocket connect, or with X as the step's error handler.
+
+### Pull: you ask the peer
+
+When the app asks on a schedule, the connection made by one run is used by the next:
+
+```plang
+Start
+- every 5 minutes call goal Pull
+- start scheduler
+
+Pull
+- set %next% = 1
+- go through 20 times, call Fetch
+
+Fetch
+- tell %agentEndpoint% to Snapshot, seq: %next%, timeout 30 seconds,
+    on error NotConnected call Connect, retry 3 times,
+    write to %env%
+- if %env.next% = "" then
+    - call goal NoEnvelope
+- set %next% = %env.next%
+
+NoEnvelope
+- end goal and 2 levels up
+
+Connect
+- connect to iroh peer %agentEndpoint%, on error call goal Unreachable
+
+Unreachable
+- end goal and 3 levels up
+```
+
+- The loop stops with `end goal`, no flag. `end goal` ends the goal it is in and `N levels up` also ends the N goals that called it. NoEnvelope (0), Fetch (1) and Pull (2) end, so the loop stops. Ending only Fetch would go on with the next item.
+- Connect has its own `on error`. Without it, a peer that is not there stops the app. Unreachable ends this pull and the next pull tries again.
+
+### A peer that goes away
+
+A peer that disappears without closing (a crash, a lost network) is noticed after the idle timeout, about 30 seconds.
+- A `tell` that is waiting when that happens fails with a general error, not `NotConnected`, so `on error NotConnected` does not catch it and the goal stops. In the pull pattern the next pull gets `NotConnected` and connects again.
+- `when the connection closes` runs then, so in the push pattern the app subscribes again.
+
+`tell %agent% to X`, with the connection object from `connect ..., write to %agent%`, still works.
 
 ## Send a file with the command
 
@@ -61,7 +147,8 @@ One bidirectional QUIC stream per `tell`, ALPN `plang/tell/1`. The request is a 
 ## Limits to know
 
 - The C interface gives no peer endpoint id on an accepted connection, so the receiver authenticates the sender by the plang signature alone.
-- `on closed` fires when the connection is closed. A peer that disappears without closing is only noticed after the QUIC idle timeout, so a `tell` that fails is the reliable moment to connect again.
+- A peer that disappears without closing is only noticed after the QUIC idle timeout (see [A peer that goes away](#a-peer-that-goes-away)).
+- A command without an identity is declined and its connection closed. A new connection from the same identity replaces the old one.
 - The signing service refuses a signature older than its expiry and a nonce it has seen, so a replayed command is declined. How long nonces are kept across a restart is not verified.
 - A file that is cut off halfway is not resumed, send it again. A 40 MB file took 2 seconds between two processes on one machine, direct, so the speed over a relay is not measured.
 - The free n0 relays are for development. Make the relay configurable before relying on it in production.
