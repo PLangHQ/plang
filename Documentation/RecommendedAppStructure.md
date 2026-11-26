@@ -18,7 +18,7 @@ Start
 - write out "hello %name%"
 ```
 
-Run with `plang` or `plang name=Anna`. Arguments of the form `key=value` become variables (a value cannot contain `=`); `set default value` keeps the one given and
+Run with `plang` or `plang name=Anna`. Arguments of the form `key=value` become variables; `set default value` keeps the one given and
 fills in the one that is missing. A goal other than Start runs with `plang exec path/to/Goal key=value`, and a goal that ends in
 `throw error` makes plang exit with 1, so a script can be used from the shell.
 
