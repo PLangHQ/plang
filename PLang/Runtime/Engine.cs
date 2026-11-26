@@ -907,6 +907,12 @@ namespace PLang.Runtime
 			if (error == null || error is IErrorHandled) return (null, error);
 			if (step.ModuleType == "PLang.Modules.ThrowErrorModule" && step.Instruction?.Function.Name == "Throw") return (null, error);
 
+			if (error is MissingSettingsException missingSetting)
+			{
+				var settingError = await MissingSettingsHelper.HandleMissingSetting(this, context, missingSetting);
+				if (settingError != null) return (null, settingError);
+				return await RunStep(goal, goalStepIndex, context);
+			}
 			if (error is Errors.AskUser.AskUserError aue)
 			{
 				var (answer, answerError) = await AskUser.GetAnswer(this, context, aue.Message);

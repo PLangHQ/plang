@@ -12,8 +12,26 @@ namespace PLang.Events.Types
 	public class AskUser
 	{
 
+		/// <summary>
+		/// A run nobody can answer at the console: a web request, a scheduled or "dont wait" run. Not while building.
+		/// </summary>
+		public static bool IsNotInteractive(PLangContext? context)
+		{
+			if (context == null) return false;
+			if (AppContext.TryGetSwitch("Builder", out bool building) && building) return false;
+			return context.HttpContext != null || context.ExecutionMode == ExecutionMode.HttpRequest
+				|| context.ExecutionMode == ExecutionMode.ScheduledTask || context.IsAsync;
+		}
+
 		public static async Task<(object? Answer, IError? Error)> GetAnswer(IEngine engine, PLangContext context, string question)
 		{
+			// The system ask goes to the console. In a run nobody answers there it waited for a line on stdin that never
+			// came, and a web request hung until the client gave up.
+			if (IsNotInteractive(context))
+			{
+				return (null, new Error($"The app needs an answer to a question, and this run cannot ask it (it is not at a terminal): {question}",
+					Key: "CannotAsk", StatusCode: 500));
+			}
 
 
 			var askUser = engine.PrParser.GetEvent("AskSystem");

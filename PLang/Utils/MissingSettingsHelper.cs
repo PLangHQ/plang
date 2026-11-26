@@ -32,6 +32,15 @@ namespace PLang.Utils
 
 		public static async Task<IError?> HandleMissingSetting(IEngine engine, PLangContext context, MissingSettingsException missing)
 		{
+			// Nobody answers a question on the console of a server: asked in a web request (or a scheduled or "dont wait"
+			// run), the ask waited for a line on stdin that never came, and every request hung until the client gave up.
+			// The run fails with an error naming the setting instead, which the app's error handler gets.
+			if (AskUser.IsNotInteractive(context))
+			{
+				return new Error($"The setting {missing.Key} has no value ({missing.Message}). It is asked for only when the app runs at a terminal; give it a value before the app serves requests, e.g. run the app once at a terminal and answer.",
+					Key: "MissingSetting", StatusCode: 500);
+			}
+
 			(var answer, var error) = await AskUser.GetAnswer(engine, context, missing.Message);
 			if (error != null)
 			{

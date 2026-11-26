@@ -281,10 +281,7 @@ namespace PLang.Modules
 			{
 				if (ex is MissingSettingsException mse)
 				{
-					(var answer, var error) = await AskUser.GetAnswer(engine, context, mse.Message);
-					if (error != null) return (null, error);
-
-					error = await mse.InvokeCallback(answer);
+					var error = await MissingSettingsHelper.HandleMissingSetting(engine, context, mse);
 					if (error != null) return (null, error);
 
 					return await RunFunction(function);
