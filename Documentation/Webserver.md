@@ -23,7 +23,7 @@ myapp/
 ```
 
 - `plang-sw.js` must be at the root, so it is served as `/plang-sw.js` and covers the whole site. It signs page loads (see 4).
-- Load the client with the number in `js/plang/VERSION` in the path: `/js/plang/dist/v9/main.js`. The web server finds
+- Load the client with the number in `js/plang/VERSION` in the path: `/js/plang/dist/v10/main.js`. The web server finds
   `js/plang/dist/main.js` for it. A new number is a new address, so a browser never runs a cached old module next to new ones.
 - Do not edit the copied files. Copy them again when plang is updated, and change a line in `plang-sw.js` on every deploy
   (`// build <commit>`), so open tabs pick up the new version.
@@ -36,7 +36,7 @@ myapp/
 <head>
 <meta charset="utf-8">
 <title>My app</title>
-<script type="module" src="/js/plang/dist/v9/main.js"></script>
+<script type="module" src="/js/plang/dist/v10/main.js"></script>
 </head>
 <body>
 <nav><a href="/">Home</a> <a href="/me">Me</a></nav>
@@ -75,7 +75,7 @@ OnRequest
   when a page connects, `on poll refresh` when it connects again.
 - `on goal begin request` runs before every route. Here it and the poll load the visitor (see 6), so every page knows
   `%user%`.
-- `on request begin` runs before every request, files included: `/js/plang/dist/v9/main.js` and `/plang-sw.js` too. Put a
+- `on request begin` runs before every request, files included: `/js/plang/dist/v10/main.js` and `/plang-sw.js` too. Put a
   check on `%Identity%` in `on goal begin request` or in the route. A check in `on request begin` that refuses anonymous
   requests also refuses the client's own files, and the client never loads.
 

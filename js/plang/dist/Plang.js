@@ -361,18 +361,19 @@ export class Plang {
     }
     async callGoal(path, data, callbackOrOptions) {
         const body = data instanceof FormData ? data : JSON.stringify(data);
+        // callGoal(path, data, callback) or callGoal(path, data, options). A callback is called with each message the
+        // goal answers when the request succeeds (onSuccess). Options are NavigatorOptions (onSuccess, onFailure, ...);
+        // an entry whose key starts with p- is sent as a header of that name.
         const isCallback = typeof callbackOrOptions === 'function';
-        const callback = isCallback ? callbackOrOptions : null;
-        const options = isCallback ? null : callbackOrOptions;
+        const options = isCallback ? { onSuccess: callbackOrOptions } : { ...(callbackOrOptions ?? {}) };
         const headers = [];
-        if (options) {
-            for (const [k, v] of Object.entries(options)) {
-                if (!k.startsWith('p-'))
-                    continue;
-                headers.push({ key: "p-" + k, value: String(v) });
-            }
+        for (const [k, v] of Object.entries(options)) {
+            if (!k.startsWith('p-'))
+                continue;
+            headers.push({ key: k, value: String(v) });
+            delete options[k];
         }
-        return this.fetch(path, { body, method: "POST", headers: headers });
+        return this.fetch(path, { ...options, body, method: "POST", headers: headers });
     }
     async onPoll(_line) {
         /* PollRequest will call onMessage itself after parsing; keep if you want raw handling */
