@@ -63,7 +63,7 @@ namespace PLang.Services.LoggerService
 				Console.ForegroundColor = ConsoleColor.Magenta;
 			}
 
-			Console.WriteLine($"{state} - ({logLevel}) - {exception}");
+			Console.WriteLine(PLang.Utils.SensitiveValues.Redact($"{state} - ({logLevel}) - {exception}"));
 			Console.ResetColor();
 
 		}

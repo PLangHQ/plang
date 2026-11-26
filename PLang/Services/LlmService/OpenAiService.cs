@@ -165,7 +165,8 @@ namespace PLang.Services.OpenAi
 			using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/responses");
 			httpRequest.Headers.UserAgent.ParseAdd("plang v0.1");
 			httpRequest.Headers.Add("Authorization", $"Bearer {GetBearer()}");
-			httpRequest.Content = new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
+			// a sensitive value (a setting, one marked sensitive) never goes to the llm
+			httpRequest.Content = new StringContent(PLang.Utils.SensitiveValues.Redact(JsonConvert.SerializeObject(body)) ?? "", Encoding.UTF8, "application/json");
 
 			string responseBody;
 			try
@@ -249,7 +250,8 @@ namespace PLang.Services.OpenAi
 			var request = new HttpRequestMessage(httpMethod, url);
 			string? bearer = GetBearer();
 
-			string data = BuildRequestBody(question);
+			// a sensitive value (a setting, one marked sensitive) never goes to the llm
+			string data = PLang.Utils.SensitiveValues.Redact(BuildRequestBody(question)) ?? "";
 			request.Headers.UserAgent.ParseAdd("plang v0.1");
 			request.Headers.Add("Authorization", $"Bearer {bearer}");
 			request.Content = new StringContent(data, Encoding.GetEncoding("UTF-8"), "application/json");

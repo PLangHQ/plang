@@ -51,7 +51,22 @@ namespace PLang.Utils
 			}
 			return text.TrimEnd();
 		}
+		/// <summary>
+		/// The error as text for the console, the log and %!error%, with every sensitive value (a setting, a value marked
+		/// sensitive) hidden: the variables of the step are written with their values.
+		/// </summary>
 		public static object ToFormat(string contentType, IError error, string[]? propertyOrder = null, string? extraInfo = null)
+		{
+			var formatted = ToFormatCore(contentType, error, propertyOrder, extraInfo);
+			return formatted switch
+			{
+				string text => SensitiveValues.Redact(text) ?? "",
+				Newtonsoft.Json.Linq.JToken token => Newtonsoft.Json.Linq.JToken.Parse(SensitiveValues.Redact(token.ToString()) ?? "null"),
+				_ => formatted
+			};
+		}
+
+		private static object ToFormatCore(string contentType, IError error, string[]? propertyOrder = null, string? extraInfo = null)
 		{
 			AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool detailedError);
 			detailedError = true;

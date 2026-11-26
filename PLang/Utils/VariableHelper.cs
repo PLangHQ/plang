@@ -852,6 +852,8 @@ namespace PLang.Utils
 				if (settingsMatch.Success)
 				{
 					var setting = settings.Get<string>(typeof(Settings), settingsMatch.Groups["key"].Value, settingsMatch.Groups["default"].Value, settingsMatch.Groups["explain"].Value);
+					// a setting is sensitive: never shown in an error, the log or an llm request, wherever it is copied
+					SensitiveValues.Add(setting);
 					list.Add(new ObjectValue(settingsMatch.ToString(), setting, typeof(string)));
 
 				}
@@ -860,6 +862,7 @@ namespace PLang.Utils
 				foreach (Match match in settingsMatches)
 				{
 					var setting = settings.Get<string>(typeof(Settings), match.Groups["key"].Value, "", match.Groups["key"].Value);
+					SensitiveValues.Add(setting);
 					list.Add(new ObjectValue(match.Value, setting, typeof(string)));
 				}
 			}

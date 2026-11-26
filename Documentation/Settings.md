@@ -53,9 +53,17 @@ Write `%Settings.X%` in the step that uses it. Never copy it into a variable fir
 - get https://api.example.com/servers, headers {"Authorization": "Bearer %Settings.ApiToken%"}, write to %servers%
 ```
 
-When that step fails, the error shows the step as written, `Bearer %Settings.ApiToken%`, and never the value. A variable is shown
-with its value: after `set %token% = %Settings.ApiToken%`, a failing step that uses `%token%` prints `%token% => "the token"` in
-the error, and the error is logged and may be stored.
+When that step fails, the error shows the step as written, `Bearer %Settings.ApiToken%`, and never the value.
+
+A setting's value is **sensitive**: wherever it is copied to (`set %token% = %Settings.ApiToken%`, `"Bearer %token%"`), it is
+hidden as `****` and the last 4 characters (`****` when shorter than 12) in an error (`%!error%`, "Variables in step"), the log
+and a request to the llm. Modules get the real value. Mark any other value the same way with `as sensitive`:
+
+```plang
+- set %password% = %request.password% as sensitive
+```
+
+What the app writes out itself (`write out "%password%"`) is not hidden. Values shorter than 6 characters are not hidden.
 
 The name of a setting cannot be built from a variable: `%Settings.Token%project%%` is not read as `Settings.TokenFinland`, and the
 request goes out with the wrong text and no error. To pick one of several keys, call one goal per key:
