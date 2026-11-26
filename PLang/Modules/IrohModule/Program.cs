@@ -43,6 +43,23 @@ namespace PLang.Modules.IrohModule
 		public record IrohPeer(string Target, string? EndpointId, [property: JsonIgnore] IrohConnection Connection) : PLang.Models.ILiveValue;
 
 		/// <summary>
+		/// What this app does with what a peer writes out or asks (`write out %x% to %peer%`, `ask user "..." to %peer%`).
+		/// Given on `start listening` / `connect` as `on output call X, on ask call Y`.
+		/// </summary>
+		public record PeerHandlers(GoalToCallInfo? OnOutput, GoalToCallInfo? OnAsk);
+
+		/// <summary>
+		/// A question a peer asked, as %callback% in the on ask goal: `answer %callback% with %answer%` sends the answer back
+		/// to the peer, which goes on with its goal from the ask step.
+		/// </summary>
+		public record IrohAskCallback(string Callback, [property: JsonIgnore] IrohPeer Peer) : PLang.Models.ILiveValue;
+
+		/// <summary>Command names the runtime itself answers, never goals of the app.</summary>
+		public const string OutputCommand = "!output";
+		public const string AskCommand = "!ask";
+		public const string AnswerCommand = "!answer";
+
+		/// <summary>
 		/// A peer given as its key (text) or as a peer that was serialized is the connection kept under that key, so
 		/// `tell %key%` works whether the step was built for a peer or for a key. Not connected: a peer without a
 		/// connection, which tell answers with NotConnected.
@@ -140,8 +157,11 @@ namespace PLang.Modules.IrohModule
 		[Example("start listening on udp port 7000, on incoming call Allow", "onIncoming=Allow, port=7000")]
 		[Example("start listening on udp port 47000, on incoming call Allow, on closed call PeerGone, write to %listener%", "onIncoming=Allow, onClosed=PeerGone, port=47000")]
 		public async Task<(IrohListener?, IError?)> Listen(GoalToCallInfo? onIncoming = null, string keyName = "default", bool useRelay = true,
-			[Description(PortDescription)] int port = 0, GoalToCallInfo? onClosed = null)
+			[Description(PortDescription)] int port = 0, GoalToCallInfo? onClosed = null,
+			[Description("The goal called with %message% and %peer% when a peer writes out to this app (`write out %x% to %peer%` in the peer), `on output call X`")] GoalToCallInfo? onOutput = null,
+			[Description("The goal called with %question%, %callback% and %peer% when a peer asks this app (`ask user \"...\" to %peer%` in the peer), `on ask call X`. It answers with `answer %callback% with %answer%`")] GoalToCallInfo? onAsk = null)
 		{
+			var peerHandlers = new PeerHandlers(onOutput, onAsk);
 			if (onIncoming == null || string.IsNullOrEmpty(onIncoming.Name))
 			{
 				return (null, new ProgramError("A goal that validates who may tell this app what to do is required", goalStep, function,
@@ -169,7 +189,7 @@ namespace PLang.Modules.IrohModule
 				}
 			};
 			_ = Task.Factory.StartNew(() => endpoint.Serve(
-				(stream, connection) => HandleStream(stream, connection, null, endpoint, onIncoming, engineRef, accessorRef, rootPath, callingGoal, callingStep),
+				(stream, connection) => HandleStream(stream, connection, null, endpoint, onIncoming, engineRef, accessorRef, rootPath, callingGoal, callingStep, peerHandlers),
 				ex => logger?.LogWarning("iroh: {Message}", ex.Message), connectionClosed), TaskCreationOptions.LongRunning);
 
 			KeepAlive(endpoint, "iroh-listen-" + keyName);
@@ -182,8 +202,11 @@ namespace PLang.Modules.IrohModule
 		[Example("connect to %agentEndpoint%, on udp port 47001, write to %agent%", "target=%agentEndpoint%, port=47001")]
 		[Example("connect to %agentEndpoint%, on incoming call Allow, on closed call Reconnect, write to %agent%", "target=%agentEndpoint%, onIncoming=Allow, onClosed=Reconnect")]
 		public async Task<(IrohPeer?, IError?)> Connect(string target, GoalToCallInfo? onClosed = null, string keyName = "default", bool useRelay = true,
-			[Description(PortDescription)] int port = 0, GoalToCallInfo? onIncoming = null)
+			[Description(PortDescription)] int port = 0, GoalToCallInfo? onIncoming = null,
+			[Description("The goal called with %message% and %peer% when the peer writes out to this app, `on output call X`. Needs onIncoming")] GoalToCallInfo? onOutput = null,
+			[Description("The goal called with %question%, %callback% and %peer% when the peer asks this app, `on ask call X`; it answers with `answer %callback% with %answer%`. Needs onIncoming")] GoalToCallInfo? onAsk = null)
 		{
+			var peerHandlers = new PeerHandlers(onOutput, onAsk);
 			if (string.IsNullOrWhiteSpace(target))
 			{
 				return (null, new ProgramError("Say which peer to connect to, its endpoint id or ticket", goalStep, function));
@@ -228,7 +251,7 @@ namespace PLang.Modules.IrohModule
 					if (onIncoming != null)
 					{
 						connection.ServeStreams(
-							stream => HandleStream(stream, connection, peer, endpoint!, onIncoming, engineRef, accessorRef, rootPath, callingGoal, callingStep),
+							stream => HandleStream(stream, connection, peer, endpoint!, onIncoming, engineRef, accessorRef, rootPath, callingGoal, callingStep, peerHandlers),
 							ex => logger?.LogWarning("iroh: {Message}", ex.Message));
 					}
 					else
@@ -478,14 +501,14 @@ namespace PLang.Modules.IrohModule
 		/// onIncoming); null for a connection accepted by listen, which is kept under the %Identity% that signed the command
 		/// once onIncoming allows it, and closed when the command is not signed.
 		/// </summary>
-		private async Task HandleStream(IrohStream stream, IrohConnection connection, IrohPeer? connectedPeer, IrohEndpoint endpoint, GoalToCallInfo onIncoming, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath, Goal? callingGoal, GoalStep? callingStep)
+		private async Task HandleStream(IrohStream stream, IrohConnection connection, IrohPeer? connectedPeer, IrohEndpoint endpoint, GoalToCallInfo onIncoming, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath, Goal? callingGoal, GoalStep? callingStep, PeerHandlers peerHandlers)
 		{
 			UseCommandContext(engineRef, accessorRef, callingGoal, callingStep);
 			TellAnswer answer;
 			string? receivedFolder = null;
 			try
 			{
-				(answer, receivedFolder) = await Process(stream, connection, connectedPeer, endpoint, onIncoming, engineRef, accessorRef, rootPath);
+				(answer, receivedFolder) = await Process(stream, connection, connectedPeer, endpoint, onIncoming, engineRef, accessorRef, rootPath, peerHandlers);
 			}
 			catch (Exception ex)
 			{
@@ -504,7 +527,7 @@ namespace PLang.Modules.IrohModule
 			if (connectedPeer == null && answer.StatusCode == 401) RemovePeer(connection, dispose: true);
 		}
 
-		private async Task<(TellAnswer Answer, string? ReceivedFolder)> Process(IrohStream stream, IrohConnection connection, IrohPeer? connectedPeer, IrohEndpoint endpoint, GoalToCallInfo onIncoming, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath)
+		private async Task<(TellAnswer Answer, string? ReceivedFolder)> Process(IrohStream stream, IrohConnection connection, IrohPeer? connectedPeer, IrohEndpoint endpoint, GoalToCallInfo onIncoming, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath, PeerHandlers peerHandlers)
 		{
 			byte[] lengthBytes = new byte[4];
 			if (!stream.ReadExactly(lengthBytes, 4, ChunkTimeoutMilliseconds))
@@ -522,10 +545,10 @@ namespace PLang.Modules.IrohModule
 				return (new TellAnswer(false, null, "Declined: the command header is not valid", 400), null);
 			}
 
-			return await Process(stream, headerBytes, connection, connectedPeer, endpoint, onIncoming, engineRef, accessorRef, rootPath);
+			return await Process(stream, headerBytes, connection, connectedPeer, endpoint, onIncoming, engineRef, accessorRef, rootPath, peerHandlers);
 		}
 
-		private async Task<(TellAnswer Answer, string? ReceivedFolder)> Process(IrohStream stream, byte[] bytes, IrohConnection connection, IrohPeer? connectedPeer, IrohEndpoint endpoint, GoalToCallInfo onIncoming, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath)
+		private async Task<(TellAnswer Answer, string? ReceivedFolder)> Process(IrohStream stream, byte[] bytes, IrohConnection connection, IrohPeer? connectedPeer, IrohEndpoint endpoint, GoalToCallInfo onIncoming, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath, PeerHandlers peerHandlers)
 		{
 			var request = JsonConvert.DeserializeObject<TellRequest>(Encoding.UTF8.GetString(bytes));
 			if (request == null || string.IsNullOrEmpty(request.Signature) || string.IsNullOrEmpty(request.Payload))
@@ -605,6 +628,11 @@ namespace PLang.Modules.IrohModule
 			// An allowed peer that connected to this app is kept under its identity, so any run can tell it
 			if (connectedPeer == null) AddPeer(peer);
 
+			if (goalName.StartsWith("!"))
+			{
+				return (await RuntimeCommand(goalName, parameters, peer, verified.Identity?.ToString(), engineRef, accessorRef, rootPath, peerHandlers), null);
+			}
+
 			string? receivedFolder = null;
 			if (fileName != null)
 			{
@@ -636,6 +664,103 @@ namespace PLang.Modules.IrohModule
 			if (run.Error != null) return (new TellAnswer(false, null, run.Error.Message, run.Error.StatusCode), receivedFolder);
 
 			return (new TellAnswer(true, null, null, 200), receivedFolder);
+		}
+
+		/// <summary>
+		/// A command the runtime answers itself, after onIncoming allowed the peer:
+		/// !output (a peer wrote out to this app) calls onOutput with %message%;
+		/// !ask (a peer asked this app) calls onAsk with %question% and %callback%, without waiting for it, as the answer
+		/// may take long; it is sent back by `answer %callback% with %answer%`;
+		/// !answer (the answer to a question this app asked the peer) goes on with the goal that asked, from the ask step.
+		/// </summary>
+		private async Task<TellAnswer> RuntimeCommand(string command, Dictionary<string, object?> parameters, IrohPeer peer, string? identity,
+			IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath, PeerHandlers peerHandlers)
+		{
+			switch (command)
+			{
+				case OutputCommand:
+				{
+					if (peerHandlers.OnOutput == null) return new TellAnswer(false, null, "Declined: this app takes no output from peers (no `on output call` on its listen or connect)", 404);
+					var call = new Dictionary<string, object?>(peerHandlers.OnOutput.Parameters)
+					{
+						["message"] = parameters.GetValueOrDefault("message"),
+						["peer"] = peer,
+						[ReservedKeywords.Identity] = identity
+					};
+					var run = await pseudoRuntime.RunGoal(engineRef, accessorRef, rootPath, new GoalToCallInfo(peerHandlers.OnOutput.Name, call));
+					if (run.Error != null && run.Error is not Return && run.Error is not EndGoal) return new TellAnswer(false, null, run.Error.Message, run.Error.StatusCode);
+					return new TellAnswer(true, null, null, 200);
+				}
+				case AskCommand:
+				{
+					if (peerHandlers.OnAsk == null) return new TellAnswer(false, null, "Declined: this app answers no questions from peers (no `on ask call` on its listen or connect)", 404);
+					var callback = parameters.GetValueOrDefault("callback")?.ToString();
+					if (string.IsNullOrEmpty(callback)) return new TellAnswer(false, null, "Declined: the question has no callback", 400);
+					var call = new Dictionary<string, object?>(peerHandlers.OnAsk.Parameters)
+					{
+						["question"] = parameters.GetValueOrDefault("question"),
+						["callback"] = new IrohAskCallback(callback, peer),
+						["peer"] = peer,
+						[ReservedKeywords.Identity] = identity
+					};
+					var (_, _, error) = await pseudoRuntime.RunGoal(engineRef, accessorRef, rootPath, new GoalToCallInfo(peerHandlers.OnAsk.Name, call), waitForExecution: false);
+					if (error != null) return new TellAnswer(false, null, error.Message, error.StatusCode);
+					return new TellAnswer(true, null, null, 200);
+				}
+				case AnswerCommand:
+					return await ResumeAsk(parameters, engineRef, accessorRef, rootPath);
+				default:
+					return new TellAnswer(false, null, $"Declined: {command} is not a command", 400);
+			}
+		}
+
+		/// <summary>
+		/// The answer to `ask user "..." to %peer%` came back: the callback is the one this app signed when it asked, so it is
+		/// verified against this app's own identity, then the goal that asked runs again from the ask step, which reads the
+		/// answer from the callback.
+		/// </summary>
+		private async Task<TellAnswer> ResumeAsk(Dictionary<string, object?> parameters, IEngine engineRef, IPLangContextAccessor accessorRef, string rootPath)
+		{
+			var callbackText = parameters.GetValueOrDefault("callback")?.ToString();
+			var answer = parameters.GetValueOrDefault("answer");
+			var identityModule = GetProgramModule<IdentityModule.Program>();
+			var (callback, _, error) = await CallbackHelper.GetCallback(identityModule, callbackText);
+			if (error != null) return new TellAnswer(false, null, "Declined: " + error.Message, error.StatusCode);
+			if (callback == null) return new TellAnswer(false, null, "Declined: the callback is not valid", 400);
+
+			var goal = engineRef.PrParser.GetAllGoals().FirstOrDefault(g => g.Hash == callback.CallbackInfo.GoalHash);
+			if (goal == null) return new TellAnswer(false, null, $"Declined: the goal {callback.CallbackInfo.GoalName} that asked has changed or is gone", 410);
+
+			string? answerText = answer switch
+			{
+				null => null,
+				string s => s,
+				JToken token => token.Type == JTokenType.String ? token.ToString() : token.ToString(Formatting.None),
+				_ => JsonConvert.SerializeObject(answer)
+			};
+			var resumed = callback with { CallbackInfo = callback.CallbackInfo with { Answer = answerText } };
+
+			var context = new PLangContext(MemoryStack.New(engineRef.Container, engineRef), engineRef, ExecutionMode.Console);
+			context.Callback = resumed;
+			context.CallStack.EnterGoal(goal);
+			accessorRef.Current = context;
+			using var origin = RunOrigin.App();
+			var (_, _, runError) = await pseudoRuntime.RunGoal(engineRef, accessorRef, rootPath,
+				new GoalToCallInfo(goal.GoalName) { Path = goal.RelativePrPath }, goal, waitForExecution: false);
+			if (runError != null) return new TellAnswer(false, null, runError.Message, runError.StatusCode);
+			return new TellAnswer(true, null, null, 200);
+		}
+
+		[Description("Send the answer to a question a peer asked (%callback% in the goal of `on ask call`), e.g. `answer %callback% with %answer%`. The peer goes on with its goal from its ask step, with the answer")]
+		[Example("answer %callback% with %answer%", "callback=%callback%, answer=%answer%")]
+		public async Task<IError?> Answer(object callback, object? answer)
+		{
+			if (callback is not IrohAskCallback ask)
+			{
+				return new ProgramError($"{callback ?? "null"} is not a question from a peer (%callback% of an `on ask` goal)", goalStep, function);
+			}
+			var (_, error) = await Tell(ask.Peer, AnswerCommand, new Dictionary<string, object?> { ["callback"] = ask.Callback, ["answer"] = answer });
+			return error;
 		}
 
 		private static string? ReceiveFile(IrohStream stream, string savedPath, long size, string expectedSha256)

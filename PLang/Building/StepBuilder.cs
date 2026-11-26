@@ -1059,6 +1059,13 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			catch { }
 		}
 
+		// `answer %callback% with %x%` answers a question a peer asked over iroh. It was built as `return`, which answers
+		// nobody, so the peer waited for ever.
+		if (Regex.IsMatch(step.Text.Trim(), @"^answer\s+%[^%]+%\s+with\b", RegexOptions.IgnoreCase))
+		{
+			return ["PLang.Modules.IrohModule"];
+		}
+
 		var modules = typeHelper.GetRuntimeModules();
 		List<string> forceModuleType = new List<string>();
 		var match = Regex.Match(step.Text.Trim(), @"^\[[\w]+\]", RegexOptions.IgnoreCase | RegexOptions.Multiline);

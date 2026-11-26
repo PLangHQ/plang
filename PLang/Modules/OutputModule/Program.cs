@@ -429,6 +429,13 @@ namespace PLang.Modules.OutputModule
 				_ => Newtonsoft.Json.JsonConvert.SerializeObject(content, Newtonsoft.Json.Formatting.None)
 			};
 
+			if (to is IrohModule.Program.IrohPeer peer)
+			{
+				var iroh = GetProgramModule<IrohModule.Program>();
+				var (_, tellError) = await iroh.Tell(peer, IrohModule.Program.OutputCommand, new Dictionary<string, object?> { ["message"] = content });
+				return tellError;
+			}
+
 			if (to is TerminalModule.PlangProcess process)
 			{
 				try
@@ -442,7 +449,47 @@ namespace PLang.Modules.OutputModule
 				}
 			}
 
-			return new ProgramError($"Cannot write out to {(to == null ? "an empty variable" : to.GetType().Name)}. A %variable% to write to holds a process started with `start process`.", goalStep, function);
+			return new ProgramError($"Cannot write out to {(to == null ? "an empty variable" : to.GetType().Name)}. A %variable% to write to holds a process started with `start process` or an iroh peer.", goalStep, function);
+		}
+
+		[Description("Ask a question to an iroh peer (%peer% from `connect` or of an incoming command), e.g. `ask user \"Allow git push?\" to %robbi%, write to %answer%`. The question goes to the peer's `on ask` goal and this goal stops; when the peer answers (`answer %callback% with %answer%`) the goal goes on from this step with the answer in the variable. Variables the goal needs after the answer are listed in callbackData. Not for asking the user of a web request or the console: that is Ask")]
+		[Example("ask user \"Allow Claude to run git push?\" to %robbi%, write to %answer%", @"question=""Allow Claude to run git push?"", to=""%robbi%"", ReturnValues = %answer%")]
+		[Example("ask \"Which branch?\" to %peer%, keep %taskId%, write to %branch%", @"question=""Which branch?"", to=""%peer%"", callbackData={""taskId"":""%taskId%""}, ReturnValues = %branch%")]
+		public async Task<(object?, IError?)> AskTo(string question, object? to, Dictionary<string, object?>? callbackData = null)
+		{
+			// The answer has come back: this is the run that goes on from the ask step.
+			var callback = context.Callback;
+			if (callback != null && callback.CallbackInfo.GoalHash == goal.Hash && callback.CallbackInfo.StepIndex == GoalRuntimeState.GetCurrentStepIndex(goal))
+			{
+				var encryption = programFactory.GetProgram<Modules.CryptographicModule.Program>(goalStep);
+				foreach (var item in callback.CallbackData ?? [])
+				{
+					var value = item.Value?.ToString();
+					if (string.IsNullOrEmpty(value)) continue;
+					memoryStack.Put(item.Key, await encryption.Decrypt(value));
+				}
+				context.Callback = null;
+				return (callback.CallbackInfo.Answer, null);
+			}
+
+			if (to is not IrohModule.Program.IrohPeer peer)
+			{
+				return (null, new ProgramError($"Cannot ask {(to == null ? "an empty variable" : to.GetType().Name)}. `ask ... to %variable%` asks an iroh peer.", goalStep, function));
+			}
+
+			var newCallback = await StepHelper.GetCallback("iroh", callbackData, memoryStack, goalStep, programFactory);
+			if (newCallback == null) return (null, new ProgramError("Could not make the callback for the question", goalStep, function));
+
+			var iroh = GetProgramModule<IrohModule.Program>();
+			var (_, error) = await iroh.Tell(peer, IrohModule.Program.AskCommand, new Dictionary<string, object?>
+			{
+				["question"] = memoryStack.LoadVariables(question)?.ToString(),
+				["callback"] = JsonConvert.SerializeObject(newCallback).ToBase64()
+			});
+			if (error != null) return (null, error);
+
+			// The goal stops here; it goes on from this step when the answer comes back.
+			return (null, new EndGoal(true, new Goal() { RelativePrPath = "RootOfApp" }, goalStep, "Asked a peer a question", Levels: 9999));
 		}
 
 		}

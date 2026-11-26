@@ -403,6 +403,8 @@ namespace PLang.Runtime
 
 				(returnVars, error) = await RunGoal(goal, context);
 				if (returnVars != null) vars.Add(returnVars);
+				// Start ending early (`end goal`, a question to a peer that it goes on from later) is not an error of the app.
+				if (error is EndGoal) error = null;
 				if (error != null)
 				{
 					(returnVars, error) = await RunAppErrorEvents(error);

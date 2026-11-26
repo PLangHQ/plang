@@ -140,6 +140,44 @@ Update
 
 The size and sha256 of the file are in the signed command. The receiver calls `on incoming` first (it gets `%fileName%` and `%fileSize%` too) and takes no file bytes until that goal has passed. Then the file is saved under `/.tmp/iroh/<id>/<name>` in the receiving app, its sha256 is checked, and the goal runs with `%file%` set to that path. A file that does not match is deleted and the command is declined. After a successful command the file belongs to the goal, so move it or delete it. Folders older than a day are removed when the app starts listening. The largest file taken is 512 MB, change it with the setting `IrohMaxFileBytes`.
 
+## Write out to a peer, and ask it
+
+An app can write out to a peer and ask it a question, the way it writes to and asks a user. The peer decides what to
+do with them, with `on output` and `on ask` on its `start listening` (or `connect`):
+
+```plang
+/ the app that asks, e.g. a bot runner
+Start
+- connect to %robbiKey%, on incoming call Allow, write to %robbi%
+- write out "starting the job" to %robbi%
+- ask user "Allow Claude to run git push?" to %robbi%, keep %task%, write to %answer%
+- write out "the answer was %answer% for %task%"
+
+/ the peer that answers, e.g. Robbi
+Start
+- start listening, on incoming call Allow, on output call ShowOutput, on ask call AskIngi
+
+ShowOutput
+/ %message% is what the peer wrote out, %peer% the peer
+- append "%message%\n" to file "/robbi.log"
+
+AskIngi
+/ %question%, %callback% and %peer%
+- ask user %question%, write to %answer%
+- answer %callback% with %answer%
+```
+
+- `write out %x% to %peer%` goes to the peer's `on output` goal as `%message%`. It waits until that goal has run.
+- `ask user "..." to %peer%` sends the question and **the goal stops there**, the same as an ask in a web request. When
+  the peer answers (`answer %callback% with %answer%`, from any goal, at any time), the goal that asked runs again
+  **from the ask step**, with the answer in its variable. Variables it needs after the answer are kept with
+  `keep %x%` (callbackData); others are not there any more. The callback is signed by the asking app and checked
+  when the answer comes back.
+- The asking app takes the answer as a command from the peer, so it needs `on incoming` on its connect (the peer is
+  checked there like any command).
+- A peer without `on output` / `on ask` declines with 404.
+- The goal that asked runs from the ask step on: a goal that called it does not go on.
+
 ## Wire format
 
 One bidirectional QUIC stream per `tell`, ALPN `plang/tell/1`. The request is a 4 byte big endian header length, the header, then the file bytes when there is a file. The header is JSON `{ "Signature": <signed message>, "Payload": <string> }` where the payload is `{ goal, parameters, created, to, file: { name, size, sha256 } }` and the signature covers the payload text. `to` is the receiver's endpoint id and is checked when the sender connected by id. The file goes in 64 KB chunks, each with a 30 second timeout. The answer is `{ Ok, Result, Error, StatusCode }`. The stream is closed after the answer.
