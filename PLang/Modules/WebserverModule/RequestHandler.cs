@@ -107,17 +107,16 @@ namespace PLang.Modules.WebserverModule
 					return (false, signedMessage?.Identity, error);
 				}
 
-				if (webserverProperties.OnPollStart != null || webserverProperties.OnPollRefresh != null)
+				// The client's poll is the connection the server pushes on, with or without poll goals. Without them it went
+				// to the route of the page as a plain request, and that route's render replaced the page the visitor was on.
+				string? pollQuery = request.QueryString.Value;
+				if (pollQuery?.StartsWith("?plang.poll=1") == true)
 				{
-					string? query = request.QueryString.Value;
-					if (query?.StartsWith("?plang.poll=1") == true)
-					{
-						error = await HandlePlangPoll(requestEngine, context, webserverProperties, query);
-						if (error != null) return (false, signedMessage?.Identity, error);
+					error = await HandlePlangPoll(requestEngine, context, webserverProperties, pollQuery);
+					if (error != null) return (false, signedMessage?.Identity, error);
 
-						//return true to create long lasting connection
-						return (true, signedMessage?.Identity, null);
-					}
+					//return true to create long lasting connection
+					return (true, signedMessage?.Identity, null);
 				}
 
 
