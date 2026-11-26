@@ -63,7 +63,8 @@ and a request to the llm. Modules get the real value. Mark any other value the s
 - set %password% = %request.password% as sensitive
 ```
 
-What the app writes out itself (`write out "%password%"`) is not hidden. Values shorter than 6 characters are not hidden.
+`write out` hides it too: `write out "password is %password%"` writes `password is ****`. Modules that send it on
+(http, a process, an iroh peer) get the real value. Values shorter than 6 characters are not hidden.
 
 The name of a setting cannot be built from a variable: `%Settings.Token%project%%` is not read as `Settings.TokenFinland`, and the
 request goes out with the wrong text and no error. To pick one of several keys, call one goal per key:

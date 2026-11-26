@@ -365,7 +365,8 @@ namespace PLang.Modules.OutputModule
 			{
 				try { content = Newtonsoft.Json.Linq.JToken.Parse(trimmed); } catch (JsonReaderException) { }
 			}
-			textMessage = textMessage with { Content = JsonConvert.SerializeObject(content, settings) };
+			// a sensitive value (a setting, one set `as sensitive`) is not written out (Ingi)
+			textMessage = textMessage with { Content = SensitiveValues.Redact(JsonConvert.SerializeObject(content, settings)) ?? "" };
 
 			return await Write(textMessage);
 		}
@@ -410,7 +411,8 @@ namespace PLang.Modules.OutputModule
 
 
 			string stepPath = Path.Join(goalStep.Goal.GoalName, goalStep.Number.ToString()).Replace("\\", "/");
-			textMessage = textMessage with { Path = stepPath };
+			// a sensitive value (a setting, one set `as sensitive`) is not written out (Ingi): **** and the last 4 characters
+			textMessage = textMessage with { Path = stepPath, Content = SensitiveValues.Redact(textMessage.Content) ?? "" };
 
 			var sink = context.GetSink(textMessage.Actor);
 			return await sink.SendAsync(textMessage);
