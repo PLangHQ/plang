@@ -444,7 +444,14 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 					throw new Exception($"Expected value to be GoalToCallInfo. {ErrorReporting.CreateIssueShouldNotHappen}");
 				}
 
-				if (goalToCall.Name != null && goalToCall.Name.Contains("%"))
+				// A goal with no name is no goal to call, e.g. an llm answer {"Name": ""} for a condition with a block under it.
+				if (string.IsNullOrWhiteSpace(goalToCall.Name))
+				{
+					jsonNode["Value"] = JValue.CreateNull();
+					continue;
+				}
+
+				if (goalToCall.Name.Contains("%"))
 				{
 					logger.LogInformation($"Cannot validate goal to call that is dynamic: {goalToCall.Name} - {goalStep.RelativeGoalPath}:{goalStep.LineNumber}");
 					return (instruction, null);

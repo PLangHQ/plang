@@ -336,8 +336,12 @@ namespace PLang.Building
 		{
 			lock (buildErrorsLock)
 			{
-			if (BuildErrors.FirstOrDefault(p => p == buildStepError) == null && 
-				(BuildErrors.FirstOrDefault(p => p.Step?.AbsolutePrFilePath != buildStepError.Step?.AbsolutePrFilePath) == null && BuildErrors.FirstOrDefault(p => p.Step?.LineNumber == buildStepError.Step?.LineNumber) == null))
+			// One error per step: the same error, or another one for the same step, is not added twice.
+			bool known = BuildErrors.Any(p => p == buildStepError
+				|| (buildStepError.Step != null && p.Step != null
+					&& p.Step.RelativeGoalPath == buildStepError.Step.RelativeGoalPath
+					&& p.Step.LineNumber == buildStepError.Step.LineNumber));
+			if (!known)
 			{
 				BuildErrors.Add(buildStepError);
 

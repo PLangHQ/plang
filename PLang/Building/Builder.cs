@@ -187,7 +187,7 @@ namespace PLang.Building
 					}
 					foreach (var err in goalErrors)
 					{
-						if (!err.ContinueBuild) return [err];
+						if (!err.ContinueBuild) return StopBuild(err, goals, stopwatch);
 						goalBuilder.AddToBuildErrors(err);
 					}
 					goalsToBuild = mayShareState;
@@ -200,7 +200,7 @@ namespace PLang.Building
 					var goalError = await goalBuilder.BuildGoal(container, goalToBuild, context);
 					if (goalError != null && !goalError.ContinueBuild)
 					{
-						return [goalError];
+						return StopBuild(goalError, goals, stopwatch);
 					}
 					else if (goalError != null)
 					{
@@ -327,6 +327,18 @@ namespace PLang.Building
 		// abandoned part way through a goal, and what is left on disk is a Goal.pr whose steps point at
 		// files that were never written. Nothing complained, and the goal only broke when it was run.
 		// So the state on disk is checked directly rather than trusting that every failure reported itself.
+		/// <summary>
+		/// An error that stops the build is reported the same way as the errors the build carried on past: the
+		/// BUILD FAILED summary names the step. Returning it bare printed nothing of the kind, and a step left without
+		/// a .pr looked like a clean build.
+		/// </summary>
+		private List<IBuilderError> StopBuild(IBuilderError error, List<Goal> goals, Stopwatch stopwatch)
+		{
+			goalBuilder.AddToBuildErrors(error);
+			ShowBuilderErrors(goals, stopwatch);
+			return [error];
+		}
+
 		private void AddErrorsForStepsWithoutPr(List<Goal> goals)
 		{
 			foreach (var goal in goals)
