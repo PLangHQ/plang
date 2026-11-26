@@ -38,7 +38,33 @@ namespace PLang.Modules.IrohModule
 		/// One open connection to a peer. Target is the key it is known by in this app: the endpoint id (or ticket) it was
 		/// connected to, or the %Identity% that signed the commands of a peer that connected to this app.
 		/// </summary>
+		[JsonConverter(typeof(IrohPeerReader))]
 		public record IrohPeer(string Target, string? EndpointId, [property: JsonIgnore] IrohConnection Connection);
+
+		/// <summary>
+		/// A peer given as its key (text) or as a peer that was serialized is the connection kept under that key, so
+		/// `tell %key%` works whether the step was built for a peer or for a key. Not connected: a peer without a
+		/// connection, which tell answers with NotConnected.
+		/// </summary>
+		internal sealed class IrohPeerReader : JsonConverter
+		{
+			public override bool CanConvert(Type objectType) => objectType == typeof(IrohPeer);
+			public override bool CanWrite => false;
+			public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer) => throw new NotSupportedException();
+
+			public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
+			{
+				var token = JToken.Load(reader);
+				string? key = token.Type switch
+				{
+					JTokenType.String => token.ToString(),
+					JTokenType.Object => token["Target"]?.ToString() ?? token["target"]?.ToString(),
+					_ => null
+				};
+				if (string.IsNullOrWhiteSpace(key)) return null;
+				return FindPeer(key) ?? new IrohPeer(PeerKey(key), null, null!);
+			}
+		}
 
 		public const string NotConnectedKey = "NotConnected";
 		private const string PeerKeepAliveKind = "iroh-listen-peer-";
@@ -271,6 +297,8 @@ namespace PLang.Modules.IrohModule
 			[Description("Path of a file to send with the command. Its size and sha256 are in the signed command, the peer checks them and gives the goal the saved path as %file%")] string? file = null,
 			int timeoutInSeconds = 60, int expiresInSeconds = 120)
 		{
+			// A peer whose connection has closed is told on the connection now kept under its key, e.g. after a reconnect.
+			if (peer != null && (peer.Connection == null || peer.Connection.IsDisposed)) peer = FindPeer(peer.Target) ?? peer;
 			return await TellConnected(peer, goalName, parameters, file, timeoutInSeconds, expiresInSeconds);
 		}
 

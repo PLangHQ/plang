@@ -8,6 +8,9 @@ using System.Text;
 
 namespace PLang.Modules.WebSocketModule
 {
+	// Not implemented (Connect and Send throw), so the builder is not offered it: `connect to %key%` went here
+	// instead of iroh and failed at run time.
+	[PLang.Attributes.LlmIgnore]
 	public class Program : BaseProgram, IDisposable
 	{
 		private readonly ProgramFactory programFactory;

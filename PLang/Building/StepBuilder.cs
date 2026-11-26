@@ -741,6 +741,24 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			}
 		}
 
+		if (canHaveErrorHandling && stepProperties.ErrorHandlers != null)
+		{
+			// `on incoming call Allow`, `on closed call Reconnect`, `on start call X` name goals that are parameters of the
+			// method. Read as an error handler, a failed connect called Allow and went on.
+			var eventGoals = Regex.Matches(step.Text, @"\bon\s+(?!error\b)[a-z]+(?:\s+[a-z]+){0,2}\s+(?:call|run)\s+(?:goal\s+)?([\w/\\.]+)", RegexOptions.IgnoreCase)
+				.Select(m => m.Groups[1].Value.TrimEnd(',', '.'))
+				.ToList();
+			var misread = stepProperties.ErrorHandlers.FirstOrDefault(h => h.GoalToCall?.Name != null
+				&& eventGoals.Contains(h.GoalToCall.Name.TrimStart('/'), StringComparer.OrdinalIgnoreCase)
+				&& !Regex.IsMatch(step.Text, @"\bon\s+error\b[^,]*?\bcall\s+(?:goal\s+)?/?" + Regex.Escape(h.GoalToCall.Name.TrimStart('/')) + @"\b", RegexOptions.IgnoreCase));
+			if (misread != null)
+			{
+				return (step, new StepBuilderError($"`{misread.GoalToCall!.Name}` is called by an `on ... call` clause that is not `on error`, so it is a parameter of the method (an event goal), not an ErrorHandler. Only `on error` clauses are ErrorHandlers.", step));
+			}
+
+			SetRetryDelayFromText(step.Text, stepProperties.ErrorHandlers);
+		}
+
 		step.ErrorHandlers = (canHaveErrorHandling) ? stepProperties.ErrorHandlers : null;
 		step.WaitForExecution = (canBeAsync) ? stepProperties.WaitForExecution : true;
 		step.LoggerLevel = GetLoggerLevel(stepProperties.LoggerLevel);
@@ -748,6 +766,34 @@ Builder will continue on other steps but not this one: ({step.Text}).
 		step.CacheHandler = (canBeCached) ? stepProperties.CachingHandler : null;
 
 		return (step, null);
+	}
+
+	/// <summary>
+	/// `retry 3 times over 1 minute` is 3 tries spread over the minute: 20 seconds between them. The llm gave 20000, 60000
+	/// or nothing for the same words, so the step's words set it.
+	/// </summary>
+	public static void SetRetryDelayFromText(string stepText, List<ErrorHandler> handlers)
+	{
+		var match = Regex.Match(stepText, @"\bretry\s+(\d+)\s+times?\s+over\s+(\d+(?:\.\d+)?)\s*(ms|milliseconds?|s|secs?|seconds?|m|mins?|minutes?|h|hours?|d|days?)\b", RegexOptions.IgnoreCase);
+		if (!match.Success) return;
+
+		int count = int.Parse(match.Groups[1].Value);
+		double amount = double.Parse(match.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture);
+		string unit = match.Groups[3].Value.ToLowerInvariant();
+		double totalMs = unit switch
+		{
+			"ms" or "millisecond" or "milliseconds" => amount,
+			"s" or "sec" or "secs" or "second" or "seconds" => amount * 1000,
+			"m" or "min" or "mins" or "minute" or "minutes" => amount * 60_000,
+			"h" or "hour" or "hours" => amount * 3_600_000,
+			_ => amount * 86_400_000
+		};
+		if (count <= 0) return;
+
+		var handler = handlers.FirstOrDefault(h => h.RetryHandler?.RetryCount == count) ?? handlers.FirstOrDefault(h => h.RetryHandler != null);
+		if (handler == null) return;
+		handler.RetryHandler!.RetryCount = count;
+		handler.RetryHandler.RetryDelayInMilliseconds = (int)Math.Min(int.MaxValue, totalMs / count);
 	}
 
 	private (StepProperties, IBuilderError?) ValidateGoalPaths(StepProperties stepProperties, GoalStep step)

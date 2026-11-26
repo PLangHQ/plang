@@ -467,8 +467,15 @@ namespace PLang.Modules.IrohModule
 			{
 				return stream.ReadAll(answerTimeoutMilliseconds, maxAnswerBytes);
 			}
+			catch (IrohConnectionEndedException)
+			{
+				// The stream broke under the request: the peer or the network ended the connection.
+				NoteEnded();
+				throw;
+			}
 			catch when (writeError != null)
 			{
+				if (writeError is IrohConnectionEndedException) NoteEnded();
 				throw writeError;
 			}
 		}
@@ -600,7 +607,8 @@ namespace PLang.Modules.IrohModule
 			{
 				var result = iroh.recv_stream_read_to_end_timeout(&stream, &buffer, (UIntPtr)maxBytes, (ulong)timeoutMilliseconds);
 				if (result == EndpointResult.ENDPOINT_RESULT_TIMEOUT) throw new IrohException("The peer did not answer in time");
-				if (result != EndpointResult.ENDPOINT_RESULT_OK) throw new IrohException("Could not read from the peer: " + result);
+				// Not a timeout: the stream broke, which is how a connection that died under a request shows.
+				if (result != EndpointResult.ENDPOINT_RESULT_OK) throw new IrohConnectionEndedException("Could not read from the peer: " + result);
 				byte[] bytes = new byte[(int)buffer.len];
 				Marshal.Copy((IntPtr)buffer.ptr, bytes, 0, bytes.Length);
 				return bytes;
@@ -646,7 +654,7 @@ namespace PLang.Modules.IrohModule
 			{
 				var written = iroh.send_stream_write_timeout(&stream, new slice_ref_uint8 { ptr = ptr, len = (UIntPtr)count }, (ulong)timeoutMilliseconds);
 				if (written == EndpointResult.ENDPOINT_RESULT_TIMEOUT) throw new IrohException("The peer stopped taking data");
-				if (written != EndpointResult.ENDPOINT_RESULT_OK) throw new IrohException("Could not send to the peer: " + written);
+				if (written != EndpointResult.ENDPOINT_RESULT_OK) throw new IrohConnectionEndedException("Could not send to the peer: " + written);
 			}
 		}
 

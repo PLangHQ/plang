@@ -121,6 +121,8 @@ ErrorHandlers: from an `on error ...` clause, and from any wording that says a f
  - StatusCode, Message and Type are null unless the step states them
  - GoalToCall is the goal named after `call`, with any parameters written after its name
  - RetryHandler only when the step asks to retry; RunRetryBeforeCallingGoalToCall is true only when the retry is written before the call
+ - `retry N times over T` spreads the N tries over T: RetryDelayInMilliseconds is T / N, e.g. `retry 3 times over 1 minute` => {""RetryCount"": 3, ""RetryDelayInMilliseconds"": 20000}
+ - Only `on error` is an error handler. `on incoming call Allow`, `on closed call Reconnect`, `on start call AddRoutes` and every other `on <event> call X` are parameters of the method, never ErrorHandlers
 Examples:
  `on error call HandleError` => [{""IgnoreError"": false, ""Key"": ""*"", ""GoalToCall"": {""Name"": ""HandleError""}}]
  `on error call Recover, ignore error` => [{""IgnoreError"": true, ""Key"": ""*"", ""GoalToCall"": {""Name"": ""Recover""}}]

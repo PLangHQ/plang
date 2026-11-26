@@ -157,6 +157,7 @@ public class TypeHelper : ITypeHelper
 		foreach (var module in runtimeModules)
 		{
 			if (excludedModules != null && excludedModules.Contains(module.FullName.Replace(".Program", ""))) continue;
+			if (module.IsDefined(typeof(PLang.Attributes.LlmIgnoreAttribute), false)) continue;
 
 			strModules += $"{{ \"module\": \"{module.FullName.Replace(".Program", "")}\"";
 
@@ -189,6 +190,8 @@ public class TypeHelper : ITypeHelper
 		{
 			var name = module.FullName.Replace(".Program", "");
 			if (excludedModules != null && excludedModules.Contains(name)) continue;
+			// A module marked LlmIgnore is not offered to the builder, e.g. one that is not implemented.
+			if (module.IsDefined(typeof(PLang.Attributes.LlmIgnoreAttribute), false)) continue;
 
 			var descriptions = module.CustomAttributes
 				.Where(p => p.AttributeType.Name == "DescriptionAttribute")

@@ -45,7 +45,7 @@ Connect
 - `tell` to a key with no open connection fails with the error key `NotConnected`. The first tell makes the connection this way, and so does the first tell after a connection was lost.
 - There is one connection per key. A `connect` to a key that is already connected returns the open connection, so connecting again does not dial again.
 - An open connection keeps the app running, as a webserver does. No `keep alive` is needed. An app that connects once and has nothing else to do ends only when the connection closes, or with `disconnect from %kioskKey%`.
-- Write the wait between retries as `wait 10 seconds between retries`. Other wordings (`retry 3 times over 30 seconds`) may build with no wait.
+- The wait between retries is `wait 10 seconds between retries`, or `retry 3 times over 30 seconds`, which spreads the tries over that time (10 seconds between them).
 
 ### Push: the peer sends to you
 
@@ -81,9 +81,9 @@ Push
 - tell peer id %subscriber% to Ingest, at: %Now%, timeout 10 seconds, on error call goal Dropped
 ```
 
-- A peer that connected to `start listening` is kept under the `%Identity%` that signed its command, once `on incoming` allowed it. Write `tell peer id %x%` when `%x%` holds a key or an identity.
+- A peer that connected to `start listening` is kept under the `%Identity%` that signed its command, once `on incoming` allowed it. `tell %x%` and `tell peer id %x%` both work when `%x%` holds a key or an identity.
 - `when the connection closes` runs when the peer or the network ends the connection, not after `disconnect`.
-- Write the connect step with `when a command comes in run X` and `when the connection closes run Y`. With `on incoming call X, on closed call Y` the step may be built as a websocket connect, or with X as the step's error handler.
+- The connect step can also be written `connect to %agentEndpoint%, on incoming call Allow, on closed call Subscribe`.
 
 ### Pull: you ask the peer
 
@@ -122,7 +122,7 @@ Unreachable
 ### A peer that goes away
 
 A peer that disappears without closing (a crash, a lost network) is noticed after the idle timeout, about 30 seconds.
-- A `tell` that is waiting when that happens fails with a general error, not `NotConnected`, so `on error NotConnected` does not catch it and the goal stops. In the pull pattern the next pull gets `NotConnected` and connects again.
+- A `tell` that is waiting when that happens fails with `NotConnected`, so `on error NotConnected call Connect, retry ...` connects again. A `tell` that only runs past its `timeout` on an open connection fails with a general error.
 - `when the connection closes` runs then, so in the push pattern the app subscribes again.
 
 A step can also tell the connection object that `connect ..., write to %agent%` returns: `tell %agent% to X`.
