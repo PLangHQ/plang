@@ -40,7 +40,7 @@ namespace PLang.Modules.WebCrawlerModule
 		public IDownload Download { get; internal set; }
 	}
 
-	[Description("Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content")]
+	[Description("Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. Never for `redirect to ...`: a redirect sends the visitor of a web request elsewhere, which is the webserver's")]
 	[PLang.Attributes.Effect(PLang.Attributes.Effects.External)]
 	public sealed class Program : BaseProgram, IAsyncConstructor, IDisposable
 	{
@@ -437,7 +437,7 @@ namespace PLang.Modules.WebCrawlerModule
 		}
 
 
-		[Description("opens a page to a url. browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot. waitAfterInMilliseconds pauses after the page has loaded, for a page whose client script paints the content a moment later, e.g. 'navigate to x, wait 3 seconds' => waitAfterInMilliseconds: 3000. The browser stays open across goals until 'close browser' or until it has been unused for closeAfterIdleMinutes. closeAfterIdleMinutes=0 means never close it for being idle, e.g. 'never close the browser' or 'keep the browser open' => closeAfterIdleMinutes: 0.")]
+		[Description("opens a page to a url in a browser this app runs. Never for `redirect to ...` (the webserver redirects the visitor). browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot. waitAfterInMilliseconds pauses after the page has loaded, for a page whose client script paints the content a moment later, e.g. 'navigate to x, wait 3 seconds' => waitAfterInMilliseconds: 3000. The browser stays open across goals until 'close browser' or until it has been unused for closeAfterIdleMinutes. closeAfterIdleMinutes=0 means never close it for being idle, e.g. 'never close the browser' or 'keep the browser open' => closeAfterIdleMinutes: 0.")]
 		public async Task NavigateToUrl(string url, string browserType = "Chrome", bool headless = false,
 				string profileName = "", bool kioskMode = false, Dictionary<string, object>? argumentOptions = null,
 				int? timeoutInSeconds = null, bool hideTestingMode = false, int pageIndex = -1, int waitAfterInMilliseconds = 0, int closeAfterIdleMinutes = 10,

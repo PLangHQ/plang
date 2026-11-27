@@ -289,6 +289,7 @@ public class StepBuilder : IStepBuilder
 
 		StepPrFiles.AlignModuleWithInstruction(step, instruction, logger.Value);
 		if (IsConditionWithOtherModule(step, step.ModuleType)) return (false, null);
+		if (IsRedirectWithWebCrawler(step, step.ModuleType)) return (false, null);
 
 		var gf = instruction.Function;
 		// lets load the return value into memoryStack
@@ -546,6 +547,10 @@ public class StepBuilder : IStepBuilder
 			{
 				logger.Value.LogInformation($"{step.LineNumber}: Decider chose {choice.Module} ({choice.Confidence:0.00}) for a step that starts with if, falling back to llm");
 			}
+			else if (choice != null && IsRedirectWithWebCrawler(step, choice.Module))
+			{
+				logger.Value.LogInformation($"{step.LineNumber}: Decider chose {choice.Module} ({choice.Confidence:0.00}) for a redirect, falling back to llm");
+			}
 			else if (choice != null && choice.Confidence >= DeciderConfidenceThreshold && typeHelper.GetRuntimeType(choice.Module) != null)
 			{
 				logger.Value.LogInformation($"{step.LineNumber}: Decider chose {choice.Module} ({choice.Confidence:0.00}) for {step.Text.Trim(['\n', '\r', '\t']).MaxLength(80)}");
@@ -587,7 +592,10 @@ public class StepBuilder : IStepBuilder
 		{
 			return (step, new StepBuilderError($"The step starts with `if`, it is a condition and is built with {ConditionalModule}, not {module}. The goal it calls runs only when the condition is true.", step, "ConditionNotConditionalModule", Retry: true));
 		}
-
+		if (IsRedirectWithWebCrawler(step, module))
+		{
+			return (step, new StepBuilderError($"The step is a redirect of the web request's visitor, built with PLang.Modules.WebserverModule, not {module}, which opens a browser on the server.", step, "RedirectNotWebCrawler", Retry: true));
+		}
 
 		step.ModuleType = module;
 		step.Name = stepInformation.StepName;
@@ -615,6 +623,15 @@ public class StepBuilder : IStepBuilder
 	{
 		if (!System.Text.RegularExpressions.Regex.IsMatch(step.Text ?? "", @"^\s*(-\s*)?if\s", System.Text.RegularExpressions.RegexOptions.IgnoreCase)) return false;
 		return !string.Equals(module, ConditionalModule, StringComparison.OrdinalIgnoreCase);
+	}
+
+	// `redirect to "/"` sends the visitor of a web request elsewhere. Built as the webcrawler's NavigateToUrl it opened a
+	// browser on the server instead. A step that wants the browser names it (`[webcrawler] ...`).
+	private const string WebCrawlerModule = "PLang.Modules.WebCrawlerModule";
+	private static bool IsRedirectWithWebCrawler(GoalStep step, string? module)
+	{
+		if (!string.Equals(module, WebCrawlerModule, StringComparison.OrdinalIgnoreCase)) return false;
+		return System.Text.RegularExpressions.Regex.IsMatch(step.Text ?? "", @"^\s*(-\s*)?redirect\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 	}
 
 	private int GetErrorCount(GoalStep step, IBuilderError error)
