@@ -511,10 +511,11 @@ namespace PLang
 				if (args[i].Contains("="))
 				{
 					var value = args[i].Split('=', 2)[1];
+					bool quoted = value.Length >= 2 && value.StartsWith("\"") && value.EndsWith("\"");
 					if (value.StartsWith("\"")) value = value.Substring(1).Trim();
 					if (value.EndsWith("\"")) value = value.Substring(0, value.Length - 1).Trim();
 
-					var valueAsType = GetValueAsType(value);
+					object valueAsType = quoted ? value : GetValueAsType(value);
 
 					memoryStack.Put(args[i].Split('=')[0].Trim(), valueAsType);
 				}
@@ -526,18 +527,24 @@ namespace PLang
 			return goalToRun;
 		}
 
-		private object GetValueAsType(string value)
+		// A value becomes a number only when the number writes back as the exact same text,
+		// so 2e80405, 1e5, 0123 and 1,5 stay strings (hashes, zip codes, phone numbers).
+		internal static object GetValueAsType(string value)
 		{
-			if (int.TryParse(value, out int i))
+			var invariant = System.Globalization.CultureInfo.InvariantCulture;
+			if (int.TryParse(value, System.Globalization.NumberStyles.AllowLeadingSign, invariant, out int i)
+				&& i.ToString(invariant) == value)
 			{
 				return i;
 			}
 
-			if (long.TryParse(value, out long l))
+			if (long.TryParse(value, System.Globalization.NumberStyles.AllowLeadingSign, invariant, out long l)
+				&& l.ToString(invariant) == value)
 			{
 				return l;
 			}
-			if (double.TryParse(value, out double d))
+			if (double.TryParse(value, System.Globalization.NumberStyles.AllowLeadingSign | System.Globalization.NumberStyles.AllowDecimalPoint, invariant, out double d)
+				&& double.IsFinite(d) && d.ToString(invariant) == value)
 			{
 				return d;
 			}
