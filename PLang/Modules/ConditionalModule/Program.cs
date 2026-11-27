@@ -511,8 +511,14 @@ A goal the step calls goes in goalToCallIfTrue (after `then`) and goalToCallIfFa
 			return await ExecuteResult(result, goalToCallIfTrue, parametersForGoalIfTrue, goalToCallIfFalse, parametersForGoalIfFalse);
 		}*/
 
+		private static string NormalizeParameterName(string? name) =>
+			(name ?? "").Trim().Trim('%').Replace('.', 'α').Replace('[', 'α').Replace(']', 'α');
+
+		private static bool SameParameterName(string? buildName, string? codeName) =>
+			string.Equals(NormalizeParameterName(buildName), NormalizeParameterName(codeName), StringComparison.OrdinalIgnoreCase);
+
 		[Description("Choose RunInlineCode when no other method matches user intent. Implementation variable can be set to null.")]
-		public async Task<(object?, IError?)> RunInlineCode(ConditionImplementationResponse implementation)
+		public async Task<(object?, IError?)> RunInlineCode([HandlesVariable] ConditionImplementationResponse implementation)
 		{
 
 			try
@@ -536,26 +542,24 @@ A goal the step calls goes in goalToCallIfTrue (after `then`) and goalToCallIfFa
 				var parameters = method.GetParameters();
 
 				var parametersObject = new List<object?>();
-				int idx = 0;
-				if (implementation.Parameters != null)
+				foreach (var parameter in parameters)
 				{
-					foreach (var parameter in parameters)
+					var parameterType = parameter.ParameterType;
+					if (parameterType.FullName == "PLang.SafeFileSystem.PLangFileSystem")
 					{
-						var parameterType = parameters[idx++].ParameterType;
-						if (parameterType.FullName == "PLang.SafeFileSystem.PLangFileSystem")
-						{
-							parametersObject.Add(fileSystem);
-						}
-						else
-						{
-							var inputParam = implementation.Parameters.FirstOrDefault(p => p.Name == parameter.Name);
-							if (inputParam != null)
-							{
-								var value = memoryStack.Get(inputParam.Name, parameterType);
-								parametersObject.Add(value);
-							}
-						}
+						parametersObject.Add(fileSystem);
+						continue;
 					}
+
+					// The builder writes a parameter's name as the C# parameter (code, userαid) or as the plang
+					// variable (%code%, %user.id%); both name the same parameter.
+					var inputParam = implementation.Parameters?.FirstOrDefault(p => SameParameterName(p.Name, parameter.Name));
+					if (inputParam == null)
+					{
+						return (null, new StepError($"The code for this condition takes {parameter.Name}, and the build gives no value for it. Rebuild the step.", goalStep, "InlineCodeParameterMissing"));
+					}
+					var variableName = VariableHelper.IsVariable(inputParam.Value) ? inputParam.Value!.ToString() : inputParam.Name;
+					parametersObject.Add(memoryStack.Get(variableName, parameterType));
 				}
 				logger.LogTrace("Parameters:{0}", parametersObject);
 
