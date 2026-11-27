@@ -1,7 +1,11 @@
 # Setup and migrations
 
-`Setup.goal` is your schema. It is not a script you edit until it looks right, it is a log of what
-has already happened to the databases, and the only safe way to change a schema is to **append**.
+`Setup.goal` is an **event source**: a log of what has already happened to the databases, in the
+order it happened. You only ever add new steps at the bottom. A step that is already in the file is
+never changed and never removed, because it has already run against every database the app has.
+
+So `Setup.goal` is not a script you edit until it looks right. To change the schema, append a step
+that makes the change.
 
 Two different run once mechanisms are at work, and knowing which one applies to a file is the
 difference between a migration that reaches your users and one that silently does nothing.
