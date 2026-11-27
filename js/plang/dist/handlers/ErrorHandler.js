@@ -11,14 +11,7 @@ export class ErrorHandler extends BaseKindHandler {
     }
     async handle(message, ctx) {
         if (message.callback) {
-            this.plang.callback.set(message.callback.hash, message.callback);
-            const previousHash = message.callback.previousHash;
-            if (previousHash) {
-                const elements = document.querySelectorAll(`input[name="__plang_callback_hash"][value="${previousHash}"]`);
-                for (let i = 0; i < elements.length; i++) {
-                    elements[i].value = message.callback.hash;
-                }
-            }
+            this.plang.renewCallback(message.callback);
         }
         if (await this.checkChannelOverride(message, ctx)) {
             return;

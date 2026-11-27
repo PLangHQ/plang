@@ -379,15 +379,7 @@ export class Plang {
             if ((env as ErrorMessage).key === "CallbackError" && !(ctx.options as any)?.__plangResent) {
                 let errorMessage = env as ErrorMessage;
                 if (errorMessage.callback) {
-                    this.callback.set(errorMessage.callback.hash, errorMessage.callback);
-
-                    const previousHash = errorMessage.callback.previousHash;
-                    if (previousHash) {
-                        const elements = document.querySelectorAll(`input[name="__plang_callback_hash"][value="${previousHash}"]`);
-                        for (let i = 0; i < elements.length; i++) {
-                            (elements[i] as HTMLInputElement).value = errorMessage.callback.hash;
-                        }
-                    }
+                    this.renewCallback(errorMessage.callback);
 
                     if (ctx.options?.body instanceof FormData) {
                         ctx.options.body.set('__plang_callback_hash', errorMessage.callback.hash);
@@ -409,14 +401,28 @@ export class Plang {
     // The server signed a form's callback again after it took an answer (`plang.renewCallback`), so a form that stays on
     // the page can be sent again. The form holds the old hash; it gets the new one. An arrow function: an execute
     // message calls it with the handler as `this`.
+    // A form rendered with the page (not by this client) has no __plang_callback_hash and posts its own `callback` field,
+    // so that field is swapped too: the one whose callback has the old hash gets the new callback.
     renewCallback = (callback: any): void => {
         if (!callback?.hash) return;
         this.callback.set(callback.hash, callback);
-        if (!callback.previousHash) return;
-        this.callback.delete(callback.previousHash);
-        const elements = document.querySelectorAll(`input[name="__plang_callback_hash"][value="${callback.previousHash}"]`);
+        const previousHash = callback.previousHash;
+        if (!previousHash) return;
+        this.callback.delete(previousHash);
+        const elements = document.querySelectorAll(`input[name="__plang_callback_hash"][value="${previousHash}"]`);
         for (let i = 0; i < elements.length; i++) {
             (elements[i] as HTMLInputElement).value = callback.hash;
+        }
+        const fields = document.querySelectorAll('input[name="callback"]');
+        for (let i = 0; i < fields.length; i++) {
+            const field = fields[i] as HTMLInputElement;
+            try {
+                const held = JSON.parse(decodeURIComponent(escape(atob(field.value))));
+                if ((held?.Hash ?? held?.hash) !== previousHash) continue;
+                field.value = btoa(unescape(encodeURIComponent(JSON.stringify(callback))));
+            } catch {
+                continue;
+            }
         }
     };
 
