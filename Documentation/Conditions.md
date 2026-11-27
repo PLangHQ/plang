@@ -33,6 +33,16 @@ Start
 
 Here, the program checks if `%isAdmin%` is true. If it is, it calls the `ShowAdmin` goal. If `%isAdmin%` is false, it calls the `ShowUser` goal instead. This is a more compact way to handle conditions where you have a clear alternative action.
 
+### Example 3: Matching a Regular Expression
+
+```plang
+Start
+- if %code% does not match regex "^[0-9]{4}$" then
+    - write out "%code% is not a four digit code"
+```
+
+`matches regex` tests the value against the pattern as written (add `(?i)` to the pattern to ignore case). `contains` looks for the text itself and never reads it as a regular expression.
+
 ### Important Note
 
 In Plang, you cannot start steps with `- else` or `- else if`. These will not create valid condition statements. Always ensure that your conditions are structured correctly to avoid errors in your program.

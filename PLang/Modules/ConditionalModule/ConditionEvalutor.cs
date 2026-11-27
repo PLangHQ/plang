@@ -30,7 +30,11 @@ A Compound NEVER has LeftValue, Operator or RightValue of its own: those belong 
 
 		[Description(@"One test. Shape:
 {""Kind"":""Simple"",""LeftValue"":""%age%"",""Operator"":"">="",""RightValue"":18,""IsNot"":false}
-Operator: ==|!=|<|>|<=|>=|in|notIn|isEmpty|isNotEmpty|contains|notContains|startswith|notStartswith|endswith|notEndswith|indexOf.
+Operator: ==|!=|<|>|<=|>=|in|notIn|isEmpty|isNotEmpty|contains|notContains|startswith|notStartswith|endswith|notEndswith|indexOf|matches|notMatches.
+matches tests LeftValue against the regular expression in RightValue, written exactly as the step gives it:
+  `%code% matches regex ""^[0-9]{4}$""`          => Operator matches, RightValue ""^[0-9]{4}$""
+  `%code% does not match regex ""^[0-9]{4}$""`   => Operator notMatches
+contains looks for the text itself and never reads it as a regular expression.
 Equality is `==` (never a single `=`), not-equal is `!=`: `%count% is 0` => Operator ==.
 A test written in the negative takes the negative operator, and IsNot stays false:
   `%city% is empty`               => Operator isEmpty
@@ -89,6 +93,8 @@ A Simple NEVER has Logic or Conditions: a step joining two tests is a Compound."
 					"notendwith" or "notendswith" => "notendswith",
 					"contain" or "contains" => "contains",
 					"notcontain" or "notcontains" => "notcontains",
+					"match" or "matches" or "matchesregex" or "matchregex" or "regex" => "matches",
+					"notmatch" or "notmatches" or "notmatchesregex" or "notmatchregex" => "notmatches",
 					_ => o
 				};
 			}
@@ -109,6 +115,8 @@ A Simple NEVER has Logic or Conditions: a step joining two tests is a Compound."
 				"startswith" => Str(n, (s, x) => s.StartsWith(x, StringComparison.OrdinalIgnoreCase)),
 				"endswith" => Str(n, (s, x) => s.EndsWith(x, StringComparison.OrdinalIgnoreCase)),
 				"indexof" => Str(n, (s, x) => s.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0),
+				"matches" => Str(n, Matches),
+				"notmatches" => !Str(n, Matches),
 
 				// A test written in the negative can say so in the operator instead of setting IsNot
 				// on the side. IsNot is a separate flag the builder has to remember to flip, and
@@ -206,6 +214,10 @@ A Simple NEVER has Logic or Conditions: a step joining two tests is a Compound."
 					IEnumerable coll => coll.Cast<object>().Contains(i),
 					_ => false
 				};
+			// The pattern is used as written; its author decides case with (?i).
+			static bool Matches(string value, string pattern) =>
+				System.Text.RegularExpressions.Regex.IsMatch(value, pattern, System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(2));
+
 			static bool Str(Condition n, Func<string, string, bool> f)
 			{
 				string? leftValue = TypeHelper.ConvertToType(n.LeftValue, typeof(string)) as string;

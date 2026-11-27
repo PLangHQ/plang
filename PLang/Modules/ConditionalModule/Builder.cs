@@ -311,7 +311,7 @@ statments like `if %!error.Handled% does NOT mean it is false
 		private static readonly HashSet<string> SupportedOperators = new(StringComparer.OrdinalIgnoreCase)
 		{
 			"==", "=", "===", "equals", "!=", "<>", "!==", ">", "<", ">=", "<=", "in", "notin", "isempty", "isnotempty",
-			"contains", "notcontains", "startswith", "notstartswith", "endswith", "notendswith", "indexof", "istrue", "isfalse"
+			"contains", "notcontains", "startswith", "notstartswith", "endswith", "notendswith", "indexof", "matches", "notmatches", "istrue", "isfalse"
 		};
 
 		/// <summary>
