@@ -50,6 +50,7 @@ namespace PLang.Modules.DbModule
 		private readonly VariableHelper variableHelper;
 		private readonly IDbServiceFactory dbFactory;
 		private readonly IAppCache appCache;
+		private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, SemaphoreSlim> InitLocks = new();
 		private readonly PLangContext context;
 		private string defaultLocalDbPath = "./.db/data/data.sqlite";
 		public record SqlStatement(string SelectTablesAndViewsInMyDatabaseSqlStatement, string SelectColumnsFromTablesSqlStatement);
@@ -622,15 +623,40 @@ Be concise"));
 			{
 				var dataSourceDynamicName = memoryStack.LoadVariables(nameInStep);
 				string cacheKey = "__plang_DataSource__" + dataSourceDynamicName;
-				var obj = await appCache.Get("__plang_DataSource__" + dataSourceDynamicName);
+				var obj = await appCache.Get(cacheKey);
 				if (obj != null)
 				{
 					dataSource = (DataSource)obj;
 				}
 				else
 				{
-					(dataSource, var error) = await InitiateDatabase(dataSource, nameInStep, cacheKey);
-					if (error != null) return (dataSource, error);
+					// Two requests of a new user at once would both create the database file and run its setup; the
+					// second failed with "being used by another process". One creates it, the other waits and reads the cache.
+					var initLock = InitLocks.GetOrAdd(cacheKey, _ => new SemaphoreSlim(1, 1));
+					await initLock.WaitAsync();
+					try
+					{
+						obj = await appCache.Get(cacheKey);
+						if (obj != null)
+						{
+							dataSource = (DataSource)obj;
+						}
+						else
+						{
+							(dataSource, var error) = await InitiateDatabase(dataSource, nameInStep, cacheKey);
+							if (error != null) return (dataSource, error);
+						}
+					}
+					finally
+					{
+						initLock.Release();
+					}
+				}
+				// The cached datasource is shared by every request of that user. Each request gets its own copy, so a
+				// transaction one request begins on it is never seen, joined or rolled back by another.
+				if (dataSource != null)
+				{
+					dataSource = dataSource with { AttachedDbs = dataSource.AttachedSnapshot(), Transaction = null };
 				}
 			}
 			return await ProcessDataSource(dataSource);
