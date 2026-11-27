@@ -60,6 +60,18 @@ WhoAmI
 - write out {"identity": "%Identity%"}
 ```
 
+The body of a request is `%request.body%`, parsed from json or a form. `%request!RawBody%` is the body as text exactly as it
+came (json, form or text; empty for multipart). A webhook's signature is computed over those bytes, so verify it on
+`%request!RawBody%`, never on `%request.body%`. GitHub's, for example:
+
+```plang
+/ github/Push.goal
+Push
+- hash hmac sha256 %request!RawBody%, key: %Settings.GitHubWebhookSecret%, write to %hash%
+- if "sha256=%hash%" != %request!Headers.X-Hub-Signature-256% then
+    - throw error "bad signature", status code 401
+```
+
 ## 4. Which requests carry the identity
 
 Measured with a headless browser and a fresh profile:

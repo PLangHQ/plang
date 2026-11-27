@@ -1083,17 +1083,15 @@ namespace PLang.Modules.WebserverModule
 			logger.LogDebug($"    - ParseHeader - {stopwatch.ElapsedMilliseconds}");
 			ParseHeaders(context, context.UserSink);
 			logger.LogDebug($"    - GetRequest - {stopwatch.ElapsedMilliseconds}");
-			var properties = GetRequestProperties(httpContext);
+			var rawBody = await ReadBodyText(req);
+			var properties = GetRequestProperties(httpContext, rawBody);
 			logger.LogDebug($"    - Done with GetRequest - {stopwatch.ElapsedMilliseconds}");
 			// ---------- JSON --------------------------------------------------------
 			if (req.HasJsonContentType())
 			{
 				logger.LogDebug($"    - JsonHandler starts - {stopwatch.ElapsedMilliseconds}");
 
-				req.EnableBuffering();
-
-				using var reader = new StreamReader(req.Body);
-				var bodyString = await reader.ReadToEndAsync();
+				var bodyString = rawBody;
 
 				if (!string.IsNullOrEmpty(bodyString))
 				{
@@ -1310,11 +1308,30 @@ namespace PLang.Modules.WebserverModule
 		}
 
 
-		private Properties? GetRequestProperties(HttpContext httpContext)
+		/// <summary>
+		/// The body as UTF-8 text exactly as it came, for %request!RawBody% (a webhook's HMAC is computed over these bytes,
+		/// not over the parsed body). The stream is buffered and rewound, so the form reader still reads it. A multipart
+		/// body carries files and is not kept as text.
+		/// </summary>
+		private static async Task<string?> ReadBodyText(HttpRequest request)
+		{
+			if (request.ContentType?.StartsWith("multipart/", StringComparison.OrdinalIgnoreCase) == true) return null;
+
+			request.EnableBuffering();
+			if (!request.Body.CanRead) return null;
+
+			using var reader = new StreamReader(request.Body, new System.Text.UTF8Encoding(false), detectEncodingFromByteOrderMarks: false, leaveOpen: true);
+			var text = await reader.ReadToEndAsync();
+			request.Body.Position = 0;
+			return text;
+		}
+
+		private Properties? GetRequestProperties(HttpContext httpContext, string? rawBody)
 		{
 			var request = httpContext.Request;
 			Properties properties = new();
 			properties.Add(new ObjectValue("Method", request.Method));
+			properties.Add(new ObjectValue("RawBody", rawBody));
 			properties.Add(new ObjectValue("Path", request.Path.Value));
 			properties.Add(new ObjectValue("QueryString", request.QueryString.ToString()));
 			properties.Add(new ObjectValue("HasFormContentType", request.HasFormContentType));
