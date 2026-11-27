@@ -39,7 +39,13 @@ The question is asked only when someone can answer it.
   empty value, the run does not fail, and an empty row is stored, so the setting looks "set" from then on. A real value has to
   overwrite it later.
 
-So never rely on a setting being absent:
+A setting that may be absent gets a default in the step. Then nothing is asked and nothing is stored, wherever it runs:
+
+```plang
+- set %pageSize% = %Settings.PageSize%, default is "20"
+```
+
+Otherwise never rely on a setting being absent:
 
 - A test instance sets a dummy for **every** `%Settings.X%` the app reads ([Mocking a provider](./TalkingToAnApi.md#mocking-a-provider-for-a-test-instance)).
 - A deploy check compares the `%Settings.X%` names used in the goals with `select Key from Settings` and fails by name for any
