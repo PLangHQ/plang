@@ -50,6 +50,11 @@ namespace PLang.Utils
 			{
 				AppContext.SetData("--logger", loggerLovel.Replace("--logger=", ""));
 			}
+			var allowPath = args.FirstOrDefault(p => p.StartsWith("--allowpath=", StringComparison.OrdinalIgnoreCase));
+			if (allowPath != null)
+			{
+				SafeFileSystem.PLangFileSystem.SetStartupAllowedFolders(allowPath.Substring("--allowpath=".Length).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+			}
 			bool builder = false;
 			bool runtime = false;
 

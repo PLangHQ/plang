@@ -44,6 +44,11 @@ Plang supports several optional parameters that enhance its functionality and de
 
 - **`--goal`**: Builds one goal file, or every goal file under a folder, and nothing else: `plang build --goal=tests/Demo.goal` or `plang build --goal=admin`. The path is relative to the project root, the working directory you start the build in. Without the flag the whole app is built, setup goals included; with it the setup loop is skipped, so use it for the goal you are working on, not for a schema change.
 
+- **`--allowpath`**: Folders outside the app that this run may read and write without asking, comma separated:
+  `plang RunActions actionsFile=//tmp/a.json --allowpath=/tmp,/workspace`. Everything in a folder and under it is open;
+  anything else outside the app still asks "is trying to access ... Do you accept that?". It holds for that run only, is
+  never stored, and is never on unless given. `..` cannot leave the folder: `/tmp/../etc/hostname` still asks.
+
 - **`--strictbuild`**: Ensures that every line number in goal files matches exactly. If they do not match, the step is rebuilt.
 
 - **`--buildparallel`**: Builds goals, and the steps inside a goal, at the same time instead of one after another. **This is on by default at 6**, so you do not need the flag. Pass a number to change it, `--buildparallel=10`, or `--buildparallel=1` to go back to building one step at a time, which is what an llm account with a tight rate limit wants.

@@ -151,6 +151,30 @@ namespace PLang.SafeFileSystem
 			this.fileAccesses.RemoveAll(p => p.path != this.SystemDirectory);
 		}
 
+		// Folders given with --allowpath when the process started: everything in them and under them is reachable without
+		// asking, for this run only. Never set unless the flag is given.
+		private static List<string> startupAllowedFolders = new();
+
+		public static void SetStartupAllowedFolders(IEnumerable<string> folders)
+		{
+			startupAllowedFolders = folders.Select(folder =>
+			{
+				// `//tmp` is the plang way to write the OS root; `/tmp` on the command line already is.
+				var osPath = folder.StartsWith("//") ? folder.Substring(1) : folder;
+				return System.IO.Path.GetFullPath(osPath).TrimEnd(System.IO.Path.DirectorySeparatorChar);
+			}).Where(f => f.Length > 0).ToList();
+		}
+
+		private static bool IsInStartupAllowedFolder(string path)
+		{
+			foreach (var folder in startupAllowedFolders)
+			{
+				if (path.Equals(folder, StringComparison.OrdinalIgnoreCase)) return true;
+				if (path.StartsWith(folder + System.IO.Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) return true;
+			}
+			return false;
+		}
+
 		public bool IsPlangRooted(string? path)
 		{
 			if (string.IsNullOrWhiteSpace(path))
@@ -254,6 +278,8 @@ namespace PLang.SafeFileSystem
 						&& (p.expires > DateTime.UtcNow || p.ProcessId == Id));
 					if (hasAccess != null) return path;
 				}
+
+				if (IsInStartupAllowedFolder(System.IO.Path.GetFullPath(path))) return path;
 
 				throw new FileAccessException(appName, path, $@"{appName} 
 
