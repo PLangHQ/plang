@@ -148,11 +148,20 @@ public static class SqlVariables
 			stepValues.TryAdd(m.Groups[1].Value, value);
 		}
 
+		// A value the llm made up (extra=%extra% for a @extra the step never mentions) is not a value the step gives.
+		bool ValueIsInStep(string name) => result.Any(p => string.Equals(ParameterNameOf(p.ParameterName), name, StringComparison.OrdinalIgnoreCase) &&
+			p.VariableNameOrValue?.ToString()?.Trim() is { Length: > 0 } v && (stepText ?? "").Contains(v, StringComparison.OrdinalIgnoreCase));
+
 		var missing = new List<string>();
 		foreach (var name in fileNames)
 		{
-			if (IsBound(name)) continue;
-			if (!stepValues.TryGetValue(name, out var value)) { missing.Add(name); continue; }
+			var inStep = stepValues.TryGetValue(name, out var value);
+			if (IsBound(name))
+			{
+				if (!inStep && !ValueIsInStep(name)) missing.Add(name);
+				continue;
+			}
+			if (!inStep) { missing.Add(name); continue; }
 
 			int idx = result.FindIndex(p => !IsFileName(p.ParameterName) &&
 				string.Equals(p.VariableNameOrValue?.ToString()?.Trim(), value, StringComparison.OrdinalIgnoreCase));
