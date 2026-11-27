@@ -125,6 +125,7 @@ namespace PLang.Building
 			// steps, and nothing in the step loop reads the description.
 			Goal? oldGoal = JsonHelper.ParseFilePath<Goal>(fileSystem, goal.AbsolutePrFilePath);
 			if (oldGoal != null) goal.GoalInfo = oldGoal.GoalInfo;
+			if (goal.IsSetup && oldGoal != null) WarnOnRewrittenSetupSteps(goal, oldGoal);
 			logger.LogDebug($" - Run BuildGoal events {goal.GoalName} - {stopwatch.ElapsedMilliseconds}");
 			var (vars, buildEventError) = await eventRuntime.RunBuildGoalEvents(EventType.Before, goal);
 			if (!ContinueBuildGoal(buildEventError, goal))
@@ -722,6 +723,40 @@ Be concise
 
 			return await dbSettings.CreateDataSource(name);
 		}*/
+
+		// A setup goal is an event source: a step that has run is recorded in SetupRunOnce and never
+		// runs again, so the only safe change is a new step at the end. A step that was rewritten,
+		// inserted before built steps or removed builds fine but never reaches an existing database,
+		// or runs out of order. It is a warning, not an error: while an app is being written the
+		// steps may be rewritten when SetupRunOnce is cleared with them.
+		private void WarnOnRewrittenSetupSteps(Goal goal, Goal oldGoal)
+		{
+			var oldSteps = oldGoal.GoalSteps;
+			var newSteps = goal.GoalSteps;
+			var oldTexts = new HashSet<string>(oldSteps.Select(p => p.Text));
+			var newTexts = new HashSet<string>(newSteps.Select(p => p.Text));
+			var goalPath = goal.RelativeGoalPath.TrimStart('/', '\\');
+			const string advice = "is an event source: leave the steps that were built as they were and append a new step that makes the change (see SetupAndMigrations.md).";
+
+			var removedIndexes = Enumerable.Range(0, oldSteps.Count).Where(i => !newTexts.Contains(oldSteps[i].Text)).ToList();
+			for (int i = 0; i < newSteps.Count; i++)
+			{
+				if (oldTexts.Contains(newSteps[i].Text)) continue;
+
+				if (removedIndexes.Remove(i))
+				{
+					logger.LogWarning($"{goalPath}:{newSteps[i].LineNumber} changed a step that was built before. {goalPath} {advice}");
+				}
+				else if (newSteps.Skip(i + 1).Any(p => oldTexts.Contains(p.Text)))
+				{
+					logger.LogWarning($"{goalPath}:{newSteps[i].LineNumber} is a new step before steps that were built before. {goalPath} {advice}");
+				}
+			}
+			foreach (var i in removedIndexes)
+			{
+				logger.LogWarning($"{goalPath}: the step '{oldSteps[i].Text.MaxLength(60)}' (line {oldSteps[i].LineNumber}) was built before and is gone. {goalPath} {advice}");
+			}
+		}
 
 		private void RemoveUnusedPrFiles(Goal goal)
 		{
