@@ -335,6 +335,11 @@ namespace PLang.Modules.PlangModule
 			var parameterNames = parameters?.Keys.ToList() ?? new List<string>();
 			var chosen = candidates.FirstOrDefault(m => parameterNames.All(n => m.GetParameters().Any(p => p.Name == n))) ?? candidates[0];
 
+			// The values are already loaded: this step's own variables were read when it ran. RunFunction loads the
+			// variables of its parameters again, so a value holding text such as "hello %Settings.ApiKey%" (a web page,
+			// an email, a file) would get the setting in. A value with a % in it is handed over through a variable of
+			// its own, which RunFunction reads once and does not look into, as for any step.
+			var heldValues = new List<string>();
 			var functionParameters = new List<Parameter>();
 			if (parameters != null)
 			{
@@ -342,7 +347,16 @@ namespace PLang.Modules.PlangModule
 				{
 					var methodParameter = chosen.GetParameters().FirstOrDefault(p => p.Name == parameter.Key);
 					var type = methodParameter?.ParameterType.FullNameNormalized() ?? parameter.Value?.GetType().FullName ?? "System.Object";
-					functionParameters.Add(new Parameter(type, parameter.Key, parameter.Value));
+					var value = parameter.Value;
+					bool handlesVariable = methodParameter?.GetCustomAttribute<HandlesVariableAttribute>() != null;
+					if (!handlesVariable && ContainsPercent(value))
+					{
+						var name = HeldValuePrefix + Guid.NewGuid().ToString("N");
+						memoryStack.Put(name, value);
+						heldValues.Add(name);
+						value = "%" + name + "%";
+					}
+					functionParameters.Add(new Parameter(type, parameter.Key, value));
 				}
 			}
 			// A function with no return variable writes what it returns straight into memory, a
@@ -361,11 +375,31 @@ namespace PLang.Modules.PlangModule
 			finally
 			{
 				memoryStack.Remove(holder);
+				foreach (var name in heldValues) memoryStack.Remove(name);
 			}
 			}
 			catch (Exception ex)
 			{
 				return (null, new ProgramError($"Method {method} on {moduleName} threw: {ex.Message}", goalStep, Key: "MethodInvocationError", StatusCode: 500));
+			}
+		}
+
+		/// <summary>The variables RunModule hands its loaded values over in. The runtime names them; no step writes them.</summary>
+		internal const string HeldValuePrefix = "__runModuleValue_";
+
+		private static bool ContainsPercent(object? value)
+		{
+			if (value == null) return false;
+			if (value is string s) return s.Contains('%');
+			if (value.GetType().IsPrimitive) return false;
+			if (value is JToken token) return token.ToString(Newtonsoft.Json.Formatting.None).Contains('%');
+			try
+			{
+				return JsonConvert.SerializeObject(value).Contains('%');
+			}
+			catch
+			{
+				return value.ToString()?.Contains('%') == true;
 			}
 		}
 

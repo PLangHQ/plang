@@ -417,7 +417,9 @@ public class MethodHelper
 
 				// check if variable is in step, just incase LLM invents a new variable
 				// The llm may give an escape written in the step, e.g. %lines.Split("\n")%, as the character itself.
+				// A value RunModule hands over is in a variable the runtime named, not one the llm wrote.
 				if (VariableHelper.IsVariable(builderParameter.Value) && !goalStep.Text.Contains(builderParameter.Value.ToString(), StringComparison.OrdinalIgnoreCase)
+					&& !builderParameter.Value.ToString()!.StartsWith("%" + PLang.Modules.PlangModule.Program.HeldValuePrefix)
 					&& !goalStep.Text.Contains(builderParameter.Value.ToString()!.Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t"), StringComparison.OrdinalIgnoreCase))
 				{
 					buildErrors.Add(new InvalidParameterError(methodInfo.Name,
@@ -1110,7 +1112,9 @@ public class MethodHelper
 		}
 		if (dict == null) dict = GetInstanceOfDictionaryTyped(parameter.ParameterType);
 
-		if (handlesAttribute != null)
+		// A dictionary read from a %variable% holds values, not step text: a value such as "hello %Settings.ApiKey%"
+		// (from a web page, an email, a file) stays as it is. Only a dictionary written in the step has its variables loaded.
+		if (handlesAttribute != null || VariableHelper.IsVariable(variableValue))
 		{
 			parameterValues.Add(parameter.Name, dict);
 			return;
