@@ -535,6 +535,10 @@ namespace PLang.Modules.DbModule
 
 			bool isSqlite = (dataSource.TypeFullName.Contains("sqlite", StringComparison.OrdinalIgnoreCase));
 
+			if (eventSourceFactory.GetType() != typeof(DisableEventSourceRepository))
+			{
+				(sql, Parameters) = NullIdInInsertSelect(sql, Parameters);
+			}
 			(sql, Parameters) = IdPerSelectedRow(sql, Parameters, isSqlite);
 			var paramResult = GetDynamicParameters(sql, isInsert, Parameters, isSqlite, dataSource);
 			if (paramResult.Error != null) return (null, null, null, sql, paramResult.Error);
@@ -1807,6 +1811,62 @@ For example:
 		private static readonly System.Text.RegularExpressions.Regex InsertSelectRegex = new(@"^\s*insert\s+(or\s+\w+\s+)?into\s+[^(]+\([^)]*\)\s*select\s",
 			System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Singleline);
 		private static readonly System.Text.RegularExpressions.Regex IdParameterRegex = new(@"@id\b(?!\.)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+		private static readonly System.Text.RegularExpressions.Regex InsertSelectColumnsRegex = new(@"^\s*insert\s+(or\s+\w+\s+)?into\s+[^(]+\((?<columns>[^)]*)\)\s*select\s+(distinct\s+)?",
+			System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Singleline);
+
+		/// <summary>
+		/// `insert into copies (id, name) select null, name from items` lets sqlite number the rows 1, 2, 3 next to the
+		/// ids plang gives every other row. The id selected as null (or 0) is @id, so each row gets a plang id.
+		/// </summary>
+		internal static (string Sql, List<ParameterInfo>? Parameters) NullIdInInsertSelect(string sql, List<ParameterInfo>? parameters)
+		{
+			var match = InsertSelectColumnsRegex.Match(sql);
+			if (!match.Success) return (sql, parameters);
+
+			var columns = match.Groups["columns"].Value.Split(',').Select(c => c.Trim().Trim('"', '`', '[', ']')).ToList();
+			int idIndex = columns.FindIndex(c => c.Equals("id", StringComparison.OrdinalIgnoreCase));
+			if (idIndex == -1) return (sql, parameters);
+
+			// the select list up to its from, split on commas outside parentheses and string literals
+			int start = match.Length, i = start, depth = 0, expressionStart = start, index = 0;
+			while (i <= sql.Length)
+			{
+				bool end = i == sql.Length;
+				char c = end ? ',' : sql[i];
+				if (!end && (c == '\'' || c == '"'))
+				{
+					int close = sql.IndexOf(c, i + 1);
+					i = close < 0 ? sql.Length : close + 1;
+					continue;
+				}
+				if (c == '(') depth++;
+				else if (c == ')') depth--;
+				bool atFrom = !end && depth == 0 && System.Text.RegularExpressions.Regex.IsMatch(sql.Substring(i), @"^\sfrom\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+				if (end || atFrom || (c == ',' && depth == 0))
+				{
+					if (index == idIndex)
+					{
+						var expression = sql.Substring(expressionStart, i - expressionStart);
+						var value = expression.Trim();
+						if (!value.Equals("null", StringComparison.OrdinalIgnoreCase) && value != "0") return (sql, parameters);
+
+						var leading = expression.Length - expression.TrimStart().Length;
+						sql = sql.Substring(0, expressionStart + leading) + "@id" + sql.Substring(expressionStart + leading + value.Length);
+						var list = parameters?.ToList() ?? new();
+						if (!list.Any(p => p.ParameterName.Equals("@id", StringComparison.OrdinalIgnoreCase)))
+						{
+							list.Add(new ParameterInfo("System.Int64", "@id", "auto"));
+						}
+						return (sql, list);
+					}
+					if (end || atFrom) return (sql, parameters);
+					index++;
+					expressionStart = i + 1;
+				}
+				i++;
+			}
+			return (sql, parameters);
+		}
 
 		/// <summary>
 		/// `insert into errors (id, message) select @id, value from json_each(@json)` gave every selected row the one id
