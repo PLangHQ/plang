@@ -283,7 +283,7 @@ namespace PLang.Modules.PlangModule
 		}
 
 		[Description("Runs a method on a runtime module by name at runtime, e.g. moduleName=PLang.Modules.FileModule, method=ReadTextFile, parameters={path:\"file.txt\"}. Parameter names must match the method's parameter names. Relative paths resolve from the app root when fromAppRoot is true, otherwise from the calling goal's folder. Returns what the method returns")]
-		public async Task<(object? Result, IError? Error)> RunModule(string moduleName, string method, Dictionary<string, object?>? parameters = null, bool fromAppRoot = false)
+		public async Task<(object? Result, IError? Error)> RunModule(string moduleName, string method, [HandlesVariable] Dictionary<string, object?>? parameters = null, bool fromAppRoot = false)
 		{
 			try
 			{
@@ -328,17 +328,20 @@ namespace PLang.Modules.PlangModule
 				var only = parameters.First();
 				if (!candidates.Any(m => m.GetParameters().Any(p => p.Name == only.Key)))
 				{
-					if (only.Value is JObject inner) parameters = inner.ToObject<Dictionary<string, object?>>();
-					else if (only.Value is Dictionary<string, object?> innerDict) parameters = innerDict;
+					var onlyValue = VariableHelper.IsVariable(only.Value) ? memoryStack.LoadVariables(only.Value) : only.Value;
+					if (onlyValue is JObject inner) parameters = inner.ToObject<Dictionary<string, object?>>();
+					else if (onlyValue is Dictionary<string, object?> innerDict) parameters = innerDict;
 				}
 			}
 			var parameterNames = parameters?.Keys.ToList() ?? new List<string>();
 			var chosen = candidates.FirstOrDefault(m => parameterNames.All(n => m.GetParameters().Any(p => p.Name == n))) ?? candidates[0];
 
-			// The values are already loaded: this step's own variables were read when it ran. RunFunction loads the
-			// variables of its parameters again, so a value holding text such as "hello %Settings.ApiKey%" (a web page,
-			// an email, a file) would get the setting in. A value with a % in it is handed over through a variable of
-			// its own, which RunFunction reads once and does not look into, as for any step.
+			// The parameters are the code of the call, written in the step or in a variable (an action list): each
+			// value has its variables loaded here, once, as a step's text is. What a variable holds is not looked into,
+			// so text such as "hello %Settings.ApiKey%" from a web page, an email or a file stays text, and \% is a
+			// literal %. RunFunction would load the variables of its parameters again, so a loaded value with a % in
+			// it is handed over in a variable of its own, which RunFunction reads once. A parameter the method marks
+			// [HandlesVariable] gets the value as written; the method loads it itself.
 			var heldValues = new List<string>();
 			var functionParameters = new List<Parameter>();
 			if (parameters != null)
@@ -346,9 +349,10 @@ namespace PLang.Modules.PlangModule
 				foreach (var parameter in parameters)
 				{
 					var methodParameter = chosen.GetParameters().FirstOrDefault(p => p.Name == parameter.Key);
-					var type = methodParameter?.ParameterType.FullNameNormalized() ?? parameter.Value?.GetType().FullName ?? "System.Object";
-					var value = parameter.Value;
+					var value = parameter.Value is JValue jValue ? jValue.Value : parameter.Value;
 					bool handlesVariable = methodParameter?.GetCustomAttribute<HandlesVariableAttribute>() != null;
+					if (!handlesVariable) value = memoryStack.LoadVariables(value);
+					var type = methodParameter?.ParameterType.FullNameNormalized() ?? value?.GetType().FullName ?? "System.Object";
 					if (!handlesVariable && ContainsPercent(value))
 					{
 						var name = HeldValuePrefix + Guid.NewGuid().ToString("N");
