@@ -61,12 +61,9 @@ Write `%Settings.X%` in the step that uses it. Never copy it into a variable fir
 
 When that step fails, the error shows the step as written, `Bearer %Settings.ApiToken%`, and never the value.
 
-A setting whose name says it is a secret is **sensitive**: the name contains key, token, secret or password (`ApiKey`,
-`GithubToken`, `ClientSecret`, `SmtpPassword`). Wherever its
-value is copied to (`set %token% = %Settings.ApiToken%`, `"Bearer %token%"`), it is hidden as `****` and the last 4 characters
-(`****` when shorter than 12) in an error (`%!error%`, "Variables in step"), the log and a request to the llm. Modules get the
-real value. Any other setting (`SiteDomain`, `AppPath`) is app data and is shown as it is. Mark any other value as sensitive
-with `as sensitive`:
+A setting's value is **sensitive**: wherever it is copied to (`set %token% = %Settings.ApiToken%`, `"Bearer %token%"`), it is
+hidden as `****` and the last 4 characters (`****` when shorter than 12) in an error (`%!error%`, "Variables in step"), the log
+and a request to the llm. Modules get the real value. Mark any other value the same way with `as sensitive`:
 
 ```plang
 - set %password% = %request.password% as sensitive

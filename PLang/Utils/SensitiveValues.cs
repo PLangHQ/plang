@@ -3,8 +3,7 @@ using System.Collections.Concurrent;
 namespace PLang.Utils
 {
 	/// <summary>
-	/// Values that must never be shown: what a setting named as a secret gave (%Settings.ApiKey%, a token) and what a
-	/// step marked as sensitive.
+	/// Values that must never be shown: what %Settings.X% gave (an api key, a token) and what a step marked as sensitive.
 	/// The value itself is kept, not the variable that held it, so a copy (`set %t% = %Settings.Token%`) or a value built
 	/// from it (`"Bearer %t%"`) is hidden too. Modules get the real value; text that goes out to be read (an error and
 	/// its variables, the log, a request to the llm) is passed through Redact, which shows **** and the last 4 characters.
@@ -19,16 +18,6 @@ namespace PLang.Utils
 		private static readonly object orderLock = new();
 
 		public static int Count => values.Count;
-
-		private static readonly System.Text.RegularExpressions.Regex SecretName = new(
-			"key|token|secret|password",
-			System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled);
-
-		/// <summary>
-		/// A setting whose name says it is a secret (ApiKey, SmtpPassword, GithubToken, ClientSecret). Only these are
-		/// sensitive: a setting such as SiteDomain or AppPath is app data.
-		/// </summary>
-		public static bool IsSecretName(string? name) => !string.IsNullOrEmpty(name) && SecretName.IsMatch(name);
 
 		public static void Add(object? value)
 		{

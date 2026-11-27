@@ -187,9 +187,9 @@ namespace PLang.Services.SettingsService
 				{
 					throw new MissingSettingsException(callingType, type, key, defaultValue, explain, SetInternal);
 				}
-				// A setting named as a secret (key, token, secret, password) is never shown in an error, the log, an llm
-				// request or what the app writes out, wherever the value is copied to.
-				if (PLang.Utils.SensitiveValues.IsSecretName(key))
+				// %Settings.X% of the app, and a module's key, token, secret or password, are never shown in an error,
+				// the log or an llm request, wherever the value is copied to.
+				if (callingType == typeof(Settings) || System.Text.RegularExpressions.Regex.IsMatch(key, "key|token|secret|password", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
 				{
 					PLang.Utils.SensitiveValues.Add(obj);
 				}
