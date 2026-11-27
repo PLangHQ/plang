@@ -89,8 +89,10 @@ Four consequences:
 
 - **The route must accept POST.** The form posts to the url it was rendered from. A `GET` only
   route gives `Routing not found`.
-- **A callback is used once.** After the answer is consumed the form is spent. To show the form
-  again you must run `ask user` again, which produces a new callback.
+- **A callback is used once.** The same callback sent twice (a double click) is refused with 409
+  "This form has already been sent". A form that stays on the page after its answer (the callback
+  goal drew "email not found", or threw an error) can be sent again: with the plang client (v13 and
+  later) every answer brings the form a new callback. To show a new form, run `ask user` again.
 - **Do not call the goal from inside itself while a callback is in flight.** The nested call
   matches the same goal hash, jumps to the same `ask user` step, gets the same answer, and
   recurses until the engine stops it at 1000 frames.
@@ -138,8 +140,9 @@ ValidateEmail
     - throw error "That is not a valid email", target: "#signInError", show
 ```
 
-Throwing in the callback goal keeps the user on the form with the error shown. It is a guard, not
-the place to do the work. The work belongs after the `ask user` step.
+Throwing in the callback goal keeps the user on the form with the error shown. An `on app error`
+handler that only logs (writes nothing to the user) leaves this message to go out as it is. It is a
+guard, not the place to do the work. The work belongs after the `ask user` step.
 
 ## Rendering the answer
 

@@ -86,7 +86,7 @@ the landing url:
 
 ```html
 {{ if request.query.src }}<script>var visitSource = {{ request.query.src | object.to_json }};</script>{{ end }}
-<script type="module" src="/js/plang/dist/v12/main.js"></script>
+<script type="module" src="/js/plang/dist/v13/main.js"></script>
 ```
 
 ```plang

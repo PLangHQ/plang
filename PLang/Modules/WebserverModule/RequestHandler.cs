@@ -336,7 +336,22 @@ namespace PLang.Modules.WebserverModule
 				error = await RunOnRequest(requestEngine, webserverInfo.OnGoalRequestEnd, context);
 			}
 
+			if (error == null && callback != null) await SendRenewedCallback(request, callback, context);
+
 			return error;
+		}
+
+		// A form answer uses its callback's nonce, and a form that stays on the page ("email not found", drawn by the
+		// callback goal) is sent again with the same callback: refused as used. The plang client gets the callback
+		// signed again and swaps it into the form, so the next send is a new one. A second send of the same callback
+		// (a double click) is still refused.
+		private async Task SendRenewedCallback(HttpRequest request, Callback callback, PLangContext context)
+		{
+			if (!request.Headers.Accept.ToString().Contains("application/plang+json")) return;
+			if (context.UserSink == null) return;
+
+			var renewed = await CallbackHelper.Renew(identity, callback);
+			await context.UserSink.SendAsync(new ExecuteMessage("plang.renewCallback", new { callback = renewed }));
 		}
 
 		private async Task<(Callback? Callback, Goal? goal, IError? Error)> GetCallbackInfos(HttpRequest request, Goal goal)

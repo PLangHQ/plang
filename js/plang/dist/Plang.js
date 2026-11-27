@@ -34,6 +34,21 @@ export class Plang {
         this.windowStack = [];
         /** Where the signing key ended up. Sent on the first poll so the server can record it. */
         this.keyStoreTier = null;
+        // The server signed a form's callback again after it took an answer (`plang.renewCallback`), so a form that stays on
+        // the page can be sent again. The form holds the old hash; it gets the new one. An arrow function: an execute
+        // message calls it with the handler as `this`.
+        this.renewCallback = (callback) => {
+            if (!callback?.hash)
+                return;
+            this.callback.set(callback.hash, callback);
+            if (!callback.previousHash)
+                return;
+            this.callback.delete(callback.previousHash);
+            const elements = document.querySelectorAll(`input[name="__plang_callback_hash"][value="${callback.previousHash}"]`);
+            for (let i = 0; i < elements.length; i++) {
+                elements[i].value = callback.hash;
+            }
+        };
         this.tr = tr;
         errorReporter.useSigner(this.signer);
         this.navigator = new HistoryNavigator(this, tr);

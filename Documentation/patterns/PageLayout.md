@@ -32,7 +32,7 @@ myapp/
 <head>
 <meta charset="utf-8">
 <title>Shop</title>
-<script type="module" src="/js/plang/dist/v12/main.js"></script>
+<script type="module" src="/js/plang/dist/v13/main.js"></script>
 </head>
 <body>
 <nav><a href="/">Home</a> <a href="/product">Products</a></nav>
@@ -41,7 +41,7 @@ myapp/
 </html>
 ```
 
-- Load the client with the number in `js/plang/VERSION` in the path: `/js/plang/dist/v12/main.js`. The web server finds
+- Load the client with the number in `js/plang/VERSION` in the path: `/js/plang/dist/v13/main.js`. The web server finds
   `js/plang/dist/main.js` for it. A new number is a new address, so a browser never runs a cached old module next to new ones.
 - `{{ main }}` is where a page's content goes. The layout is a template: it sees the variables of the request, so a part of
   the frame that depends on the visitor is a variable here (see [First page load](./FirstPageLoad.md)).

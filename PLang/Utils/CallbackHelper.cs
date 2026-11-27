@@ -62,14 +62,7 @@ namespace PLang.Utils
 				// signature is to old or nonce has been used, create new callback and allow user to sign again
 				if (result.Error.StatusCode == 401 || result.Error.StatusCode == 403)
 				{
-					int? secondsLeft = signature.Expires != null ? (int)Math.Max(1, (signature.Expires.Value - SystemTime.OffsetUtcNow()).TotalSeconds) : null;
-					var signed = await identity.Sign(callback, expiresInSeconds: secondsLeft);
-					// The browser finds the form by the old hash and swaps in the new one, so the new
-					// callback needs both. Without them every resend carried the expired callback again.
-					var renewed = new Callback(callback.Path, callback.CallbackData, callback.CallbackInfo, signed);
-					renewed.Hash = HashHelper.Hash(renewed);
-					renewed.PreviousHash = callback.Hash;
-					return (null, renewed, result.Error);
+					return (null, await Renew(identity, callback), result.Error);
 				}
 				
 				return (null, null, result.Error);
@@ -82,6 +75,19 @@ namespace PLang.Utils
 			
 			return (null, null, new Error("Signature could not be verified"));
 
+		}
+
+		// The same callback signed again, with a new nonce and the time it had left. The browser finds the form by the
+		// old hash and swaps in the new one, so the new callback carries both.
+		public static async Task<Callback> Renew(Modules.IdentityModule.Program identity, Callback callback)
+		{
+			var expires = callback.Signature?.Expires;
+			int? secondsLeft = expires != null ? (int)Math.Max(1, (expires.Value - SystemTime.OffsetUtcNow()).TotalSeconds) : null;
+			var signed = await identity.Sign(callback, expiresInSeconds: secondsLeft);
+			var renewed = new Callback(callback.Path, callback.CallbackData, callback.CallbackInfo, signed);
+			renewed.Hash = HashHelper.Hash(renewed);
+			renewed.PreviousHash = callback.Hash;
+			return renewed;
 		}
 	}
 }

@@ -61,6 +61,7 @@ export declare class Plang {
     private isStaleSignature;
     getPlangHash(body: any): string | null;
     handleResponse(line: string, ctx: HandleCtx): Promise<void>;
+    renewCallback: (callback: any) => void;
     private setCallback;
     get(path: string, options?: NavigatorOptions | null): Promise<any>;
     post(path: string, data: any, options?: NavigatorOptions | null): Promise<any>;
