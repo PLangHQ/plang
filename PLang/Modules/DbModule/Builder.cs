@@ -455,7 +455,7 @@ This is pre-processing to choose selection of possible <methods>, so you can sug
 For Select, Insert, Update, Delete, CreateTable and Execute methods, list out the table names that are affected
 When a you cannot determine method for the user intentented sql statement, use Execute(when sql is know) or ExecuteDynamicSql(when sql cannot be determined)
 When table name is unknown at built time because it is created with variable, use ExecuteDynamicSql, e.g. select * from %tableName%, or select * from %type%Options
-When the user points to a sql file (a path ending in .sql), the sql lives in that file and you MUST choose QuerySqlFile for reads or ExecuteSqlFile for writes, never Select, SelectOneRow or any method that takes a sql statement. This holds even when the user asks for one row, a row limit is a parameter of QuerySqlFile
+When the user points to a sql file (a path ending in .sql), the sql lives in that file and you MUST choose QuerySqlFile for reads or ExecuteSqlFile for writes, never Select, SelectOneRow or any method that takes a sql statement. This holds even when the user asks for one row, a row limit is a parameter of QuerySqlFile. Both take the step's name=value pairs as parameters, e.g. `execute sql/mark.sql, email=%email%` => parameters [{""ParameterName"":""@email"",""VariableNameOrValue"":""%email%""}]
 
 ## Scheme explained: 
 - Reasoning: explain why you chose method(s)
@@ -878,31 +878,34 @@ When the user points to a sql file (a path ending in .sql), the sql lives in tha
 		return (dataSource, null);
 	}
 
-	public async Task<IBuilderError?> BuilderExecuteSqlFile(GoalStep step, Instruction instruction, DbGenericFunction gf)
+	public async Task<(Instruction, IBuilderError?)> BuilderExecuteSqlFile(GoalStep step, Instruction instruction, DbGenericFunction gf)
 	{
 		var (dataSource, error) = await GetDataSource(step, gf);
-		if (error != null) return error;
+		if (error != null) return (instruction, error);
 
 		var fileName = gf.GetParameter<string>("fileName");
 		if (string.IsNullOrEmpty(fileName))
 		{
-			return new StepBuilderError("Filename is empty", step);
+			return (instruction, new StepBuilderError("Filename is empty", step));
 		}
 
 		var file = programFactory.GetProgram<Modules.FileModule.Program>(step);
 		var readResult = await file.ReadTextFile(fileName);
-		if (readResult.Error != null) return new BuilderError(readResult.Error);
+		if (readResult.Error != null) return (instruction, new BuilderError(readResult.Error));
+
+		(instruction, var parameters, var parameterError) = BindSqlFileParameters(step, instruction, gf, fileName, readResult.Content.ToString()!);
+		if (parameterError != null) return (instruction, parameterError);
 
 		var tableAllowList = GenericFunctionHelper.GetParameterValueAsList(gf, "tableAllowList");
 		using var program = GetProgram(step);
-		var result = await program.Execute(dataSource, readResult.Content.ToString(), tableAllowList);
+		var result = await program.Execute(dataSource, readResult.Content.ToString(), tableAllowList, parameters);
 		if (result.Error != null)
 		{
 			logger.LogWarning($"  - ❌ Sql statement got error - {result.Error.Message} - {step.Text} @ {step.RelativeGoalPath}:{step.LineNumber}");
-			return null;
+			return (instruction, null);
 		}
 		logger.LogInformation($"  - ✅ Sql statement validated - {readResult.Content.ToString().MaxLength(30, "...")} - {step.Goal.RelativeGoalPath}:{step.LineNumber}");
-		return null;
+		return (instruction, null);
 
 	}
 
@@ -921,17 +924,23 @@ When the user points to a sql file (a path ending in .sql), the sql lives in tha
 		var readResult = await file.ReadTextFile(fileName);
 		if (readResult.Error != null || readResult.Content == null) return (instruction, null);
 
+		var bound = BindSqlFileParameters(step, instruction, gf, fileName, readResult.Content.ToString()!);
+		return (bound.Instruction, bound.Error);
+	}
+
+	private (Instruction Instruction, List<ParameterInfo> Parameters, IBuilderError? Error) BindSqlFileParameters(GoalStep step, Instruction instruction, DbGenericFunction gf, string fileName, string sql)
+	{
 		var parameters = gf.GetParameter<List<ParameterInfo>>("parameters");
-		var (matched, missing) = SqlVariables.MatchFileParameters(readResult.Content.ToString()!, parameters, step.Text);
+		var (matched, missing) = SqlVariables.MatchFileParameters(sql, parameters, step.Text);
 		if (missing.Count > 0)
 		{
 			var names = string.Join(", ", missing.Select(n => "@" + n));
 			var example = string.Join(", ", missing.Select(n => $"{n}=%{n}%"));
-			return (instruction, new StepBuilderError($"{fileName} uses {names}, and the step gives no value for it. Pass each one as name=value in the step, e.g. {example}",
+			return (instruction, matched, new StepBuilderError($"{fileName} uses {names}, and the step gives no value for it. Pass each one as name=value in the step, e.g. {example}",
 				step, "SqlFileParameterMissing", Retry: false));
 		}
 
-		if (parameters != null && matched.SequenceEqual(parameters)) return (instruction, null);
+		if (parameters != null && matched.SequenceEqual(parameters)) return (instruction, matched, null);
 
 		var renamed = matched.Where(m => parameters == null || !parameters.Contains(m)).Select(m => m.ParameterName);
 		logger.LogInformation($"  - Parameters of {fileName} bound by the name in the step: {string.Join(", ", renamed)} - {step.RelativeGoalPath}:{step.LineNumber}");
@@ -946,7 +955,7 @@ When the user points to a sql file (a path ending in .sql), the sql lives in tha
 		{
 			updated.Add(new Parameter("System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]", "parameters", matched));
 		}
-		return (instruction with { Function = gf with { Parameters = updated } }, null);
+		return (instruction with { Function = gf with { Parameters = updated } }, matched, null);
 	}
 
 	public async Task<IBuilderError?> BuilderExecuteDynamicSql(GoalStep step, Instruction instruction, DbGenericFunction gf)

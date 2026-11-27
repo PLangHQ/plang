@@ -603,23 +603,25 @@ namespace PLang.Modules.DbModule
 
 			return await eventSourceRepository.AddEventSourceData(connection, id, data, keyHash, transaction);
 		}*/
-		[Description("Executes a sql file")]
+		[Description("Executes a sql file that writes (update, insert, delete), e.g. `execute sql/mark.sql, email=%email%`. The sql is written in the file with @name for each value, and the step passes the values as name=value")]
 		[Effect(Effects.WritesData)]
-		public async Task<(long, IError?)> ExecuteSqlFile([HandlesVariable] string dataSourceName, string fileName, List<string> tableAllowList)
+		public async Task<(long, IError?)> ExecuteSqlFile([HandlesVariable] string dataSourceName, string fileName, List<string>? tableAllowList = null,
+			[Description("One entry per named value the sql file expects. The step writes each as name=value, with or without the word parameters in front, e.g. `email=%email%` is one entry. ParameterName is that name with an @ in front, VariableNameOrValue is the value. This is always a list, never the bare value")]
+			List<ParameterInfo>? parameters = null)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
 			if (error != null) return (0, error);
 
-			return await ExecuteSqlFile(dataSource, fileName, tableAllowList);
+			return await ExecuteSqlFile(dataSource, fileName, tableAllowList, parameters);
 		}
 
-		internal async Task<(long, IError?)> ExecuteSqlFile(DataSource dataSource, string fileName, List<string> tableAllowList)
+		internal async Task<(long, IError?)> ExecuteSqlFile(DataSource dataSource, string fileName, List<string>? tableAllowList, List<ParameterInfo>? parameters = null)
 		{
 			var file = GetProgramModule<Modules.FileModule.Program>();
 			var readResult = await file.ReadTextFile(fileName);
 			if (readResult.Error != null) return (0, readResult.Error);
 
-			return await Execute(dataSource, readResult.Content.ToString(), tableAllowList);
+			return await Execute(dataSource, readResult.Content.ToString(), tableAllowList, parameters);
 
 		}
 

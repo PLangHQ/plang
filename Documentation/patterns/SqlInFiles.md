@@ -60,6 +60,8 @@ order by products desc
 - A parameter is `@name` in the file and `name=value` in the step. The name left of `=` is the parameter, not the variable:
   `cancellationInfo=%cCancellation%` binds `@cancellationInfo`. The build reads the file and checks that every `@name` in it gets
   a value from the step; one that gets none stops the build with `save.sql uses @extra, and the step gives no value for it`.
+- A file that writes runs with `execute`, and takes its values the same way:
+  `execute "sql/mark.sql", email=%email%` for `update subs set marked = 1 where email = @email`. The same build check applies.
 - `%` in the file is plain SQL: `where name like '%' || @q || '%'` needs no escaping.
 - **Write `tables:` and `ds:`.** Without them the step can build without its datasource and table list, and fails when it runs with
   `Could not find parameter dataSourceNames`. The two lines make the build include them. Check the `.pr`: `dataSourceNames` and
