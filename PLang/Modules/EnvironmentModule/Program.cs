@@ -47,9 +47,10 @@ public class Program : BaseProgram
 		return appName;
 	}
 
-	public async Task EndApp()
+	[Description("Stops the app. exitCode is the process exit code the step states, e.g. `end app, exit code 1`; 0 when the step gives none")]
+	public async Task EndApp(int exitCode = 0)
 	{
-		Environment.Exit(0);
+		Environment.Exit(exitCode);
 		throw new Exceptions.RuntimeGoalEndException("End app", null);
 	}
 

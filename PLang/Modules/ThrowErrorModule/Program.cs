@@ -119,11 +119,11 @@ namespace PLang.Modules.ThrowErrorModule
 			return new EndGoal(false, endingGoal, goalStep, message ?? "", Levels: levels);
 		}
 
-		[Description("Shutdown the application")]
+		[Description("Shutdown the application. exitCode is the process exit code the step states, e.g. `end app, exit code 1`; 0 when the step gives none")]
 		[MethodSettings(CanBeAsync = false, CanHaveErrorHandling = false, CanBeCached = false)]
-		public async Task EndApp()
+		public async Task EndApp(int exitCode = 0)
 		{
-			Environment.Exit(0);
+			Environment.Exit(exitCode);
 		}
 
 		[Description("Create payment request(402)")]
