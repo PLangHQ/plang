@@ -630,7 +630,7 @@ Bad (dont use for):
 				{
 					// `set %d% = %Settings.X%, default is ""`: a missing setting is the default, the user is not asked for it
 					value = settings.GetOrDefault<string?>(typeof(PLang.Services.SettingsService.Settings), settingMatch.Groups["key"].Value, null);
-					if (value != null) SensitiveValues.Add(value);
+					if (value != null && SensitiveValues.IsSecretName(settingMatch.Groups["key"].Value)) SensitiveValues.Add(value);
 				}
 				else
 				{
