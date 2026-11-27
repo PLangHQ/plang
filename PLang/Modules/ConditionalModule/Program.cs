@@ -409,7 +409,14 @@ A goal the step calls goes in goalToCallIfTrue (after `then`) and goalToCallIfFa
 		}
 		
 		
-		private static bool? AsBool(object? value)
+		// "true" / "false" as text: compared with 1 or 0 (a sqlite bool column) it is a bool comparison.
+		internal static bool IsBoolWord(object? value)
+		{
+			if (value is JValue jvalue) value = jvalue.Value;
+			return value is string s && (s.Trim().Equals("true", StringComparison.OrdinalIgnoreCase) || s.Trim().Equals("false", StringComparison.OrdinalIgnoreCase));
+		}
+
+		internal static bool? AsBool(object? value)
 		{
 			if (value is JValue jvalue) value = jvalue.Value;
 			switch (value)
@@ -437,7 +444,7 @@ A goal the step calls goes in goalToCallIfTrue (after `then`) and goalToCallIfFa
 
 			// `%user.admin% != true`: a bool against "true" (the step's text) or 1 (a sqlite bool column) is a bool
 			// comparison. It was compared as unlike types, so != true was true for an admin too.
-			if (result == null && (item1 is bool || item2 is bool))
+			if (result == null && (item1 is bool || item2 is bool || IsBoolWord(item1) || IsBoolWord(item2)))
 			{
 				var b1 = AsBool(item1);
 				var b2 = AsBool(item2);

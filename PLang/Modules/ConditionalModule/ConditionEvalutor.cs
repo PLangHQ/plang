@@ -97,8 +97,8 @@ A Simple NEVER has Logic or Conditions: a step joining two tests is a Compound."
 			{
 				// Equality is ==, not-equal is !=. The other spellings below mean exactly the same
 				// test and are accepted so a step built with one of them runs instead of throwing.
-				"==" or "=" or "===" or "equals" => Equals(n.LeftValue, n.RightValue),
-				"!=" or "<>" or "!==" => !Equals(n.LeftValue, n.RightValue),
+				"==" or "=" or "===" or "equals" => Same(n.LeftValue, n.RightValue),
+				"!=" or "<>" or "!==" => !Same(n.LeftValue, n.RightValue),
 				">" => Cmp(n) > 0,
 				"<" => Cmp(n) < 0,
 				">=" => Cmp(n) >= 0,
@@ -126,6 +126,23 @@ A Simple NEVER has Logic or Conditions: a step joining two tests is a Compound."
 				"isfalse" => !IsTrue(n.LeftValue),
 				_ => throw new NotSupportedException($"Op '{n.Operator}'")
 			};
+
+			// `%x% is not true` built as == with RightValue "true" (the step's text): a bool against "true", "1" or 1 is a
+			// bool comparison, not two unlike values. So is a sqlite bool column (1, 0) against "true" or "false".
+			private static bool Same(object? left, object? right)
+			{
+				if (Equals(left, right)) return true;
+				if (left is ObjectValue lov) left = lov.Value;
+				if (right is ObjectValue rov) right = rov.Value;
+				if (left is Newtonsoft.Json.Linq.JValue ljv) left = ljv.Value;
+				if (right is Newtonsoft.Json.Linq.JValue rjv) right = rjv.Value;
+				if (Equals(left, right)) return true;
+				if (left is not bool && right is not bool && !Program.IsBoolWord(left) && !Program.IsBoolWord(right)) return false;
+
+				var l = Program.AsBool(left);
+				var r = Program.AsBool(right);
+				return l != null && r != null && l == r;
+			}
 
 			private static bool IsTrue(object? value)
 			{
