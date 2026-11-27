@@ -76,6 +76,98 @@ public static class SqlVariables
 		return found;
 	}
 
+	private static readonly Regex ParameterAt = new(@"\G@([A-Za-z_][A-Za-z0-9_]*)", RegexOptions.Compiled);
+	// name=value in a step, e.g. `query x.sql, id=%id%, cancellationInfo=%cCancellation%, status="open", max=5`
+	private static readonly Regex NamedValueInStep = new(@"(?<![\w%@.])@?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(%[^%\s]+%|""[^""]*""|'[^']*'|[^,\s""']+)", RegexOptions.Compiled);
+
+	/// <summary>
+	/// The @parameters a sql text binds, outside string literals, quoted identifiers and comments.
+	/// @@name (a server variable) and a @ inside a word are not parameters.
+	/// </summary>
+	public static List<string> ParameterNames(string sql)
+	{
+		var names = new List<string>();
+		int i = 0;
+		while (i < sql.Length)
+		{
+			char c = sql[i];
+			if (c == '\'' || c == '"' || c == '`') { i = SkipQuoted(sql, i, c); continue; }
+			if (c == '[' && i > 0 && !IsWordChar(sql[i - 1]))
+			{
+				int close = sql.IndexOf(']', i + 1);
+				i = close < 0 ? sql.Length : close + 1;
+				continue;
+			}
+			if (c == '-' && i + 1 < sql.Length && sql[i + 1] == '-')
+			{
+				int end = sql.IndexOf('\n', i);
+				i = end < 0 ? sql.Length : end + 1;
+				continue;
+			}
+			if (c == '/' && i + 1 < sql.Length && sql[i + 1] == '*')
+			{
+				int end = sql.IndexOf("*/", i + 2, StringComparison.Ordinal);
+				i = end < 0 ? sql.Length : end + 2;
+				continue;
+			}
+			if (c == '@')
+			{
+				if (i + 1 < sql.Length && sql[i + 1] == '@') { i += 2; while (i < sql.Length && IsWordChar(sql[i])) i++; continue; }
+				var match = ParameterAt.Match(sql, i);
+				if (match.Success && (i == 0 || !IsWordChar(sql[i - 1])))
+				{
+					var name = match.Groups[1].Value;
+					if (!names.Contains(name, StringComparer.OrdinalIgnoreCase)) names.Add(name);
+					i += match.Length;
+					continue;
+				}
+			}
+			i++;
+		}
+		return names;
+	}
+
+	/// <summary>
+	/// Matches the parameter list of a sql file step with the @names the file binds. The step writes each value as
+	/// name=value, and the name left of = is the parameter: `cancellationInfo=%cCancellation%` is @cancellationInfo.
+	/// A parameter named after its variable instead (@cCancellation) is renamed, and a name=value of the step the
+	/// list left out is added. Returns the list and the @names of the file that are still unbound.
+	/// </summary>
+	public static (List<ParameterInfo> Parameters, List<string> Missing) MatchFileParameters(string sql, List<ParameterInfo>? parameters, string? stepText)
+	{
+		var result = new List<ParameterInfo>(parameters ?? new());
+		var fileNames = ParameterNames(sql);
+		bool IsBound(string name) => result.Any(p => string.Equals(ParameterNameOf(p.ParameterName), name, StringComparison.OrdinalIgnoreCase));
+		bool IsFileName(string? parameterName) => parameterName != null && fileNames.Any(n => string.Equals(n, ParameterNameOf(parameterName), StringComparison.OrdinalIgnoreCase));
+
+		var stepValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		foreach (Match m in NamedValueInStep.Matches(stepText ?? ""))
+		{
+			var value = m.Groups[2].Value;
+			if (value.Length >= 2 && (value[0] == '"' || value[0] == '\'') && value[^1] == value[0]) value = value[1..^1];
+			stepValues.TryAdd(m.Groups[1].Value, value);
+		}
+
+		var missing = new List<string>();
+		foreach (var name in fileNames)
+		{
+			if (IsBound(name)) continue;
+			if (!stepValues.TryGetValue(name, out var value)) { missing.Add(name); continue; }
+
+			int idx = result.FindIndex(p => !IsFileName(p.ParameterName) &&
+				string.Equals(p.VariableNameOrValue?.ToString()?.Trim(), value, StringComparison.OrdinalIgnoreCase));
+			if (idx != -1)
+			{
+				result[idx] = result[idx] with { ParameterName = "@" + name };
+			}
+			else
+			{
+				result.Add(new ParameterInfo("System.Object", "@" + name, value));
+			}
+		}
+		return (result, missing);
+	}
+
 	private static int SkipQuoted(string sql, int start, char quote)
 	{
 		int i = start + 1;

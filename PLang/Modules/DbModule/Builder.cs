@@ -906,6 +906,49 @@ When the user points to a sql file (a path ending in .sql), the sql lives in tha
 
 	}
 
+	/// <summary>
+	/// Every @name the sql file binds must be in the parameter list, or the query fails when it runs ("Must add values
+	/// for the following parameters"). The step writes name=%variable%, and the llm sometimes names the parameter
+	/// after the variable instead; that is set right here. A @name the step gives no value for stops the build.
+	/// The file is read on every build, so a @name added to the file later is caught too.
+	/// </summary>
+	public async Task<(Instruction, IBuilderError?)> BuilderQuerySqlFile(GoalStep step, Instruction instruction, DbGenericFunction gf)
+	{
+		var fileName = gf.GetParameter<string>("fileName");
+		if (string.IsNullOrEmpty(fileName) || VariableHelper.ContainsVariable(fileName)) return (instruction, null);
+
+		var file = programFactory.GetProgram<Modules.FileModule.Program>(step);
+		var readResult = await file.ReadTextFile(fileName);
+		if (readResult.Error != null || readResult.Content == null) return (instruction, null);
+
+		var parameters = gf.GetParameter<List<ParameterInfo>>("parameters");
+		var (matched, missing) = SqlVariables.MatchFileParameters(readResult.Content.ToString()!, parameters, step.Text);
+		if (missing.Count > 0)
+		{
+			var names = string.Join(", ", missing.Select(n => "@" + n));
+			var example = string.Join(", ", missing.Select(n => $"{n}=%{n}%"));
+			return (instruction, new StepBuilderError($"{fileName} uses {names}, and the step gives no value for it. Pass each one as name=value in the step, e.g. {example}",
+				step, "SqlFileParameterMissing", Retry: false));
+		}
+
+		if (parameters != null && matched.SequenceEqual(parameters)) return (instruction, null);
+
+		var renamed = matched.Where(m => parameters == null || !parameters.Contains(m)).Select(m => m.ParameterName);
+		logger.LogInformation($"  - Parameters of {fileName} bound by the name in the step: {string.Join(", ", renamed)} - {step.RelativeGoalPath}:{step.LineNumber}");
+
+		var updated = gf.Parameters.ToList();
+		int idx = updated.FindIndex(p => p.Name == "parameters");
+		if (idx != -1)
+		{
+			updated[idx] = updated[idx] with { Value = matched };
+		}
+		else
+		{
+			updated.Add(new Parameter("System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]", "parameters", matched));
+		}
+		return (instruction with { Function = gf with { Parameters = updated } }, null);
+	}
+
 	public async Task<IBuilderError?> BuilderExecuteDynamicSql(GoalStep step, Instruction instruction, DbGenericFunction gf)
 	{
 		string sql = gf.GetParameter<string>("sql");
@@ -957,6 +1000,8 @@ When the user points to a sql file (a path ending in .sql), the sql lives in tha
 	{
 		if (step.Goal.IsSetup || (AppContext.TryGetSwitch("Validate", out bool validate) && validate)) return false;
 		if (gf.GetParameter<string>("sql") == null && gf.GetParameter<string>("fileName") == null) return false;
+		// the sql file can change without the step changing; BuilderQuerySqlFile reads it on every build
+		if (gf.Name == "QuerySqlFile") return false;
 
 		if (instruction.Properties.TryGetValue("IsValidSql", out object? prop))
 		{

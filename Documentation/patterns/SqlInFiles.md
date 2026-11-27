@@ -57,12 +57,15 @@ order by products desc
  {"category":"drink","products":1,"aboveLimit":1,"pctAbove":100.0,"avgPrice":30.0}]
 ```
 
-- A parameter is `@name` in the file and `name=value` in the step.
+- A parameter is `@name` in the file and `name=value` in the step. The name left of `=` is the parameter, not the variable:
+  `cancellationInfo=%cCancellation%` binds `@cancellationInfo`. The build reads the file and checks that every `@name` in it gets
+  a value from the step; one that gets none stops the build with `save.sql uses @extra, and the step gives no value for it`.
 - `%` in the file is plain SQL: `where name like '%' || @q || '%'` needs no escaping.
 - **Write `tables:` and `ds:`.** Without them the step can build without its datasource and table list, and fails when it runs with
   `Could not find parameter dataSourceNames`. The two lines make the build include them. Check the `.pr`: `dataSourceNames` and
   `tableAllowList` must be among the parameters.
 - **The file is read when the step runs.** A change to the `.sql` file is used on the next run without building the step again.
+  A new `@name` in the file needs a `name=value` in the step, and the step must be built again so the parameter is in the `.pr`.
 
 ## Why this way
 
