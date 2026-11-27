@@ -352,6 +352,15 @@ TakeScreenshotOfWebsite(String saveToPath, Boolean overwrite = False, String css
 ```
 
 
+### UploadFile
+
+```
+UploadFile(List<String> paths, String cssSelector, Nullable<Int32> timeoutInSeconds = null) : object
+```
+
+Puts one or more files into a file input (input[type=file]) by cssSelector, e.g. `upload file "/files/invoice.pdf" to "#attachment"`. Several files only when the input allows multiple. The files are read through the app's file system (paths as in the File module).
+
+
 ### Wait
 
 ```

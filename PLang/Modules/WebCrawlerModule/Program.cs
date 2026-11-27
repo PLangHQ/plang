@@ -732,6 +732,39 @@ return result;");
 			await SendKey(value, cssSelector, timeoutInSeconds);
 		}
 
+		[Description("Puts one or more files into a file input (input[type=file]) by cssSelector, e.g. `upload file \"/files/invoice.pdf\" to \"#attachment\"` => paths [\"/files/invoice.pdf\"], cssSelector \"#attachment\". Several files only when the input allows multiple")]
+		public async Task<IError?> UploadFile(List<string> paths, string cssSelector, int? timeoutInSeconds = null)
+		{
+			if (paths == null || paths.Count == 0)
+			{
+				return new ProgramError("No file to upload", goalStep, function);
+			}
+
+			// Read through the app's file system, so a file the app may not read is not sent to a website either.
+			var files = new List<FilePayload>();
+			foreach (var path in paths)
+			{
+				var absolutePath = GetPath(path);
+				if (!fileSystem.File.Exists(absolutePath))
+				{
+					return new ProgramError($"{path} cannot be found ({absolutePath})", goalStep, function, Key: "FileNotFound", StatusCode: 404);
+				}
+				files.Add(new FilePayload
+				{
+					Name = Path.GetFileName(absolutePath),
+					MimeType = MimeTypeHelper.GetMimeType(absolutePath),
+					Buffer = await fileSystem.File.ReadAllBytesAsync(absolutePath)
+				});
+			}
+
+			var page = await GetPage();
+			var options = new LocatorSetInputFilesOptions();
+			if (timeoutInSeconds != null) options.Timeout = timeoutInSeconds.Value * 1000;
+			await page.Locator(cssSelector).SetInputFilesAsync(files, options);
+			SetCssSelector(cssSelector);
+			return null;
+		}
+
 		[Description("select an option by its value in select input by cssSelector")]
 		public async Task SelectByValue(string value, string? cssSelector = null, int? timeoutInSeconds = null)
 		{

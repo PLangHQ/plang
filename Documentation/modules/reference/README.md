@@ -493,6 +493,7 @@ the column spells out the ambiguous ones.
 | SwitchTab | [WebCrawlerModule](./WebCrawlerModule.md) | `SwitchTab(Int32 tabIndex) : object` |
 | SymbolOnSmartContract | [BlockchainModule](./BlockchainModule.md) | `SymbolOnSmartContract(String contractAddressOrSymbol) : Object` |
 | TakeScreenshotOfWebsite | [WebCrawlerModule](./WebCrawlerModule.md) | `TakeScreenshotOfWebsite(String saveToPath, Boolean overwrite = False, String cssSelector = null) : object` |
+| UploadFile | [WebCrawlerModule](./WebCrawlerModule.md) | `UploadFile(List<String> paths, String cssSelector, Nullable<Int32> timeoutInSeconds = null) : object` |
 | Throw | [ThrowErrorModule](./ThrowErrorModule.md) | `Throw(Object message, String key = UserDefinedError, Int32 statusCode = 400, String fixSuggestion = null, String helpfullLinks = null) : object` |
 | ThrowError | [ThrowErrorModule](./ThrowErrorModule.md) | `ThrowError(PLang.Services.OutputStream.Messages.ErrorMessage errorMessage) : object` |
 | TotalSupplyOnSmartContract | [BlockchainModule](./BlockchainModule.md) | `TotalSupplyOnSmartContract(String contractAddressOrSymbol) : Object` |
