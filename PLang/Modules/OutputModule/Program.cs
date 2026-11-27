@@ -365,8 +365,7 @@ namespace PLang.Modules.OutputModule
 			{
 				try { content = Newtonsoft.Json.Linq.JToken.Parse(trimmed); } catch (JsonReaderException) { }
 			}
-			// a sensitive value (a setting, one set `as sensitive`) is not written out (Ingi)
-			textMessage = textMessage with { Content = SensitiveValues.Redact(JsonConvert.SerializeObject(content, settings)) ?? "" };
+			textMessage = textMessage with { Content = JsonConvert.SerializeObject(content, settings) };
 
 			return await Write(textMessage);
 		}
@@ -411,8 +410,9 @@ namespace PLang.Modules.OutputModule
 
 
 			string stepPath = Path.Join(goalStep.Goal.GoalName, goalStep.Number.ToString()).Replace("\\", "/");
-			// a sensitive value (a setting, one set `as sensitive`) is not written out (Ingi): **** and the last 4 characters
-			textMessage = textMessage with { Path = stepPath, Content = SensitiveValues.Redact(textMessage.Content) ?? "" };
+			// What the app writes out is its own output and is written as it is; sensitive values are hidden only in errors,
+			// the log and llm requests.
+			textMessage = textMessage with { Path = stepPath };
 
 			var sink = context.GetSink(textMessage.Actor);
 			return await sink.SendAsync(textMessage);

@@ -61,8 +61,8 @@ Write `%Settings.X%` in the step that uses it. Never copy it into a variable fir
 
 When that step fails, the error shows the step as written, `Bearer %Settings.ApiToken%`, and never the value.
 
-A setting whose name says it is a secret is **sensitive**: the name contains key, token, secret, password, passwd, passphrase,
-pwd, credential or private, or ends in pass (`ApiKey`, `GithubToken`, `ClientSecret`, `SmtpPassword`, `SmtpPass`). Wherever its
+A setting whose name says it is a secret is **sensitive**: the name contains key, token, secret or password (`ApiKey`,
+`GithubToken`, `ClientSecret`, `SmtpPassword`). Wherever its
 value is copied to (`set %token% = %Settings.ApiToken%`, `"Bearer %token%"`), it is hidden as `****` and the last 4 characters
 (`****` when shorter than 12) in an error (`%!error%`, "Variables in step"), the log and a request to the llm. Modules get the
 real value. Any other setting (`SiteDomain`, `AppPath`) is app data and is shown as it is. Mark any other value as sensitive
@@ -72,8 +72,9 @@ with `as sensitive`:
 - set %password% = %request.password% as sensitive
 ```
 
-`write out` hides it too: `write out "password is %password%"` writes `password is ****`. Modules that send it on
-(http, a process, an iroh peer) get the real value. Values shorter than 6 characters are not hidden.
+What the app writes out is its own output and gets the real value: `write out` (console and web response), render, files,
+http requests, a process and an iroh peer. Only errors, the log and llm requests hide it. Values shorter than 6 characters
+are not hidden.
 
 The name of a setting can have a variable in it, to pick one of several keys without the key going into a variable:
 
