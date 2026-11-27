@@ -7,6 +7,16 @@ never changed and never removed, because it has already run against every databa
 So `Setup.goal` is not a script you edit until it looks right. To change the schema, append a step
 that makes the change.
 
+The build warns, in the build where it happens, when a step that was built before is changed, when a
+new step is put before steps that were built before, and when a built step is removed:
+
+```
+Setup.goal:2 changed a step that was built before. Setup.goal is an event source: leave the steps
+that were built as they were and append a new step that makes the change (see SetupAndMigrations.md).
+```
+
+A step appended at the bottom gives no warning.
+
 Two different run once mechanisms are at work, and knowing which one applies to a file is the
 difference between a migration that reaches your users and one that silently does nothing.
 
