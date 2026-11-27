@@ -42,8 +42,8 @@ ToFrontPage
 - end goal and 2 levels up
 ```
 
-- The gate is the first goal of its file, so it is guarded by its own folder's binding too. An event goal is never called for
-  itself, so this does not loop.
+- The gate is the first goal of its file and lives in the folder it guards, but a goal that an event calls gets no goal events,
+  so the binding does not run the gate before itself and nothing loops.
 - `ToFrontPage` is a private goal (not the first in its file), and a `before each goal` binding runs only for public goals.
 - `redirect` ends the request, and every goal above it: the guarded goal does not run, nothing it would render is sent, and
   neither does any goal that called it. A new visitor's request, or curl, gets `302` to `/`.
@@ -62,12 +62,12 @@ With a log line in each gate and in the page, a request to `/admin/sysadmin` (th
 user with both roles ran, in this order:
 
 1. the admin gate, before `/admin/sysadmin/Settings.goal`
-2. the admin gate again, before `/admin/sysadmin/Authenticate.goal`
-3. the sysadmin gate
-4. the page, `Settings`
+2. the sysadmin gate, before the same goal
+3. the page, `Settings`
 
-The admin gate also runs before the sysadmin gate itself, because that gate is a goal in `admin/` too. It costs nothing: `%user%`
-is already loaded. Measured with a real browser for each user:
+A goal that an event calls gets no goal events of its own, so the gates do not guard each other: the sysadmin gate is in
+`admin/`, but the admin gate does not run before it. In both gates `%!Event.SourceGoal%` is the page. Measured with a real browser
+for each user:
 
 | user | `/admin` | `/admin/sysadmin` |
 |---|---|---|
