@@ -1295,9 +1295,22 @@ namespace PLang.Runtime
 
 		private Goal? GetStartGoal(string goalName)
 		{
-			string prPath = fileSystem.Path.Join(goalName.Replace(".goal", ""), ISettings.GoalFileName);
-			string absolutePath = fileSystem.Path.Join(fileSystem.BuildPath, prPath);
+			string name = goalName.EndsWith(".goal", StringComparison.OrdinalIgnoreCase) ? goalName[..^".goal".Length] : goalName;
+			string absolutePath = fileSystem.Path.Join(fileSystem.BuildPath, name, ISettings.GoalFileName);
+			if (fileSystem.File.Exists(absolutePath)) return prParser.GetGoal(absolutePath);
 
+			// Goal names are case-insensitive, `plang setup` runs Setup.goal, on a case-sensitive file system too.
+			// A goal in a folder of its own name, setup/Setup.goal, is found by the folder name.
+			var goalFiles = fileSystem.Directory.Exists(fileSystem.BuildPath)
+				? fileSystem.Directory.GetFiles(fileSystem.BuildPath, ISettings.GoalFileName, SearchOption.AllDirectories)
+				: [];
+			string lastSegment = fileSystem.Path.GetFileName(name.TrimEnd('/', '\\'));
+			foreach (var candidate in new[] { name, fileSystem.Path.Join(name, lastSegment) })
+			{
+				var wanted = fileSystem.Path.GetFullPath(fileSystem.Path.Join(fileSystem.BuildPath, candidate, ISettings.GoalFileName));
+				var match = goalFiles.FirstOrDefault(p => string.Equals(fileSystem.Path.GetFullPath(p), wanted, StringComparison.OrdinalIgnoreCase));
+				if (match != null) return prParser.GetGoal(match);
+			}
 			return prParser.GetGoal(absolutePath);
 
 		}
