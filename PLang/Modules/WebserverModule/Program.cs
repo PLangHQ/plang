@@ -483,9 +483,12 @@ public class Program : BaseProgram, IDisposable
 									httpContext.Response.ContentType = httpOutputSink.ContentType;
 								}
 								// An error the app threw (`throw error "Not allowed", 403`) goes to `on app error` like any other, so
-								// the app decides what the visitor sees. Handled, nothing more is written; still a user error (the
-								// same, or one the handler threw), its message goes out as it was written.
+								// the app decides what the visitor sees. A handler that wrote the answer has answered; one that wrote
+								// nothing (it only logged) leaves the thrown message to go out, with its target and the form's new
+								// callback. A user error the handler threw goes out in place of the original.
+								var thrown = error;
 								(_, error) = await requestEngine.GetEventRuntime().AppErrorEvents(error);
+								if (error == null && thrown is UserInputError { ErrorMessage: not null } && !httpContext.Response.HasStarted && !httpOutputSink.PageStarted) error = thrown;
 								if (error == null || error is IErrorHandled) return;
 								if (error is UserInputError uie && uie.ErrorMessage != null)
 								{

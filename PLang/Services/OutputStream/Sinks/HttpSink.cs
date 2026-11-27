@@ -207,13 +207,15 @@ public sealed class HttpSink : IOutputSink
 		var ui = context.UiOutputProperties;
 		if (ui == null) return m;
 
-		if (!string.IsNullOrEmpty(ui.Target)) { 
-			m = m with { Target = ui.Target };
-		}
-
+		// An error goes where its step put it (`throw error "Wrong code", target: "#codeError"`), else to the
+		// request's error target.
 		if (m is ErrorMessage)
 		{
-			m = m with { Target = ui.ErrorTarget };
+			m = m with { Target = string.IsNullOrEmpty(m.Target) ? ui.ErrorTarget : m.Target };
+		}
+		else if (!string.IsNullOrEmpty(ui.Target))
+		{
+			m = m with { Target = ui.Target };
 		}
 
 		if (ui.Actions != null && ui.Actions.Count > 0)
