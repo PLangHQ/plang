@@ -85,7 +85,7 @@ its hash, and sets the step index, so execution resumes at the `ask user` step.
   written straight to the memory stack, so `call back data: {"orderId": "%order.id%"}` comes back
   as `%orderId%`. There is no `%answer.orderId%`.
 
-Four consequences:
+Three consequences:
 
 - **The route must accept POST.** The form posts to the url it was rendered from. A `GET` only
   route gives `Routing not found`.

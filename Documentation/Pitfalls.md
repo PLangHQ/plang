@@ -15,6 +15,7 @@ be a different module than you meant: an http get instead of a goal call, a math
 |---|---|---|
 | `- if %x% is empty, set %x% = 1` | does not build: a one-line condition can only call a goal, end the goal or throw | the action as an indented step under `- if %x% is empty then`, or `- set default value %x% = 1` |
 | `- read file "/x.jsonl", write to %t%` | read as JSON lines, not as text | `- read text file "/x.jsonl", write to %t%` |
+| `- execute sql "VACUUM INTO '%path%'"` | usually built as the parameter `@path`; a build that leaves `%path%` in the sql text is refused when it runs, `VariableInSql` | the parameter yourself: `- execute sql "VACUUM INTO @path", @path=%path%` |
 
 ## Values and methods
 
