@@ -98,7 +98,14 @@ public class Builder : BaseBuilder
 		if (dataSource == null)
 		{
 			dataSource = context.DataSource;
+		}
 
+		// A step that names no datasource and no table to find one by (`execute sql "vacuum into @path"`) runs on the
+		// app's default datasource, as it does at runtime.
+		if (dataSource == null)
+		{
+			var result = await dbSettings.GetAllDataSourcesForBuilder();
+			if (result.Error == null) dataSource = result.DataSources.FirstOrDefault(p => p.IsDefault);
 		}
 
 		string sqlType = "sqlite";

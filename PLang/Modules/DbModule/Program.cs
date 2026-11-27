@@ -694,9 +694,8 @@ namespace PLang.Modules.DbModule
 		[Effect(Effects.FromSql)]
 		public async Task<(Table?, IError?, Properties?)> QueryDynamicSql([HandlesVariable] string sql, List<string>? tableAllowList = null, [HandlesVariable] List<string>? dataSourceNames = null, List<ParameterInfo>? parameters = null)
 		{
-			(sql, var sqlError) = LoadDynamicSql(sql);
+			(sql, var sqlError) = LoadDynamicSql(sql, tableAllowList);
 			if (sqlError != null) return (null, sqlError, null);
-			if (tableAllowList == null || tableAllowList.Count == 0) return (null, NoTableAllowList(sql), null);
 
 			(var dataSources, var error) = await GetDataSourcesByNames(dataSourceNames);
 			if (error != null) return (null, error, null);
@@ -708,13 +707,17 @@ namespace PLang.Modules.DbModule
 		/// The sql of a dynamic query is either all one variable (`execute query %sql%`, the app built it) or sql text. A
 		/// %variable% inside sql text (`select value from json_each(%json%)`) would be pasted into the sql, where its value
 		/// can change the statement (sql injection), so it is refused; the value goes in as a @parameter.
+		/// The sql the app built (from a variable) must name the tables it may touch; sql written in the step
+		/// (`vacuum into @path`, `create index ...`) is the developer's own and needs no table list.
 		/// </summary>
-		private (string Sql, IError? Error) LoadDynamicSql(string sql)
+		private (string Sql, IError? Error) LoadDynamicSql(string sql, List<string>? tableAllowList)
 		{
 			if (string.IsNullOrEmpty(sql) || !VariableHelper.ContainsVariable(sql)) return (sql, null);
 			if (VariableHelper.IsVariable(sql.Trim()))
 			{
-				return (memoryStack.Get(sql.Trim())?.ToString() ?? "", null);
+				var value = memoryStack.Get(sql.Trim())?.ToString() ?? "";
+				if (tableAllowList == null || tableAllowList.Count == 0) return (value, NoTableAllowList(value));
+				return (value, null);
 			}
 			return (sql, new ProgramError($"The sql has a %variable% in its text: {sql}. Its value would be pasted into the sql, where it can change the statement",
 				goalStep, function, Key: "VariableInSql",
@@ -736,9 +739,8 @@ namespace PLang.Modules.DbModule
 		[Effect(Effects.WritesData)]
 		public async Task<(long RowsAffected, IError? Error)> Execute([HandlesVariable] string sql, List<string>? tableAllowList = null, [HandlesVariable] string? dataSourceName = null, List<ParameterInfo>? parameters = null)
 		{
-			(sql, var sqlError) = LoadDynamicSql(sql);
+			(sql, var sqlError) = LoadDynamicSql(sql, tableAllowList);
 			if (sqlError != null) return (0, sqlError);
-			if (tableAllowList == null || tableAllowList.Count == 0) return (0, NoTableAllowList(sql));
 
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
 			if (error != null) return (0, error);
