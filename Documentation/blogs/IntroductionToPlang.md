@@ -114,7 +114,7 @@ With **Plang**, programming becomes simple, fun, and approachable. By breaking t
 ## What’s Next?
 
 1. **Create your own project:** Maybe a program to track your favorite games or books!
-2. **Explore Plang’s capabilities:** Try adding more functionality, like [sending a message](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/PLang.Modules.MessageModule.md) or [setting reminders](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/PLang.Modules.ScheduleModule.md).
+2. **Explore Plang’s capabilities:** Try adding more functionality, like [sending a message](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/reference/MessageModule.md) or [setting reminders](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/reference/ScheduleModule.md).
 3. **Share your project:** Show your friends how easy and exciting coding can be!
 
 

@@ -89,6 +89,6 @@ If Plang is interesting to you, you should dig a bit deeper:
 
 * [Basic concepts and lessons](https://github.com/PLangHQ/plang/blob/main/Documentation/blogs/Lesson%202.md)
 * [Simple Todo example](https://github.com/PLangHQ/plang/blob/main/Documentation/Todo_webservice.md) is a good start
-* [Documentation](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/PLang.Modules.MessageModule.md) on the message module
+* [Documentation](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/reference/MessageModule.md) on the message module
 * Check out the [GitHub repo](https://github.com/PLangHQ/)
 * [Meet up on Discord](https://discord.gg/A8kYUymsDD) to discuss or get help
