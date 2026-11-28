@@ -68,7 +68,7 @@ Categorize
 - `[llm]`: This indicates to Plang that the LLM module should be used. It helps the language detect which module to use.
 - `scheme`: This forces the LLM to return a specific structure, which is automatically loaded as a variable. In this case, `%category%` is used in the next step to update the task's category.
 
-For more on LLM, check out the [LlmModule documentation](./modules/PLang.Modules.LlmModule.md).
+For more on LLM, check out the [LlmModule documentation](./modules/reference/LlmModule.md).
 
 ### Build and Restart webserver
 

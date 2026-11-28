@@ -79,7 +79,7 @@ If Plang is interesting to you, you should dig a bit deeper:
 * [Simple Todo example](https://github.com/PLangHQ/plang/blob/main/Documentation/Todo_webservice.md) is a good start
 * Check out the [GitHub repo](https://github.com/PLangHQ/)
 * [Meet up on Discord](https://discord.gg/A8kYUymsDD) to discuss or get help
-* Detailed documentation about Scheduler and waiting can be found [here](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/PLang.Modules.ScheduleModule.md)
+* Detailed documentation about Scheduler and waiting can be found [here](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/reference/ScheduleModule.md)
 
 ## Conclusion
 

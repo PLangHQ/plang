@@ -162,7 +162,7 @@ fs.readFile(filePath, 'utf8', (err, data) => {
 
 WOW, that is a lot. (Thank you, ChatGPT, for making it so large to make my point even more 🤣)
 
-Let's try that in Plang, let's [read a file](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/PLang.Modules.FileModule.md#read-a-text-file) and update it:
+Let's try that in Plang, let's [read a file](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/reference/FileModule.md) and update it:
 
 ```plang
 ReadAndUpdateFile
@@ -282,7 +282,7 @@ req.end();
 
 > There is an library that abstracts away this complexity and reduces this code.
 
-Here is Plang code for [GET](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/PLang.Modules.HttpModule.md#get-request) and [POST](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/PLang.Modules.HttpModule.md#post-request):
+Here is Plang code for [GET and POST](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/reference/HttpModule.md):
 
 ```plang
 GetAndPost

@@ -1,6 +1,6 @@
 # Scrabe for information
 
-Plang provides access to a [browser module](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/PLang.Modules.WebCrawlerModule.md), this make is possible to retrieve information easily when you don't have database access.
+Plang provides access to a [browser module](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/reference/WebCrawlerModule.md), this make is possible to retrieve information easily when you don't have database access.
 
 In our [Simple decisions](https://github.com/PLangHQ/plang/blob/main/Documentation/blogs/TheSimpleDecisions.md) article, we are retrieving data from database, but we don't always have access to the database, but we might have access to the website or even the admin system that answer the question we are looking for.
 

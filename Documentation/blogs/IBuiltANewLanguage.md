@@ -88,19 +88,19 @@ Need to [retry an API](./Lesson%205.md) call?
 - get https://example.org/getinfo, retry 3 times over 3 minutes
 ```
 
-Want to [send money](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/PLang.Modules.BlockchainModule.md)?
+Want to [send money](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/reference/BlockchainModule.md)?
 
 ```plang
 - send 5 USDC to %address%
 ```
 
-[Receive](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/PLang.Modules.BlockchainModule.md#listen-to-transfer-events-on-a-smart-contract) money?
+[Receive](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/reference/BlockchainModule.md) money?
 
 ```plang
 - listen to %address%, call ProcessPayment
 ```
 
-Want to [send a report every Monday](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/PLang.Modules.ScheduleModule.md) at 9 am?
+Want to [send a report every Monday](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/reference/ScheduleModule.md) at 9 am?
 
 ```plang
 - on mondays at 9am, call SendReport

@@ -96,6 +96,8 @@ Explore plang's features and capabilities:
         - **[Identity in the browser](https://github.com/PLangHQ/plang/blob/main/Documentation/IdentityInTheBrowser.md)**: Where the identity comes from in a browser, which requests carry it, and what that decides about the first page load, sign in, images and webhooks.
         - **[ask user](https://github.com/PLangHQ/plang/blob/main/Documentation/AskUser.md)**: Why `ask user` is `Console.ReadLine`, what survives the answer on a stateless web request and what does not, how the callback resumes the goal, and why a form is one shot.
         - **[Setup and migrations](https://github.com/PLangHQ/plang/blob/main/Documentation/SetupAndMigrations.md)**: Setup.goal is a log of what already happened, the two run once mechanisms, and why editing a create statement is not a migration.
+        - **[Writing steps that build](https://github.com/PLangHQ/plang/blob/main/Documentation/WritingStepsThatBuild.md)**: One checked wording for each common task (variables, files, database, conditions, loops, errors, cache) and the function each one becomes.
+        - **[Check the build](https://github.com/PLangHQ/plang/blob/main/Documentation/CheckTheBuild.md)**: The `.pr` file is what a step will do. How to see what each step became, what to look for, and how to reword a step that became the wrong thing.
         - **[Pitfalls](https://github.com/PLangHQ/plang/blob/main/Documentation/Pitfalls.md)**: Steps that build to the wrong thing, values and methods that surprise, variables between goals; each with the wording that works.
         - **[Writing goals that behave](https://github.com/PLangHQ/plang/blob/main/Documentation/WritingGoals.md)**: One decision per goal, why `end goal` inside an `if` is a trap, and what a called goal shares with its caller.
         - **[Talking to an api](https://github.com/PLangHQ/plang/blob/main/Documentation/TalkingToAnApi.md)**: Keys with a dash in them, form and multipart posts, webhooks, and the mock that quietly stops matching.
@@ -106,7 +108,7 @@ Explore plang's features and capabilities:
         - **[Deploying a new version](https://github.com/PLangHQ/plang/blob/main/Documentation/Deploy.md)**: A new runtime or new goals on a copy of the production databases first, with mocked providers and a check that fails the deploy.
         - **[Agents](https://github.com/PLangHQ/plang/blob/main/Documentation/Agents.md)**: One step runs the loop, tools are goals, three events draw it; what to put in the prompt and what to attach to results.
     - **Extending the language**
-        - **[Modules](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/README.md)**: Learn how to extend the language. Discover the different modules available in plang and their capabilities. 
+        - **[Modules](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/README.md)**: What a step becomes, the generated reference of every module and function, and modules that are not built in. 
         - **[Services](https://github.com/PLangHQ/plang/blob/main/Documentation/Services.md)**: Learn how flexible the plang language is, e.g. using the db engine of your choice, your own caching service and more.
         - **[3rd party libraries](https://github.com/PLangHQ/plang/blob/main/Documentation/3rdPartyLibrary.md)**: Learn how use existing .Net library in Plang.
     - **[Performance](https://github.com/PLangHQ/plang/blob/main/Documentation/Performance.md)**: What is the perfomance of plang?
@@ -133,8 +135,8 @@ Plang comes with a wide range of features including:
 - Intuitive syntax (just natural language, with some rules)
 - Powerful standard library
 - [Built-in Identity](https://github.com/PLangHQ/plang/blob/main/Documentation/Identity.md)
-- [Efficient error handling](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/plang.Modules.FileModule.md#caching-retries-error-handling--run-and-forget)
-- [Efficient cache handling](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/plang.Modules.CachingModule.md#caching)
+- [Efficient error handling](https://github.com/PLangHQ/plang/blob/main/Documentation/ErrorHandler.md)
+- [Efficient cache handling](https://github.com/PLangHQ/plang/blob/main/Documentation/CachingHandler.md)
 - [Built-in Messaging system](https://github.com/PLangHQ/plang/blob/main/Documentation/paper/README.md#messages)
 - [Built-in Database](https://github.com/PLangHQ/plang/blob/main/Documentation/paper/README.md#dbmodule)
 - [Dependency injection](https://github.com/PLangHQ/plang/blob/main/Documentation/Services.md)
