@@ -17,50 +17,52 @@ the column spells out the ambiguous ones.
 | Module | Hint | Methods | What it does |
 | --- | --- | --- | --- |
 | [AiModule](./AiModule.md) | `[aimodule]` | 1 |  |
-| [AppModule](./AppModule.md) | `[app] (ambiguous, matches AppModule, WindowAppModule)` | 1 | Call an App. When the user has the word 'app' in his statement, this should be called. |
+| [AppModule](./AppModule.md) | `[app] (ambiguous, matches AppModule, WindowAppModule)` | 1 | Call an App. When the user has the word 'app' in his statement, this should be called. Not for `drain app`, which stops the running process itself (EnvironmentM... |
 | [AssertModule](./AssertModule.md) | `[assert]` | 2 | Assert object/variable/text or other entity to be what is epxected. For unit testing |
 | [BlockchainModule](./BlockchainModule.md) | `[blockchain]` | 49 | Use blockchain, create wallet, account info, transfer money |
 | [CachingModule](./CachingModule.md) | `[caching]` | 4 | Handles caching of objects, set, get and remove. object can be can be cached with sliding or fixed period |
-| [CallGoalModule](./CallGoalModule.md) | `[callgoal]` | 1 | Call a Goal, e.g. `call goal Process`, `call Visits` |
+| [CallGoalModule](./CallGoalModule.md) | `[callgoal]` | 1 | Call a Goal, e.g. `call goal Process`, `call Visits`. A step that starts with `call goal X` or `call X` belongs here whatever the goal X is named: `call goal Sh... |
 | [CodeModule](./CodeModule.md) | `[code]` | 2 | Generate or Run existing c# code from user description. Only use if no other module is found or if [code] is defined. |
 | [CompressionModule](./CompressionModule.md) | `[compression]` | 4 | compress and decompress(extract) a file or folder. This can be various of file formats, zip, gz, or other custom formats. Example usage: `zip file.txt to file.z... |
-| [ConditionalModule](./ConditionalModule.md) | `[conditional]` | 20 | if statement for the user intent. Example 1:'if %isValid% is true then call SomeGoal, else call OtherGoal', this condition would return true if %isValid% is tru... |
+| [ConditionalModule](./ConditionalModule.md) | `[conditional]` | 24 | if statement for the user intent. Example 1:'if %isValid% is true then call SomeGoal, else call OtherGoal', this condition would return true if %isValid% is tru... |
 | [ConvertModule](./ConvertModule.md) | `[convert]` | 4 | Convert object from one to another. html => md, md => html, string => keyvalue list |
 | [CryptographicModule](./CryptographicModule.md) | `[cryptographic]` | 22 | Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token |
-| [DbModule](./DbModule.md) | `[db]` | 34 | Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. Isolated data pattern (idp) |
+| [DbModule](./DbModule.md) | `[db]` | 34 | Database access, select, insert, update, delete and execute raw sql, on a table of any name. A step naming a datasource, e.g. `ds: "dev"`, is database access, e... |
 | [DesktopModule](./DesktopModule.md) | `[desktop]` | 1 | Get information about what windows are open on the operating system |
-| [EnvironmentModule](./EnvironmentModule.md) | `[environment]` | 25 | Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in... |
+| [EnvironmentModule](./EnvironmentModule.md) | `[environment]` | 33 | Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes (`set debug mode = true`, ... |
 | [EventModule](./EventModule.md) | `[event]` | 1 | Bind an event to app, goal, step, error, and any kind of custom errors. Example: - run before app starts, call goal Starting - run on each step, call StepAfter ... |
-| [FileModule](./FileModule.md) | `[file]` | 36 | Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads files, such as text, llm, csv, xls, pdf files and raw stream |
-| [FilterModule](./FilterModule.md) | `[filter]` | 9 | Allow user to find text, filter out items, select, query from a %variable% and get specific item from that variable. ```plang - filter %list% where id=%id%, wri... |
+| [FileModule](./FileModule.md) | `[file]` | 38 | Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads files, such as text, llm, csv, xls, pdf files and raw stream |
+| [FilterModule](./FilterModule.md) | `[filter]` | 9 | Allow user to find text, filter out items, select, query from a %variable% and get specific item from that variable. Also joins a list into one string. ```plang... |
+| [HostModule](./HostModule.md) | `[host]` | 7 | Look at what runs on the machine, as a sysadmin does: which ports listen and which program owns them, which processes run and as whom, tcp connections and count... |
 | [HtmlModule](./HtmlModule.md) | `[html]` | 5 | Parse html text, extract from css selectors |
 | [HttpModule](./HttpModule.md) | `[http]` | 12 | Make Http request. Mare sure to format Bearer authentication correctly in headers variable |
-| [IdentityModule](./IdentityModule.md) | `[identity]` | 13 | Handles Identity in plang. Sign content and verifies signature with the identity. |
-| [ImageModule](./ImageModule.md) | `[image]` | 1 | Image generation and manipulation including QR codes, barcodes, and image processing |
+| [IdentityModule](./IdentityModule.md) | `[identity]` | 15 | Handles Identity in plang. Sign content and verifies signature with the identity. |
+| [ImageModule](./ImageModule.md) | `[image]` | 4 | Image generation and manipulation including QR codes, barcodes, and image processing |
 | [InjectModule](./InjectModule.md) | `[inject]` | 1 | Dependancy injection |
 | [InstallModule](./InstallModule.md) | `[install]` | 1 | Install external utility from url |
-| [ListDictionaryModule](./ListDictionaryModule.md) | `[listdictionary]` | 13 | get first\|last\|random\|position\| item from list or dictionary. Add, update, delete and retrieve list or dictionary. Group by key, merge two lists |
-| [LlmModule](./LlmModule.md) | `[llmmodule]` | 8 | Ask LLM a question and recieve and answer |
+| [IrohModule](./IrohModule.md) | `[iroh]` | 10 | Talk to other plang apps over iroh, peer to peer by key and not by ip. Create and print the endpoint key (`create iroh key`), listen for signed commands (`start... |
+| [ListDictionaryModule](./ListDictionaryModule.md) | `[listdictionary]` | 13 | get first\|last\|random\|position\| item from list or dictionary, when the step asks for it in words, e.g. `get first item of %rows%, write to %row%`. Add, upda... |
+| [LlmModule](./LlmModule.md) | `[llmmodule]` | 9 | Ask LLM a question and recieve and answer. Also decide: when a step says decide, or picks one option out of a list of options (kind, status, yes or no) for a te... |
 | [LoggerModule](./LoggerModule.md) | `[logger]` | 1 |  |
 | [LoopModule](./LoopModule.md) | `[loop]` | 2 | While, for, foreach, loops, repeat, go through a list and call a goal |
 | [MathModule](./MathModule.md) | `[math]` | 3 | Solves math expressions |
-| [MessageModule](./MessageModule.md) | `[message]` | 8 | Send and recieve private messages. Get account(public key), set current account for messaging |
+| [MessageModule](./MessageModule.md) | `[message]` | 10 | Send and recieve private messages over the network (nostr) to a public key. Get account(public key), set current account for messaging. Get, add or remove the r... |
 | [MockModule](./MockModule.md) | `[mock]` | 1 | Mock other modules. Code should start with `mock XXX` where XXX would be the module, each mock needs to call a goal that will perform the mocking Example `mock ... |
 | [OptionsModule](./OptionsModule.md) | `[options]` | 1 | Set options for the code. Only set the options that are defined by user |
-| [OutputModule](./OutputModule.md) | `[output]` | 5 | Writes to the output stream. Ask a question with either text or template file. output stream can be to the user(default), system, to different channels such aud... |
+| [OutputModule](./OutputModule.md) | `[output]` | 7 | Send a value or text to the user, and ask the user a question with either text or a template file. A step that starts with `write out`, `write to output` or `as... |
 | [PlangModule](./PlangModule.md) | `[plang]` | 25 | get apps available, compiles plang code, gets goals and steps from .goal files, method descriptions and class scheme. Runtime Engine for plang, can run goal and... |
 | [PythonModule](./PythonModule.md) | `[python]` | 1 | Runs python scripts. Parameters can be passed to the python process |
-| [ScheduleModule](./ScheduleModule.md) | `[schedule]` | 5 | Wait, Sleep and time delay. Interval and cron scheduler |
+| [ScheduleModule](./ScheduleModule.md) | `[schedule]` | 6 | Wait, Sleep and time delay. Schedule a goal to be called repeatedly ('every 45 seconds', 'every 5 minutes', 'every day at 8am'), interval and cron scheduler |
 | [SerializerModule](./SerializerModule.md) | `[serializer]` | 5 |  |
-| [TemplateEngineModule](./TemplateEngineModule.md) | `[templateengine]` | 2 | Render template html, files, elements using template engine. plang examples:  ``` - render file.html - render %content% to #main / will render the variable into... |
-| [TerminalModule](./TerminalModule.md) | `[terminal]` | 2 | Terminal/Console access to run external applications |
-| [ThrowErrorModule](./ThrowErrorModule.md) | `[throwerror]` | 6 | Allows user to throw error or retry a step. Allows user to return out of goal or stop(end) running goal. Create payment request(status code 402) |
-| [UdpModule](./UdpModule.md) | `[udp]` | 1 |  |
-| [UiModule](./UiModule.md) | `[ui]` | 14 | Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. Set the (default) layout for the UI. Execute javascript. |
-| [ValidateModule](./ValidateModule.md) | `[validate]` | 9 | DO NOT USE for if statements. Validates a variable, make sure it's not empty, follows a pattern, is a number, etc. |
-| [VariableModule](./VariableModule.md) | `[variable]` | 38 | Set, Get & Return variable(s). Set(NOT if statement) on variable includes condition such as empty or null, and a fallback written as `, default is X`, `, or X i... |
-| [WebCrawlerModule](./WebCrawlerModule.md) | `[webcrawler]` | 38 | Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content |
-| [WebserverModule](./WebserverModule.md) | `[webserver]` | 21 | Start webserver, add route, set certificate, read/write to Header, Cookie, send file to client |
+| [SpeechModule](./SpeechModule.md) | `[speech]` | 1 | Text to speech with Google Gemini. Turns text into a spoken audio file, Icelandic and many other languages. The api key is read from the app settings by the mod... |
+| [TemplateEngineModule](./TemplateEngineModule.md) | `[templateengine]` | 2 | Run a template file or template text through the template engine and hand the result back to the goal. A render step belongs here when it captures the result in... |
+| [TerminalModule](./TerminalModule.md) | `[terminal]` | 5 | Terminal/Console access to run external applications |
+| [ThrowErrorModule](./ThrowErrorModule.md) | `[throwerror]` | 6 | Allows user to throw error or retry a step. Allows user to stop(end) running goal, leaving it early without sending anything back. Create payment request(status... |
+| [UiModule](./UiModule.md) | `[ui]` | 15 | Puts content into the page the user is looking at. A render step belongs here when it says where on the page the result goes, naming a cssSelector such as #main... |
+| [ValidateModule](./ValidateModule.md) | `[validate]` | 10 | DO NOT USE for if statements. Validates a variable, make sure it's not empty, follows a pattern, is a number, etc. |
+| [VariableModule](./VariableModule.md) | `[variable]` | 38 | Set, Get & Return variable(s). Load and store %variable%s so their value is kept between runs: a step that starts with `load %x%` or `store %x%` (save, persist)... |
+| [WebCrawlerModule](./WebCrawlerModule.md) | `[webcrawler]` | 40 | Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. Never for `redirect to ...`: ... |
+| [WebserverModule](./WebserverModule.md) | `[webserver]` | 22 | Start webserver, add route, set certificate, read/write to Header, Cookie, send file to client |
 | [WebSocketModule](./WebSocketModule.md) | `[websocket]` | 2 |  |
 | [WindowAppModule](./WindowAppModule.md) | `[windowapp]` | 1 |  |
 | [XmlModule](./XmlModule.md) | `[xml]` | 1 |  |
@@ -75,12 +77,14 @@ the column spells out the ambiguous ones.
 | AddItemsToDictionary | [ListDictionaryModule](./ListDictionaryModule.md) | `AddItemsToDictionary(String key, Dictionary<String, Object> value = null, Dictionary<String, Object> dictionaryInstance = null, Boolean updateIfExists = True) : String` |
 | AddItemsToList | [ListDictionaryModule](./ListDictionaryModule.md) | `AddItemsToList(List<Object> value = null) : List<Object>` |
 | AddPrivateKey | [CryptographicModule](./CryptographicModule.md) | `AddPrivateKey(String privateKey) : object` |
+| AddRelay | [MessageModule](./MessageModule.md) | `AddRelay(String relayUrl) : String` |
 | AddRoute | [WebserverModule](./WebserverModule.md) | `AddRoute(String path, List<PLang.Modules.WebserverModule.Program+ParamInfo> pathParameters, PLang.Models.GoalToCallInfo goalToCall, PLang.Modules.WebserverModule.Program+RequestProperties requestProperties = null, PLang.Modules.WebserverModule.Program+ResponseProperties responseProperties = null) : object` |
 | AddSerializer | [SerializerModule](./SerializerModule.md) | `AddSerializer(String path) : Nullable<Int32>` |
 | AddToDictionary | [ListDictionaryModule](./ListDictionaryModule.md) | `AddToDictionary(String key, Object value, Dictionary<String, Object> dictionaryInstance = null, Boolean updateIfExists = True) : Dictionary<String,Object>` |
 | AddToList | [ListDictionaryModule](./ListDictionaryModule.md) | `AddToList(Object value, List<Object> listInstance = null, Boolean uniqueValue = False, Boolean caseSensitive = False) : Object` |
 | AddTypeMapping | [FileModule](./FileModule.md) | `AddTypeMapping(String extension, String type, String contentType = null) : object` |
 | AllowanceFromSmartContract | [BlockchainModule](./BlockchainModule.md) | `AllowanceFromSmartContract(String contractAddressOrSymbol, String from, String to, Numerics.BigInteger value) : Object` |
+| Answer | [IrohModule](./IrohModule.md) | `Answer(Object callback, Object answer) : object` |
 | AppendToAssistant | [LlmModule](./LlmModule.md) | `AppendToAssistant(String assistant) : object` |
 | AppendToFile | [FileModule](./FileModule.md) | `AppendToFile(String path, String content, String seperator = null, Boolean loadVariables = False, Boolean emptyVariableIfNotFound = False, String encoding = utf-8) : object` |
 | AppendToSystem | [LlmModule](./LlmModule.md) | `AppendToSystem(String system) : object` |
@@ -91,12 +95,13 @@ the column spells out the ambiguous ones.
 | ArchiveIdentity | [IdentityModule](./IdentityModule.md) | `ArchiveIdentity(String nameOrIdentity) : PLang.Interfaces.Identity` |
 | Ask | [OutputModule](./OutputModule.md) | `Ask(PLang.Services.OutputStream.Messages.AskMessage askMessage) : Object` |
 | AskLlm | [LlmModule](./LlmModule.md) | `AskLlm(List<PLang.Models.LlmMessage> promptMessages, String scheme = null, String model = gpt-4.1-mini, Double temperature = 0, Double topP = 0, Double frequencyPenalty = 0, Double presencePenalty = 0, Int32 maxLength = 4000, Boolean cacheResponse = True, String llmResponseType = null, Boolean continuePrevConversation = False, PLang.Modules.LlmModule.Program+Tools tools = null) : Object` |
+| AskTo | [OutputModule](./OutputModule.md) | `AskTo(String question, Object to, Dictionary<String, Object> callbackData = null) : Object` |
 | AssertPageContains | [WebCrawlerModule](./WebCrawlerModule.md) | `AssertPageContains(PLang.Modules.WebCrawlerModule.Program+AssertCheck assertCheck) : object` |
 | BalanceOfBatchOnSmartContract | [BlockchainModule](./BlockchainModule.md) | `BalanceOfBatchOnSmartContract(String contractAddressOrSymbol, String[] addresses, Numerics.BigInteger[] ids) : Object` |
 | BalanceOfOnSmartContract | [BlockchainModule](./BlockchainModule.md) | `BalanceOfOnSmartContract(String contractAddressOrSymbol, String addressToCheckBalanceOf) : Object` |
 | BeginTransaction | [DbModule](./DbModule.md) | `BeginTransaction(List<String> dataSourceNames = null, PLang.Models.GoalToCallInfo onRollback = null) : object` |
 | BindEvent | [EventModule](./EventModule.md) | `BindEvent(PLang.Events.EventBinding eventBinding) : object` |
-| BuildPlangCode | [PlangModule](./PlangModule.md) | `BuildPlangCode(PLang.Building.Model.Goal goal) : object` |
+| BuildPlangCode | [PlangModule](./PlangModule.md) | `BuildPlangCode(List<PLang.Building.Model.Goal> goals) : Object` |
 | BuildPlangStep | [PlangModule](./PlangModule.md) | `BuildPlangStep(PLang.Building.Model.GoalStep step) : PLang.Building.Model.GoalStep` |
 | BurnSmartContract | [BlockchainModule](./BlockchainModule.md) | `BurnSmartContract(String contractAddressOrSymbol, String account, Numerics.BigInteger amount, Boolean waitForReceipt = False) : Object` |
 | CallAndSignFunction | [BlockchainModule](./BlockchainModule.md) | `CallAndSignFunction(String contractAddressOrSymbol, String abi, Object[] functionInputs = null, Boolean waitForReceipt = False) : Object` |
@@ -106,20 +111,23 @@ the column spells out the ambiguous ones.
 | ClearDictionary | [ListDictionaryModule](./ListDictionaryModule.md) | `ClearDictionary(Dictionary<String, Object> dictionary = null) : object` |
 | ClearHtml | [HtmlModule](./HtmlModule.md) | `ClearHtml(String html) : String` |
 | ClearList | [ListDictionaryModule](./ListDictionaryModule.md) | `ClearList(List<Object> listInstance = null) : object` |
-| Click | [WebCrawlerModule](./WebCrawlerModule.md) | `Click(String cssSelector, Int32 elementAtToClick = 0, Boolean clickAllMatchingElements = False, Nullable<Int32> timeoutInSeconds = null) : object` |
+| Click | [WebCrawlerModule](./WebCrawlerModule.md) | `Click(String cssSelector, Int32 elementAtToClick = 0, Boolean clickAllMatchingElements = False, Nullable<Int32> timeoutInSeconds = null, Int32 waitAfterInMilliseconds = 0) : object` |
 | ClickOnElement | [WebCrawlerModule](./WebCrawlerModule.md) | `ClickOnElement(PLang.Modules.WebCrawlerModule.PlangWebElement element) : object` |
+| Close | [IrohModule](./IrohModule.md) | `Close(String keyName = default) : object` |
 | CloseBrowser | [WebCrawlerModule](./WebCrawlerModule.md) | `CloseBrowser() : object` |
 | CloseWindow | [UiModule](./UiModule.md) | `CloseWindow(PLang.Modules.UiModule.Program+DialogCommand dialogCommand) : object` |
 | CompoundCondition | [ConditionalModule](./ConditionalModule.md) | `CompoundCondition(PLang.Modules.ConditionalModule.ConditionEvaluator+CompoundCondition condition, PLang.Models.GoalToCallInfo goalToCallIfTrue = null, PLang.Models.GoalToCallInfo goalToCallIfFalse = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnTrue = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnFalse = null) : Object` |
 | CompressDirectory | [CompressionModule](./CompressionModule.md) | `CompressDirectory(String sourceDirectoryName, String destinationArchiveFileName, Int32 compressionLevel = 0, Boolean includeBaseDirectory = True, Boolean createDestinationDirectory = True, Boolean overwriteDestinationFile = False, String[] excludePatterns = null) : object` |
 | CompressFile | [CompressionModule](./CompressionModule.md) | `CompressFile(String filePath, String saveToPath, Int32 compressionLevel = 0, Boolean overwrite = False) : object` |
 | CompressFiles | [CompressionModule](./CompressionModule.md) | `CompressFiles(String[] filePaths, String saveToPath, Int32 compressionLevel = 0, Boolean overwrite = False) : object` |
+| Connect | [IrohModule](./IrohModule.md) | `Connect(String target, PLang.Models.GoalToCallInfo onClosed = null, String keyName = default, Boolean useRelay = True, Int32 port = 0, PLang.Models.GoalToCallInfo onIncoming = null, PLang.Models.GoalToCallInfo onOutput = null, PLang.Models.GoalToCallInfo onAsk = null) : PLang.Modules.IrohModule.Program+IrohPeer` |
 | Connect | [WebSocketModule](./WebSocketModule.md) | `Connect(String url, String name = null, Dictionary<String, Object> headers = null, PLang.Models.GoalToCallInfo onMessage = null, PLang.Models.GoalToCallInfo onConnected = null, PLang.Models.GoalToCallInfo onClose = null, PLang.Models.GoalToCallInfo onError = null, Int32 bufferSize = 8192) : Object` |
 | Contains | [AssertModule](./AssertModule.md) | `Contains(Object contains, Object actualValue) : object` |
 | ContainsNumbers | [ConditionalModule](./ConditionalModule.md) | `ContainsNumbers(Object item, List<Int32> contains = null, PLang.Models.GoalToCallInfo goalToCallIfTrue = null, PLang.Models.GoalToCallInfo goalToCallIfFalse = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnTrue = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnFalse = null) : Object` |
 | ContainsString | [ConditionalModule](./ConditionalModule.md) | `ContainsString(Object item, String contains, Boolean isNot = False, PLang.Models.GoalToCallInfo goalToCallIfTrue = null, PLang.Models.GoalToCallInfo goalToCallIfFalse = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnTrue = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnFalse = null) : Object` |
 | ConvertFromBase64 | [CryptographicModule](./CryptographicModule.md) | `ConvertFromBase64(String base64) : Byte[]` |
 | ConvertHtmlToPdf | [ConvertModule](./ConvertModule.md) | `ConvertHtmlToPdf(PLang.Modules.ConvertModule.Program+ConvertHtmlToPdfInstruction options) : object` |
+| ConvertImage | [ImageModule](./ImageModule.md) | `ConvertImage(String sourcePath, String targetPath, Int32 quality = 90, String format = null, String backgroundColor = null) : PLang.Modules.ImageModule.ImageResult` |
 | ConvertMdToHtml | [ConvertModule](./ConvertModule.md) | `ConvertMdToHtml(String content, Boolean useAdvancedExtension = True, List<String> markdownPipelineExtensions = null) : String` |
 | ConvertToBase64 | [CryptographicModule](./CryptographicModule.md) | `ConvertToBase64(String content) : String` |
 | ConvertToBase64 | [VariableModule](./VariableModule.md) | `ConvertToBase64(String key) : String` |
@@ -132,11 +140,13 @@ the column spells out the ambiguous ones.
 | CreateDataSource | [DbModule](./DbModule.md) | `CreateDataSource(String name = data, String databaseType = sqlite, Nullable<Boolean> setAsDefaultForApp = null, Nullable<Boolean> keepHistoryEventSourcing = null) : PLang.Modules.DbModule.ModuleSettings+DataSource` |
 | CreateDirectory | [FileModule](./FileModule.md) | `CreateDirectory(String directoryPath, Boolean incrementalNaming = False) : String` |
 | CreateIdentity | [IdentityModule](./IdentityModule.md) | `CreateIdentity(String name, Boolean setAsDefault = False) : PLang.Interfaces.Identity` |
+| CreateKey | [IrohModule](./IrohModule.md) | `CreateKey(String name = default, Boolean replace = False) : PLang.Modules.IrohModule.Program+IrohKey` |
 | CreatePathByJoining | [FileModule](./FileModule.md) | `CreatePathByJoining(String[] paths) : String` |
 | CreatePaymentRequest | [ThrowErrorModule](./ThrowErrorModule.md) | `CreatePaymentRequest(String name, String description, String error, List<Dictionary<String, Object>> services = null) : PLang.Errors.Types.PaymentContract` |
 | CreateSalt | [CryptographicModule](./CryptographicModule.md) | `CreateSalt(Int32 workFactor = 12) : String` |
 | CreateTable | [DbModule](./DbModule.md) | `CreateTable(String sql) : Int64` |
 | CreateToken | [CryptographicModule](./CryptographicModule.md) | `CreateToken(String password = null, Int32 validForSeconds = 600, String secretKeyName = null) : String` |
+| Decide | [LlmModule](./LlmModule.md) | `Decide(Object state, String question, Dictionary<String, String> options = null) : String` |
 | DecompressFile | [CompressionModule](./CompressionModule.md) | `DecompressFile(String sourceArchiveFileName, String destinationDirectoryName, Boolean overwrite = False) : object` |
 | Decrypt | [CryptographicModule](./CryptographicModule.md) | `Decrypt(String content) : Object` |
 | Delete | [DbModule](./DbModule.md) | `Delete(String dataSourceName, String sql, List<PLang.Modules.DbModule.Program+ParameterInfo> sqlParameters = null, Boolean validateAffectedRows = True) : Int64` |
@@ -149,19 +159,25 @@ the column spells out the ambiguous ones.
 | Deserialize | [SerializerModule](./SerializerModule.md) | `Deserialize(IO.Stream stream, String serializer = json) : Object` |
 | Deserialize | [SerializerModule](./SerializerModule.md) | `Deserialize(Byte[] data, String serializer = json) : Object` |
 | DirectoryExists | [ConditionalModule](./ConditionalModule.md) | `DirectoryExists(String dirPathOrVariableName, PLang.Models.GoalToCallInfo goalToCallIfTrue = null, PLang.Models.GoalToCallInfo goalToCallIfFalse = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnTrue = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnFalse = null) : Object` |
+| Disconnect | [IrohModule](./IrohModule.md) | `Disconnect(PLang.Modules.IrohModule.Program+IrohPeer peer) : object` |
+| DisconnectById | [IrohModule](./IrohModule.md) | `DisconnectById(String peerId) : object` |
 | DownloadFile | [HttpModule](./HttpModule.md) | `DownloadFile(String url, String pathToSaveTo, Boolean overwriteFile = False, Dictionary<String, Object> headers = null, Boolean createPathToSaveTo = True, Boolean doNotDownloadIfFileExists = False) : String` |
+| DrainApp | [EnvironmentModule](./EnvironmentModule.md) | `DrainApp(Int32 timeoutInSeconds = 0, Boolean exitWhenDone = True) : PLang.Runtime.DrainResult` |
+| EnableScheduler | [ScheduleModule](./ScheduleModule.md) | `EnableScheduler() : object` |
 | Encrypt | [CryptographicModule](./CryptographicModule.md) | `Encrypt(Object content) : String` |
-| EndApp | [EnvironmentModule](./EnvironmentModule.md) | `EndApp() : object` |
-| EndApp | [ThrowErrorModule](./ThrowErrorModule.md) | `EndApp() : object` |
+| EndApp | [EnvironmentModule](./EnvironmentModule.md) | `EndApp(Int32 exitCode = 0) : object` |
+| EndApp | [ThrowErrorModule](./ThrowErrorModule.md) | `EndApp(Int32 exitCode = 0) : object` |
 | EndGoalExecution | [ThrowErrorModule](./ThrowErrorModule.md) | `EndGoalExecution(String message = null, Int32 levels = 0) : object` |
+| EndsWith | [ConditionalModule](./ConditionalModule.md) | `EndsWith(Object item, String endsWith, Boolean ignoreCase = False, Boolean isNot = False, PLang.Models.GoalToCallInfo goalToCallIfTrue = null, PLang.Models.GoalToCallInfo goalToCallIfFalse = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnTrue = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnFalse = null) : Object` |
 | EndTransaction | [DbModule](./DbModule.md) | `EndTransaction() : object` |
-| Execute | [DbModule](./DbModule.md) | `Execute(String dataSourceName, String sql, List<String> tableAllowList = null, List<PLang.Modules.DbModule.Program+ParameterInfo> parameters = null) : Int64` |
+| EvaluateJavascript | [WebCrawlerModule](./WebCrawlerModule.md) | `EvaluateJavascript(String script, Int32 waitAfterInMilliseconds = 0) : Object` |
+| Execute | [DbModule](./DbModule.md) | `Execute(String sql, List<String> tableAllowList = null, String dataSourceName = null, List<PLang.Modules.DbModule.Program+ParameterInfo> parameters = null) : Int64` |
 | ExecuteByConnectionString | [DbModule](./DbModule.md) | `ExecuteByConnectionString(String sql, String connectionString, String dbType = sqlite, List<PLang.Modules.DbModule.Program+ParameterInfo> parameters = null) : Int64` |
 | ExecuteDynamicSql | [DbModule](./DbModule.md) | `ExecuteDynamicSql(String dataSourceName, String sql, List<String> tableAllowList = null, List<PLang.Modules.DbModule.Program+ParameterInfo> parameters = null) : Int64` |
 | ExecuteJavascript | [UiModule](./UiModule.md) | `ExecuteJavascript(PLang.Services.OutputStream.Messages.ExecuteMessage executeMessage) : object` |
 | ExecutePlang | [DbModule](./DbModule.md) | `ExecutePlang(String sql, List<PLang.Runtime.ObjectValue> parameters = null) : Int64` |
 | ExecuteSqlByConnectionString | [DbModule](./DbModule.md) | `ExecuteSqlByConnectionString(String pathToSql, String sql, List<String> tableAllowList = null, List<PLang.Modules.DbModule.Program+ParameterInfo> parameters = null) : Int64` |
-| ExecuteSqlFile | [DbModule](./DbModule.md) | `ExecuteSqlFile(String dataSourceName, String fileName, List<String> tableAllowList = null) : Int64` |
+| ExecuteSqlFile | [DbModule](./DbModule.md) | `ExecuteSqlFile(String dataSourceName, String fileName, List<String> tableAllowList = null, List<PLang.Modules.DbModule.Program+ParameterInfo> parameters = null) : Int64` |
 | Extract | [HtmlModule](./HtmlModule.md) | `Extract(String html, String cssSelector) : PLang.Runtime.ObjectValue` |
 | ExtractByCssSelector | [FilterModule](./FilterModule.md) | `ExtractByCssSelector(String html, String cssSelector, String retrieveOneItem = null) : Object` |
 | ExtractClassesToList | [WebCrawlerModule](./WebCrawlerModule.md) | `ExtractClassesToList(String[] cssSelectors, String fromCssSelector) : Object` |
@@ -184,16 +200,17 @@ the column spells out the ambiguous ones.
 | GenerateQrCode | [ImageModule](./ImageModule.md) | `GenerateQrCode(PLang.Modules.ImageModule.QrCode.QrCodeRequest request) : PLang.Modules.ImageModule.QrCode.QrCodeResult` |
 | Get | [CachingModule](./CachingModule.md) | `Get(String key) : Object` |
 | Get | [HttpModule](./HttpModule.md) | `Get(String url, Object data = null, Boolean doNotSignRequest = False, Dictionary<String, Object> headers = null, String encoding = utf-8, String contentType = application/json, Int32 timeoutInSeconds = 30) : Object` |
-| Get | [UdpModule](./UdpModule.md) | `Get(String key) : Object` |
 | GetAdditionalAssistantErrorInfo | [DbModule](./DbModule.md) | `GetAdditionalAssistantErrorInfo() : String` |
 | GetAdditionalSystemErrorInfo | [DbModule](./DbModule.md) | `GetAdditionalSystemErrorInfo() : String` |
 | GetAppName | [EnvironmentModule](./EnvironmentModule.md) | `GetAppName() : String` |
 | GetApprovedOnSmartContract | [BlockchainModule](./BlockchainModule.md) | `GetApprovedOnSmartContract(String contractAddressOrSymbol) : Object` |
 | GetBearerSecret | [CryptographicModule](./CryptographicModule.md) | `GetBearerSecret() : String` |
-| GetBrowserInstance | [WebCrawlerModule](./WebCrawlerModule.md) | `GetBrowserInstance(String browserType = Chrome, Boolean headless = False, String profileName = , Boolean kioskMode = False, Dictionary<String, Object> argumentOptions = null, Nullable<Int32> timoutInSeconds = null, Boolean hideTestingMode = False, PLang.Models.GoalToCallInfo onRequest = null, PLang.Models.GoalToCallInfo onResponse = null) : PLang.Modules.WebCrawlerModule.Models.BrowserInstance` |
+| GetBrowserInstance | [WebCrawlerModule](./WebCrawlerModule.md) | `GetBrowserInstance(String browserType = Chrome, Boolean headless = False, String profileName = , Boolean kioskMode = False, Dictionary<String, Object> argumentOptions = null, Nullable<Int32> timoutInSeconds = null, Boolean hideTestingMode = False, PLang.Models.GoalToCallInfo onRequest = null, PLang.Models.GoalToCallInfo onResponse = null, Int32 closeAfterIdleMinutes = 10) : PLang.Modules.WebCrawlerModule.Models.BrowserInstance` |
+| GetCallStackDepth | [EnvironmentModule](./EnvironmentModule.md) | `GetCallStackDepth() : Int32` |
 | GetClassDescription | [PlangModule](./PlangModule.md) | `GetClassDescription(String moduleName) : PLang.Building.Model.ClassDescription` |
 | GetCookie | [WebserverModule](./WebserverModule.md) | `GetCookie(String name) : Object` |
 | GetCookieRaw | [WebserverModule](./WebserverModule.md) | `GetCookieRaw(String name) : String` |
+| GetCpuTicks | [HostModule](./HostModule.md) | `GetCpuTicks() : PLang.Modules.HostModule.CpuTicks` |
 | GetCurrentAddress | [BlockchainModule](./BlockchainModule.md) | `GetCurrentAddress() : String` |
 | GetCurrentCulture | [EnvironmentModule](./EnvironmentModule.md) | `GetCurrentCulture() : Globalization.CultureInfo` |
 | GetCurrentFolderPath | [FileModule](./FileModule.md) | `GetCurrentFolderPath(String path) : String` |
@@ -204,6 +221,7 @@ the column spells out the ambiguous ones.
 | GetDbScheme | [DbModule](./DbModule.md) | `GetDbScheme(String dataSourceName) : List<String>` |
 | GetDecimal | [BlockchainModule](./BlockchainModule.md) | `GetDecimal(String contractAddress) : UInt32` |
 | GetDirectoryPathsInDirectory | [FileModule](./FileModule.md) | `GetDirectoryPathsInDirectory(String directoryPath = ./, String regexSearchPattern = null, String[] excludePatterns = null, Boolean includeSubfolders = False, Boolean includeSystemFolder = False, Boolean includeDirectoryInfo = False) : PLang.Modules.FileModule.Program+Directory` |
+| GetDisks | [EnvironmentModule](./EnvironmentModule.md) | `GetDisks() : List<DiskInfo>` |
 | GetElement | [WebCrawlerModule](./WebCrawlerModule.md) | `GetElement(String cssSelector = null, Object parentElement = null, String position = null) : PLang.Modules.WebCrawlerModule.PlangWebElement` |
 | GetElementByText | [WebCrawlerModule](./WebCrawlerModule.md) | `GetElementByText(String text, String operatorOnText = equals, Nullable<Int32> timeoutInSeconds = null, String cssSelector = null) : PLang.Modules.WebCrawlerModule.PlangWebElement` |
 | GetElements | [WebCrawlerModule](./WebCrawlerModule.md) | `GetElements(String cssSelector = null, Object parentElement = null) : List<PlangWebElement>` |
@@ -211,6 +229,7 @@ the column spells out the ambiguous ones.
 | GetElementsInsideElement | [WebCrawlerModule](./WebCrawlerModule.md) | `GetElementsInsideElement(String elementName, Microsoft.Playwright.IElementHandle element = null) : List<PlangWebElement>` |
 | GetEnvironmentVariable | [EnvironmentModule](./EnvironmentModule.md) | `GetEnvironmentVariable(String key) : String` |
 | GetEnvironmentVariable | [VariableModule](./VariableModule.md) | `GetEnvironmentVariable(String key) : String` |
+| GetFileHash | [FileModule](./FileModule.md) | `GetFileHash(String path, String algorithm = sha256) : String` |
 | GetFileInfo | [FileModule](./FileModule.md) | `GetFileInfo(String fileName) : PLang.Modules.FileModule.FileInfo` |
 | GetFilePathsInDirectory | [FileModule](./FileModule.md) | `GetFilePathsInDirectory(String directoryPath = ./, String searchPattern = *, String[] excludePatterns = null, Boolean includeSubfolders = False, Boolean includeFileInfo = False, String filterOnType = null) : PLang.Modules.FileModule.Program+File` |
 | GetFileType | [FileModule](./FileModule.md) | `GetFileType(String extension) : String` |
@@ -220,11 +239,15 @@ the column spells out the ambiguous ones.
 | GetHashOfFile | [CryptographicModule](./CryptographicModule.md) | `GetHashOfFile(String filePath, String hashAlgorithm = sha256, String encoding = base64) : String` |
 | GetIdentities | [IdentityModule](./IdentityModule.md) | `GetIdentities() : PLang.Interfaces.Identity` |
 | GetIdentity | [IdentityModule](./IdentityModule.md) | `GetIdentity(String nameOrIdentity) : PLang.Interfaces.Identity` |
+| GetImageInfo | [ImageModule](./ImageModule.md) | `GetImageInfo(String sourcePath) : PLang.Modules.ImageModule.ImageResult` |
 | GetItem | [FilterModule](./FilterModule.md) | `GetItem(Object variableToExtractFrom, String retrieveOneItem) : Object` |
 | GetItem | [ListDictionaryModule](./ListDictionaryModule.md) | `GetItem(String operator = first, List<Object> listInstance = null, List<String> sortColumns = null, List<String> sortOperator = null) : Object` |
+| GetKey | [IrohModule](./IrohModule.md) | `GetKey(String name = default) : PLang.Modules.IrohModule.Program+IrohKey` |
+| GetListeningPorts | [HostModule](./HostModule.md) | `GetListeningPorts() : List<ListeningPort>` |
 | GetLlmIdentity | [LlmModule](./LlmModule.md) | `GetLlmIdentity() : String` |
 | GetMachineName | [EnvironmentModule](./EnvironmentModule.md) | `GetMachineName() : String` |
 | GetMehodInfo | [PlangModule](./PlangModule.md) | `GetMehodInfo(String type, String methodName) : PLang.Building.Model.ClassDescription` |
+| GetMemory | [EnvironmentModule](./EnvironmentModule.md) | `GetMemory() : PLang.Modules.HostModule.MemoryInfo` |
 | GetMemoryInfo | [EnvironmentModule](./EnvironmentModule.md) | `GetMemoryInfo(Boolean forceGarbageCollection = False) : PLang.Modules.EnvironmentModule.Program+MemoryInfo` |
 | GetMethodMappingScheme | [PlangModule](./PlangModule.md) | `GetMethodMappingScheme() : String` |
 | GetMethods | [PlangModule](./PlangModule.md) | `GetMethods(List<String> modules = null, String format = null) : Object` |
@@ -240,25 +263,34 @@ the column spells out the ambiguous ones.
 | GetOrCreateWallet | [BlockchainModule](./BlockchainModule.md) | `GetOrCreateWallet() : Nethereum.HdWallet.Wallet` |
 | GetOSDescription | [EnvironmentModule](./EnvironmentModule.md) | `GetOSDescription() : String` |
 | GetPage | [WebCrawlerModule](./WebCrawlerModule.md) | `GetPage(Int32 idx = -1) : Microsoft.Playwright.IPage` |
+| GetPressure | [HostModule](./HostModule.md) | `GetPressure() : List<PressureRow>` |
 | GetPreviousMessages | [LlmModule](./LlmModule.md) | `GetPreviousMessages() : PLang.Models.LlmMessage` |
 | GetPrivateKey | [BlockchainModule](./BlockchainModule.md) | `GetPrivateKey() : String` |
 | GetPrivateKey | [CryptographicModule](./CryptographicModule.md) | `GetPrivateKey() : String` |
 | GetPrivateKey | [IdentityModule](./IdentityModule.md) | `GetPrivateKey() : String` |
 | GetPrivateKey | [MessageModule](./MessageModule.md) | `GetPrivateKey() : String` |
 | GetPrivateKeyHash | [CryptographicModule](./CryptographicModule.md) | `GetPrivateKeyHash() : String` |
+| GetProcesses | [HostModule](./HostModule.md) | `GetProcesses() : List<ProcessInfo>` |
 | GetProcessId | [EnvironmentModule](./EnvironmentModule.md) | `GetProcessId() : Int32` |
+| GetProcessStats | [HostModule](./HostModule.md) | `GetProcessStats(Int32 pid) : PLang.Modules.HostModule.ProcessStats` |
 | GetPublicKey | [MessageModule](./MessageModule.md) | `GetPublicKey() : String` |
 | GetRelays | [MessageModule](./MessageModule.md) | `GetRelays() : String` |
 | GetRequestHeader | [WebserverModule](./WebserverModule.md) | `GetRequestHeader(String key) : String` |
 | GetRequestHeaders | [WebCrawlerModule](./WebCrawlerModule.md) | `GetRequestHeaders(List<String> keys = null, String keyOperator = equals, String value = null, String valueOperator = contains) : Object` |
+| GetRequestMetrics | [WebserverModule](./WebserverModule.md) | `GetRequestMetrics(String since = null, Int32 windowMinutes = 60) : Dictionary<String,Object>` |
 | GetResponseHeaders | [WebCrawlerModule](./WebCrawlerModule.md) | `GetResponseHeaders(List<String> keys = null, String keyOperator = equals, String value = null, String valueOperator = contains) : Object` |
 | GetRpcServers | [BlockchainModule](./BlockchainModule.md) | `GetRpcServers() : PLang.Modules.BlockchainModule.ModuleSettings+RpcServer` |
+| GetRunningEngines | [EnvironmentModule](./EnvironmentModule.md) | `GetRunningEngines(Boolean withSizes = False, Int32 top = 20, Boolean includeRootEngine = False) : PLang.Modules.EnvironmentModule.RunningEngine` |
+| GetRunningTasks | [EnvironmentModule](./EnvironmentModule.md) | `GetRunningTasks() : PLang.Modules.EnvironmentModule.RunningTask` |
+| GetRuntimeStats | [EnvironmentModule](./EnvironmentModule.md) | `GetRuntimeStats(Boolean forceGc = False) : PLang.Modules.EnvironmentModule.RuntimeStats` |
 | GetSettings | [EnvironmentModule](./EnvironmentModule.md) | `GetSettings() : PLang.Models.Setting` |
 | GetSettings | [VariableModule](./VariableModule.md) | `GetSettings(String key) : object` |
 | GetSetupGoals | [PlangModule](./PlangModule.md) | `GetSetupGoals(String appPath = null, String visibility = public, List<String> propertiesToExtract = null) : List<Goal>` |
 | GetStep | [PlangModule](./PlangModule.md) | `GetStep(String goalPrPath, String stepPrFile) : PLang.Building.Model.GoalStep` |
 | GetStepProperties | [PlangModule](./PlangModule.md) | `GetStepProperties(String moduleName, String methodName) : Dictionary<String,Object>` |
 | GetSteps | [PlangModule](./PlangModule.md) | `GetSteps(String goalPath) : IReadOnlyList<GoalStep>` |
+| GetTcpConnections | [HostModule](./HostModule.md) | `GetTcpConnections() : List<TcpConnection>` |
+| GetTcpStats | [HostModule](./HostModule.md) | `GetTcpStats() : PLang.Modules.HostModule.TcpStats` |
 | GetTimeSpanRelated | [VariableModule](./VariableModule.md) | `GetTimeSpanRelated(DateTime fromDate, DateTime toDate, String pattern) : Object` |
 | GetUriFromPage | [WebCrawlerModule](./WebCrawlerModule.md) | `GetUriFromPage(Nullable<Int32> tabIndex = null) : Uri` |
 | GetUriOnSmartContract | [BlockchainModule](./BlockchainModule.md) | `GetUriOnSmartContract(String contractAddressOrSymbol, Numerics.BigInteger id) : Object` |
@@ -307,6 +339,7 @@ the column spells out the ambiguous ones.
 | IsValid2LetterCountryCode | [ValidateModule](./ValidateModule.md) | `IsValid2LetterCountryCode(String[] variables, String pattern, String errorMessage, Int32 statusCode = 400) : object` |
 | Join | [FilterModule](./FilterModule.md) | `Join(List<Object> list = null, String seperator = , , String[] exclude = null) : String` |
 | KeepAlive | [EnvironmentModule](./EnvironmentModule.md) | `KeepAlive(String message = App KeepAlive) : object` |
+| Listen | [IrohModule](./IrohModule.md) | `Listen(PLang.Models.GoalToCallInfo onIncoming = null, String keyName = default, Boolean useRelay = True, Int32 port = 0, PLang.Models.GoalToCallInfo onClosed = null, PLang.Models.GoalToCallInfo onOutput = null, PLang.Models.GoalToCallInfo onAsk = null) : PLang.Modules.IrohModule.Program+IrohListener` |
 | Listen | [MessageModule](./MessageModule.md) | `Listen(PLang.Models.GoalToCallInfo goalName, String contentVariableName = content, String senderVariableName = sender, String eventVariableName = __NosrtEventKey__, Nullable<DateTimeOffset> listenFromDateTime = null, String[] onlyMessageFromSenders = null) : object` |
 | ListenToApprovalEventOnSmartContract | [BlockchainModule](./BlockchainModule.md) | `ListenToApprovalEventOnSmartContract(String contractAddressOrSymbol, PLang.Models.GoalToCallInfo goalToCall, String subscriptIdVariableName = subscriptionId) : object` |
 | ListenToApprovalForAllEventOnSmartContract | [BlockchainModule](./BlockchainModule.md) | `ListenToApprovalForAllEventOnSmartContract(String contractAddressOrSymbol, PLang.Models.GoalToCallInfo goalToCall, String subscriptIdVariableName = subscriptionId) : object` |
@@ -330,7 +363,10 @@ the column spells out the ambiguous ones.
 | MoveFile | [FileModule](./FileModule.md) | `MoveFile(String sourceFileName, String destFileName, Boolean createDirectoryIfNotExisting = False, Boolean overwriteFile = False) : object` |
 | NameOfSmartContract | [BlockchainModule](./BlockchainModule.md) | `NameOfSmartContract(String contractAddressOrSymbol) : Object` |
 | Navigate | [UiModule](./UiModule.md) | `Navigate(PLang.Services.OutputStream.Messages.ExecuteMessage executeMessage) : object` |
-| NavigateToUrl | [WebCrawlerModule](./WebCrawlerModule.md) | `NavigateToUrl(String url, String browserType = Chrome, Boolean headless = False, String profileName = , Boolean kioskMode = False, Dictionary<String, Object> argumentOptions = null, Nullable<Int32> timeoutInSeconds = null, Boolean hideTestingMode = False, Int32 pageIndex = -1, PLang.Models.GoalToCallInfo onRequest = null, PLang.Models.GoalToCallInfo onResponse = null, PLang.Models.GoalToCallInfo onWebsocketReceived = null, PLang.Models.GoalToCallInfo onWebsocketSent = null, PLang.Models.GoalToCallInfo onConsoleOutput = null, PLang.Models.GoalToCallInfo onWorker = null, PLang.Models.GoalToCallInfo onDialog = null, PLang.Models.GoalToCallInfo onLoad = null, PLang.Models.GoalToCallInfo onDOMLoad = null, PLang.Models.GoalToCallInfo onFileChooser = null, PLang.Models.GoalToCallInfo onIFrameLoad = null, PLang.Models.GoalToCallInfo onDownload = null) : object` |
+| NavigateToUrl | [WebCrawlerModule](./WebCrawlerModule.md) | `NavigateToUrl(String url, String browserType = Chrome, Boolean headless = False, String profileName = , Boolean kioskMode = False, Dictionary<String, Object> argumentOptions = null, Nullable<Int32> timeoutInSeconds = null, Boolean hideTestingMode = False, Int32 pageIndex = -1, Int32 waitAfterInMilliseconds = 0, Int32 closeAfterIdleMinutes = 10, PLang.Models.GoalToCallInfo onRequest = null, PLang.Models.GoalToCallInfo onResponse = null, PLang.Models.GoalToCallInfo onWebsocketReceived = null, PLang.Models.GoalToCallInfo onWebsocketSent = null, PLang.Models.GoalToCallInfo onConsoleOutput = null, PLang.Models.GoalToCallInfo onWorker = null, PLang.Models.GoalToCallInfo onDialog = null, PLang.Models.GoalToCallInfo onLoad = null, PLang.Models.GoalToCallInfo onDOMLoad = null, PLang.Models.GoalToCallInfo onFileChooser = null, PLang.Models.GoalToCallInfo onIFrameLoad = null, PLang.Models.GoalToCallInfo onDownload = null) : object` |
+| NotContainsString | [ConditionalModule](./ConditionalModule.md) | `NotContainsString(Object item, String contains, PLang.Models.GoalToCallInfo goalToCallIfTrue = null, PLang.Models.GoalToCallInfo goalToCallIfFalse = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnTrue = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnFalse = null) : Object` |
+| NotEndsWith | [ConditionalModule](./ConditionalModule.md) | `NotEndsWith(Object item, String endsWith, Boolean ignoreCase = False, PLang.Models.GoalToCallInfo goalToCallIfTrue = null, PLang.Models.GoalToCallInfo goalToCallIfFalse = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnTrue = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnFalse = null) : Object` |
+| NotStartsWith | [ConditionalModule](./ConditionalModule.md) | `NotStartsWith(Object item, String startsWith, Boolean ignoreCase = False, PLang.Models.GoalToCallInfo goalToCallIfTrue = null, PLang.Models.GoalToCallInfo goalToCallIfFalse = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnTrue = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnFalse = null) : Object` |
 | OnChangeVariablesListener | [VariableModule](./VariableModule.md) | `OnChangeVariablesListener(List<String> keys = null, PLang.Models.GoalToCallInfo goalName, Boolean notifyWhenCreated = True, Boolean waitForResponse = True, Int32 delayWhenNotWaitingInMilliseconds = 50) : object` |
 | OnCreateVariablesListener | [VariableModule](./VariableModule.md) | `OnCreateVariablesListener(List<String> keys = null, PLang.Models.GoalToCallInfo goalName, Boolean waitForResponse = True, Int32 delayWhenNotWaitingInMilliseconds = 50) : object` |
 | OnRemoveVariablesListener | [VariableModule](./VariableModule.md) | `OnRemoveVariablesListener(List<String> keys = null, PLang.Models.GoalToCallInfo goalName, Boolean waitForResponse = True, Int32 delayWhenNotWaitingInMilliseconds = 50) : object` |
@@ -341,7 +377,7 @@ the column spells out the ambiguous ones.
 | PostMultipartFormData | [HttpModule](./HttpModule.md) | `PostMultipartFormData(String url, Object data, String httpMethod = POST, Boolean doNotSignRequest = False, Dictionary<String, Object> headers = null, String encoding = utf-8, Int32 timeoutInSeconds = 30) : Object` |
 | PrimeNumbers | [MathModule](./MathModule.md) | `PrimeNumbers(Int32 number) : List<Int32>` |
 | Put | [HttpModule](./HttpModule.md) | `Put(String url, Object data = null, Boolean doNotSignRequest = False, Dictionary<String, Object> headers = null, String encoding = utf-8, String contentType = application/json, Int32 timeoutInSeconds = 30) : Object` |
-| QueryDynamicSql | [DbModule](./DbModule.md) | `QueryDynamicSql(List<String> dataSourceNames = null, String sql, List<String> tableAllowList = null, List<PLang.Modules.DbModule.Program+ParameterInfo> parameters = null) : PLang.Modules.DbModule.Table` |
+| QueryDynamicSql | [DbModule](./DbModule.md) | `QueryDynamicSql(String sql, List<String> tableAllowList = null, List<String> dataSourceNames = null, List<PLang.Modules.DbModule.Program+ParameterInfo> parameters = null) : PLang.Modules.DbModule.Table` |
 | QuerySqlFile | [DbModule](./DbModule.md) | `QuerySqlFile(List<String> dataSourceNames = null, String fileName, List<String> tableAllowList = null, List<PLang.Modules.DbModule.Program+ParameterInfo> parameters = null, Nullable<Int32> rowsToReturn = null) : Object` |
 | Read | [TerminalModule](./TerminalModule.md) | `Read(String variableName) : object` |
 | ReadBinaryFileAndConvertToBase64 | [FileModule](./FileModule.md) | `ReadBinaryFileAndConvertToBase64(String path, String returnValueIfFileNotExisting = , Boolean throwErrorOnNotFound = False, Boolean includeDataUrl = False) : String` |
@@ -361,18 +397,22 @@ the column spells out the ambiguous ones.
 | RemoveDebugMode | [EnvironmentModule](./EnvironmentModule.md) | `RemoveDebugMode() : object` |
 | RemoveElement | [UiModule](./UiModule.md) | `RemoveElement(List<PLang.Modules.UiModule.Program+UiRemove> domRemoves, String actor = user, String channel = default) : object` |
 | RemoveHeaderFromRequest | [WebCrawlerModule](./WebCrawlerModule.md) | `RemoveHeaderFromRequest(String url, List<String> headersToRemove = null) : object` |
+| RemoveRelay | [MessageModule](./MessageModule.md) | `RemoveRelay(String relayUrl) : String` |
 | RemoveSharedIdentity | [IdentityModule](./IdentityModule.md) | `RemoveSharedIdentity() : object` |
 | RemoveVariables | [VariableModule](./VariableModule.md) | `RemoveVariables(String[] keys) : object` |
 | RenderContent | [TemplateEngineModule](./TemplateEngineModule.md) | `RenderContent(String content, String fullPath = null, Dictionary<String, Object> variables = null) : String` |
 | RenderFile | [TemplateEngineModule](./TemplateEngineModule.md) | `RenderFile(String path, Dictionary<String, Object> variables = null, Boolean writeToOutputStream = False) : String` |
 | RenderImageToHtml | [UiModule](./UiModule.md) | `RenderImageToHtml(String path) : Object` |
+| RenderInMainLayout | [UiModule](./UiModule.md) | `RenderInMainLayout(String content, String actor = user) : String` |
 | RenderTemplate | [UiModule](./UiModule.md) | `RenderTemplate(PLang.Modules.UiModule.Program+RenderTemplateOptions options) : Object` |
 | Repeat | [LoopModule](./LoopModule.md) | `Repeat(Int32 repeatCounter, PLang.Models.GoalToCallInfo goalToCall, Int32 startIndex = 0) : object` |
+| ReplaceInFile | [FileModule](./FileModule.md) | `ReplaceInFile(String path, String oldText, String newText, String encoding = utf-8) : Int32` |
 | ReplaceState | [UiModule](./UiModule.md) | `ReplaceState(PLang.Services.OutputStream.Messages.ExecuteMessage executeMessage) : object` |
 | Request | [HttpModule](./HttpModule.md) | `Request(PLang.Modules.HttpModule.Program+HttpRequest request) : Object` |
 | Request | [HttpModule](./HttpModule.md) | `Request(String url, String method, Object data = null, Boolean doNotSignRequest = False, Dictionary<String, Object> headers = null, String encoding = utf-8, String contentType = application/json, Int32 timeoutInSeconds = 30) : Object` |
 | RequestAccessToPath | [FileModule](./FileModule.md) | `RequestAccessToPath(String path) : Boolean` |
 | ResetSetup | [DbModule](./DbModule.md) | `ResetSetup(List<String> dataSourceNames = null) : object` |
+| Resize | [ImageModule](./ImageModule.md) | `Resize(String sourcePath, Int32 width, Int32 height, String targetPath, String mode = fit, Int32 quality = 90, String format = null, String backgroundColor = null, Boolean sharpen = False, Boolean center = False) : PLang.Modules.ImageModule.ImageResult` |
 | RestartWebserver | [WebserverModule](./WebserverModule.md) | `RestartWebserver(String webserverName = default) : PLang.Modules.WebserverModule.Program+WebserverProperties` |
 | Retry | [ThrowErrorModule](./ThrowErrorModule.md) | `Retry(Int32 maxRetries = 1, String maxRetriesReachedMesage = null, String key = MaxRetries, Int32 statusCode = 400, String fixSuggestion = null, String helpfullLinks = null) : object` |
 | Return | [VariableModule](./VariableModule.md) | `Return(Dictionary<String, Object> variables = null) : object` |
@@ -384,14 +424,16 @@ the column spells out the ambiguous ones.
 | RunFileCode | [CodeModule](./CodeModule.md) | `RunFileCode(PLang.Modules.CodeModule.Builder+FileCodeImplementationResponse implementation) : Object` |
 | RunFromStep | [PlangModule](./PlangModule.md) | `RunFromStep(String prFileName) : Object` |
 | RunFunction | [PlangModule](./PlangModule.md) | `RunFunction(PLang.Runtime.ObjectValue genericFunction) : Object` |
-| RunGoal | [CallGoalModule](./CallGoalModule.md) | `RunGoal(PLang.Models.GoalToCallInfo goalInfo, Boolean waitForExecution = True, Int32 delayWhenNotWaitingInMilliseconds = 50, UInt32 waitForXMillisecondsBeforeRunningGoal = 0, Boolean keepMemoryStackOnAsync = False, Boolean isolated = False, Boolean disableSystemGoals = False) : Object` |
+| RunGoal | [CallGoalModule](./CallGoalModule.md) | `RunGoal(PLang.Models.GoalToCallInfo goalInfo, Boolean waitForExecution = True, Int32 delayWhenNotWaitingInMilliseconds = 50, UInt32 waitForXMillisecondsBeforeRunningGoal = 0, Boolean keepMemoryStackOnAsync = False, Boolean isolated = False, Boolean disableSystemGoals = False, Boolean onlyExplicitReturn = False) : Object` |
 | RunInlineCode | [CodeModule](./CodeModule.md) | `RunInlineCode(PLang.Services.CompilerService.CodeImplementationResponse implementation) : Object` |
 | RunInlineCode | [ConditionalModule](./ConditionalModule.md) | `RunInlineCode(PLang.Services.CompilerService.ConditionImplementationResponse implementation) : Object` |
 | RunLoop | [LoopModule](./LoopModule.md) | `RunLoop(String variableToLoopThrough, PLang.Models.GoalToCallInfo goalToCall, PLang.Modules.LoopModule.Program+MultiThreaded multiThreaded = null, PLang.Modules.LoopModule.Program+LinqOptions linqOptions = null) : object` |
 | RunModule | [PlangModule](./PlangModule.md) | `RunModule(String moduleName, String method, Dictionary<String, Object> parameters = null, Boolean fromAppRoot = False) : Object` |
 | RunPythonScript | [PythonModule](./PythonModule.md) | `RunPythonScript(String fileName = main.py, String[] parameterValues = null, String[] parameterNames = null, String[] variablesToExtractFromPythonScript = null, Boolean useNamedArguments = False, String pythonPath = null, String stdOutVariableName = null, String stdErrorVariableName = null) : object` |
+| RunSetup | [EnvironmentModule](./EnvironmentModule.md) | `RunSetup() : object` |
 | RunStep | [PlangModule](./PlangModule.md) | `RunStep(PLang.Building.Model.GoalStep step, Dictionary<String, Object> parameters = null) : Object` |
-| RunTerminal | [TerminalModule](./TerminalModule.md) | `RunTerminal(String appExecutableName, List<String> parameters = null, String pathToWorkingDirInTerminal = null, String variableNameForDeltaOnStandardStream = null, String variableNameForDeltaOnErrorStream = null, Boolean hideTerminal = False) : Object` |
+| RunTerminal | [TerminalModule](./TerminalModule.md) | `RunTerminal(String appExecutableName, List<String> parameters = null, String pathToWorkingDirInTerminal = null, Boolean hideTerminal = False, String parseWith = null) : Object` |
+| RunTerminalStreaming | [TerminalModule](./TerminalModule.md) | `RunTerminalStreaming(String appExecutableName, String variableNameForDeltaOnStandardStream, List<String> parameters = null, String pathToWorkingDirInTerminal = null, String variableNameForDeltaOnErrorStream = null, Boolean hideTerminal = False, String parseWith = null) : Object` |
 | RunWindowApp | [WindowAppModule](./WindowAppModule.md) | `RunWindowApp(PLang.Models.GoalToCallInfo goalName, Int32 width = 800, Int32 height = 450, String iconPath = null, String windowTitle = plang) : object` |
 | SafeBatchTransferFromSmartContract | [BlockchainModule](./BlockchainModule.md) | `SafeBatchTransferFromSmartContract(String contractAddressOrSymbol, String from, String to, Numerics.BigInteger value, Boolean waitForReceipt = False) : Object` |
 | SafeTransferFromErc1155SmartContract | [BlockchainModule](./BlockchainModule.md) | `SafeTransferFromErc1155SmartContract(String contractAddressOrSymbol, String from, String to, Numerics.BigInteger[] ids, Numerics.BigInteger[] amounts, Boolean waitForReceipt = False) : Object` |
@@ -457,13 +499,13 @@ the column spells out the ambiguous ones.
 | SetSelfSignedCertificate | [WebserverModule](./WebserverModule.md) | `SetSelfSignedCertificate() : object` |
 | SetSettingsDbPath | [EnvironmentModule](./EnvironmentModule.md) | `SetSettingsDbPath(String path) : object` |
 | SetSettingValue | [VariableModule](./VariableModule.md) | `SetSettingValue(String key, Object value) : object` |
-| SetStringVariable | [VariableModule](./VariableModule.md) | `SetStringVariable(String key, String value = null, Boolean urlDecode = False, Boolean htmlDecode = False, Boolean doNotLoadVariablesInValue = False, String defaultValue = null) : object` |
+| SetStringVariable | [VariableModule](./VariableModule.md) | `SetStringVariable(String key, String value = null, Boolean urlDecode = False, Boolean htmlDecode = False, Boolean doNotLoadVariablesInValue = False, String defaultValue = null, Boolean sensitive = False) : object` |
 | SetTargetArea | [UiModule](./UiModule.md) | `SetTargetArea(String target) : object` |
 | SetTextOnElement | [WebCrawlerModule](./WebCrawlerModule.md) | `SetTextOnElement(String text, String cssSelector = null, Nullable<Int32> timeoutInSeconds = null, Boolean clearElementFirst = False) : object` |
 | SetValueAndStore | [VariableModule](./VariableModule.md) | `SetValueAndStore(Dictionary<String, Object> variables = null, String dataSourceName = null) : object` |
 | SetValueOnVariablesOrDefaultIfValueIsEmpty | [VariableModule](./VariableModule.md) | `SetValueOnVariablesOrDefaultIfValueIsEmpty(List<PLang.Modules.VariableModule.Program+VariableIfEmpty> variables, Boolean doNotLoadVariablesInValue = False, Boolean keyIsDynamic = False, Object onlyIfValueIsNot = null) : object` |
 | SetValuesOnVariables | [VariableModule](./VariableModule.md) | `SetValuesOnVariables(Dictionary<String, Object> keyValues = null, Boolean doNotLoadVariablesInValue = False, Boolean keyIsDynamic = False, Object onlyIfValueIsNot = null) : object` |
-| SetVariable | [VariableModule](./VariableModule.md) | `SetVariable(String key, Object value = null, Boolean doNotLoadVariablesInValue = False, Boolean keyIsDynamic = False, Object onlyIfValueIsNot = null, Object defaultValue = null, String FullTypeName = null) : object` |
+| SetVariable | [VariableModule](./VariableModule.md) | `SetVariable(String key, Object value = null, Boolean doNotLoadVariablesInValue = False, Boolean keyIsDynamic = False, Object onlyIfValueIsNot = null, Object defaultValue = null, String FullTypeName = null, Boolean sensitive = False) : object` |
 | SetVariables | [VariableModule](./VariableModule.md) | `SetVariables(Dictionary<String, Tuple<Object, Object>> keyValues = null, Boolean doNotLoadVariablesInValue = False, Boolean keyIsDynamic = False, Object onlyIfValueIsNot = null) : object` |
 | SetVariableWithCalculation | [VariableModule](./VariableModule.md) | `SetVariableWithCalculation(String key, String expression, Int32 decimalRound = 2, Nullable<MidpointRounding> midpointRounding = null) : object` |
 | SetVariableWithCondition | [ConditionalModule](./ConditionalModule.md) | `SetVariableWithCondition(String variableName, Boolean boolValue, Object valueIfTrue, Object valueIfFalse) : object` |
@@ -473,19 +515,22 @@ the column spells out the ambiguous ones.
 | ShowNotification | [UiModule](./UiModule.md) | `ShowNotification(PLang.Services.OutputStream.Messages.TextMessage textMessage) : object` |
 | ShutdownWebserver | [WebserverModule](./WebserverModule.md) | `ShutdownWebserver(String webserverName) : PLang.Modules.WebserverModule.Program+WebserverProperties` |
 | Sign | [IdentityModule](./IdentityModule.md) | `Sign(Object body, List<String> contracts = null, Nullable<Int32> expiresInSeconds = null, Dictionary<String, Object> headers = null, Boolean skipNonce = False) : PLang.Models.SignedMessage` |
+| SignFile | [IdentityModule](./IdentityModule.md) | `SignFile(String path, List<String> contracts = null, Nullable<Int32> expiresInSeconds = null, String identity = default) : PLang.Models.SignedMessage` |
 | SignIntoProperty | [IdentityModule](./IdentityModule.md) | `SignIntoProperty(Object body, String property) : Object` |
 | SignTransfer | [BlockchainModule](./BlockchainModule.md) | `SignTransfer(String recipient, String smartContractSymbolOrAddress, Int64 value) : String` |
 | SimpleCondition | [ConditionalModule](./ConditionalModule.md) | `SimpleCondition(PLang.Modules.ConditionalModule.ConditionEvaluator+SimpleCondition condition, PLang.Models.GoalToCallInfo goalToCallIfTrue = null, PLang.Models.GoalToCallInfo goalToCallIfFalse = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnTrue = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnFalse = null) : Object` |
 | Sleep | [ScheduleModule](./ScheduleModule.md) | `Sleep(Int32 sleepTimeInMilliseconds) : object` |
 | SolveExpression | [MathModule](./MathModule.md) | `SolveExpression(String expression, Int32 decimalRound = 2, Nullable<MidpointRounding> midpointRounding = null) : Object` |
-| StartBrowser | [WebCrawlerModule](./WebCrawlerModule.md) | `StartBrowser(String browserType = Chrome, Boolean headless = False, String profileName = , Boolean kioskMode = False, Dictionary<String, Object> argumentOptions = null, Nullable<Int32> timoutInSeconds = null, Boolean hideTestingMode = False, PLang.Models.GoalToCallInfo onRequest = null, PLang.Models.GoalToCallInfo onResponse = null) : PLang.Modules.WebCrawlerModule.Models.BrowserInstance` |
+| StartBrowser | [WebCrawlerModule](./WebCrawlerModule.md) | `StartBrowser(String browserType = Chrome, Boolean headless = False, String profileName = , Boolean kioskMode = False, Dictionary<String, Object> argumentOptions = null, Nullable<Int32> timoutInSeconds = null, Boolean hideTestingMode = False, PLang.Models.GoalToCallInfo onRequest = null, PLang.Models.GoalToCallInfo onResponse = null, Int32 closeAfterIdleMinutes = 10) : PLang.Modules.WebCrawlerModule.Models.BrowserInstance` |
 | StartCSharpDebugger | [PlangModule](./PlangModule.md) | `StartCSharpDebugger() : object` |
-| StartScheduler | [ScheduleModule](./ScheduleModule.md) | `StartScheduler() : object` |
+| StartProcess | [TerminalModule](./TerminalModule.md) | `StartProcess(String appExecutableName, List<String> parameters = null, String pathToWorkingDirInTerminal = null, PLang.Models.GoalToCallInfo onOutputLine = null, PLang.Models.GoalToCallInfo onErrorLine = null, PLang.Models.GoalToCallInfo onExit = null, String name = null) : PLang.Modules.TerminalModule.PlangProcess` |
+| StartScheduler | [ScheduleModule](./ScheduleModule.md) | `StartScheduler(Boolean force = False) : object` |
 | StartsWith | [ConditionalModule](./ConditionalModule.md) | `StartsWith(Object item, String startsWith, Boolean isNot = False, Boolean ignoreCase = False, PLang.Models.GoalToCallInfo goalToCallIfTrue = null, PLang.Models.GoalToCallInfo goalToCallIfFalse = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnTrue = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnFalse = null) : Object` |
 | StartWebserver | [WebserverModule](./WebserverModule.md) | `StartWebserver(PLang.Modules.WebserverModule.Program+WebserverProperties webserverProperties) : PLang.Modules.WebserverModule.Program+WebserverProperties` |
 | StartWebSocketConnection | [WebserverModule](./WebserverModule.md) | `StartWebSocketConnection(String url, PLang.Models.GoalToCallInfo goalToCall, String webSocketName = default, String contentRecievedVariableName = %content%) : PLang.Modules.WebserverModule.Program+WebSocketInfo` |
 | StopListening | [BlockchainModule](./BlockchainModule.md) | `StopListening(String subscriptionId) : object` |
 | StopListeningToFileChange | [FileModule](./FileModule.md) | `StopListeningToFileChange(String[] fileSearchPatterns, PLang.Models.GoalToCallInfo goalToCall = null) : object` |
+| StopProcess | [TerminalModule](./TerminalModule.md) | `StopProcess(Object process) : object` |
 | Store | [VariableModule](./VariableModule.md) | `Store(List<String> variables = null, String dataSourceName = null) : object` |
 | StreamFile | [WebserverModule](./WebserverModule.md) | `StreamFile(PLang.Services.OutputStream.Messages.StreamMessage streamMessage, Int64 startByte = 0, Nullable<Int64> endByte = null) : object` |
 | Submit | [WebCrawlerModule](./WebCrawlerModule.md) | `Submit(String cssSelector = null, Nullable<Int32> timeoutInSeconds = null) : object` |
@@ -493,7 +538,9 @@ the column spells out the ambiguous ones.
 | SwitchTab | [WebCrawlerModule](./WebCrawlerModule.md) | `SwitchTab(Int32 tabIndex) : object` |
 | SymbolOnSmartContract | [BlockchainModule](./BlockchainModule.md) | `SymbolOnSmartContract(String contractAddressOrSymbol) : Object` |
 | TakeScreenshotOfWebsite | [WebCrawlerModule](./WebCrawlerModule.md) | `TakeScreenshotOfWebsite(String saveToPath, Boolean overwrite = False, String cssSelector = null) : object` |
-| UploadFile | [WebCrawlerModule](./WebCrawlerModule.md) | `UploadFile(List<String> paths, String cssSelector, Nullable<Int32> timeoutInSeconds = null) : object` |
+| Tell | [IrohModule](./IrohModule.md) | `Tell(PLang.Modules.IrohModule.Program+IrohPeer peer, String goalName, Dictionary<String, Object> parameters = null, String file = null, Int32 timeoutInSeconds = 60, Int32 expiresInSeconds = 120) : Object` |
+| TellById | [IrohModule](./IrohModule.md) | `TellById(String peerId, String goalName, Dictionary<String, Object> parameters = null, String file = null, Int32 timeoutInSeconds = 60, Int32 expiresInSeconds = 120) : Object` |
+| TextToSpeech | [SpeechModule](./SpeechModule.md) | `TextToSpeech(String text, String filePath, String language = null, String voice = null, String style = null, String model = null, String apiKey = null) : PLang.Modules.SpeechModule.SpeechResult` |
 | Throw | [ThrowErrorModule](./ThrowErrorModule.md) | `Throw(Object message, String key = UserDefinedError, Int32 statusCode = 400, String fixSuggestion = null, String helpfullLinks = null) : object` |
 | ThrowError | [ThrowErrorModule](./ThrowErrorModule.md) | `ThrowError(PLang.Services.OutputStream.Messages.ErrorMessage errorMessage) : object` |
 | TotalSupplyOnSmartContract | [BlockchainModule](./BlockchainModule.md) | `TotalSupplyOnSmartContract(String contractAddressOrSymbol) : Object` |
@@ -504,19 +551,22 @@ the column spells out the ambiguous ones.
 | TrimForLlm | [VariableModule](./VariableModule.md) | `TrimForLlm(Object obj, Int32 maxItemCount = 30, Nullable<Int32> maxItemLength = null, String groupOn = null, Int32 samplesPerGroup = 5, Int32 listLimit = 50, Int32 totalCharsLimit = 2000, Boolean formatJson = False) : Object` |
 | Update | [DbModule](./DbModule.md) | `Update(String dataSourceName, String sql, List<PLang.Modules.DbModule.Program+ParameterInfo> sqlParameters = null, Boolean validateAffectedRows = True) : Int64` |
 | UpdateWithJsonColumns | [DbModule](./DbModule.md) | `UpdateWithJsonColumns(String dataSourceName, String table, String jsonOfColumns, List<String> allowColumns = null, String whereStatment = null, List<PLang.Modules.DbModule.Program+ParameterInfo> whereParameter = null) : Int64` |
+| UploadFile | [WebCrawlerModule](./WebCrawlerModule.md) | `UploadFile(List<String> paths = null, String cssSelector, Nullable<Int32> timeoutInSeconds = null) : object` |
 | UseSharedIdentity | [IdentityModule](./IdentityModule.md) | `UseSharedIdentity() : object` |
 | UseSharedIdentity | [LlmModule](./LlmModule.md) | `UseSharedIdentity(Boolean useSharedIdentity = True) : object` |
 | ValidateBearerToken | [CryptographicModule](./CryptographicModule.md) | `ValidateBearerToken(String token, String issuer = PLangRuntime, String audience = user) : Boolean` |
 | ValidateFileExtension | [ValidateModule](./ValidateModule.md) | `ValidateFileExtension(List<String> allowedExtensions = null, String fileName) : object` |
 | ValidateGoal | [PlangModule](./PlangModule.md) | `ValidateGoal(PLang.Building.Model.Goal goal) : Object` |
-| ValidateItemIsInList | [ValidateModule](./ValidateModule.md) | `ValidateItemIsInList(Object[] itemsToCheckInList, Collections.IList list, String errorMessage = item is not in list, Boolean caseSensitive = False) : List<Object>` |
+| ValidateItemIsInList | [ValidateModule](./ValidateModule.md) | `ValidateItemIsInList(Object[] itemsToCheckInList, Collections.IList list, String errorMessage = item is not in list, Boolean caseSensitive = False, Int32 statusCode = 400) : List<Object>` |
+| ValidateJsonSchema | [ValidateModule](./ValidateModule.md) | `ValidateJsonSchema(Object data, String schemaFile) : List<String>` |
 | ValidateMethod | [PlangModule](./PlangModule.md) | `ValidateMethod(PLang.Building.Model.GoalStep step, Object function) : Object` |
 | ValidateSignedContract | [ValidateModule](./ValidateModule.md) | `ValidateSignedContract(Object contract, List<String> signatureProperties = null, List<String> propertiesToMatch = null) : object` |
 | ValidateToken | [CryptographicModule](./CryptographicModule.md) | `ValidateToken(String token, String password = null, String secretKeyName = null) : object` |
 | ValidateType | [ValidateModule](./ValidateModule.md) | `ValidateType(PLang.Modules.ValidateModule.Program+TypeValidation validation) : object` |
+| VerifyFile | [IdentityModule](./IdentityModule.md) | `VerifyFile(String path, List<String> contracts = null) : PLang.Models.SignedMessage` |
 | VerifyHashedValues | [CryptographicModule](./CryptographicModule.md) | `VerifyHashedValues(String text, String hash, String hashAlgorithm = keccak256, Boolean useSalt = True, String salt = null) : Boolean` |
 | VerifyHashOfFile | [CryptographicModule](./CryptographicModule.md) | `VerifyHashOfFile(String filePath, String expectedHash, String hashAlgorithm = sha256, String encoding = base64) : Boolean` |
-| VerifySignature | [IdentityModule](./IdentityModule.md) | `VerifySignature(Object signatureFromUser = null, Dictionary<String, Object> headers = null, Object body = null, List<String> contracts = null) : PLang.Models.SignedMessage` |
+| VerifySignature | [IdentityModule](./IdentityModule.md) | `VerifySignature(Object signatureFromUser = null, Dictionary<String, Object> headers = null, Object body = null, List<String> contracts = null, Boolean requireData = False) : PLang.Models.SignedMessage` |
 | VerifySignatureOnProperties | [IdentityModule](./IdentityModule.md) | `VerifySignatureOnProperties(Object signatureFromUser, List<String> properties = null) : PLang.Models.SignedMessage` |
 | Wait | [WebCrawlerModule](./WebCrawlerModule.md) | `Wait(Int32 milliseconds = 1000) : object` |
 | WaitForElementToAppear | [WebCrawlerModule](./WebCrawlerModule.md) | `WaitForElementToAppear(String cssSelector, Int32 timeoutInSeconds = 30, Boolean waitForElementToChange = False) : object` |
@@ -531,18 +581,19 @@ the column spells out the ambiguous ones.
 | WriteCsvFile | [FileModule](./FileModule.md) | `WriteCsvFile(String path, Object variableToWriteToCsv, Boolean appendToFile = False, PLang.Modules.FileModule.CsvHelper+CsvOptions csvOptions = null, Boolean createDirectoryAutomatically = True) : object` |
 | WriteExcelFile | [FileModule](./FileModule.md) | `WriteExcelFile(String path, Object variableToWriteToExcel, String sheetName = Sheet1, Boolean printHeader = True, Boolean overwrite = False) : object` |
 | WriteJson | [OutputModule](./OutputModule.md) | `WriteJson(PLang.Services.OutputStream.Messages.TextMessage textMessage, PLang.Modules.OutputModule.Program+JsonOptions jsonOptions = null) : object` |
-| WriteToFile | [FileModule](./FileModule.md) | `WriteToFile(String path, Object content, Boolean overwrite = False, Boolean loadVariables = False, Boolean emptyVariableIfNotFound = False, String encoding = utf-8) : object` |
+| WriteTo | [OutputModule](./OutputModule.md) | `WriteTo(Object content, Object to) : object` |
+| WriteToFile | [FileModule](./FileModule.md) | `WriteToFile(String path, Object content, Boolean overwrite = False, Boolean loadVariables = False, Boolean emptyVariableIfNotFound = False, String encoding = utf-8, String identity = null, List<String> contracts = null) : object` |
 | WriteToResponseHeader | [WebserverModule](./WebserverModule.md) | `WriteToResponseHeader(Dictionary<String, Object> headers = null) : object` |
 | WriteVariablesToCookie | [WebserverModule](./WebserverModule.md) | `WriteVariablesToCookie(String name, List<PLang.Runtime.ObjectValue> values, Int32 expiresInSeconds = 604800) : object` |
 | WriteWithStreamInfo | [OutputModule](./OutputModule.md) | `WriteWithStreamInfo(Object content, PLang.Modules.OutputModule.Program+OutputStreamInfo outputStreamInfo) : object` |
 
 ## Gaps
 
-7 modules and 264 of 462 methods carry no
+6 modules and 254 of 512 methods carry no
 `[Description]`, so the builder has nothing but the name to match a step against. Those are the
 ones the llm guesses at, and the ones worth writing first.
 
-Modules: AiModule, LoggerModule, SerializerModule, UdpModule, WebSocketModule, WindowAppModule, XmlModule
+Modules: AiModule, LoggerModule, SerializerModule, WebSocketModule, WindowAppModule, XmlModule
 
 <details><summary>Methods with no description</summary>
 
@@ -604,7 +655,6 @@ Modules: AiModule, LoggerModule, SerializerModule, UdpModule, WebSocketModule, W
 - ConditionalModule.FileExists
 - ConditionalModule.HasAccessToPath
 - ConditionalModule.IsBase64
-- ConditionalModule.IsEmpty
 - ConditionalModule.IsFalse
 - ConditionalModule.IsMod
 - ConditionalModule.IsNotEmpty
@@ -623,7 +673,6 @@ Modules: AiModule, LoggerModule, SerializerModule, UdpModule, WebSocketModule, W
 - CryptographicModule.Encrypt
 - CryptographicModule.GenerateBearerToken
 - CryptographicModule.GetBearerSecret
-- CryptographicModule.GetHashOfFile
 - CryptographicModule.GetPrivateKey
 - CryptographicModule.GetPrivateKeyHash
 - CryptographicModule.SetCurrentBearerToken
@@ -639,7 +688,6 @@ Modules: AiModule, LoggerModule, SerializerModule, UdpModule, WebSocketModule, W
 - DbModule.Update
 - DesktopModule.GetOpenWindows
 - EnvironmentModule.CanSeeErrorDetails
-- EnvironmentModule.EndApp
 - EnvironmentModule.GetAppName
 - EnvironmentModule.GetCurrentCulture
 - EnvironmentModule.GetEnvironmentVariable
@@ -654,8 +702,6 @@ Modules: AiModule, LoggerModule, SerializerModule, UdpModule, WebSocketModule, W
 - EnvironmentModule.IsInDebugMode
 - EnvironmentModule.KeepAlive
 - EnvironmentModule.OpenFileInDefaultApp
-- EnvironmentModule.RemoveDebugMode
-- EnvironmentModule.SetDebugMode
 - EnvironmentModule.SetEnvironment
 - EnvironmentModule.SetSettingsDbPath
 - EnvironmentModule.ShowErrorDetails
@@ -671,7 +717,6 @@ Modules: AiModule, LoggerModule, SerializerModule, UdpModule, WebSocketModule, W
 - FileModule.GetDirectoryPathsInDirectory
 - FileModule.GetFileInfo
 - FileModule.GetFileType
-- FileModule.GiveAccess
 - FileModule.MoveFile
 - FileModule.ReadCsvFile
 - FileModule.ReadFileAsStream
@@ -714,7 +759,6 @@ Modules: AiModule, LoggerModule, SerializerModule, UdpModule, WebSocketModule, W
 - MessageModule.GetPublicKey
 - MessageModule.GetRelays
 - MessageModule.SendEmail
-- MessageModule.SendPrivateMessage
 - MessageModule.SendPrivateMessageToMyself
 - MessageModule.SetCurrentAccount
 - MockModule.MockMethod
@@ -736,39 +780,35 @@ Modules: AiModule, LoggerModule, SerializerModule, UdpModule, WebSocketModule, W
 - PlangModule.StartCSharpDebugger
 - PlangModule.ValidateGoal
 - PlangModule.ValidateMethod
-- ScheduleModule.StartScheduler
-- ScheduleModule.WaitOnVariable
 - SerializerModule.AddSerializer
 - SerializerModule.ConvertToType
 - SerializerModule.Deserialize
 - SerializerModule.Deserialize
 - TemplateEngineModule.RenderContent
 - TerminalModule.Read
-- UdpModule.Get
 - UiModule.CloseWindow
 - UiModule.ExecuteJavascript
 - UiModule.Flush
 - UiModule.RenderImageToHtml
+- UiModule.RenderInMainLayout
 - UiModule.SetElement
 - UiModule.SetFrameworks
 - ValidateModule.ValidateFileExtension
-- ValidateModule.ValidateItemIsInList
 - VariableModule.ConvertToBase64
 - VariableModule.GetEnvironmentVariable
 - VariableModule.GetSettings
 - VariableModule.GetVariable
-- VariableModule.Load
 - VariableModule.LoadVariables
 - VariableModule.OnChangeVariablesListener
 - VariableModule.OnCreateVariablesListener
 - VariableModule.OnRemoveVariablesListener
 - VariableModule.RemoveVariables
+- VariableModule.SetValueOnVariablesOrDefaultIfValueIsEmpty
 - VariableModule.SetVariableWithCondition
 - VariableModule.TrimForLlm
 - WebCrawlerModule.AcceptAlert
 - WebCrawlerModule.AddDefaultRequestHeader
 - WebCrawlerModule.AssertPageContains
-- WebCrawlerModule.Click
 - WebCrawlerModule.ClickOnElement
 - WebCrawlerModule.CloseBrowser
 - WebCrawlerModule.ExtractClassesToList
@@ -794,6 +834,7 @@ Modules: AiModule, LoggerModule, SerializerModule, UdpModule, WebSocketModule, W
 - WebserverModule.GetCookieRaw
 - WebserverModule.GetNumberOfLiveConnections
 - WebserverModule.GetRequestHeader
+- WebserverModule.GetRequestMetrics
 - WebserverModule.Redirect
 - WebserverModule.RestartWebserver
 - WebserverModule.SendFileToUser

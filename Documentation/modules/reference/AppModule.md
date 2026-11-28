@@ -3,7 +3,7 @@
 Hint: `[app] (ambiguous, matches AppModule, WindowAppModule)`  
 Type: `PLang.Modules.AppModule.Program`
 
-Call an App. When the user has the word 'app' in his statement, this should be called.
+Call an App. When the user has the word 'app' in his statement, this should be called. Not for `drain app`, which stops the running process itself (EnvironmentModule).
 
 ## Methods
 

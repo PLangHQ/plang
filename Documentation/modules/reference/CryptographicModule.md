@@ -78,6 +78,12 @@ GetBearerSecret() : String
 GetHashOfFile(String filePath, String hashAlgorithm = sha256, String encoding = base64) : String
 ```
 
+The hash of a file's bytes. hashAlgorithm sha256 (default), encoding base64 (default) or hex (lower case, no dashes: the format sha256sum prints). e.g. `get sha256 hash of file "/out/x.json", hex, write to %sum%`, `hash file %path% with sha256 as hex`
+
+
+Examples:
+
+- get sha256 hash of file "/out/x.json", hex, write to %sum% => filePath="/out/x.json", hashAlgorithm="sha256", encoding="hex"
 
 ### GetPrivateKey
 

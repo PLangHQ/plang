@@ -3,7 +3,7 @@
 Hint: `[webcrawler]`  
 Type: `PLang.Modules.WebCrawlerModule.Program`
 
-Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content
+Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. Never for `redirect to ...`: a redirect sends the visitor of a web request elsewhere, which is the webserver's job
 
 ## Methods
 
@@ -35,13 +35,7 @@ AssertPageContains(PLang.Modules.WebCrawlerModule.Program+AssertCheck assertChec
 Click(String cssSelector, Int32 elementAtToClick = 0, Boolean clickAllMatchingElements = False, Nullable<Int32> timeoutInSeconds = null, Int32 waitAfterInMilliseconds = 0) : object
 ```
 
-waitAfterInMilliseconds pauses after the click, for a page that repaints a moment later, e.g. 'click #next, wait 2 seconds' => waitAfterInMilliseconds: 2000. Throws when nothing on the page matches cssSelector.
-
-- `cssSelector` *String*
-- `elementAtToClick` *Int32*, default `0`
-- `clickAllMatchingElements` *Boolean*, default `False`
-- `timeoutInSeconds` *Nullable<Int32>*, default `null`
-- `waitAfterInMilliseconds` *Int32*, default `0`
+waitAfterInMilliseconds pauses after the click, for a page that repaints a moment later, e.g. 'click #next, wait 2 seconds' => waitAfterInMilliseconds: 2000
 
 
 ### ClickOnElement
@@ -59,23 +53,21 @@ CloseBrowser() : object
 ```
 
 
+### EvaluateJavascript
+
+```
+EvaluateJavascript(String script, Int32 waitAfterInMilliseconds = 0) : Object
+```
+
+Runs javascript inside the open page, in the browser, and returns what the script returns. e.g. 'run javascript "document.title" in the browser, write to %title%'. Not the same as [ui] execute javascript, which sends script to the user's browser through the webserver.
+
+
 ### ExtractClassesToList
 
 ```
 ExtractClassesToList(String[] cssSelectors, String fromCssSelector) : Object
 ```
 
-
-### EvaluateJavascript
-
-```
-EvaluateJavascript(String script, Int32 waitAfterInMilliseconds = 0) : object
-```
-
-Runs javascript inside the open page, in the browser, and returns what the script returns. e.g. 'run javascript "document.title" in the browser, write to %title%'. Not the same as `[ui] execute javascript`, which sends script to the user's browser through the webserver. A script written as `() => ...` runs as a function and may return a promise.
-
-- `script` *String*
-- `waitAfterInMilliseconds` *Int32*, default `0`
 
 ### ExtractContent
 
@@ -102,7 +94,7 @@ FindElementAndExtractAttribute(String attribute, String cssSelector = null, PLan
 ### GetBrowserInstance
 
 ```
-GetBrowserInstance(String browserType = Chrome, Boolean headless = False, String profileName = , Boolean kioskMode = False, Dictionary<String, Object> argumentOptions = null, Nullable<Int32> timoutInSeconds = null, Boolean hideTestingMode = False, PLang.Models.GoalToCallInfo onRequest = null, PLang.Models.GoalToCallInfo onResponse = null) : PLang.Modules.WebCrawlerModule.Models.BrowserInstance
+GetBrowserInstance(String browserType = Chrome, Boolean headless = False, String profileName = , Boolean kioskMode = False, Dictionary<String, Object> argumentOptions = null, Nullable<Int32> timoutInSeconds = null, Boolean hideTestingMode = False, PLang.Models.GoalToCallInfo onRequest = null, PLang.Models.GoalToCallInfo onResponse = null, Int32 closeAfterIdleMinutes = 10) : PLang.Modules.WebCrawlerModule.Models.BrowserInstance
 ```
 
 - `browserType` *String*, default `Chrome`
@@ -114,6 +106,7 @@ GetBrowserInstance(String browserType = Chrome, Boolean headless = False, String
 - `hideTestingMode` *Boolean*, default `False`
 - `onRequest` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
 - `onResponse` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
+- `closeAfterIdleMinutes` *Int32*, default `10`
 
 ### GetElement
 
@@ -203,9 +196,7 @@ set the value of an input by cssSelector
 NavigateToUrl(String url, String browserType = Chrome, Boolean headless = False, String profileName = , Boolean kioskMode = False, Dictionary<String, Object> argumentOptions = null, Nullable<Int32> timeoutInSeconds = null, Boolean hideTestingMode = False, Int32 pageIndex = -1, Int32 waitAfterInMilliseconds = 0, Int32 closeAfterIdleMinutes = 10, PLang.Models.GoalToCallInfo onRequest = null, PLang.Models.GoalToCallInfo onResponse = null, PLang.Models.GoalToCallInfo onWebsocketReceived = null, PLang.Models.GoalToCallInfo onWebsocketSent = null, PLang.Models.GoalToCallInfo onConsoleOutput = null, PLang.Models.GoalToCallInfo onWorker = null, PLang.Models.GoalToCallInfo onDialog = null, PLang.Models.GoalToCallInfo onLoad = null, PLang.Models.GoalToCallInfo onDOMLoad = null, PLang.Models.GoalToCallInfo onFileChooser = null, PLang.Models.GoalToCallInfo onIFrameLoad = null, PLang.Models.GoalToCallInfo onDownload = null) : object
 ```
 
-opens a page to a url. browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot. waitAfterInMilliseconds pauses after the page has loaded, for a page whose client script paints the content a moment later, e.g. 'navigate to x, wait 3 seconds' => waitAfterInMilliseconds: 3000. No separate Wait call is needed.
-
-The browser stays open across goals, including sub goals, until `close browser` is called or it has been unused for closeAfterIdleMinutes (default 10). A browser the idle timer closed is started again the same way, headless and with its profile, on the next call; its page is blank, so navigate again.
+opens a page to a url in a browser this app runs. Never for `redirect to ...` (the webserver redirects the visitor). browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot. waitAfterInMilliseconds pauses after the page has loaded, for a page whose client script paints the content a moment later, e.g. 'navigate to x, wait 3 seconds' => waitAfterInMilliseconds: 3000. The browser stays open across goals until 'close browser' or until it has been unused for closeAfterIdleMinutes. closeAfterIdleMinutes=0 means never close it for being idle, e.g. 'never close the browser' or 'keep the browser open' => closeAfterIdleMinutes: 0.
 
 - `url` *String*
 - `browserType` *String*, default `Chrome`
@@ -316,10 +307,10 @@ set the text of an element other than input by cssSelector
 ### StartBrowser
 
 ```
-StartBrowser(String browserType = Chrome, Boolean headless = False, String profileName = , Boolean kioskMode = False, Dictionary<String, Object> argumentOptions = null, Nullable<Int32> timoutInSeconds = null, Boolean hideTestingMode = False, PLang.Models.GoalToCallInfo onRequest = null, PLang.Models.GoalToCallInfo onResponse = null) : PLang.Modules.WebCrawlerModule.Models.BrowserInstance
+StartBrowser(String browserType = Chrome, Boolean headless = False, String profileName = , Boolean kioskMode = False, Dictionary<String, Object> argumentOptions = null, Nullable<Int32> timoutInSeconds = null, Boolean hideTestingMode = False, PLang.Models.GoalToCallInfo onRequest = null, PLang.Models.GoalToCallInfo onResponse = null, Int32 closeAfterIdleMinutes = 10) : PLang.Modules.WebCrawlerModule.Models.BrowserInstance
 ```
 
-browserType=Chrome|Edge|Firefox|Safari. hideTestingMode tries to disguise that it is a bot. when user want to use the default profile, set profileName="default"
+browserType=Chrome|Edge|Firefox|Safari. hideTestingMode tries to disguise that it is a bot. when user want to use the default profile, set profileName="default". profileName written as a folder path, e.g. "/.db/browser", is the folder the browser profile lives in: it is created if missing and everything the page stores, cookies, localStorage and IndexedDB, is still there on the next call and after a restart. Without it the browser starts empty each time, so anything the site remembers about the visitor, a signed in session included, is gone
 
 - `browserType` *String*, default `Chrome`
 - `headless` *Boolean*, default `False`
@@ -330,6 +321,7 @@ browserType=Chrome|Edge|Firefox|Safari. hideTestingMode tries to disguise that i
 - `hideTestingMode` *Boolean*, default `False`
 - `onRequest` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
 - `onResponse` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
+- `closeAfterIdleMinutes` *Int32*, default `10`
 
 ### Submit
 
@@ -355,10 +347,10 @@ TakeScreenshotOfWebsite(String saveToPath, Boolean overwrite = False, String css
 ### UploadFile
 
 ```
-UploadFile(List<String> paths, String cssSelector, Nullable<Int32> timeoutInSeconds = null) : object
+UploadFile(List<String> paths = null, String cssSelector, Nullable<Int32> timeoutInSeconds = null) : object
 ```
 
-Puts one or more files into a file input (input[type=file]) by cssSelector, e.g. `upload file "/files/invoice.pdf" to "#attachment"`. Several files only when the input allows multiple. The files are read through the app's file system (paths as in the File module).
+Puts one or more files into a file input (input[type=file]) by cssSelector, e.g. `upload file "/files/invoice.pdf" to "#attachment"` => paths ["/files/invoice.pdf"], cssSelector "#attachment". Several files only when the input allows multiple
 
 
 ### Wait

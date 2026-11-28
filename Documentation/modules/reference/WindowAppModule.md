@@ -11,7 +11,7 @@ Type: `PLang.Modules.WindowAppModule.Program`
 RunWindowApp(PLang.Models.GoalToCallInfo goalName, Int32 width = 800, Int32 height = 450, String iconPath = null, String windowTitle = plang) : object
 ```
 
-goalName is required. It is one word. Example: call NameOfGoal, run Google.Search. Do not use the names in your response unless defined by user
+goalName is required. It is one word. Example: call !NameOfGoal, run !Google.Search. Do not use the names in your response unless defined by user
 
 - `goalName` *PLang.Models.GoalToCallInfo* — (see Type information in SupportingObjects)
 - `width` *Int32*, default `800`

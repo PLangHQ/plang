@@ -3,7 +3,7 @@
 Hint: `[llmmodule]`  
 Type: `PLang.Modules.LlmModule.Program`
 
-Ask LLM a question and recieve and answer
+Ask LLM a question and recieve and answer. Also decide: when a step says decide, or picks one option out of a list of options (kind, status, yes or no) for a text, it is Decide, answered by the decider with a confidence
 
 ## Methods
 
@@ -52,23 +52,20 @@ When user intent is to write the result into a %variable% it MUST have ReturnVal
 ### Decide
 
 ```
-Decide(Object state, String question, Dictionary<String, String> options) : String
+Decide(Object state, String question, Dictionary<String, String> options = null) : String
 ```
 
-Decides which one of a closed set of options fits a text. Answers the option, never free text. Use it when the answer is a choice (kind, status, yes or no), use AskLlm when the answer is text to write or extract. `%x%` is the option, `%x!Confidence%` how sure it is, `%x!Probabilities%` each option's share.
+Decides which one of a closed set of options fits a text. Answers the option, never free text. Use it when the answer is a choice (kind, status, yes or no), use AskLlm when the answer is text to write or extract. %x% is the option, %x!Confidence% how sure it is, %x!Probabilities% each option's share.
 
-Runs on Typesafe System One with the key `%Settings.TypeSafeApiKey%`. A missing key comes back as the error `MissingTypeSafeApiKey`, which `on error` can handle.
+- `state` *Object* — The text or variable the decision is about, e.g. %email%
+- `question` *String* — What is being decided, short, e.g. which kind of email is this
+- `options` *Dictionary<String, String>*, default `null`
 
-- `state` *Object* — the text the question is about
-- `question` *String* — what is being decided
-- `options` *Dictionary<String, String>* — option and what it means (the meaning may be null)
+Examples:
 
-```plang
-- decide which kind of email %email% is, options: invoice, order, spam, write to %kind%
-- if %kind% == "spam" then
-    - end goal
-- write out "%kind!Confidence%"
-```
+- decide which kind of email %email% is, options: invoice, order, spam, write to %kind% => state="%email%", question="which kind of email is this", options={"invoice": null, "order": null, "spam": null}
+- decide if %message% asks for a reply, options: yes means a question waits for an answer, no means nothing waits, write to %needsReply% => state="%message%", question="does the message ask for a reply", options={"yes": "a question waits for an answer", "no": "nothing waits for an answer"}
+- decide the status of %company% from %mail%, options: open, waiting, closed, write to %status% => state="%mail%", question="what should the status of the company be", options={"open": null, "waiting": null, "closed": null}
 
 ### GetLlmIdentity
 

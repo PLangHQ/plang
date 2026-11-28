@@ -20,6 +20,12 @@ AddTypeMapping(String extension, String type, String contentType = null) : objec
 AppendToFile(String path, String content, String seperator = null, Boolean loadVariables = False, Boolean emptyVariableIfNotFound = False, String encoding = utf-8) : object
 ```
 
+- `path` *String*
+- `content` *String*
+- `seperator` *String*, default `null`
+- `loadVariables` *Boolean*, default `False` — true only when the step says in words that the %variables% inside the content should be replaced with their values before it is written. A content that merely contains variables is not a reason: `content: {"a": %x%}` writes the variable through as it stands, which is the normal case and false
+- `emptyVariableIfNotFound` *Boolean*, default `False` — true when the step says the variable should simply be empty if the file is missing, e.g. `empty variable if not found`. false otherwise
+- `encoding` *String*, default `utf-8`
 
 ### CopyFile
 
@@ -93,6 +99,19 @@ GetDirectoryPathsInDirectory(String directoryPath = ./, String regexSearchPatter
 ```
 
 
+### GetFileHash
+
+```
+GetFileHash(String path, String algorithm = sha256) : String
+```
+
+Hash of the content of a file, as lower case hex. algorithm: sha256 (default), sha1 or md5. e.g. `get hash of file %path%, write to %hash%`, `get sha256 of file //shared/x.dll, write to %hash%`
+
+
+Examples:
+
+- get hash of file %path%, write to %hash% => path=%path%, algorithm="sha256"
+
 ### GetFileInfo
 
 ```
@@ -121,6 +140,8 @@ GetFileType(String extension) : String
 ```
 GiveAccess(String path) : object
 ```
+
+Give the app access to a path outside the app folder, e.g. `give access to "/proc"`, `give access to "//etc"` (// is the root of the drive), `allow access to %folder%`. The app can then read and write under that path for the rest of the run without being asked.
 
 
 ### ListenToFileChange
@@ -205,6 +226,12 @@ ReadFileAsStream(String path, Boolean throwErrorOnNotFound = False) : IO.Stream
 ReadJson(String path, Boolean throwErrorOnNotFound = True, Boolean loadVariables = False, Boolean emptyVariableIfNotFound = False, String encoding = utf-8, Boolean allowReadingFromSystem = False) : Object
 ```
 
+- `path` *String*
+- `throwErrorOnNotFound` *Boolean*, default `True` — false when the step says a missing file is not an error, e.g. `dont throw error on not found` or `empty variable if not found`. true otherwise
+- `loadVariables` *Boolean*, default `False` — true only when the step says in words to load variables, e.g. `read file x.txt, load variables`. A path or a step containing variables is not a reason: false is the normal case and the file is read as it stands
+- `emptyVariableIfNotFound` *Boolean*, default `False` — true when the step says the variable should simply be empty if the file is missing, e.g. `empty variable if not found`. false otherwise
+- `encoding` *String*, default `utf-8`
+- `allowReadingFromSystem` *Boolean*, default `False` — Almost always false. It is true only when the step says in words that it reads from plang's own installation folder, outside this app. Any path belonging to the app is false, including paths that begin with a dot folder such as /.db/ or /.build/, which are the app's own. A path that begins with /// is a path on the machine outside the app (e.g. ///proc/..., ///etc/...), not plang's installation: false
 
 ### ReadJsonLineFile
 
@@ -212,6 +239,13 @@ ReadJson(String path, Boolean throwErrorOnNotFound = True, Boolean loadVariables
 ReadJsonLineFile(String path, Boolean throwErrorOnNotFound = True, Boolean loadVariables = False, Boolean emptyVariableIfNotFound = False, String encoding = utf-8, String newLineSymbol = null, Boolean allowReadingFromSystem = False) : List<Object>
 ```
 
+- `path` *String*
+- `throwErrorOnNotFound` *Boolean*, default `True` — false when the step says a missing file is not an error, e.g. `dont throw error on not found` or `empty variable if not found`. true otherwise
+- `loadVariables` *Boolean*, default `False` — true only when the step says in words to load variables, e.g. `read file x.txt, load variables`. A path or a step containing variables is not a reason: false is the normal case and the file is read as it stands
+- `emptyVariableIfNotFound` *Boolean*, default `False` — true when the step says the variable should simply be empty if the file is missing, e.g. `empty variable if not found`. false otherwise
+- `encoding` *String*, default `utf-8`
+- `newLineSymbol` *String*, default `null`
+- `allowReadingFromSystem` *Boolean*, default `False` — Almost always false. It is true only when the step says in words that it reads from plang's own installation folder, outside this app. Any path belonging to the app is false, including paths that begin with a dot folder such as /.db/ or /.build/, which are the app's own. A path that begins with /// is a path on the machine outside the app (e.g. ///proc/..., ///etc/...), not plang's installation: false
 
 ### ReadMultipleTextFiles
 
@@ -226,7 +260,7 @@ ReadMultipleTextFiles(String folderPath, String searchPattern = *, String[] excl
 ReadPdf(String path, String format = md, String imagePath = null, String password = null) : PLang.Modules.FileModule.Program+Pdf
 ```
 
-Reads pdf file and loads into return variable. format can be md|text. imagePath can be null|base64|pathToFolder.
+Reads pdf file and loads into return variable. format can be md|text|layout. layout keeps the horizontal position of words so table columns line up. imagePath can be null|base64|pathToFolder.
 
 
 ### ReadTextFile
@@ -237,6 +271,14 @@ ReadTextFile(String path, String returnValueIfFileNotExisting = , Boolean throwE
 
 Reads a text file and write the content into a variable(return value)
 
+- `path` *String*
+- `returnValueIfFileNotExisting` *String*, default ``
+- `throwErrorOnNotFound` *Boolean*, default `True` — false when the step says a missing file is not an error, e.g. `dont throw error on not found` or `empty variable if not found`. true otherwise
+- `loadVariables` *Boolean*, default `False` — true only when the step says in words to load variables, e.g. `read file x.txt, load variables`. A path or a step containing variables is not a reason: false is the normal case and the file is read as it stands
+- `emptyVariableIfNotFound` *Boolean*, default `False` — true when the step says the variable should simply be empty if the file is missing, e.g. `empty variable if not found`. false otherwise
+- `encoding` *String*, default `utf-8`
+- `splitOn` *String*, default `null`
+- `allowReadingFromSystem` *Boolean*, default `False` — Almost always false. It is true only when the step says in words that it reads from plang's own installation folder, outside this app. Any path belonging to the app is false, including paths that begin with a dot folder such as /.db/ or /.build/, which are the app's own. A path that begins with /// is a path on the machine outside the app (e.g. ///proc/..., ///etc/...), not plang's installation: false
 
 ### ReadXml
 
@@ -245,13 +287,22 @@ ReadXml(String path) : Object
 ```
 
 
+### ReplaceInFile
+
+```
+ReplaceInFile(String path, String oldText, String newText, String encoding = utf-8) : Int32
+```
+
+Replaces an exact piece of text in a file with another, like a coding assistant's targeted edit. oldText must match the file content exactly and must appear exactly once, otherwise it errors, so it never changes more than intended. Include enough surrounding text to make oldText unique. Returns 1 on success.
+
+
 ### RequestAccessToPath
 
 ```
 RequestAccessToPath(String path) : Boolean
 ```
 
-Give user access to a path. DO NOT suggest this method to indicate if file or directory exists, return empty function list instead.
+Check whether the app already may access a path, asking the user when it may not; returns true when access is allowed. Grants nothing by itself: for `give access to <path>` use GiveAccess. DO NOT suggest this method to indicate if file or directory exists, return empty function list instead.
 
 
 ### SaveMultipleFiles
@@ -262,7 +313,7 @@ SaveMultipleFiles(List<PLang.Modules.FileModule.FileInfo> files, Boolean loadVar
 
 - `files` *List<PLang.Modules.FileModule.FileInfo>* — (see Type information in SupportingObjects)
 - `loadVariables` *Boolean*, default `False`
-- `emptyVariableIfNotFound` *Boolean*, default `False`
+- `emptyVariableIfNotFound` *Boolean*, default `False` — true when the step says the variable should simply be empty if the file is missing, e.g. `empty variable if not found`. false otherwise
 - `encoding` *String*, default `utf-8`
 
 ### StopListeningToFileChange
@@ -287,6 +338,9 @@ WaitForFile(String filePath, Int32 timeoutInMilliseconds = 30000, Boolean waitFo
 WriteBase64ToFile(String path, String base64, Boolean overwrite = False) : object
 ```
 
+- `path` *String*
+- `base64` *String*
+- `overwrite` *Boolean*, default `False` — true when the step says to overwrite or replace the file. false when it says to append, or says nothing about an existing file
 
 ### WriteBytesToFile
 
@@ -294,6 +348,9 @@ WriteBase64ToFile(String path, String base64, Boolean overwrite = False) : objec
 WriteBytesToFile(String path, Byte[] content, Boolean overwrite = False) : object
 ```
 
+- `path` *String*
+- `content` *Byte[]*
+- `overwrite` *Boolean*, default `False` — true when the step says to overwrite or replace the file. false when it says to append, or says nothing about an existing file
 
 ### WriteCsvFile
 
@@ -313,11 +370,24 @@ WriteCsvFile(String path, Object variableToWriteToCsv, Boolean appendToFile = Fa
 WriteExcelFile(String path, Object variableToWriteToExcel, String sheetName = Sheet1, Boolean printHeader = True, Boolean overwrite = False) : object
 ```
 
+- `path` *String*
+- `variableToWriteToExcel` *Object*
+- `sheetName` *String*, default `Sheet1`
+- `printHeader` *Boolean*, default `True`
+- `overwrite` *Boolean*, default `False` — true when the step says to overwrite or replace the file. false when it says to append, or says nothing about an existing file
 
 ### WriteToFile
 
 ```
-WriteToFile(String path, Object content, Boolean overwrite = False, Boolean loadVariables = False, Boolean emptyVariableIfNotFound = False, String encoding = utf-8) : object
+WriteToFile(String path, Object content, Boolean overwrite = False, Boolean loadVariables = False, Boolean emptyVariableIfNotFound = False, String encoding = utf-8, String identity = null, List<String> contracts = null) : object
 ```
 
+- `path` *String*
+- `content` *Object*
+- `overwrite` *Boolean*, default `False` — true when the step says to overwrite or replace the file. false when it says to append, or says nothing about an existing file
+- `loadVariables` *Boolean*, default `False` — true only when the step says in words that the %variables% inside the content should be replaced with their values before it is written. A content that merely contains variables is not a reason: `content: {"a": %x%}` writes the variable through as it stands, which is the normal case and false
+- `emptyVariableIfNotFound` *Boolean*, default `False` — true when the step says the variable should simply be empty if the file is missing, e.g. `empty variable if not found`. false otherwise
+- `encoding` *String*, default `utf-8`
+- `identity` *String*, default `null` — Only when the step says to sign the file, e.g. `sign with identity default`. 'default' is the current identity. The signature is written next to the file as <file>.signature and covers the file's name and the sha256 of the bytes written. null when the step does not ask for a signature
+- `contracts` *List<String>*, default `null`
 

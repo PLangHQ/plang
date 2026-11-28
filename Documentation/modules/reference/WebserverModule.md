@@ -21,6 +21,14 @@ Add route to webserver. When goalToCall is null, use the path parameter in the r
 - `requestProperties` *PLang.Modules.WebserverModule.Program+RequestProperties*, default `null` — (see Type information in SupportingObjects)
 - `responseProperties` *PLang.Modules.WebserverModule.Program+ResponseProperties*, default `null` — (see Type information in SupportingObjects)
 
+Examples:
+
+- add route /admin, call /admin/Overview => path="/admin", pathParameters=[], goalToCall={"Name":"/admin/Overview"}, requestProperties=null
+- add route "/admin/crm/vendor/%id%(number)", [get, post], call /admin/crm/Vendor => path="/admin/crm/vendor/%id%(number)", pathParameters=[{"Name":"id","VariableOrValue":"%id%","Type":"number"}], goalToCall={"Name":"/admin/crm/Vendor"}, requestProperties={"Methods":["GET","POST"]}
+- add route /admin/idea, post, max content length 8mb, call /admin/Idea => path="/admin/idea", pathParameters=[], goalToCall={"Name":"/admin/Idea"}, requestProperties={"Methods":["POST"],"MaxContentLengthInBytes":8388608}
+- add route /zoo/feed, content type application/json, call /zoo/Feed => path="/zoo/feed", pathParameters=[], goalToCall={"Name":"/zoo/Feed"}, responseProperties={"ContentType":"application/json"}
+- add route /shop/%sku%/review, call /shop/Review productSku=%sku% => path="/shop/%sku%/review", pathParameters=[{"Name":"sku","VariableOrValue":"%sku%"}], goalToCall={"Name":"/shop/Review","Parameters":{"productSku":"%sku%"}}
+
 ### DeleteCookie
 
 ```
@@ -56,13 +64,20 @@ GetRequestHeader(String key) : String
 ```
 
 
+### GetRequestMetrics
+
+```
+GetRequestMetrics(String since = null, Int32 windowMinutes = 60) : Dictionary<String,Object>
+```
+
+
 ### GetUserIp
 
 ```
 GetUserIp(String headerKey = null) : String
 ```
 
-headerKey should be null unless specified by user
+Returns the ip address of the connection. headerKey should be null unless specified by user (e.g. X-Forwarded-For when the app runs behind a proxy); then the value of that header is returned
 
 
 ### Redirect

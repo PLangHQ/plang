@@ -3,7 +3,7 @@
 Hint: `[db]`  
 Type: `PLang.Modules.DbModule.Program`
 
-Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. Isolated data pattern (idp)
+Database access, select, insert, update, delete and execute raw sql, on a table of any name. A step naming a datasource, e.g. `ds: "dev"`, is database access, except `load %x%` and `store %x%` of a %variable%, which belong to the variable module. Handles transactions. Sets and create datasources. Isolated data pattern (idp)
 
 ## Methods
 
@@ -55,14 +55,14 @@ EndTransaction() : object
 ### Execute
 
 ```
-Execute(String dataSourceName, String sql, List<String> tableAllowList = null, List<PLang.Modules.DbModule.Program+ParameterInfo> parameters = null) : Int64
+Execute(String sql, List<String> tableAllowList = null, String dataSourceName = null, List<PLang.Modules.DbModule.Program+ParameterInfo> parameters = null) : Int64
 ```
 
 Executes a sql statement that defined by user, such as `create index ..`, `drop ..`. Preferable not for select,update,insert statements. This statement will be validated. Since this is pure and dynamic execution on database, user MUST to define list of tables that are allowed to be updated
 
-- `dataSourceName` *String*
 - `sql` *String*
 - `tableAllowList` *List<String>*, default `null`
+- `dataSourceName` *String*, default `null`
 - `parameters` *List<PLang.Modules.DbModule.Program+ParameterInfo>*, default `null` — (see Type information in SupportingObjects)
 
 ### ExecuteByConnectionString
@@ -118,11 +118,15 @@ Execute sql by connection string
 ### ExecuteSqlFile
 
 ```
-ExecuteSqlFile(String dataSourceName, String fileName, List<String> tableAllowList = null) : Int64
+ExecuteSqlFile(String dataSourceName, String fileName, List<String> tableAllowList = null, List<PLang.Modules.DbModule.Program+ParameterInfo> parameters = null) : Int64
 ```
 
-Executes a sql file
+Executes a sql file that writes (update, insert, delete), e.g. `execute sql/mark.sql, email=%email%`. The sql is written in the file with @name for each value, and the step passes the values as name=value
 
+- `dataSourceName` *String*
+- `fileName` *String*
+- `tableAllowList` *List<String>*, default `null`
+- `parameters` *List<PLang.Modules.DbModule.Program+ParameterInfo>*, default `null` — One entry per named value the sql file expects. The step writes each as name=value, with or without the word parameters in front, e.g. `email=%email%` is one entry. ParameterName is that name with an @ in front, VariableNameOrValue is the value. This is always a list, never the bare value (see Type information in SupportingObjects)
 
 ### GetAdditionalAssistantErrorInfo
 
@@ -244,14 +248,14 @@ LoadExtension(String dataSourceName, String fileName, String procName = null) : 
 ### QueryDynamicSql
 
 ```
-QueryDynamicSql(List<String> dataSourceNames = null, String sql, List<String> tableAllowList = null, List<PLang.Modules.DbModule.Program+ParameterInfo> parameters = null) : PLang.Modules.DbModule.Table
+QueryDynamicSql(String sql, List<String> tableAllowList = null, List<String> dataSourceNames = null, List<PLang.Modules.DbModule.Program+ParameterInfo> parameters = null) : PLang.Modules.DbModule.Table
 ```
 
 Query sql statement that is fully from a %variable%. Since this is pure and dynamic execution on database, user MUST to define list of tables that are allowed to be queried
 
-- `dataSourceNames` *List<String>*, default `null`
 - `sql` *String*
 - `tableAllowList` *List<String>*, default `null`
+- `dataSourceNames` *List<String>*, default `null`
 - `parameters` *List<PLang.Modules.DbModule.Program+ParameterInfo>*, default `null` — (see Type information in SupportingObjects)
 
 Examples:
@@ -264,19 +268,20 @@ Examples:
 QuerySqlFile(List<String> dataSourceNames = null, String fileName, List<String> tableAllowList = null, List<PLang.Modules.DbModule.Program+ParameterInfo> parameters = null, Nullable<Int32> rowsToReturn = null) : Object
 ```
 
-Query the database with a sql file pointed to by path, e.g. query sql/file.sql. It can use multiple datasource and parameterer
+Query the database with a sql file pointed to by path, e.g. query sql/file.sql. It can use multiple datasource and parameterer. This is where a long query belongs (many lines, several CTEs, window functions): the sql is written in the file with @name for each value, and the step passes the values, `query sql/trends.sql, name=%name%, tab=%tab%, write to %rows%`. The file is run as it is, so a % inside it, e.g. like 'x%', is never a variable. When the step also says to return 1 row, set rowsToReturn=1: the file is still the sql, never write sql of your own
 
 - `dataSourceNames` *List<String>*, default `null`
 - `fileName` *String*
 - `tableAllowList` *List<String>*, default `null`
-- `parameters` *List<PLang.Modules.DbModule.Program+ParameterInfo>*, default `null` — (see Type information in SupportingObjects)
+- `parameters` *List<PLang.Modules.DbModule.Program+ParameterInfo>*, default `null` — One entry per named value the sql file expects. The step writes each as name=value, with or without the word parameters in front, e.g. `kt=%kt%` is one entry. ParameterName is that name with an @ in front, VariableNameOrValue is the value. This is always a list, never the bare value: parameters="%kt%" binds nothing (see Type information in SupportingObjects)
 - `rowsToReturn` *Nullable<Int32>*, default `null`
 
 Examples:
 
-- query usersCount.sql, parameters: date=%now%, ds:"data", "sales", table: "users", write to %result% => fileName="usersCount.sql", parameter=[{"date":"%now%"}], dataSourceNames=["data", "sales"], tableAllowList=["users"], ReturnValues="%result%"
+- query usersCount.sql, parameters: date=%now%, ds:"data", "sales", table: "users", write to %result% => fileName="usersCount.sql", parameters=[{"TypeFullName":"System.Object","ParameterName":"@date","VariableNameOrValue":"%now%"}], dataSourceNames=["data", "sales"], tableAllowList=["users"], ReturnValues="%result%"
 - query usersCount.sql, table: "users", write to %result% => fileName="usersCount.sql", tableAllowList=["users"], ReturnValues="%result%"
 - query sql/totalProducts.sql, table: "products", write to %productCount% => fileName="totalProducts.sql", tableAllowList=["products"], ReturnValues="%productCount%"
+- query sql/lookup.sql, kt=%kt%, table: "people", write to %person% => fileName="lookup.sql", parameters=[{"TypeFullName":"System.Object","ParameterName":"@kt","VariableNameOrValue":"%kt%"}], tableAllowList=["people"], ReturnValues="%person%"
 
 ### ResetSetup
 
@@ -298,7 +303,7 @@ Rollback() : object
 Select(String dataSourceName, String sql, List<PLang.Modules.DbModule.Program+ParameterInfo> sqlParameters = null) : PLang.Modules.DbModule.Table
 ```
 
-Any step starting with SELECT/WITH using one datasource.
+Any step starting with SELECT/WITH using one datasource. Every %variable% in the step, wherever it stands in the sql (where, case, join, a CTE, a subquery, a window function), is replaced by an @parameter in the sql text and listed once in sqlParameters, the same @parameter at every place the %variable% is used. The sql you return contains no %variable%, the length of the sql makes no difference. A step that carries a long query (many lines, several CTEs) is better written as a sql file, `query sql/file.sql, name=%name%`
 
 - `dataSourceName` *String*
 - `sql` *String*
@@ -306,7 +311,8 @@ Any step starting with SELECT/WITH using one datasource.
 
 Examples:
 
-- select * from orders where id=%id%, ds: users/%user.id%, write to %orders% => sql="select * from orders where id=@id", sqlParameters=["id", "%id"], dataSourceName="users/%user.id%", ReturnValues=["%orders%"]
+- select * from orders where id=%id%, ds: users/%user.id%, write to %orders% => sql="select * from orders where id=@id", sqlParameters=[{"TypeFullName":"System.Int64","ParameterName":"@id","VariableNameOrValue":"%id%"}], dataSourceName="users/%user.id%", ReturnValues=["%orders%"]
+- with per as (select case %tab% when 'week' then 7 else 1 end as d), recent as (select * from events where server = %name% and day > date('now', '-' || (select d from per) || ' day')) select kind, count(*) from recent where server = %name% group by kind, write to %rows% => sql="with per as (select case @tab when 'week' then 7 else 1 end as d), recent as (select * from events where server = @name and day > date('now', '-' || (select d from per) || ' day')) select kind, count(*) from recent where server = @name group by kind", sqlParameters=[{"TypeFullName":"System.String","ParameterName":"@tab","VariableNameOrValue":"%tab%"},{"TypeFullName":"System.String","ParameterName":"@name","VariableNameOrValue":"%name%"}], ReturnValues=["%rows%"]
 
 ### SelectOneRow
 
@@ -314,7 +320,7 @@ Examples:
 SelectOneRow(String dataSourceName, String sql, List<PLang.Modules.DbModule.Program+ParameterInfo> sqlParameters = null) : Object
 ```
 
-When SELECT/WITH should return 1 row (limit 1)
+When SELECT/WITH should return 1 row (limit 1). Every %variable% in the step, wherever it stands in the sql, is an @parameter in the sql text and listed once in sqlParameters, the sql text holds no %variable%
 
 - `dataSourceName` *String*
 - `sql` *String*
@@ -346,7 +352,7 @@ Doing SELECT/WITH on multiple datasources
 
 Examples:
 
-- select * from main.users u, join users.orders o on o.userId=u.id where u.id=%id%, ds: data, users/%user.id%, write to %results% => sql="select * from main.users u join users.orders o on o.userId=u.id where u.id=%id%", sqlParameters=["id", "%id"], dataSourceName=["data", "users/%user.id%"], ReturnValues=["%results%"]
+- select * from main.users u, join users.orders o on o.userId=u.id where u.id=%id%, ds: data, users/%user.id%, write to %results% => sql="select * from main.users u join users.orders o on o.userId=u.id where u.id=@id", sqlParameters=[{"TypeFullName":"System.Int64","ParameterName":"@id","VariableNameOrValue":"%id%"}], dataSourceName=["data", "users/%user.id%"], ReturnValues=["%results%"]
 
 ### SetDataSourceNames
 

@@ -10,12 +10,12 @@ get apps available, compiles plang code, gets goals and steps from .goal files, 
 ### BuildPlangCode
 
 ```
-BuildPlangCode(PLang.Building.Model.Goal goal) : object
+BuildPlangCode(List<PLang.Building.Model.Goal> goals) : Object
 ```
 
-Builds(compiles) a goal in plang code
+Builds(compiles) one or more goals in plang code. Pass a single goal or a list of goals, e.g. from 'get goals in "/folder"'. Every distinct .goal file among them is compiled. Returns an error when any step failed to build, so 'on error' fires; returns nothing when all built.
 
-- `goal` *PLang.Building.Model.Goal* — (see Type information in SupportingObjects)
+- `goals` *List<PLang.Building.Model.Goal>* — (see Type information in SupportingObjects)
 
 ### BuildPlangStep
 

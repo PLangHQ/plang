@@ -3,7 +3,7 @@
 Hint: `[ui]`  
 Type: `PLang.Modules.UiModule.Program`
 
-Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. Set the (default) layout for the UI. Execute javascript.
+Puts content into the page the user is looking at. A render step belongs here when it says where on the page the result goes, naming a cssSelector such as #main or an action such as replace, append, showModal or navigate, e.g. `render 'page.html' to #main`. A render step that captures the result in a variable instead, `write to %html%`, is the template engine module and shows nothing. Also takes any user command and tries to convert it to html, adds, removes and inserts content at a css selector, sets the (default) layout for the UI, and executes javascript.
 
 ## Methods
 
@@ -59,28 +59,37 @@ RenderImageToHtml(String path) : Object
 ```
 
 
+### RenderInMainLayout
+
+```
+RenderInMainLayout(String content, String actor = user) : String
+```
+
+
 ### RenderTemplate
 
 ```
 RenderTemplate(PLang.Modules.UiModule.Program+RenderTemplateOptions options) : Object
 ```
 
-Examples:
+Everything goes inside the single options parameter, and what is rendered goes inside its RenderMessage. Examples:
 ```plang
-- render product.html => isTemplateFile=true, renderToOutputstream = true
-- render frontpage.html, write to %html% => isTemplateFile=true, renderToOutputstream = false
-- render "Is this correct file content.html" => isTemplateFile = false, renderToOutputstream = true
-- render product.html to #main => renderToOutputstream = true, ReRender=true, Target="#main"
-- replace #main with template.html => Target=#main, actions=["replace"], ReRender=true, FileName=template.html, renderToOutputStream= true
-- set html of #product to product.html => Target=#product, actions=["replace"], ReRender=true, FileName=product.html, renderToOutputStream= true
-- append to #list to item.html, scroll to view => Target=#list, actions=["replace", "scrollIntoView"], ReRender=true, FileName=item.html, renderToOutputStream= true
-
-Target can be null when not defined by user.
-Actions: list of action to preform, the default is 'replace'(innerHTML).
-ReRender: default is true. normal behaviour is to re-render the content, like user browsing a website
-When user doesn't write the return value into any variable, set it as renderToOutputstream=true, or when user defines it.
-IsTemplateFile: set as true when RenderMessage.Content looks like a fileName, e.g. %fileName%, %template%, etc. If Content is clearly a text, set as false
+- render product.html
+  => options={"RenderMessage":{"Content":"product.html"},"IsTemplateFile":true,"RenderToOutputstream":true}
+- render frontpage.html, write to %html%
+  => options={"RenderMessage":{"Content":"frontpage.html"},"IsTemplateFile":true,"RenderToOutputstream":false}
+- render "<p>plain text</p>"
+  => options={"RenderMessage":{"Content":"<p>plain text</p>"},"IsTemplateFile":false,"RenderToOutputstream":true}
+- append to #list to item.html, scroll to view
+  => options={"RenderMessage":{"Content":"item.html","Target":"#list","Actions":["replace","scrollIntoView"]},"IsTemplateFile":true,"RenderToOutputstream":true,"DontRenderMainLayout":true}
+- render welcome.html, cssSelector: "#main", action: "replace"
+  => options={"RenderMessage":{"Content":"welcome.html","Target":"#main","Actions":["replace"]},"IsTemplateFile":true,"RenderToOutputstream":true,"DontRenderMainLayout":false}
 ```
+Target is null when the step names no selector, and lives inside RenderMessage with Content and Actions.
+ReRender defaults to true, the normal behaviour of re-rendering the content.
+RenderToOutputstream is true when the step writes the result into no variable.
+DontRenderMainLayout turns on the selector the step names, not on whether it names one. #main is the page's main render area and takes false; any other selector takes true.
+IsTemplateFile is true when RenderMessage.Content is a file name, which includes a path written out in the step, and false when Content is the text to render.
 
 - `options` *PLang.Modules.UiModule.Program+RenderTemplateOptions* — (see Type information in SupportingObjects)
 
@@ -137,7 +146,7 @@ Target defines where in the UI to write the content, e.g. a cssSelector when ui 
 ShowElement(PLang.Services.OutputStream.Messages.ExecuteMessage executeMessage) : object
 ```
 
-Set ExecuteMessage.Actions="show"
+Show an element that is already on the page, by css selector. Set ExecuteMessage.Actions="show". A step that renders a template file into the page is RenderTemplate, even when it names an action such as show or showModal: the action is part of rendering, not a step of its own
 
 - `executeMessage` *PLang.Services.OutputStream.Messages.ExecuteMessage* — (see Type information in SupportingObjects)
 

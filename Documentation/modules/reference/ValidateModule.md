@@ -67,13 +67,25 @@ ValidateFileExtension(List<String> allowedExtensions = null, String fileName) : 
 ### ValidateItemIsInList
 
 ```
-ValidateItemIsInList(Object[] itemsToCheckInList, Collections.IList list, String errorMessage = item is not in list, Boolean caseSensitive = False) : List<Object>
+ValidateItemIsInList(Object[] itemsToCheckInList, Collections.IList list, String errorMessage = item is not in list, Boolean caseSensitive = False, Int32 statusCode = 400) : List<Object>
 ```
+
+Every item in itemsToCheckInList must be in list, e.g. `validate %answer% is in list %question.options%, "Ógilt svar"`. A single value is checked as one item. Fails on the first item that is not in the list.
 
 - `itemsToCheckInList` *Object[]*
 - `list` *Collections.IList* — (see Type information in SupportingObjects)
 - `errorMessage` *String*, default `item is not in list`
 - `caseSensitive` *Boolean*, default `False`
+- `statusCode` *Int32*, default `400`
+
+### ValidateJsonSchema
+
+```
+ValidateJsonSchema(Object data, String schemaFile) : List<String>
+```
+
+Checks a json answer (an object, or json text) against a JSON Schema file and returns the problems, one line each: `<path> <what is wrong>`. An empty list means it passes. e.g. `validate %answer% against json schema "/schema/health.schema.json", write to %problems%`. Schemas written for draft 2020-12 (with $defs) are read. Not an error when there are problems: look at the list
+
 
 ### ValidateSignedContract
 

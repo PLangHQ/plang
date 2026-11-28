@@ -5,6 +5,7 @@ Type: `PLang.Modules.ConditionalModule.Program`
 
 if statement for the user intent. Example 1:'if %isValid% is true then call SomeGoal, else call OtherGoal', this condition would return true if %isValid% is true and call a goals on either conditions. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists. Prefer predefined methods in this module over SimpleCondition and CompoundCondition. 
 if statement can throw an error, e.g. `if %isValid% is false, then throw error 'Not valid'`
+A one line if that calls goals, `if %codeCount% >= 2 then call goal HandleOverLimit, else call goal IssueCodeNow`, sets goalToCallIfTrue to HandleOverLimit and goalToCallIfFalse to IssueCodeNow.
 
 ## Methods
 
@@ -14,13 +15,17 @@ if statement can throw an error, e.g. `if %isValid% is false, then throw error '
 CompoundCondition(PLang.Modules.ConditionalModule.ConditionEvaluator+CompoundCondition condition, PLang.Models.GoalToCallInfo goalToCallIfTrue = null, PLang.Models.GoalToCallInfo goalToCallIfFalse = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnTrue = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnFalse = null) : Object
 ```
 
-Logic: AND|OR Operator: ==|!=|<|>|<=|>=|in|contains|startswith|endswith|indexOf.  IsNot property indicates if the condition is a negation of the specified operator. True for ‘is not’, ‘does not’, etc.
+Logic: AND|OR Operator: ==|!=|<|>|<=|>=|in|contains|startswith|endswith|indexOf. Equality is `==` (never a single `=`).  IsNot property indicates if the condition is a negation of the specified operator. True for ‘is not’, ‘does not’, etc. A goal the step calls goes in goalToCallIfTrue (after `then`) and goalToCallIfFalse (after `else`), also when the whole if is written on one line.
 
 - `condition` *PLang.Modules.ConditionalModule.ConditionEvaluator+CompoundCondition* — (see Type information in SupportingObjects)
 - `goalToCallIfTrue` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
 - `goalToCallIfFalse` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
 - `throwErrorOnTrue` *PLang.Modules.ThrowErrorModule.ErrorInfo*, default `null` — (see Type information in SupportingObjects)
 - `throwErrorOnFalse` *PLang.Modules.ThrowErrorModule.ErrorInfo*, default `null` — (see Type information in SupportingObjects)
+
+Examples:
+
+- if %count% > 0 and %isValid% then call goal Process, else call goal Reject => condition={"Kind":"Compound","Logic":"AND","Conditions":[...]}, goalToCallIfTrue={Name="Process"}, goalToCallIfFalse={Name="Reject"}
 
 ### ContainsNumbers
 
@@ -30,7 +35,7 @@ ContainsNumbers(Object item, List<Int32> contains = null, PLang.Models.GoalToCal
 
 example: `if %code% contains 123, 345 then ....`, `if %zip% is one of (223,333) then...`
 
-- `item` *Object*
+- `item` *Object* — The value being tested, the left side of the comparison
 - `contains` *List<Int32>*, default `null`
 - `goalToCallIfTrue` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
 - `goalToCallIfFalse` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
@@ -45,9 +50,9 @@ ContainsString(Object item, String contains, Boolean isNot = False, PLang.Models
 
 isNot property reverse true to false, example: `if %name% contains "john" then`, `if %product% contains %title% then call goal DoProdudct`, `if %name% does not contain "bill"` (isNot=true)
 
-- `item` *Object*
-- `contains` *String*
-- `isNot` *Boolean*, default `False`
+- `item` *Object* — The value being tested, the left side of the comparison, e.g. %name% in `if %name% contains "john"`
+- `contains` *String* — What it is tested against, the right side, e.g. "john" in `if %name% contains "john"`
+- `isNot` *Boolean*, default `False` — true when the step negates the test, e.g. `does not contain`, `does not start with`, `is not`. false when the step states the test plainly
 - `goalToCallIfTrue` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
 - `goalToCallIfFalse` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
 - `throwErrorOnTrue` *PLang.Modules.ThrowErrorModule.ErrorInfo*, default `null` — (see Type information in SupportingObjects)
@@ -64,6 +69,27 @@ DirectoryExists(String dirPathOrVariableName, PLang.Models.GoalToCallInfo goalTo
 - `goalToCallIfFalse` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
 - `throwErrorOnTrue` *PLang.Modules.ThrowErrorModule.ErrorInfo*, default `null` — (see Type information in SupportingObjects)
 - `throwErrorOnFalse` *PLang.Modules.ThrowErrorModule.ErrorInfo*, default `null` — (see Type information in SupportingObjects)
+
+### EndsWith
+
+```
+EndsWith(Object item, String endsWith, Boolean ignoreCase = False, Boolean isNot = False, PLang.Models.GoalToCallInfo goalToCallIfTrue = null, PLang.Models.GoalToCallInfo goalToCallIfFalse = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnTrue = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnFalse = null) : Object
+```
+
+For a step that tests how a value ends, e.g. `if %path% ends with ".md" then`. For the negative form use NotEndsWith.
+
+- `item` *Object* — The value being tested, the left side, e.g. %path% in `if %path% ends with ".md"`
+- `endsWith` *String* — What it is tested against, the right side, e.g. ".md"
+- `ignoreCase` *Boolean*, default `False` — true when letter case must not matter. false unless the step asks for that
+- `isNot` *Boolean*, default `False` — true when the step negates the test. Prefer the NotEndsWith method, which says it in its name
+- `goalToCallIfTrue` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
+- `goalToCallIfFalse` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
+- `throwErrorOnTrue` *PLang.Modules.ThrowErrorModule.ErrorInfo*, default `null` — (see Type information in SupportingObjects)
+- `throwErrorOnFalse` *PLang.Modules.ThrowErrorModule.ErrorInfo*, default `null` — (see Type information in SupportingObjects)
+
+Examples:
+
+- if %file% ends with ".csv" then => item="%file%", endsWith=".csv"
 
 ### FileExists
 
@@ -107,6 +133,8 @@ IsBase64(String content, PLang.Models.GoalToCallInfo goalToCallIfTrue = null, PL
 IsEmpty(Object item, PLang.Models.GoalToCallInfo goalToCallIfTrue = null, PLang.Models.GoalToCallInfo goalToCallIfFalse = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnTrue = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnFalse = null) : Object
 ```
 
+Is a value empty or null, e.g. `if %question% is empty then`. This is the dedicated method for that test and is the one to use, rather than SimpleCondition with its isEmpty operator
+
 - `item` *Object*
 - `goalToCallIfTrue` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
 - `goalToCallIfFalse` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
@@ -133,7 +161,7 @@ Check if item equals(==) another object.
 - `item2` *Object*
 - `goalToCallIfTrue` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
 - `goalToCallIfFalse` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
-- `ignoreCase` *Boolean*, default `True`
+- `ignoreCase` *Boolean*, default `True` — true is the normal case, letter case does not matter. false only when the step asks for an exact, case sensitive comparison
 - `throwErrorOnTrue` *PLang.Modules.ThrowErrorModule.ErrorInfo*, default `null` — (see Type information in SupportingObjects)
 - `throwErrorOnFalse` *PLang.Modules.ThrowErrorModule.ErrorInfo*, default `null` — (see Type information in SupportingObjects)
 
@@ -185,7 +213,7 @@ IsNotEqual(Object item1, Object item2, PLang.Models.GoalToCallInfo goalToCallIfT
 - `item2` *Object*
 - `goalToCallIfTrue` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
 - `goalToCallIfFalse` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
-- `ignoreCase` *Boolean*, default `True`
+- `ignoreCase` *Boolean*, default `True` — true is the normal case, letter case does not matter. false only when the step asks for an exact, case sensitive comparison
 - `throwErrorOnTrue` *PLang.Modules.ThrowErrorModule.ErrorInfo*, default `null` — (see Type information in SupportingObjects)
 - `throwErrorOnFalse` *PLang.Modules.ThrowErrorModule.ErrorInfo*, default `null` — (see Type information in SupportingObjects)
 
@@ -225,6 +253,65 @@ IsTrue(Nullable<Boolean> item = null, PLang.Models.GoalToCallInfo goalToCallIfTr
 - `throwErrorOnTrue` *PLang.Modules.ThrowErrorModule.ErrorInfo*, default `null` — (see Type information in SupportingObjects)
 - `throwErrorOnFalse` *PLang.Modules.ThrowErrorModule.ErrorInfo*, default `null` — (see Type information in SupportingObjects)
 
+### NotContainsString
+
+```
+NotContainsString(Object item, String contains, PLang.Models.GoalToCallInfo goalToCallIfTrue = null, PLang.Models.GoalToCallInfo goalToCallIfFalse = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnTrue = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnFalse = null) : Object
+```
+
+For a step that says the value does NOT contain something, e.g. `if %user.role% does not contain "admin" then`. For the positive form use ContainsString.
+
+- `item` *Object* — The value being tested, the left side, e.g. %user.role% in `if %user.role% does not contain "admin"`
+- `contains` *String* — What it is tested against, the right side, e.g. "admin"
+- `goalToCallIfTrue` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
+- `goalToCallIfFalse` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
+- `throwErrorOnTrue` *PLang.Modules.ThrowErrorModule.ErrorInfo*, default `null` — (see Type information in SupportingObjects)
+- `throwErrorOnFalse` *PLang.Modules.ThrowErrorModule.ErrorInfo*, default `null` — (see Type information in SupportingObjects)
+
+Examples:
+
+- if %tags% does not contain "draft" then => item="%tags%", contains="draft"
+
+### NotEndsWith
+
+```
+NotEndsWith(Object item, String endsWith, Boolean ignoreCase = False, PLang.Models.GoalToCallInfo goalToCallIfTrue = null, PLang.Models.GoalToCallInfo goalToCallIfFalse = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnTrue = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnFalse = null) : Object
+```
+
+For a step that says the value does NOT end with something, e.g. `if %path% does not end with ".md" then`. For the positive form use EndsWith.
+
+- `item` *Object* — The value being tested, the left side, e.g. %path% in `if %path% does not end with ".md"`
+- `endsWith` *String* — What it is tested against, the right side, e.g. ".md"
+- `ignoreCase` *Boolean*, default `False` — true when letter case must not matter. false unless the step asks for that
+- `goalToCallIfTrue` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
+- `goalToCallIfFalse` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
+- `throwErrorOnTrue` *PLang.Modules.ThrowErrorModule.ErrorInfo*, default `null` — (see Type information in SupportingObjects)
+- `throwErrorOnFalse` *PLang.Modules.ThrowErrorModule.ErrorInfo*, default `null` — (see Type information in SupportingObjects)
+
+Examples:
+
+- if %file% does not end with ".tmp" then => item="%file%", endsWith=".tmp"
+
+### NotStartsWith
+
+```
+NotStartsWith(Object item, String startsWith, Boolean ignoreCase = False, PLang.Models.GoalToCallInfo goalToCallIfTrue = null, PLang.Models.GoalToCallInfo goalToCallIfFalse = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnTrue = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnFalse = null) : Object
+```
+
+For a step that says the value does NOT start with something, e.g. `if %goal% does not start with "tests/" then`. For the positive form use StartsWith.
+
+- `item` *Object* — The value being tested, the left side, e.g. %goal% in `if %goal% does not start with "tests/"`
+- `startsWith` *String* — What it is tested against, the right side, e.g. "tests/"
+- `ignoreCase` *Boolean*, default `False` — true when letter case must not matter. false unless the step asks for that
+- `goalToCallIfTrue` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
+- `goalToCallIfFalse` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
+- `throwErrorOnTrue` *PLang.Modules.ThrowErrorModule.ErrorInfo*, default `null` — (see Type information in SupportingObjects)
+- `throwErrorOnFalse` *PLang.Modules.ThrowErrorModule.ErrorInfo*, default `null` — (see Type information in SupportingObjects)
+
+Examples:
+
+- if %file% does not start with "tmp/" then => item="%file%", startsWith="tmp/"
+
 ### RunInlineCode
 
 ```
@@ -248,15 +335,22 @@ SetVariableWithCondition(String variableName, Boolean boolValue, Object valueIfT
 SimpleCondition(PLang.Modules.ConditionalModule.ConditionEvaluator+SimpleCondition condition, PLang.Models.GoalToCallInfo goalToCallIfTrue = null, PLang.Models.GoalToCallInfo goalToCallIfFalse = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnTrue = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnFalse = null) : Object
 ```
 
-Operator: ==|!=|<|>|<=|>=|in|isEmpty|contains|startswith|endswith|indexOf. IsNot property indicates if the condition is a negation of the specified operator. 
+One condition made of a value and an operator, for cases no dedicated method covers. When a dedicated method exists for the test, use that instead: IsEmpty for `is empty`, IsEqual for `==`, StartsWith for `starts with`, ContainsString for `contains`.
+Operator: ==|!=|<|>|<=|>=|in|isEmpty|contains|startswith|endswith|indexOf. Equality is `==` (never a single `=`). IsNot property indicates if the condition is a negation of the specified operator. 
 IsNot=True for ‘is not’, ‘does not’, 
 Logic: convert "&&" => "AND", "||" => "OR"
+A goal the step calls goes in goalToCallIfTrue (after `then`) and goalToCallIfFalse (after `else`), also when the whole if is written on one line. Never leave them out when the step says `call`.
 
 - `condition` *PLang.Modules.ConditionalModule.ConditionEvaluator+SimpleCondition* — (see Type information in SupportingObjects)
 - `goalToCallIfTrue` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
 - `goalToCallIfFalse` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
 - `throwErrorOnTrue` *PLang.Modules.ThrowErrorModule.ErrorInfo*, default `null` — (see Type information in SupportingObjects)
 - `throwErrorOnFalse` *PLang.Modules.ThrowErrorModule.ErrorInfo*, default `null` — (see Type information in SupportingObjects)
+
+Examples:
+
+- if %codeCount% >= 2 then call goal HandleOverLimit, else call goal IssueCodeNow => condition={"Kind":"Simple","LeftValue":"%codeCount%","Operator":">=","RightValue":2}, goalToCallIfTrue={Name="HandleOverLimit"}, goalToCallIfFalse={Name="IssueCodeNow"}
+- if %total% > 100 then call ApplyDiscount amount=%total% => condition={"Kind":"Simple","LeftValue":"%total%","Operator":">","RightValue":100}, goalToCallIfTrue={Name="ApplyDiscount", Parameters={"amount":"%total%"}}
 
 ### StartsWith
 
@@ -266,10 +360,10 @@ StartsWith(Object item, String startsWith, Boolean isNot = False, Boolean ignore
 
 isNot property reverse true to false, example: `if %name% starts with "john" then`, `if %source% starts with "t" then call goal Track`, `if %name% does not start with "bill"` (isNot=true). Use ignoreCase=true to compare case insensitive.
 
-- `item` *Object*
-- `startsWith` *String*
-- `isNot` *Boolean*, default `False`
-- `ignoreCase` *Boolean*, default `False`
+- `item` *Object* — The value being tested, the left side of the comparison, e.g. %path% in `if %path% starts with "/"`
+- `startsWith` *String* — What it is tested against, the right side, e.g. "/" in `if %path% starts with "/"`
+- `isNot` *Boolean*, default `False` — true when the step negates the test, e.g. `does not contain`, `does not start with`, `is not`. false when the step states the test plainly
+- `ignoreCase` *Boolean*, default `False` — true when letter case must not matter in the comparison. false unless the step asks for that
 - `goalToCallIfTrue` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
 - `goalToCallIfFalse` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
 - `throwErrorOnTrue` *PLang.Modules.ThrowErrorModule.ErrorInfo*, default `null` — (see Type information in SupportingObjects)
