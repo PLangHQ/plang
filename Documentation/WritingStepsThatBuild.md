@@ -89,7 +89,7 @@ Setup
 ```plang
 - if %email% is empty then                          → ConditionalModule.IsEmpty
     - throw error "Email is missing", status code 400
-- if %email% does not contain "@" then              → ConditionalModule.NotContainsString
+- if %email% does not contain "@" then              → ConditionalModule.ContainsString, isNot: true
     - throw error "Not an email", status code 400
 - if %email% matches "^[^@]+@[^@]+$" then           → ConditionalModule.SimpleCondition
     - write out "looks like an email"

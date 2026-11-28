@@ -71,7 +71,7 @@ grep -A2 '"Name": "sql"' ".build/Data/03. select_product.pr"
 | `select ...` (many rows) | `Function.Name` is `Select`; the variable is a list, so `%rows.Count%` works and `%rows[0].name%` is the first row. |
 | `query file "x.sql"` | `Function.Name` is `QuerySqlFile` and `dataSourceNames` and `tableAllowList` are among the parameters. A step that became `ReadTextFile` reads the file as text. |
 | `set cache` | `SetForAbsoluteExpiration` or `SetForSlidingExpiration`, and `timeInSeconds`. |
-| `if ...` | `ModuleType` is `ConditionalModule` and the function matches the test, e.g. `IsEmpty`, `NotContainsString` for `does not contain`, `CompoundCondition` for `and`/`or`. |
+| `if ...` | `ModuleType` is `ConditionalModule` and the function matches the test, e.g. `IsEmpty`, `ContainsString` with `isNot` true for `does not contain`, `CompoundCondition` for `and`/`or`. A test with `not` in it must have `isNot` true or a negative operator such as `notContains`. |
 | `throw error` | `ThrowErrorModule.Throw` with the status code you wrote. |
 | `call goal X` | `CallGoalModule.RunGoal`, the goal name, and each parameter you passed. |
 | A step that reads a value from the machine or a service | The function name is the one you meant, not a neighbour in the same module that returns something else. |
