@@ -1169,6 +1169,8 @@ When the user points to a sql file (a path ending in .sql), the sql lives in tha
 			instruction = instruction with { Function = gf };
 
 			logger.LogInformation($"  - ✅ Sql statement validated - {sql.MaxLength(30, "...")} - {step.Goal.RelativeGoalPath}:{step.LineNumber}");
+			WarnOnColumnNotInSql(step, gf, sql, dataSourceName);
+			WarnOnPropertyOfSingleColumn(step, gf, sql);
 
 			var setupFile = ModuleSettings.FindSetupGoal(goalParser.GetGoals(), dataSource.Name);
 			if (setupFile == null)
@@ -1521,6 +1523,119 @@ Reason:{error.Message}", step,
 		return false;
 	}
 
+
+	private static readonly Regex StepVariableOrQuote = new(@"%[^%]*%|'[^']*'|""[^""]*""", RegexOptions.Compiled);
+	private static readonly Regex Word = new(@"[A-Za-z_][A-Za-z0-9_]*", RegexOptions.Compiled);
+
+	// A column of the step's table that the step names, outside its %variables% and quoted text, but
+	// that the sql never mentions, was dropped by the llm: the sql validates and the value is lost
+	// without a word. The primary key is left out, a step names it to read the id back.
+	private void WarnOnColumnNotInSql(GoalStep step, DbGenericFunction gf, string sql, string anchorKey)
+	{
+		if (gf.TableNames == null || gf.TableNames.Count == 0) return;
+		if (Regex.IsMatch(sql, @"(^|[\s,.])\*(\s|,|$)")) return;
+
+		var stepWords = new HashSet<string>(Word.Matches(StepVariableOrQuote.Replace(step.Text, " ")).Select(m => m.Value), StringComparer.OrdinalIgnoreCase);
+		var sqlWords = new HashSet<string>(Word.Matches(sql).Select(m => m.Value), StringComparer.OrdinalIgnoreCase);
+
+		foreach (var table in gf.TableNames)
+		{
+			var tableName = table.Contains('.') ? table.Substring(table.IndexOf('.') + 1) : table;
+			var missing = GetMirrorColumns(anchorKey, tableName)
+				.Where(c => !c.IsPrimaryKey && !c.Name.Equals(tableName, StringComparison.OrdinalIgnoreCase))
+				.Where(c => stepWords.Contains(c.Name) && !sqlWords.Contains(c.Name))
+				.Select(c => $"'{c.Name}'")
+				.ToList();
+			if (missing.Count == 0) continue;
+
+			var columns = missing.Count == 1 ? $"the column {missing[0]}" : $"the columns {string.Join(", ", missing)}";
+			logger.LogWarning($"{StepLocation(step)} names {columns} of {tableName}, but the sql does not use it: {sql.ReplaceLineEndings(" ")}. Reword the step or check the .pr.");
+		}
+	}
+
+	private List<(string Name, bool IsPrimaryKey)> GetMirrorColumns(string anchorKey, string tableName)
+	{
+		var columns = new List<(string, bool)>();
+		var anchors = appContext.GetOrDefault<Dictionary<string, IDbConnection>>("AnchorMemoryDb", new(StringComparer.OrdinalIgnoreCase));
+		var anchor = anchors?.FirstOrDefault(kvp => kvp.Key.Equals(anchorKey, StringComparison.OrdinalIgnoreCase)).Value;
+		if (anchor == null) return columns;
+		try
+		{
+			using var cmd = anchor.CreateCommand();
+			cmd.CommandText = $"PRAGMA table_info(\"{tableName.Replace("\"", "\"\"")}\")";
+			using var reader = cmd.ExecuteReader();
+			while (reader.Read())
+			{
+				columns.Add((reader["name"]?.ToString() ?? "", Convert.ToInt64(reader["pk"]) > 0));
+			}
+		}
+		catch (Exception ex)
+		{
+			logger.LogDebug($"Could not read the columns of {tableName}: {ex.Message}");
+		}
+		return columns;
+	}
+
+	// SelectOneRow gives the value itself when the sql selects one column, so a later %v.name% reads
+	// a property of that value and is empty at runtime, without an error.
+	private void WarnOnPropertyOfSingleColumn(GoalStep step, DbGenericFunction gf, string sql)
+	{
+		if (gf.Name != "SelectOneRow" && gf.Name != "SelectOneRowWithMultipleDataSources") return;
+		if (gf.ReturnValues == null || gf.ReturnValues.Count != 1 || step.Goal == null) return;
+
+		var selected = SelectedColumns(sql);
+		if (selected == null || selected.Count != 1) return;
+		var column = selected[0];
+		if (column == "*" || column.EndsWith(".*") || column.Contains("json", StringComparison.OrdinalIgnoreCase)) return;
+
+		var variableName = gf.ReturnValues[0].VariableName.Trim('%');
+		if (string.IsNullOrEmpty(variableName)) return;
+		var propertyRead = new Regex($@"%{Regex.Escape(variableName)}[.\[][^%]*%", RegexOptions.IgnoreCase);
+
+		foreach (var laterStep in step.Goal.GoalSteps.Where(s => s.LineNumber > step.LineNumber))
+		{
+			var match = propertyRead.Match(laterStep.Text);
+			if (!match.Success) continue;
+			logger.LogWarning($"{StepLocation(laterStep)} reads {match.Value}, but %{variableName}% is the value of the one column selected with return 1 row on line {step.LineNumber}: write %{variableName}%.");
+			return;
+		}
+	}
+
+	// The select list of the outermost select, split on its top level commas; null when it cannot be read.
+	internal static List<string>? SelectedColumns(string sql)
+	{
+		var start = Regex.Match(sql, @"^\s*select\s+(distinct\s+)?", RegexOptions.IgnoreCase);
+		if (!start.Success) return null;
+
+		var columns = new List<string>();
+		int depth = 0, from = start.Length;
+		char? quote = null;
+		for (int i = start.Length; i < sql.Length; i++)
+		{
+			var c = sql[i];
+			if (quote != null) { if (c == quote) quote = null; continue; }
+			if (c == '\'' || c == '"') { quote = c; continue; }
+			if (c == '(') depth++;
+			else if (c == ')') depth--;
+			else if (depth == 0 && c == ',')
+			{
+				columns.Add(sql.Substring(from, i - from).Trim());
+				from = i + 1;
+			}
+			else if (depth == 0 && Regex.IsMatch(sql.Substring(i), @"^\sfrom\s", RegexOptions.IgnoreCase))
+			{
+				columns.Add(sql.Substring(from, i - from).Trim());
+				return columns;
+			}
+		}
+		columns.Add(sql.Substring(from).Trim());
+		return columns;
+	}
+
+	private static string StepLocation(GoalStep step)
+	{
+		return $"{(step.Goal?.RelativeGoalPath ?? step.RelativeGoalPath ?? "").TrimStart('/', '\\')}:{step.LineNumber}";
+	}
 
 	private async Task<(bool IsValid, string DataSourceName, IBuilderError? Error)> IsValidSql(string sql, DataSource dataSource, GoalStep step)
 	{

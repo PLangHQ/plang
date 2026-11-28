@@ -176,6 +176,9 @@ namespace PLang.Building
 				return await BuildGoal(container, goal, context, errorCount, goalIndex);
 			}
 
+			var failedIndexes = new HashSet<int>();
+			var stepsBuildStart = DateTime.UtcNow;
+
 			// A setup goal's steps change the build's in memory database in their order (create datasource, create table,
 			// add column), so they are built one after the other: built at the same time, `add column` was checked
 			// before `create table` had run ("no such table") and a table went into the wrong datasource.
@@ -203,6 +206,7 @@ namespace PLang.Building
 				foreach (var index in indexesToBuild)
 				{
 					if (!errorsByIndex.TryGetValue(index, out var stepError)) continue;
+					failedIndexes.Add(index);
 					if (!stepError.ContinueBuild) return stepError;
 					groupedBuildErrors.Add(stepError);
 				}
@@ -216,6 +220,7 @@ namespace PLang.Building
 					logger.LogDebug($" - Done building step {goal.GoalSteps[i].Text.MaxLength(20)} - {stopwatch.ElapsedMilliseconds}");
 					if (buildStepError != null)
 					{
+						failedIndexes.Add(i);
 						if (!buildStepError.ContinueBuild) return buildStepError;
 						groupedBuildErrors.Add(buildStepError);
 					}
@@ -235,6 +240,7 @@ namespace PLang.Building
 			}
 
 			AlignBuiltStepsWithPrFiles(goal, indexesToBuild);
+			ReportBuiltSteps(goal, indexesToBuild.Where(i => !moved.Contains(i) && !failedIndexes.Contains(i)), stepsBuildStart);
 			WriteToGoalPrFile(goal);
 			logger.LogInformation($"Done building all goals {goal.GoalName} - It took {stopwatch.ElapsedMilliseconds}ms");
 			deciderReport.RecordGoalBuilt(goal, stopwatch.Elapsed);
@@ -573,6 +579,27 @@ namespace PLang.Building
 		// is left listing the module of the failed attempt while its .pr file still holds the earlier,
 		// complete build. Before the goal is written each built step is checked against its .pr file and
 		// the instruction wins, so 00. Goal.pr never lists a module the step's function is not on.
+		// The step text does not prove what a step does, its .pr does. One line per step built in this
+		// build names the module and method it became, so a wrong mapping shows without opening the .pr.
+		// A step that was already built also passes through BuildStep, so only a .pr written since
+		// builtSince counts.
+		private void ReportBuiltSteps(Goal goal, IEnumerable<int> stepIndexes, DateTime builtSince)
+		{
+			var goalPath = goal.RelativeGoalPath.TrimStart('/', '\\');
+			foreach (var i in stepIndexes)
+			{
+				var step = goal.GoalSteps[i];
+				if (string.IsNullOrEmpty(step.AbsolutePrFilePath) || !fileSystem.File.Exists(step.AbsolutePrFilePath)) continue;
+				if (fileSystem.File.GetLastWriteTimeUtc(step.AbsolutePrFilePath) < builtSince) continue;
+
+				var (instruction, error) = InstructionCreator.Create(step.AbsolutePrFilePath, fileSystem);
+				if (error != null || instruction?.Function == null) continue;
+
+				var module = (instruction.ModuleType ?? step.ModuleType ?? "").Replace("PLang.Modules.", "");
+				logger.LogInformation($"{goalPath}:{step.LineNumber} → {module}.{instruction.Function.Name}");
+			}
+		}
+
 		private void AlignBuiltStepsWithPrFiles(Goal goal, IEnumerable<int> stepIndexes)
 		{
 			foreach (var i in stepIndexes)
