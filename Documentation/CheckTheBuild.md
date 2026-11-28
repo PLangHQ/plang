@@ -7,9 +7,34 @@ until the step runs, and sometimes not even then.
 
 So after every build, look at what the new steps became before you run the app on real data.
 
+## What the build prints
+
+For each step that got a new `.pr` file in this build, the build writes one line with the module and function:
+
+```
+Start.goal:2 → DbModule.InsertAndSelectIdOfInsertedRow
+Start.goal:3 → DbModule.SelectOneRow
+Start.goal:4 → OutputModule.Write
+```
+
+Read these lines first. A step that is not built again gives no line.
+
+The build also warns about two mistakes that do not stop it:
+
+```
+Start.goal:2 names the column 'prio' of tasks, but the sql does not use it: insert into tasks (id, bot, text) values (@id, @bot, @text). Reword the step or check the .pr.
+Start.goal:4 reads %row.text%, but %row% is the value of the one column selected with return 1 row on line 3: write %row%.
+```
+
+- **The first** compares the words of a database step with the columns of its table. A column the step names and the
+  SQL does not use was either left out on purpose, or lost. If you left it out on purpose, ignore the warning. If
+  not, reword the step.
+- **The second** comes when the select step is built in the same build as the step that reads the variable.
+
 ## Where the answer is
 
-Each step has a file in `.build/<goal path>/`, named by its position: `.build/Data/03. select_product.pr`. Four fields
+For a step that was built earlier, or to see its parameters, open its `.pr` file. Each step has a file in
+`.build/<goal path>/`, named by its position: `.build/Data/03. select_product.pr`. Four fields
 answer almost every question:
 
 | Field | What it tells you |
