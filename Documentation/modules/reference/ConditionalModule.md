@@ -15,7 +15,7 @@ A one line if that calls goals, `if %codeCount% >= 2 then call goal HandleOverLi
 CompoundCondition(PLang.Modules.ConditionalModule.ConditionEvaluator+CompoundCondition condition, PLang.Models.GoalToCallInfo goalToCallIfTrue = null, PLang.Models.GoalToCallInfo goalToCallIfFalse = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnTrue = null, PLang.Modules.ThrowErrorModule.ErrorInfo throwErrorOnFalse = null) : Object
 ```
 
-Logic: AND|OR Operator: ==|!=|<|>|<=|>=|in|contains|startswith|endswith|indexOf. Equality is `==` (never a single `=`).  IsNot property indicates if the condition is a negation of the specified operator. True for ‘is not’, ‘does not’, etc. A goal the step calls goes in goalToCallIfTrue (after `then`) and goalToCallIfFalse (after `else`), also when the whole if is written on one line.
+Logic: AND|OR Operator: ==|!=|<|>|<=|>=|in|notIn|isEmpty|isNotEmpty|contains|notContains|startswith|notStartswith|endswith|notEndswith|indexOf|matches|notMatches. Equality is `==` (never a single `=`). A test written in the negative takes the negative operator and IsNot stays false, e.g. `is not empty` => isNotEmpty. A goal the step calls goes in goalToCallIfTrue (after `then`) and goalToCallIfFalse (after `else`), also when the whole if is written on one line.
 
 - `condition` *PLang.Modules.ConditionalModule.ConditionEvaluator+CompoundCondition* — (see Type information in SupportingObjects)
 - `goalToCallIfTrue` *PLang.Models.GoalToCallInfo*, default `null` — (see Type information in SupportingObjects)
@@ -336,8 +336,7 @@ SimpleCondition(PLang.Modules.ConditionalModule.ConditionEvaluator+SimpleConditi
 ```
 
 One condition made of a value and an operator, for cases no dedicated method covers. When a dedicated method exists for the test, use that instead: IsEmpty for `is empty`, IsEqual for `==`, StartsWith for `starts with`, ContainsString for `contains`.
-Operator: ==|!=|<|>|<=|>=|in|isEmpty|contains|startswith|endswith|indexOf. Equality is `==` (never a single `=`). IsNot property indicates if the condition is a negation of the specified operator. 
-IsNot=True for ‘is not’, ‘does not’, 
+Operator: ==|!=|<|>|<=|>=|in|notIn|isEmpty|isNotEmpty|contains|notContains|startswith|notStartswith|endswith|notEndswith|indexOf|matches|notMatches. Equality is `==` (never a single `=`). A test written in the negative takes the negative operator and IsNot stays false, e.g. `does not contain` => notContains.
 Logic: convert "&&" => "AND", "||" => "OR"
 A goal the step calls goes in goalToCallIfTrue (after `then`) and goalToCallIfFalse (after `else`), also when the whole if is written on one line. Never leave them out when the step says `call`.
 
